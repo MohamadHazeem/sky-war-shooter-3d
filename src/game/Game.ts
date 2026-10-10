@@ -1152,7 +1152,8 @@ export class Game {
     const alive = w.bombers().filter((b) => b.alive).length;
     const enemies = w.activeEnemies().length;
     let objective = m.objectives[0];
-    if (m.round) {
+    if (m.tutorial) objective = 'Gunnery School — follow the instructions';
+    else if (m.round) {
       const r = roundDef(m, this.roundIdx);
       const left = Math.max(0, Math.ceil(r.duration - (w.time - this.roundT0)));
       const rn = Number.isFinite(m.rounds ?? 1) ? `Round ${this.roundIdx + 1}/${m.rounds}` : `Round ${this.roundIdx + 1}`;
