@@ -9,6 +9,7 @@ import { playMedalFanfare } from '../audio/Fanfare';
 const medalDelay = (i: number) => 0.8 + i * 0.5;
 import { CREW, CrewId } from '../world/Crew';
 import { briefingMapSvg } from './BriefingMap';
+import { mountAccessibilityPanel } from './AccessibilityPanel';
 
 export interface Settings {
   sensitivity: number;
@@ -425,6 +426,7 @@ export class UI {
       onChange(s);
     }));
     st.querySelector('[data-back]')!.addEventListener('click', () => { st.classList.remove('show'); onBack(); });
+    mountAccessibilityPanel(st.querySelector('.box')!);
     st.classList.add('show');
   }
 

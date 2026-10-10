@@ -115,6 +115,10 @@ export class PilotController {
     // Throttle
     if (inp.down('KeyW')) this.throttleCmd = Math.min(1.1, this.throttleCmd + dt * 0.5);
     if (inp.down('KeyS')) this.throttleCmd = Math.max(0, this.throttleCmd - dt * 0.5);
+    // gamepad throttle lever (rate) and the touch throttle slider (absolute, one-shot)
+    const an = inp.analog;
+    if (an.throttle) this.throttleCmd = THREE.MathUtils.clamp(this.throttleCmd + an.throttle * dt * 0.6, 0, 1.1);
+    if (an.throttleSet !== null) { this.throttleCmd = THREE.MathUtils.clamp(an.throttleSet, 0, 1.1); an.throttleSet = null; }
     fm.throttle = this.throttleCmd;
     fm.limiter = this.mode === 'mouseAim';
 
@@ -150,6 +154,8 @@ export class PilotController {
       if (inp.down('KeyD')) fm.yaw = -0.8;
       if (inp.down('KeyQ')) fm.roll = -1;
       if (inp.down('KeyE')) fm.roll = 1;
+      if (an.roll) fm.roll = an.roll;          // gamepad left stick
+      if (an.yaw) fm.yaw = -an.yaw * 0.8;
       p.trigger = inp.mouse(0) || inp.down('Space');
       if (p.trigger && p.guns.every((g) => g.ammo <= 0) && inp.mouseHit(0)) sound.play('click', null, { gain: 0.5 });
     } else {

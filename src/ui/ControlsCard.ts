@@ -1,4 +1,8 @@
 import { STATION_ORDER, STATIONS } from '../world/B17Layout';
+import { keyMap, ActionId } from '../core/KeyMap';
+
+// key bound to an action (Settings > Key bindings)
+const b = (id: ActionId) => keyMap.label(id);
 
 // Controls card: H (or F1) during a mission shows the keys for the current role on a
 // semi-transparent card; the game pauses underneath. H, F1, Esc or a click closes it.
@@ -7,16 +11,16 @@ type Role = 'gunner' | 'pilot';
 
 const k = (...keys: string[]) => keys.map((x) => `<kbd>${x}</kbd>`).join(' ');
 
-const GUNNER: [string, string][] = [
+const GUNNER = (): [string, string][] => [
   [k('Mouse') + ' / ' + k('↑↓←→') + ' / ' + k('I', 'J', 'K', 'L'), 'Swing the gun'],
-  [k('Left button') + ' / ' + k('Space'), 'Fire — short bursts keep the barrel cool'],
-  [k('Right button'), 'Look down the ring sight (zoom)'],
-  [k('1') + '–' + k('5'), 'Change gun position: ' + STATION_ORDER.map((s) => `${STATIONS[s].key} ${STATIONS[s].label}`).join(' · ')],
-  [k('R'), 'Reload'],
-  [k('Tab'), 'Big radar map'],
+  [k('Left button') + ' / ' + k(b('fire')), 'Fire — short bursts keep the barrel cool'],
+  [k('Right button') + ' / ' + k(b('zoom')), 'Look down the ring sight (zoom)'],
+  [k(...STATION_ORDER.map((s) => b(('seat' + STATIONS[s].key) as ActionId))), 'Change gun position: ' + STATION_ORDER.map((s) => `${b(('seat' + STATIONS[s].key) as ActionId)} ${STATIONS[s].label}`).join(' · ')],
+  [k(b('reload')), 'Reload'],
+  [k(b('map')), 'Big radar map'],
   [k('F'), 'Photo mode'],
-  [k('Esc') + ' / ' + k('P'), 'Pause'],
-  [k('H') + ' / ' + k('F1'), 'This card'],
+  [k('Esc') + ' / ' + k(b('pause')), 'Pause'],
+  [k(b('help')) + ' / ' + k('F1'), 'This card'],
 ];
 const GUNNER_TIPS = [
   'Aim at the yellow ◇ lead indicator, not the plane.',
@@ -24,20 +28,20 @@ const GUNNER_TIPS = [
   'The radar shows where the next group will come from.',
 ];
 
-const PILOT: [string, string][] = [
+const PILOT = (): [string, string][] => [
   [k('Mouse') + ' / ' + k('↑↓←→'), 'Fly where you look (mouse aim)'],
-  [k('Left button') + ' / ' + k('Space'), 'Fire'],
+  [k('Left button') + ' / ' + k(b('fire')), 'Fire'],
   [k('W') + ' / ' + k('S'), 'Throttle up / down'],
   [k('Q') + ' / ' + k('E'), 'Roll'],
   [k('A') + ' / ' + k('D'), 'Rudder'],
-  [k('Right button'), 'Zoom'],
+  [k('Right button') + ' / ' + k(b('zoom')), 'Zoom'],
   [k('V'), 'Cockpit / chase view'],
   [k('C'), 'Free look (hold)'],
   [k('M'), 'Mouse aim / direct flight controls'],
-  [k('Tab'), 'Big radar map'],
+  [k(b('map')), 'Big radar map'],
   [k('F'), 'Photo mode'],
-  [k('Esc') + ' / ' + k('P'), 'Pause'],
-  [k('H') + ' / ' + k('F1'), 'This card'],
+  [k('Esc') + ' / ' + k(b('pause')), 'Pause'],
+  [k(b('help')) + ' / ' + k('F1'), 'This card'],
 ];
 const PILOT_TIPS = [
   'Put the K-14 gunsight pipper ahead of the bandit, then fire.',
@@ -58,13 +62,13 @@ export class ControlsCard {
   }
 
   show(role: Role) {
-    const rows = role === 'gunner' ? GUNNER : PILOT;
+    const rows = role === 'gunner' ? GUNNER() : PILOT();
     const tips = role === 'gunner' ? GUNNER_TIPS : PILOT_TIPS;
     this.el.innerHTML = `<div class="cc-box">
       <div class="cc-k">CONTROLS · ${role === 'gunner' ? 'B-17 GUNNER' : 'P-51 PILOT'}</div>
       <div class="cc-grid">${rows.map(([key, what]) => `<div class="cc-key">${key}</div><div class="cc-what">${what}</div>`).join('')}</div>
       <div class="cc-tips">${tips.map((t) => `<div>${t}</div>`).join('')}</div>
-      <div class="cc-foot">Game paused · press <kbd>H</kbd> or click to continue</div>
+      <div class="cc-foot">Game paused · press <kbd>${b('help')}</kbd> or tap to continue</div>
     </div>`;
     this.el.classList.add('show');
     this.open = true;

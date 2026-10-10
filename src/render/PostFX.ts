@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { Atmos } from './Atmosphere';
 import { mulberry } from './Particles';
+import { access } from '../core/Accessibility';
 
 // Procedural lens dirt: faint smudges, specks and a fingerprint-ish swirl
 function makeDirt(): THREE.Texture {
@@ -442,14 +443,14 @@ export class PostFX {
     u.uNearFocus.value = this.nearFocus;
     u.uDofStrength.value = this.dofStrength;
     u.uTime.value = time;
-    u.uDamageFlash.value = this.damageFlash;
+    u.uDamageFlash.value = this.damageFlash * access.flash;   // 'reduce flashes' setting
     u.uDesat.value = this.desat;
     u.uVignette.value = this.vignette;
     u.uGrain.value = this.grain;
     u.uGrainDark.value = this.grainDark;
     u.uChroma.value = this.chroma;
-    u.uFlash.value = this.flash;
-    u.uZoomPulse.value = this.zoomPulse;
+    u.uFlash.value = this.flash * access.flash;
+    u.uZoomPulse.value = this.zoomPulse * access.flash;
     u.uNoBlurDist.value = this.noBlurDist;
     // sun position on screen for the lens flare
     const sunW = new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld).addScaledVector(Atmos.sunDir, 5000);

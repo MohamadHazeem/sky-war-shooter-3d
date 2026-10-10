@@ -7,6 +7,7 @@ import { ENEMY_VARIANTS, EnemyType } from '../world/EnemyTypes';
 import { Combo, FIRE_KILLS, FIRE_SCORE } from './Combo';
 import { sound } from '../audio/Sound';
 import { playCue } from '../audio/FeedbackCues';
+import { access } from '../core/Accessibility';
 
 // Game feel ("juice") for kills and hits, plus the streak meter / ON FIRE presentation.
 //
@@ -193,6 +194,8 @@ export class GameFeel {
   }
 
   private startHitstop(sec: number) {
+    sec *= access.hitStop;   // 'reduce screen shake and flashes': no freeze frames
+    if (sec <= 0) return;
     if (this.hitstop <= 0) this.savedScale = this.engine.timeScale === HITSTOP_SCALE ? 1 : this.engine.timeScale;
     this.hitstop = Math.max(this.hitstop, sec);
     this.freshStop = true;
@@ -212,7 +215,7 @@ export class GameFeel {
     post.zoomPulse = this.pulse < 0.0005 ? 0 : this.pulse;
     this.world.ballistics.playerTracerHeat = this.tracerHeat < 0.01 ? 0 : this.tracerHeat;
     const cam = this.engine.camera;
-    const z = 1 + Math.max(-0.02, this.punch) * 1.0;
+    const z = 1 + Math.max(-0.02, this.punch) * access.shake;
     if (this.punch !== 0 || this.zoomSet) {
       cam.zoom = z;
       cam.updateProjectionMatrix();
