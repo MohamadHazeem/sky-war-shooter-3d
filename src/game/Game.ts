@@ -15,6 +15,7 @@ import { DistantBattle } from '../audio/DistantBattle';
 import type { AttackType } from '../world/AI';
 import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
 import * as ThreatRing from '../ui/ThreatRing';
+import { GlassCracks } from '../ui/Cracks';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -60,6 +61,7 @@ export class Game {
   private killMarkerT = 0;
   private damageT = 0;
   private woundT = 0;   // eased wounded-crew amount for the PostFX desaturation
+  private cracks = new GlassCracks();
   private slowmo = 0;
   private streak = 0;
   private lastKillAt = -99;
@@ -193,6 +195,7 @@ export class Game {
     w.events.playerHit = (zone, heavy) => {
       sound.airframeHit(heavy);
       this.damageT = Math.min(1, this.damageT + (heavy ? 0.6 : 0.25));
+      if (heavy && this.mission?.role === 'gunner') this.cracks.hit();
       if (zone === 'gunner') {
         this.ui.feed('You are wounded', 'loss');
         w.callout('wound', 'Navigator', 'Gunner\'s hit! Stay on that gun if you can!', 10, 2);
@@ -308,6 +311,7 @@ export class Game {
     this.bailT = -1;
     this.score = 0;
     this.damageT = 0;
+    this.cracks.clear();
     this.engine.post.resetHistory();
     // survival picks a random time of day
     const presets: Weather[] = CAMPAIGN.map((c) => c.weather!).filter(Boolean);
@@ -733,6 +737,7 @@ export class Game {
     const woundTarget = this.menuMode ? 0 : Math.min(1, w.crewWounded / 4);
     this.woundT += (woundTarget - this.woundT) * (1 - Math.exp(-dt * 0.6));
     this.engine.post.desat = this.woundT < 0.002 ? 0 : this.woundT;
+    this.cracks.update(dt);
     this.ui.redVignette(this.damageT * 0.8 + (this.mission?.role === 'gunner' && !this.menuMode ? w.crewWounded * 0.12 : 0));
     if (this.mission?.role === 'pilot' && !this.menuMode) { /* pilot sets exposure/vignette */ }
     else { this.engine.post.vignette = 0.9; this.engine.post.exposure = 1; }
@@ -956,6 +961,8 @@ export class Game {
       for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { ctx.moveTo(hx + sx * b, hy + sy * b); ctx.lineTo(hx + sx * a, hy + sy * a); }
       ctx.stroke();
     }
+    // Cracked glass sits in front of everything else on the gunner's view
+    this.cracks.draw(ctx, W, H);
   }
 }
 
