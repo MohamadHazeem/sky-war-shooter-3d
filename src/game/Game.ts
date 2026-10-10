@@ -53,6 +53,7 @@ import { analytics, mountStatsToggle } from '../net/Analytics';
 import { showCampaignMap, mountCampaignReport, prepareCampaignMission, campaignMeritMult, isSideRaid } from '../ui/CampaignMap';
 import '../ui/CustomBattleScreen'; // registers the Custom Battle and Weekly Challenge modes + their Survival-screen tabs
 import { CoopSession } from './CoopSession';
+import { syncSurfaceDetail } from '../render/SurfaceDetail';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -270,6 +271,7 @@ export class Game {
     this.gunner.baseFov = fov;
     this.pilot.baseFov = fov;
     this.engine.applyGraphics(s.quality, !!s.fpsCounter);
+    syncSurfaceDetail(this.engine.quality);   // aircraft panel lines / weathering level (render/SurfaceDetail.ts)
     save(SETTINGS_KEY, s);
   }
 
@@ -1067,6 +1069,7 @@ export class Game {
   // ---------------- Frame ----------------
   private frame(dt: number) {
     const w = this.world;
+    syncSurfaceDetail(this.engine.quality);   // follows auto-quality drops (no-op unless the tier changed)
     const playing = !this.menuMode && (this.state === 'playing' || this.state === 'ending');
     this.input.active = playing;
     this.onboarding.update(dt);

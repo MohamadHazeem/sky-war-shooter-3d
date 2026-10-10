@@ -3,7 +3,7 @@ import { markOwned } from '../render/Dispose';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { NOW, assetUrl, request, take } from '../core/Assets';
-import { tuneAircraftMaterial } from '../render/AircraftLook';
+import { prepareAircraftSurface, tuneAircraftMaterial } from '../render/AircraftLook';
 
 export type ModelKind =
   | 'b17' | 'fw190' | 'p51d' | 'p51d_cockpit'
@@ -62,6 +62,7 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
       const bytes = await take(FILES[k], prio);
       const gltf = await gltfLoader().parseAsync(bytes, assetUrl('models/'));
       const root = gltf.scene;
+      const skins = new Set<THREE.Material>();
       root.traverse((o) => {
         const m = o as THREE.Mesh;
         if (m.isMesh) {
@@ -72,10 +73,12 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
             if (mat.transparent && mat.opacity < 0.9) { m.castShadow = false; mat.depthWrite = false; }
             if (mat.map) mat.map.anisotropy = 8;
             // per-part roughness / metalness / sky reflection (render/AircraftLook.ts)
-            tuneAircraftMaterial(mat, k);
+            if (tuneAircraftMaterial(mat, k)) skins.add(mat);
           }
         }
       });
+      // panel lines, rivets and weathering on the skins (render/SurfaceDetail.ts)
+      prepareAircraftSurface(root, k, skins);
       cache.set(k, root);
     } catch (e) {
       console.warn(`Model ${k} unavailable, using placeholder`, e);
