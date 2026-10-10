@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import type { World } from '../world/World';
 import { Bomber, Fighter } from '../world/Aircraft';
+import { BossShip } from '../world/BossShip';
+import { drawBossBlip } from './BossHud';
 
 /**
  * Plan-view radar plot, north-up = the formation's heading. Compact in the bottom-left
@@ -103,6 +105,7 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
       ctx.fillRect(m.x - 2, m.y - 2, 4, 4);
       continue;
     }
+    if (a instanceof BossShip) { drawBossBlip(ctx, m.x, m.y, e, m.clipped, time, a, a.vel.dot(_r), -a.vel.dot(_f)); continue; }
     if (!(a instanceof Fighter)) continue;
     const enemy = a.team === 'axis';
     // heading arrow

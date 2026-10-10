@@ -23,6 +23,7 @@ import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
 import { CombatTally } from './CombatTally';
 import { achievements } from './Achievements';
+import { BossBattle } from './BossBattle';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -48,6 +49,7 @@ export class Game {
   readonly gunner: GunnerController;
   readonly pilot: PilotController;
   readonly photo: PhotoMode;
+  readonly boss: BossBattle;
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -119,6 +121,7 @@ export class Game {
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
     this.photo = new PhotoMode(engine, input, this.world);
+    this.boss = new BossBattle(this.world, ui, { score: (n) => { this.score += n; }, slowmo: (s) => { this.slowmo = Math.max(this.slowmo, s); }, perk: (l) => this.awardPerk(l), merit: (n) => this.prog.earn(n) });
     this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: true, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 65 });
     // settings saved before aim assist existed: switch the lead indicator on with it
     let raw = ''; try { raw = localStorage.getItem(SETTINGS_KEY) ?? ''; } catch { /* */ }
@@ -512,6 +515,7 @@ export class Game {
   // are in the air than the round's ramping target; the next group shows on the radar.
   private director(dt: number, m: Mission, r: Round, enemies: number) {
     const w = this.world, t = w.time - this.roundT0;
+    if (this.boss.director(dt, m, this.roundIdx)) { this.updateIncoming(null, null); if (this.boss.cleared && !this.roundClear && this.state === 'playing') { this.roundClear = true; this.endRound(m); } return; }
     const ramp = THREE.MathUtils.clamp((t - r.start) / (r.duration * 0.6), 0, 1);
     const target = Math.round(r.min + (r.max - r.min) * ramp);
     // round over: stop sending fighters; once the sky is clear (or 30 s on) the round ends
@@ -1021,6 +1025,7 @@ export class Game {
     sound.updateWind(dt);
     w.listener = this.engine.camera.position;
     sound.updateFighterVoices(w.fighterSoundInfo());
+    this.boss.update(dt);
     // damaged B-17 engines change the interior drone (Sound.setEngineHealth caches repeats)
     if (this.mission?.role === 'gunner' && w.playerBomber) sound.setEngineHealth(4 - w.playerBomber.enginesOut);
     // screen effects
@@ -1088,6 +1093,7 @@ export class Game {
       const r = roundDef(m, this.roundIdx);
       const left = Math.max(0, Math.ceil(r.duration - (w.time - this.roundT0)));
       const rn = Number.isFinite(m.rounds ?? 1) ? `Round ${this.roundIdx + 1}/${m.rounds}` : `Round ${this.roundIdx + 1}`;
+      if (this.boss.active) objective = `${rn} — ${this.boss.objective}`; else
       objective = left > 0 ? `${rn} — ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} · ${enemies} fighters` : `${rn} — clear the last ${enemies} fighter${enemies === 1 ? '' : 's'}`;
     }
     else if (m.duration === Infinity) objective = this.survivalWave ? `Wave ${this.survivalWave} — ${enemies} fighters remaining` : 'Stand by — enemy fighters approaching';
@@ -1258,6 +1264,7 @@ export class Game {
     // Radar plot (bottom-left; Tab expands it into the big map)
     this.mapT += ((this.mapOpen ? 1 : 0) - this.mapT) * Math.min(1, (1 / 60) * 9);
     if (this.mission) Radar.draw(ctx, W, H, w, this.mapT, this.incoming, w.time);
+    this.boss.drawHud(ctx, W, H, cam);
     // Lead indicator aim aid: pip for the enemy nearest the line of fire ('recruit' = only on Recruit difficulty)
     const leadMode = this.settings.leadPip ?? 'recruit';
     if (pl?.alive && (this.loadout.leadPip || leadMode === 'always' || (leadMode === 'recruit' && this.settings.difficulty === 'recruit'))) this.drawLeadPip(ctx, W, H);

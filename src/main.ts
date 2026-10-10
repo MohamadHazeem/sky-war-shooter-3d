@@ -43,6 +43,11 @@ async function boot() {
     const { autoplay } = await import('./dev/autoplay');
     (window as any).sws.autoplay = (m: any, steps?: number) => autoplay(engine, game, m, steps);
     Object.assign((window as any).sws, { game, engine });
+    // Boss battle now (starts a survival mission first when not flying): sws.boss('pilot')
+    (window as any).sws.boss = (role: 'gunner' | 'pilot' = 'gunner') => {
+      if (game.state !== 'playing' || !game.mission) game.startMission(survivalMission(role));
+      game.boss.force();
+    };
     // Frame-time benchmark: n rendered frames, GPU synced with a 1-pixel readback each frame
     (window as any).sws.bench = (n = 120, render = true) => {
       const gl = engine.renderer.getContext(), px = new Uint8Array(4), t: number[] = [];

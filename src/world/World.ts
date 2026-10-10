@@ -21,6 +21,7 @@ import { hitSounds } from '../audio/HitSounds';
 import { setup as setupDamageLook, update as updateDamageLook } from './DamageLook';
 import { update as updateDamageStages, stageOf, damageStage } from './DamageStages';
 import { Crew, STATION_CREW } from './Crew';
+import { prewarmBoss } from './BossShip';
 
 export const ENEMY_SCALE = 6.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 460; // ~40 hits from a .50 to wear one down
@@ -237,7 +238,9 @@ export class World implements WorldView {
     const at = camera.position.clone().addScaledVector(fwd, 80);
     this.effects.explosion(at, new THREE.Vector3(), 1);
     this.effects.parachute(at, new THREE.Vector3());
+    const unwarmBoss = prewarmBoss(this.scene, camera.position, fwd);
     render();
+    unwarmBoss();
     for (const f of dummies) this.scene.remove(f.root);
     this.wrecks.clear();
     this.effects.clear();

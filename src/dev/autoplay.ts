@@ -31,6 +31,15 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
         const d = f.pos.distanceTo(pb.pos);
         if (d < bd) { bd = d; best = f.root; tv.copy(f.vel); tp0.copy(f.pos); }
       }
+      // boss battle: with no fighter close, work on the warships' weak points (or breached hulls)
+      let boss = false;
+      if (!best && game.boss.active) {
+        bd = 1400;
+        for (const t of game.boss.targets()) {
+          const d = t.pos.distanceTo(pb.pos);
+          if (d < bd) { bd = d; best = pb.root; boss = true; tv.copy(t.vel); tp0.copy(t.pos); }
+        }
+      }
       if (best) {
         const tof = bd / 870;
         const tp = tp0.clone().add(tv.clone().sub(pb.vel).multiplyScalar(tof));
@@ -52,7 +61,7 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
           if (chosen.id !== gun.station && gun.transition <= 0 && k % 40 === 0) gun.requestStation(chosen.id);
           if (chosen.id === gun.station) {
             gun.state.tYaw = chosen.dy; gun.state.tPitch = chosen.pr;
-            if (bd < 700 && !gun.state.overheated) inp.buttons = 1;
+            if (bd < (boss ? 1300 : 700) && !gun.state.overheated) inp.buttons = 1;
           }
         }
       }
@@ -65,13 +74,23 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
         const d = e.pos.distanceTo(f.pos);
         if (d < bd) { bd = d; target = e.pos.clone(); tvel.copy(e.vel); }
       }
-      if (target && f.alive) {
+      let boss = false;
+      if (game.boss.active && bd > 400) {
+        for (const t of game.boss.targets()) {
+          const d = t.pos.distanceTo(f.pos);
+          if (d < bd || !boss) { bd = d; target = t.pos.clone(); tvel.copy(t.vel); boss = true; }
+        }
+      }
+      if (target && f.alive && boss && bd < 320) {
+        // break off before flying into the warship, then come round again
+        pilot.aimYaw += 0.02; pilot.aimPitch = 0.45;
+      } else if (target && f.alive) {
         const tof = bd / 880;
         const tp = target.add(tvel.sub(f.vel).multiplyScalar(tof));
         tp.y += 0.5 * 9.81 * tof * tof;
         const dir = tp.sub(f.pos).normalize();
         pilot.aimYaw = Math.atan2(dir.x, dir.z); pilot.aimPitch = Math.asin(dir.y);
-        if (bd < 500 && f.forward().dot(dir) > 0.998) inp.buttons = 1;
+        if (bd < (boss ? 1000 : 500) && f.forward().dot(dir) > (boss ? 0.993 : 0.998)) inp.buttons = 1;
       } else if (f.alive) {
         const c = w.formationCenter.clone().add(new THREE.Vector3(0, 300, 0)).sub(f.pos).normalize();
         pilot.aimYaw = Math.atan2(c.x, c.z); pilot.aimPitch = Math.asin(c.y);
