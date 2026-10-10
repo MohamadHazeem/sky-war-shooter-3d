@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Music } from './Music';
+import { AirframeCreaks } from './Creaks';
 
 // Procedural audio engine (no sample files).
 // - Engines are synthesised as looping firing-pulse trains: Wright R-1820 Cyclones
@@ -47,6 +48,7 @@ export class Sound {
   private playerEngine: { src: AudioBufferSourceNode; gain: GainNode; filter: BiquadFilterNode } | null = null;
   private radioBed: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
   readonly music = new Music();
+  private creaks: AirframeCreaks | null = null;
   volume = 0.8;
   radioEnabled = true;
   musicEnabled = true;
@@ -76,6 +78,7 @@ export class Sound {
     this.revOutSend = ctx.createGain(); this.revOutSend.gain.value = 0.5;
     this.revInSend.connect(this.revIn).connect(this.master);
     this.revOutSend.connect(this.revOut).connect(this.master);
+    this.creaks = new AirframeCreaks(ctx, this.amb, this.revInSend);
     this.buildBuffers();
     this.startAmbience();
     for (let i = 0; i < 6; i++) this.voices.push(this.makeVoice());
@@ -431,6 +434,7 @@ export class Sound {
     this.wind?.gain.gain.setTargetAtTime(mode === 'menu' ? 0.1 : mode === 'bomber' ? 0.3 : 0.18, t, 0.5);
     this.wind?.filter.frequency.setTargetAtTime(mode === 'bomber' ? 1400 : 800, t, 0.5);
     this.revInSend.gain.setTargetAtTime(mode === 'bomber' ? 0.55 : 0.0, t, 0.2);
+    this.creaks?.setActive(mode === 'bomber');
     if (mode === 'fighter') this.ensurePlayerEngine();
     else if (this.playerEngine) this.playerEngine.gain.gain.setTargetAtTime(0, t, 0.3);
     this.music.setScene(mode === 'menu' ? 'menu' : 'mission');
@@ -570,6 +574,9 @@ export class Sound {
   }
 
   rattle() { this.play('rattle', null, { gain: 0.7, reverb: 0.5 }); }
+
+  // Hits on the bomber shake the airframe: extra creaks (no-op outside the bomber)
+  airframeHit(heavy: boolean) { this.creaks?.hit(heavy); }
 
   duckFor(seconds: number, depth = 0.45) {
     if (!this.ctx) return;

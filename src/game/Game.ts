@@ -174,6 +174,7 @@ export class Game {
       else w.callout('playerdown', 'Pilot', 'We\'ve had it! Bail out! Bail out!', 0, 3);
     };
     w.events.playerHit = (zone, heavy) => {
+      sound.airframeHit(heavy);
       this.damageT = Math.min(1, this.damageT + (heavy ? 0.6 : 0.25));
       if (zone === 'gunner') {
         this.ui.feed('You are wounded', 'loss');
