@@ -3,6 +3,7 @@ import { envRef } from '../render/EnvRef';
 import { gunTextures, interiorTextures } from '../render/Textures';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { addWaistProps } from './InteriorProps';
+import { turretGlassDome } from './TurretGlass';
 
 // Procedural first-person geometry for the B-17 gun positions: fuselage interior,
 // Browning AN/M2 .50 cal with ring-and-post sight, ammunition belt, turret frames.
@@ -452,6 +453,8 @@ export function buildTurret(kind: 'top' | 'ball'): { group: THREE.Group; guns: G
     g.add(port);
   }
   g.traverse((o) => { if ((o as THREE.Mesh).isMesh && o !== sight) { o.castShadow = true; o.receiveShadow = true; } });
+  // Faint plexiglass dome added after the shadow pass so it stays shadow-free
+  g.add(turretGlassDome(kind, R));
   return { group: g, guns, sight };
 }
 
