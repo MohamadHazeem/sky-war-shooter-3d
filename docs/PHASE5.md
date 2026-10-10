@@ -35,7 +35,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 18 | P-51 ground attack: strafing trains, flak towers and airfields at low level | Done — "Train Busting" special operation: procedural countryside (fields, rivers, railway, village, 9,800 trees), 3 rounds (train with boiler burst, convoy, airfield with parked aircraft), 20 mm flak and a quad flak tower firing back, low-level Fw 190s, PULL UP warning, crash rules, wingman ground attacks, own leaderboard |
 | 19 | Arabic for every screen added overnight (campaign map, skills, custom battle, weekly, co-op, theatre, wingman) | Done — campaign map, skills, custom battle, weekly, theatre, FPS counter, raid missions + wingman, co-op, canvas HUDs, special events and tactics; RTL mirroring, Arabic number agreement, coverage tests |
 | 21 | Nemesis system: persistent named Luftwaffe aces with traits, grudges, scars, promotions and a dossier screen | Done — 8 Experten (name, rank, unit, aircraft, colours/emblem, trait-driven AI), appearances with radio memory + dossier card, outcomes persist (victories, promotions, escapes with patches and grudges, deaths, hospital), replacements, bounties + medal + achievements, "Luftwaffe Experten" screen |
-| 22 | Audio pass 3: engine voices for the new aircraft and warships, BK 5 / flak sounds, distance-aware explosions, waist ambience (wind, creaks, brass), ducking and mix check | In progress |
+| 22 | Audio pass 3: engine voices for the new aircraft and warships, BK 5 / flak sounds, distance-aware explosions, waist ambience (wind, creaks, brass), ducking and mix check | Done — synthesised engine voices per type (Jumo/DB 603 twins, Do 335 push-pull, Me 262 turbine whine, Me 163 rocket, warship engine groups + hull throb), BK 5 thump, MG 81Z, 20 mm flak, distance-delayed/filtered explosions with stages, waist wind/rattles/other gunner/brass, ducking, Audio detail + breathing settings; 0 bytes added |
 | 23 | Mission bookends: dawn takeoff from the English base and landing afterwards (belly landing with fire trucks when badly damaged), skippable | In progress |
 | 24 | QA sweep: phone/touch, gamepad, first-time player flow, console errors across all new features | In progress |
 | 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | |
@@ -55,3 +55,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 00:11 new aircraft + clouds/haze merged (274 tests).
 - 00:48 nemesis system merged (302 tests).
 - 01:00 ground attack merged (311 tests).
+- 01:05 audio pass 3 merged (326 tests).
