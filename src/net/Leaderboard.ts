@@ -1,0 +1,94 @@
+// Online leaderboard on Firebase (Firestore + anonymous auth). The SDK is loaded on demand
+// so the game's first load stays small. The web config below is public by design: access is
+// controlled by firestore.rules (validated, rate-limited, append-only entries).
+
+const CONFIG = {
+  apiKey: 'AIzaSyCHO600Ran-9oLSXURKJTBtQTmmkn03VjE',
+  authDomain: 'sky-war-shooter-3d.firebaseapp.com',
+  projectId: 'sky-war-shooter-3d',
+  storageBucket: 'sky-war-shooter-3d.firebasestorage.app',
+  messagingSenderId: '354810040291',
+  appId: '1:354810040291:web:d18635589bae15c2e49ad6',
+};
+
+export interface ScoreEntry {
+  name: string;
+  mode: string;      // 'survival-gunner' | 'survival-pilot' | 'campaign-m1' … | 'daily-20261011'
+  score: number;
+  kills: number;
+  rounds: number;
+}
+
+export interface BoardRow extends ScoreEntry { uid: string; mine: boolean }
+
+const NAME_KEY = 'sws3d.pilotName';
+
+export function savedName(): string {
+  try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; }
+}
+export function saveName(n: string) {
+  try { localStorage.setItem(NAME_KEY, cleanName(n)); } catch { /* */ }
+}
+export function cleanName(n: string) {
+  return n.replace(/[^\p{L}\p{N} ._'-]/gu, '').trim().slice(0, 20) || 'Gunner';
+}
+
+type Fb = {
+  db: import('firebase/firestore').Firestore;
+  uid: string;
+  fs: typeof import('firebase/firestore');
+};
+let ready: Promise<Fb> | null = null;
+
+async function connect(): Promise<Fb> {
+  const [{ initializeApp }, auth, fs] = await Promise.all([import('firebase/app'), import('firebase/auth'), import('firebase/firestore')]);
+  const app = initializeApp(CONFIG);
+  const a = auth.getAuth(app);
+  const cred = a.currentUser ? { user: a.currentUser } : await auth.signInAnonymously(a);
+  return { db: fs.getFirestore(app), uid: cred.user.uid, fs };
+}
+
+function fb(): Promise<Fb> {
+  if (!ready) ready = connect().catch((e) => { ready = null; throw e; });
+  return ready;
+}
+
+// One entry per call. The rules require the per-player 'limits' document to be stamped in the
+// same batch, which enforces at most one submission every 20 s per player.
+export async function submitScore(e: ScoreEntry): Promise<boolean> {
+  try {
+    const { db, uid, fs } = await fb();
+    const batch = fs.writeBatch(db);
+    batch.set(fs.doc(db, 'limits', uid), { last: fs.serverTimestamp() });
+    batch.set(fs.doc(fs.collection(db, 'scores')), {
+      uid, name: cleanName(e.name), mode: e.mode,
+      score: Math.max(0, Math.round(e.score)), kills: Math.max(0, Math.round(e.kills)), rounds: Math.max(0, Math.round(e.rounds)),
+      createdAt: fs.serverTimestamp(), v: 1,
+    });
+    await batch.commit();
+    return true;
+  } catch (err) {
+    console.warn('Leaderboard: submit failed', err);
+    return false;
+  }
+}
+
+export async function topScores(mode: string, n = 10): Promise<BoardRow[]> {
+  try {
+    const { db, uid, fs } = await fb();
+    const q = fs.query(fs.collection(db, 'scores'), fs.where('mode', '==', mode), fs.orderBy('score', 'desc'), fs.limit(n));
+    const snap = await fs.getDocs(q);
+    return snap.docs.map((d) => {
+      const x = d.data() as any;
+      return { name: String(x.name), mode: String(x.mode), score: Number(x.score), kills: Number(x.kills), rounds: Number(x.rounds), uid: String(x.uid), mine: x.uid === uid };
+    });
+  } catch (err) {
+    console.warn('Leaderboard: read failed', err);
+    return [];
+  }
+}
+
+export function dailyMode(role: 'gunner' | 'pilot', d = new Date()) {
+  const s = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
+  return `daily-${role}-${s}`;
+}

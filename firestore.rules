@@ -1,0 +1,39 @@
+rules_version = '2';
+
+// Sky War Shooter 3D — online leaderboard.
+// - Anyone can read scores.
+// - Signed-in (anonymous) players can only append entries: no edits, no deletes.
+// - Every entry is validated (fields, types, ranges, plausibility) and must be written in the
+//   same batch as the player's 'limits' stamp, which allows one entry per 20 seconds.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /limits/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['last'])
+        && request.resource.data.last == request.time
+        && (resource == null || resource.data.last < request.time - duration.value(20, 's'));
+      allow delete: if false;
+    }
+
+    match /scores/{id} {
+      allow read: if true;
+      allow update, delete: if false;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'mode', 'score', 'kills', 'rounds', 'createdAt', 'v'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 20
+        && request.resource.data.mode is string && request.resource.data.mode.size() <= 40
+        && request.resource.data.mode.matches('^(survival-(gunner|pilot)|campaign-m[0-9]{1,2}|daily-(gunner|pilot)-[0-9]{8}|(acehunt|timeattack)-(gunner|pilot))$')
+        && request.resource.data.score is int && request.resource.data.score >= 0 && request.resource.data.score <= 5000000
+        && request.resource.data.kills is int && request.resource.data.kills >= 0 && request.resource.data.kills <= 5000
+        && request.resource.data.rounds is int && request.resource.data.rounds >= 0 && request.resource.data.rounds <= 500
+        // plausibility: points per kill are capped (bosses and multipliers included)
+        && request.resource.data.score <= request.resource.data.kills * 4000 + request.resource.data.rounds * 3000 + 5000
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.v == 1
+        && getAfter(/databases/$(database)/documents/limits/$(request.auth.uid)).data.last == request.time;
+    }
+  }
+}

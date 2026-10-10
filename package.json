@@ -11,6 +11,7 @@
     "deploy": "vite build && wrangler deploy"
   },
   "dependencies": {
+    "firebase": "^13.0.0",
     "three": "^0.186.1"
   },
   "devDependencies": {
