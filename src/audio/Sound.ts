@@ -1049,7 +1049,9 @@ export class Sound {
     this.radioBed.gain.gain.setTargetAtTime(on ? 0.035 : 0, t, 0.05);
   }
 
-  stopSpeech() { try { speechSynthesis.cancel(); } catch { /* ignore */ } this.radioBedOn(false); this.interphone?.cancel(); }
+  stopSpeech() { try { speechSynthesis.cancel(); } catch { /* ignore */ } this.radioBedOn(false); this.interphone?.cancel(); this.onStopSpeech?.(); }
+  // Set by the recorded crew voices (Voice.ts) so mission end / quit also silences them
+  onStopSpeech: (() => void) | null = null;
 }
 
 export const sound = new Sound();

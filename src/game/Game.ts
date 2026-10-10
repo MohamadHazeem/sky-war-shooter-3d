@@ -13,6 +13,7 @@ import { STATIONS, STATION_ORDER, StationId } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
 import { DistantBattle } from '../audio/DistantBattle';
 import { INTERPHONE_LEAD_S } from '../audio/Interphone';
+import { voice as crewVoice } from '../audio/Voice';
 import type { AttackType } from '../world/AI';
 import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
 import * as Radar from '../ui/Radar';
@@ -117,7 +118,7 @@ export class Game {
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
     this.photo = new PhotoMode(engine, input, this.world);
-    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: false, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 65 });
+    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: true, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 65 });
     // settings saved before aim assist existed: switch the lead indicator on with it
     let raw = ''; try { raw = localStorage.getItem(SETTINGS_KEY) ?? ''; } catch { /* */ }
     if (raw && !raw.includes('aimAssist')) { this.settings.aimAssist = 'high'; this.settings.leadPip = 'always'; if (this.settings.fov === 62) this.settings.fov = 65; }
@@ -195,13 +196,15 @@ export class Game {
 
   private wireWorldEvents() {
     const w = this.world;
-    w.events.radio = (speaker, text) => {
+    w.events.radio = (speaker, text, priority) => {
+      // recorded crew voice (Voice.ts) when it has clips: it does its own interphone click
+      const recorded = crewVoice.sayLine(speaker, text, priority);
       // interphone: call-click and static first, then the line and subtitle
-      sound.radioStatic();
+      if (!recorded) sound.radioStatic();
       const voice = ['Pilot', 'Navigator', 'Tail', 'Top Turret', 'Ball Turret', 'Bombardier', 'Radio', 'Lead', 'Big Friend'].indexOf(speaker);
       setTimeout(() => {
         this.ui.subtitle(speaker, text);
-        sound.speak(text, Math.max(0, voice));
+        if (!recorded) sound.speak(text, Math.max(0, voice));
       }, INTERPHONE_LEAD_S * 1000);
     };
     w.events.kill = (victim, byPlayer, cause) => {
