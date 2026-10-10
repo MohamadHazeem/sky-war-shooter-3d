@@ -85,10 +85,15 @@ def expand(cfg):
     return clips
 
 
+def bitrate(c, cfg):
+    """Per-role override: the long briefing clips use a lower rate than the short radio lines."""
+    return cfg['roles'][c['role']].get('bitrate', cfg['audio']['bitrate'])
+
+
 def clip_hash(c, cfg):
     v = cfg['roles'][c['role']]['voice']
     a = cfg['audio']
-    key = f"{FORMAT_VERSION}|{v}|{c['rate']}|{c['spoken']}|{a['sampleRate']}|{a['bitrate']}"
+    key = f"{FORMAT_VERSION}|{v}|{c['rate']}|{c['spoken']}|{a['sampleRate']}|{bitrate(c, cfg)}"
     return hashlib.sha1(key.encode('utf-8')).hexdigest()[:10]
 
 
@@ -175,7 +180,7 @@ def render(c, cfg, tmp):
             if attempt == 3:
                 raise
     dur = trim_normalise(raw, cut, sr)
-    subprocess.run(['afconvert', '-f', 'm4af', '-d', 'aac', '-b', str(cfg['audio']['bitrate']), '-q', '127', cut, dst], check=True)
+    subprocess.run(['afconvert', '-f', 'm4af', '-d', 'aac', '-b', str(bitrate(c, cfg)), '-q', '127', cut, dst], check=True)
     slim_m4a(dst)
     return dur
 
@@ -237,7 +242,7 @@ def write_ts(cfg, clips):
     roles = cfg['roles']
     table = {}
     for c in clips:
-        if c['kind'] != 'line':
+        if c['kind'] != 'line' or roles[c['role']].get('noTable'):  # briefings: played by id, not by game code
             continue
         e = table.setdefault(c['base'], {'speakers': [], 'text': c['text']})
         e['speakers'].append(roles[c['role']]['speaker'])

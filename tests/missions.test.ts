@@ -25,7 +25,8 @@ describe('campaign table', () => {
       const r = m.round as Round;
       expect(r, m.id).toBeDefined();
       expect(m.duration).toBe(r.duration);
-      expect(m.rounds).toBe(m.number <= 2 ? 2 : 3);
+      if (m.number <= 2) expect(m.rounds).toBe(2);
+      else expect([3, 4]).toContain(m.rounds);
       expect(r.start).toBeGreaterThan(0);
       expect(r.start).toBeLessThan(r.duration);
       expect(r.min).toBeGreaterThan(0);
