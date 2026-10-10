@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Atmos, atmosUniforms, syncAtmosUniforms } from '../render/Atmosphere';
 import { CloudRenderer } from '../render/Clouds';
+import { heatHaze, type HeatHaze } from '../render/HeatHaze';
 import { PostFX } from '../render/PostFX';
 import { buildEnvironment, SkyDome } from '../render/Sky';
 import { envRef } from '../render/EnvRef';
@@ -20,15 +21,17 @@ export interface QualityPreset {
   shadows: number;       // sun shadow map size (0 = no shadows)
   shadowRange: number;   // half-width (m) of the shadow frustum around the camera
   cloudScale: number;    // volumetric cloud buffer scale
-  cloudSteps: number;    // cloud raymarch steps
+  cloudSteps: number;    // cloud raymarch steps (temporal path: on a quarter of the texels per frame)
+  cloudTemporal: boolean; // jittered march + reprojected accumulation, silver linings, cloud shadows
+  haze: boolean;         // heat-haze refraction (exhausts, muzzle blasts, explosion ripples)
   ao: number;            // screen-space contact AO strength (0 = off)
   particles: number;     // visual particle budget multiplier (0 = living sky off)
 }
 export const QUALITY: Record<Quality, QualityPreset> = {
-  low:    { pixels: 0.9e6, msaa: 0, shadows: 0,    shadowRange: 60, cloudScale: 0.33, cloudSteps: 36, ao: 0,   particles: 0 },
-  medium: { pixels: 1.5e6, msaa: 2, shadows: 2048, shadowRange: 48, cloudScale: 0.45, cloudSteps: 52, ao: 0,   particles: 0.5 },
-  high:   { pixels: 2.3e6, msaa: 4, shadows: 2048, shadowRange: 40, cloudScale: 0.5,  cloudSteps: 64, ao: 0.6, particles: 1 },
-  ultra:  { pixels: 3.7e6, msaa: 4, shadows: 4096, shadowRange: 40, cloudScale: 0.62, cloudSteps: 88, ao: 0.7, particles: 1.6 },
+  low:    { pixels: 0.9e6, msaa: 0, shadows: 0,    shadowRange: 60, cloudScale: 0.33, cloudSteps: 36, cloudTemporal: false, haze: false, ao: 0,   particles: 0 },
+  medium: { pixels: 1.5e6, msaa: 2, shadows: 2048, shadowRange: 48, cloudScale: 0.45, cloudSteps: 52, cloudTemporal: true,  haze: true,  ao: 0,   particles: 0.5 },
+  high:   { pixels: 2.3e6, msaa: 4, shadows: 2048, shadowRange: 40, cloudScale: 0.5,  cloudSteps: 64, cloudTemporal: true,  haze: true,  ao: 0.6, particles: 1 },
+  ultra:  { pixels: 3.7e6, msaa: 4, shadows: 4096, shadowRange: 40, cloudScale: 0.62, cloudSteps: 88, cloudTemporal: true,  haze: true,  ao: 0.7, particles: 1.6 },
 };
 export const QUALITY_ORDER: Quality[] = ['low', 'medium', 'high', 'ultra'];
 // One tier down (the auto-quality fallback): ultra -> high -> medium -> low
@@ -48,6 +51,7 @@ export class Engine {
   readonly clouds: CloudRenderer;
   readonly post: PostFX;
   readonly livingSky: LivingSky;   // distant bomber boxes, dogfights and flak (purely visual)
+  readonly heatHaze: HeatHaze = heatHaze;   // screen-space refraction emitters (HeatHaze.ts)
   readonly reversed: boolean;
   private sceneRT: THREE.WebGLRenderTarget;
   private hdrRT: THREE.WebGLRenderTarget;
@@ -149,7 +153,8 @@ export class Engine {
 
     this.clouds = new CloudRenderer(this.reversed);
     this.post = new PostFX(this.reversed);
-    this.post.cloudTex = this.clouds.rt.texture;
+    this.post.cloudTex = this.clouds.texture;
+    this.heatHaze.setReversed(this.reversed);
     this.livingSky = new LivingSky();
     this.scene.add(this.livingSky.group);
 
@@ -175,6 +180,7 @@ export class Engine {
     syncAircraftLook(this.hemi);
     retireEnv(old);
     this.post.resetHistory();
+    this.clouds.resetHistory();
   }
 
   add(u: Updatable) { this.updatables.add(u); }
@@ -201,6 +207,7 @@ export class Engine {
     sc.left = -p.shadowRange; sc.right = p.shadowRange; sc.top = p.shadowRange; sc.bottom = -p.shadowRange;
     sc.updateProjectionMatrix();
     this.post.ao = p.ao;
+    this.heatHaze.enabled = p.haze;
     this.livingSky.setQuality(p.particles);
     // a new tier gets a fresh chance at the display's full refresh rate
     this.hiGiveUp = false; this.hiMiss = 0;
@@ -231,6 +238,7 @@ export class Engine {
     this.hdrRT.setSize(pw, ph);
     this.clouds.setQuality(QUALITY[this.quality], pw, ph);
     this.post.setSize(pw, ph);
+    this.heatHaze.setSize(pw, ph);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
   }
@@ -285,6 +293,7 @@ export class Engine {
     Atmos.windOffset.addScaledVector(Atmos.wind, dt);
     for (const u of this.updatables) u.update(dt, this.time);
     this.onFrame?.(dt, this.time);
+    this.heatHaze.update(dt);
     // after the game moved the formation, so the distant boxes stay locked to it
     this.livingSky.update(this.camera, this.time, this.height * this.pixelRatio);
     if (render) this.render(realDt);
@@ -355,6 +364,8 @@ export class Engine {
     this.sun.position.copy(snapped).addScaledVector(Atmos.sunDir, 300);
     this.sun.target.position.copy(snapped);
     this.sun.target.updateMatrixWorld();
+    // the upper cloud layer's shadow on the formation (cloud shadow map, read back async)
+    this.sun.intensity = Atmos.sunIntensity * 0.95 * (0.35 + 0.65 * this.clouds.sunShadow);
     atmosUniforms.uCamAlt.value = cp.y;
     (this.sky.mesh.material as THREE.ShaderMaterial).uniforms.uGroundXZ.value.set(cp.x + Atmos.originOffset.x, cp.z + Atmos.originOffset.z);
 
@@ -366,7 +377,11 @@ export class Engine {
     cam.layers.set(0);
     r.render(this.scene, cam);
     // Clouds + aerial perspective composite
-    this.clouds.render(r, cam, this.sceneRT, this.hdrRT, this.time);
+    this.clouds.render(r, cam, this.sceneRT, this.hdrRT, this.time, dt);
+    this.post.cloudTex = this.clouds.texture;
+    // Heat-haze offsets, soft-depth-tested against the opaque depth (before pass 2, so a
+    // canopy or turret dome doesn't mask the exhaust shimmer seen through it)
+    this.post.hazeTex = this.heatHaze.render(r, cam, this.sceneRT.depthTexture!);
     // Copy the composite back over the scene colour (keeping its depth buffer), then
     // pass 2: transparent effects (layer 1) on top of the clouds, depth-tested.
     r.autoClear = false;

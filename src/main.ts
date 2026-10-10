@@ -100,6 +100,9 @@ async function boot() {
     // Before/after screenshot gallery (tools/gallery/README.md)
     const { gallery } = await import('./dev/gallery');
     (window as any).sws.gallery = gallery(engine, game);
+    // Cloud path A/B render times on the gallery cameras (src/dev/cloudBench.ts)
+    const { cloudBench } = await import('./dev/cloudBench');
+    (window as any).sws.cloudBench = cloudBench(engine, (window as any).sws.gallery);
   }
 }
 

@@ -3,6 +3,7 @@ import { disposeOwned, markOwned } from '../render/Dispose';
 import { ParticleSystem, type ParticleOpts } from '../render/Particles';
 import { chuteTexture } from '../render/ChuteTexture';
 import { VolumeFX, type Vol } from '../render/Explosions';
+import { heatHaze } from '../render/HeatHaze';
 
 const _v = new THREE.Vector3();
 const _p = new THREE.Vector3();
@@ -293,6 +294,7 @@ export class Effects {
     if (kind === 'boss') { this.warshipBlast(pos, vel, k / 2); return; }
     const dist = this.vol.camDist(pos);
     if (dist > VOL_FAR) { this.farBlast(pos, vel, k); return; }
+    if (dist < 900) heatHaze.emit(pos, (kind === 'heavy' ? 26 : 18) * k, 1, 0.5); // shock ripple (HeatHaze.ts)
     const near = dist < VOL_MID;
     if (kind === 'heavy') {
       // Bf 110 / Ju 88: two engines and a full fuel load, a bigger ball and a second stage
@@ -346,6 +348,7 @@ export class Effects {
   warshipBlast(pos: THREE.Vector3, vel: THREE.Vector3, k: number) {
     if (!this.volumetric) { this.legacyWarshipBlast(pos, vel, k); return; }
     const r = 13 * k;
+    if (this.vol.camDist(pos) < 2500) heatHaze.emit(pos, 2.4 * r, 1, 0.7);
     const lobes = Math.min(7, 3 + Math.floor(k));
     this.blast(pos, vel, r, lobes, k >= 2.5 ? 4 : 3, k >= 3 ? 3 : 2, 22, 24, 9000 * k, 300 + 120 * k, true, 0.7);
     this.spawnDebris(pos, vel, Math.round(12 * Math.min(1, 0.4 + k * 0.2)), true);
