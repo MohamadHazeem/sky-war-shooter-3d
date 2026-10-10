@@ -38,7 +38,8 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 22 | Audio pass 3: engine voices for the new aircraft and warships, BK 5 / flak sounds, distance-aware explosions, waist ambience (wind, creaks, brass), ducking and mix check | Done — synthesised engine voices per type (Jumo/DB 603 twins, Do 335 push-pull, Me 262 turbine whine, Me 163 rocket, warship engine groups + hull throb), BK 5 thump, MG 81Z, 20 mm flak, distance-delayed/filtered explosions with stages, waist wind/rattles/other gunner/brass, ducking, Audio detail + breathing settings; 0 bytes added |
 | 23 | Mission bookends: dawn takeoff from the English base and landing afterwards (belly landing with fire trucks when badly damaged), skippable | In progress |
 | 24 | QA sweep: phone/touch, gamepad, first-time player flow, console errors across all new features | In progress |
-| 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | |
+| 25 | Weather fronts mid-mission (storm wall approaching, smooth transitions) + night flares, flak glow in cloud, night tracers | In progress |
+| 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | In progress |
 
 ## Log
 - 23:00 started co-op (9), custom battle + weekly (10, 15), skill tree (13), living interior (7), campaign map (14).
