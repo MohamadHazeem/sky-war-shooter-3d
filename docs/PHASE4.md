@@ -14,8 +14,8 @@ Player notes given at the start:
 ## Tier A — shippable foundation
 | # | Goal | Status |
 |---|---|---|
-| 1 | Public release: <10 s load, compressed assets, installable (PWA) | |
-| 2 | First-time player experience: tutorial round, controls overlay, hints | |
+| 1 | Public release: <10 s load, compressed assets, installable (PWA) || Done — models 15→4.6 MB (meshopt+WebP), menu after 2.6 MB (was 16 MB; ~6.5 s at 10 Mbit/s vs 20 s), PWA + offline service worker, cache headers |
+| 2 | First-time player experience: tutorial round, controls overlay, hints || Done — Gunnery School (8 steps), H controls card, 6 first-time hints, title prompt |
 | 3 | Automated quality gate: unit tests + CI (tsc, build, tests) + playtest script | Done — 79 unit tests (Vitest), `npm run check`, GitHub Actions CI on every push |
 | 4 | Performance & stability: 60 fps mid laptop, 30-min soak no growth, presets verified | |
 
@@ -24,10 +24,10 @@ Player notes given at the start:
 |---|---|---|
 | 31 | Game feel (freeze-frame, flashes, popups, pulses) | Done — hit-stop, flashes, camera punch, zoom pulse, escalating popups, hit ring |
 | 32 | Combo meter + "On Fire" mode | Done — streak meter, ON FIRE (+50% score, hot tracers, fiery frame, swell) |
-| 33 | Active abilities: Call the Mustangs, Overdrive, Focus | |
+| 33 | Active abilities: Call the Mustangs, Overdrive, Focus || Done — Mustang sweep (Q), Overdrive (E), Focus (G); pilot Z/X/G |
 | 34 | Boss fights: battle group of giant flying warships, very hard | |
-| 35 | Bonus objectives mid-round | |
-| 36 | Random events (engine fire, jammed gun, oxygen, straggler) | |
+| 35 | Bonus objectives mid-round || Done — 6 objective types, 1–2 per round, merit rewards |
+| 36 | Random events (engine fire, jammed gun, oxygen, straggler) || Done — engine fire (X), jammed gun (R), oxygen (O), straggler |
 | 37 | Loot crates | |
 | 38 | Bomber customisation (name, nose art, paint) | |
 | 39 | Crew with personalities | |
@@ -75,3 +75,5 @@ Player notes given at the start:
 - 21:48 leaderboard backend + rules deployed; rules test 6/6 (read pending index build).
 - 21:52 cloud save, adaptive difficulty, weather moods; tests+CI merged; game feel merged.
 - 21:54 deploy #1 to Cloudflare.
+- 21:58 tutorial, abilities, objectives/events merged; deploy #2 (22:04).
+- 22:10 fast loading + PWA merged; deploy #3; live manifest/sw/headers verified.
