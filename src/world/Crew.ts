@@ -35,6 +35,8 @@ export const STATION_CREW: Record<StationId, CrewId> = { waistL: 'waistL', waist
 
 export class Crew {
   private hurt = new Set<CrewId>();
+  // Called whenever a crew position is hit (the crew roster tracks who sits there)
+  onWound: ((id: CrewId) => void) | null = null;
 
   // Live set, read by the HUD on each update (no per-frame allocation)
   get wounded(): ReadonlySet<CrewId> { return this.hurt; }
@@ -42,7 +44,10 @@ export class Crew {
 
   reset() { this.hurt.clear(); }
 
-  wound(id: CrewId) { this.hurt.add(id); }
+  wound(id: CrewId) { this.hurt.add(id); this.onWound?.(id); }
+
+  // A replacement (or a patched-up crewman) is at this position again
+  heal(id: CrewId) { this.hurt.delete(id); }
 
   // Wound a random crewman who is still fit, leaving out `skip` (the player's own position).
   // Returns who was hit, or null when nobody eligible is left.
@@ -51,6 +56,7 @@ export class Crew {
     if (fit.length === 0) return null;
     const m = fit[Math.floor(Math.random() * fit.length)];
     this.hurt.add(m.id);
+    this.onWound?.(m.id);
     return m;
   }
 }

@@ -5,12 +5,12 @@
     "pilot":      { "speaker": "Pilot",       "aliases": [],                   "voice": "Reed (English (US))",    "rate": 185 },
     "copilot":    { "speaker": "Co-Pilot",    "aliases": ["Co-pilot", "Copilot"], "voice": "Eddy (English (US))", "rate": 192 },
     "nav":        { "speaker": "Navigator",   "aliases": [],                   "voice": "Daniel (English (UK))",  "rate": 182 },
-    "tail":       { "speaker": "Tail",        "aliases": [],                   "voice": "Rocko (English (US))",   "rate": 200 },
-    "top":        { "speaker": "Top Turret",  "aliases": ["Engineer"],         "voice": "Ralph",                  "rate": 188 },
-    "ball":       { "speaker": "Ball Turret", "aliases": ["Ball"],             "voice": "Grandpa (English (US))", "rate": 205 },
+    "tail":       { "speaker": "Tail",        "aliases": ["Dawson"],           "voice": "Rocko (English (US))",   "rate": 200 },
+    "top":        { "speaker": "Top Turret",  "aliases": ["Engineer", "Mendez"], "voice": "Ralph",                  "rate": 188 },
+    "ball":       { "speaker": "Ball Turret", "aliases": ["Ball", "Reilly"],   "voice": "Grandpa (English (US))", "rate": 205 },
     "bombardier": { "speaker": "Bombardier",  "aliases": [],                   "voice": "Rocko (English (UK))",   "rate": 190 },
-    "radio":      { "speaker": "Radio",       "aliases": [],                   "voice": "Fred",                   "rate": 185 },
-    "waist":      { "speaker": "Waist",       "aliases": [],                   "voice": "Eddy (English (UK))",    "rate": 200 },
+    "radio":      { "speaker": "Radio",       "aliases": ["Gallo"],            "voice": "Fred",                   "rate": 185 },
+    "waist":      { "speaker": "Waist",       "aliases": ["Price", "Walsh"],   "voice": "Eddy (English (UK))",    "rate": 200 },
     "lead":       { "speaker": "Lead",        "aliases": [],                   "voice": "Reed (English (UK))",    "rate": 195 },
     "bigfriend":  { "speaker": "Big Friend",  "aliases": [],                   "voice": "Grandpa (English (UK))", "rate": 182 },
     "blue3":      { "speaker": "Blue Three",  "aliases": [],                   "voice": "Eddy (English (UK))",    "rate": 195 }
@@ -135,6 +135,12 @@
     { "id": "rc_lead_engage", "role": "lead", "text": "Tally ho! Blue flight, drop tanks and engage!", "urgent": true },
     { "id": "rc_lead_regroup", "role": "lead", "text": "Blue flight, regroup on me." },
     { "id": "rc_lead_clear", "role": "lead", "text": "Sky's clear. Good work, Blue flight." },
-    { "id": "rc_bigfriend_thanks", "role": "bigfriend", "text": "Thanks, little friends. That was close!" }
+    { "id": "rc_bigfriend_thanks", "role": "bigfriend", "text": "Thanks, little friends. That was close!" },
+
+    {"group": "new: crew roster (CrewRoster.ts): reassigned gunners and replacement rookies, level-ups in the crewman's own voice"},
+    {"id": "crewwound_x_{i}", "role": "pilot", "text": "{who}! Somebody get him some help!", "vars": {"who": ["Sgt. Mendez is hit at the radio", "Sgt. Mendez is hit in the ball turret", "Sgt. Mendez is hit at the left waist gun", "Sgt. Mendez is hit at the right waist gun", "Sgt. Mendez is hit in the tail", "Sgt. Tom Gallo is hit at the top turret", "Sgt. Tom Gallo is hit in the ball turret", "Sgt. Tom Gallo is hit at the left waist gun", "Sgt. Tom Gallo is hit at the right waist gun", "Sgt. Tom Gallo is hit in the tail", "Sgt. Reilly is hit at the top turret", "Sgt. Reilly is hit at the radio", "Sgt. Reilly is hit at the left waist gun", "Sgt. Reilly is hit at the right waist gun", "Sgt. Reilly is hit in the tail", "Sgt. Price is hit at the top turret", "Sgt. Price is hit at the radio", "Sgt. Price is hit in the ball turret", "Sgt. Price is hit at the right waist gun", "Sgt. Price is hit in the tail", "Sgt. Walsh is hit at the top turret", "Sgt. Walsh is hit at the radio", "Sgt. Walsh is hit in the ball turret", "Sgt. Walsh is hit at the left waist gun", "Sgt. Walsh is hit in the tail", "Sgt. Dawson is hit at the top turret", "Sgt. Dawson is hit at the radio", "Sgt. Dawson is hit in the ball turret", "Sgt. Dawson is hit at the left waist gun", "Sgt. Dawson is hit at the right waist gun", "Sgt. Kowalski is hit at the top turret", "Sgt. Hughes is hit at the radio", "Sgt. Baker is hit in the ball turret", "Sgt. Russo is hit at the left waist gun", "Sgt. Novak is hit at the right waist gun", "Sgt. Fisher is hit in the tail", "Capt. Bill Morrow is hit up front in the cockpit", "Lt. Jim Carver is hit up front in the cockpit", "Lt. Ed Pruitt is hit at the nav table", "Lt. Sam Ortega is hit in the nose"]}, "urgent": true},
+    {"id": "crew_levelup_1", "roles": ["top", "radio", "ball", "waist", "tail"], "text": "Getting the feel of this gun now. Keep 'em coming!"},
+    {"id": "crew_levelup_2", "roles": ["top", "radio", "ball", "waist", "tail"], "text": "I'm getting the hang of this. Send me another one!"},
+    {"id": "crew_levelup_3", "roles": ["top", "radio", "ball", "waist", "tail"], "text": "Starting to see 'em before they see me."}
   ]
 }

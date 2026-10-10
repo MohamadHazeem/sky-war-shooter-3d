@@ -12,6 +12,7 @@ import { bulletHoleTexture } from '../render/Textures';
 import { Atmos } from '../render/Atmosphere';
 import { DustMotes } from './DustMotes';
 import { KeyAim, KEY_AIM_RATE } from './KeyAim';
+import { crewSeatLoadout } from './CrewRoster';
 
 interface StationState {
   def: StationDef;
@@ -270,7 +271,7 @@ export class GunnerController {
 
   // Upgrades/perks changed (belts are unlimited: ammo stays topped up)
   applyLoadout(l: Loadout, _refill = false) {
-    this.loadout = l;
+    this.loadout = crewSeatLoadout(l, () => this.station); // + the seat bonus of the crewman at the gun
     for (const s of this.states.values()) s.ammo = s.maxAmmo;
   }
 

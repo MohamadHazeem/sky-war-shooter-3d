@@ -21,6 +21,7 @@ import { hitSounds } from '../audio/HitSounds';
 import { setup as setupDamageLook, update as updateDamageLook } from './DamageLook';
 import { update as updateDamageStages, stageOf, damageStage } from './DamageStages';
 import { Crew, STATION_CREW } from './Crew';
+import { aiGunnerSkill } from '../game/CrewRoster';
 
 export const ENEMY_SCALE = 6.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 460; // ~40 hits from a .50 to wear one down
@@ -788,10 +789,11 @@ export class World implements WorldView {
       if (!b.alive) continue;
       for (const g of gs) {
         if (b.isPlayer && g.station && this.playerStation && g.station.id === this.playerStation.id) continue;
+        const sk = aiGunnerSkill(b.isPlayer ? g.station?.id : null); // crew skill (CrewRoster); default elsewhere
         g.retarget -= dt;
         g.cooldown -= dt;
         if (g.retarget <= 0) {
-          g.retarget = 0.4 + Math.random() * 0.4;
+          g.retarget = (0.4 + Math.random() * 0.4) * sk.react;
           g.target = null;
           let best = 650 + 250 * Math.random();
           const pivotW = b.localToWorld(g.def.pivot, new THREE.Vector3());
@@ -802,7 +804,7 @@ export class World implements WorldView {
             if (!inArc(g.def as StationDef, local)) continue;
             best = d; g.target = e;
           }
-          if (g.target && g.burst <= 0 && Math.random() < 0.35) g.burst = 0.5 + Math.random() * 1.2;
+          if (g.target && g.burst <= 0 && Math.random() < 0.35 * sk.engage) g.burst = (0.5 + Math.random() * 1.2) * sk.burst;
         }
         if (!g.target || !g.target.alive) { g.burst = 0; continue; }
         // swing the visible turret/gun toward the target
@@ -817,10 +819,10 @@ export class World implements WorldView {
             const tp = g.target.pos.clone();
             const dist = tp.distanceTo(pivotW);
             const tof = dist / 860;
-            tp.addScaledVector(_v.copy(g.target.vel).sub(b.vel), tof * (0.2 + Math.random() * 1.4));
+            tp.addScaledVector(_v.copy(g.target.vel).sub(b.vel), tof * (sk.leadC + (Math.random() * 2 - 1) * sk.leadW));
             tp.y += 0.5 * 9.81 * tof * tof;
             const dir = tp.sub(pivotW).normalize();
-            const spread = 0.026;
+            const spread = 0.026 * sk.spread;
             dir.x += R() * spread; dir.y += R() * spread; dir.z += R() * spread;
             dir.normalize();
             const muzzle = pivotW.addScaledVector(dir, 1.6);
