@@ -1,0 +1,190 @@
+{
+ "loop_b17_interior.wav": [
+  437863,
+  440164
+ ],
+ "loop_radial_exterior.wav": [
+  143556
+ ],
+ "loop_merlin.wav": [
+  42968
+ ],
+ "loop_wind.wav": [
+  350678,
+  481148
+ ],
+ "loop_radio_static.wav": [
+  110739
+ ],
+ "mg50_shot_1.mp3": [
+  865990
+ ],
+ "mg50_shot_2.mp3": [
+  855595
+ ],
+ "mg50_shot_3.mp3": [
+  668071
+ ],
+ "mg50_shot_4.mp3": [
+  239138
+ ],
+ "mg50_burst_far_1.mp3": [
+  160771
+ ],
+ "mg50_burst_far_2.mp3": [
+  160771
+ ],
+ "mg50_burst_far_3.mp3": [
+  675591
+ ],
+ "mg50_burst_far_4.mp3": [
+  854635
+ ],
+ "cannon_shot_1.mp3": [
+  854186
+ ],
+ "cannon_shot_2.mp3": [
+  854186
+ ],
+ "cannon_shot_3.mp3": [
+  854186
+ ],
+ "impact_metal_1.mp3": [
+  182263
+ ],
+ "impact_metal_2.mp3": [
+  182263
+ ],
+ "impact_metal_3.mp3": [
+  267893
+ ],
+ "impact_metal_4.mp3": [
+  351371
+ ],
+ "impact_metal_5.mp3": [
+  399550
+ ],
+ "impact_metal_6.mp3": [
+  30932
+ ],
+ "impact_heavy_1.mp3": [
+  798843
+ ],
+ "impact_heavy_2.mp3": [
+  798843
+ ],
+ "impact_heavy_3.mp3": [
+  798843
+ ],
+ "impact_heavy_4.mp3": [
+  798843,
+  108641
+ ],
+ "explosion_air_1.mp3": [
+  108641
+ ],
+ "explosion_air_2.mp3": [
+  182432
+ ],
+ "explosion_air_3.mp3": [
+  587180
+ ],
+ "explosion_air_4.mp3": [
+  108641,
+  483289
+ ],
+ "explosion_far_1.mp3": [
+  108640
+ ],
+ "explosion_far_2.mp3": [
+  121371
+ ],
+ "flak_burst_1.mp3": [
+  702245
+ ],
+ "flak_burst_2.mp3": [
+  621003
+ ],
+ "flak_burst_3.mp3": [
+  702245,
+  108640
+ ],
+ "flak_burst_4.mp3": [
+  621003,
+  121371
+ ],
+ "shrapnel_rattle_1.mp3": [
+  121634
+ ],
+ "shrapnel_rattle_2.mp3": [
+  275727
+ ],
+ "shrapnel_rattle_3.mp3": [
+  461779
+ ],
+ "shrapnel_rattle_4.mp3": [
+  675465
+ ],
+ "flyby_1.mp3": [
+  143558
+ ],
+ "flyby_2.mp3": [
+  143560
+ ],
+ "flyby_3.mp3": [
+  143562
+ ],
+ "flyby_4.mp3": [
+  142901
+ ],
+ "casing_1.mp3": [
+  318964
+ ],
+ "casing_2.mp3": [
+  318964
+ ],
+ "casing_3.mp3": [
+  318964
+ ],
+ "casing_4.mp3": [
+  171322
+ ],
+ "glass_crack_1.mp3": [
+  221528
+ ],
+ "glass_crack_2.mp3": [
+  758207
+ ],
+ "glass_crack_3.mp3": [
+  418194
+ ],
+ "glass_crack_4.mp3": [
+  336425
+ ],
+ "rocket_launch_1.mp3": [
+  521377
+ ],
+ "rocket_launch_2.mp3": [
+  857959
+ ],
+ "rocket_launch_3.mp3": [
+  479517
+ ],
+ "ui_click.mp3": [
+  423957
+ ],
+ "radio_squelch_on.mp3": [
+  522164
+ ],
+ "radio_squelch_off.mp3": [
+  760245
+ ],
+ "hit_confirm.mp3": [
+  217461,
+  798843
+ ],
+ "kill_confirm.mp3": [
+  798843,
+  587180
+ ]
+}

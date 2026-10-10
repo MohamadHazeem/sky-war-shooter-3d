@@ -306,7 +306,7 @@ export class Sound {
       if (!e) return;
       const files: string[] = e.files ?? (e.file ? [e.file] : []);
       const bufs = (await Promise.all(files.map(decode))).filter((b): b is AudioBuffer => !!b);
-      if (bufs.length) { this.bufs.set(name, bufs); this.gainMap.set(name, (e.gain ?? 1) * g); }
+      if (bufs.length) { this.bufs.set(name, bufs); this.gainMap.set(name, (e.gain ?? 1) * g); if (name === 'whoosh') this.flybyPeak = e.peakAt ?? 0; }
     }));
     for (const k of ['hit_confirm', 'kill_confirm'] as const) {
       const e = man.sfx?.[k];
@@ -327,7 +327,7 @@ export class Sound {
       this.b17.filter.frequency.setValueAtTime(this.mode === 'bomber' ? 2400 : 900, t);
       this.b17Sampled = true;
     }
-    if (radial?.buf) { this.engineBufs.bmw = radial.buf; this.voiceGain = radial.gain; for (const v of this.voices) this.reseat(v, radial.buf); }
+    if (radial?.buf) { this.engineBufs.bmw = radial.buf; this.voiceGain = radial.gain; this.radialRate = 2.2; for (const v of this.voices) this.reseat(v, radial.buf); }
     if (merlin?.buf) { this.engineBufs.merlin = merlin.buf; this.merlinGain = merlin.gain; if (this.playerEngine) { this.playerEngine.src.stop(); this.playerEngine.src.disconnect(); this.playerEngine.src = this.loopSrc(merlin.buf); this.playerEngine.src.connect(this.playerEngine.filter); } }
     if (wind?.buf && this.windSrc && this.wind) { this.windSrc.stop(); this.windSrc.disconnect(); this.windSrc = this.loopSrc(wind.buf); this.windSrc.connect(this.wind.filter); this.wind.filter.frequency.value = 6000; }
     if (radio?.buf) this.radioStaticBuf = radio.buf;
@@ -344,6 +344,8 @@ export class Sound {
   private extraGain = new Map<string, number>();
   private b17Sampled = false;
   private voiceGain = 1;
+  private radialRate = 1; // recorded radial loop is at taxi rpm
+  private flybyPeak = 0;
   private merlinGain = 1;
   private radioStaticBuf: AudioBuffer | null = null;
 
@@ -504,7 +506,7 @@ export class Sound {
       toL.divideScalar(dist);
       const vr = f.vel.dot(toL); // approaching = positive
       const dop = 343 / Math.max(110, 343 - vr);
-      v.src.playbackRate.setTargetAtTime((0.82 + f.throttle * 0.22) * dop, t, 0.04);
+      v.src.playbackRate.setTargetAtTime((0.82 + f.throttle * 0.22) * dop * (v.radial ? this.radialRate : 1), t, 0.04);
       v.filter.frequency.setTargetAtTime((this.interior ? 650 : 1600) * Math.max(0.3, Math.exp(-d / 2200)) + 160, t, 0.05);
       v.pan.positionX.setValueAtTime(f.pos.x, t); v.pan.positionY.setValueAtTime(f.pos.y, t); v.pan.positionZ.setValueAtTime(f.pos.z, t);
       v.gain.gain.setTargetAtTime((this.interior ? 0.5 : 0.65) * this.voiceGain, t, 0.08);
@@ -551,7 +553,7 @@ export class Sound {
       src.connect(g).connect(this.sfx);
     }
     if (this.interior && (opts.reverb ?? 0) > 0) { const s = ctx.createGain(); s.gain.value = opts.reverb!; out.connect(s).connect(this.revInSend); }
-    src.start(when);
+    src.start(when, name === 'whoosh' ? Math.max(0, this.flybyPeak - 0.7) : 0);
   }
 
   // Player's own guns: un-positioned, close, with the fuselage ringing around them
