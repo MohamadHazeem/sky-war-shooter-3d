@@ -45,6 +45,7 @@ import { ServiceRecord } from './ServiceRecord';
 import { Pacing } from './Pacing';
 import { ModeRunner, mountModePanel, leaderboardMode } from './Modes';
 import { SpecialEvents } from './SpecialEvents';
+import { showCampaignMap, mountCampaignReport, prepareCampaignMission, campaignMeritMult, isSideRaid } from '../ui/CampaignMap';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -389,13 +390,14 @@ export class Game {
   }
 
   private showCampaign() {
-    this.ui.campaign(CAMPAIGN, this.progress, (m) => this.showBriefing(m), () => this.startMenu());
+    showCampaignMap(this.progress, (m) => this.showBriefing(m), () => this.startMenu()); // campaign map (CampaignMap.ts) replaces ui.campaign
   }
 
   private showBriefing(m: Mission) {
     sound.init();
     this.state = 'briefing';
-    this.ui.briefing(m, () => this.startMission(m), () => (m.number ? this.showCampaign() : this.startMenu()));
+    prepareCampaignMission(m, this.progress); // campaign state modifiers (CampaignState.ts)
+    this.ui.briefing(m, () => this.startMission(m), () => (m.number || isSideRaid(m) ? this.showCampaign() : this.startMenu()));
   }
 
   // Cinematic camera over the formation behind the menus
@@ -446,6 +448,7 @@ export class Game {
   startMission(m: Mission) {
     // Models and gameplay sounds stream in behind the menu: wait for them (loading screen)
     if (!isMissionReady()) { whenMissionReady(this.ui, () => this.startMission(m)); return; }
+    prepareCampaignMission(m, this.progress); // campaign state: formation size, enemy count/skill, P-51 escort
     sound.init();
     this.photo.exit();
     this.mission = m;
@@ -961,7 +964,7 @@ export class Game {
     }
     save(PROGRESS_KEY, this.progress);
     // merit for the Armory: the mission score (half if it failed)
-    const merit = Math.round((this.score - this.scoreBanked) * (r.success ? 1 : 0.5) * this.loadout.scoreMult);
+    const merit = Math.round((this.score - this.scoreBanked) * (r.success ? 1 : 0.5) * this.loadout.scoreMult * campaignMeritMult(m, this.progress));
     this.prog.earn(merit);
     const idx = CAMPAIGN.findIndex((c) => c.id === m.id);
     const d: DebriefData = {
@@ -986,6 +989,7 @@ export class Game {
     const board = leaderboardMode(m) ?? (survival ? `survival-${m.role}` : `campaign-${m.id}`);
     if (host) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: this.score, kills: w.stats.kills, rounds: this.roundIdx + 1 });
     this.service.onDebrief(m, d, medals);
+    mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers }, this.prog, this.progress, () => this.showCampaign());
   }
 
   pause() {

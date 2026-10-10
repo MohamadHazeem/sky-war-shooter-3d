@@ -77,6 +77,27 @@ const COUNTRIES: [string, Geo][] = [
   ['DENMARK', { lat: 56.0, lon: 9.3 }],
 ];
 
+// Side-raid targets (game/SideRaids.ts) and the chart data the campaign map (CampaignMap.ts) reuses
+const RUHR_IP: Geo = { lat: 52.3, lon: 4.4 }, FRISIAN_IP: Geo = { lat: 53.45, lon: 5.6 };
+PLACES.push(
+  { key: 'Hamm', lat: 51.68, lon: 7.82, ip: RUHR_IP },
+  { key: 'Münster', lat: 51.96, lon: 7.63, ip: RUHR_IP },
+  { key: 'Osnabrück', lat: 52.28, lon: 8.05, ip: RUHR_IP },
+  { key: 'Hannover', lat: 52.37, lon: 9.73, ip: { lat: 52.6, lon: 4.6 } },
+  { key: 'Rheine', lat: 52.28, lon: 7.44, ip: RUHR_IP },
+  { key: 'Twente', lat: 52.27, lon: 6.89, ip: RUHR_IP },
+  { key: 'Oldenburg', lat: 53.14, lon: 8.21, ip: FRISIAN_IP },
+  { key: 'Gelsenkirchen', lat: 51.51, lon: 7.09, eng: ESSEX, ip: { lat: 51.9, lon: 4.1 } },
+  { key: 'Leuna', lat: 51.32, lon: 12.02, ip: { lat: 52.3, lon: 4.2 } },
+  { key: 'Misburg', lat: 52.39, lon: 9.84, ip: { lat: 52.6, lon: 4.6 } },
+  { key: 'Wilhelmshaven', lat: 53.53, lon: 8.11, ip: FRISIAN_IP },
+  { key: 'Brunswick', lat: 52.27, lon: 10.52, ip: { lat: 52.55, lon: 4.6 } },
+  { key: 'Kassel', lat: 51.31, lon: 9.49, eng: ESSEX, ip: { lat: 51.3, lon: 3.3 } },
+  { key: 'Gotha', lat: 50.95, lon: 10.7, eng: ESSEX, ip: { lat: 51.3, lon: 3.3 } },
+);
+export const CHART = { BASE, NORFOLK, ESSEX, KENT, BERLIN, FRANKFURT, PLACES, ENGLAND, MAINLAND, ISLANDS, COUNTRIES, KX } as const;
+export type ChartPlace = Place;
+
 const proj = (p: Geo): [number, number] => [p.lon * KX, -p.lat];
 const flakRadius = (intensity: number) => 0.2 + 0.18 * intensity; // degrees
 const f = (n: number) => n.toFixed(1);

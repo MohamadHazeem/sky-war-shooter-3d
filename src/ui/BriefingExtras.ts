@@ -1,5 +1,6 @@
 import { CAMPAIGN, type Mission } from '../game/Missions';
 import { briefingVoice } from '../audio/BriefingVoice';
+import { decorateCampaignBriefing } from './CampaignMap';
 
 // Briefing-sheet extras, added on top of the sheet UI.briefing() renders:
 // - a stamped mission-number badge ("MISSION 03 OF 12") and a strip of mission facts
@@ -99,6 +100,7 @@ export function decorateBriefing(root: HTMLElement, m: Mission) {
     meta.innerHTML = facts(m).map((f) => `<span${f.hot ? ' class="hot"' : ''}>${esc(f.text)}</span>`).join('');
     target.after(meta);
   }
+  decorateCampaignBriefing(sheet, m); // dynamic campaign: side-raid kicker, strategic modifiers
 
   // Recorded briefing
   const text = sheet.querySelector<HTMLElement>('.brief-text');
