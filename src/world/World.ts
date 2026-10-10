@@ -273,7 +273,7 @@ export class World implements WorldView {
     const heavy = e.cannon;
     this.effects.sparks(e.point, t.vel, heavy);
     if (t === this.player || t === this.playerBomber) {
-      sound.play(heavy ? 'hitHeavy' : 'hit', e.point, { gain: heavy ? 1.2 : 0.7, delay: false, ref: 8 });
+      sound.playerImpact(heavy);
       this.events.playerHit?.(z.name, heavy);
       if (t === this.playerBomber && this.playerStation) {
         // Rounds hitting the section of fuselage you are standing in can wound you
@@ -331,7 +331,8 @@ export class World implements WorldView {
       if (Math.random() < 0.45) {
         // blows up in mid-air
         this.effects.explosion(a.pos, a.vel, 1);
-        sound.play('explosion', a.pos, { gain: 1.4, ref: 120 });
+        sound.play('explosion', a.pos, { gain: 1.4, ref: 120, reverb: 0.7 });
+        if (this.player && a.pos.distanceTo(this.player.pos) < 400) sound.play('debris', a.pos, { gain: 0.6, ref: 40 });
         a.remove = true;
       } else {
         this.effects.spawnDebris(a.pos, a.vel, 5, true);
@@ -349,7 +350,7 @@ export class World implements WorldView {
       a.vel.copy(this.formationForward).multiplyScalar(CRUISE * 0.85);
       a.zones.forEach((z) => { if (z.engine !== undefined && Math.random() < 0.5) z.burning = true; });
       this.effects.explosion(a.localToWorld(new THREE.Vector3(R() * 6, 0, 2)), a.vel, 0.8);
-      sound.play('explosion', a.pos, { gain: 1.6, ref: 200 });
+      sound.play('explosion', a.pos, { gain: 1.6, ref: 200, reverb: 0.8 });
       this.stats.bombersLost++;
       this.events.bomberLost?.(a);
       // crew bailing out
@@ -497,7 +498,9 @@ export class World implements WorldView {
       const target = Math.random() < 0.15 && this.playerBomber?.alive ? this.playerBomber : bs[Math.floor(Math.random() * bs.length)];
       const p = target.pos.clone().add(new THREE.Vector3(R() * 180, R() * 90 + 20, R() * 220 + 60));
       this.effects.flak(p);
-      sound.play('flak', p, { gain: 1.3, ref: 80 });
+      const dl = this.player ? p.distanceTo(this.player.pos) : 9999;
+      if (dl < 160) { sound.play('flakClose', p, { gain: 1.5, ref: 60, reverb: 0.5 }); if (dl < 75) setTimeout(() => sound.rattle(), 120); }
+      else sound.play('flak', p, { gain: 1.3, ref: 80, reverb: 0.6 });
       // shrapnel
       for (const a of this.aircraft) {
         if (!a.alive) continue;

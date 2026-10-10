@@ -6,6 +6,7 @@ export interface Settings {
   invertY: boolean;
   volume: number;
   radio: boolean;
+  music: boolean;
   quality: 'low' | 'medium' | 'high';
   markers: boolean;
   flightMode: 'mouseAim' | 'direct';
@@ -289,6 +290,7 @@ export class UI {
       <label class="setting">Mouse sensitivity <input type="range" min="0.3" max="2.5" step="0.05" data-k="sensitivity" value="${s.sensitivity}"></label>
       <label class="setting">Invert mouse Y <select data-k="invertY"><option value="false">Off</option><option value="true" ${s.invertY ? 'selected' : ''}>On</option></select></label>
       <label class="setting">Volume <input type="range" min="0" max="1" step="0.05" data-k="volume" value="${s.volume}"></label>
+      <label class="setting">Music <select data-k="music"><option value="true">On</option><option value="false" ${!s.music ? 'selected' : ''}>Off</option></select></label>
       <label class="setting">Radio voices <select data-k="radio"><option value="true">On</option><option value="false" ${!s.radio ? 'selected' : ''}>Subtitles only</option></select></label>
       <label class="setting">Graphics quality <select data-k="quality">${['low', 'medium', 'high'].map((q) => `<option ${s.quality === q ? 'selected' : ''}>${q}</option>`).join('')}</select></label>
       <label class="setting">Target markers <select data-k="markers"><option value="true">On</option><option value="false" ${!s.markers ? 'selected' : ''}>Off (realistic)</option></select></label>
@@ -299,7 +301,7 @@ export class UI {
       const k = i.dataset.k as keyof Settings;
       let v: any = i.value;
       if (k === 'sensitivity' || k === 'volume') v = parseFloat(v);
-      if (k === 'invertY' || k === 'radio' || k === 'markers') v = v === 'true';
+      if (k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music') v = v === 'true';
       (s as any)[k] = v;
       onChange(s);
     }));

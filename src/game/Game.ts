@@ -60,7 +60,7 @@ export class Game {
     this.world = new World(engine);
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
-    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, radio: true, quality: 'high', markers: true, flightMode: 'mouseAim' });
+    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, radio: true, music: true, quality: 'high', markers: true, flightMode: 'mouseAim' });
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
@@ -77,6 +77,10 @@ export class Game {
       if (e.code === 'KeyP' && this.state === 'playing') this.pause();
     });
     engine.onFrame = (dt) => this.frame(dt);
+    // Browsers only allow audio after a user gesture: start it on the first one
+    const unlock = () => { sound.init(); window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock); };
+    window.addEventListener('pointerdown', unlock);
+    window.addEventListener('keydown', unlock);
   }
 
   // Compile shaders for objects that only appear mid-mission (debris, chutes, bombs,
@@ -100,6 +104,7 @@ export class Game {
     this.input.invertY = s.invertY;
     sound.setVolume(s.volume);
     sound.radioEnabled = s.radio;
+    sound.setMusic(s.music);
     this.pilot.mode = s.flightMode;
     if (this.engine.quality !== s.quality) this.engine.setQuality(s.quality);
     save(SETTINGS_KEY, s);
@@ -448,6 +453,8 @@ export class Game {
     this.state = 'debrief';
     this.input.unlock();
     sound.stopSpeech();
+    sound.music.stinger(r.success);
+    sound.setMode('menu');
     const acc = w.stats.shots > 0 ? w.stats.hits / w.stats.shots : 0;
     const survivors = w.bombers().filter((b) => b.alive).length;
     const survival = m.duration === Infinity;
