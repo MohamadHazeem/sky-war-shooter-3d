@@ -104,7 +104,7 @@ const KEEP = /B-17G?|P-51D?|Fw 190|Bf 109|Bf 110|Ju 88|Me 262|Me 163|Me 410|He 1
 function arabicFor(s: string): string {
   const out = tx(s);
   expect(out, s).toMatch(arabic);
-  expect(out.replace(KEEP, ''), `untranslated words in: ${s}\n→ ${out}`).not.toMatch(/[A-Za-z]{2,}/);
+  expect(out.replace(/<[^>]+>/g, '').replace(KEEP, ''), `untranslated words in: ${s}\n→ ${out}`).not.toMatch(/[A-Za-z]{2,}/);
   return out;
 }
 const missionTexts = (m: Mission) => [m.title, m.target, m.date, ...m.briefing, ...m.objectives, ...(m.success ? [m.success] : []),
@@ -208,5 +208,131 @@ describe('new screens resolve to Arabic', () => {
     expect(tx('Formation {n} ships', { n: '9/12' })).toBe('Formation 9/12 ships');
     expect(tx(SKILLS[0].desc)).toBe(SKILLS[0].desc);
     expect(tx('{n} pts'.replace('{n}', '2'))).toBe('2 pts');
+  });
+});
+
+// ---------------- co-op and the canvas HUD ----------------
+
+// node:fs without @types/node (the project's tsconfig only has the browser types)
+const FS = 'node:fs';
+const { readFileSync } = (await import(FS)) as { readFileSync(p: URL, enc: 'utf8'): string };
+const source = (path: string) => readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8');
+// the quoted English literals on the lines that show text (single words like 'left', 'loss',
+// 'paused' are states, not text)
+function shownLiterals(path: string, calls: RegExp, templates = false): string[] {
+  const out = new Set<string>();
+  for (const line of source(path).split('\n')) {
+    if (!calls.test(line) || /console\./.test(line)) continue;
+    for (const m of (templates ? line : line.replace(/`[^`]*`/g, '')).matchAll(/'((?:[^'\\]|\\.)*)'/g)) {
+      const s = m[1].replace(/\\'/g, "'");
+      if (/[A-Za-z]/.test(s) && !/^[a-z_-]+$/.test(s)) out.add(s);
+    }
+  }
+  return [...out];
+}
+
+describe('co-op and canvas HUD resolve to Arabic', () => {
+  beforeEach(() => { setLang('ar'); });
+
+  it('co-op: every status, error, disconnect and in-mission message', () => {
+    const session = shownLiterals('game/CoopSession.ts', /screen\.(menu|busy|toast|waiting)\(|renderLobby\('|ui\.(tip|feed|banner)\(|const msg =|endWhy = String|why: typeof|title: '/);
+    const signal = shownLiterals('net/Signal.ts', /new RoomError\(/);
+    expect(session.length).toBeGreaterThan(20);
+    expect(signal.length).toBe(4);
+    for (const s of [...session, ...signal]) arabicFor(s);
+    // runtime-built lines
+    expect(arabicFor('Joining 7K2P9Q…')).toContain('7K2P9Q');
+    for (const s of ['Mission over — The mission is over.', 'Mission over — Too many bombers lost — 6 Fortresses went down.',
+      'PARTNER is on the LEFT WAIST', 'PARTNER is on the TAIL GUN', 'Fw 190 destroyed — partner', 'Bf 109 destroyed — partner', 'Double kill — partner']) arabicFor(s);
+  });
+
+  it('co-op: every screen text (title entry, menu, stand-by, lobby, tag, tooltip)', () => {
+    const screen = shownLiterals('ui/CoopScreen.ts', /tx\(/, true);
+    expect(screen.length).toBeGreaterThanOrEqual(25);
+    for (const s of screen) if (!s.includes('{')) arabicFor(s); else expect(tx(s, { ms: 84 }).replace(/\d+/, '')).not.toMatch(/[A-Za-z]{2,}/);
+    // no English left between tags in the markup (template lines, with every ${…} removed)
+    const left: string[] = [];
+    for (let line of source('ui/CoopScreen.ts').split('\n')) {
+      if (!/<(div|button|p|h2|small)\b/.test(line)) continue;
+      for (let prev = ''; prev !== line;) { prev = line; line = line.replace(/\$\{[^{}]*\}/g, ''); }
+      left.push(...(line.match(/>[^<>]*[A-Za-z]{2,}[^<>]*</g) ?? []));
+    }
+    expect(left).toEqual([]);
+    expect(tx('Connection: {ms} ms round trip', { ms: 84 })).toContain('84');
+    for (const s of ['Left Waist', 'Right Waist', 'Top Turret', 'Ball Turret', 'Tail Gun']) arabicFor(s);
+  });
+
+  it('wingman panel: orders, DOWN, kills and the key list', async () => {
+    const { WING_LABEL } = await import('../src/game/Wingman');
+    for (const s of Object.values(WING_LABEL)) arabicFor(s);
+    arabicFor('DOWN');
+    arabicFor('1 ATK  2 COVER  3 BOMBERS  4 FORM');
+    for (const n of [0, 1, 2, 3, 11]) {
+      arabicFor(`80%  ·  ${n} kill${n === 1 ? '' : 's'}`);
+      arabicFor(`replacement next round · ${n} kills`);
+    }
+    expect(tx('100%  ·  2 kills')).toBe('100%  ·  إسقاطان');
+  });
+
+  it('raid, escort and pilot canvas labels', () => {
+    for (const s of ['AIRFIELD 4.2 km', 'CONED · 1.8 km TO FIELD', '12.0 km TO FIELD', 'UNDER ATTACK', 'UNDER ATTACK ×3',
+      'STRAGGLER 42%', 'STRAGGLER 42% — UNDER ATTACK', 'IN RANGE 240m', '640m', 'LOCK 380m +45mph', 'LOCK 380m -12mph', 'LOCK 1200m',
+      'NO TARGET', 'SPLASHED']) arabicFor(s);
+    // every padlock note: the bandit's manoeuvre labels in DogfightAI
+    const labels = source('world/DogfightAI.ts').match(/const LABELS[^}]*}/)![0];
+    const notes = [...labels.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+    expect(notes.length).toBe(10);
+    for (const s of notes) arabicFor(s);
+  });
+
+  it('settings key list and touch buttons: every remappable action and reserved key', async () => {
+    const { ACTIONS, RESERVED } = await import('../src/core/KeyMap');
+    for (const a of ACTIONS) arabicFor(a.label);
+    for (const r of new Set(Object.values(RESERVED))) arabicFor(r);
+    for (const s of ['ATK', 'COVER', 'BOMB', 'FORM']) arabicFor(s);
+    expect(tx('Wingman: {order}', { order: tx('COVER') })).toBe('الجناح المرافق: تغطية');
+    arabicFor('<kbd>T</kbd> padlocks the nearest bandit — the view tracks him while you fly · <kbd>V</kbd> cockpit / chase');
+  });
+
+  it('special events: every ace, banner, panel, tag, feed and radio line', () => {
+    const src = source('game/SpecialEvents.ts');
+    const aces = [...src.matchAll(/\{ rank: '(\w+)', short: '([\w.]+)', name: '([\w ]+)', last: '(\w+)', victories: (\d+) \}/g)]
+      .map((m) => ({ rank: m[1], short: m[2], name: m[3], last: m[4], victories: +m[5] }));
+    expect(aces.length).toBe(5);
+    for (const a of aces) {
+      for (const s of [`ACE SQUADRON · ${a.rank.toUpperCase()} ${a.name.toUpperCase()} · ${a.victories} VICTORIES`, `${a.last}'s Staffel`,
+        `ACE · ${a.victories} VICTORIES`, `${a.rank} ${a.name}`, `${a.short} ${a.last} got away`, `${a.short} ${a.last} shot down`,
+        `${a.short} ${a.last} shot down — +450 merit`, `${a.rank.toUpperCase()} ${a.name.toUpperCase()} · ${a.victories} VICTORIES`,
+        `${a.short.toUpperCase()} ${a.last.toUpperCase()} · ${a.victories}`, `${a.short} ${a.last}`, a.last,
+        `Yellow noses, twelve o'clock high! That's ${a.last}'s Staffel — ${a.victories} kills!`,
+        `${a.last} is breaking off — the yellow noses are heading home.`, `You got ${a.last}! The whole group saw him go down!`,
+        `Somebody got ${a.last}! Scratch one Experte!`, `Viermots ahead. ${a.last} here — the fat one in the middle is mine. Horrido!`,
+        `Achtung, Amis. Number ${a.victories + 1} is flying in that box. Pauke, pauke!`]) arabicFor(s);
+    }
+    // the fixed texts of the three events (panel, banners, tips, tags, rewards, radio)
+    const fixed = shownLiterals('game/SpecialEvents.ts', /ui\.(tip|banner|feed)\(|callout\(|view: PanelView|t\.label = |reward\(|cueAt\(|barText = /);
+    expect(fixed.length).toBeGreaterThan(15);
+    for (const s of fixed) if (!s.endsWith('×')) arabicFor(s);
+    for (const n of [0, 1, 2, 3, 5]) { arabicFor(`+${n} WINGMEN`); arabicFor(`${n} LAUNCHER${n === 1 ? '' : 'S'}`); arabicFor(`${n} HEAVY FIGHTERS WITH ROCKETS`); arabicFor(`${n} / 6 LEFT`); }
+    for (const s of ['Fw 190 (yellow nose)', 'Zerstörer wave broken up — +135 merit']) arabicFor(s);
+  });
+
+  it('enemy tactics: radar cues, gunner hints and radio calls', () => {
+    const fixed = shownLiterals('world/Tactics.ts', /\.call\(|hint\?\.\(|cueAt\(/);
+    expect(fixed.length).toBeGreaterThan(15);
+    for (const s of fixed) if (!s.endsWith('×') && /\s/.test(s)) arabicFor(s);   // skip call ids like 'bk5down'
+    for (const s of ['HEAD-ON ×6', 'Bf 110 hanging back out of range — he\'s got rocket tubes! He\'ll lob them in from a kilometre!',
+      'Zerstörers! Twin-engine destroyers forming up at four o\'clock level — they\'re carrying rockets!',
+      'Zerstörer formation on the <b>RIGHT</b> — <kbd>2</kbd> right waist · break them up before they fire',
+      'Zerstörer formation on the <b>LEFT</b> — <kbd>1</kbd> left waist · break them up before they fire',
+      '109s diving on Sky Queen! She\'s out of formation — they\'re going for her!', 'Flak coming up — heavy guns below us. Hold steady.']) arabicFor(s);
+  });
+
+  it('English is unchanged', () => {
+    setLang('en');
+    for (const s of ['LOCK 380m +45mph', 'IN RANGE 240m', 'AIRFIELD 4.2 km', '80%  ·  1 kill', 'PARTNER is on the TAIL GUN', 'Joining 7K2P9Q…', 'Co-op (beta)',
+      'ACE · 52 VICTORIES', 'HPTM. KESSLER · 52', 'Kessler', '3 LAUNCHERS', 'PINCER'])
+      expect(tx(s)).toBe(s);
+    expect(tx('Connection: {ms} ms round trip', { ms: 84 })).toBe('Connection: 84 ms round trip');
   });
 });

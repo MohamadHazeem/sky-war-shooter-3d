@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { Aircraft } from '../world/Aircraft';
+import { tx } from '../i18n';
 
 // HUD for the special events (game/SpecialEvents.ts): a panel at the top centre (the ace's
 // name, victories and health bar; the Zerstörer / rocket-barrage status with a timer) and
@@ -82,16 +83,16 @@ export class SpecialHud {
     const key = v.kicker + '|' + v.title + '|' + v.desc;
     if (key !== this.key) {
       this.key = key;
-      (this.panel.children[0] as HTMLElement).textContent = v.kicker;
-      (this.panel.children[1] as HTMLElement).textContent = v.title;
-      (this.panel.children[2] as HTMLElement).textContent = v.desc;
+      (this.panel.children[0] as HTMLElement).textContent = tx(v.kicker);
+      (this.panel.children[1] as HTMLElement).textContent = tx(v.title);
+      (this.panel.children[2] as HTMLElement).textContent = tx(v.desc);
       this.panel.classList.toggle('ace', !!v.ace);
       this.lastBar = this.lastTime = -1; this.lastP = '';
     }
     if (!this.panel.classList.contains('show')) this.panel.classList.add('show');
     const bar = Math.round(Math.min(1, Math.max(0, v.bar)) * 200) / 2;
     if (bar !== this.lastBar) { this.lastBar = bar; this.barEl.style.width = bar + '%'; }
-    if (v.barText !== this.lastP) { this.lastP = v.barText; this.pEl.textContent = v.barText; }
+    if (v.barText !== this.lastP) { this.lastP = v.barText; this.pEl.textContent = tx(v.barText); }
     const tf = v.timeFrac < 0 ? 0 : Math.round(Math.min(1, v.timeFrac) * 200) / 2;
     if (tf !== this.lastTime) { this.lastTime = tf; this.timerEl.style.width = tf + '%'; (this.timerEl.parentElement as HTMLElement).style.visibility = v.timeFrac < 0 ? 'hidden' : ''; }
   }
@@ -129,7 +130,7 @@ export class SpecialHud {
       const lift = edge ? 0 : Math.min(70, Math.max(18, 3000 / Math.max(1, d)));
       const px = Math.round((x * 0.5 + 0.5) * W), py = Math.round((-y * 0.5 + 0.5) * H - lift);
       if (px !== t.x || py !== t.y) { t.x = px; t.y = py; t.el.style.transform = `translate(${px}px, ${py}px) translate(-50%, -100%)`; }
-      if (v.label !== t.label) { t.label = v.label; t.b.textContent = v.label; t.el.classList.toggle('ace', !!v.ace); }
+      if (v.label !== t.label) { t.label = v.label; t.b.textContent = tx(v.label); t.el.classList.toggle('ace', !!v.ace); }
       const w = Math.round(Math.min(1, Math.max(0, v.health)) * 50) * 2;
       if (w !== t.w) { t.w = w; t.bar.style.width = w + '%'; }
       t.el.classList.toggle('edge', edge);

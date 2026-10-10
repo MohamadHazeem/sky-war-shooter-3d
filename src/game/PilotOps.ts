@@ -13,6 +13,7 @@ import { Wingman } from './Wingman';
 import { RaidDefence } from './RaidDefence';
 import type { Input } from '../core/Input';
 import type { PilotController } from './PilotController';
+import { tx, isAr, CANVAS_MONO } from '../i18n';
 
 // P-51 missions director layer.
 //  * Campaign pilot missions with a PILOT_ROUNDS entry (m4, m7) are flown as scripted rounds:
@@ -367,7 +368,7 @@ export class PilotOps {
     }
     const s = this.straggler;
     ctx.save();
-    ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
+    ctx.font = isAr() ? `600 12px ${CANVAS_MONO}` : '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
     const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 160);
     const mark = (b: Bomber, label: string, col: string) => {
       const p = _v.copy(b.pos).project(cam);
@@ -375,7 +376,7 @@ export class PilotOps {
       const x = THREE.MathUtils.clamp((p.x * 0.5 + 0.5) * W, 30, W - 30), y = THREE.MathUtils.clamp((-p.y * 0.5 + 0.5) * H, 40, H - 30);
       ctx.fillStyle = col;
       ctx.beginPath(); ctx.moveTo(x, y - 30); ctx.lineTo(x + 7, y - 42); ctx.lineTo(x - 7, y - 42); ctx.closePath(); ctx.fill();
-      ctx.fillText(label, x, y - 48);
+      ctx.fillText(tx(label), x, y - 48);
     };
     for (const [b, n] of under) if (b !== s) mark(b, n > 1 ? `UNDER ATTACK ×${n}` : 'UNDER ATTACK', `rgba(255,80,60,${pulse})`);
     if (s?.alive && !this.stragglerDone) {

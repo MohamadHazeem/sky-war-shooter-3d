@@ -32,6 +32,7 @@ import { CombatTally } from './CombatTally';
 import { achievements } from './Achievements';
 import { GameFeel } from './GameFeel';
 import { CombatFeedback, killFeedText } from '../ui/CombatFeedback';
+import { tx } from '../i18n';
 import { Onboarding } from './Onboarding';
 import { Abilities } from './Abilities';
 import { MidRound } from './MidRound';
@@ -1343,7 +1344,8 @@ export class Game {
           ctx.stroke();
           access.enemyGlyph(ctx, x, y, s);
           ctx.fillStyle = col; ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
-          ctx.fillText(d < 1600 ? `${a.label.toUpperCase()}  ${Math.round(d)}m` : a.label.toUpperCase(), x, y + s + 13);
+          const lab = tx(a.label).toUpperCase();
+          ctx.fillText(d < 1600 ? `${lab}  ${Math.round(d)}m` : lab, x, y + s + 13);
         } else if (enemy && d < 1500) {
           // edge arrow toward off-screen attacker
           let ex = p.x, ey = p.y;

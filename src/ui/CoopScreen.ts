@@ -1,7 +1,10 @@
 // Co-op (beta) screens: the title-menu entry, host / join menu, lobby with seat picking, the
 // text-free connection-quality indicator, the PARTNER tag on the gunner HUD's station bar and
 // short notices. All DOM lives here (own layer and styles), driven by CoopSession.
+// Every text is English in the code and shown through tx() (Arabic: i18n/ar/coop.ts); the
+// PARTNER tag is CSS content, fed from the --coop-partner custom property.
 import { STATION_ORDER, STATIONS, StationId } from '../world/B17Layout';
+import { tx } from '../i18n';
 
 export interface CoopScreenHandlers {
   host(): void;
@@ -34,14 +37,14 @@ const CSS = `
 #coop .seats button { font: inherit; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 10px 4px; background: rgba(0,0,0,0.35); color: var(--ink); border: 1px solid var(--line); cursor: pointer; position: relative; }
 #coop .seats button.mine { background: var(--khaki); color: #1b1a12; border-color: var(--khaki); }
 #coop .seats button.partner { border-color: #6fa8d8; color: #9cc6ec; cursor: not-allowed; }
-#coop .seats button.partner::after { content: 'PARTNER'; position: absolute; left: 50%; top: -8px; transform: translateX(-50%); font-size: 9px; padding: 0 4px; background: #2b5d86; color: #fff; letter-spacing: 1px; }
+#coop .seats button.partner::after { content: var(--coop-partner, 'PARTNER'); position: absolute; left: 50%; top: -8px; transform: translateX(-50%); font-size: 9px; padding: 0 4px; background: #2b5d86; color: #fff; letter-spacing: 1px; }
 #coop .joinrow { display: flex; gap: 8px; margin-top: 8px; }
 #coop .joinrow input { flex: 1; min-width: 0; font-family: 'IBM Plex Mono', monospace; font-size: 22px; letter-spacing: 6px; text-transform: uppercase; padding: 8px 12px; background: rgba(0,0,0,0.4); color: var(--ink); border: 1px solid var(--line); }
 #coop .joinrow input:focus { outline: 2px solid var(--khaki); }
 #coop .btn:disabled { opacity: 0.4; cursor: default; filter: none; }
 #coop .sep { border: none; border-top: 1px solid var(--line); margin: 20px 0 14px; }
 #hStations span.partner { border-color: #6fa8d8; color: #9cc6ec; }
-#hStations span.partner::after { content: 'PARTNER'; position: absolute; left: 50%; top: -9px; transform: translateX(-50%); font-size: 8px; line-height: 11px; padding: 0 3px; background: #2b5d86; color: #fff; letter-spacing: 1px; white-space: nowrap; }
+#hStations span.partner::after { content: var(--coop-partner, 'PARTNER'); position: absolute; left: 50%; top: -9px; transform: translateX(-50%); font-size: 8px; line-height: 11px; padding: 0 3px; background: #2b5d86; color: #fff; letter-spacing: 1px; white-space: nowrap; }
 #coopPing { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 40; display: none; align-items: flex-end; gap: 2px; height: 14px; padding: 3px 5px; background: rgba(0,0,0,0.35); border-radius: 3px; pointer-events: auto; }
 #coopPing.show { display: flex; }
 #coopPing i { display: block; width: 4px; background: rgba(255,255,255,0.18); border-radius: 1px; }
@@ -50,6 +53,16 @@ const CSS = `
 #coopPing.q4 { --q: #7ed36a; } #coopPing.q3 { --q: #c9d65a; } #coopPing.q2 { --q: #eaa64a; } #coopPing.q1 { --q: #e8573f; }
 #coopPing.q0 i { animation: coopBlink 1s steps(2) infinite; }
 @keyframes coopBlink { 50% { background: rgba(232,87,63,0.8); } }
+/* Arabic: the code stays Latin and left-to-right (keeps its spacing); tags and small labels a size up */
+html[lang=ar] #coop .code, html[lang=ar] #coop .joinrow input { direction: ltr; text-align: right; }
+html[lang=ar] #coop .code { letter-spacing: 10px !important; }
+html[lang=ar] #coop .joinrow input:not(:placeholder-shown) { letter-spacing: 6px !important; }
+html[lang=ar] #coop .joinrow input:placeholder-shown { direction: rtl; }
+html[lang=ar] #coop .seats button { font-size: 12.5px; padding: 9px 3px; line-height: 1.35; }
+html[lang=ar] #coop .seats button.partner::after { font-size: 10.5px; top: -10px; line-height: 15px; white-space: nowrap; }
+html[lang=ar] #hStations span.partner::after { font-size: 10px; top: -12px; line-height: 14px; }
+html[lang=ar] #coop .status, html[lang=ar] #coop .err, html[lang=ar] #coop p.note { line-height: 1.7; }
+html[lang=ar] #coopToast, html[lang=ar] #coopWait { line-height: 1.6; }
 #coopToast { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 60; background: rgba(12,12,8,0.88); border: 1px solid rgba(185,167,111,0.6); color: var(--ink); padding: 12px 20px; font-size: 16px; letter-spacing: 1px; text-align: center; max-width: min(560px, 90vw); opacity: 0; transition: opacity 0.4s; pointer-events: none; }
 #coopToast.show { opacity: 1; }
 #coopWait { position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%); z-index: 30; background: rgba(12,12,8,0.8); border: 1px solid var(--line); padding: 14px 22px; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; display: none; pointer-events: none; }
@@ -90,13 +103,21 @@ export class CoopScreen {
     if (!menu || menu.querySelector('[data-a="coop"]')) return;
     const b = document.createElement('button');
     b.dataset.a = 'coop';
-    b.innerHTML = 'Co-op (beta) <small>two gunners, one B-17 · online</small>';
+    b.innerHTML = `${tx('Co-op (beta)')} <small>${tx('two gunners, one B-17 · online')}</small>`;
     b.addEventListener('click', onClick);
     const after = menu.querySelector('[data-a="survival"]');
     if (after?.nextSibling) menu.insertBefore(b, after.nextSibling); else menu.appendChild(b);
   }
 
+  // the PARTNER tag's text (CSS content), in the current language
+  private tagText() {
+    const v = JSON.stringify(tx('PARTNER'));
+    const root = document.documentElement;
+    if (root.style.getPropertyValue('--coop-partner') !== v) root.style.setProperty('--coop-partner', v);
+  }
+
   private show() {
+    this.tagText();
     document.querySelectorAll('.layer').forEach((l) => l.classList.toggle('show', l === this.root));
   }
 
@@ -104,15 +125,15 @@ export class CoopScreen {
 
   menu(error = '', code = '') {
     this.root.innerHTML = `<div class="screen-center"><div class="box panel">
-      <div class="kicker">ONLINE · PEER TO PEER</div><h2 class="h2">Co-op (beta)</h2>
-      <p class="note" style="margin-top:4px">Two gunners crew the same Fortress in Survival. One player hosts and runs the battle; the other joins with a code.</p>
-      <div class="row" style="margin:18px 0 4px"><button class="btn" data-host>Host a game</button></div>
+      <div class="kicker">${tx('ONLINE · PEER TO PEER')}</div><h2 class="h2">${tx('Co-op (beta)')}</h2>
+      <p class="note" style="margin-top:4px">${tx('Two gunners crew the same Fortress in Survival. One player hosts and runs the battle; the other joins with a code.')}</p>
+      <div class="row" style="margin:18px 0 4px"><button class="btn" data-host>${tx('Host a game')}</button></div>
       <hr class="sep" />
-      <div class="hud-label">Join a game</div>
-      <div class="joinrow"><input maxlength="7" placeholder="CODE" autocomplete="off" spellcheck="false" value="${esc(code)}" aria-label="Join code" /><button class="btn" data-join>Join</button></div>
-      <div class="err" role="alert">${esc(error)}</div>
-      <p class="note">Prototype. Peer-to-peer with no relay server, so some networks (strict firewalls, some corporate, campus and mobile networks) cannot connect.</p>
-      <div class="row" style="margin-top:18px"><button class="btn ghost" data-back>Back</button></div>
+      <div class="hud-label">${tx('Join a game')}</div>
+      <div class="joinrow"><input maxlength="7" placeholder="${esc(tx('CODE'))}" autocomplete="off" spellcheck="false" value="${esc(code)}" aria-label="${esc(tx('Join code'))}" /><button class="btn" data-join>${tx('Join')}</button></div>
+      <div class="err" role="alert">${esc(tx(error))}</div>
+      <p class="note">${tx('Prototype. Peer-to-peer with no relay server, so some networks (strict firewalls, some corporate, campus and mobile networks) cannot connect.')}</p>
+      <div class="row" style="margin-top:18px"><button class="btn ghost" data-back>${tx('Back')}</button></div>
     </div></div>`;
     const input = this.root.querySelector('input')!;
     const join = () => this.h.join(input.value);
@@ -125,9 +146,9 @@ export class CoopScreen {
 
   busy(text: string) {
     this.root.innerHTML = `<div class="screen-center"><div class="box panel">
-      <div class="kicker">CO-OP (BETA)</div><h2 class="h2">Stand by</h2>
-      <div class="status">${esc(text)}</div>
-      <div class="row"><button class="btn ghost" data-leave>Cancel</button></div>
+      <div class="kicker">${tx('CO-OP (BETA)')}</div><h2 class="h2">${tx('Stand by')}</h2>
+      <div class="status">${esc(tx(text))}</div>
+      <div class="row"><button class="btn ghost" data-leave>${tx('Cancel')}</button></div>
     </div></div>`;
     this.root.querySelector('[data-leave]')!.addEventListener('click', () => this.h.leave());
     this.show();
@@ -135,14 +156,14 @@ export class CoopScreen {
 
   lobby(v: LobbyView) {
     this.root.innerHTML = `<div class="screen-center"><div class="box panel">
-      <div class="kicker">CO-OP (BETA) · SURVIVAL · B-17 GUNNERS</div>
-      <div class="hud-label" style="margin-top:12px">${v.role === 'host' ? 'Join code — give it to your partner' : 'Joined game'}</div>
+      <div class="kicker">${tx('CO-OP (BETA) · SURVIVAL · B-17 GUNNERS')}</div>
+      <div class="hud-label" style="margin-top:12px">${tx(v.role === 'host' ? 'Join code — give it to your partner' : 'Joined game')}</div>
       <div class="code">${esc(v.code)}</div>
-      <div class="status ${v.connected ? 'ok' : ''}" data-status>${esc(v.status)}</div>
-      <div class="hud-label">Your gun position</div>
-      <div class="seats">${STATION_ORDER.map((s) => `<button data-s="${s}" class="${s === v.mine ? 'mine' : s === v.partner ? 'partner' : ''}" ${s === v.partner ? 'disabled' : ''}>${STATIONS[s].label}</button>`).join('')}</div>
-      <div class="row">${v.role === 'host' ? `<button class="btn" data-start ${v.connected ? '' : 'disabled'}>Start mission</button>` : ''}<button class="btn ghost" data-leave>Leave</button></div>
-      <p class="note">${v.role === 'host' ? 'You run the battle: if your partner drops out you carry on alone.' : 'The host starts the mission. If the host leaves, the game ends.'}</p>
+      <div class="status ${v.connected ? 'ok' : ''}" data-status>${esc(tx(v.status))}</div>
+      <div class="hud-label">${tx('Your gun position')}</div>
+      <div class="seats">${STATION_ORDER.map((s) => `<button data-s="${s}" class="${s === v.mine ? 'mine' : s === v.partner ? 'partner' : ''}" ${s === v.partner ? 'disabled' : ''}>${tx(STATIONS[s].label)}</button>`).join('')}</div>
+      <div class="row">${v.role === 'host' ? `<button class="btn" data-start ${v.connected ? '' : 'disabled'}>${tx('Start mission')}</button>` : ''}<button class="btn ghost" data-leave>${tx('Leave')}</button></div>
+      <p class="note">${tx(v.role === 'host' ? 'You run the battle: if your partner drops out you carry on alone.' : 'The host starts the mission. If the host leaves, the game ends.')}</p>
     </div></div>`;
     this.root.querySelectorAll<HTMLButtonElement>('[data-s]').forEach((b) => b.addEventListener('click', () => this.h.seat(b.dataset.s as StationId)));
     this.root.querySelector('[data-start]')?.addEventListener('click', () => this.h.start());
@@ -155,7 +176,7 @@ export class CoopScreen {
     const q = !visible ? -1 : rtt < 0 ? 0 : rtt < 90 ? 4 : rtt < 160 ? 3 : rtt < 280 ? 2 : 1;
     const cls = q < 0 ? '' : `show q${q}`;
     if (this.ping.className !== cls) this.ping.className = cls;
-    const label = q < 0 ? '' : rtt < 0 ? 'Connection: waiting for a reply' : `Connection: ${Math.round(rtt)} ms round trip`;
+    const label = q < 0 ? '' : rtt < 0 ? tx('Connection: waiting for a reply') : tx('Connection: {ms} ms round trip', { ms: Math.round(rtt) });
     if (this.ping.title !== label) { this.ping.title = label; this.ping.setAttribute('aria-label', label); }
   }
 
@@ -163,6 +184,7 @@ export class CoopScreen {
   markPartner(seat: StationId | null) {
     const spans = document.querySelectorAll<HTMLElement>('#hStations span');
     if (!spans.length) return;
+    if (seat) this.tagText();
     for (const el of spans) {
       const on = el.dataset.s === seat;
       if (el.classList.contains('partner') !== on) el.classList.toggle('partner', on);
@@ -170,12 +192,12 @@ export class CoopScreen {
   }
 
   waiting(text: string | null) {
-    this.waitEl.textContent = text ?? '';
+    this.waitEl.textContent = text ? tx(text) : '';
     this.waitEl.classList.toggle('show', !!text);
   }
 
   toast(text: string, ms = 4500) {
-    this.toastEl.textContent = text;
+    this.toastEl.textContent = tx(text);
     this.toastEl.classList.add('show');
     if (this.toastTimer) clearTimeout(this.toastTimer);
     this.toastTimer = setTimeout(() => this.toastEl.classList.remove('show'), ms);
