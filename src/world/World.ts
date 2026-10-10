@@ -10,7 +10,7 @@ import { sound } from '../audio/Sound';
 import { Contrails } from '../render/Contrails';
 import { Wrecks, BreakKind } from './Wrecks';
 
-export const ENEMY_SCALE = 1.45;     // Fw 190s are drawn (and hit) 30% larger so they read on screen
+export const ENEMY_SCALE = 1.7;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 260; // ~20 hits from a .50 to wear one down
 
 export const CRUISE = 75;          // m/s formation speed (~170 mph)
