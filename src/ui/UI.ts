@@ -249,7 +249,7 @@ export class UI {
         <div class="hud-big mono" id="hAmmo">600</div>
         <div class="hud-label" style="margin-top:4px">Barrel</div>
         <div class="meter" id="hHeatM"><div id="hHeat" style="width:0%"></div></div>
-        <div class="stations" id="hStations">${STATION_ORDER.map((s) => `<span data-s="${s}">${STATIONS[s].key} ${STATIONS[s].label.toUpperCase()}</span>`).join('')}</div>`;
+        <div class="stations" id="hStations">${STATION_ORDER.map((s) => `<span data-s="${s}">${STATIONS[s].key} ${STATIONS[s].label.toUpperCase()}<b></b></span>`).join('')}</div>`;
       $('#hBR').innerHTML = `<div class="hud-label">Sky Queen</div><div id="dmg">${b17Svg()}</div>
         <div class="crewlist" id="hCrewList">${CREW.map((m) => `<span data-c="${m.id}"><i>${m.label}</i><b>OK</b></span>`).join('')}</div>
         <div class="hud-label" id="hCrew"></div>`;
@@ -267,15 +267,24 @@ export class UI {
 
   setText(id: string, t: string) { const e = document.getElementById(id); if (e && e.textContent !== t) e.textContent = t; }
 
-  updateGunnerHud(d: { station: StationId; ammo: number; heat: number; overheated: boolean; reloading: number; zones: Record<string, number>; crew: string; wounded: ReadonlySet<CrewId> }) {
+  updateGunnerHud(d: { station: StationId; threats: Partial<Record<StationId, number>>; best: StationId | null; ammo: number; heat: number; overheated: boolean; reloading: number; zones: Record<string, number>; crew: string; wounded: ReadonlySet<CrewId> }) {
     this.setText('hStation', STATIONS[d.station].label + (d.reloading > 0 ? ' — RELOADING' : d.overheated ? ' — BARREL HOT' : ''));
-    this.setText('hAmmo', String(d.ammo));
+    this.setText('hAmmo', '∞');
     // under 60 rounds the belt warning colours the count red (.low in style.css)
     document.getElementById('hAmmo')?.classList.toggle('low', d.ammo < 60);
     const h = document.getElementById('hHeat');
     if (h) h.style.width = `${Math.round(Math.min(1, d.heat) * 100)}%`;
     document.getElementById('hHeatM')?.classList.toggle('hot', d.overheated || d.heat > 0.8);
-    document.querySelectorAll('#hStations span').forEach((s) => s.classList.toggle('on', (s as HTMLElement).dataset.s === d.station));
+    document.querySelectorAll('#hStations span').forEach((el) => {
+      const id = (el as HTMLElement).dataset.s as StationId;
+      const n = d.threats[id] ?? 0;
+      el.classList.toggle('on', id === d.station);
+      el.classList.toggle('threat', n > 0 && id !== d.station);
+      el.classList.toggle('best', id === d.best && id !== d.station);
+      const badge = n > 0 ? String(n) : '';
+      const b = el.querySelector('b');
+      if (b) { if (b.textContent !== badge) b.textContent = badge; }
+    });
     for (const [k, v] of Object.entries(d.zones)) {
       const z = document.querySelector(`#dmg [data-z="${k}"]`) as SVGElement | null;
       if (z) z.setAttribute('fill', zoneColor(v));

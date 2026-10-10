@@ -248,3 +248,11 @@ kbd { font-family: 'IBM Plex Mono', monospace; font-size: 12px; border: 1px soli
 .pcard .t { font-size: 21px; letter-spacing: 1px; text-transform: uppercase; color: var(--khaki); margin-bottom: 8px; }
 .pcard .d { color: var(--ink-dim); font-size: 14px; }
 .perkwrap .hint { margin-top: 14px; color: var(--ink-dim); font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+
+/* seat finder: fighters in a gun position's arc */
+.stations span { position: relative; }
+.stations span b { position: absolute; top: -9px; right: -6px; min-width: 15px; padding: 0 3px; font-size: 10px; line-height: 15px; text-align: center; background: #d8432c; color: #fff; border-radius: 8px; font-weight: 700; }
+.stations span b:empty { display: none; }
+.stations span.threat { border-color: rgba(235,90,60,0.9); color: #ffb7a8; }
+.stations span.best { animation: seatPulse 0.9s ease-in-out infinite; }
+@keyframes seatPulse { 50% { background: rgba(216,67,44,0.55); color: #fff; } }

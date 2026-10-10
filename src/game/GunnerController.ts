@@ -3,7 +3,7 @@ import type { Input } from '../core/Input';
 import type { Engine } from '../core/Engine';
 import { World } from '../world/World';
 import { Bomber } from '../world/Aircraft';
-import { dirFromYawPitch, STATIONS, StationDef, StationId, wrapAngle } from '../world/B17Layout';
+import { dirFromYawPitch, STATIONS, StationDef, StationId, wrapAngle, STATION_ORDER, inArc } from '../world/B17Layout';
 import { buildM2, buildTailInterior, buildTurret, buildWaistInterior, GunModel } from './Viewmodels';
 import { Loadout, Progression } from './Upgrades';
 import type { Fighter } from '../world/Aircraft';
@@ -112,9 +112,9 @@ export class GunnerController {
     const tail = buildTailInterior();
     this.interiors.tail = tail;
     const tg: GunModel[] = [];
-    for (const sx of [1, -1]) {
-      const m = buildM2({ ringSight: false, belt: false, beltSide: 1 });
-      m.group.position.set(sx * 0.15, 0, 0);
+    {
+      const m = buildM2({ ringSight: false, belt: true, beltSide: 1 });
+      m.group.position.set(0, -0.04, 0);
       tg.push(m);
     }
     // ring-and-post sight on a bracket above the guns, on the gunner's eye line
@@ -383,6 +383,7 @@ export class GunnerController {
     this.gunPivot.rotation.set(0, 0, 0);
     this.gunPivot.quaternion.setFromEuler(new THREE.Euler(-pitch, yaw, 0, 'YXZ'));
 
+    for (const g of guns) g.belt?.tick(dt);
     this.updateCasings(dt);
     // dust motes only matter while the waist interior is on screen
     if (this.dust && this.waistInterior?.visible) {
@@ -417,6 +418,21 @@ export class GunnerController {
       if (ang < best) { best = ang; this.assistTarget = f; this.assistYaw = s.tYaw + wrapAngle(yaw - s.tYaw); this.assistPitch = pitch; }
     }
     return this.assistTarget ? 1 - best / cone : 0;
+  }
+
+  // Seat finder: enemy fighters inside each gun position's field of fire (within 1.3 km)
+  threatsByStation(out: Partial<Record<StationId, number>> = {}) {
+    const b = this.bomber;
+    for (const id of STATION_ORDER) out[id] = 0;
+    if (!b) return out;
+    for (const f of this.world.fighters('axis')) {
+      if (!f.alive || f.pos.distanceTo(b.pos) > 1300) continue;
+      for (const id of STATION_ORDER) {
+        const def = STATIONS[id];
+        if (inArc(def, b.worldToLocal(_pa.copy(f.pos)).sub(def.pivot))) out[id]!++;
+      }
+    }
+    return out;
   }
 
   private fireRound(g: GunModel, def: StationDef) {

@@ -34,17 +34,17 @@ export const STATIONS: Record<StationId, StationDef> = {
   top: {
     id: 'top', label: 'Top Turret', key: '3', type: 'turret',
     pivot: new THREE.Vector3(0, 1.5, 1.15), rest: { yaw: 0, pitch: D(8) },
-    yaw: [-Math.PI, Math.PI], pitch: [D(-4), D(85)], twin: true, eyeBack: 0.25, eyeUp: 0.08, crew: 'Sgt. Mendez',
+    yaw: [-Math.PI, Math.PI], pitch: [D(-4), D(85)], twin: false, eyeBack: 0.25, eyeUp: 0.08, crew: 'Sgt. Mendez',
   },
   ball: {
     id: 'ball', label: 'Ball Turret', key: '4', type: 'turret',
     pivot: new THREE.Vector3(0, -1.45, -4.65), rest: { yaw: Math.PI, pitch: D(-20) },
-    yaw: [-Math.PI, Math.PI], pitch: [D(-90), D(2)], twin: true, eyeBack: 0.22, eyeUp: 0.0, crew: 'Sgt. Reilly',
+    yaw: [-Math.PI, Math.PI], pitch: [D(-90), D(2)], twin: false, eyeBack: 0.22, eyeUp: 0.0, crew: 'Sgt. Reilly',
   },
   tail: {
     id: 'tail', label: 'Tail Gun', key: '5', type: 'tail',
     pivot: new THREE.Vector3(0, 0.3, -15.6), rest: { yaw: Math.PI, pitch: 0 },
-    yaw: [D(-32), D(32)], pitch: [D(-28), D(28)], twin: true, eyeBack: 0.55, eyeUp: 0.16, crew: 'Sgt. Dawson',
+    yaw: [D(-32), D(32)], pitch: [D(-28), D(28)], twin: false, eyeBack: 0.55, eyeUp: 0.16, crew: 'Sgt. Dawson',
   },
 };
 

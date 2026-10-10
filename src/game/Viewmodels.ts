@@ -80,22 +80,42 @@ export class AmmoBelt {
     this.links = new THREE.InstancedMesh(linkGeo, linkMat(), this.count);
     // Tips: alternating armour-piercing (black), incendiary (blue), tracer (red)
     const tipCols = [new THREE.Color(0.55, 0.24, 0.09), new THREE.Color(0.06, 0.06, 0.06), new THREE.Color(0.55, 0.24, 0.09), new THREE.Color(0.6, 0.08, 0.05)];
+    this.tipCols = tipCols;
     for (let i = 0; i < this.count; i++) this.bullets.setColorAt(i, tipCols[i % tipCols.length]);
     for (const m of [this.cases, this.bullets, this.links]) { m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; this.group.add(m); }
     this.update();
   }
 
-  advance(rounds: number) { this.phase = (this.phase + rounds) % 4; this.update(); }
+  private feed = 0;
+  private tipCols: THREE.Color[] = [];
+  private shown = -1;
+
+  // a fired round pulls the belt one link toward the gun; tick() eases it there
+  advance(rounds: number) { this.feed += rounds; }
+
+  tick(dt: number) {
+    if (this.feed - this.phase > 6) this.phase = this.feed - 6; // long bursts: keep up
+    this.phase += (this.feed - this.phase) * Math.min(1, dt * 28);
+    if (Math.abs(this.phase - this.shown) < 0.004) return;
+    this.shown = this.phase;
+    this.update();
+  }
 
   update() {
     const tan = new THREE.Vector3();
     const pos = new THREE.Vector3();
     const x = new THREE.Vector3(), y = new THREE.Vector3();
     const z = this.roundDir;
-    const frac = this.phase % 1;
+    const frac = this.phase - Math.floor(this.phase);
+    const shift = Math.floor(this.phase) % 4;
+    if (this.tipCols.length) {
+      for (let i = 0; i < this.count; i++) this.bullets.setColorAt(i, this.tipCols[(i + shift) % 4]);
+      if (this.bullets.instanceColor) this.bullets.instanceColor.needsUpdate = true;
+    }
     for (let i = 0; i < this.count; i++) {
       const visible = i < this.visibleRounds;
-      const u = Math.min(1, Math.max(0, ((i + frac) * this.pitch) / this.length));
+      // rounds slide toward the feed tray (u = 0) as the phase grows
+      const u = Math.min(1, Math.max(0, ((i + 1 - frac) * this.pitch) / this.length));
       this.curve.getPointAt(u, pos);
       this.curve.getTangentAt(u, tan);
       // basis: z = round axis (parallel to bore), x = along belt (projected), y = z cross x
@@ -407,10 +427,10 @@ export function buildTurret(kind: 'top' | 'ball'): { group: THREE.Group; guns: G
   const g = new THREE.Group();
   const fmat = frameMat();
   const guns: GunModel[] = [];
-  for (const s of [1, -1]) {
-    const m = buildM2({ ringSight: false, belt: false, beltSide: 1 });
-    // guns sit low and wide so they frame the view instead of filling it
-    m.group.position.set(s * 0.36, kind === 'ball' ? -0.2 : -0.16, kind === 'ball' ? 0.1 : -0.05);
+  // a single gun, centred below the eye line (the player prefers one barrel to the twin mount)
+  {
+    const m = buildM2({ ringSight: false, belt: true, beltSide: 1 });
+    m.group.position.set(0, kind === 'ball' ? -0.22 : -0.19, kind === 'ball' ? 0.1 : -0.05);
     g.add(m.group);
     guns.push(m);
   }

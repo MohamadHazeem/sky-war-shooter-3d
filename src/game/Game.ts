@@ -9,7 +9,7 @@ import { GunnerController } from './GunnerController';
 import { PilotController } from './PilotController';
 import { PhotoMode } from './PhotoMode';
 import { CAMPAIGN, Mission, Round, survivalMission, SpawnFrom, Wave } from './Missions';
-import { STATIONS } from '../world/B17Layout';
+import { STATIONS, STATION_ORDER, StationId } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
 import { DistantBattle } from '../audio/DistantBattle';
 import { INTERPHONE_LEAD_S } from '../audio/Interphone';
@@ -73,6 +73,9 @@ export class Game {
   private bailCue = 0;    // crew chutes released so far
   private score = 0;
   private hudAcc = 0;
+  private threats: Partial<Record<StationId, number>> = {};
+  private idleSeatT = 0;
+  private lastSeatTip = -99;
   private hitMarkerT = 0;
   private killMarkerT = 0;
   private damageT = 0;
@@ -1005,7 +1008,17 @@ export class Game {
       const zones: Record<string, number> = {};
       for (const z of w.playerBomber!.zones) zones[z.name] = Math.max(0, z.hp) / z.maxHp;
       const crew = w.crewWounded ? `Gunner wounded (${w.crewWounded}/4)` : '';
-      this.ui.updateGunnerHud({ station: this.gunner.station, ammo: s.ammo, heat: s.heat, overheated: s.overheated, reloading: s.reload, zones, crew, wounded: w.crew.wounded });
+      // seat finder: which gun positions have fighters in their field of fire
+      this.gunner.threatsByStation(this.threats);
+      let best: StationId | null = null, bn = 0;
+      for (const id of STATION_ORDER) { const n = this.threats[id] ?? 0; if (n > bn) { bn = n; best = id; } }
+      const here = this.threats[this.gunner.station] ?? 0;
+      this.idleSeatT = here === 0 && bn > 0 ? this.idleSeatT + 0.08 : 0;
+      if (best && this.idleSeatT > 2.5 && w.time - this.lastSeatTip > 7) {
+        this.lastSeatTip = w.time;
+        this.ui.tip(`${bn} fighter${bn > 1 ? 's' : ''} in the ${STATIONS[best].label.toUpperCase()} arc — press <kbd>${STATIONS[best].key}</kbd>`, 2600);
+      }
+      this.ui.updateGunnerHud({ station: this.gunner.station, threats: this.threats, best, ammo: s.ammo, heat: s.heat, overheated: s.overheated, reloading: s.reload, zones, crew, wounded: w.crew.wounded });
     } else if (w.playerFighter) {
       const f = w.playerFighter;
       const zones: Record<string, number> = {};
