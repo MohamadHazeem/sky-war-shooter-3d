@@ -43,6 +43,10 @@ export class Sound {
   private listenerPos = new THREE.Vector3();
   private b17: { gain: GainNode; filter: BiquadFilterNode; srcs: AudioBufferSourceNode[] } | null = null;
   private wind: { gain: GainNode; filter: BiquadFilterNode; flutter: GainNode } | null = null;
+  // Gust stage (see updateWind): its own level and filter, so it never fights the per-frame wind setters
+  private gust: { gain: GainNode; filter: BiquadFilterNode; walkG: number; walkF: number } | null = null;
+  private windSpeed = 0;   // player airspeed (m/s), scales gust strength in the fighter
+  private windCut = 800;   // base wind-filter cutoff that the gust filter is relative to
   private voices: Voice[] = [];
   private playerEngine: { src: AudioBufferSourceNode; gain: GainNode; filter: BiquadFilterNode } | null = null;
   private radioBed: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
@@ -377,14 +381,18 @@ export class Sound {
     // Slipstream wind with gusts (louder through the open waist windows)
     const ws = this.loopSrc(this.noiseLoop(5, 'pink'));
     const wf = ctx.createBiquadFilter(); wf.type = 'lowpass'; wf.frequency.value = 900; wf.Q.value = 0.5;
+    // Gust stage between the base shaping and the level: swept by updateWind
+    const gf = ctx.createBiquadFilter(); gf.type = 'lowpass'; gf.frequency.value = 2000; gf.Q.value = 0.5;
+    const gg = ctx.createGain(); gg.gain.value = 1;
     const flutter = ctx.createGain(); flutter.gain.value = 1;
     const lfo = ctx.createOscillator(); lfo.frequency.value = 0.31;
     const lfoG = ctx.createGain(); lfoG.gain.value = 0.25;
     lfo.connect(lfoG).connect(flutter.gain); lfo.start();
     const wg = ctx.createGain(); wg.gain.value = 0;
-    ws.connect(wf).connect(flutter).connect(wg).connect(this.amb);
+    ws.connect(wf).connect(gf).connect(flutter).connect(gg).connect(wg).connect(this.amb);
     this.windSrc = ws;
     this.wind = { gain: wg, filter: wf, flutter };
+    this.gust = { gain: gg, filter: gf, walkG: 0, walkF: 0 };
     // B-17 interior: four Cyclones, each slightly off-speed so they beat ("wow-wow")
     const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 520; filter.Q.value = 0.8;
     const gain = ctx.createGain(); gain.gain.value = 0;
@@ -429,7 +437,8 @@ export class Sound {
     this.b17?.gain.gain.setTargetAtTime(mode === 'bomber' ? 0.62 : mode === 'menu' ? 0.16 : 0.0, t, 0.6);
     this.b17?.filter.frequency.setTargetAtTime(this.b17Sampled ? (mode === 'bomber' ? 2400 : 900) : mode === 'bomber' ? 520 : 300, t, 0.3);
     this.wind?.gain.gain.setTargetAtTime(mode === 'menu' ? 0.1 : mode === 'bomber' ? 0.3 : 0.18, t, 0.5);
-    this.wind?.filter.frequency.setTargetAtTime(mode === 'bomber' ? 1400 : 800, t, 0.5);
+    this.windCut = mode === 'bomber' ? 1400 : 800;
+    this.wind?.filter.frequency.setTargetAtTime(this.windCut, t, 0.5);
     this.revInSend.gain.setTargetAtTime(mode === 'bomber' ? 0.55 : 0.0, t, 0.2);
     if (mode === 'fighter') this.ensurePlayerEngine();
     else if (this.playerEngine) this.playerEngine.gain.gain.setTargetAtTime(0, t, 0.3);
@@ -454,7 +463,28 @@ export class Sound {
     this.playerEngine.filter.frequency.setTargetAtTime(380 + throttle * 1100, t, 0.1);
     this.playerEngine.gain.gain.setTargetAtTime((0.26 + throttle * 0.2) * this.merlinGain, t, 0.1);
     this.wind?.gain.gain.setTargetAtTime(0.05 + speed / 800, t, 0.2);
-    this.wind?.filter.frequency.setTargetAtTime(350 + speed * 7, t, 0.2);
+    this.windSpeed = speed;
+    this.windCut = 350 + speed * 7;
+    this.wind?.filter.frequency.setTargetAtTime(this.windCut, t, 0.2);
+  }
+
+  // Wind gusts: two slow mean-reverting random walks. One swells the wind level and
+  // the other sweeps the gust filter, which only muffles the lulls (its cutoff sits above
+  // the base wind filter), so gusts stay full and lulls go dull. Strength scales with
+  // airspeed in the P-51 and stays subtle inside the bomber.
+  updateWind(dt: number) {
+    if (!this.ctx || !this.gust) return;
+    const h = Math.min(dt, 0.1); // clamp so a stalled tab cannot jump the walks
+    const fighter = this.mode === 'fighter';
+    const speedN = fighter ? THREE.MathUtils.clamp((this.windSpeed - 60) / 90, 0, 1) : 0;
+    const s = fighter ? 0.35 + 0.65 * speedN : 0.3;
+    const g = this.gust;
+    const sig = (0.45 + 0.35 * s) * Math.sqrt(3 * h); // uniform rand() has variance 1/3
+    g.walkG = THREE.MathUtils.clamp(g.walkG - 0.35 * g.walkG * h + rand() * sig, -1, 1);
+    g.walkF = THREE.MathUtils.clamp(g.walkF - 0.35 * g.walkF * h + rand() * sig, -1, 1);
+    const t = this.ctx.currentTime;
+    g.gain.gain.setTargetAtTime(1 + (0.15 + 0.45 * s) * g.walkG, t, 0.3);
+    g.filter.frequency.setTargetAtTime(this.windCut * Math.pow(2, 0.7 + g.walkF * (0.25 + 0.75 * s)), t, 0.3);
   }
 
   setListener(cam: THREE.Camera) {

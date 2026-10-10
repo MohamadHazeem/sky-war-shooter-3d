@@ -639,6 +639,7 @@ export class Game {
     this.autoQuality(dt);
     this.floatingOrigin();
     sound.setListener(this.engine.camera);
+    sound.updateWind(dt);
     w.listener = this.engine.camera.position;
     sound.updateFighterVoices(w.fighterSoundInfo());
     // screen effects
