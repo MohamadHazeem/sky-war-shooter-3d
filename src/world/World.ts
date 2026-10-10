@@ -15,6 +15,7 @@ import { updateExhausts } from './Exhaust';
 import { WingVapor } from './WingVapor';
 import { makeDropTank } from './Props';
 import { startBomberDeath, updateBomberDeath, clearBomberDeath } from './BomberDeath';
+import { setup as setupDamageLook, update as updateDamageLook } from './DamageLook';
 
 export const ENEMY_SCALE = 1.7;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 260; // ~20 hits from a .50 to wear one down
@@ -270,6 +271,9 @@ export class World implements WorldView {
     f.setScale(ENEMY_SCALE);
     f.structure = f.maxStructure = ENEMY_STRUCTURE * (0.85 + 0.15 * this.difficulty) * variant.structure;
     f.label = variant.label;
+    f.structure = f.maxStructure = ENEMY_STRUCTURE * (0.85 + 0.15 * this.difficulty);
+    f.label = 'Fw 190';
+    setupDamageLook(f); // after tank/rockets so their materials are per-instance too
     this.add(f);
     this.pilots.set(f, new EnemyPilot(f, attack, skill * this.difficulty));
     this.stats.enemiesSpawned++;
@@ -487,6 +491,7 @@ export class World implements WorldView {
       const p = this.pilots.get(a as Fighter);
       if (p && a.alive) p.update(dt, this);
       a.update(dt, this.time);
+      if (a instanceof Fighter) updateDamageLook(a, this.time);
       if (a.hitFlash > 0) a.hitFlash -= dt;
       if (a instanceof Fighter && a.alive && !a.isPlayer && this.listener) {
         // close fly-by: roar of the engine and a buffet
