@@ -76,6 +76,7 @@ Most features need one line in one of these places:
 | Show a value in the HUD panels | `GameHud.updateHud()`. |
 | Add something to the title screen | `Game.startMenu()`, next to `coop/onboarding/service/skills.onTitle`. |
 | Change the menu background camera | `MenuScene.update()`. |
+| Show a screen with a 3D scene of its own | Take over `engine.onFrame` (as `Theatre.ts` does) and set `engine.renderOverride` to draw it with `engine.renderStudio(scene, camera, dt)`: the world's MSAA target and post stack. Copy the world's light counts so the aircraft materials keep their compiled programs, and compile anything new with `engine.compileStudio()` before showing it (`AircraftGallery.ts`). Title-menu screens of this kind hook in through `TitleExtras.ts`. |
 
 A bigger system belongs in its own class that takes the `Game` (or a small host interface) in its
 constructor, like `MidRound`, `SpecialEvents`, `SkillRuntime` or `CoopSession`. Create it in the
