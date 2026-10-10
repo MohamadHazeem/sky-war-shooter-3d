@@ -19,6 +19,7 @@ import * as ThreatRing from '../ui/ThreatRing';
 import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
 import { CombatTally } from './CombatTally';
+import { achievements } from './Achievements';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -163,7 +164,7 @@ export class Game {
         sound.speak(text, Math.max(0, voice));
       }, INTERPHONE_LEAD_S * 1000);
     };
-    w.events.kill = (victim, byPlayer) => {
+    w.events.kill = (victim, byPlayer, cause) => {
       if (victim.team === 'axis') {
         if (byPlayer) {
           // paid at the multiplier held going in; the kill then builds the next step
@@ -171,6 +172,9 @@ export class Game {
           this.score += pts;
           this.combo.onKill();
           this.popups.push({ pos: victim.pos.clone(), text: `+${pts}  KILL`, life: 1.6 });
+          achievements.onConfirmedKill(w.stats.kills, cause ?? '');
+          this.score += Math.round(100 * (1 + this.survivalWave * 0.1));
+          this.popups.push({ pos: victim.pos.clone(), text: '+100  KILL', life: 1.6 });
           sound.confirm('kill_confirm');
           this.ui.feed(`${victim.label} destroyed — confirmed`, 'mine');
           // streaks: kills in quick succession
@@ -208,6 +212,7 @@ export class Game {
     };
     w.events.playerHit = (zone, heavy) => {
       sound.airframeHit(heavy);
+      achievements.onPlayerHit();
       this.damageT = Math.min(1, this.damageT + (heavy ? 0.6 : 0.25));
       if (heavy && this.mission?.role === 'gunner') this.cracks.hit();
       if (zone === 'gunner') {
@@ -341,6 +346,7 @@ export class Game {
     this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false; this.trauma = 0;
     this.combo.reset();
     this.tally.reset();
+    achievements.beginMission(m);
     this.world.spawnFormation(m.bombers, 1);
     const pb = this.world.playerBomber!;
     if (m.role === 'pilot') for (const b of this.world.bombers()) for (const z of b.zones) { z.hp *= 2.2; z.maxHp *= 2.2; }
@@ -445,6 +451,7 @@ export class Game {
         this.survivalBreak -= dt;
         if (this.survivalBreak <= 0) {
           this.survivalWave++;
+          achievements.onSurvivalWave(this.survivalWave);
           const n = Math.min(14, 2 + Math.floor(this.survivalWave * 1.4));
           const skill = Math.min(1.5, 0.75 + this.survivalWave * 0.06);
           const from: SpawnFrom = this.survivalWave % 3 === 0 ? 'mixed' : (['front', 'rear', 'left', 'right', 'high'] as SpawnFrom[])[this.survivalWave % 5];
@@ -620,6 +627,7 @@ export class Game {
     sound.music.stinger(r.success);
     sound.setMode('menu');
     const acc = w.stats.shots > 0 ? w.stats.hits / w.stats.shots : 0;
+    achievements.endMission(r.success, w.stats.shots, w.stats.hits);
     const survivors = w.bombers().filter((b) => b.alive).length;
     const survival = m.duration === Infinity;
     if (r.success) this.score += 500 + survivors * 50 + Math.round(acc * 300);
