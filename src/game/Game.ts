@@ -191,7 +191,7 @@ export class Game {
   private lightningT = 8;
   private flashT = 0;
   private storm(dt: number) {
-    if (this.mood !== 'storm' || this.menuMode) { if (this.flashT > 0) { this.flashT = 0; this.engine.post.flash = 0; } return; }
+    if (this.mood !== 'storm' || this.menuMode) { if (this.flashT > 0) { this.flashT = 0; this.feel.ambientFlash = 0; } return; }
     this.lightningT -= dt;
     if (this.lightningT <= 0) {
       this.lightningT = 5 + Math.random() * 9;
@@ -203,8 +203,8 @@ export class Game {
       this.flashT -= dt;
       // double-stroke flicker
       const k = Math.max(0, this.flashT) / 0.22;
-      this.engine.post.flash = (k > 0.6 || (k > 0.2 && k < 0.4) ? 0.55 : 0.08) * k;
-    }
+      this.feel.ambientFlash = (k > 0.6 || (k > 0.2 && k < 0.4) ? 0.55 : 0.08) * k;
+    } else this.feel.ambientFlash = 0;
   }
 
   applySettings() {

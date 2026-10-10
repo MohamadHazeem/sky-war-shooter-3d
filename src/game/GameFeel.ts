@@ -52,6 +52,7 @@ const CHAIN_LABEL = ['', '', 'DOUBLE KILL', 'TRIPLE KILL', 'QUAD KILL', 'RAMPAGE
 const _p = new THREE.Vector3();
 
 export class GameFeel {
+  ambientFlash = 0;   // set by the weather (lightning)
   private clock = 0;                 // real seconds while active
   private appliedScale = 1;          // engine.timeScale the next frame's dt was scaled by
   private hitstop = 0;               // real seconds of freeze left
@@ -206,7 +207,8 @@ export class GameFeel {
 
   private applyOutputs() {
     const post = this.engine.post;
-    post.flash = this.flash < 0.004 ? 0 : this.flash;
+    const f = Math.max(this.flash, this.ambientFlash); // lightning (Game.storm) shares the flash
+    post.flash = f < 0.004 ? 0 : f;
     post.zoomPulse = this.pulse < 0.0005 ? 0 : this.pulse;
     this.world.ballistics.playerTracerHeat = this.tracerHeat < 0.01 ? 0 : this.tracerHeat;
     const cam = this.engine.camera;
