@@ -33,6 +33,11 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'sharpshooter', name: 'Sharpshooter', desc: `Finish a mission with over ${SHARP_ACCURACY * 100}% accuracy (${SHARP_MIN_SHOTS}+ rounds fired).`, rarity: 'uncommon' },
   { id: 'wingClipper', name: 'Wing Clipper', desc: 'Shoot a wing off an enemy fighter.', rarity: 'uncommon' },
   { id: 'survivor', name: 'Survivor', desc: `Reach survival round ${SURVIVOR_WAVE}.`, rarity: 'uncommon' },
+  // ---- the named Experten (Nemesis.ts, unlocked by NemesisRuntime) ----
+  { id: 'expKill', name: 'Scratch One Experte', desc: 'Shoot down a named Luftwaffe Experte.', rarity: 'uncommon' },
+  { id: 'expGrudge', name: 'Settled Score', desc: 'Shoot down an Experte who hurt your crew or got away from you before.', rarity: 'rare' },
+  { id: 'expWanted', name: 'Most Wanted', desc: 'Shoot down the Luftwaffe\'s most wanted Experte and collect the bounty.', rarity: 'epic' },
+  { id: 'expFive', name: 'Knight Hunter', desc: 'Shoot down five named Experten.', rarity: 'epic' },
   // ---- lifetime: kills ----
   { id: 'kills25', name: 'Bandit Hunter', desc: 'Confirm 25 kills.', rarity: 'common', goal: 25, stat: (c) => c.kills },
   { id: 'kills100', name: 'Centurion', desc: 'Confirm 100 kills.', rarity: 'uncommon', goal: 100, stat: (c) => c.kills },

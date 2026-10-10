@@ -19,6 +19,8 @@ import {
 } from '../game/CampaignState';
 import { isRaidId, raidEnemyType, sideRaidById, type SideRaid } from '../game/SideRaids';
 import { tx, isAr } from '../i18n';
+import { loadNemesis, mostWanted, reportLines, aceName, bounty, MOST_WANTED_MULT } from '../game/Nemesis';
+import { showNemesisScreen } from './NemesisScreen';
 
 export { prepareCampaignMission, campaignMeritMult } from '../game/CampaignState';
 
@@ -74,6 +76,12 @@ function ensureStyle() {
 .cm-intel p.up::before { content: '▲'; font-size: 9px; top: 3px; }
 .cm-intel p.down::before { content: '▼'; font-size: 9px; top: 3px; }
 .cm-intel .t { font-size: 15px; letter-spacing: 1px; margin-bottom: 8px; }
+.cm-nem { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.cm-nem-t { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #e8b923; margin-bottom: 6px; }
+.cm-intel .cm-nem p::before { content: '✠'; font-size: 10px; top: 2px; color: #e8b923; }
+.cm-intel .cm-nem p.mw { color: #ff9c6e; }
+.cm-nem .btn { padding: 6px 12px; font-size: 13px; margin-top: 4px; }
+html[lang=ar] .cm-nem-t { letter-spacing: 0; }
 .cm-intel .t.ok { color: var(--good); } .cm-intel .t.fail { color: var(--bad); }
 .cm-ops { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 2fr); gap: 16px; margin-top: 16px; align-items: stretch; }
 .cm-op-card { position: relative; text-align: left; background: rgba(255,255,255,0.03); border: 1px solid var(--line); color: var(--ink); padding: 14px 16px; font-family: inherit; display: flex; flex-direction: column; gap: 4px; transition: border-color 0.15s, background 0.15s; }
@@ -286,8 +294,21 @@ function gaugesHtml(d: CampaignData): string {
   </div>`;
 }
 
+// The named Experten in the intelligence report: what they did on the last campaign operation,
+// the most wanted man and his bounty, and the way into their dossiers (ui/NemesisScreen.ts)
+function experteIntel(): string {
+  let st;
+  try { st = loadNemesis(); } catch { return ''; }
+  const w = mostWanted(st);
+  const lines = st.last?.campaign ? st.last.items.flatMap(reportLines) : [];
+  return `<div class="cm-nem"><div class="cm-nem-t">${tx('Luftwaffe Experten')}</div>
+    ${lines.map((l) => `<p>${esc(l)}</p>`).join('')}
+    ${w ? `<p class="mw">${esc(tx('Most wanted: {name} · {n} victories · bounty {b} merit', { name: aceName(w), n: w.victories, b: (bounty(w) * MOST_WANTED_MULT).toLocaleString('en-US') }))}</p>` : ''}
+    <button class="btn ghost" data-nem>${tx('Experten dossiers')}</button></div>`;
+}
+
 function intelHtml(r: IntelReport | null): string {
-  if (!r) return `<div class="cm-card cm-intel"><h3>${tx('Intelligence report')}</h3><p>${tx('No operations flown yet. Group expects heavy fighter opposition over the German coast.')}</p></div>`;
+  if (!r) return `<div class="cm-card cm-intel"><h3>${tx('Intelligence report')}</h3><p>${tx('No operations flown yet. Group expects heavy fighter opposition over the German coast.')}</p>${experteIntel()}</div>`;
   const cls = (l: IntelReport['lines'][number]) => {
     if (l.from === undefined || l.to === undefined || l.from === l.to) return '';
     const good = l.gauge === 'luftwaffe' ? l.to < l.from : l.to > l.from;
@@ -295,7 +316,7 @@ function intelHtml(r: IntelReport | null): string {
   };
   return `<div class="cm-card cm-intel"><h3>${tx('Intelligence report')}</h3>
     <div class="t ${r.success ? 'ok' : 'fail'}">${esc(tx(r.title))}</div>
-    ${r.lines.map((l) => `<p class="${cls(l)}"><span style="color:var(--ink-dim)">${esc(tx(l.text))}</span></p>`).join('')}</div>`;
+    ${r.lines.map((l) => `<p class="${cls(l)}"><span style="color:var(--ink-dim)">${esc(tx(l.text))}</span></p>`).join('')}${experteIntel()}</div>`;
 }
 
 function roleLabel(m: Mission) {
@@ -440,6 +461,7 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
     root.querySelectorAll<SVGPathElement>('[data-route]').forEach((p) => p.setAttribute('opacity', p.dataset.route === c.dataset.card ? '1' : '0.45'));
   }));
   root.querySelector('[data-back]')!.addEventListener('click', onBack);
+  root.querySelector('[data-nem]')?.addEventListener('click', () => showNemesisScreen({ back: () => showCampaignMap(progress, onPick, onBack) }));
   root.querySelectorAll('[data-summary]').forEach((b) => b.addEventListener('click', () => showCampaignSummary(progress, onPick, onBack)));
   root.querySelector<HTMLButtonElement>('[data-newtour]')?.addEventListener('click', (e) => {
     const b = e.currentTarget as HTMLButtonElement;

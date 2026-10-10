@@ -9,6 +9,10 @@ import { Aircraft, Fighter } from '../world/Aircraft';
 import { ENEMY_VARIANTS, EnemyType } from '../world/EnemyTypes';
 import { SpecialHud, PanelView, TagSpec } from '../ui/SpecialHud';
 import { sound } from '../audio/Sound';
+import { paintNose } from '../world/AceLook';
+import { NemesisRuntime, setNemesisRuntime, type NemLive } from './NemesisRuntime';
+import { ACE_RANKS, aceName, fullRankName, traitLabel } from './Nemesis';
+import { tx } from '../i18n';
 
 // Special events inside normal rounds, on top of MidRound's objectives and random events.
 // Rare and memorable: at most one per round, only from round 2 of a mission (or any round of
@@ -21,6 +25,9 @@ import { sound } from '../audio/Sound';
 //   barrage    3–4 heavies stand off at ~1 km lobbing Wgr. 21 salvos until they are shot down
 // This module also owns the enemy tactics layer (world/Tactics.ts): Game hands it every group
 // the director spawns (onGroup) and calls update() once per frame.
+// Nemesis (NemesisRuntime.ts): an ace squadron is led by one of the persistent named Experten
+// when one is available (his trait flies him, his outcome goes into his dossier), and the
+// nemesis runtime books extra ace squadrons into some rounds (newRound -> forced).
 //
 // Hooked into Game with: import, a field + construction, one onGroup() call in director() after
 // spawnWave(), one update() call per frame next to MidRound's. Score is added through Game's
@@ -88,6 +95,8 @@ class AceSquadron extends Special {
   readonly id = 'ace';
   ace: Ace = ACES[Math.floor(Math.random() * ACES.length)];
   leader!: Fighter;
+  nem: NemLive | null = null;     // a roster Experte leads this squadron
+  private c: SpecialEvents | null = null;
   private tauntAt = 4;
   private eye: THREE.Vector3 | null = null;
   private taunted = false;
@@ -96,14 +105,25 @@ class AceSquadron extends Special {
 
   start(c: SpecialEvents) {
     const w = c.world;
-    const type: EnemyType = Math.random() < 0.6 ? 'fw190' : 'bf109';
-    const n = Math.random() < 0.5 ? 3 : 4;
+    this.c = c;
+    const pro = c.nemesis.claim();
+    if (pro) this.ace = { rank: ACE_RANKS[pro.rank].name, short: ACE_RANKS[pro.rank].short, name: `${pro.first} ${pro.last}`, last: pro.last, victories: pro.victories };
+    const type: EnemyType = pro ? pro.type : Math.random() < 0.6 ? 'fw190' : 'bf109';
+    // jets and Zerstörers fly in pairs; piston Experten bring a Schwarm
+    const n = pro ? (pro.type === 'me262' || pro.type === 'me410' ? 2 : Math.random() < 0.5 ? 2 : 3) : Math.random() < 0.5 ? 3 : 4;
     const skill = Math.min(1.9, 1.55 + 0.06 * c.round);
     this.fighters = c.tactics.spawn(type, n, skill);
     this.leader = this.fighters[0];
-    for (const f of this.fighters) { toughen(f, 2); c.yellowNose(f); f.label = `${ENEMY_VARIANTS[type].label} (yellow nose)`; }
+    for (const f of this.fighters) { toughen(f, 2); if (!pro) c.yellowNose(f); f.label = `${ENEMY_VARIANTS[type].label} (${pro ? 'Experte' : 'yellow nose'})`; }
     (this.leader as any).ace = true;   // kill-cam / big slow-motion beat in Game's kill handler
     this.leader.label = `${this.ace.short} ${this.ace.last}`;
+    if (pro) {
+      this.nem = c.nemesis.engage(pro, this.fighters);
+      this.view.kicker = tx('EXPERTE · {n} VICTORIES', { n: pro.victories });
+      this.view.title = fullRankName(pro);
+      this.view.desc = traitLabel(pro.trait);
+      return;
+    }
     const lp = w.enemyPilot(this.leader);
     if (lp) lp.skill = Math.max(lp.skill, 1.75);
     // the entrance: a schwarm head-on pass out of twelve o'clock high
@@ -115,9 +135,15 @@ class AceSquadron extends Special {
     this.view.title = `${this.ace.rank} ${this.ace.name}`;
   }
 
-  update(_dt: number, c: SpecialEvents) {
+  update(dt: number, c: SpecialEvents) {
     const w = c.world, L = this.leader;
     this.eye = w.player ? w.player.pos : null;
+    if (this.nem) {
+      c.nemesis.fly(this.nem, dt);
+      if (!L.alive) { c.aceDown(this); return; }
+      if (L.remove) { this.state = 'lost'; c.nemesis.leave(this.nem, 'escaped'); }
+      return;
+    }
     if (!this.taunted && this.t > this.tauntAt) {
       this.taunted = true;
       // German pilot on the radio: subtitle only
@@ -138,13 +164,19 @@ class AceSquadron extends Special {
     if (this.state !== 'active') return;
     this.state = 'timeout';
     c.withdraw(this.fighters);
+    if (this.nem) { if (this.leader.alive) c.nemesis.leave(this.nem, 'timeout'); return; }
     if (this.leader.alive) c.world.callout('sp_aceaway', 'Tail', `${this.ace.last} is breaking off — the yellow noses are heading home.`, 0, 3);
+  }
+
+  cancel() {
+    if (this.state === 'active' && this.nem && this.c) this.c.nemesis.leave(this.nem, 'cancel');
+    super.cancel();
   }
 
   panel() {
     this.view.bar = this.leader.alive ? health(this.leader) : 0;
     const n = this.alive() - (this.leader.alive ? 1 : 0);
-    this.view.barText = n > 0 ? `+${n} WINGMEN` : 'ALONE';
+    this.view.barText = n > 0 ? tx('+{n} WINGMEN', { n }) : tx('ALONE');
     this.view.timeFrac = -1;
     return this.view;
   }
@@ -159,7 +191,7 @@ class AceSquadron extends Special {
       const t = out[n++];
       t.a = f; t.health = health(f);
       t.ace = f === this.leader;
-      t.label = f === this.leader ? `${this.ace.short.toUpperCase()} ${this.ace.last.toUpperCase()} · ${this.ace.victories}` : 'ACE';
+      t.label = f === this.leader ? (this.nem ? `${aceName(this.nem.ace).toUpperCase()} · ${this.nem.ace.victories}` : `${this.ace.short.toUpperCase()} ${this.ace.last.toUpperCase()} · ${this.ace.victories}`) : tx('ACE');
     }
     return n;
   }
@@ -291,6 +323,7 @@ const WEIGHT: Record<SpecialId, number> = { ace: 0.4, zerstorer: 0.3, barrage: 0
 // ---------------------------------------------------------------- scheduler
 export class SpecialEvents {
   readonly tactics: Tactics;
+  readonly nemesis: NemesisRuntime;   // the persistent named Experten (Nemesis.ts)
   readonly hud = new SpecialHud();
   active: Special | null = null;
   log: string[] = [];
@@ -305,14 +338,14 @@ export class SpecialEvents {
   private roundDur = 120;        // this round's spawning time (cached: roundDef allocates)
   private hadLast = false;
   private recent: SpecialId[] = [];
+  private forced: SpecialId | null = null;   // this round's slot is a nemesis appearance
   private tagList: TagSpec[] = Array.from({ length: 8 }, () => ({ a: null as unknown as Aircraft, label: '', health: 1 }));
-  private noseGeo: THREE.BufferGeometry | null = null;
-  private noseMat: THREE.Material | null = null;
-  private noseFit = new Map<string, { pos: THREE.Vector3; r: number; l: number }>();
 
   constructor(readonly game: Game, readonly engine: Engine, readonly ui: UI) {
     this.tactics = new Tactics(game.world);
     this.tactics.hint = (html) => { if (this.game.state === 'playing') this.ui.tip(html, 3400); };
+    this.nemesis = new NemesisRuntime(this);
+    setNemesisRuntime(this.nemesis);
   }
 
   get world() { return this.game.world; }
@@ -356,7 +389,7 @@ export class SpecialEvents {
       if (e.state !== 'active') this.finish(e);
     } else if (this.slotT >= 0 && this.roundT >= Math.max(SPECIAL_QUIET_START, this.slotT)) {
       if (this.roundLeft < 25) this.slotT = -1;
-      else if (!this.bossUp()) { this.slotT = -1; this.start(this.pick()); }
+      else if (!this.bossUp()) { this.slotT = -1; this.start(this.forced ?? this.pick()); this.forced = null; }
     }
     this.draw();
   }
@@ -366,7 +399,8 @@ export class SpecialEvents {
     this.tactics.reset();
     this.mission = m;
     this.roundIdx = -1; this.roundT0 = -1; this.slotT = -1;
-    this.hadLast = false; this.recent = []; this.log = []; this.bonusMerit = 0;
+    this.hadLast = false; this.recent = []; this.log = []; this.bonusMerit = 0; this.forced = null;
+    this.nemesis.resetMission(m as Game['mission']);
   }
 
   private newRound(idx: number, t0: number) {
@@ -375,14 +409,20 @@ export class SpecialEvents {
     this.roundDur = m.round ? roundDef(m, idx).duration : (Number.isFinite(m.duration) ? m.duration : 120);
     this.tactics.groupCd = Math.min(this.tactics.groupCd, 12);
     this.slotT = -1;
+    this.forced = null;
     if (!this.eligible(idx)) { this.hadLast = false; return; }
     const r = roundDef(m, idx);
     const dur = Number.isFinite(r.duration) ? r.duration : 100;
-    if (Math.random() < (this.hadLast ? SPECIAL_CHANCE_AFTER : SPECIAL_CHANCE) && dur - 30 > SPECIAL_QUIET_START) {
+    if (dur - 30 > SPECIAL_QUIET_START && this.nemesis.wantsRound(idx)) {
+      // a named Experte turns up this round (an ace squadron led by him)
+      this.slotT = rnd(SPECIAL_QUIET_START, Math.max(SPECIAL_QUIET_START + 1, dur - 35));
+      this.forced = 'ace';
+      this.hadLast = true;
+    } else if (Math.random() < (this.hadLast ? SPECIAL_CHANCE_AFTER : SPECIAL_CHANCE) && dur - 30 > SPECIAL_QUIET_START) {
       this.slotT = rnd(SPECIAL_QUIET_START, Math.max(SPECIAL_QUIET_START + 1, dur - 35));
       this.hadLast = true;
     } else this.hadLast = false;
-    this.log.push(`round ${idx + 1}: special ${this.slotT >= 0 ? 'at ' + this.slotT.toFixed(0) + 's' : 'none'}`);
+    this.log.push(`round ${idx + 1}: special ${this.slotT >= 0 ? 'at ' + this.slotT.toFixed(0) + 's' + (this.forced ? ' (Experte)' : '') : 'none'}`);
   }
 
   // round 2 onwards, or any round from mission 3; never a boss round
@@ -450,7 +490,8 @@ export class SpecialEvents {
     const w = this.world, L = e.leader, a = e.ace;
     const credited = w.time - L.lastPlayerHit < 0.8 || L.playerDamage >= L.damageTaken * 0.2;
     e.state = credited ? 'won' : 'lost';
-    if (credited) {
+    if (e.nem) this.nemesis.down(e.nem, credited);
+    else if (credited) {
       this.reward(round5(150 * (1 + 0.25 * Math.min(4, this.round))), 2500, `${a.short} ${a.last} shot down`);
       this.ui.banner(`${a.rank.toUpperCase()} ${a.name.toUpperCase()} · ${a.victories} VICTORIES`, 'Ace down', 4200);
       w.callout('sp_acedown', 'Pilot', `You got ${a.last}! The whole group saw him go down!`, 0, 3);
@@ -462,7 +503,7 @@ export class SpecialEvents {
     const wings = e.fighters.filter((f) => f !== L && f.alive);
     if (wings.length && Math.random() < 0.5) {
       this.withdraw(wings);
-      w.callout('sp_acewings', 'Navigator', 'The yellow noses are breaking off — they\'ve lost their leader!', 0, 2);
+      if (!e.nem) w.callout('sp_acewings', 'Navigator', 'The yellow noses are breaking off — they\'ve lost their leader!', 0, 2);
     }
   }
 
@@ -495,38 +536,8 @@ export class SpecialEvents {
   }
 
   // JG 2 / JG 26 style yellow cowling ring, fitted behind the propeller of this airframe
-  // (size from the model's own length, so it suits the Fw 190 and Bf 109 models alike)
-  yellowNose(f: Fighter) {
-    if (!this.noseGeo) {
-      this.noseGeo = new THREE.CylinderGeometry(1, 1.08, 1, 24, 1, true).rotateX(Math.PI / 2);
-      this.noseMat = new THREE.MeshStandardMaterial({ color: 0xf2c418, roughness: 0.45, metalness: 0.15, side: THREE.DoubleSide });
-    }
-    let fit = this.noseFit.get(f.kind);
-    if (!fit) {
-      const model = f.model;
-      f.root.updateMatrixWorld(true);
-      const inv = new THREE.Matrix4().copy(model.matrixWorld).invert();
-      const box = new THREE.Box3(), mb = new THREE.Box3(), m4 = new THREE.Matrix4();
-      model.traverse((o) => {
-        const mesh = o as THREE.Mesh;
-        if (!mesh.isMesh || !mesh.geometry || mesh.name === 'yellowNose') return;
-        if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
-        mb.copy(mesh.geometry.boundingBox!).applyMatrix4(m4.multiplyMatrices(inv, mesh.matrixWorld));
-        box.union(mb);
-      });
-      const len = Math.max(1e-3, box.max.z - box.min.z);
-      const axis = new THREE.Vector3(0, (box.min.y + box.max.y) * 0.5, box.max.z - 0.05 * len);
-      const prop = f.props[0]?.node;
-      if (prop) { prop.getWorldPosition(axis); axis.applyMatrix4(inv); }
-      fit = { pos: axis.clone().setZ(axis.z - 0.1 * len), r: 0.069 * len, l: 0.11 * len };
-      this.noseFit.set(f.kind, fit);
-    }
-    const ring = new THREE.Mesh(this.noseGeo, this.noseMat!);
-    ring.position.copy(fit.pos);
-    ring.scale.set(fit.r, fit.r, fit.l);
-    ring.name = 'yellowNose';
-    f.model.add(ring);
-  }
+  // (world/AceLook.ts; size from the model's own length, so it suits every model)
+  yellowNose(f: Fighter) { paintNose(f, 0xf2c418); }
 
   // ---------------- dev ----------------
   // sws.special(name): a special event ('ace' | 'zerstorer' | 'barrage') or a tactic

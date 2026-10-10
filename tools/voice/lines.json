@@ -1551,6 +1551,230 @@
       "text": "Flak coming up — heavy guns below us. Hold steady."
     },
     {
+      "group": "Phase 5 nemesis: named Luftwaffe Experten (NemesisRuntime.ts)"
+    },
+    {
+      "id": "nem_spot_{i}",
+      "roles": [
+        "nav",
+        "lead"
+      ],
+      "text": "Intelligence was right — that's {name}'s machine! Watch for his markings!",
+      "vars": {
+        "name": [
+          "Brückner",
+          "Dorn",
+          "Eckhardt",
+          "Faber",
+          "Gebhardt",
+          "Hollmann",
+          "Kranz",
+          "Lindner",
+          "Neumeyer",
+          "Ostermann",
+          "Pfeiffer",
+          "Reuter",
+          "Sauer",
+          "Thalberg",
+          "Vossberg",
+          "Wendt",
+          "Zeller",
+          "Kaltenbach",
+          "Riedel",
+          "Stahl",
+          "Winterfeld",
+          "Haller",
+          "Ritter",
+          "Engel"
+        ]
+      },
+      "urgent": true
+    },
+    {
+      "id": "nem_down_{i}",
+      "roles": [
+        "pilot",
+        "lead"
+      ],
+      "text": "You got {name}! That's one Experte off the board!",
+      "vars": {
+        "name": [
+          "Brückner",
+          "Dorn",
+          "Eckhardt",
+          "Faber",
+          "Gebhardt",
+          "Hollmann",
+          "Kranz",
+          "Lindner",
+          "Neumeyer",
+          "Ostermann",
+          "Pfeiffer",
+          "Reuter",
+          "Sauer",
+          "Thalberg",
+          "Vossberg",
+          "Wendt",
+          "Zeller",
+          "Kaltenbach",
+          "Riedel",
+          "Stahl",
+          "Winterfeld",
+          "Haller",
+          "Ritter",
+          "Engel"
+        ]
+      }
+    },
+    {
+      "id": "nem_back",
+      "roles": [
+        "nav",
+        "lead"
+      ],
+      "text": "Those markings again — it's the same Experte we tangled with before!"
+    },
+    {
+      "id": "nem_back_scar",
+      "roles": [
+        "tail",
+        "lead"
+      ],
+      "text": "He's back — you can still see the patches where we shot him up!"
+    },
+    {
+      "id": "nem_back_bail",
+      "roles": [
+        "pilot",
+        "lead"
+      ],
+      "text": "That's the one who bailed out on us — he's flying again!"
+    },
+    {
+      "id": "nem_escape",
+      "roles": [
+        "tail",
+        "lead"
+      ],
+      "text": "He's breaking off, trailing smoke — don't let him get away!",
+      "urgent": true
+    },
+    {
+      "id": "nem_gone",
+      "roles": [
+        "nav",
+        "lead"
+      ],
+      "text": "He got away. He'll be back — and he'll remember us."
+    },
+    {
+      "id": "nem_bail",
+      "roles": [
+        "tail",
+        "lead"
+      ],
+      "text": "He's bailed out — there's his chute! He'll fly again."
+    },
+    {
+      "id": "nem_formation",
+      "roles": [
+        "tail",
+        "lead"
+      ],
+      "text": "Somebody got the Experte! Scratch one ace!"
+    },
+    {
+      "id": "nem_hurt",
+      "role": "pilot",
+      "text": "That was the Experte! He got one of ours!",
+      "urgent": true
+    },
+    {
+      "id": "nem_fort",
+      "roles": [
+        "tail",
+        "lead"
+      ],
+      "text": "The Experte just got one of the Forts!"
+    },
+    {
+      "id": "nem_grudge",
+      "roles": [
+        "pilot",
+        "lead"
+      ],
+      "text": "He's coming straight for us — he's got a score to settle!",
+      "urgent": true
+    },
+    {
+      "id": "nem_escort",
+      "roles": [
+        "nav",
+        "lead"
+      ],
+      "text": "He's going after the Mustangs — he wants the little friends!"
+    },
+    {
+      "id": "nem_strag",
+      "roles": [
+        "nav",
+        "lead"
+      ],
+      "text": "He's going for the stragglers — the cripples are his meat!"
+    },
+    {
+      "id": "nem_tail",
+      "role": "nav",
+      "text": "He's lining up on the tail gun — watch six o'clock!",
+      "urgent": true
+    },
+    {
+      "id": "nem_sturm",
+      "roles": [
+        "tail",
+        "lead"
+      ],
+      "text": "Sturmbock! Armoured Fw 190s closing to point-blank — hit him hard!",
+      "urgent": true,
+      "say": "Sturmbock! Armoured Focke-Wulfs closing to point-blank, hit him hard!"
+    },
+    {
+      "id": "nem_headon",
+      "roles": [
+        "nav",
+        "lead"
+      ],
+      "text": "He's coming head-on, twelve o'clock high — he never turns away first!",
+      "urgent": true
+    },
+    {
+      "id": "nem_sun",
+      "roles": [
+        "top",
+        "lead"
+      ],
+      "text": "He's coming out of the sun — watch the glare!",
+      "urgent": true
+    },
+    {
+      "id": "nem_jet",
+      "roles": [
+        "tail",
+        "lead"
+      ],
+      "text": "Jet Experte! One pass and he's gone — be ready!",
+      "urgent": true
+    },
+    {
+      "id": "nem_biggun",
+      "roles": [
+        "nav",
+        "lead"
+      ],
+      "text": "That Me 410 Experte is hanging back — he'll use the big gun!",
+      "say": "That M E four-ten Experte is hanging back, he will use the big gun!"
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {

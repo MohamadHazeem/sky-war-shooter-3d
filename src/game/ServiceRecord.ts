@@ -21,6 +21,7 @@ import type { UI, DebriefData } from '../ui/UI';
 import type { Aircraft } from '../world/Aircraft';
 import { CAMPAIGN, survivalMission, type Mission } from './Missions';
 import { achievements } from './Achievements';
+import { nemesisMissionKills } from './NemesisRuntime';
 import {
   type CareerData, type Reward, RANKS, PROMOTION_REWARDS, grantReward, loadCareer, medalDef, rankFor, saveCareer, xpForMission,
 } from './Career';
@@ -174,6 +175,7 @@ export class ServiceRecord {
     if (m.role === 'gunner' && success && st.shots >= 150 && st.hits / st.shots >= 0.25) add('Gunner\'s Wings');
     if (success && m.duration !== Infinity && st.bombersLost === 0) add('Fortress Defender');
     if (b.bosses > 0) add('Giant Killer');
+    if (nemesisMissionKills() > 0) add('Experten Killer');
     return out;
   }
 

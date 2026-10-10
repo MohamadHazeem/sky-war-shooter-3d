@@ -1024,6 +1024,7 @@ export class Game {
     analytics.missionEnd(m, d);
     this.service.onDebrief(m, d, medals);
     mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers }, this.prog, this.progress, () => this.showCampaign());
+    this.specials.nemesis.onDebrief(m); // named Experten: this mission's ace outcomes (NemesisRuntime.ts)
   }
 
   get currentScore() { return this.score; }   // share stamp / analytics
