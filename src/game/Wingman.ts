@@ -101,6 +101,16 @@ export function pickBomberTarget<T extends Spot>(enemies: readonly T[], attackin
   return best;
 }
 
+// Low-level operations (StrafeOps.ts): a terrain floor instead of the cloud-deck floor, ground
+// strafing passes for order 1 (run() flies them and returns true), pick() chooses a ground
+// target when there is no bandit in front of the leader, busy() while that target lives
+export interface LowLevel {
+  floorAt(x: number, z: number, vel: THREE.Vector3): number;
+  run(p: WingmanPilot, dt: number): boolean;
+  pick(): boolean;
+  busy(): boolean;
+}
+
 // ---------- the AI pilot ----------
 
 // Flies Blue Two. An EscortPilot (so World runs it like any escort) with its own orders.
@@ -109,6 +119,7 @@ export class WingmanPilot extends EscortPilot {
   lead: Fighter | null = null;
   ordered: Fighter | null = null;      // attack: the bandit he was told to get
   raidTargets: (() => Fighter[]) | null = null;
+  low: LowLevel | null = null;
   reason = '';                         // why he picked his current target (log / tests)
   private scanT = 0;
   private aimAt = new THREE.Vector3();
@@ -205,6 +216,7 @@ export class WingmanPilot extends EscortPilot {
     }
     if (this.scanT <= 0) { this.scanT = 0.5; if (!(this.cmd === 'attack' && this.target)) this.choose(); }
     this.breakT -= dt;
+    if (this.low?.run(this, dt)) return;
     const t = this.target;
     fm.p = this.baseP;
     if (t && this.breakT <= 0) {
@@ -248,7 +260,8 @@ export class WingmanPilot extends EscortPilot {
       steerTo(fm, dir, 0.8, 0.5);
       fm.throttle = 0.75;
     }
-    if (me.pos.y < 4200) steerTo(fm, _d.copy(me.forward(_f)).setY(0).normalize().add(_t.set(0, 0.8, 0)), 1.2, 1);
+    const floor = this.low ? this.low.floorAt(me.pos.x, me.pos.z, me.vel) : 4200;
+    if (me.pos.y < floor) steerTo(fm, _d.copy(me.forward(_f)).setY(0).normalize().add(_t.set(0, 0.8, 0)), 1.2, 1);
   }
 }
 
@@ -263,6 +276,7 @@ export class Wingman {
   active = false;
   log: string[] = [];              // order / target log (dev, playtests)
   raidTargets: (() => Fighter[]) | null = null;
+  lowLevel: LowLevel | null = null;   // low-level operations (StrafeOps sets it before start)
   // Blue Two when the player leads the flight (raid missions); in escort missions the player is
   // Lead's Blue Two, so the wingman flies as Blue Four (PilotOps sets this before start)
   callsign: 'Blue Two' | 'Blue Four' = 'Blue Two';
@@ -303,6 +317,7 @@ export class Wingman {
     const p = new WingmanPilot(f, w);
     p.lead = pf;
     p.raidTargets = this.raidTargets;
+    p.low = this.lowLevel;
     p.order(this.cmd === 'attack' ? 'cover' : this.cmd);
     this.cmd = p.cmd;
     w.setPilot(f, p);
@@ -326,6 +341,16 @@ export class Wingman {
     if (cmd === 'attack') {
       const pf = w.playerFighter;
       if (pf) target = pickAttackTarget(pf.pos, pf.forward(_f), w.fighters('axis'), this.lead?.padlock ?? null);
+      // low level: no bandit in front, so a ground target near the nose
+      if (!target && this.lowLevel?.pick()) {
+        this.cmd = cmd;
+        p.order(cmd, null);
+        p.low = this.lowLevel;
+        this.flash = 1.6;
+        w.callout('wing_ground', this.callsign, this.line('Blue Two, going down on your target!'), 0, 3);
+        this.note('attack: ground target');
+        return null;
+      }
       if (!target) {
         this.note('attack: no target in front');
         w.callout('wing_none', this.callsign, this.line(WING_RADIO.noTarget), 0, 3);
@@ -358,7 +383,7 @@ export class Wingman {
     if (!f || !p) return;
     if (p.lead !== w.playerFighter) p.lead = w.playerFighter;
     // an attack order is done once the bandit is down: back to covering the leader
-    if (p.cmd === 'attack' && !(p.ordered?.alive)) { p.order('cover'); this.cmd = 'cover'; }
+    if (p.cmd === 'attack' && !(p.ordered?.alive) && !this.lowLevel?.busy()) { p.order('cover'); this.cmd = 'cover'; }
     if (p.reason && p.reason !== this.lastReason) {
       this.lastReason = p.reason;
       this.note(`target (${p.cmd}) ${p.reason}`);

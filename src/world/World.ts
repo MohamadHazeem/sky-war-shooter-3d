@@ -101,6 +101,7 @@ export class World implements WorldView {
   aiGunnerFactor = 1; // damage multiplier for AI bomber crews
   playerDamageScale = 0.6; // incoming damage on the player's own aircraft (game balance)
   flakIntensity = 0;   // bursts per second around the formation
+  floorY = 250;        // fighters below this height crash (low-level operations lower it and run their own terrain collision: StrafeOps.ts)
   private flakAcc = 0;
   private gunners = new Map<Bomber, AIGunner[]>();
   private rockets: Rocket[] = [];
@@ -662,7 +663,7 @@ export class World implements WorldView {
         }
       }
       if (a instanceof Fighter && a.alive) {
-        if (a.pos.y < 250) { a.alive = false; a.remove = !a.isPlayer; if (a.isPlayer) { a.falling = false; } }
+        if (a.pos.y < this.floorY) { a.alive = false; a.remove = !a.isPlayer; if (a.isPlayer) { a.falling = false; } }
         else if (!a.isPlayer && a.pos.distanceTo(this.formationCenter) > ((this.pilots.get(a) as EnemyPilot | undefined)?.state === 'withdraw' ? 4500 : 9000)) a.remove = true; // left the battle
       }
       this.fireGuns(a, dt);

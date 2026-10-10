@@ -2075,6 +2075,59 @@
       "id": "raid_he111_nav",
       "role": "nav",
       "text": "German bombers crossing ahead — a whole formation of Heinkels!"
+    },
+    {
+      "id": "strafe_r1",
+      "role": "control",
+      "text": "Control to Blue flight: a supply train is heading east for the tunnel. Stop that locomotive before it gets there!"
+    },
+    {
+      "id": "strafe_r2",
+      "role": "control",
+      "text": "Control: a truck convoy is on the road to the village. Shoot it up before it gets under cover!"
+    },
+    {
+      "id": "strafe_r3",
+      "role": "control",
+      "text": "Control: the Luftwaffe field to the north-east. Strafe the aircraft on the ground — and watch the flak!"
+    },
+    {
+      "id": "strafe_loco",
+      "role": "blue2",
+      "text": "Got the loco! She's blown her boiler!",
+      "urgent": true
+    },
+    {
+      "id": "strafe_escaped",
+      "role": "control",
+      "text": "The train made it into the tunnel. Too late, Blue flight."
+    },
+    {
+      "id": "strafe_flak",
+      "role": "blue2",
+      "text": "Light flak coming up! Stay low and keep jinking!",
+      "urgent": true
+    },
+    {
+      "id": "strafe_bandits",
+      "role": "blue2",
+      "text": "Focke-Wulfs coming down on us! Watch your tail, Leader!",
+      "urgent": true
+    },
+    {
+      "id": "strafe_wing_go",
+      "role": "blue2",
+      "text": "Blue Two, going down on your target!"
+    },
+    {
+      "id": "strafe_wing_kill",
+      "role": "blue2",
+      "text": "Blue Two — got one on the ground!"
+    },
+    {
+      "id": "strafe_area",
+      "role": "control",
+      "text": "Blue Leader, you are leaving the target area. Come back round."
     }
   ]
 }

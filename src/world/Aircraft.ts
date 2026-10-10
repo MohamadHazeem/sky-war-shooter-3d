@@ -4,6 +4,10 @@ import { FlightModel, FlightParams } from './FlightModel';
 
 export type Team = 'allied' | 'axis';
 
+// Height (m) below which a falling wreck is removed. Low-level operations (StrafeOps.ts) lower it
+// and blow wrecks up on the terrain themselves.
+export const WRECK_FLOOR = { fighter: 3000, bomber: 3500 };
+
 export interface HitZone {
   name: string;
   offset: THREE.Vector3;
@@ -182,7 +186,7 @@ export class Fighter extends Aircraft {
       this.root.position.addScaledVector(this.vel, dt);
       const e = new THREE.Euler(this.spin.x * dt, this.spin.y * dt, this.spin.z * dt);
       this.root.quaternion.multiply(_q.setFromEuler(e));
-      if (this.root.position.y < 3000 || this.fallTime > 40) this.remove = true;
+      if (this.root.position.y < WRECK_FLOOR.fighter || this.fallTime > 40) this.remove = true;
     }
     this.updateProps(dt, this.fm.throttle * 0.6 + 0.6);
   }
@@ -247,7 +251,7 @@ export class Bomber extends Aircraft {
       this.root.position.addScaledVector(this.vel, dt);
       const e = new THREE.Euler(this.spin.x * dt, this.spin.y * dt, this.spin.z * dt);
       this.root.quaternion.multiply(_q.setFromEuler(e));
-      if (this.root.position.y < 3500 || this.fallTime > 75) this.remove = true;
+      if (this.root.position.y < WRECK_FLOOR.bomber || this.fallTime > 75) this.remove = true;
       rpm = 0.4;
     }
     this.animateGuns(dt);

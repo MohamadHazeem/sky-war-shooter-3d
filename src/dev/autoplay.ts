@@ -6,6 +6,8 @@ import type { EnemyType } from '../world/EnemyTypes';
 import type { StationId } from '../world/B17Layout';
 import { DogfightAI } from '../world/DogfightAI';
 import type { Fighter } from '../world/Aircraft';
+import { StrafeRun, pullOutHeight } from '../game/StrafeOps';
+import type { GroundTarget } from '../world/GroundTargets';
 
 // Development-only scripted player used for automated playtests in headless browsers
 // (where requestAnimationFrame never fires). Usage from the console / Playwright:
@@ -24,6 +26,9 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
   w.events.playerHitFrom = (e) => { if (e.target === w.playerFighter) taken++; prevHit?.(e); };
   const modes: Record<string, number> = {};
   let fired = 0;
+  // ground attack (Train Busting): strafing passes on the round's targets
+  let run: StrafeRun | null = null, gtgt: GroundTarget | null = null, passes = 0, lastPhase = '';
+  const trace: string[] = [];
   for (let k = 0; k < maxSteps; k++) {
     // between-wave perk cards: take the first one
     const card = document.querySelector<HTMLElement>('#perks.show .pcard');
@@ -75,6 +80,51 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
         }
       }
       if (gun.state.ammo < 5 && gun.state.reload <= 0) inp.pressed.add('KeyR');
+    } else if (game.pilotOps.strafe.active) {
+      const so = game.pilotOps.strafe, f = w.playerFighter!;
+      run ??= new StrafeRun(so.groundAt, 250);
+      // a bandit close in front or on us: fight it (above the ground); else the round's targets
+      let bandit: Fighter | null = null, bdist = run.phase === 'dive' ? 350 : 750;
+      for (const e of w.fighters('axis')) { if (!e.alive) continue; const d = e.pos.distanceTo(f.pos); if (d < bdist && e.pos.clone().sub(f.pos).normalize().dot(f.forward()) > 0.5) { bdist = d; bandit = e; } }
+      if (bandit && f.alive) {
+        const tof = bdist / 880;
+        const tp = bandit.pos.clone().add(bandit.vel.clone().sub(f.vel).multiplyScalar(tof));
+        tp.y += 0.5 * 9.81 * tof * tof;
+        const dir = tp.sub(f.pos).normalize();
+        const agl = f.pos.y - so.groundAt(f.pos.x, f.pos.z);
+        if (agl < pullOutHeight(f.vel, 3.5) + 90) dir.copy(f.forward()).setY(0).normalize().setY(0.8).normalize();
+        pilot.aimYaw = Math.atan2(dir.x, dir.z); pilot.aimPitch = Math.asin(dir.y);
+        if (bdist < 550 && f.forward().dot(dir) > 0.996) inp.buttons = 1;
+        run.reset();
+      } else if (f.alive && so.gt) {
+        const set = so.roundSet();
+        if (!gtgt?.alive || gtgt.set !== set) {
+          const cand = so.gt.list.filter((t) => t.alive && t.set === set && !t.gun);
+          const pool = cand.length ? cand : so.gt.list.filter((t) => t.alive && t.set === set);
+          pool.sort((a, b) => (a.kind === 'loco' ? -1e6 : 0) + a.pos.distanceTo(f.pos) - ((b.kind === 'loco' ? -1e6 : 0) + b.pos.distanceTo(f.pos)));
+          gtgt = pool[0] ?? null;
+          run.reset();
+        }
+        if (gtgt) {
+          const tp = gtgt.pos.clone().add(new THREE.Vector3(0, 2, 0));
+          const tv = new THREE.Vector3(Math.sin(gtgt.heading) * gtgt.speed, 0, Math.cos(gtgt.heading) * gtgt.speed);
+          const axis = gtgt.set === 'train' || gtgt.set === 'convoy' ? new THREE.Vector3(Math.cos(gtgt.heading), 0, -Math.sin(gtgt.heading)) : undefined;
+          const dir = run.step(f, tp, tv, 3 / 60, axis).clone();
+          if (run.phase === 'dive' && lastPhase !== 'dive') passes++;
+          lastPhase = run.phase;
+          pilot.aimYaw = Math.atan2(dir.x, dir.z); pilot.aimPitch = Math.asin(THREE.MathUtils.clamp(dir.y, -1, 1));
+          if (run.fire) inp.buttons = 1;
+        } else {
+          const c = w.formationCenter.clone().sub(f.pos).setY(0).normalize();
+          c.y = THREE.MathUtils.clamp((so.groundAt(f.pos.x, f.pos.z) + 300 - f.pos.y) * 0.005, -0.2, 0.3);
+          c.normalize();
+          pilot.aimYaw = Math.atan2(c.x, c.z); pilot.aimPitch = Math.asin(c.y);
+        }
+      }
+      if (f.alive) { trace.push(`${w.time.toFixed(1)} ${bandit ? 'air ' + bdist.toFixed(0) : (gtgt?.kind ?? '-') + ' ' + run.phase} agl ${(f.pos.y - so.groundAt(f.pos.x, f.pos.z)).toFixed(0)} vy ${f.vel.y.toFixed(0)} aimP ${pilot.aimPitch.toFixed(2)} up ${f.up().y.toFixed(2)}`); if (trace.length > 12) trace.shift(); }
+      pilot.throttleCmd = 1;
+      // order Blue Two onto our target now and then
+      if (k % 400 === 120) game.pilotOps.wing.command('attack');
     } else {
       const f = w.playerFighter!;
       let target = null as THREE.Vector3 | null, tvel = new THREE.Vector3(), bd = 5000;
@@ -128,6 +178,8 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
   }
   const res = game.state === 'debrief' ? document.querySelector('#debrief .result')?.textContent ?? game.state : `TIMEOUT (${game.state})`;
   w.events.playerHitFrom = prevHit;
+  if (trace.length && !w.playerFighter?.alive) log.push('last frames: ' + trace.join(' / '));
+  if (game.pilotOps.strafe.active || passes) log.push(`strafe: passes ${passes} · destroyed ${JSON.stringify(game.pilotOps.strafe.destroyed)} · objectives ${game.pilotOps.strafe.objectives.join('/')} · ${game.pilotOps.strafe.log.slice(-12).join(' | ')}`);
   if (mission.role === 'pilot') log.push(`BFM modes (samples): ${JSON.stringify(modes)} · BFM firing samples ${fired} · hits taken ${taken}`);
   log.push(`RESULT: ${res} — perks ${perks}, kills ${w.stats.kills}, accuracy ${(w.stats.hits / Math.max(1, w.stats.shots) * 100).toFixed(0)}%, bombers lost ${w.stats.bombersLost}, t=${w.time.toFixed(0)}s`);
   return log.join('\n');

@@ -45,6 +45,8 @@ export class PilotController {
   view: 'cockpit' | 'chase' = 'chase';
   mode: 'mouseAim' | 'direct' = 'mouseAim';
   baseFov = 62;   // set from Settings; cockpit (+8) and chase (+2) keep their original offsets
+  // low-level operations (StrafeOps): ground height under a scene point; the chase camera stays above it
+  groundAt: ((x: number, z: number) => number) | null = null;
   sightLit = false; // night missions: the K-14's lamp is turned up (brighter reticle, glow on the glass)
   private glassMat: THREE.MeshPhysicalMaterial | null = null;
   private cockpit: THREE.Object3D | null = null;
@@ -400,6 +402,7 @@ export class PilotController {
       }
       this.chaseOff.lerp(off, 1 - Math.exp(-dt * 6));
       cam.position.copy(p.pos).add(this.chaseOff);
+      if (this.groundAt) cam.position.y = Math.max(cam.position.y, this.groundAt(cam.position.x, cam.position.z) + 1.5);
       const dir = _v.copy(look);
       if (t && pw > 0) dir.lerp(_as.copy(t.pos).sub(cam.position).normalize(), pw).normalize();
       this.chaseDir.lerp(dir, 1 - Math.exp(-dt * 10)).normalize();
