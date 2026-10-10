@@ -2,6 +2,9 @@
 // Self-contained so Game.ts only needs a few one-line hooks. Progress lives in localStorage
 // (per browser), and every storage call is guarded because it can be blocked or full.
 import type { Mission } from './Missions';
+import {
+  type CareerData, RANKS, heavyKills, lifetimeAccuracy, stationsScored, totalMedals, typesDowned,
+} from './Career';
 
 const STORE_KEY = 'sws3d.achievements.v1';
 const TOAST_MS = 4200;
@@ -11,16 +14,62 @@ const SHARP_ACCURACY = 0.3;
 const ACE_KILLS = 5;
 const SURVIVOR_WAVE = 5;
 
-export interface AchievementDef { id: string; name: string; desc: string }
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+export const RARITY_LABEL: Record<Rarity, string> = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+
+// goal + stat: a lifetime counter read from the career record (progress bar on the Trophies
+// screen, unlocked by checkStats). Without them the achievement is event-driven.
+export interface AchievementDef { id: string; name: string; desc: string; rarity: Rarity; goal?: number; stat?: (c: CareerData) => number }
+
+const kills = (t: string) => (c: CareerData) => c.killsByType[t] ?? 0;
 
 export const ACHIEVEMENTS: AchievementDef[] = [
-  { id: 'firstBlood', name: 'First Blood', desc: 'Confirm your first Fw 190 kill.' },
-  { id: 'ace', name: 'Ace in a Day', desc: `Confirm ${ACE_KILLS} kills in a single mission.` },
-  { id: 'untouchable', name: 'Untouchable', desc: 'Complete a mission without taking a single hit.' },
-  { id: 'flakSurvivor', name: 'Flak Survivor', desc: 'Complete a mission that flies through flak.' },
-  { id: 'sharpshooter', name: 'Sharpshooter', desc: `Finish a mission with over ${SHARP_ACCURACY * 100}% accuracy (${SHARP_MIN_SHOTS}+ rounds fired).` },
-  { id: 'wingClipper', name: 'Wing Clipper', desc: 'Shoot a wing off a Fw 190.' },
-  { id: 'survivor', name: 'Survivor', desc: `Reach survival wave ${SURVIVOR_WAVE}.` },
+  { id: 'firstBlood', name: 'First Blood', desc: 'Confirm your first kill.', rarity: 'common' },
+  { id: 'ace', name: 'Ace in a Day', desc: `Confirm ${ACE_KILLS} kills in a single mission.`, rarity: 'uncommon' },
+  { id: 'untouchable', name: 'Untouchable', desc: 'Complete a mission without taking a single hit.', rarity: 'rare' },
+  { id: 'flakSurvivor', name: 'Flak Survivor', desc: 'Complete a mission that flies through flak.', rarity: 'common' },
+  { id: 'sharpshooter', name: 'Sharpshooter', desc: `Finish a mission with over ${SHARP_ACCURACY * 100}% accuracy (${SHARP_MIN_SHOTS}+ rounds fired).`, rarity: 'uncommon' },
+  { id: 'wingClipper', name: 'Wing Clipper', desc: 'Shoot a wing off an enemy fighter.', rarity: 'uncommon' },
+  { id: 'survivor', name: 'Survivor', desc: `Reach survival round ${SURVIVOR_WAVE}.`, rarity: 'uncommon' },
+  // ---- lifetime: kills ----
+  { id: 'kills25', name: 'Bandit Hunter', desc: 'Confirm 25 kills.', rarity: 'common', goal: 25, stat: (c) => c.kills },
+  { id: 'kills100', name: 'Centurion', desc: 'Confirm 100 kills.', rarity: 'uncommon', goal: 100, stat: (c) => c.kills },
+  { id: 'kills500', name: 'Scourge of the Luftwaffe', desc: 'Confirm 500 kills.', rarity: 'epic', goal: 500, stat: (c) => c.kills },
+  { id: 'kills1000', name: 'Legend of the Eighth', desc: 'Confirm 1,000 kills.', rarity: 'legendary', goal: 1000, stat: (c) => c.kills },
+  { id: 'fw190x50', name: 'Butcher-Bird Hunter', desc: 'Down 50 Fw 190s.', rarity: 'uncommon', goal: 50, stat: kills('fw190') },
+  { id: 'bf109x25', name: 'Gustav Grounded', desc: 'Down 25 Bf 109s.', rarity: 'uncommon', goal: 25, stat: kills('bf109') },
+  { id: 'heavy10', name: 'Heavy Hitter', desc: 'Down 10 heavies (Bf 110 / Ju 88).', rarity: 'uncommon', goal: 10, stat: heavyKills },
+  { id: 'heavy50', name: 'Destroyer of Destroyers', desc: 'Down 50 heavies (Bf 110 / Ju 88).', rarity: 'rare', goal: 50, stat: heavyKills },
+  { id: 'jets5', name: 'Jet Age', desc: 'Down 5 Me 262 jets.', rarity: 'rare', goal: 5, stat: kills('me262') },
+  { id: 'komet', name: 'Komet Catcher', desc: 'Down an Me 163 rocket fighter.', rarity: 'uncommon', goal: 1, stat: kills('me163') },
+  { id: 'allTypes', name: 'Know Your Enemy', desc: 'Down every enemy type: Fw 190, Bf 109, Bf 110, Ju 88, Me 262 and Me 163.', rarity: 'rare', goal: 6, stat: typesDowned },
+  { id: 'boss1', name: 'Giant Killer', desc: 'Bring down a boss.', rarity: 'rare', goal: 1, stat: (c) => c.bosses },
+  { id: 'boss10', name: 'Dragon Slayer', desc: 'Bring down 10 bosses.', rarity: 'epic', goal: 10, stat: (c) => c.bosses },
+  { id: 'streak3', name: 'Triple Threat', desc: 'Chain a 3-kill streak.', rarity: 'common', goal: 3, stat: (c) => c.bestStreak },
+  { id: 'streak6', name: 'Chain Reaction', desc: 'Chain a 6-kill streak.', rarity: 'epic', goal: 6, stat: (c) => c.bestStreak },
+  { id: 'pilot50', name: 'Mustang Ace', desc: 'Down 50 fighters flying the P-51.', rarity: 'rare', goal: 50, stat: (c) => c.killsByRole.pilot },
+  { id: 'allGuns', name: 'Every Gun Position', desc: 'Score kills from all five B-17 gun positions.', rarity: 'rare', goal: 5, stat: stationsScored },
+  { id: 'marksman', name: 'Marksman', desc: 'Hold 25%+ lifetime accuracy over 3,000+ rounds.', rarity: 'rare', goal: 25, stat: (c) => (c.shots >= 3000 ? Math.floor(lifetimeAccuracy(c) * 100) : 0) },
+  // ---- lifetime: service ----
+  { id: 'missions10', name: 'Ten in the Logbook', desc: 'Fly 10 missions.', rarity: 'common', goal: 10, stat: (c) => c.missions },
+  { id: 'tour25', name: 'Tour of Duty', desc: 'Complete 25 missions, a full 1944 bomber tour.', rarity: 'rare', goal: 25, stat: (c) => c.wins },
+  { id: 'tour50', name: 'Second Tour', desc: 'Complete 50 missions.', rarity: 'epic', goal: 50, stat: (c) => c.wins },
+  { id: 'campaign7', name: 'Big Week Veteran', desc: 'Complete 7 different campaign missions.', rarity: 'rare', goal: 7, stat: (c) => c.campaignWins.length },
+  { id: 'saved100', name: 'Big Friends\' Friend', desc: 'Bring 100 bombers home from successful missions.', rarity: 'uncommon', goal: 100, stat: (c) => c.bombersSaved },
+  { id: 'hours1', name: 'Logbook', desc: 'Spend an hour in the air.', rarity: 'uncommon', goal: 60, stat: (c) => Math.floor(c.seconds / 60) },
+  { id: 'hours10', name: 'Old Hand', desc: 'Spend ten hours in the air.', rarity: 'epic', goal: 600, stat: (c) => Math.floor(c.seconds / 60) },
+  { id: 'overdrive25', name: 'Pour It On', desc: 'Use Overdrive 25 times.', rarity: 'common', goal: 25, stat: (c) => c.overdrives },
+  // ---- rank and medals ----
+  { id: 'rankLt', name: 'Commissioned', desc: 'Earn a commission: reach Lieutenant.', rarity: 'uncommon', goal: RANKS[3].xp, stat: (c) => c.xp },
+  { id: 'rankMaj', name: 'The Major', desc: 'Reach the rank of Major.', rarity: 'legendary', goal: RANKS[5].xp, stat: (c) => c.xp },
+  { id: 'medals10', name: 'Fruit Salad', desc: 'Earn 10 medals.', rarity: 'uncommon', goal: 10, stat: totalMedals },
+  { id: 'medals50', name: 'Chest Full of Ribbons', desc: 'Earn 50 medals.', rarity: 'epic', goal: 50, stat: totalMedals },
+  { id: 'purple3', name: 'Walking Wounded', desc: 'Earn 3 Purple Hearts.', rarity: 'uncommon', goal: 3, stat: (c) => c.medals['Purple Heart'] ?? 0 },
+  // ---- daily ----
+  { id: 'daily1', name: 'Orders Received', desc: 'Complete a daily order.', rarity: 'common', goal: 1, stat: (c) => c.dailyDone },
+  { id: 'daily25', name: 'Reliable', desc: 'Complete 25 daily orders.', rarity: 'rare', goal: 25, stat: (c) => c.dailyDone },
+  { id: 'dailyAll', name: 'Clean Sheet', desc: 'Complete all three daily orders in one day.', rarity: 'uncommon', goal: 1, stat: (c) => c.dailyPerfectDays },
+  { id: 'dailyRun', name: 'Daily Sortie', desc: 'Fly a Daily Run.', rarity: 'common', goal: 1, stat: (c) => c.dailyRuns },
 ];
 
 interface MissionTrack {
@@ -71,6 +120,20 @@ class Achievements {
   constructor() { this.unlocked = readStore(); }
 
   has(id: string) { return this.unlocked[id] !== undefined; }
+  unlockedAt(id: string): number | undefined { return this.unlocked[id]; }
+  count() { return ACHIEVEMENTS.filter((a) => this.has(a.id)).length; }
+
+  // 0..1 progress of a stat-driven achievement (1 once unlocked; 0 for event-driven ones)
+  progress(def: AchievementDef, c: CareerData): number {
+    if (this.has(def.id)) return 1;
+    if (!def.stat || !def.goal) return 0;
+    return Math.max(0, Math.min(1, def.stat(c) / def.goal));
+  }
+
+  // Unlock every lifetime achievement whose counter has reached its goal
+  checkStats(c: CareerData) {
+    for (const a of ACHIEVEMENTS) if (a.stat && a.goal && !this.has(a.id) && a.stat(c) >= a.goal) this.unlock(a.id);
+  }
 
   unlock(id: string) {
     if (this.has(id)) return;
@@ -128,7 +191,7 @@ class Achievements {
     }
     const el = document.createElement('div');
     el.className = 'achv-toast';
-    el.innerHTML = `<div class="achv-star">★</div><div><div class="achv-k">Achievement unlocked</div><div class="achv-n">${def.name}</div><div class="achv-d">${def.desc}</div></div>`;
+    el.innerHTML = `<div class="achv-star">★</div><div><div class="achv-k">Achievement unlocked · ${RARITY_LABEL[def.rarity]}</div><div class="achv-n">${def.name}</div><div class="achv-d">${def.desc}</div></div>`;
     this.toastHost.appendChild(el);
     requestAnimationFrame(() => el.classList.add('show'));
     setTimeout(() => {
@@ -137,16 +200,14 @@ class Achievements {
     }, TOAST_MS);
   }
 
-  // ---- Credits list ----
+  // ---- Credits list (compact: the full cabinet is on the Trophies screen) ----
   listHtml(): string {
     ensureStyle();
-    const n = ACHIEVEMENTS.filter((a) => this.has(a.id)).length;
-    const rows = ACHIEVEMENTS.map((a) => {
-      const ts = this.unlocked[a.id];
-      const got = ts !== undefined;
-      return `<li class="${got ? 'got' : ''}"><span class="achv-mark">${got ? '★' : '☆'}</span><span>${a.name} — ${a.desc}${got ? `<small>Unlocked ${new Date(ts).toLocaleDateString()}</small>` : ''}</span></li>`;
-    }).join('');
-    return `<div class="achv-head"><div class="kicker">ACHIEVEMENTS</div><span class="achv-count">${n}/${ACHIEVEMENTS.length}</span></div><ul class="achv-list">${rows}</ul>`;
+    const got = ACHIEVEMENTS.filter((a) => this.has(a.id)).sort((a, b) => this.unlocked[b.id] - this.unlocked[a.id]);
+    const rows = got.slice(0, 6).map((a) => `<li class="got"><span class="achv-mark">★</span><span>${a.name} — ${a.desc}<small>Unlocked ${new Date(this.unlocked[a.id]).toLocaleDateString()}</small></span></li>`).join('');
+    return `<div class="achv-head"><div class="kicker">ACHIEVEMENTS</div><span class="achv-count">${got.length}/${ACHIEVEMENTS.length}</span></div>
+      <ul class="achv-list">${rows || '<li>None yet: fly a mission.</li>'}</ul>
+      <div class="achv-d" style="margin-top:8px">The full trophy cabinet is on the title menu: Trophies.</div>`;
   }
 }
 
