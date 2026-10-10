@@ -119,7 +119,7 @@ export class Effects {
     this.flashLight(pos, 900 * scale, 0.4, 0xff9944);
     // white-hot flash and an expanding shockwave
     this.glow.spawn({ pos, vel, life: 0.14, size0: 10 * scale, size1: 22 * scale, color0: [40, 28, 14], alpha0: 1, alpha1: 0, frame: 1 });
-    this.glow.spawn({ pos, vel, life: 0.4, size0: 4 * scale, size1: 70 * scale, color0: [2.2, 1.9, 1.6], alpha0: 0.8, alpha1: 0, frame: 3, rotVel: 0 });
+    this.glow.spawn({ pos, vel, life: 0.3, size0: 4 * scale, size1: 45 * scale, color0: [1.2, 1.05, 0.9], alpha0: 0.45, alpha1: 0, frame: 3, rotVel: 0 });
     // rolling fireball
     for (let i = 0; i < 22 * scale; i++) {
       _v.set(R(), R(), R()).normalize().multiplyScalar((5 + Math.random() * 16) * scale).add(vel);

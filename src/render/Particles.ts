@@ -271,7 +271,7 @@ export class TracerRenderer {
           vec3 toCam = cameraPosition - p;
           float dist = length(toCam);
           vec3 side = normalize(cross(dir, toCam / dist));
-          float w = max(iC.a, dist * uPx * 1.6);
+          float w = max(iC.a, dist * uPx * 2.1);
           p += side * position.x * w;
           gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
           vQ = position.xy;

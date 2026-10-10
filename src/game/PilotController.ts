@@ -17,7 +17,7 @@ export class PilotController {
   plane: Fighter | null = null;
   aimYaw = 0;
   aimPitch = 0;
-  view: 'cockpit' | 'chase' = 'cockpit';
+  view: 'cockpit' | 'chase' = 'chase';
   mode: 'mouseAim' | 'direct' = 'mouseAim';
   private camPos = new THREE.Vector3();
   private camQuat = new THREE.Quaternion();
