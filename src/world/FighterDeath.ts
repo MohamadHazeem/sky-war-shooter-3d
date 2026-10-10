@@ -106,6 +106,9 @@ function emit(sys: ParticleSystem, pos: THREE.Vector3, vel: THREE.Vector3 | unde
 // True while a scripted death owns this fighter's trails (World/DamageStages skip their
 // generic falling fire for it).
 export function deathOwned(f: Fighter) { return owned.has(f); }
+// The scripted ending a downed fighter is flying ('bailout': the pilot jumps and lives), or null
+// for the instant ones (fireball, wing or tail shot away). Read by game/NemesisRuntime.ts.
+export function deathKindOf(f: Fighter): string | null { for (const s of active) if (s.f === f) return s.kind; return null; }
 
 function pick(cause: string): DeathKind {
   const base = cause === 'wingL' || cause === 'wingR' ? W_WING : cause === 'tail' ? W_TAIL : cause === 'engine' ? W_ENGINE

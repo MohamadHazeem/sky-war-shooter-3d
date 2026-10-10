@@ -70,6 +70,7 @@ export const MEDALS: MedalDef[] = [
   { name: 'Ace in a Day', desc: 'Five confirmed kills in one mission.', ribbon: stripes('#1a1a1a', '#e0b65a', '#1a1a1a', '#e0b65a', '#e0b65a', '#1a1a1a', '#e0b65a', '#1a1a1a'), first: { kind: 'unlock', id: 'p51h', label: 'P-51H Lightweight', fallback: 400 }, repeat: 400 },
   { name: 'Gunner\'s Wings', desc: 'Complete a gunner mission with 25%+ accuracy over 150+ rounds.', ribbon: stripes('#9aa3ad', '#1d3f8f', '#9aa3ad', '#d8dde2', '#9aa3ad', '#1d3f8f', '#9aa3ad'), first: { kind: 'unlock', id: 'hellfire', label: 'M2 "Hellfire" AP-I', fallback: 300 }, repeat: 300 },
   { name: 'Fortress Defender', desc: 'Complete a campaign mission without losing a bomber.', ribbon: stripes('#4b5132', '#b9a76f', '#4b5132', '#4b5132', '#b9a76f', '#4b5132'), first: { kind: 'unlock', id: 'p8x50', label: 'Heavy battery (+30% fire)', fallback: 300 }, repeat: 300 },
+  { name: 'Experten Killer', desc: 'Shoot down a named Luftwaffe Experte.', ribbon: stripes('#1a1a1a', '#f2efe6', '#b3321f', '#b3321f', '#f2efe6', '#1a1a1a'), first: { kind: 'merit', amount: 600 }, repeat: 300 },
   { name: 'Giant Killer', desc: 'Bring down a boss.', ribbon: stripes('#1a1a1a', '#b3321f', '#1a1a1a', '#1a1a1a', '#b3321f', '#1a1a1a'), first: { kind: 'unlock', id: 'p4x20', label: '20 mm cannons (P-51)', fallback: 500 }, repeat: 500 },
 ];
 
