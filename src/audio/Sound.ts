@@ -560,6 +560,39 @@ export class Sound {
     src.start(when, name === 'whoosh' ? Math.max(0, this.flybyPeak - 0.7) : 0);
   }
 
+  // One-off synthesized buffers (see Ricochet.ts): same positional chain as play(), caller supplies the buffer
+  playBuffer(buffer: AudioBuffer, pos: THREE.Vector3 | null, opts: { gain?: number; rate?: number; delay?: boolean; ref?: number; reverb?: number } = {}) {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.playbackRate.value = (opts.rate ?? 1) * (0.95 + Math.random() * 0.1);
+    const g = ctx.createGain();
+    g.gain.value = opts.gain ?? 1;
+    let when = ctx.currentTime;
+    let out: AudioNode = g;
+    if (pos) {
+      const d = pos.distanceTo(this.listenerPos);
+      if (d > 12000) return;
+      const f = ctx.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.value = Math.max(150, 18000 * Math.exp(-d / 1000)) * (this.interior ? 0.55 : 1);
+      const p = ctx.createPanner();
+      p.panningModel = d < 60 ? 'HRTF' : 'equalpower'; p.distanceModel = 'inverse'; p.refDistance = opts.ref ?? 40; p.rolloffFactor = 1;
+      p.positionX.value = pos.x; p.positionY.value = pos.y; p.positionZ.value = pos.z;
+      src.connect(f).connect(g).connect(p).connect(this.sfx);
+      out = p;
+      if (opts.delay !== false) when += d / 343;
+      const send = ctx.createGain();
+      send.gain.value = (opts.reverb ?? 0.35) * Math.min(1, 0.3 + d / 1500);
+      p.connect(send).connect(this.revOutSend);
+    } else {
+      src.connect(g).connect(this.sfx);
+    }
+    if (this.interior && (opts.reverb ?? 0) > 0) { const s = ctx.createGain(); s.gain.value = opts.reverb!; out.connect(s).connect(this.revInSend); }
+    src.start(when);
+  }
+
   // Player's own guns: un-positioned, close, with the fuselage ringing around them
   playerGun(twin: boolean) {
     if (!this.ctx) return;

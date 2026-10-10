@@ -7,6 +7,7 @@ import { EnemyPilot, EscortPilot, AttackType, WorldView } from './AI';
 import { FW190_PARAMS, P51_PARAMS } from './FlightModel';
 import { AI_EXTRA, dirFromYawPitch, inArc, STATIONS, STATION_ORDER, StationDef } from './B17Layout';
 import { sound } from '../audio/Sound';
+import { playRicochet } from '../audio/Ricochet';
 import { Contrails } from '../render/Contrails';
 import { Wrecks, BreakKind } from './Wrecks';
 import { updateExhausts } from './Exhaust';
@@ -369,6 +370,7 @@ export class World implements WorldView {
       }
     } else if (e.playerShot) {
       sound.play('hit', e.point, { gain: 0.35, delay: false, ref: 60 });
+      playRicochet(e.point);
       if (this.time - this.lastConfirm > 0.07) { this.lastConfirm = this.time; sound.confirm('hit_confirm'); }
       this.events.hitMarker?.(false);
       // visible battle damage: panels and cowling pieces tearing off
