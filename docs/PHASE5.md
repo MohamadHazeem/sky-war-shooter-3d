@@ -35,6 +35,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 18 | P-51 ground attack: strafing trains, flak towers and airfields at low level | In progress |
 | 19 | Arabic for every screen added overnight (campaign map, skills, custom battle, weekly, co-op, theatre, wingman) | Done — campaign map, skills, custom battle, weekly, theatre, FPS counter, raid missions + wingman, co-op, canvas HUDs, special events and tactics; RTL mirroring, Arabic number agreement, coverage tests |
 | 21 | Nemesis system: persistent named Luftwaffe aces with traits, grudges, scars, promotions and a dossier screen | In progress |
+| 22 | Audio pass 3: engine voices for the new aircraft and warships, BK 5 / flak sounds, distance-aware explosions, waist ambience (wind, creaks, brass), ducking and mix check | In progress |
 | 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | |
 
 ## Log
