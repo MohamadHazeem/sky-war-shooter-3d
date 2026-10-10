@@ -16,6 +16,7 @@ import { WingVapor } from './WingVapor';
 import { makeDropTank } from './Props';
 import { startBomberDeath, updateBomberDeath, clearBomberDeath } from './BomberDeath';
 import { setup as setupDamageLook, update as updateDamageLook } from './DamageLook';
+import { update as updateDamageStages } from './DamageStages';
 import { Crew, STATION_CREW } from './Crew';
 
 export const ENEMY_SCALE = 3.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
@@ -542,7 +543,7 @@ export class World implements WorldView {
       const p = this.pilots.get(a as Fighter);
       if (p && a.alive) p.update(dt, this);
       a.update(dt, this.time);
-      if (a instanceof Fighter) updateDamageLook(a, this.time);
+      if (a instanceof Fighter) { updateDamageLook(a, this.time); updateDamageStages(a, dt, this.time, this.effects, this.listener); }
       if (a.hitFlash > 0) a.hitFlash -= dt;
       if (a instanceof Fighter && a.alive && !a.isPlayer && this.listener) {
         // close fly-by: roar of the engine and a buffet
@@ -705,14 +706,7 @@ export class World implements WorldView {
       const p = a.localToWorld(_v.copy(z.offset).add(_v2.set(0, 0.2, -0.6)), new THREE.Vector3());
       this.effects.trail(p, a.vel, Math.min(1, dmg), !!z.burning, a instanceof Bomber ? 1.3 : 0.8);
     }
-    // worn-down fighters: thin smoke -> black smoke -> fire, from the engine
-    if (a instanceof Fighter && a.alive && a.maxStructure !== Infinity) {
-      const f = a.structureFrac;
-      if (f < 0.75) {
-        const at = a.localToWorld(_v.set(0, 0.3, 0.6 * ENEMY_SCALE), new THREE.Vector3());
-        this.effects.trail(at, a.vel, f < 0.45 ? 0.9 : 0.35, f < 0.25, 0.9);
-      }
-    }
+    // worn-down fighters: staged smoke, fire and debris live in DamageStages
     if (a.falling && a instanceof Fighter && Math.random() < 0.6) {
       this.effects.trail(a.localToWorld(_v.set(0, 0, 1.5), new THREE.Vector3()), a.vel, 1, true, 1);
     }
