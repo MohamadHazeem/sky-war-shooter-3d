@@ -95,14 +95,22 @@ function propDiscTexture() {
       const r = Math.sqrt(dx * dx + dy * dy);
       const a = Math.atan2(dy, dx);
       let alpha = 0;
+      let ring = 0; // 0..1 weight of the yellow tip ring
       if (r < 1 && r > 0.12) {
         const streak = 0.5 + 0.5 * Math.cos(a * 3);
-        alpha = (0.05 + 0.1 * Math.pow(streak, 6)) * (1 - Math.pow(r, 6)) * Math.min(1, (r - 0.12) * 8);
-        if (r > 0.9) alpha += 0.12 * Math.exp(-Math.pow((r - 0.95) / 0.03, 2)); // yellow tip ring
+        const inner = Math.min(1, (r - 0.12) * 8);
+        // Faint two-blade shadow banding (cos 2a) reads as the blurred blade sweep.
+        const band = 0.5 + 0.5 * Math.cos(a * 2);
+        alpha = (0.05 + 0.1 * Math.pow(streak, 6) + 0.035 * Math.pow(band, 3)) * (1 - Math.pow(r, 6)) * inner;
+        // Fine radial striations that fade out toward hub and rim, like motion streaks.
+        alpha += 0.02 * Math.pow(0.5 + 0.5 * Math.cos(a * 17 + r * 2), 4) * 4 * r * (1 - r) * inner;
+        if (r > 0.9) {
+          ring = Math.exp(-Math.pow((r - 0.955) / 0.014, 2)); // thin yellow tip ring
+          alpha += 0.16 * ring;
+        }
       }
       const i = (y * S + x) * 4;
-      const tip = r > 0.9;
-      img.data[i] = tip ? 200 : 40; img.data[i + 1] = tip ? 170 : 40; img.data[i + 2] = tip ? 40 : 38;
+      img.data[i] = 40 + 160 * ring; img.data[i + 1] = 40 + 130 * ring; img.data[i + 2] = 38 + 2 * ring;
       img.data[i + 3] = Math.min(255, alpha * 255 * 1.6);
     }
   g.putImageData(img, 0, 0);
