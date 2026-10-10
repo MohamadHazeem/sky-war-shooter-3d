@@ -9,7 +9,8 @@ import { keyMap, keyValue } from './KeyMap';
 // Other devices speak the mouse's language so the controllers need no device code:
 //   aim         add to mouseDX / mouseDY
 //   fire, zoom  setVirtualButtons(source, bits): bit 0 = fire (LMB), bit 2 = zoom (RMB)
-//   keys        tap(code) sends a one-shot key press through the normal keydown path
+//   keys        tap(code) sends a one-shot key press through the normal keydown path,
+//               hold(code, down) keeps one held (free look)
 //   pilot       analog roll / yaw / throttle (PilotController reads these)
 //
 // Key remapping (KeyMap): physical keys are translated to the action's default code in a
@@ -101,6 +102,12 @@ export class Input {
   tap(code: string) {
     this.dispatch('keydown', code);
     this.dispatch('keyup', code);
+  }
+
+  /** Hold a logical key down (true) or let it go (false) from another device, e.g. free look (C). */
+  hold(code: string, down: boolean) {
+    if (down === this.keys.has(code)) return;
+    this.dispatch(down ? 'keydown' : 'keyup', code);
   }
 
   /** Fire / zoom from another device: bits as mouse buttons (1 = fire, 4 = zoom). */

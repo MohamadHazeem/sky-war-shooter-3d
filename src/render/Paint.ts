@@ -96,7 +96,7 @@ function paintedMap(id: string, src: THREE.Texture): THREE.Texture | null {
   }
   g.putImageData(im, 0, 0);
   const t = src.clone();
-  t.source = new THREE.Source(c);
+  t.source = new THREE.TextureSource(c);
   t.needsUpdate = true;
   cache.set(k, t);
   return t;

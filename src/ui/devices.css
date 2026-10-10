@@ -69,7 +69,16 @@ body.touch #lockHint, body.touch #controlsHint { display: none !important; }
 #touchHud.pilot .th-thr { display: flex; }
 #touchHud .th-wing { position: absolute; top: calc(56px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); display: none; gap: 6px; }
 #touchHud.pilot .th-wing { display: flex; }
-#touchHud .th-wing button { position: static; min-width: 50px; height: 34px; padding: 0 6px; font-size: 11px; border-color: rgba(120, 200, 255, 0.55); }
+#touchHud .th-wing button { position: static; min-width: 50px; height: 40px; padding: 0 6px; font-size: 11px; border-color: rgba(120, 200, 255, 0.55); }
+/* free look toggle: in the gunner's empty VIEW slot left of ZOOM; above the throttle lever in the P-51 */
+#touchHud .th-look { right: calc(212px + env(safe-area-inset-right)); bottom: calc(30px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 50%; font-size: 12px; }
+#touchHud.pilot .th-look { right: calc(142px + env(safe-area-inset-right)); bottom: calc(108px + min(150px, 34vh) + env(safe-area-inset-bottom)); width: 52px; height: 40px; border-radius: 0; font-size: 11px; }
+#touchHud .th-look.on { background: var(--khaki); color: #1b1a12; border-color: var(--khaki); }
+/* in-flight event prompts are touched directly on a touch screen (TouchHud): drop the key cap */
+body.touch #evPrompt[data-code]:not([data-code=""]) .ev-a kbd { display: none; }
+/* the ability bar's key caps (Q/E/G, Z/X/G) mean nothing on a touch screen: the buttons are on the right */
+body.touch #abilityBar .ab-key { display: none; }
+#touchHud.school .th-abil { display: none; }
 #touchHud.pilot .th-abil { right: calc(206px + env(safe-area-inset-right)); bottom: calc(100px + env(safe-area-inset-bottom)); }
 #touchHud .th-track { position: relative; flex: 1; width: 30px; background: rgba(12, 14, 9, 0.5); border: 1.5px solid rgba(233, 226, 207, 0.45); overflow: hidden; }
 #touchHud .th-track i { position: absolute; inset: 0; transform-origin: 50% 100%; transform: scaleY(0.77); background: linear-gradient(0deg, rgba(185, 167, 111, 0.85), rgba(224, 180, 69, 0.85)); }
@@ -79,14 +88,26 @@ body.touch #lockHint, body.touch #controlsHint { display: none !important; }
 #touchHud .th-stick::before { content: ''; position: absolute; left: -62px; top: -62px; width: 124px; height: 124px; border-radius: 50%; border: 2px solid rgba(233, 226, 207, 0.45); background: rgba(12, 14, 9, 0.25); }
 #touchHud .th-stick i { position: absolute; left: -24px; top: -24px; width: 48px; height: 48px; border-radius: 50%; background: rgba(233, 226, 207, 0.55); box-shadow: 0 0 10px rgba(0, 0, 0, 0.4); }
 
+/* Menus in touch mode: every control at least 40 px tall for a thumb (title, buttons, mode tabs,
+   Weekly strip, Custom Battle, skill tree, briefing voice, hangar nose-art chips) */
+body.touch #title .menu.grouped > button, body.touch .btn, body.touch .mode-tab, body.touch .wk-strip,
+body.touch .cb-seg button, body.touch .sk-respec, body.touch .bx-play, body.touch #hangar .chip { min-height: 40px; }
+body.touch .cb-f input[type=range] { height: 32px; }
+
 /* HUD in touch mode: tappable gun positions, room for the buttons */
 body.touch #hStations span { pointer-events: auto; padding: 7px 8px; cursor: pointer; }
 body.touch .hud-tr { top: calc(56px + env(safe-area-inset-top)); }
-body.touch .hud-br { bottom: calc(140px + env(safe-area-inset-bottom)); right: calc(14px + env(safe-area-inset-right)); }
-body.touch #feed { top: auto; bottom: 150px; right: 130px; }
+body.touch.touch-pilot .hud-tr { top: calc(104px + env(safe-area-inset-top)); }   /* under the wingman order row */
+/* damage plate / crew list (tablets): above the ability buttons (gunner) and the LOOK button (P-51) */
+body.touch .hud-br { bottom: calc(238px + env(safe-area-inset-bottom)); right: calc(14px + env(safe-area-inset-right)); }
+body.touch.touch-pilot .hud-br { bottom: calc(300px + env(safe-area-inset-bottom)); }
+/* kill feed: centred above the ability bar, clear of the button cluster on the right */
+body.touch #feed { top: auto; right: 50%; left: auto; bottom: 150px; transform: translateX(50%); align-items: center; }
+/* Experte / special-event panel under the subtitles (which move to the top in touch mode) */
+body.touch #spPanel { top: 92px; }
 /* subtitles and tips move up, clear of the thumbs */
-body.touch #subs { max-width: max(300px, calc(100vw - 2 * (236px + env(safe-area-inset-right)))); width: max-content; bottom: auto; top: calc(34px + env(safe-area-inset-top)); }
-body.touch #tip { bottom: auto; top: 36vh; }
+body.touch #subs { max-width: max(300px, calc(100vw - 2 * (246px + env(safe-area-inset-right)))); width: max-content; bottom: auto; top: calc(34px + env(safe-area-inset-top)); }
+body.touch #tip { bottom: auto; top: 36vh; z-index: 3; }   /* a passing tip reads over the bonus objective card */
 
 /* ---------- Small screens (phones in landscape, any input) ---------- */
 @media (max-height: 520px) {
@@ -122,7 +143,10 @@ body.touch #tip { bottom: auto; top: 36vh; }
   body #title .menu { gap: 2px; }
   body #briefing .sheet { padding: 20px 22px; max-height: 98vh; }
   body #briefing h2 { font-size: 28px; }
-  body #title .wrap { top: 52%; }
+  /* the grouped menu (14 entries) is taller than a phone held sideways: scroll, never clip */
+  body #title .wrap { top: 0; bottom: 0; transform: none; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; display: flex; flex-direction: column; justify-content: safe center; padding: 10px 0; max-width: 460px; }
+  body #title .wrap::-webkit-scrollbar { display: none; }
+  body #title .wrap > * { flex-shrink: 0; }
   body #title .eyebrow { margin-bottom: 4px; font-size: 12px; }
   body #title .foot { display: none; }
   body #title .ob-prompt { width: 300px; padding: 12px 14px; bottom: 12px; right: 12px; }
@@ -131,7 +155,40 @@ body.touch #tip { bottom: auto; top: 36vh; }
 }
 @media (max-height: 520px) and (orientation: landscape) {
   body.touch .hud-br { display: none; }   /* no room on a phone: the damage plate returns on tablets */
-  body.touch #feed { bottom: 120px; }
+  body.touch #feed { bottom: 128px; }
+  body.touch #feed div:nth-child(n+3) { display: none; }   /* the newest two lines only: the sight is just above */
+  /* P-51: the wingman order row sits under the top buttons, so the score block moves down a row */
+  body.touch.touch-pilot .hud-tr { top: calc(100px + env(safe-area-inset-top)); transform: scale(0.8); }
   body.touch .hud-tr { top: calc(52px + env(safe-area-inset-top)); transform: scale(0.85); transform-origin: top right; }
   body.touch .hud-bl .hud-big { display: inline-block; }
+}
+
+/* ---------- Phones: the newer HUD panels around the touch buttons ---------- */
+@media (max-height: 520px) {
+  /* bonus objective (left) and Experte / special-event panel (centre) side by side, under the subtitles */
+  /* (body + id: these panels inject their own CSS after this file) */
+  body #objCard { width: 250px; padding: 7px 10px 8px; }
+  body #objCard .oc-t { font-size: 16px; }
+  body #objCard .oc-d { font-size: 11.5px; line-height: 1.3; }
+  body #spPanel { top: 92px; width: 260px; margin-left: -130px; padding: 5px 10px 7px; }
+  body #spPanel .sp-t { font-size: 16px; }
+  body #spPanel .sp-d { display: none; }
+  /* Experte dossier card (6.5 s on arrival): top left, smaller, over the bonus objective */
+  body #nemCard { top: 46px; left: 12px; scale: 0.78; transform-origin: 0 0; }
+  /* an in-flight event prompt (engine fire, oxygen ...): a little higher and tighter so it clears
+     the gun-position bar, and over the ability bar, which steps aside while it shows */
+  body #evPrompt { top: calc(50% + 34px); padding: 5px 12px 6px; }
+  body #evPrompt .ev-a { font-size: 16px; margin: 2px 0 4px; }
+  body:has(#evPrompt.show) #abilityBar { visibility: hidden; }
+}
+/* Arabic on a touch screen: the touch buttons stay where the thumbs are, so the HUD corners keep
+   their touch places instead of mirroring (the top-right corner holds MAP / pause, the right side FIRE) */
+html[dir=rtl] body.touch .hud-tl { right: auto; left: 12px; text-align: left; }
+html[dir=rtl] body.touch .hud-tr { left: auto; right: calc(14px + env(safe-area-inset-right)); text-align: right; }
+html[dir=rtl] body.touch #objCard { right: auto; left: 22px; }
+html[dir=rtl] body.touch #nemCard { right: auto; left: 12px; }
+/* the gunner block bottom left is as wide as the seat bar: its gun name, ammo and barrel meter hug
+   the left edge (in RTL they would end under the ability bar on a phone) */
+@media (max-height: 520px) {
+  html[dir=rtl] body.touch #hBL { direction: ltr; text-align: left; }
 }

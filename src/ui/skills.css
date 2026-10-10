@@ -135,6 +135,10 @@
   .sk-name { font-size: 12px; }
   .sk-node.cap .sk-name { font-size: 13px; }
 }
+/* short screens: the sheet scrolls, and the absolutely placed drawing plate would sit on the cards */
+@media (max-height: 900px) {
+  .sk-plate { display: none; }
+}
 
 /* ---------- Arabic: Arabic faces behind the drafting lettering; the sheet reads from the right ----------
    (SkillTreeScreen.ts mirrors the card columns and drafting lines itself) */

@@ -125,9 +125,15 @@ export class MissionFlow {
     setTimeout(() => g.ui.fade(false), 50);
     g.input.lock();
     g.ui.banner(m.number ? `MISSION ${m.number} · ${m.target.toUpperCase()}` : m.date.toUpperCase(), m.title, 3800);
-    const tips = m.role === 'gunner'
-      ? ['<kbd>Move the mouse</kbd> to swing the gun · <kbd>Hold left button</kbd> to fire', 'Lead the fighters — aim where they will be · <kbd>Right button</kbd> to zoom', 'Short bursts keep the barrel cool · <kbd>1–5</kbd> change gun position']
-      : ['<kbd>Move the mouse</kbd> to fly where you look · <kbd>Left button</kbd> fires', 'Put the K-14 sight ahead of the bandit and fire · <kbd>W/S</kbd> throttle', 'Fw 190s will come for you — keep turning · <kbd>V</kbd> chase view'];
+    // opening tips (touch controls get their own wording); Gunnery School teaches with its own cards
+    const touch = document.body.classList.contains('touch');
+    const tips = m.tutorial ? [] : m.role === 'gunner'
+      ? touch
+        ? ['<kbd>Drag</kbd> to swing the gun · <kbd>Hold FIRE</kbd> to shoot', 'Lead the fighters — aim where they will be · <kbd>ZOOM</kbd> for the ring sight', 'Short bursts keep the barrel cool · tap a gun position to change seats']
+        : ['<kbd>Move the mouse</kbd> to swing the gun · <kbd>Hold left button</kbd> to fire', 'Lead the fighters — aim where they will be · <kbd>Right button</kbd> to zoom', 'Short bursts keep the barrel cool · <kbd>1–5</kbd> change gun position']
+      : touch
+        ? ['<kbd>Drag</kbd> on the left to fly · <kbd>FIRE</kbd> shoots', 'Put the K-14 sight ahead of the bandit and fire · <kbd>THR</kbd> lever for power', 'Fw 190s will come for you — keep turning · <kbd>VIEW</kbd> chase view']
+        : ['<kbd>Move the mouse</kbd> to fly where you look · <kbd>Left button</kbd> fires', 'Put the K-14 sight ahead of the bandit and fire · <kbd>W/S</kbd> throttle', 'Fw 190s will come for you — keep turning · <kbd>V</kbd> chase view'];
     tips.forEach((t, i) => setTimeout(() => { if (g.state === 'playing' && g.mission === m) g.ui.tip(t, 4200); }, 4200 + i * 4600));
     setTimeout(() => {
       if (g.state !== 'playing') return;

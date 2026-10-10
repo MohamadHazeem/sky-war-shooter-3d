@@ -9,8 +9,11 @@ import { tx } from '../i18n';
 //                     P-51: a floating virtual stick appears under the thumb
 //   bottom right      FIRE (hold; sliding the thumb while holding also aims), ZOOM (toggle)
 //   right edge        P-51 throttle lever, VIEW button
+//   LOOK              free look toggle: left of ZOOM (gunner), above the throttle (P-51)
 //   top right         MAP, controls card (?), PAUSE, full screen
+//   under it (P-51)   wingman orders (added by DeviceControls)
 //   seat bar          the HUD's gun-position bar becomes tappable
+//   event prompt      engine fire / jam / oxygen: touch (or hold) the prompt itself
 //
 // Everything feeds Input exactly like a mouse and keyboard would (see Input.ts).
 // Abilities: other systems can add small buttons with addAbility(id, label, code).
@@ -28,7 +31,9 @@ export class TouchHud {
   private stick: Track | null = null;   // pilot stick finger
   private firePtr: Track | null = null; // finger on FIRE (sliding it aims too)
   private thrPtr: number | null = null;
+  private promptPtr: { id: number; code: string } | null = null;   // finger on an event prompt
   private zoomOn = false;
+  private lookOn = false;
   private stickEl: HTMLElement;
   private knobEl: HTMLElement;
   private thrFill: HTMLElement;
@@ -52,6 +57,7 @@ export class TouchHud {
       <div class="th-abil"></div>
       <div class="th-thr" aria-label="${tx('Throttle')}"><div class="th-track"><i></i></div><span>${tx('THR')}</span></div>
       <button class="th-view" data-t="view">${tx('VIEW')}</button>
+      <button class="th-look" aria-label="${tx('Free look')}" aria-pressed="false">${tx('LOOK')}</button>
       <button class="th-zoom" aria-label="${tx('Zoom')}">${tx('ZOOM')}</button>
       <button class="th-fire" aria-label="${tx('Fire')}">${tx('FIRE')}</button>`;
     document.body.appendChild(el);
@@ -103,11 +109,23 @@ export class TouchHud {
   private releaseAll() {
     this.aim = this.stick = this.firePtr = null;
     this.thrPtr = null;
+    if (this.promptPtr) { this.input.hold(this.promptPtr.code, false); this.promptPtr = null; }
     this.zoomOn = false;
+    this.setLook(false);
     this.el.querySelector('.th-zoom')?.classList.remove('on');
     this.el.querySelector('.th-fire')?.classList.remove('on');
     this.stickEl.classList.remove('on');
     this.input.setVirtualButtons('touch', 0);
+  }
+
+  // Free look is a toggle on touch (holding C on a keyboard): while on, dragging turns the head
+  private setLook(on: boolean) {
+    if (on === this.lookOn) return;
+    this.lookOn = on;
+    this.input.hold('KeyC', on);
+    const b = this.el.querySelector('.th-look');
+    b?.classList.toggle('on', on);
+    b?.setAttribute('aria-pressed', String(on));
   }
 
   private bits() { return (this.firePtr ? FIRE : 0) | (this.zoomOn ? ZOOM : 0); }
@@ -125,12 +143,18 @@ export class TouchHud {
     } else if (btn?.classList.contains('th-zoom')) {
       this.zoomOn = !this.zoomOn;
       btn.classList.toggle('on', this.zoomOn);
+    } else if (btn?.classList.contains('th-look')) {
+      this.setLook(!this.lookOn);
     } else if (btn?.dataset.t) {
       const a = btn.dataset.t;
       if (a === 'full') this.toggleFullscreen();
       else this.onAction?.(a as 'pause' | 'map' | 'help' | 'view');
     } else if (btn?.dataset.code) {
       this.input.tap(btn.dataset.code);
+    } else if (this.promptAt(e.clientX, e.clientY)) {
+      // in-flight event prompt (engine fire, jam, oxygen): touching it holds the key it asks for
+      this.promptPtr = { id: e.pointerId, code: this.promptAt(e.clientX, e.clientY)! }; capture();
+      this.input.hold(this.promptPtr.code, true);
     } else if (t.closest('.th-thr')) {
       this.thrPtr = e.pointerId; capture();
       this.setThrottleFrom(e.clientY);
@@ -173,7 +197,17 @@ export class TouchHud {
     if (this.stick?.id === id) { this.stick = null; this.stickEl.classList.remove('on'); }
     if (this.firePtr?.id === id) { this.firePtr = null; this.el.querySelector('.th-fire')?.classList.remove('on'); }
     if (this.thrPtr === id) this.thrPtr = null;
+    if (this.promptPtr?.id === id) { this.input.hold(this.promptPtr.code, false); this.promptPtr = null; }
     this.input.setVirtualButtons('touch', this.bits());
+  }
+
+  // the key of the event prompt under a finger, if one is showing there
+  private promptAt(x: number, y: number): string | null {
+    const p = document.getElementById('evPrompt');
+    const code = p?.dataset.code;
+    if (!code || !p!.classList.contains('show')) return null;
+    const r = p!.getBoundingClientRect();
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom ? code : null;
   }
 
   private stickRadius() { return Math.max(40, Math.min(70, Math.min(innerWidth, innerHeight) * 0.16)); }

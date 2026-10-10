@@ -32,6 +32,7 @@ const table: PhraseTable = {
     // step instructions
     'Move the {mouse} to swing the gun onto the target drone — the <b class="red">red brackets</b>.': 'حرّك {mouse} لتوجّه المدفع نحو طائرة الهدف — إلى داخل <b class="red">الأقواس الحمراء</b>.',
     'mouse': 'الفأرة',
+    'thumb': 'الإبهام',
     '{lmb} fires. Use <b>short bursts</b> — half a second, then let go — and walk the tracers onto the drone.': '{lmb} للإطلاق. أطلق <b>رشقات قصيرة</b> — نصف ثانية ثم ارفع إصبعك — وقُد الطلقات الخطّاطة حتى تستقر على الهدف.',
     'Left button': 'الزر الأيسر',
     'Barrel too hot! Wait for the heat bar to cool.': 'السبطانة ساخنة جدًا! انتظر حتى يبرد مؤشر الحرارة.',
@@ -98,6 +99,12 @@ const table: PhraseTable = {
     'Zoom': 'تقريب',
     'Cockpit / chase view': 'منظر قمرة القيادة / منظر المطاردة',
     'Free look (hold)': 'النظر الحر (اضغط مطوّلًا)',
+    // the card with the touch controls
+    'Drag': 'اسحب',
+    'Free look on / off: dragging looks around the fuselage': 'النظر الحر تشغيل / إيقاف: السحب يلتفت داخل جسم الطائرة',
+    'Change gun position: tap a seat in the bar at the bottom': 'غيّر موقع الرماية: المس موقعًا في الشريط أسفل الشاشة',
+    'Fly: a stick appears under your thumb on the left': 'الطيران: تظهر عصا تحكم تحت إبهامك في الجهة اليسرى',
+    'Free look on / off': 'النظر الحر تشغيل / إيقاف',
     'Mouse aim / direct flight controls': 'التوجيه بالفأرة / التحكم المباشر بالطيران',
     'Put the K-14 gunsight pipper ahead of the bandit, then fire.': 'ضع نقطة مهداف K-14 أمام الطائرة المعادية، ثم أطلق النار.',
     'Keep your speed up and stay near the bombers.': 'حافظ على سرعتك وابقَ قرب القاذفات.',
@@ -177,6 +184,8 @@ const table: PhraseTable = {
     'VIEW': 'منظر',
     'ZOOM': 'تقريب',
     'FIRE': 'إطلاق',
+    'LOOK': 'تلفّت',
+    'Free look': 'النظر الحر',
 
     // ---------------- mission loading screen (Preload.ts) ----------------
     'Loading aircraft and sounds… {a} / {b} MB': 'جارٍ تحميل الطائرات والأصوات… {a} / {b} ميغابايت',
