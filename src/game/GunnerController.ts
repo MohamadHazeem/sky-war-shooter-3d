@@ -9,6 +9,7 @@ import { sound } from '../audio/Sound';
 import { bulletHoleTexture } from '../render/Textures';
 import { Atmos } from '../render/Atmosphere';
 import { DustMotes } from './DustMotes';
+import { KeyAim, KEY_AIM_RATE } from './KeyAim';
 
 interface StationState {
   def: StationDef;
@@ -57,6 +58,7 @@ export class GunnerController {
   onNotice?: (text: string) => void;
   transition = 0; // >0 while crawling to another station (screen fades)
   private pendingStation: StationId | null = null;
+  private keyAim = new KeyAim();
 
   constructor(private engine: Engine, private world: World, private input: Input) {
     for (const id of Object.keys(STATIONS) as StationId[]) {
@@ -276,6 +278,11 @@ export class GunnerController {
     const mdx = inp.mouseDX + push.x * 900 * dt, mdy = inp.mouseDY + push.y * 700 * dt;
     s.tYaw -= mdx * sens;
     s.tPitch -= mdy * sens * (inp.invertY ? -1 : 1);
+    // keyboard traverse (arrows / I-J-K-L) moves the same target, slower when sighting
+    this.keyAim.update(inp, dt);
+    const kr = KEY_AIM_RATE * (this.zoom ? 0.55 : 1) * dt;
+    s.tYaw -= this.keyAim.x * kr;
+    s.tPitch += this.keyAim.y * kr * (inp.invertY ? -1 : 1);
     if (def.yaw[1] - def.yaw[0] < Math.PI * 1.99) s.tYaw = THREE.MathUtils.clamp(s.tYaw, def.yaw[0], def.yaw[1]);
     else s.tYaw = wrapAngle(s.tYaw);
     s.tPitch = THREE.MathUtils.clamp(s.tPitch, def.pitch[0] - def.rest.pitch, def.pitch[1] - def.rest.pitch);
@@ -306,7 +313,7 @@ export class GunnerController {
     this.cooldown -= dt;
     s.heat = Math.max(0, s.heat - dt * (s.overheated ? 0.22 : 0.16));
     if (s.overheated && s.heat < 0.45) s.overheated = false;
-    const wantFire = inp.mouse(0) && this.transition <= 0 && s.reload <= 0 && !s.overheated && s.ammo > 0 && this.bomber.alive;
+    const wantFire = (inp.mouse(0) || inp.down('Space')) && this.transition <= 0 && s.reload <= 0 && !s.overheated && s.ammo > 0 && this.bomber.alive;
     this.firing = wantFire;
     this.brassClatter(dt, wantFire);
     // Low belt warning: a metallic tick every 0.6 s while firing with under 60 rounds left
@@ -328,7 +335,7 @@ export class GunnerController {
         if (s.ammo <= 0) break;
       }
     } else if (this.cooldown < 0) this.cooldown = 0;
-    if (s.ammo === 0 && inp.mouseHit(0)) sound.play('click', null, { gain: 0.6 });
+    if (s.ammo === 0 && (inp.mouseHit(0) || inp.hit('Space'))) sound.play('click', null, { gain: 0.6 });
 
     // Recoil animation & lights
     this.recoilT = Math.max(0, this.recoilT - dt * 14);

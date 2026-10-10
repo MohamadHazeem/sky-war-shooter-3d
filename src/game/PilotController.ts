@@ -6,6 +6,7 @@ import type { Fighter } from '../world/Aircraft';
 import { steerTo } from '../world/AI';
 import { instantiate, hasModel } from '../world/Models';
 import { sound } from '../audio/Sound';
+import { KeyAim, KEY_AIM_RATE } from './KeyAim';
 
 const _v = new THREE.Vector3();
 const _v2 = new THREE.Vector3();
@@ -31,6 +32,7 @@ export class PilotController {
   readonly gunsight = { x: 0, y: 0, visible: false, aimX: 0, aimY: 0, aimVisible: false, leadMil: 0 };
   private prevQuat = new THREE.Quaternion();
   private omegaSmooth = new THREE.Vector3();
+  private keyAim = new KeyAim();
 
   constructor(private engine: Engine, private world: World, private input: Input) {}
 
@@ -89,15 +91,18 @@ export class PilotController {
     const sens = 0.0016 * inp.sensitivity;
     const push = inp.edgePush();
     const mdx = inp.mouseDX + push.x * 900 * dt, mdy = inp.mouseDY + push.y * 700 * dt;
+    // keyboard aim (arrows / I-J-K-L), an accessibility alternative to the mouse
+    this.keyAim.update(inp, dt);
+    const kr = KEY_AIM_RATE * dt;
     if (p.alive) {
       if (this.freeLook) {
-        this.lookYaw -= mdx * sens * 1.4;
-        this.lookPitch = THREE.MathUtils.clamp(this.lookPitch - mdy * sens * 1.4, -1.2, 1.4);
+        this.lookYaw -= mdx * sens * 1.4 + this.keyAim.x * kr;
+        this.lookPitch = THREE.MathUtils.clamp(this.lookPitch - mdy * sens * 1.4 + this.keyAim.y * kr, -1.2, 1.4);
       } else {
         this.lookYaw *= Math.exp(-dt * 6); this.lookPitch *= Math.exp(-dt * 6);
         if (this.mode === 'mouseAim') {
-          this.aimYaw -= mdx * sens;
-          this.aimPitch = THREE.MathUtils.clamp(this.aimPitch - mdy * sens * (inp.invertY ? -1 : 1), -1.5, 1.5);
+          this.aimYaw -= mdx * sens + this.keyAim.x * kr;
+          this.aimPitch = THREE.MathUtils.clamp(this.aimPitch - mdy * sens * (inp.invertY ? -1 : 1) + this.keyAim.y * kr * (inp.invertY ? -1 : 1), -1.5, 1.5);
           const dir = this.aimDir(_v);
           steerTo(fm, dir, 1.1, 1);
         } else {
