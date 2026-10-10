@@ -41,7 +41,7 @@ Player notes given at the start:
 | 5 | Progression depth (crew levels, medals, dailies, stats, online leaderboard) | Done — career/rank ladder + stats, medals unlock weapons/aircraft, 3 daily orders, online leaderboard |
 | 6 | Campaign 7 → 12 missions with story || Done — 12 missions (m8 Black Thursday, m9 storm escort, m10 dusk straggler, m11 flak bomb run, m12 finale), story through all briefings; boss finales m5/m7/m12 |
 | 7 | Special events (ace squadrons, Zerstörer waves, rocket barrages) || Done — ace squadron (named leader, yellow noses), Zerstörer wave, rocket barrage |
-| 8 | Visual match to Yarnhub reference | |
+| 8 | Visual match to Yarnhub reference | Done — film-like grade (desaturated, cool shadows / warm highlights, lifted brown blacks), paler sky + horizon haze, per-part materials (glossy glass, satin paint, worn metal, polished P-51), sky rim light, sharper stable shadows, contact shadowing |
 | 9 | Cinematics (kill cam, replay, fly-by) || Done — kill cam (special kills, skippable, setting), mission fly-by, best-moment replay |
 | 10 | Pilot mode overhaul | Done — dogfight AI (breaks, scissors, spirals, extend/zoom, wingman pairs, per-type styles), Bf 110/Ju 88 rear gunners, K-14 gyro sight, G head-lean + buffet, chase cam, padlock view (T), wing-gun FX, 3-round m4/m7 (intercept, sweep, save the straggler), bomber-protection scoring |
 | 11 | Audio pass 2 || Done — threat-driven adaptive music + climax track + synced layers, loudness-balanced mix, limiter, more variation |
@@ -61,11 +61,11 @@ Player notes given at the start:
 |---|---|---|
 | 22 | Online co-op prototype | |
 | 23 | 40 achievements + trophy screen || Done — 42 achievements with rarity, trophy screen |
-| 24 | Living sky | |
+| 24 | Living sky | Done — distant bomber boxes with contrails, far-off dogfights with gun flashes and burning fallers, distant flak barrages (scaled by quality) |
 | 25 | Story briefings (voiced) || Done — 45 voiced briefing clips (intelligence officer), Play/Stop, paragraph highlight |
 | 26 | Gameplay analytics | Done — one anonymous summary per mission to Firestore (validated, rate-limited, write-only), Settings → Privacy opt-out, DNT/GPC respected, `tools/analytics_report.mjs` |
-| 27 | Ultra preset, FPS counter, 120 Hz | |
-| 28 | Menu/front-end polish || Partly — Career, Trophies, Daily Orders, Training screens |
+| 27 | Ultra preset, FPS counter, 120 Hz | Done — Ultra (3.7 MP, 88 cloud steps, 4096 shadows, denser living sky), FPS counter setting, display refresh detection with 120/144 Hz targeting and 60 fps fallback |
+| 28 | Menu/front-end polish | Done — grouped title menu (play modes large, 2-column secondary grid), Career, Trophies, Daily Orders, Skills, Training screens, campaign map |
 | 29 | Share + trailer + social card | Done — share screenshot (stamped) / result from pause, debrief, photo mode; OG/Twitter card image; 57 s scripted trailer recorder (`sws.trailer`, docs/TRAILER.md) |
 | 30 | Code health: split Game.ts, unit tests, README | |
 
@@ -88,3 +88,4 @@ Player notes given at the start:
 - 23:10 Arabic (RTL) merged; Arabic for the pilot overhaul lines. Boss regression: m12 (4 warships) completes at 853 s; m7 completes.
 - 23:13 share/social card/trailer/analytics merged (squashed); m5 boss regression 3/3 OK.
 - 23:16 deploy #6 (pilot overhaul, Arabic, share/analytics, field dressing).
+- 23:30 graphics pass merged (goals 8, 24, 27); grouped title menu (28).
