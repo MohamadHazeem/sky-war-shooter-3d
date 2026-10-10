@@ -64,6 +64,8 @@ interface Station {
   cooldown: number; recoilT: number; shots: number; idle: number;
 }
 
+const _camW = new THREE.Vector3();
+
 export class LivingInterior {
   brass: Brass | null = null;
   private bomber: Bomber | null = null;
@@ -123,9 +125,20 @@ export class LivingInterior {
     this.dressCrew();
     this.airframe = cabinAirframe(bomber, zc);
     this.cabinOn = false;
+    // The cut-down airframe is only for an eye inside the cabin: photo mode, kill cam, theatre and
+    // other outside cameras take over without this update running, so decide per render from
+    // where the camera actually is (Scene.onBeforeRender runs before the scene is culled/sorted).
+    this.world.scene.onBeforeRender = (_r, _s, cam) => {
+      if (!this.waist) return;
+      // eye in bomber space: inside the fuselage section around the waist (the hip view leans
+      // ~1 m out of the window, so allow a little beyond the skin)
+      const l = bomber.root.worldToLocal(cam.getWorldPosition(_camW));
+      this.cabinGeometry(this.waist.visible && Math.abs(l.x) < 1.9 && Math.abs(l.y) < 2.2 && Math.abs(l.z - zc) < 4.5);
+    };
   }
 
   detach() {
+    this.world.scene.onBeforeRender = () => {};
     this.cabinGeometry(false);
     this.airframe = [];
     this.brass?.dispose();
@@ -381,7 +394,6 @@ export class LivingInterior {
     const side = station === 'waistL' ? 1 : station === 'waistR' ? -1 : 0;
     _d.set(side * 0.18, 0.02, -0.22);
     this.breath?.update(dt, mouth, vent, ventX, _d, eyeIn * (0.55 + 0.45 * cold), breathRate, daylight, viewH);
-    this.cabinGeometry(!!this.waist?.visible);
     if (!this.waist?.visible) { this.flash.intensity = 0; return; }
     this.frostT += dt;
     // frost creeps in over the first few minutes of a cold mission; the player's own window
