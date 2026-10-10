@@ -1,6 +1,6 @@
 import { defineConfig, type Plugin } from 'vite';
 import { createHash } from 'node:crypto';
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 
 const PUBLIC = resolve(import.meta.dirname, 'public');
@@ -35,7 +35,8 @@ function pwaPlugin(): Plugin {
     apply: 'build',
     configResolved(c) { outDir = resolve(c.root, c.build.outDir); },
     closeBundle() {
-      const files = listFiles(outDir).filter((p) => p !== 'sw.js' && p !== '_headers' && !p.endsWith('.md'));
+      // og-image.jpg is for link previews only: not worth precaching
+      const files = listFiles(outDir).filter((p) => p !== 'sw.js' && p !== '_headers' && p !== 'og-image.jpg' && !p.endsWith('.md'));
       const rev = (p: string) => createHash('sha256').update(readFileSync(join(outDir, p))).digest('hex').slice(0, 12);
       const shell: string[] = [];
       const media: Record<string, string> = {};
@@ -58,10 +59,37 @@ function pwaPlugin(): Plugin {
   };
 }
 
+// Dev server only: POST /__dev/save?path=<file> stores the request body in the repo, for the
+// in-browser tools in src/dev (sws.ogCard() -> public/og-image.jpg, sws.trailer({ save: true })
+// -> trailer-out/*.webm, which is git-ignored). Only these paths are writable.
+const DEV_SAVE = [/^public\/og-image\.jpg$/, /^docs\/screenshots\/[\w.-]+\.(png|jpg)$/, /^trailer-out\/[\w.-]+\.webm$/];
+function devSavePlugin(): Plugin {
+  return {
+    name: 'sws-dev-save',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/__dev/save', (req, res) => {
+        const path = new URL(req.url ?? '', 'http://x').searchParams.get('path') ?? '';
+        if (req.method !== 'POST' || !DEV_SAVE.some((r) => r.test(path))) { res.statusCode = 403; res.end('forbidden'); return; }
+        const chunks: Buffer[] = [];
+        req.on('data', (c: Buffer) => chunks.push(c));
+        req.on('end', () => {
+          const file = resolve(import.meta.dirname, path);
+          mkdirSync(resolve(file, '..'), { recursive: true });
+          const buf = Buffer.concat(chunks);
+          writeFileSync(file, buf);
+          res.setHeader('content-type', 'application/json');
+          res.end(JSON.stringify({ path, bytes: buf.length }));
+        });
+      });
+    },
+  };
+}
+
 export default defineConfig({
   base: './',
   server: { port: 5173, host: '127.0.0.1' },
   build: { target: 'es2022', chunkSizeWarningLimit: 2000 },
   define: { __ASSET_SIZES__: JSON.stringify(assetSizes()) },
-  plugins: [pwaPlugin()],
+  plugins: [pwaPlugin(), devSavePlugin()],
 });

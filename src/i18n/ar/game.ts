@@ -178,6 +178,7 @@ const table: PhraseTable = {
     'REPLAY': 'إعادة',
     'BEST MOMENT': 'أفضل لحظة',
     'PHOTO MODE · WASD move · mouse look · Q/E down/up · Shift faster · wheel speed · F exit': 'وضع التصوير · WASD للتحرك · الفأرة للنظر · Q/E لأسفل/لأعلى · Shift أسرع · العجلة للسرعة · F للخروج',
+    'PHOTO MODE · WASD move · mouse look · Q/E down/up · Shift faster · wheel speed · Enter share · F exit': 'وضع التصوير · WASD للتحرك · الفأرة للنظر · Q/E لأسفل/لأعلى · Shift أسرع · العجلة للسرعة · Enter للمشاركة · F للخروج',
 
     // ---- kill juice and streak meter (GameFeel.ts), lining-up warning (CombatFeedback.ts) ----
     'DOUBLE KILL': 'إسقاط مزدوج',

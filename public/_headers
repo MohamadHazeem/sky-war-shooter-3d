@@ -15,6 +15,8 @@
 
 /icons/*
   Cache-Control: public, max-age=604800
+/og-image.jpg
+  Cache-Control: public, max-age=86400
 
 # Always revalidated: the page, the service worker and the web manifest
 /

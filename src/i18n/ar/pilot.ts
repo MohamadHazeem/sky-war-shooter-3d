@@ -98,6 +98,17 @@ const table: PhraseTable = {
     "That's the last of the destroyers! Nice work, boys.": 'كانت تلك آخر المدمّرات! عمل رائع يا شباب.',
     "That one's an ace — kill markings all down the tail. Watch him!": 'ذاك طيّار بارع — علامات الإسقاط على طول ذيله. احذروه!',
     "That's the lot of them! They're breaking off!": 'هذا كل ما لديهم! إنهم ينسحبون!',
+    // share / privacy (Share.ts, Analytics.ts)
+    'Share screenshot': 'مشاركة لقطة الشاشة',
+    'Share result': 'مشاركة النتيجة',
+    'Could not capture the screen': 'تعذّر التقاط الشاشة',
+    'Screenshot saved · share text and link copied': 'حُفظت اللقطة · نُسخ نص المشاركة والرابط',
+    'Screenshot saved': 'حُفظت اللقطة',
+    'Result and link copied — paste it anywhere': 'نُسخت النتيجة والرابط — الصقها أينما شئت',
+    'PRIVACY': 'الخصوصية',
+    'Share anonymous gameplay stats': 'مشاركة إحصاءات لعب مجهولة الهوية',
+    'Your browser asks sites not to track you (Do Not Track), so no stats are sent.': 'متصفحك يطلب من المواقع عدم تتبّعك (Do Not Track)، لذا لا تُرسل أي إحصاءات.',
+    'One anonymous summary per mission (mission, result, kills, accuracy, gun positions used, settings, screen size and frame rate) helps balance the game. No name, account or personal data is sent.': 'ملخّص واحد مجهول الهوية لكل مهمة (المهمة، النتيجة، الإسقاطات، الدقة، مواقع الرشّاشات المستخدمة، الإعدادات، حجم الشاشة ومعدّل الإطارات) يساعد في موازنة اللعبة. لا يُرسل أي اسم أو حساب أو بيانات شخصية.',
   },
   patterns,
 };

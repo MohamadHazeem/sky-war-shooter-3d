@@ -46,8 +46,15 @@ export class PhotoMode {
   private revealed: THREE.Object3D[] = [];
   private hint: HTMLElement | null = null;
   private hintT = 0;
+  private shareBtn: HTMLButtonElement | null = null;
+  /** Share the current view (Enter or the on-screen button); wired in game/Share.ts */
+  onShare?: () => void;
 
-  constructor(private engine: Engine, private input: Input, private world: World) {}
+  constructor(private engine: Engine, private input: Input, private world: World) {
+    window.addEventListener('keydown', (e) => {
+      if (this.active && e.code === 'Enter' && !e.repeat && this.onShare) { e.preventDefault(); this.onShare(); }
+    });
+  }
 
   toggle() { if (this.active) this.exit(); else this.enter(); }
 
@@ -133,6 +140,7 @@ export class PhotoMode {
 
     if (s.hudShown) document.getElementById('hud')?.classList.add('show');
     this.hideHint();
+    if (this.shareBtn) this.shareBtn.style.display = 'none';
     this.vel.set(0, 0, 0);
   }
 
@@ -180,9 +188,20 @@ export class PhotoMode {
       document.body.appendChild(h);
       this.hint = h;
     }
-    this.hint.textContent = tx('PHOTO MODE · WASD move · mouse look · Q/E down/up · Shift faster · wheel speed · F exit');
+    this.hint.textContent = tx(this.onShare ? 'PHOTO MODE · WASD move · mouse look · Q/E down/up · Shift faster · wheel speed · Enter share · F exit' : 'PHOTO MODE · WASD move · mouse look · Q/E down/up · Shift faster · wheel speed · F exit');
     this.hint.style.display = 'block';
     this.hintT = 6;
+    if (this.onShare) {
+      if (!this.shareBtn) {
+        const b = document.createElement('button');
+        b.className = 'btn ghost photo-share';
+        b.textContent = '📸 Share screenshot';
+        b.addEventListener('click', (e) => { e.stopPropagation(); this.onShare?.(); });
+        document.body.appendChild(b);
+        this.shareBtn = b;
+      }
+      this.shareBtn.style.display = 'block';
+    }
   }
 
   private hideHint() {

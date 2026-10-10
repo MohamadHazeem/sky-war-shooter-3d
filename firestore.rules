@@ -5,8 +5,50 @@ rules_version = '2';
 // - Signed-in (anonymous) players can only append entries: no edits, no deletes.
 // - Every entry is validated (fields, types, ranges, plausibility) and must be written in the
 //   same batch as the player's 'limits' stamp, which allows one entry per 20 seconds.
+// Anonymous gameplay stats (src/net/Analytics.ts): one append-only summary per mission in
+// 'analytics_events', no personal data, never readable by clients, rate-limited through
+// 'analytics_limits' (one write per 10 seconds per player).
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function intIn(v, lo, hi) { return v is int && v >= lo && v <= hi; }
+    function optInt(m, k, hi) { return !(k in m) || intIn(m[k], 0, hi); }
+    function shortStr(v, max) { return v is string && v.size() <= max; }
+
+    function validMissionStats(d) {
+      return d.keys().hasAll(['v', 'event', 'createdAt', 'mission', 'mode', 'role', 'outcome', 'success', 'duration', 'kills', 'accuracy', 'bombersLost', 'rounds', 'shots', 'deaths', 'score', 'seatSwitches', 'seats', 'abilities', 'perks', 'settings', 'device', 'fpsAvg', 'fpsP10', 'fpsBucket', 'dev'])
+        && d.keys().hasOnly(['v', 'event', 'createdAt', 'mission', 'mode', 'role', 'outcome', 'success', 'duration', 'kills', 'accuracy', 'bombersLost', 'rounds', 'shots', 'deaths', 'score', 'seatSwitches', 'seats', 'abilities', 'perks', 'settings', 'device', 'fpsAvg', 'fpsP10', 'fpsBucket', 'dev'])
+        && d.v == 1 && d.event == 'mission' && d.createdAt == request.time
+        && shortStr(d.mission, 40) && d.mission.matches('^[a-z0-9-]{1,40}$')
+        && d.mode in ['campaign', 'survival', 'acehunt', 'timeattack', 'daily', 'tutorial', 'other']
+        && d.role in ['gunner', 'pilot']
+        && d.outcome in ['success', 'fail', 'aborted'] && d.success is bool
+        && intIn(d.duration, 0, 36000) && intIn(d.kills, 0, 5000)
+        && (d.accuracy is int || d.accuracy is float) && d.accuracy >= 0 && d.accuracy <= 1
+        && intIn(d.bombersLost, 0, 100) && intIn(d.rounds, 0, 500) && intIn(d.shots, 0, 1000000)
+        && intIn(d.deaths, 0, 1) && intIn(d.score, 0, 5000000) && intIn(d.seatSwitches, 0, 10000)
+        && d.seats is map && d.seats.keys().hasOnly(['waistL', 'waistR', 'top', 'ball', 'tail'])
+        && optInt(d.seats, 'waistL', 36000) && optInt(d.seats, 'waistR', 36000) && optInt(d.seats, 'top', 36000)
+        && optInt(d.seats, 'ball', 36000) && optInt(d.seats, 'tail', 36000)
+        && d.abilities is map && d.abilities.keys().hasOnly(['mustangs', 'overdrive', 'focus'])
+        && optInt(d.abilities, 'mustangs', 999) && optInt(d.abilities, 'overdrive', 999) && optInt(d.abilities, 'focus', 999)
+        && shortStr(d.perks, 600) && d.perks.matches('^[a-z0-9_,]*$')
+        && d.settings is map
+        && d.settings.keys().hasOnly(['quality', 'aimAssist', 'difficulty', 'flightMode', 'language', 'touch', 'gamepad'])
+        && d.settings.quality in ['low', 'medium', 'high']
+        && d.settings.aimAssist in ['off', 'low', 'high']
+        && d.settings.difficulty in ['recruit', 'veteran', 'ace']
+        && d.settings.flightMode in ['mouseAim', 'direct']
+        && shortStr(d.settings.language, 2) && d.settings.language.matches('^[a-z]{2}$')
+        && d.settings.touch is bool && d.settings.gamepad is bool
+        && d.device is map && d.device.keys().hasOnly(['screen', 'touch', 'dpr'])
+        && d.device.screen in ['phone', 'tablet', 'laptop', 'desktop', 'large']
+        && d.device.touch is bool
+        && (d.device.dpr is int || d.device.dpr is float) && d.device.dpr >= 0 && d.device.dpr <= 4
+        && intIn(d.fpsAvg, 0, 500) && intIn(d.fpsP10, 0, 500)
+        && d.fpsBucket in ['<20', '20-30', '30-45', '45-58', '58+']
+        && d.dev is bool;
+    }
 
     match /limits/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
@@ -44,6 +86,22 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && request.resource.data.v == 1
         && getAfter(/databases/$(database)/documents/limits/$(request.auth.uid)).data.last == request.time;
+    }
+
+    // ---- anonymous gameplay stats ----
+    match /analytics_limits/{uid} {
+      allow read, delete: if false;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['last'])
+        && request.resource.data.last == request.time
+        && (resource == null || resource.data.last < request.time - duration.value(10, 's'));
+    }
+
+    match /analytics_events/{id} {
+      allow read, update, delete: if false;
+      allow create: if request.auth != null
+        && validMissionStats(request.resource.data)
+        && getAfter(/databases/$(database)/documents/analytics_limits/$(request.auth.uid)).data.last == request.time;
     }
   }
 }

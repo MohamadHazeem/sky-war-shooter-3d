@@ -7,3 +7,4 @@ dist/
 .env.*
 .claude/worktrees/
 .wrangler/
+trailer-out/

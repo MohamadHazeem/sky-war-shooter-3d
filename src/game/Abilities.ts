@@ -67,6 +67,7 @@ export class Abilities {
   private boosts: GunBoost[] = [];
   private tipShown = false;
   private missionT = 0;
+  onUse?: (id: AbilityId) => void;   // anonymous gameplay stats (net/Analytics.ts)
 
   constructor(private engine: Engine, private input: Input, private ui: UI, private game: Game) {}
 
@@ -105,6 +106,7 @@ export class Abilities {
     else if (id === 'overdrive') this.startOverdrive();
     else this.startFocus();
     playAbilityCue(id);
+    this.onUse?.(id);
     const [who, text] = LINES[id][this.role];
     w.callout('ab_' + id, who, text, 0, 2);
     return true;

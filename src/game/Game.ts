@@ -46,6 +46,8 @@ import { ServiceRecord } from './ServiceRecord';
 import { Pacing } from './Pacing';
 import { ModeRunner, mountModePanel, leaderboardMode } from './Modes';
 import { SpecialEvents } from './SpecialEvents';
+import { mountShare, shareStamp } from './Share';
+import { analytics, mountStatsToggle } from '../net/Analytics';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -548,6 +550,7 @@ export class Game {
     }, 2500);
     this.onboarding.onMissionStart(m);
     this.service.onMissionStart(m);
+    analytics.missionStart(m);
   }
 
   // Armory levels + this mission's perks -> guns, ammo, fire, aim aid
@@ -589,6 +592,7 @@ export class Game {
   private mountCloud() {
     const host = document.querySelector<HTMLElement>('#settings .box');
     if (host) mountCloudSave(host);
+    mountStatsToggle(host);
   }
 
   // Field upgrade: a random perk, applied on the spot with a short card (no pause)
@@ -994,8 +998,12 @@ export class Game {
     const host = document.querySelector<HTMLElement>('#debrief .box');
     const board = leaderboardMode(m) ?? (survival ? `survival-${m.role}` : `campaign-${m.id}`);
     if (host) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: this.score, kills: w.stats.kills, rounds: this.roundIdx + 1 });
+    mountShare(host, this.engine, () => shareStamp(this), () => ({ title: m.title, kills: d.kills, score: d.score, success: d.success, survival, waves: d.waves, role: m.role }));
+    analytics.missionEnd(m, d);
     this.service.onDebrief(m, d, medals);
   }
+
+  get currentScore() { return this.score; }   // share stamp / analytics
 
   pause() {
     if (this.state !== 'playing') return;
@@ -1010,6 +1018,7 @@ export class Game {
       settings: () => { this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => {}); this.mountCloud(); },
       quit: () => { this.ui.hidePause(); this.engine.paused = false; sound.ctx?.resume(); sound.stopSpeech(); this.startMenu(); },
     }, this.mission?.role ?? 'gunner', this.pauseInfo());
+    mountShare(document.querySelector('#pause .box'), this.engine, () => shareStamp(this));
   }
 
   // Snapshot of the mission state for the pause screen (same figures as the debrief)

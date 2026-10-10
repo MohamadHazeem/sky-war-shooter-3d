@@ -5,6 +5,8 @@ import { Game } from './game/Game';
 import { essentialsRequested, loadEssentials, loadInBackground, isMissionReady } from './core/Preload';
 import { CAMPAIGN, survivalMission } from './game/Missions';
 import { DeviceControls } from './game/DeviceControls';
+import { installShare } from './game/Share';
+import { analytics } from './net/Analytics';
 import './style.css';
 
 async function boot() {
@@ -32,6 +34,8 @@ async function boot() {
   const input = new Input(engine.renderer.domElement);
   const game = new Game(engine, input, ui);
   const devices = new DeviceControls(engine, input, game);   // touch, gamepad, accessibility
+  installShare(game, engine);                                 // photo mode: Enter / button shares the view
+  analytics.install(engine, game, () => devices.pad.connected); // anonymous per-mission stats (opt-out in Settings)
   game.startMenu();
   game.warmupShaders();
   // Warm up shaders before revealing the menu
@@ -57,6 +61,14 @@ async function boot() {
     (window as any).sws.tutorialAutoplay = (o?: any) => tutorialAutoplay(engine, game, o);
     Object.assign((window as any).sws, { game, engine });
     Object.assign((window as any).sws, { event: (n: any) => game.midRound.devEvent(n), objective: (n: any) => game.midRound.devObjective(n) });
+    // Sharing / trailer / social card tools (docs/TRAILER.md): sws.trailer(), sws.ogCard(), sws.analytics.last
+    const { trailer } = await import('./dev/Trailer');
+    const { ogCard } = await import('./dev/OgCard');
+    Object.assign((window as any).sws, {
+      analytics,
+      trailer: (o?: any) => trailer(engine, game, o),
+      ogCard: (o?: any) => ogCard(engine, game, o),
+    });
     // Boss battle now (starts a survival mission first when not flying): sws.boss('pilot')
     (window as any).sws.boss = (role: 'gunner' | 'pilot' = 'gunner') => {
       if (game.state !== 'playing' || !game.mission) game.startMission(survivalMission(role));
