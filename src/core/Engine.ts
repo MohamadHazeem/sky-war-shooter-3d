@@ -5,8 +5,34 @@ import { PostFX } from '../render/PostFX';
 import { buildEnvironment, SkyDome } from '../render/Sky';
 import { envRef } from '../render/EnvRef';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
+import { installAircraftLook, retargetEnvMaps, retireEnv, syncAircraftLook } from '../render/AircraftLook';
+import { LivingSky } from '../render/LivingSky';
+import { FpsCounter } from '../render/FpsCounter';
+import { drsFloor, drsTargetMs, fasterRefreshFrom, refreshFromTimestamps } from '../render/FrameTiming';
 
-export type Quality = 'low' | 'medium' | 'high';
+export type Quality = 'low' | 'medium' | 'high' | 'ultra';
+
+// Per-tier render settings. `particles` scales the purely visual particle budgets
+// (living sky: distant boxes, dogfights, flak puffs); other systems may read it too.
+export interface QualityPreset {
+  pixels: number;        // pixel budget of the main render targets (before dynamic resolution)
+  msaa: number;          // scene MSAA samples
+  shadows: number;       // sun shadow map size (0 = no shadows)
+  shadowRange: number;   // half-width (m) of the shadow frustum around the camera
+  cloudScale: number;    // volumetric cloud buffer scale
+  cloudSteps: number;    // cloud raymarch steps
+  ao: number;            // screen-space contact AO strength (0 = off)
+  particles: number;     // visual particle budget multiplier (0 = living sky off)
+}
+export const QUALITY: Record<Quality, QualityPreset> = {
+  low:    { pixels: 0.9e6, msaa: 0, shadows: 0,    shadowRange: 60, cloudScale: 0.33, cloudSteps: 36, ao: 0,   particles: 0 },
+  medium: { pixels: 1.5e6, msaa: 2, shadows: 2048, shadowRange: 48, cloudScale: 0.45, cloudSteps: 52, ao: 0,   particles: 0.5 },
+  high:   { pixels: 2.3e6, msaa: 4, shadows: 2048, shadowRange: 40, cloudScale: 0.5,  cloudSteps: 64, ao: 0.6, particles: 1 },
+  ultra:  { pixels: 3.7e6, msaa: 4, shadows: 4096, shadowRange: 40, cloudScale: 0.62, cloudSteps: 88, ao: 0.7, particles: 1.6 },
+};
+export const QUALITY_ORDER: Quality[] = ['low', 'medium', 'high', 'ultra'];
+// One tier down (the auto-quality fallback): ultra -> high -> medium -> low
+export const lowerQuality = (q: Quality): Quality => QUALITY_ORDER[Math.max(0, QUALITY_ORDER.indexOf(q) - 1)];
 
 export interface Updatable { update(dt: number, time: number): void }
 
@@ -21,6 +47,7 @@ export class Engine {
   readonly hemi: THREE.HemisphereLight;
   readonly clouds: CloudRenderer;
   readonly post: PostFX;
+  readonly livingSky: LivingSky;   // distant bomber boxes, dogfights and flak (purely visual)
   readonly reversed: boolean;
   private sceneRT: THREE.WebGLRenderTarget;
   private hdrRT: THREE.WebGLRenderTarget;
@@ -54,6 +81,19 @@ export class Engine {
   private lastRaiseAt = -99;
   private fpsAcc = 0;
   private fpsN = 0;
+  // Display refresh rate: measured from idle requestAnimationFrame intervals (probeRefresh)
+  // and refined from live frame intervals. Dynamic resolution targets this frame time; on a
+  // high-refresh display it gives up on the full rate (back to 60 fps) rather than drop the
+  // resolution below a floor.
+  refreshHz = 60;
+  refreshMeasured = false;   // true once an idle-frame probe has run (else 60 Hz assumed)
+  private intervals: number[] = [];
+  private pendingHz: number | null = null;
+  private hiGiveUp = false;
+  private hiMiss = 0;
+  private probing = false;
+  private fpsCounter: FpsCounter | null = null;
+  private lightRot = new THREE.Matrix4();
 
   constructor(container: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({
@@ -96,21 +136,28 @@ export class Engine {
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     const sc = this.sun.shadow.camera;
-    sc.left = -60; sc.right = 60; sc.top = 60; sc.bottom = -60; sc.near = 1; sc.far = 600;
+    const sr = QUALITY.high.shadowRange;
+    sc.left = -sr; sc.right = sr; sc.top = sr; sc.bottom = -sr; sc.near = 1; sc.far = 600;
     this.sun.shadow.bias = -0.0004;
-    this.sun.shadow.normalBias = 0.04;
+    this.sun.shadow.normalBias = 0.03;
     this.scene.add(this.sun, this.sun.target);
 
     this.hemi = new THREE.HemisphereLight(0x9fbce6, 0xd9dde4, 0.35);
     this.scene.add(this.hemi);
+    // sky rim / Fresnel on aircraft, coloured from the sky (AircraftLook.ts)
+    installAircraftLook();
 
     this.clouds = new CloudRenderer(this.reversed);
     this.post = new PostFX(this.reversed);
     this.post.cloudTex = this.clouds.rt.texture;
+    this.livingSky = new LivingSky();
+    this.scene.add(this.livingSky.group);
 
     this.scene.environment = buildEnvironment(this.renderer, this.sky);
     envRef.tex = this.scene.environment;
     this.scene.environmentIntensity = 0.75;
+    retargetEnvMaps(this.scene, null, envRef.tex);   // models may have loaded before the engine
+    syncAircraftLook(this.hemi);
 
     window.addEventListener('resize', () => this.resize());
     this.resize();
@@ -123,26 +170,57 @@ export class Engine {
     const old = this.scene.environment;
     this.scene.environment = buildEnvironment(this.renderer, this.sky);
     envRef.tex = this.scene.environment;
-    old?.dispose();
+    // materials that hold the env map explicitly (per-material intensity) follow the new one
+    retargetEnvMaps(this.scene, old, envRef.tex);
+    syncAircraftLook(this.hemi);
+    retireEnv(old);
     this.post.resetHistory();
   }
 
   add(u: Updatable) { this.updatables.add(u); }
   remove(u: Updatable) { this.updatables.delete(u); }
 
+  get preset(): QualityPreset { return QUALITY[this.quality]; }
+
   setQuality(q: Quality) {
+    if (!QUALITY[q]) q = 'high';
     this.quality = q;
-    this.sceneRT.samples = q === 'high' ? 4 : q === 'medium' ? 2 : 0;
+    const p = QUALITY[q];
+    const maxSamples = (this.renderer.capabilities as { maxSamples?: number }).maxSamples ?? 4;
+    this.sceneRT.samples = Math.min(p.msaa, maxSamples);
     this.sceneRT.dispose();
     this.resize();
-    this.renderer.shadowMap.enabled = q !== 'low';
-    this.sun.castShadow = q !== 'low';
+    this.renderer.shadowMap.enabled = p.shadows > 0;
+    this.sun.castShadow = p.shadows > 0;
+    if (p.shadows > 0 && this.sun.shadow.mapSize.x !== p.shadows) {
+      this.sun.shadow.mapSize.set(p.shadows, p.shadows);
+      this.sun.shadow.map?.dispose();
+      (this.sun.shadow as { map: THREE.WebGLRenderTarget | null }).map = null;
+    }
+    const sc = this.sun.shadow.camera;
+    sc.left = -p.shadowRange; sc.right = p.shadowRange; sc.top = p.shadowRange; sc.bottom = -p.shadowRange;
+    sc.updateProjectionMatrix();
+    this.post.ao = p.ao;
+    this.livingSky.setQuality(p.particles);
+    // a new tier gets a fresh chance at the display's full refresh rate
+    this.hiGiveUp = false; this.hiMiss = 0;
+  }
+
+  // Settings hook: quality tier and the FPS counter overlay
+  applyGraphics(q: Quality, fpsCounter: boolean) {
+    if (this.quality !== q) this.setQuality(q);
+    this.setFpsCounter(fpsCounter);
+  }
+
+  setFpsCounter(on: boolean) {
+    if (on && !this.fpsCounter) this.fpsCounter = new FpsCounter();
+    else if (!on && this.fpsCounter) { this.fpsCounter.dispose(); this.fpsCounter = null; }
   }
 
   resize() {
     const w = window.innerWidth, h = window.innerHeight;
     // pixel budget instead of the raw device ratio: a Retina screen would otherwise render 4K
-    const budget = this.quality === 'high' ? 2.3e6 : this.quality === 'medium' ? 1.5e6 : 0.9e6;
+    const budget = QUALITY[this.quality].pixels;
     const base = Math.min(window.devicePixelRatio || 1, Math.sqrt(budget / Math.max(1, w * h)));
     this.pixelRatio = Math.max(0.4, base * this.renderScale);
     this.width = w; this.height = h;
@@ -151,7 +229,7 @@ export class Engine {
     const pw = Math.floor(w * this.pixelRatio), ph = Math.floor(h * this.pixelRatio);
     this.sceneRT.setSize(pw, ph);
     this.hdrRT.setSize(pw, ph);
-    this.clouds.setQuality(this.quality, pw, ph);
+    this.clouds.setQuality(QUALITY[this.quality], pw, ph);
     this.post.setSize(pw, ph);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
@@ -159,8 +237,39 @@ export class Engine {
 
   start() {
     this.last = performance.now();
-    this.renderer.setAnimationLoop(() => this.frame());
+    this.renderer.setAnimationLoop(() => { if (!this.probing) this.frame(); });
+    this.probeRefresh();
+    // back from a hidden tab (or dragged to another screen and refocused): measure again
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => this.probeRefresh(), 300); });
   }
+
+  // Measure the display refresh rate from idle requestAnimationFrame intervals: a dozen
+  // frames (~0.1-0.2 s) with rendering skipped, so a slow frame can't pose as a slow
+  // screen. Hidden tabs never fire rAF: the probe gives up after a second.
+  probeRefresh() {
+    if (this.probing || document.hidden) return;
+    this.probing = true;
+    const ts: number[] = [];
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      ts.push(t);
+      if (ts.length < 14 && performance.now() - t0 < 1000) { requestAnimationFrame(tick); return; }
+      this.probing = false;
+      this.last = this.lastFrameAt = performance.now();
+      const hz = refreshFromTimestamps(ts);
+      if (hz) this.setRefresh(hz, true);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  private setRefresh(next: number, measured: boolean) {
+    if (next !== this.refreshHz) { this.refreshHz = next; this.hiGiveUp = false; this.hiMiss = 0; this.ftEma = 1 / next; }
+    if (measured) this.refreshMeasured = true;
+  }
+
+  // Frame time that dynamic resolution aims for: the refresh period, or 60 fps when a
+  // high-refresh display can't be kept up with (and never faster than the display)
+  get targetMs() { return drsTargetMs(this.refreshHz, this.hiGiveUp); }
 
   // Advance one frame. A fixed dt can be passed by automated playtests, which run in
   // background tabs where requestAnimationFrame is paused.
@@ -176,12 +285,29 @@ export class Engine {
     Atmos.windOffset.addScaledVector(Atmos.wind, dt);
     for (const u of this.updatables) u.update(dt, this.time);
     this.onFrame?.(dt, this.time);
+    // after the game moved the formation, so the distant boxes stay locked to it
+    this.livingSky.update(this.camera, this.time, this.height * this.pixelRatio);
     if (render) this.render(realDt);
-    if (fixedDt === undefined) this.dynamicResolution(realDt);
+    if (fixedDt === undefined) {
+      this.dynamicResolution(realDt);
+      this.fpsCounter?.update(realDt, this);
+    }
+    this.lastFrameAt = now;
   }
+  private lastFrameAt = 0;
 
   private dynamicResolution(dt: number) {
     if (dt <= 0 || dt > 0.25) return; // tab switches, breakpoints
+    // live intervals: a display faster than measured shows up as frames shorter than its period
+    this.intervals.push(dt * 1000);
+    if (this.intervals.length >= 90) {
+      // live frames can only reveal a faster display (a slow frame never means a slow screen)
+      // (only after two windows in a row agree)
+      const hz = fasterRefreshFrom(this.intervals, this.refreshHz);
+      if (hz && hz === this.pendingHz) this.setRefresh(hz, false);
+      this.pendingHz = hz;
+      this.intervals = [];
+    }
     this.ftEma += (dt - this.ftEma) * 0.06;
     this.drsT += dt;
     this.drsCeilT = Math.max(0, this.drsCeilT - dt);
@@ -190,13 +316,22 @@ export class Engine {
     this.drsT = 0;
     if (this.drsHold > 0) { this.drsHold--; return; }
     const ms = this.ftEma * 1000;
-    if (ms > 19 && this.renderScale > 0.55) {
+    const target = this.targetMs;
+    const hi = target < 1000 / 65;
+    // high-refresh tier: don't trade more than ~28 % of the resolution for the extra frames
+    const floor = drsFloor(target);
+    if (hi && ms > target * 1.14 && this.renderScale <= floor + 0.001) {
+      // three misses in a row at the floor: this machine can't hold the full rate, run at 60
+      if (++this.hiMiss >= 3) { this.hiGiveUp = true; this.hiMiss = 0; this.drsCeil = 1; this.drsCeilT = 0; }
+      return;
+    }
+    if (ms > target * 1.14 && this.renderScale > floor) {
       // a raise that made things slow sets a ceiling for the next 30 s
       if (this.time - this.lastRaiseAt < 6) { this.drsCeil = this.renderScale - 0.01; this.drsCeilT = 30; }
-      this.renderScale = Math.max(0.55, this.renderScale - (ms > 28 ? 0.15 : 0.08));
-      this.drsUp = 0; this.drsHold = 1;
+      this.renderScale = Math.max(floor, this.renderScale - (ms > target * 1.68 ? 0.15 : 0.08));
+      this.drsUp = 0; this.drsHold = 1; this.hiMiss = 0;
       this.resize();
-    } else if (ms < 17.6 && this.renderScale < Math.min(1, this.drsCeil)) {
+    } else if (ms < target * 1.054 && this.renderScale < Math.min(1, this.drsCeil)) {
       if (++this.drsUp >= 4) {
         this.renderScale = Math.min(1, this.drsCeil, this.renderScale + 0.07);
         this.drsUp = 0; this.drsHold = 2; this.lastRaiseAt = this.time;
@@ -208,10 +343,17 @@ export class Engine {
   render(dt: number) {
     const cam = this.camera;
     cam.updateMatrixWorld();
-    // Keep the shadow frustum centred on the camera
+    // Keep the shadow frustum centred on the camera, snapped to whole shadow-map texels in
+    // light space so the edges of the (tight, sharp) shadows don't crawl as the camera moves
     const cp = cam.getWorldPosition(new THREE.Vector3());
-    this.sun.position.copy(cp).addScaledVector(Atmos.sunDir, 300);
-    this.sun.target.position.copy(cp);
+    const p = this.preset;
+    const texel = (2 * p.shadowRange) / Math.max(1, this.sun.shadow.mapSize.x);
+    this.lightRot.lookAt(_origin, Atmos.sunDir, _up);
+    const ls = _v.copy(cp).applyMatrix4(_m.copy(this.lightRot).invert());
+    ls.x = Math.round(ls.x / texel) * texel; ls.y = Math.round(ls.y / texel) * texel;
+    const snapped = ls.applyMatrix4(this.lightRot);
+    this.sun.position.copy(snapped).addScaledVector(Atmos.sunDir, 300);
+    this.sun.target.position.copy(snapped);
     this.sun.target.updateMatrixWorld();
     atmosUniforms.uCamAlt.value = cp.y;
     (this.sky.mesh.material as THREE.ShaderMaterial).uniforms.uGroundXZ.value.set(cp.x + Atmos.originOffset.x, cp.z + Atmos.originOffset.z);
@@ -262,3 +404,8 @@ export class Engine {
     Atmos.originOffset.add(offset);
   }
 }
+
+const _origin = new THREE.Vector3();
+const _up = new THREE.Vector3(0, 1, 0);
+const _v = new THREE.Vector3();
+const _m = new THREE.Matrix4();

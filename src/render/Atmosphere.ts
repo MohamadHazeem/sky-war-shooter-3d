@@ -66,12 +66,16 @@ vec3 skyRadiance(vec3 d) {
   float y = d.y;
   vec3 col;
   if (y >= 0.0) {
-    float t = pow(clamp(y, 0.0, 1.0), 0.42);
+    // the horizon colour reaches a little higher (paler, airier mid sky), then a bright
+    // milky haze band hugs the horizon itself
+    float t = pow(clamp(y, 0.0, 1.0), 0.5);
     col = mix(uHorizon, uZenith, t);
+    col += uHorizon * 0.22 * exp(-y * 9.0);
   } else {
     // Looking down through ~7 km of air: the ground is mostly lost in haze.
     float t = 1.0 - exp(y * 9.0);
     col = mix(uHorizon * 0.92, mix(uHorizon * 0.55, uGround, 0.55), t);
+    col += uHorizon * 0.22 * exp(y * 40.0);   // the haze band continues just below the horizon
   }
   float mu = max(dot(d, uSunDir), 0.0);
   col += uSunColor * (pow(mu, 6.0) * 0.02 + pow(mu, 48.0) * 0.06 + pow(mu, 600.0) * 0.6);

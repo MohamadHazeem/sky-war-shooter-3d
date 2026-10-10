@@ -176,6 +176,15 @@ uniform float uDirt;
 uniform float uAspect;
 uniform float uDesat;   // 0..1 wounded crew: drain colour and pulse the edges
 uniform float uShafts;
+// Film grade (see PostFX.grade): split-tone tints, saturation, S-curve, warm black lift
+uniform vec3 uShadowTint;
+uniform vec3 uHighTint;
+uniform float uSat;
+uniform float uCurve;
+uniform vec3 uLift;
+// Contact AO from the depth buffer (0 = off) and the projection's y scale (1 / tan(fov/2))
+uniform float uAO;
+uniform float uProjY;
 
 float sunVisibility() {
   if (uSunOn <= 0.0) return 0.0;
@@ -273,6 +282,28 @@ vec3 godRays(vec2 uv) {
   return tint * (acc / wsum) * falloff * uShafts * uSunOn;
 }
 
+// Cheap contact shadowing: for 4 opposite pairs of depth taps on a ~0.35 m disc, a pair
+// whose average sits in front of the centre means a crease (wing root, frames, ammo boxes).
+// Planar surfaces cancel out, and a range check keeps foreground silhouettes from haloing.
+float contactAO(float dist, float noise) {
+  if (uAO <= 0.0 || dist > 90.0) return 1.0;
+  const float R = 0.35;
+  float ry = clamp(0.5 * R * uProjY / dist, 1.5 / uRes.y, 0.06);
+  vec2 rad = vec2(ry / uAspect, ry);
+  float occ = 0.0;
+  float a0 = noise * 3.14159;
+  for (int i = 0; i < 4; i++) {
+    float a = a0 + float(i) * 0.785398;
+    vec2 o = vec2(cos(a), sin(a)) * rad * (0.6 + 0.4 * fract(noise * 7.0 + float(i) * 0.37));
+    vec3 w1, w2; bool s1, s2;
+    float d1 = viewDist(vUv + o, w1, s1);
+    float d2 = viewDist(vUv - o, w2, s2);
+    float crease = dist - 0.5 * (d1 + d2);
+    occ += clamp(crease / (R * 0.6), 0.0, 1.0) * (1.0 - smoothstep(R * 1.5, R * 4.0, crease));
+  }
+  return 1.0 - uAO * occ * 0.25 * (1.0 - smoothstep(50.0, 90.0, dist));
+}
+
 void main() {
   vec3 wp; bool sky;
   float dist = viewDist(vUv, wp, sky);
@@ -314,6 +345,8 @@ void main() {
     col = mix(col, acc / wsum, clamp(coc * 1.6, 0.0, 1.0));
   }
 
+  if (!sky) col *= contactAO(dist, noise);
+
   vec3 bloom = texture2D(tBloom, vUv).rgb;
   col += bloom * uBloomStrength;
   // lens dirt lights up where the bloom is bright
@@ -325,16 +358,17 @@ void main() {
   col += vec3(1.0, 0.85, 0.6) * uFlash;
   col *= uExposure;
 
-  // Subtle chromatic fringe toward the edges
   col = ACESFilm(col);
 
-  // Grade: lift shadows slightly cool, warm the highlights (matches the reference footage)
+  // Grade (the Yarnhub wartime palette): cool, slightly teal shadows, warm cream highlights,
+  // a touch of desaturation, a gentle S-curve and blacks lifted toward warm brown like print film
   float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
-  col = mix(col, col * vec3(0.96, 0.99, 1.05), 1.0 - smoothstep(0.0, 0.5, l));
-  col = mix(col, col * vec3(1.03, 1.0, 0.95), smoothstep(0.5, 1.0, l));
-  col = mix(vec3(l), col, 1.12);
-  // gentle S-curve for punchier contrast
-  col = mix(col, col * col * (3.0 - 2.0 * col), 0.22);
+  col = mix(col, col * uShadowTint, 1.0 - smoothstep(0.0, 0.5, l));
+  col = mix(col, col * uHighTint, smoothstep(0.45, 1.0, l));
+  l = dot(col, vec3(0.2126, 0.7152, 0.0722));
+  col = max(mix(vec3(l), col, uSat), 0.0);
+  col = mix(col, col * col * (3.0 - 2.0 * col), uCurve);
+  col = uLift + col * (1.0 - uLift);
 
   // Damage tint
   col = mix(col, col * vec3(1.4, 0.55, 0.5), uDamageFlash);
@@ -389,6 +423,16 @@ export class PostFX {
   noBlurDist = 1.5;
   flareStrength = 1;
   shafts = 0.35;   // sun god-ray strength (0 disables)
+  // Look development (Engine-owned; Game drives `exposure` per frame, this multiplies it)
+  baseExposure = 1.06;
+  ao = 0.6;        // contact AO strength (quality preset)
+  readonly grade = {
+    shadowTint: new THREE.Vector3(0.96, 1.0, 1.02),
+    highTint: new THREE.Vector3(1.05, 1.0, 0.91),
+    sat: 0.9,
+    curve: 0.16,
+    lift: new THREE.Vector3(0.016, 0.014, 0.011),
+  };
   cloudTex: THREE.Texture | null = null;
   private rotOnly = new THREE.Matrix4();
 
@@ -407,6 +451,9 @@ export class PostFX {
         tCloud: { value: null }, tDirt: { value: makeDirt() }, uDirt: { value: 0.35 }, uAspect: { value: 1 },
         uDesat: { value: 0 },
         uShafts: { value: 0.35 },
+        uShadowTint: { value: this.grade.shadowTint }, uHighTint: { value: this.grade.highTint },
+        uSat: { value: 1 }, uCurve: { value: 0.2 }, uLift: { value: this.grade.lift },
+        uAO: { value: 0 }, uProjY: { value: 1 },
       },
       vertexShader: vert,
       fragmentShader: finalFrag,
@@ -438,7 +485,11 @@ export class PostFX {
     u.uPrevViewProj.value.copy(this.hasPrev ? this.prevViewProj : curVP);
     // Normalise blur to a 60 fps shutter so low frame rates don't smear excessively
     u.uMotionBlur.value = this.motionBlur * Math.min(1.5, (1 / 60) / Math.max(dt, 1e-3));
-    u.uExposure.value = this.exposure;
+    u.uExposure.value = this.exposure * this.baseExposure;
+    u.uSat.value = this.grade.sat;
+    u.uCurve.value = this.grade.curve;
+    u.uAO.value = this.ao;
+    u.uProjY.value = camera.projectionMatrix.elements[5];
     u.uBloomStrength.value = this.bloomStrength;
     u.uNearFocus.value = this.nearFocus;
     u.uDofStrength.value = this.dofStrength;

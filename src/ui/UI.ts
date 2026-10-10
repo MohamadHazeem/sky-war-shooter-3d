@@ -24,7 +24,8 @@ export interface Settings {
   ambVolume: number;
   radio: boolean;
   music: boolean;
-  quality: 'low' | 'medium' | 'high';
+  quality: 'low' | 'medium' | 'high' | 'ultra';
+  fpsCounter?: boolean;   // on-screen frame-rate readout (render/FpsCounter.ts); undefined = off
   markers: boolean;
   leadPip: 'off' | 'recruit' | 'always';
   aimAssist: 'off' | 'low' | 'high';
@@ -415,7 +416,8 @@ export class UI {
       <label class="setting">Ambience volume <input type="range" min="0" max="1" step="0.05" data-k="ambVolume" value="${s.ambVolume}"></label>
       <label class="setting">Music <select data-k="music"><option value="true">On</option><option value="false" ${!s.music ? 'selected' : ''}>Off</option></select></label>
       <label class="setting">Radio voices <select data-k="radio"><option value="true">On</option><option value="false" ${!s.radio ? 'selected' : ''}>Subtitles only</option></select></label>
-      <label class="setting">Graphics quality <select data-k="quality">${['low', 'medium', 'high'].map((q) => `<option ${s.quality === q ? 'selected' : ''}>${q}</option>`).join('')}</select></label>
+      <label class="setting">Graphics quality <select data-k="quality">${['low', 'medium', 'high', 'ultra'].map((q) => `<option ${s.quality === q ? 'selected' : ''}>${q}</option>`).join('')}</select></label>
+      <label class="setting">FPS counter <select data-k="fpsCounter"><option value="false">Off</option><option value="true" ${s.fpsCounter ? 'selected' : ''}>On</option></select></label>
       <label class="setting">Target markers <select data-k="markers"><option value="true">On</option><option value="false" ${!s.markers ? 'selected' : ''}>Off (realistic)</option></select></label>
       <label class="setting">Aim assist <select data-k="aimAssist"><option value="off" ${s.aimAssist === 'off' ? 'selected' : ''}>Off</option><option value="low" ${s.aimAssist === 'low' ? 'selected' : ''}>Low</option><option value="high" ${s.aimAssist === 'high' || !s.aimAssist ? 'selected' : ''}>High</option></select></label>
       <label class="setting">Lead indicator <select data-k="leadPip"><option value="off" ${s.leadPip === 'off' ? 'selected' : ''}>Off</option><option value="recruit" ${s.leadPip === 'recruit' || !s.leadPip ? 'selected' : ''}>Recruit only</option><option value="always" ${s.leadPip === 'always' ? 'selected' : ''}>Always</option></select></label>
@@ -427,7 +429,7 @@ export class UI {
       const k = i.dataset.k as keyof Settings;
       let v: any = i.value;
       if (k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume' || k === 'fov') v = parseFloat(v);
-      if (k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'killCam') v = v === 'true';
+      if (k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'killCam' || k === 'fpsCounter') v = v === 'true';
       (s as any)[k] = v;
       if (k === 'fov') { const b = i.closest('label')?.querySelector('.fov-val'); if (b) b.textContent = `${v}°`; }
       onChange(s);

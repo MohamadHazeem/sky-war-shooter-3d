@@ -3,6 +3,7 @@ import { markOwned } from '../render/Dispose';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { NOW, assetUrl, request, take } from '../core/Assets';
+import { tuneAircraftMaterial } from '../render/AircraftLook';
 
 export type ModelKind =
   | 'b17' | 'fw190' | 'p51d' | 'p51d_cockpit'
@@ -70,7 +71,8 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
           for (const mat of mats as THREE.MeshStandardMaterial[]) {
             if (mat.transparent && mat.opacity < 0.9) { m.castShadow = false; mat.depthWrite = false; }
             if (mat.map) mat.map.anisotropy = 8;
-            mat.envMapIntensity = 1.0;
+            // per-part roughness / metalness / sky reflection (render/AircraftLook.ts)
+            tuneAircraftMaterial(mat, k);
           }
         }
       });
