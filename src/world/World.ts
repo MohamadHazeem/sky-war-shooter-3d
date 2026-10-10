@@ -9,6 +9,7 @@ import { AI_EXTRA, dirFromYawPitch, inArc, STATIONS, STATION_ORDER, StationDef }
 import { sound } from '../audio/Sound';
 import { Contrails } from '../render/Contrails';
 import { Wrecks, BreakKind } from './Wrecks';
+import { startBomberDeath, updateBomberDeath, clearBomberDeath } from './BomberDeath';
 
 export const ENEMY_SCALE = 1.7;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 260; // ~20 hits from a .50 to wear one down
@@ -144,6 +145,7 @@ export class World implements WorldView {
     this.effects.clear();
     this.contrails.clear();
     this.wrecks.clear();
+    clearBomberDeath();
     for (const r of this.rockets) r.obj.removeFromParent();
     this.rockets = [];
     this.extinguishers.clear();
@@ -439,6 +441,8 @@ export class World implements WorldView {
       a.vel.copy(this.formationForward).multiplyScalar(CRUISE * 0.85);
       a.zones.forEach((z) => { if (z.engine !== undefined && Math.random() < 0.5) z.burning = true; });
       this.effects.explosion(a.localToWorld(new THREE.Vector3(R() * 6, 0, 2)), a.vel, 0.8);
+      // the stricken bomber breaks up over the next few seconds: secondary blasts and a burning wing
+      startBomberDeath(a, this.effects, (pos, k) => { if (this.player) this.events.shake?.(Math.max(0, 1 - pos.distanceTo(this.player.pos) / 300) * k); });
       sound.play('explosion', a.pos, { gain: 1.6, ref: 200, reverb: 0.8 });
       this.stats.bombersLost++;
       this.events.bomberLost?.(a);
@@ -486,6 +490,7 @@ export class World implements WorldView {
     this.flak(dt);
     this.updateRockets(dt);
     this.fires(dt);
+    updateBomberDeath(dt);
     this.ballistics.update(dt, this.aircraft);
     this.effects.update(dt);
     this.wrecks.update(dt);
