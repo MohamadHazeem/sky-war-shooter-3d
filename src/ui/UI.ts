@@ -5,6 +5,7 @@ import { playMedalFanfare } from '../audio/Fanfare';
 
 // Debrief medal timing (seconds): first badge after the result line, then one every half second
 const medalDelay = (i: number) => 0.8 + i * 0.5;
+import { CREW, CrewId } from '../world/Crew';
 
 export interface Settings {
   sensitivity: number;
@@ -224,7 +225,9 @@ export class UI {
         <div class="hud-label" style="margin-top:4px">Barrel</div>
         <div class="meter" id="hHeatM"><div id="hHeat" style="width:0%"></div></div>
         <div class="stations" id="hStations">${STATION_ORDER.map((s) => `<span data-s="${s}">${STATIONS[s].key} ${STATIONS[s].label.toUpperCase()}</span>`).join('')}</div>`;
-      $('#hBR').innerHTML = `<div class="hud-label">Sky Queen</div><div id="dmg">${b17Svg()}</div><div class="hud-label" id="hCrew"></div>`;
+      $('#hBR').innerHTML = `<div class="hud-label">Sky Queen</div><div id="dmg">${b17Svg()}</div>
+        <div class="crewlist" id="hCrewList">${CREW.map((m) => `<span data-c="${m.id}"><i>${m.label}</i><b>OK</b></span>`).join('')}</div>
+        <div class="hud-label" id="hCrew"></div>`;
     } else {
       $('#hBL').innerHTML = `<div class="instr">
         <div class="hud-label">IAS mph</div><div class="hud-label">ALT ft</div><div class="hud-label">THR</div><div class="hud-label">G</div><div class="hud-label">AMMO</div>
@@ -239,7 +242,7 @@ export class UI {
 
   setText(id: string, t: string) { const e = document.getElementById(id); if (e && e.textContent !== t) e.textContent = t; }
 
-  updateGunnerHud(d: { station: StationId; ammo: number; heat: number; overheated: boolean; reloading: number; zones: Record<string, number>; crew: string }) {
+  updateGunnerHud(d: { station: StationId; ammo: number; heat: number; overheated: boolean; reloading: number; zones: Record<string, number>; crew: string; wounded: ReadonlySet<CrewId> }) {
     this.setText('hStation', STATIONS[d.station].label + (d.reloading > 0 ? ' — RELOADING' : d.overheated ? ' — BARREL HOT' : ''));
     this.setText('hAmmo', String(d.ammo));
     // under 60 rounds the belt warning colours the count red (.low in style.css)
@@ -251,6 +254,15 @@ export class UI {
     for (const [k, v] of Object.entries(d.zones)) {
       const z = document.querySelector(`#dmg [data-z="${k}"]`) as SVGElement | null;
       if (z) z.setAttribute('fill', zoneColor(v));
+    }
+    // Crew rows only change when someone is hit, so touch the DOM only on a change
+    const list = document.getElementById('hCrewList');
+    if (list) for (let i = 0; i < list.children.length; i++) {
+      const row = list.children[i] as HTMLElement;
+      const hurt = d.wounded.has(row.dataset.c as CrewId);
+      if (row.classList.contains('wnd') === hurt) continue;
+      row.classList.toggle('wnd', hurt);
+      row.lastElementChild!.textContent = hurt ? 'WOUNDED' : 'OK';
     }
     this.setText('hCrew', d.crew);
   }
