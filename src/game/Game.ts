@@ -8,7 +8,7 @@ import { Aircraft, Bomber, Fighter } from '../world/Aircraft';
 import { GunnerController } from './GunnerController';
 import { PilotController } from './PilotController';
 import { PhotoMode } from './PhotoMode';
-import { CAMPAIGN, Mission, survivalMission, SpawnFrom, Wave } from './Missions';
+import { CAMPAIGN, Mission, Round, survivalMission, SpawnFrom, Wave } from './Missions';
 import { STATIONS } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
 import { DistantBattle } from '../audio/DistantBattle';
@@ -57,6 +57,8 @@ export class Game {
   readonly prog = new Progression();
   private perkWave = 0;        // last wave a perk was offered after
   private killsSincePerk = 0;  // every 5 kills also earns a perk
+  private spawnCd = 0;         // director: time to the next group
+  private groups = 0;
   private loadout = this.prog.loadout();
   private mapOpen = false;
   private mapT = 0;
@@ -87,6 +89,7 @@ export class Game {
   private popups: { pos: THREE.Vector3; text: string; life: number }[] = [];
   private slowFrames = 0;
   private autoQualityDone = false;
+  private prewarmed = false;
   private menuShot = 0;
   private menuShotT = 0;
   private menuMode = true;
@@ -101,7 +104,10 @@ export class Game {
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
     this.photo = new PhotoMode(engine, input, this.world);
-    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: false, music: true, quality: 'high', markers: true, leadPip: 'recruit', flightMode: 'mouseAim', difficulty: 'veteran', fov: 62 });
+    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: false, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 62 });
+    // settings saved before aim assist existed: switch the lead indicator on with it
+    let raw = ''; try { raw = localStorage.getItem(SETTINGS_KEY) ?? ''; } catch { /* */ }
+    if (raw && !raw.includes('aimAssist')) { this.settings.aimAssist = 'high'; this.settings.leadPip = 'always'; }
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
@@ -163,6 +169,10 @@ export class Game {
     sound.radioEnabled = s.radio;
     sound.setMusic(s.music);
     this.pilot.mode = s.flightMode;
+    const assist = s.aimAssist === 'off' ? 0 : s.aimAssist === 'low' ? 0.5 : 1;
+    this.gunner.assist = assist;
+    this.pilot.assist = assist;
+    if (this.loadout) this.updateHitScale();
     // Base FOV from Settings (clamped; the views derive their zoom from it each frame)
     const fov = THREE.MathUtils.clamp(Number.isFinite(s.fov) ? s.fov : 62, 50, 80);
     this.gunner.baseFov = fov;
@@ -190,9 +200,10 @@ export class Game {
           this.score += pts;
           this.combo.onKill();
           this.killsSincePerk++;
-          if (this.loadout.killRefill) {
-            if (this.mission?.role === 'gunner') this.gunner.onKillRefill(this.loadout.killRefill);
-            else w.playerFighter?.guns.forEach((g) => (g.ammo = Math.min(Math.round(((g as any).baseAmmo ?? 500) * this.loadout.ammo), g.ammo + 150)));
+          if (this.loadout.killRepair) {
+            const pl = w.player;
+            if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * this.loadout.killRepair);
+            if (this.mission?.role === 'gunner') this.gunner.coolBarrel();
           }
           this.popups.push({ pos: victim.pos.clone(), text: `+${pts}  KILL`, life: 1.6 });
           achievements.onConfirmedKill(w.stats.kills, cause ?? '');
@@ -368,7 +379,7 @@ export class Game {
     if (diff === 'recruit') this.world.aiGunnerFactor *= 1.2;
     this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false; this.trauma = 0;
     this.incoming = null; this.incomingOff = null; this.mapOpen = false; this.mapT = 0;
-    this.prog.perks = []; this.perkWave = 0; this.killsSincePerk = 0;
+    this.prog.perks = []; this.perkWave = 0; this.killsSincePerk = 0; this.spawnCd = 0; this.groups = 0;
     this.combo.reset();
     this.tally.reset();
     achievements.beginMission(m);
@@ -403,6 +414,7 @@ export class Game {
     }
     this.applyLoadout(true);
     this.world.playerDamageScale *= this.loadout.armor;
+    if (!this.prewarmed) { this.prewarmed = true; this.world.prewarm(() => this.engine.render(1 / 60), this.engine.camera); }
     this.state = 'playing';
     this.distantBattle.reset();
     this.ui.hud(m.role);
@@ -429,10 +441,18 @@ export class Game {
     const f = this.world.playerFighter;
     if (f && this.mission?.role === 'pilot') for (const g of f.guns) {
       const b = g as any;
-      b.baseDamage ??= g.damage; b.baseRate ??= g.rate; b.baseAmmo ??= g.ammo;
-      g.damage = b.baseDamage * l.damage; g.rate = b.baseRate * l.rate;
-      if (refill) g.ammo = Math.round(b.baseAmmo * l.ammo);
+      b.baseDamage ??= g.damage; b.baseRate ??= g.rate; b.baseVel ??= g.muzzleVel;
+      g.damage = b.baseDamage * l.damage; g.rate = b.baseRate * l.rate; g.muzzleVel = b.baseVel * l.velocity;
+      g.ammo = Infinity; // unlimited belts: the fight never stops for ammunition
     }
+    this.world.playerExecute = l.execute;
+    this.updateHitScale();
+  }
+
+  // bullet magnetism: aim assist setting x Gyro Gunsight upgrade
+  private updateHitScale() {
+    const a = this.settings.aimAssist === 'off' ? 0 : this.settings.aimAssist === 'low' ? 0.5 : 1;
+    this.world.ballistics.playerHitScale = (1 + 0.4 * a) * this.loadout.hitScale;
   }
 
   // Wave cleared: freeze the action and offer three perks
@@ -447,12 +467,43 @@ export class Game {
         const pl = this.world.player;
         if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * 0.35);
       }
-      this.applyLoadout(p.id === 'belt');
+      this.applyLoadout();
       this.ui.feed(`${p.name}: ${p.desc}`, 'mine');
       this.state = 'playing';
       this.engine.paused = false;
       this.input.lock();
     });
+  }
+
+  // Continuous engagement: keep the sky full. Groups of 2-4 arrive whenever fewer fighters
+  // are in the air than the round's ramping target; the next group shows on the radar.
+  private director(dt: number, m: Mission, r: Round, enemies: number) {
+    const w = this.world, t = w.time;
+    const ramp = THREE.MathUtils.clamp((t - r.start) / (Number.isFinite(r.duration) ? r.duration * 0.6 : 420), 0, 1);
+    const target = Math.round(r.min + (r.max - r.min) * ramp);
+    if (t < r.start || t >= r.duration) { this.updateIncoming(null, null); return; }
+    this.spawnCd -= dt;
+    const want = target - enemies;
+    if (want <= 0) { this.updateIncoming(null, null); return; }
+    const sides: SpawnFrom[] = ['front', 'rear', 'left', 'right', 'high'];
+    const n = Math.min(want, 2 + Math.floor(Math.random() * 3));
+    const next: Wave = {
+      at: 0, count: Math.max(1, n),
+      from: this.groups % 3 === 2 ? sides[Math.floor(Math.random() * sides.length)] : (this.mission?.role === 'gunner' ? 'mixed' : sides[this.groups % sides.length]),
+      skill: THREE.MathUtils.lerp(r.skill[0], r.skill[1], ramp), rockets: r.rockets ?? 0,
+    };
+    // the first group comes straight away, later ones after a short gap (shown on the radar)
+    if (this.groups === 0) this.spawnCd = Math.min(this.spawnCd, r.start - t + 0.01);
+    this.updateIncoming(Math.max(0, this.spawnCd), next);
+    if (this.spawnCd > 0) return;
+    this.spawnWave(next);
+    if (this.groups === 0 && m.waves[0]?.radio) w.callout('round', m.waves[0].radio[0], m.waves[0].radio[1], 0, 3);
+    else if (w.player) {
+      const p = this.world.fighters('axis').filter((f) => f.alive).pop();
+      if (p) w.callout('grp' + (this.groups % 4), Math.random() < 0.5 ? 'Tail' : 'Navigator', `${n > 2 ? 'More bandits' : 'Bandits'}, ${w.clockPosition(w.player, p.pos)}!`, 6, 2);
+    }
+    this.groups++;
+    this.spawnCd = THREE.MathUtils.lerp(7, 3.5, ramp) + Math.random() * 3;
   }
 
   private spawnPos(from: SpawnFrom): THREE.Vector3 {
@@ -505,7 +556,15 @@ export class Game {
     const w = this.world;
     const t = w.time;
     const enemies = w.activeEnemies().length;
-    if (m.waves.length) {
+    // field promotion: every 5 kills, once the kill's slow-motion beat has played
+    if (this.killsSincePerk >= 5 && t - this.lastKillAt > 1.2 && this.state === 'playing' && w.player?.alive) {
+      this.killsSincePerk = 0;
+      this.offerPerk('5 KILLS · FIELD PROMOTION');
+      return;
+    }
+    if (m.round) {
+      this.director(dt, m, m.round, enemies);
+    } else if (m.waves.length) {
       this.waveTimer += dt;
       const next = m.waves[this.waveIdx];
       // field promotion: every 5 kills, once the kill's slow-motion beat has played
@@ -630,7 +689,8 @@ export class Game {
       this.finish(false, `Too many bombers lost — ${w.stats.bombersLost} Fortresses went down.`);
       return;
     }
-    if (m.waves.length && this.waveIdx >= m.waves.length && enemies === 0 && t >= Math.min(m.duration, (m.flak?.end ?? 0) + 5)) {
+    const roundDone = m.round ? t >= m.round.duration && (enemies === 0 || t >= m.round.duration + 45) : false;
+    if (roundDone || (!m.round && m.waves.length && this.waveIdx >= m.waves.length && enemies === 0 && t >= Math.min(m.duration, (m.flak?.end ?? 0) + 5))) {
       if (!m.bombsAway || this.bombsDropped) {
         if (!m.escortArrive || this.escortsSpawned) this.finish(true, m.success ?? (m.role === 'gunner' ? 'The formation fought its way through. Good shooting, gunner.' : 'The bombers made it through. Outstanding work, Blue Leader.'));
       }
@@ -895,7 +955,8 @@ export class Game {
   // can't keep up: sustained <28 fps for 10 s of visible gameplay.
   private autoQuality(dt: number) {
     if (this.autoQualityDone || dt <= 0 || this.state !== 'playing' || document.hidden) return;
-    if (this.engine.fps < 28) this.slowFrames += dt; else this.slowFrames = Math.max(0, this.slowFrames - dt);
+    // dynamic resolution handles most of it; drop the quality tier only when that is not enough
+    if (this.engine.fps < 40 && this.engine.renderScale <= 0.56) this.slowFrames += dt; else this.slowFrames = Math.max(0, this.slowFrames - dt);
     if (this.slowFrames > 10 && this.engine.quality !== 'low') {
       const q = this.engine.quality === 'high' ? 'medium' : 'low';
       this.engine.setQuality(q);
@@ -924,7 +985,11 @@ export class Game {
     const alive = w.bombers().filter((b) => b.alive).length;
     const enemies = w.activeEnemies().length;
     let objective = m.objectives[0];
-    if (m.duration === Infinity) objective = this.survivalWave ? `Wave ${this.survivalWave} — ${enemies} fighters remaining` : 'Stand by — enemy fighters approaching';
+    if (m.round && Number.isFinite(m.round.duration)) {
+      const left = Math.max(0, Math.ceil(m.round.duration - w.time));
+      objective = left > 0 ? `Hold them off — ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} · ${enemies} fighters` : `Clear the last ${enemies} fighter${enemies === 1 ? '' : 's'}`;
+    } else if (m.round) objective = `${Math.floor(w.time / 60)}:${String(Math.floor(w.time % 60)).padStart(2, '0')} survived · ${enemies} fighters`;
+    else if (m.duration === Infinity) objective = this.survivalWave ? `Wave ${this.survivalWave} — ${enemies} fighters remaining` : 'Stand by — enemy fighters approaching';
     else if (m.flak && w.time >= m.flak.start && w.time <= m.flak.end) objective = 'Hold steady through the flak';
     else if (m.escortArrive && !this.escortsSpawned) objective = `Hold out — escort ETA ${Math.max(0, Math.ceil(m.escortArrive - w.time))}s`;
     else if (enemies > 0) objective = `${enemies} enemy fighter${enemies > 1 ? 's' : ''} attacking`;

@@ -43,6 +43,20 @@ async function boot() {
     const { autoplay } = await import('./dev/autoplay');
     (window as any).sws.autoplay = (m: any, steps?: number) => autoplay(engine, game, m, steps);
     Object.assign((window as any).sws, { game, engine });
+    // Frame-time benchmark: n rendered frames, GPU synced with a 1-pixel readback each frame
+    (window as any).sws.bench = (n = 120, render = true) => {
+      const gl = engine.renderer.getContext(), px = new Uint8Array(4), t: number[] = [];
+      for (let i = 0; i < n; i++) {
+        const t0 = performance.now();
+        engine.frame(1 / 60, render);
+        if (render) gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+        t.push(performance.now() - t0);
+      }
+      t.sort((a, b) => a - b);
+      const avg = t.reduce((a, b) => a + b, 0) / n;
+      const info = engine.renderer.info;
+      return { avg: +avg.toFixed(2), p50: +t[n >> 1].toFixed(2), p95: +t[Math.floor(n * 0.95)].toFixed(2), max: +t[n - 1].toFixed(2), calls: info.render.calls, tris: info.render.triangles, programs: info.programs?.length, w: engine.renderer.domElement.width, h: engine.renderer.domElement.height };
+    };
   }
 }
 

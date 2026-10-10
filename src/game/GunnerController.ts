@@ -6,6 +6,7 @@ import { Bomber } from '../world/Aircraft';
 import { dirFromYawPitch, STATIONS, StationDef, StationId, wrapAngle } from '../world/B17Layout';
 import { buildM2, buildTailInterior, buildTurret, buildWaistInterior, GunModel } from './Viewmodels';
 import { Loadout, Progression } from './Upgrades';
+import type { Fighter } from '../world/Aircraft';
 import { sound } from '../audio/Sound';
 import { bulletHoleTexture } from '../render/Textures';
 import { Atmos } from '../render/Atmosphere';
@@ -28,6 +29,8 @@ const R = () => Math.random() * 2 - 1;
 
 // First-person B-17 gunner: heavy, sprung gun traverse, recoil, barrel heat, belts.
 
+const _pa = new THREE.Vector3();
+const _pb = new THREE.Vector3();
 export class GunnerController {
   station: StationId = 'waistL';
   private states = new Map<StationId, StationState>();
@@ -46,6 +49,10 @@ export class GunnerController {
   private beltTickT = 0; // time until the next low-ammo belt tick
   zoom = false;
   fov = 62;
+  assist = 1;    // aim assist strength 0..1 (Settings)
+  assistTarget: Fighter | null = null;
+  private assistYaw = 0;
+  private assistPitch = 0;
   ads = 0;       // 0 = over-the-gun view, 1 = eye down the ring sight (RMB)
   hipWaist = new THREE.Vector3(0, 0.1, 0.3);  // head offset in the unzoomed view (gun frame)
   baseFov = 62;   // set from Settings; zoom-in keeps the original 34/62 magnification ratio
@@ -259,19 +266,15 @@ export class GunnerController {
   get state() { return this.states.get(this.station)!; }
   get def() { return STATIONS[this.station]; }
 
-  // Upgrades/perks changed: resize the ammo boxes (refill = top them all up)
-  applyLoadout(l: Loadout, refill = false) {
+  // Upgrades/perks changed (belts are unlimited: ammo stays topped up)
+  applyLoadout(l: Loadout, _refill = false) {
     this.loadout = l;
-    for (const s of this.states.values()) {
-      s.maxAmmo = Math.round(s.baseAmmo * l.ammo);
-      s.ammo = refill ? s.maxAmmo : Math.min(s.ammo, s.maxAmmo);
-    }
+    for (const s of this.states.values()) s.ammo = s.maxAmmo;
   }
 
-  // Scavenger perk: a kill refills part of the current box and cools the barrel
-  onKillRefill(frac: number) {
+  // Crew Chief perk: a kill cools the barrel
+  coolBarrel() {
     const s = this.state;
-    s.ammo = Math.min(s.maxAmmo, s.ammo + Math.round(s.maxAmmo * frac));
     s.heat = Math.max(0, s.heat - 0.4); s.overheated = false;
   }
 
@@ -295,7 +298,9 @@ export class GunnerController {
     for (const id of Object.keys(STATIONS) as StationId[]) if (inp.hit('Digit' + STATIONS[id].key)) this.requestStation(id);
 
     // Aim: mouse moves the target; the gun follows on a damped spring (heavy mount)
-    const sens = 0.0018 * inp.sensitivity * (this.zoom ? 0.55 : 1);
+    const lock = this.findAssistTarget(def);
+    // aim friction: the mouse slows down while the sight is on a fighter's lead point
+    const sens = 0.0018 * inp.sensitivity * (this.zoom ? 0.55 : 1) * (1 - 0.4 * lock * this.assist);
     const push = inp.edgePush();
     const mdx = inp.mouseDX + push.x * 900 * dt, mdy = inp.mouseDY + push.y * 700 * dt;
     s.tYaw -= mdx * sens;
@@ -305,6 +310,14 @@ export class GunnerController {
     const kr = KEY_AIM_RATE * (this.zoom ? 0.55 : 1) * dt;
     s.tYaw -= this.keyAim.x * kr;
     s.tPitch += this.keyAim.y * kr * (inp.invertY ? -1 : 1);
+    // aim magnetism: draw the sight onto the lead point of the fighter nearest the crosshair
+    if (lock > 0 && this.assist > 0) {
+      const pull = Math.min(1, dt * (2.5 + 5 * lock) * this.assist);
+      let ey = this.assistYaw - s.tYaw;
+      if (def.yaw[1] - def.yaw[0] >= Math.PI * 1.99) ey = wrapAngle(ey);
+      s.tYaw += ey * pull;
+      s.tPitch += (this.assistPitch - s.tPitch) * pull;
+    }
     if (def.yaw[1] - def.yaw[0] < Math.PI * 1.99) s.tYaw = THREE.MathUtils.clamp(s.tYaw, def.yaw[0], def.yaw[1]);
     else s.tYaw = wrapAngle(s.tYaw);
     s.tPitch = THREE.MathUtils.clamp(s.tPitch, def.pitch[0] - def.rest.pitch, def.pitch[1] - def.rest.pitch);
@@ -327,7 +340,7 @@ export class GunnerController {
       if (s.reload <= 0) { s.ammo = s.maxAmmo; this.guns[this.station]?.forEach((g) => { if (g.belt) { g.belt.visibleRounds = 999; g.belt.update(); } }); }
     } else if ((inp.hit('KeyR') && s.ammo < s.maxAmmo) || s.ammo <= 0) {
       if (s.ammo <= 0) this.onNotice?.('RELOADING — new ammunition box');
-      s.reload = (def.type === 'waist' ? 4.5 : 6) * this.loadout.reload;
+      s.reload = def.type === 'waist' ? 4.5 : 6;
       sound.play('click', null, { gain: 0.5, rate: 0.7 });
     }
 
@@ -351,7 +364,7 @@ export class GunnerController {
         const g = guns[this.shotCount % guns.length];
         this.fireRound(g, def);
         this.shotCount++;
-        s.ammo--;
+        // unlimited belts: the counter never runs down
         s.heat += (def.twin ? 0.0075 : 0.011) * this.loadout.heat;
         if (s.heat >= 1) { s.overheated = true; this.onNotice?.('BARREL OVERHEATED — let it cool'); this.world.callout('hot', 'Pilot', 'Short bursts! You\'ll burn out that barrel!', 15); }
         if (s.ammo <= 0) break;
@@ -380,6 +393,32 @@ export class GunnerController {
     this.world.playerAimDir.copy(this.aimDirection());
   }
 
+  // Aim assist: the enemy whose lead point is closest to where the gun is laid, inside a
+  // cone (wider when unzoomed). Returns 0..1 lock strength and stores the lead angles.
+  private findAssistTarget(def: StationDef): number {
+    this.assistTarget = null;
+    const b = this.bomber;
+    if (!b || this.assist <= 0) return 0;
+    const s = this.state;
+    const cone = (this.zoom ? 0.07 : 0.12) * (0.6 + 0.4 * this.assist);
+    const pivot = b.localToWorld(_pa.copy(def.pivot));
+    let best = cone;
+    for (const f of this.world.fighters('axis')) {
+      if (!f.alive) continue;
+      const d = f.pos.distanceTo(pivot);
+      if (d > 1400) continue;
+      const tof = d / (870 * this.loadout.velocity);
+      _pb.copy(f.vel).sub(b.vel).multiplyScalar(tof).add(f.pos);
+      _pb.y += 0.5 * 9.81 * tof * tof;
+      const local = b.worldToLocal(_pb).sub(def.pivot);
+      const yaw = Math.atan2(local.x, local.z) - def.rest.yaw;
+      const pitch = Math.asin(THREE.MathUtils.clamp(local.y / local.length(), -1, 1)) - def.rest.pitch;
+      const ang = Math.hypot(wrapAngle(yaw - s.tYaw) * Math.cos(def.rest.pitch + s.tPitch), pitch - s.tPitch);
+      if (ang < best) { best = ang; this.assistTarget = f; this.assistYaw = s.tYaw + wrapAngle(yaw - s.tYaw); this.assistPitch = pitch; }
+    }
+    return this.assistTarget ? 1 - best / cone : 0;
+  }
+
   private fireRound(g: GunModel, def: StationDef) {
     const b = this.bomber!;
     const muzzle = g.muzzles[0].getWorldPosition(new THREE.Vector3());
@@ -387,7 +426,7 @@ export class GunnerController {
     const spread = 0.0022 * this.loadout.spread;
     dir.x += R() * spread; dir.y += R() * spread; dir.z += R() * spread;
     dir.normalize();
-    const vel = dir.clone().multiplyScalar(870).add(b.vel);
+    const vel = dir.clone().multiplyScalar(870 * this.loadout.velocity).add(b.vel);
     const tracer = this.shotCount % 3 === 0;
     this.world.ballistics.fire(muzzle, vel, 'allied', 12 * this.loadout.damage, tracer, [10, 2.6, 0.9], b, false, true);
     this.world.stats.shots++;

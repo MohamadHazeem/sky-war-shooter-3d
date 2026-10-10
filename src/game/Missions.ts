@@ -39,6 +39,17 @@ export interface Mission {
   weather?: Weather;
   sun?: { el: number; az: number };
   coverage?: number;
+  round?: Round;              // continuous engagement (replaces the wave list when set)
+}
+
+// A round of continuous combat: fighters keep coming in groups, the number in the air
+// climbing from `min` to `max` over the first 60% of the round; then the survivors are cleared.
+export interface Round {
+  duration: number;           // s of spawning
+  start: number;              // s before the first group
+  min: number; max: number;   // fighters in the air at once
+  skill: [number, number];    // skill at the start / at full ramp
+  rockets?: number;           // share carrying Wgr. 21 rockets
 }
 
 export const CAMPAIGN: Mission[] = [
@@ -153,8 +164,27 @@ export const CAMPAIGN: Mission[] = [
   },
 ];
 
+// Rounds of 3-5 minutes; the flak and bombing times sit inside them
+const ROUNDS: Record<string, Round> = {
+  m1: { duration: 180, start: 7, min: 4, max: 7, skill: [0.8, 1.0] },
+  m2: { duration: 210, start: 6, min: 5, max: 9, skill: [0.9, 1.1] },
+  m3: { duration: 240, start: 6, min: 5, max: 9, skill: [0.95, 1.15], rockets: 0.15 },
+  m4: { duration: 240, start: 8, min: 6, max: 11, skill: [0.95, 1.15] },
+  m5: { duration: 270, start: 6, min: 6, max: 12, skill: [1.0, 1.25], rockets: 0.35 },
+  m6: { duration: 240, start: 6, min: 5, max: 10, skill: [1.0, 1.2] },
+  m7: { duration: 300, start: 8, min: 7, max: 14, skill: [1.05, 1.3], rockets: 0.3 },
+};
+for (const m of CAMPAIGN) {
+  const r = ROUNDS[m.id];
+  if (!r) continue;
+  m.round = r;
+  m.duration = r.duration;
+  if (m.maxBombersLost !== undefined && m.maxBombersLost < 99) m.maxBombersLost += 3; // more fighters, more losses allowed
+}
+
 export function survivalMission(role: 'gunner' | 'pilot'): Mission {
   return {
+    round: { duration: Infinity, start: 6, min: 3, max: 16, skill: [0.8, 1.5], rockets: 0.25 },
     id: 'survival-' + role, number: 0, title: role === 'gunner' ? 'Survival — Gunner' : 'Survival — Escort', target: 'Endless waves', date: 'Somewhere over the Reich', role,
     station: 'waistL', briefing: ['Endless waves of fighters, growing stronger every time. How long can you hold out?'],
     objectives: ['Survive as many waves as possible'], bombers: 12, escorts: role === 'pilot' ? 2 : 0, waves: [], duration: Infinity, maxBombersLost: 99,

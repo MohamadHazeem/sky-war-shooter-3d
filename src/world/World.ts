@@ -18,7 +18,7 @@ import { startBomberDeath, updateBomberDeath, clearBomberDeath } from './BomberD
 import { setup as setupDamageLook, update as updateDamageLook } from './DamageLook';
 import { Crew, STATION_CREW } from './Crew';
 
-export const ENEMY_SCALE = 2.4;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
+export const ENEMY_SCALE = 3.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 460; // ~40 hits from a .50 to wear one down
 export const ENEMY_ZONE_HP = 2.2;   // vital zones (cockpit, engine, wings) toughened to match
 const FORMATION_SPREAD = 1.8;       // spacing between B-17s, so friends never crowd the sight picture
@@ -60,7 +60,8 @@ export class World implements WorldView {
   readonly wrecks: Wrecks;
   playerFocus = 0.7;
   playerAimDir = new THREE.Vector3(1, 0, 0);
-  playerIncendiary = false;   // perk: player hits can set enemy engines alight
+  playerIncendiary = false;
+  playerExecute = 1;          // perk: damage multiplier vs fighters below half structure   // perk: player hits can set enemy engines alight
   formationCenter = new THREE.Vector3(0, ALTITUDE, 0);
   formationForward = new THREE.Vector3(0, 0, 1);
   player: Aircraft | null = null;
@@ -177,6 +178,30 @@ export class World implements WorldView {
     this.lastCrewWound = -99;
     this.lastKillCause = '';
     this.lastCallout.clear();
+  }
+
+  // Compile every shader variant a kill can need (clipped wreck materials, shadow casters,
+  // fire, chutes) before play, so the first kill doesn't freeze the game for half a second.
+  // Pieces are put in front of the camera, rendered once (behind the mission fade) and cleared.
+  prewarm(render: () => void, camera: THREE.Camera) {
+    const fwd = camera.getWorldDirection(new THREE.Vector3());
+    const kinds: BreakKind[] = ['wingL', 'tail', 'blowup'];
+    const dummies: Fighter[] = [];
+    kinds.forEach((k, i) => {
+      const f = new Fighter('fw190', 'axis', ENEMY_VARIANTS.fw190.params);
+      f.setScale(ENEMY_SCALE);
+      f.root.position.copy(camera.position).addScaledVector(fwd, 60 + i * 15);
+      this.scene.add(f.root);
+      dummies.push(f);
+      this.wrecks.break(f, k);
+    });
+    const at = camera.position.clone().addScaledVector(fwd, 80);
+    this.effects.explosion(at, new THREE.Vector3(), 1);
+    this.effects.parachute(at, new THREE.Vector3());
+    render();
+    for (const f of dummies) this.scene.remove(f.root);
+    this.wrecks.clear();
+    this.effects.clear();
   }
 
   // Combat box: lead element + high and low elements, 3-ship vics, offsets in meters
@@ -355,6 +380,7 @@ export class World implements WorldView {
     const z = e.zone;
     const wasAlive = t.alive;
     if (t === this.player) e.damage *= this.playerDamageScale;
+    if (e.playerShot && t instanceof Fighter && t.structureFrac < 0.5) e.damage *= this.playerExecute;
     z.hp -= e.damage;
     t.damageTaken += e.damage;
     t.hitFlash = 0.15;

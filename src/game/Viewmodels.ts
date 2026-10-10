@@ -409,7 +409,8 @@ export function buildTurret(kind: 'top' | 'ball'): { group: THREE.Group; guns: G
   const guns: GunModel[] = [];
   for (const s of [1, -1]) {
     const m = buildM2({ ringSight: false, belt: false, beltSide: 1 });
-    m.group.position.set(s * 0.26, kind === 'ball' ? -0.13 : -0.06, kind === 'ball' ? 0.1 : -0.05);
+    // guns sit low and wide so they frame the view instead of filling it
+    m.group.position.set(s * 0.36, kind === 'ball' ? -0.2 : -0.16, kind === 'ball' ? 0.1 : -0.05);
     g.add(m.group);
     guns.push(m);
   }
@@ -432,10 +433,10 @@ export function buildTurret(kind: 'top' | 'ball'): { group: THREE.Group; guns: G
   g.add(sight);
   const sightBody = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.045, 0.12), new THREE.MeshStandardMaterial({ color: 0x1c1d1a, roughness: 0.6, metalness: 0.5 }));
   sightBody.position.set(0, -0.085, 0.27);
-  g.add(sightBody);
-  // Dome struts
+  sightBody.visible = false; // sat right under the aim point; the reticle floats on its own
+  // Dome struts: left out of the view (they cut the sky into panels); the faint glass stays
   const R = kind === 'ball' ? 0.62 : 0.68;
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 0; i++) {
     const a = (i / 6) * Math.PI * 2 + 0.3;
     const pts: THREE.Vector3[] = [];
     for (let k = 0; k <= 12; k++) {
@@ -447,7 +448,7 @@ export function buildTurret(kind: 'top' | 'ball'): { group: THREE.Group; guns: G
   }
   const ring = new THREE.Mesh(new THREE.TorusGeometry(R, 0.04, 6, 48), fmat);
   ring.rotation.x = Math.PI / 2;
-  ring.position.y = -0.15;
+  ring.position.y = -0.32; // dropped below the eye line so it no longer crosses the view
   g.add(ring);
   if (kind === 'ball') {
     // armoured glass port frame

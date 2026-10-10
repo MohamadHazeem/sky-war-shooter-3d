@@ -42,6 +42,16 @@ export class Engine {
   pixelRatio = 1;
   onFrame?: (dt: number, time: number) => void;
   fps = 60;
+  // Dynamic resolution: the render scale drops when frames run long and creeps back up
+  // when there is headroom; a scale that proved too slow becomes a ceiling for a while.
+  renderScale = 1;
+  private ftEma = 1 / 60;
+  private drsT = 0;
+  private drsHold = 0;
+  private drsUp = 0;
+  private drsCeil = 1;
+  private drsCeilT = 0;
+  private lastRaiseAt = -99;
   private fpsAcc = 0;
   private fpsN = 0;
 
@@ -131,8 +141,10 @@ export class Engine {
 
   resize() {
     const w = window.innerWidth, h = window.innerHeight;
-    const maxPr = this.quality === 'high' ? 2 : this.quality === 'medium' ? 1.25 : 0.85;
-    this.pixelRatio = Math.min(window.devicePixelRatio || 1, maxPr);
+    // pixel budget instead of the raw device ratio: a Retina screen would otherwise render 4K
+    const budget = this.quality === 'high' ? 2.3e6 : this.quality === 'medium' ? 1.5e6 : 0.9e6;
+    const base = Math.min(window.devicePixelRatio || 1, Math.sqrt(budget / Math.max(1, w * h)));
+    this.pixelRatio = Math.max(0.4, base * this.renderScale);
     this.width = w; this.height = h;
     this.renderer.setPixelRatio(this.pixelRatio);
     this.renderer.setSize(w, h);
@@ -165,6 +177,32 @@ export class Engine {
     for (const u of this.updatables) u.update(dt, this.time);
     this.onFrame?.(dt, this.time);
     if (render) this.render(realDt);
+    if (fixedDt === undefined) this.dynamicResolution(realDt);
+  }
+
+  private dynamicResolution(dt: number) {
+    if (dt <= 0 || dt > 0.25) return; // tab switches, breakpoints
+    this.ftEma += (dt - this.ftEma) * 0.06;
+    this.drsT += dt;
+    this.drsCeilT = Math.max(0, this.drsCeilT - dt);
+    if (this.drsCeilT === 0) this.drsCeil = 1;
+    if (this.drsT < 1) return;
+    this.drsT = 0;
+    if (this.drsHold > 0) { this.drsHold--; return; }
+    const ms = this.ftEma * 1000;
+    if (ms > 19 && this.renderScale > 0.55) {
+      // a raise that made things slow sets a ceiling for the next 30 s
+      if (this.time - this.lastRaiseAt < 6) { this.drsCeil = this.renderScale - 0.01; this.drsCeilT = 30; }
+      this.renderScale = Math.max(0.55, this.renderScale - (ms > 28 ? 0.15 : 0.08));
+      this.drsUp = 0; this.drsHold = 1;
+      this.resize();
+    } else if (ms < 17.6 && this.renderScale < Math.min(1, this.drsCeil)) {
+      if (++this.drsUp >= 4) {
+        this.renderScale = Math.min(1, this.drsCeil, this.renderScale + 0.07);
+        this.drsUp = 0; this.drsHold = 2; this.lastRaiseAt = this.time;
+        this.resize();
+      }
+    } else this.drsUp = 0;
   }
 
   render(dt: number) {

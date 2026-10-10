@@ -9,6 +9,8 @@ import { sound } from '../audio/Sound';
 import { KeyAim, KEY_AIM_RATE } from './KeyAim';
 
 const _v = new THREE.Vector3();
+const _as = new THREE.Vector3();
+const _at = new THREE.Vector3();
 const _v2 = new THREE.Vector3();
 const _q = new THREE.Quaternion();
 
@@ -17,6 +19,7 @@ const _q = new THREE.Quaternion();
 export class PilotController {
   plane: Fighter | null = null;
   aimYaw = 0;
+  assist = 1;   // aim assist strength 0..1 (Settings)
   aimPitch = 0;
   view: 'cockpit' | 'chase' = 'chase';
   mode: 'mouseAim' | 'direct' = 'mouseAim';
@@ -70,6 +73,32 @@ export class PilotController {
     });
   }
 
+  // Aim assist: bend the mouse-aim point onto the lead point of the fighter nearest to it
+  private applyAssist(p: Fighter, dt: number) {
+    if (this.assist <= 0) return;
+    const aim = this.aimDir(_as);
+    const cone = 0.1 * (0.6 + 0.4 * this.assist);
+    let best = cone, ty = 0, tp = 0;
+    for (const e of this.world.fighters('axis')) {
+      if (!e.alive) continue;
+      const d = e.pos.distanceTo(p.pos);
+      if (d > 1200) continue;
+      const tof = d / 880;
+      _at.copy(e.vel).sub(p.vel).multiplyScalar(tof).add(e.pos);
+      _at.y += 0.5 * 9.81 * tof * tof;
+      _at.sub(p.pos).normalize();
+      const ang = _at.angleTo(aim);
+      if (ang < best) { best = ang; ty = Math.atan2(_at.x, _at.z); tp = Math.asin(THREE.MathUtils.clamp(_at.y, -1, 1)); }
+    }
+    if (best >= cone) return;
+    const pull = Math.min(1, dt * (2 + 4 * (1 - best / cone)) * this.assist);
+    let dy = ty - this.aimYaw;
+    while (dy > Math.PI) dy -= Math.PI * 2;
+    while (dy < -Math.PI) dy += Math.PI * 2;
+    this.aimYaw += dy * pull;
+    this.aimPitch += (tp - this.aimPitch) * pull;
+  }
+
   aimDir(out = new THREE.Vector3()) {
     return out.set(Math.sin(this.aimYaw) * Math.cos(this.aimPitch), Math.sin(this.aimPitch), Math.cos(this.aimYaw) * Math.cos(this.aimPitch));
   }
@@ -104,6 +133,7 @@ export class PilotController {
         if (this.mode === 'mouseAim') {
           this.aimYaw -= mdx * sens + this.keyAim.x * kr;
           this.aimPitch = THREE.MathUtils.clamp(this.aimPitch - mdy * sens * (inp.invertY ? -1 : 1) + this.keyAim.y * kr * (inp.invertY ? -1 : 1), -1.5, 1.5);
+          this.applyAssist(p, dt);
           const dir = this.aimDir(_v);
           steerTo(fm, dir, 1.1, 1);
         } else {

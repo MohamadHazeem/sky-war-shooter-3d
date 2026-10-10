@@ -92,6 +92,8 @@ export class Ballistics {
     for (let i = 0; i < this.n; i++) { this.px[i] -= off.x; this.py[i] -= off.y; this.pz[i] -= off.z; }
   }
 
+  playerHitScale = 1; // aim assist: the player's rounds count hits a little wider
+
   clear() { this.n = 0; this.owner.fill(null); }
 
   update(dt: number, aircraft: Aircraft[]) {
@@ -108,12 +110,13 @@ export class Ballistics {
       const bx = ax + this.vx[i] * dt, by = ay + this.vy[i] * dt, bz = az + this.vz[i] * dt;
       let hitT = 2, hitAc: Aircraft | null = null, hitZone: HitZone | null = null;
       const team = this.team[i];
+      const hs = this.player[i] === 1 ? this.playerHitScale : 1;
       for (const ac of aircraft) {
         if (ac.remove || ac === this.owner[i]) continue;
         if ((ac.team === 'allied' ? 0 : 1) === team) continue;
         const p = ac.root.position;
         // Bullets move relative to the target during the frame; test in target frame
-        const t0 = segSphere(ax, ay, az, bx, by, bz, p.x, p.y, p.z, ac.radius + 2);
+        const t0 = segSphere(ax, ay, az, bx, by, bz, p.x, p.y, p.z, ac.radius * hs + 2);
         if (t0 < 0) continue;
         _qi.copy(ac.root.quaternion).invert();
         // Relative motion: aircraft were updated first, so at the segment start the target
@@ -121,7 +124,7 @@ export class Ballistics {
         _la.set(ax - p.x + ac.vel.x * dt, ay - p.y + ac.vel.y * dt, az - p.z + ac.vel.z * dt).applyQuaternion(_qi);
         _lb.set(bx - p.x, by - p.y, bz - p.z).applyQuaternion(_qi);
         for (const z of ac.zones) {
-          const t = segSphere(_la.x, _la.y, _la.z, _lb.x, _lb.y, _lb.z, z.offset.x, z.offset.y, z.offset.z, z.radius);
+          const t = segSphere(_la.x, _la.y, _la.z, _lb.x, _lb.y, _lb.z, z.offset.x, z.offset.y, z.offset.z, z.radius * hs);
           if (t >= 0 && t < hitT) { hitT = t; hitAc = ac; hitZone = z; }
         }
       }

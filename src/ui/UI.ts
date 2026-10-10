@@ -22,6 +22,7 @@ export interface Settings {
   quality: 'low' | 'medium' | 'high';
   markers: boolean;
   leadPip: 'off' | 'recruit' | 'always';
+  aimAssist: 'off' | 'low' | 'high';
   flightMode: 'mouseAim' | 'direct';
   difficulty: 'recruit' | 'veteran' | 'ace';
   fov: number;   // base field of view in degrees (gunner and P-51 views); zoom scales from it
@@ -398,6 +399,7 @@ export class UI {
       <label class="setting">Radio voices <select data-k="radio"><option value="true">On</option><option value="false" ${!s.radio ? 'selected' : ''}>Subtitles only</option></select></label>
       <label class="setting">Graphics quality <select data-k="quality">${['low', 'medium', 'high'].map((q) => `<option ${s.quality === q ? 'selected' : ''}>${q}</option>`).join('')}</select></label>
       <label class="setting">Target markers <select data-k="markers"><option value="true">On</option><option value="false" ${!s.markers ? 'selected' : ''}>Off (realistic)</option></select></label>
+      <label class="setting">Aim assist <select data-k="aimAssist"><option value="off" ${s.aimAssist === 'off' ? 'selected' : ''}>Off</option><option value="low" ${s.aimAssist === 'low' ? 'selected' : ''}>Low</option><option value="high" ${s.aimAssist === 'high' || !s.aimAssist ? 'selected' : ''}>High</option></select></label>
       <label class="setting">Lead indicator <select data-k="leadPip"><option value="off" ${s.leadPip === 'off' ? 'selected' : ''}>Off</option><option value="recruit" ${s.leadPip === 'recruit' || !s.leadPip ? 'selected' : ''}>Recruit only</option><option value="always" ${s.leadPip === 'always' ? 'selected' : ''}>Always</option></select></label>
       <label class="setting">P-51 flight controls <select data-k="flightMode"><option value="mouseAim">Mouse aim</option><option value="direct" ${s.flightMode === 'direct' ? 'selected' : ''}>Direct (mouse = stick)</option></select></label>
       <div class="row" style="margin-top:22px"><button class="btn" data-back>Done</button></div>

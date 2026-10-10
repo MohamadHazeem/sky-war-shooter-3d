@@ -167,7 +167,7 @@ export class EnemyPilot {
     this.duelU.crossVectors(this.duelS, this.duelA).normalize();
     // start the weave where the fighter already is, turning the way it is already going
     const rel = _u.copy(this.me.pos).sub(gp);
-    this.duelPhase = Math.atan2(rel.dot(this.duelS) / 300, (rel.dot(this.duelA) - 560) / 230);
+    this.duelPhase = Math.atan2(rel.dot(this.duelS) / 240, (rel.dot(this.duelA) - 400) / 170);
     const side = _t.copy(this.me.vel).sub(this.target!.vel).dot(this.duelS);
     this.duelRate = (side >= 0 ? 1 : -1) * (0.34 + Math.random() * 0.1);
     this.duelLen = 10 + Math.random() * 6 * this.skill;
@@ -272,7 +272,7 @@ export class EnemyPilot {
         if (me.rockets > 0 && dist < 1250 && dist > 800 && err < 0.06) me.fireRockets = true;
         const closing = _t.copy(me.vel).sub(t.vel).dot(_r.copy(t.pos).sub(me.pos)) > 0;
         const realDist = gunPos0 ? me.pos.distanceTo(gunPos0) : dist;
-        if (gunPos0 && realDist < 620) { this.beginDuel(w, gunPos0); break; }
+        if (gunPos0 && realDist < 560) { this.beginDuel(w, gunPos0); break; }
         if (realDist < (this.fromArc ? 150 : 160) || (!closing && dist < 400) || this.timer > 22) {
           this.state = 'break'; this.timer = 0; this.attackCount++;
           me.gunAim = null;
@@ -290,7 +290,7 @@ export class EnemyPilot {
         if (!t || !t.alive || !gp || !arc || w.playerStationId() !== this.duelStation || this.timer > this.duelLen) { this.endDuel(t); break; }
         this.duelPhase += this.duelRate * dt;
         const ph = this.duelPhase;
-        const A = 300, B = 230, R0 = 560, C = 90;
+        const A = 240, B = 170, R0 = 400, C = 70;
         // target point on the weave and its velocity relative to the bomber
         const P = _p.copy(gp).addScaledVector(this.duelA, R0 + B * Math.cos(ph)).addScaledVector(this.duelS, A * Math.sin(ph)).addScaledVector(this.duelU, C * Math.sin(2 * ph));
         const dv = _c.copy(this.duelA).multiplyScalar(-B * Math.sin(ph)).addScaledVector(this.duelS, A * Math.cos(ph)).addScaledVector(this.duelU, 2 * C * Math.cos(2 * ph)).multiplyScalar(this.duelRate);
