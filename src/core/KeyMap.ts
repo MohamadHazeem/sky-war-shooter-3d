@@ -14,7 +14,7 @@ export interface ActionDef { id: ActionId; label: string; def: string }
 // def = the code the game listens for (and the default binding)
 export const ACTIONS: readonly ActionDef[] = [
   { id: 'fire', label: 'Fire (alternative to the left button)', def: 'Space' },
-  { id: 'zoom', label: 'Zoom / look down the sight (alternative to the right button)', def: 'KeyZ' },
+  { id: 'zoom', label: 'Zoom / look down the sight (alternative to the right button)', def: 'KeyB' },
   { id: 'reload', label: 'Reload', def: 'KeyR' },
   { id: 'map', label: 'Big radar map', def: 'Tab' },
   { id: 'seat1', label: 'Gun position 1', def: 'Digit1' },

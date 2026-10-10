@@ -17,7 +17,7 @@ import { keyMap, keyValue } from './KeyMap';
 
 const MARK = new WeakSet<Event>();   // synthetic events that already carry a logical code
 const FIELD = /^(INPUT|TEXTAREA|SELECT)$/;
-const ZOOM_KEY = 'KeyZ';             // logical zoom key (remappable): acts as the right button
+const ZOOM_KEY = 'KeyB';             // logical zoom key (B: Z is the pilot's Mustang call) (remappable): acts as the right button
 
 export class Input {
   private keys = new Set<string>();

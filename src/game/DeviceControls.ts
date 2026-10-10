@@ -16,6 +16,7 @@ import '../ui/devices.css';
 // screen; a real mouse moving on a non-touch-first device turns it back off.
 
 export class DeviceControls {
+  private abilityRole: string | null = null;
   readonly touch: TouchHud;
   readonly pad: GamepadInput;
   private toastEl: HTMLElement;
@@ -106,6 +107,15 @@ export class DeviceControls {
     this.pad.update(real);
     const g = this.game;
     const role = this.touchMode && this.flying() ? g.mission!.role : null;
+    // ability buttons follow the role's keys (gunner Q/E/G, pilot Z/X/G)
+    if (role && role !== this.abilityRole) {
+      this.abilityRole = role;
+      for (const id of ['mustangs', 'overdrive', 'focus']) this.touch.removeAbility(id);
+      const keys = role === 'gunner' ? ['KeyQ', 'KeyE', 'KeyG'] : ['KeyZ', 'KeyX', 'KeyG'];
+      this.touch.addAbility('mustangs', 'P-51s', keys[0]);
+      this.touch.addAbility('overdrive', 'OVR', keys[1]);
+      this.touch.addAbility('focus', 'FOCUS', keys[2]);
+    }
     this.touch.show(role);
     this.touch.update(real, g.pilot.throttleCmd);
     // portrait on a phone: hold the game until it is turned sideways
