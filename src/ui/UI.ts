@@ -31,6 +31,15 @@ export interface DebriefData {
   nextAvailable: boolean;
 }
 
+// Live mission snapshot shown on the pause screen
+export interface PauseInfo {
+  objectives: string[];
+  kills: number;
+  accuracy: number;     // 0..1
+  bombersAlive: number;
+  bombersTotal: number;
+}
+
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 
 function el(html: string): HTMLElement {
@@ -277,13 +286,21 @@ export class UI {
 
   redVignette(a: number) { $('#vignetteRed').style.opacity = String(Math.min(1, a)); }
 
-  pause(h: { resume(): void; restart(): void; settings(): void; quit(): void }, role: 'gunner' | 'pilot' = 'gunner') {
+  pause(h: { resume(): void; restart(): void; settings(): void; quit(): void }, role: 'gunner' | 'pilot' = 'gunner', info?: PauseInfo) {
     const p = $('#pause');
     const keys = role === 'gunner'
       ? 'Mouse aim · LMB fire · RMB sight · 1–5 gun positions · R reload'
       : 'Mouse aim/fly · LMB/Space fire · W/S throttle · Q/E roll · A/D rudder · V view · C free look · M control mode';
+    // Mission snapshot: taken once when paused (the HUD does not tick while paused)
+    const status = info ? `<div class="stats pause-stats">
+        <div class="stat"><div class="hud-label">Confirmed kills</div><div class="v">${info.kills}</div></div>
+        <div class="stat"><div class="hud-label">Accuracy</div><div class="v">${Math.round(info.accuracy * 100)}%</div></div>
+        <div class="stat"><div class="hud-label">Bombers remaining</div><div class="v">${info.bombersAlive}/${info.bombersTotal}</div></div>
+      </div>
+      <div class="obj pause-obj"><b>OBJECTIVES</b>${info.objectives.map((o) => `<div>☐ ${esc(o)}</div>`).join('')}</div>` : '';
     p.innerHTML = `<div class="screen-center"><div class="box panel">
       <div class="kicker">INTERPHONE SILENT</div><h2 class="h2">Paused</h2>
+      ${status}
       <div class="menu" style="margin-top:18px">
         <button data-a="resume">Resume</button><button data-a="restart">Restart mission</button><button data-a="settings">Settings</button><button data-a="quit">Abort to menu</button>
       </div>

@@ -124,6 +124,10 @@ kbd { font-family: 'IBM Plex Mono', monospace; font-size: 12px; border: 1px soli
 /* ---------- Pause / Settings / Debrief ---------- */
 #pause .box, #settings .box, #debrief .box, #credits .box, #survival .box { width: min(560px, 100%); padding: 30px 34px; max-height: 92vh; overflow: auto; }
 #debrief .box { width: min(760px, 100%); }
+#pause .pause-stats { margin: 16px 0 0; }
+#pause .pause-obj { margin: 14px 0 0; padding: 12px 16px; border: 1px dashed var(--line); }
+#pause .pause-obj b { font-family: 'Special Elite', monospace; color: var(--khaki); font-weight: 400; letter-spacing: 2px; font-size: 13px; }
+#pause .pause-obj div { margin: 4px 0; font-size: 15px; }
 .setting { display: grid; grid-template-columns: 1fr 200px; align-items: center; gap: 12px; margin: 14px 0; font-size: 15px; letter-spacing: 1px; }
 .setting input[type=range] { width: 100%; accent-color: #b9a76f; }
 .setting select { background: #222; color: var(--ink); border: 1px solid var(--line); padding: 6px; font-family: inherit; }
