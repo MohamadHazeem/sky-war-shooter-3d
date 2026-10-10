@@ -87,3 +87,4 @@ Player notes given at the start:
 - 23:05 pilot-mode overhaul merged (+26 radio clips, briefings regenerated).
 - 23:10 Arabic (RTL) merged; Arabic for the pilot overhaul lines. Boss regression: m12 (4 warships) completes at 853 s; m7 completes.
 - 23:13 share/social card/trailer/analytics merged (squashed); m5 boss regression 3/3 OK.
+- 23:16 deploy #6 (pilot overhaul, Arabic, share/analytics, field dressing).
