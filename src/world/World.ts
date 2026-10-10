@@ -43,6 +43,7 @@ export class World implements WorldView {
   time = 0;
   difficulty = 1;
   aiGunnerFactor = 1; // damage multiplier for AI bomber crews
+  playerDamageScale = 0.6; // incoming damage on the player's own aircraft (game balance)
   flakIntensity = 0;   // bursts per second around the formation
   private flakAcc = 0;
   private gunners = new Map<Bomber, AIGunner[]>();
@@ -53,6 +54,8 @@ export class World implements WorldView {
   events: Partial<WorldEvents> = {};
   stats = { kills: 0, shots: 0, hits: 0, damage: 0, bombersLost: 0, assists: 0, enemiesSpawned: 0 };
   crewWounded = 0;
+  private lastWound = -99;
+  lastKillCause = '';
 
   constructor(private engine: Engine) {
     this.scene = engine.scene;
@@ -73,6 +76,15 @@ export class World implements WorldView {
   // ---------- WorldView ----------
   bombers(): Bomber[] { return this.aircraft.filter((a): a is Bomber => a instanceof Bomber && !a.remove); }
   fighters(team: 'allied' | 'axis'): Fighter[] { return this.aircraft.filter((a): a is Fighter => a instanceof Fighter && a.team === team && !a.remove); }
+
+  // Enemies still pressing the attack (withdrawing/damaged stragglers don't hold up a wave)
+  activeEnemies(): Fighter[] {
+    return this.fighters('axis').filter((f) => {
+      if (!f.alive) return false;
+      const p = this.pilots.get(f) as EnemyPilot | undefined;
+      return !(p && p.state === 'withdraw') && f.pos.distanceTo(this.formationCenter) < 7000;
+    });
+  }
 
   dropTank(f: Fighter) {
     if (!f.dropTankAttached || !f.dropTank) return;
@@ -101,6 +113,8 @@ export class World implements WorldView {
     this.flakIntensity = 0;
     this.stats = { kills: 0, shots: 0, hits: 0, damage: 0, bombersLost: 0, assists: 0, enemiesSpawned: 0 };
     this.crewWounded = 0;
+    this.lastWound = -99;
+    this.lastKillCause = '';
     this.lastCallout.clear();
   }
 
@@ -116,7 +130,11 @@ export class World implements WorldView {
       b.slot.copy(slots[i]);
       b.name = i === playerSlot ? 'Sky Queen' : names.splice(1 + Math.floor(Math.random() * (names.length - 1)), 1)[0] ?? `B-17 #${i}`;
       b.wobbleAmp = 0.6 + Math.random() * 0.8;
-      if (i === playerSlot) { b.isPlayer = true; this.playerBomber = b; this.player = b; }
+      if (i === playerSlot) {
+        b.isPlayer = true; this.playerBomber = b; this.player = b;
+        // The player's ship is tougher than the rest: one bad pass shouldn't end the mission
+        for (const z of b.zones) { const k = z.critical ? 2.4 : 1.5; z.hp *= k; z.maxHp *= k; }
+      }
       this.placeBomber(b, 0);
       this.add(b);
       const gs: AIGunner[] = [];
@@ -158,12 +176,12 @@ export class World implements WorldView {
     // Fw 190 A-8: 2x MG 131 (13 mm) cowling, 4x MG 151/20 wing cannon
     const tracerY: [number, number, number] = [10, 8, 3.5];
     f.guns = [
-      makeGun({ offset: new THREE.Vector3(0.18, 0.554, 0.9), rate: 15, muzzleVel: 750, damage: 7, spread: 0.006, tracerEvery: 3, tracerColor: tracerY }),
-      makeGun({ offset: new THREE.Vector3(-0.18, 0.554, 0.9), rate: 15, muzzleVel: 750, damage: 7, spread: 0.006, tracerEvery: 3, tracerColor: tracerY }),
-      makeGun({ offset: new THREE.Vector3(0.95, -0.466, 0.9), rate: 11, muzzleVel: 700, damage: 20, spread: 0.008, tracerEvery: 2, tracerColor: [11, 6, 2], cannon: true }),
-      makeGun({ offset: new THREE.Vector3(-0.95, -0.466, 0.9), rate: 11, muzzleVel: 700, damage: 20, spread: 0.008, tracerEvery: 2, tracerColor: [11, 6, 2], cannon: true }),
-      makeGun({ offset: new THREE.Vector3(2.3, -0.326, 0.7), rate: 9, muzzleVel: 700, damage: 20, spread: 0.009, tracerEvery: 3, tracerColor: [11, 6, 2], cannon: true }),
-      makeGun({ offset: new THREE.Vector3(-2.3, -0.326, 0.7), rate: 9, muzzleVel: 700, damage: 20, spread: 0.009, tracerEvery: 3, tracerColor: [11, 6, 2], cannon: true }),
+      makeGun({ offset: new THREE.Vector3(0.18, 0.554, 0.9), rate: 15, muzzleVel: 750, damage: 5, spread: 0.007, tracerEvery: 3, tracerColor: tracerY }),
+      makeGun({ offset: new THREE.Vector3(-0.18, 0.554, 0.9), rate: 15, muzzleVel: 750, damage: 5, spread: 0.007, tracerEvery: 3, tracerColor: tracerY }),
+      makeGun({ offset: new THREE.Vector3(0.95, -0.466, 0.9), rate: 11, muzzleVel: 700, damage: 14, spread: 0.009, tracerEvery: 2, tracerColor: [11, 6, 2], cannon: true }),
+      makeGun({ offset: new THREE.Vector3(-0.95, -0.466, 0.9), rate: 11, muzzleVel: 700, damage: 14, spread: 0.009, tracerEvery: 2, tracerColor: [11, 6, 2], cannon: true }),
+      makeGun({ offset: new THREE.Vector3(2.3, -0.326, 0.7), rate: 9, muzzleVel: 700, damage: 14, spread: 0.01, tracerEvery: 3, tracerColor: [11, 6, 2], cannon: true }),
+      makeGun({ offset: new THREE.Vector3(-2.3, -0.326, 0.7), rate: 9, muzzleVel: 700, damage: 14, spread: 0.01, tracerEvery: 3, tracerColor: [11, 6, 2], cannon: true }),
     ];
     if (dropTank) {
       const t = this.tankProto.clone();
@@ -240,6 +258,7 @@ export class World implements WorldView {
     if (t.remove) return;
     const z = e.zone;
     const wasAlive = t.alive;
+    if (t === this.player) e.damage *= this.playerDamageScale;
     z.hp -= e.damage;
     t.damageTaken += e.damage;
     t.hitFlash = 0.15;
@@ -257,7 +276,8 @@ export class World implements WorldView {
       if (t === this.playerBomber && this.playerStation) {
         // Rounds hitting the section of fuselage you are standing in can wound you
         const near = e.point.distanceTo(t.localToWorld(this.playerStation.pivot, _v)) < 2.2;
-        if (near && Math.random() < (heavy ? 0.25 : 0.06)) {
+        if (near && this.time - this.lastWound > 12 && Math.random() < (heavy ? 0.09 : 0.012)) {
+          this.lastWound = this.time;
           this.crewWounded++;
           this.events.playerHit?.('gunner', true);
         }
@@ -282,18 +302,22 @@ export class World implements WorldView {
           }
         } else if (t instanceof Fighter) {
           // engine dead -> the fighter is effectively finished
-          this.killAircraft(t, e.playerShot);
+          this.killAircraft(t, e.playerShot, 'engine');
         }
       } else if (z.critical) {
-        this.killAircraft(t, e.playerShot);
+        this.killAircraft(t, e.playerShot, z.name);
       }
-      if (t instanceof Bomber && t.enginesOut >= 3) this.killAircraft(t, false);
+      if (t instanceof Bomber && t.enginesOut >= 4) this.killAircraft(t, false, 'all engines');
     }
     if (wasAlive && !t.alive && e.playerShot) this.events.hitMarker?.(true);
   }
 
-  killAircraft(a: Aircraft, byPlayer: boolean) {
+  killAircraft(a: Aircraft, byPlayer: boolean, cause = '') {
     if (!a.alive) return;
+    if (a === this.player) {
+      this.lastKillCause = cause;
+      console.info('Player aircraft lost:', cause, a.zones.map((z) => `${z.name}:${Math.round(z.hp)}/${Math.round(z.maxHp)}`).join(' '));
+    }
     a.alive = false;
     a.falling = true;
     a.fallTime = 0;
@@ -352,7 +376,7 @@ export class World implements WorldView {
       if (a.hitFlash > 0) a.hitFlash -= dt;
       if (a instanceof Fighter && a.alive) {
         if (a.pos.y < 250) { a.alive = false; a.remove = !a.isPlayer; if (a.isPlayer) { a.falling = false; } }
-        else if (!a.isPlayer && a.pos.distanceTo(this.formationCenter) > 9000) a.remove = true; // left the battle
+        else if (!a.isPlayer && a.pos.distanceTo(this.formationCenter) > ((this.pilots.get(a) as EnemyPilot | undefined)?.state === 'withdraw' ? 4500 : 9000)) a.remove = true; // left the battle
       }
       this.fireGuns(a, dt);
       this.damageEffects(a, dt);

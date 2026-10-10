@@ -240,6 +240,7 @@ export class Game {
     this.score = 0;
     this.damageT = 0;
     this.engine.post.resetHistory();
+    this.world.playerDamageScale = m.role === 'gunner' ? 0.6 : 0.75;
     this.world.spawnFormation(m.bombers, 1);
     const pb = this.world.playerBomber!;
     if (m.role === 'gunner') {
@@ -254,6 +255,7 @@ export class Game {
         }
         pb.straggling = true;
         pb.zone('engine2')!.burning = false;
+        this.world.playerDamageScale = 0.45;
       }
       this.world.flakIntensity = 0;
     } else {
@@ -311,7 +313,7 @@ export class Game {
     const m = this.mission!;
     const w = this.world;
     const t = w.time;
-    const enemies = w.fighters('axis').filter((f) => f.alive).length;
+    const enemies = w.activeEnemies().length;
     if (m.waves.length) {
       this.waveTimer += dt;
       const next = m.waves[this.waveIdx];
@@ -321,7 +323,8 @@ export class Game {
       }
     } else if (m.duration === Infinity) {
       // Survival: endless escalating waves
-      if (enemies === 0) {
+      this.waveTimer += dt;
+      if (enemies === 0 || this.waveTimer > 90) {
         this.survivalBreak -= dt;
         if (this.survivalBreak <= 0) {
           this.survivalWave++;
@@ -331,6 +334,7 @@ export class Game {
           this.spawnWave({ at: 0, count: n, from, skill });
           this.ui.banner('INCOMING', `Wave ${this.survivalWave}`, 2500);
           this.survivalBreak = 8;
+          this.waveTimer = 0;
           if (this.survivalWave > 1) {
             this.score += 150;
             // patch up the guns between waves
@@ -362,10 +366,16 @@ export class Game {
     if (this.endResult) return;
     const pl = w.player;
     if (pl && !pl.alive) {
-      this.finish(false, m.role === 'gunner' ? 'The Sky Queen was shot down. The crew bailed out over enemy territory.' : 'Your Mustang was shot down.');
+      const cause = w.lastKillCause;
+      const why = cause === 'cockpit' ? 'Both pilots were hit and the Sky Queen fell out of control.'
+        : cause === 'tail' ? 'The tail was shot away.'
+        : cause.startsWith('wing') ? 'A wing was shot off.'
+        : cause === 'all engines' ? 'All four engines were knocked out.'
+        : 'The Sky Queen was shot down.';
+      this.finish(false, m.role === 'gunner' ? `${why} The crew bailed out over enemy territory.` : pl.pos.y < 300 ? 'Your Mustang flew into the ground.' : 'Your Mustang was shot down.');
       return;
     }
-    if (m.role === 'gunner' && w.crewWounded >= 3) {
+    if (m.role === 'gunner' && w.crewWounded >= 4) {
       this.finish(false, 'You were seriously wounded and could no longer man your gun.');
       return;
     }
@@ -544,7 +554,7 @@ export class Game {
     const m = this.mission!;
     const w = this.world;
     const alive = w.bombers().filter((b) => b.alive).length;
-    const enemies = w.fighters('axis').filter((f) => f.alive).length;
+    const enemies = w.activeEnemies().length;
     let objective = m.objectives[0];
     if (m.duration === Infinity) objective = this.survivalWave ? `Wave ${this.survivalWave} — ${enemies} fighters remaining` : 'Stand by — enemy fighters approaching';
     else if (m.flak && w.time >= m.flak.start && w.time <= m.flak.end) objective = 'Hold steady through the flak';
@@ -560,7 +570,7 @@ export class Game {
       const s = this.gunner.state;
       const zones: Record<string, number> = {};
       for (const z of w.playerBomber!.zones) zones[z.name] = Math.max(0, z.hp) / z.maxHp;
-      const crew = w.crewWounded ? `Gunner wounded (${w.crewWounded}/3)` : '';
+      const crew = w.crewWounded ? `Gunner wounded (${w.crewWounded}/4)` : '';
       this.ui.updateGunnerHud({ station: this.gunner.station, ammo: s.ammo, heat: s.heat, overheated: s.overheated, reloading: s.reload, zones, crew });
     } else if (w.playerFighter) {
       const f = w.playerFighter;

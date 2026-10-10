@@ -202,7 +202,7 @@ export class Bomber extends Aircraft {
     H('fuselageFwd', 0, 0.2, -0.6, 1.5, 300);
     H('fuselageMid', 0, 0.15, -4.4, 1.4, 300);
     H('fuselageAft', 0, 0.25, -8.9, 1.25, 260);
-    H('tail', 0, 1.9, -14.0, 2.5, 240, { critical: true });
+    H('tail', 0, 1.9, -14.0, 2.2, 400, { critical: true });
     H('engine1', 6.5, -0.15, 2.0, 1.1, 130, { engine: 0 });
     H('engine2', 3.0, -0.5, 2.5, 1.1, 130, { engine: 1 });
     H('engine3', -3.0, -0.5, 2.5, 1.1, 130, { engine: 2 });

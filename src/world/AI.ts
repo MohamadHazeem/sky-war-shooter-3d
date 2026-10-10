@@ -96,9 +96,9 @@ export class EnemyPilot {
     if (!bs.length) return null;
     // Prefer stragglers, then the player's bomber now and then, then random
     const strag = bs.filter((b) => b.straggling);
-    if (strag.length && Math.random() < 0.6) return strag[Math.floor(Math.random() * strag.length)];
+    if (strag.length && Math.random() < 0.45) return strag[Math.floor(Math.random() * strag.length)];
     const pl = bs.find((b) => b.isPlayer);
-    if (pl && Math.random() < 0.55) return pl;
+    if (pl && Math.random() < 0.4) return pl;
     return bs[Math.floor(Math.random() * bs.length)];
   }
 
