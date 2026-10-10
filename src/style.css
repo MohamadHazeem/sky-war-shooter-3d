@@ -162,8 +162,8 @@ kbd { font-family: 'IBM Plex Mono', monospace; font-size: 12px; border: 1px soli
 .combo.hot .combo-val { color: var(--warn); }
 .combo-bar { width: 120px; height: 3px; margin: 3px 0 0 auto; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); }
 .combo-bar div { height: 100%; width: 0; background: var(--warn); }
-#subs { position: absolute; left: 50%; bottom: 13vh; transform: translateX(-50%); text-align: center; max-width: 80vw; }
-#subs .line { display: inline-block; background: rgba(0,0,0,0.78); color: #fff; font-family: 'Oswald', sans-serif; font-weight: 400; font-size: clamp(16px, 1.7vw, 24px); padding: 4px 14px; margin-top: 4px; letter-spacing: 0.3px; animation: subin 0.2s ease-out; }
+#subs { position: absolute; left: 50%; bottom: 3.2vh; transform: translateX(-50%); text-align: center; max-width: 56vw; }
+#subs .line { display: inline-block; background: rgba(0,0,0,0.55); color: #fff; font-family: 'Oswald', sans-serif; font-weight: 400; font-size: clamp(14px, 1.25vw, 19px); padding: 3px 12px; margin-top: 4px; letter-spacing: 0.3px; animation: subin 0.2s ease-out; }
 #subs .who { color: var(--khaki); margin-right: 8px; font-size: 0.75em; letter-spacing: 2px; text-transform: uppercase; }
 @keyframes subin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 #feed { position: absolute; right: 22px; top: 96px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
@@ -220,7 +220,7 @@ kbd { font-family: 'IBM Plex Mono', monospace; font-size: 12px; border: 1px soli
   .instr { grid-template-columns: repeat(3, auto); }
 }
 
-#tip { position: absolute; left: 50%; top: 64%; transform: translateX(-50%); background: rgba(10,10,6,0.72); border: 1px solid rgba(185,167,111,0.5); padding: 10px 18px; font-size: 16px; letter-spacing: 1px; opacity: 0; transition: opacity 0.4s; text-align: center; max-width: 80vw; }
+#tip { position: absolute; left: 50%; bottom: 9vh; transform: translateX(-50%); background: rgba(10,10,6,0.72); border: 1px solid rgba(185,167,111,0.5); padding: 7px 14px; font-size: 14px; letter-spacing: 1px; opacity: 0; transition: opacity 0.4s; text-align: center; max-width: 80vw; }
 #tip.show { opacity: 1; }
 #tip kbd { color: var(--khaki); }
 
