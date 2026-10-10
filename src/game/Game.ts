@@ -11,6 +11,7 @@ import { STATIONS } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
 import type { AttackType } from '../world/AI';
 import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
+import * as ThreatRing from '../ui/ThreatRing';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -825,6 +826,9 @@ export class Game {
       ctx.font = '600 20px Oswald, sans-serif'; ctx.textAlign = 'center';
       ctx.fillText(pop.text, (p.x * 0.5 + 0.5) * W, (-p.y * 0.5 + 0.5) * H - (1.6 - pop.life) * 40);
     }
+    // Threat ring (bottom-left): enemy fighters within 3 km around the nose. Target markers
+    // 'Off (realistic)' hides it too.
+    if (this.mission && this.settings.markers) ThreatRing.draw(ctx, W, H, w, cam);
     // Recruit aim aid: lead pip for the enemy nearest the line of fire
     if (this.settings.difficulty === 'recruit' && pl?.alive) this.drawLeadPip(ctx, W, H);
     // Pilot gunsight
