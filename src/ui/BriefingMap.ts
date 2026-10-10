@@ -1,4 +1,5 @@
 import type { Mission } from '../game/Missions';
+import { tx as txt, isAr } from '../i18n';  // `tx` is the target's x below
 
 // WWII navigation-chart style route map for the mission briefing. Pure function
 // of the mission data: the target name picks the destination, the route runs
@@ -138,7 +139,7 @@ export function briefingMapSvg(m: Mission): string {
 
   const countries = COUNTRIES.flatMap(([name, g]) => {
     const [x, y] = pt(g);
-    return inside(x, y, 36) ? [`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" font-style="italic" font-size="11" letter-spacing="2">${name}</text>`] : [];
+    return inside(x, y, 36) ? [`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" font-style="italic" font-size="11" letter-spacing="${isAr() ? 0 : 2}">${txt(name)}</text>`] : [];
   });
 
   // Route legs, turn-points and chevrons showing direction of travel.
@@ -157,27 +158,27 @@ export function briefingMapSvg(m: Mission): string {
 
   // Labels use a paper halo so they stay readable over coast and route.
   const label = (x: number, y: number, text: string, anchor: 'start' | 'end' | 'middle', size = 12) =>
-    `<text x="${f(x)}" y="${f(y)}" text-anchor="${anchor}" font-size="${size}" font-family="'Special Elite', Georgia, serif" fill="${INK}" stroke="${PAPER}" stroke-width="3" paint-order="stroke" stroke-linejoin="round">${text}</text>`;
+    `<text x="${f(x)}" y="${f(y)}" text-anchor="${anchor}" font-size="${size}" font-family="'Special Elite', Georgia, serif${isAr() ? ", 'Noto Naskh Arabic'" : ''}" fill="${INK}" stroke="${PAPER}" stroke-width="3" paint-order="stroke" stroke-linejoin="round">${text}</text>`;
 
   const [bx, by] = pt(BASE);
   const baseMark = inside(bx, by)
     ? `<rect x="${f(bx - 4)}" y="${f(by - 4)}" width="8" height="8" fill="${ROUTE}"/>` +
-      label(bx + 8, by + 4, 'DEENETHORPE', bx > W * 0.6 ? 'end' : 'start', 10)
+      label(bx + 8, by + 4, txt('DEENETHORPE'), bx > W * 0.6 ? 'end' : 'start', 10)
     : '';
 
   const [tx, ty] = pt(place);
   const right = tx < W * 0.6;
   const targetMark = place.home
     ? `<circle cx="${f(tx)}" cy="${f(ty)}" r="4" fill="${PAPER}" stroke="${ROUTE}" stroke-width="1.5"/>` +
-      label(tx + (right ? 8 : -8), ty + 4, 'RETURN ROUTE', right ? 'start' : 'end', 11)
+      label(tx + (right ? 8 : -8), ty + 4, txt('RETURN ROUTE'), right ? 'start' : 'end', 11)
     : `<circle cx="${f(tx)}" cy="${f(ty)}" r="7" fill="none" stroke="${ROUTE}" stroke-width="1.6"/>` +
       `<circle cx="${f(tx)}" cy="${f(ty)}" r="2.4" fill="${ROUTE}"/>` +
       `<path d="M${f(tx - 11)} ${f(ty)}H${f(tx - 8)}M${f(tx + 8)} ${f(ty)}H${f(tx + 11)}M${f(tx)} ${f(ty - 11)}V${f(ty - 8)}M${f(tx)} ${f(ty + 8)}V${f(ty + 11)}" stroke="${ROUTE}" stroke-width="1.2"/>` +
-      label(tx + (right ? 11 : -11), ty - 9, place.key.toUpperCase(), right ? 'start' : 'end');
+      label(tx + (right ? 11 : -11), ty - 9, txt(place.key.toUpperCase()), right ? 'start' : 'end');
 
   const flakMark = flakPt
     ? `<circle cx="${f(X(flakPt.at[0]))}" cy="${f(Y(flakPt.at[1]))}" r="${f(flakPt.r * s)}" fill="url(#bm-flak)" stroke="${FLAK}" stroke-width="1" stroke-dasharray="3 2"/>` +
-      label(X(flakPt.at[0]), Y(flakPt.at[1]) + flakPt.r * s + 11, 'FLAK', 'middle', 10)
+      label(X(flakPt.at[0]), Y(flakPt.at[1]) + flakPt.r * s + 11, txt('FLAK'), 'middle', 10)
     : '';
 
   // Compass rose, and a scale bar in statute miles (1 degree of latitude is about 69 miles).
@@ -192,12 +193,12 @@ export function briefingMapSvg(m: Mission): string {
   const scale = `<g transform="translate(14 ${H - 14})" font-size="9" fill="${INK}">
       <rect x="0" y="-4" width="${f(barLen / 2)}" height="4" fill="${INK}"/>
       <rect x="${f(barLen / 2)}" y="-4" width="${f(barLen / 2)}" height="4" fill="${PAPER}" stroke="${INK}" stroke-width=".6"/>
-      <text x="0" y="-8">0</text><text x="${f(barLen)}" y="-8" text-anchor="end">${barMi} MI</text></g>`;
+      <text x="0" y="-8">0</text><text x="${f(barLen)}" y="-8" text-anchor="end">${txt('{n} MI', { n: barMi })}</text></g>`;
 
   const seaLines = `<pattern id="bm-sea" width="7" height="7" patternUnits="userSpaceOnUse"><path d="M0 3.5H7" stroke="${SEA_LINE}" stroke-width=".5" opacity=".35"/></pattern>` +
     `<pattern id="bm-flak" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V5" stroke="${FLAK}" stroke-width="1.4"/></pattern>`;
 
-  const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Route chart to ${place.key}" overflow="hidden" font-family="Georgia, serif">
+  const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${txt('Route chart to {p}', { p: txt(place.key) })}" overflow="hidden" font-family="Georgia, serif${isAr() ? ", 'Noto Naskh Arabic'" : ''}"${isAr() ? ' direction="ltr"' : ''}>
     <defs>${seaLines}</defs>
     <rect width="${W}" height="${H}" fill="${PAPER}"/>
     <rect width="${W}" height="${H}" fill="url(#bm-sea)"/>
@@ -217,6 +218,6 @@ export function briefingMapSvg(m: Mission): string {
     <rect x="6" y="6" width="${W - 12}" height="${H - 12}" fill="none" stroke="${COAST}" stroke-width=".6"/>
   </svg>`;
 
-  const caption = `Route in red${place.home ? ', homeward leg' : ''}${flakPt ? ' · hatched: flak zone' : ''} · scale in statute miles`;
+  const caption = txt('Route in red') + (place.home ? txt(', homeward leg') : '') + (flakPt ? txt(' · hatched: flak zone') : '') + txt(' · scale in statute miles');
   return `<figure class="brief-map">${svg}<figcaption>${caption}</figcaption></figure>`;
 }

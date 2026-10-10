@@ -1,5 +1,6 @@
 import { CAMPAIGN, type Mission } from '../game/Missions';
 import { briefingVoice } from '../audio/BriefingVoice';
+import { tx } from '../i18n';
 
 // Briefing-sheet extras, added on top of the sheet UI.briefing() renders:
 // - a stamped mission-number badge ("MISSION 03 OF 12") and a strip of mission facts
@@ -39,6 +40,10 @@ function ensureStyle() {
 @keyframes bx-bar { 0%, 100% { height: 3px; } 50% { height: 12px; } }
 #briefing .brief-text > p { border-left: 3px solid transparent; padding-left: 10px; margin-left: -13px; transition: background 0.35s, border-color 0.35s; }
 #briefing .brief-text > p.bx-reading { background: rgba(179,50,31,0.07); border-left-color: var(--red); }
+html[dir="rtl"] #briefing .bx-badge, html[dir="rtl"] #briefing .bx-badge span, html[dir="rtl"] #briefing .bx-meta, html[dir="rtl"] #briefing .bx-play, html[dir="rtl"] #briefing .bx-vst { letter-spacing: 0; }
+html[dir="rtl"] #briefing .bx-badge { float: right; margin: -4px 0 8px 20px; transform: rotate(9deg); }
+html[dir="rtl"] #briefing .brief-text > p { border-left: none; border-right: 3px solid transparent; padding-left: 0; padding-right: 10px; margin-left: 0; margin-right: -13px; }
+html[dir="rtl"] #briefing .brief-text > p.bx-reading { border-right-color: var(--red); }
 @media (prefers-reduced-motion: reduce) { #briefing .bx-play[aria-pressed="true"] .bx-bars i { animation: none; height: 8px; } #briefing .brief-text > p { transition: none; } }
 `;
   document.head.appendChild(st);
@@ -59,14 +64,14 @@ function weatherLabel(m: Mission): string {
 }
 
 function facts(m: Mission): { text: string; hot?: boolean }[] {
-  const out: { text: string; hot?: boolean }[] = [{ text: `Weather: ${weatherLabel(m)}` }];
+  const out: { text: string; hot?: boolean }[] = [{ text: tx('Weather: {w}', { w: tx(weatherLabel(m)) }) }];
   const n = m.rounds ?? 1;
-  out.push({ text: Number.isFinite(n) ? `${n} rounds` : 'Endless rounds' });
-  if (m.playerDamaged) out.push({ text: 'Two engines out', hot: true });
-  if (m.flak) out.push({ text: m.flak.intensity >= 1.5 ? 'Heavy flak' : 'Flak', hot: m.flak.intensity >= 1.5 });
-  if (m.bombsAway !== undefined) out.push({ text: 'Bomb run' });
-  if (m.escortArrive !== undefined) out.push({ text: `Escort due ${mmss(m.escortArrive)}` });
-  if (m.role === 'pilot' && m.escorts) out.push({ text: `${m.escorts + 1} Mustangs` });
+  out.push({ text: Number.isFinite(n) ? tx('{n} rounds', { n }) : tx('Endless rounds') });
+  if (m.playerDamaged) out.push({ text: tx('Two engines out'), hot: true });
+  if (m.flak) out.push({ text: tx(m.flak.intensity >= 1.5 ? 'Heavy flak' : 'Flak'), hot: m.flak.intensity >= 1.5 });
+  if (m.bombsAway !== undefined) out.push({ text: tx('Bomb run') });
+  if (m.escortArrive !== undefined) out.push({ text: tx('Escort due {t}', { t: mmss(m.escortArrive) }) });
+  if (m.role === 'pilot' && m.escorts) out.push({ text: tx('{n} Mustangs', { n: m.escorts + 1 }) });
   return out;
 }
 
@@ -88,9 +93,9 @@ export function decorateBriefing(root: HTMLElement, m: Mission) {
     const badge = document.createElement('div');
     badge.className = 'bx-badge';
     badge.setAttribute('aria-hidden', 'true');
-    badge.innerHTML = `<span>MISSION</span><b>${String(m.number).padStart(2, '0')}</b><span>OF ${total}</span>`;
+    badge.innerHTML = `<span>${tx('MISSION')}</span><b>${String(m.number).padStart(2, '0')}</b><span>${tx('OF {total}', { total })}</span>`;
     kicker.before(badge);
-    kicker.textContent = `MISSION No. ${m.number} OF ${total}${m.number === total ? ' · FINAL MISSION' : ''}`;
+    kicker.textContent = tx('MISSION No. {n} OF {total}', { n: m.number, total }) + (m.number === total ? tx(' · FINAL MISSION') : '');
   }
   const target = sheet.querySelector<HTMLElement>('.target');
   if (target) {
@@ -108,7 +113,7 @@ export function decorateBriefing(root: HTMLElement, m: Mission) {
   if (!count) return;
   const bar = document.createElement('div');
   bar.className = 'bx-voice';
-  bar.innerHTML = `<button type="button" class="bx-play" aria-pressed="false"><i class="bx-ico">▶</i><span class="bx-lbl">Play briefing</span><span class="bx-bars" aria-hidden="true"><i></i><i></i><i></i></span></button><span class="bx-vst" aria-live="polite">Read by the group intelligence officer</span>`;
+  bar.innerHTML = `<button type="button" class="bx-play" aria-pressed="false"><i class="bx-ico">▶</i><span class="bx-lbl">${tx('Play briefing')}</span><span class="bx-bars" aria-hidden="true"><i></i><i></i><i></i></span></button><span class="bx-vst" aria-live="polite">${tx('Read by the group intelligence officer')}</span>`;
   text.prepend(bar);
   const btn = bar.querySelector<HTMLButtonElement>('.bx-play')!;
   const icon = btn.querySelector<HTMLElement>('.bx-ico')!, lbl = btn.querySelector<HTMLElement>('.bx-lbl')!, st = bar.querySelector<HTMLElement>('.bx-vst')!;
@@ -121,14 +126,14 @@ export function decorateBriefing(root: HTMLElement, m: Mission) {
   const setUi = (on: boolean, msg?: string) => {
     btn.setAttribute('aria-pressed', String(on));
     icon.textContent = on ? '■' : '▶';
-    lbl.textContent = on ? 'Stop' : 'Play briefing';
+    lbl.textContent = tx(on ? 'Stop' : 'Play briefing');
     if (msg) st.textContent = msg;
   };
   const play = () => {
-    setUi(true, 'Intelligence officer…');
+    setUi(true, tx('Intelligence officer…'));
     void briefingVoice.play(m.id, count, 0, {
-      paragraph: (i) => { if (!alive) return; mark(i); st.textContent = `Paragraph ${i + 1} of ${count}`; },
-      end: (completed) => { if (!alive) return; mark(-1); setUi(false, completed ? 'Briefing complete' : 'Read by the group intelligence officer'); },
+      paragraph: (i) => { if (!alive) return; mark(i); st.textContent = tx('Paragraph {i} of {n}', { i: i + 1, n: count }); },
+      end: (completed) => { if (!alive) return; mark(-1); setUi(false, tx(completed ? 'Briefing complete' : 'Read by the group intelligence officer')); },
     });
   };
   btn.addEventListener('click', () => (briefingVoice.playing ? briefingVoice.stop() : play()));

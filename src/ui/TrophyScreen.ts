@@ -2,7 +2,8 @@
 // silhouettes with a progress bar when they track a lifetime counter. Rarity is a fixed tier.
 import { achievements, ACHIEVEMENTS, RARITY_LABEL, type Rarity } from '../game/Achievements';
 import type { CareerData } from '../game/Career';
-import { esc, onBackKey, showLayer } from './serviceCommon';
+import { esc, fmtDate, onBackKey, showLayer } from './serviceCommon';
+import { num, tx } from '../i18n';
 
 const RARITIES: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 type Filter = 'all' | 'got' | 'locked';
@@ -35,7 +36,7 @@ export function showTrophyScreen(c: CareerData, h: { back(): void; career(): voi
     const total = ACHIEVEMENTS.length, got = achievements.count();
     const byR = RARITIES.map((r) => {
       const all = ACHIEVEMENTS.filter((a) => a.rarity === r);
-      return `<span class="tro-chip r-${r}">${RARITY_LABEL[r]} ${all.filter((a) => achievements.has(a.id)).length}/${all.length}</span>`;
+      return `<span class="tro-chip r-${r}">${tx(RARITY_LABEL[r])} ${all.filter((a) => achievements.has(a.id)).length}/${all.length}</span>`;
     }).join('');
     const list = ACHIEVEMENTS.filter((a) => filter === 'all' || (filter === 'got') === achievements.has(a.id));
     const cards = list.map((a) => {
@@ -46,23 +47,23 @@ export function showTrophyScreen(c: CareerData, h: { back(): void; career(): voi
       return `<div class="tro-card r-${a.rarity} ${has ? 'got' : 'locked'}">
         <div class="tro-ico">${trophySvg(a.rarity, has)}</div>
         <div class="tro-body">
-          <div class="tro-top"><b>${esc(a.name)}</b><span class="tro-rar">${RARITY_LABEL[a.rarity]}</span></div>
-          <div class="tro-desc">${esc(a.desc)}</div>
-          ${has ? `<div class="tro-when">Unlocked ${at ? new Date(at).toLocaleDateString() : ''}</div>`
-            : a.goal ? `<div class="tro-prog"><div class="tro-bar"><i style="width:${Math.round(p * 100)}%"></i></div><span>${cur.toLocaleString()}/${a.goal.toLocaleString()}</span></div>` : '<div class="tro-when">Locked</div>'}
+          <div class="tro-top"><b>${esc(tx(a.name))}</b><span class="tro-rar">${tx(RARITY_LABEL[a.rarity])}</span></div>
+          <div class="tro-desc">${esc(tx(a.desc))}</div>
+          ${has ? `<div class="tro-when">${tx('Unlocked {date}', { date: at ? fmtDate(at) : '' })}</div>`
+            : a.goal ? `<div class="tro-prog"><div class="tro-bar"><i style="width:${Math.round(p * 100)}%"></i></div><span>${num(cur)}/${num(a.goal)}</span></div>` : `<div class="tro-when">${tx('Locked')}</div>`}
         </div>
       </div>`;
     }).join('');
     el.innerHTML = `${GRADIENTS}<div class="screen-center"><div class="box panel tro-box">
-      <div class="kicker">TROPHY ROOM · 401ST BOMB SQUADRON</div>
-      <div class="tro-head"><h2 class="h2">Trophies</h2><div class="tro-total"><b>${got}</b>/${total} · ${Math.round((got / total) * 100)}%</div></div>
+      <div class="kicker">${tx('TROPHY ROOM · 401ST BOMB SQUADRON')}</div>
+      <div class="tro-head"><h2 class="h2">${tx('Trophies')}</h2><div class="tro-total"><b>${got}</b>/${total} · ${Math.round((got / total) * 100)}%</div></div>
       <div class="tro-bar tro-bar-big"><i style="width:${(got / total) * 100}%"></i></div>
       <div class="tro-chips">${byR}</div>
       <div class="tro-filter" role="tablist">
-        ${(['all', 'got', 'locked'] as Filter[]).map((f) => `<button role="tab" aria-selected="${f === filter}" class="${f === filter ? 'on' : ''}" data-f="${f}">${f === 'all' ? 'All' : f === 'got' ? 'Unlocked' : 'Locked'}</button>`).join('')}
+        ${(['all', 'got', 'locked'] as Filter[]).map((f) => `<button role="tab" aria-selected="${f === filter}" class="${f === filter ? 'on' : ''}" data-f="${f}">${tx(f === 'all' ? 'All' : f === 'got' ? 'Unlocked' : 'Locked')}</button>`).join('')}
       </div>
-      <div class="tro-grid">${cards || '<div class="tro-when">Nothing here yet.</div>'}</div>
-      <div class="row" style="margin-top:18px"><button class="btn ghost" data-back>Back</button><button class="btn ghost" data-car>Career</button></div>
+      <div class="tro-grid">${cards || `<div class="tro-when">${tx('Nothing here yet.')}</div>`}</div>
+      <div class="row" style="margin-top:18px"><button class="btn ghost" data-back>${tx('Back')}</button><button class="btn ghost" data-car>${tx('Career')}</button></div>
     </div></div>`;
     el.querySelectorAll<HTMLButtonElement>('[data-f]').forEach((b) => b.addEventListener('click', () => { filter = b.dataset.f as Filter; render(); }));
     el.querySelector('[data-back]')!.addEventListener('click', h.back);

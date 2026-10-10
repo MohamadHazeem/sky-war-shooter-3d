@@ -30,6 +30,7 @@ import { showCareerScreen } from '../ui/CareerScreen';
 import { showTrophyScreen } from '../ui/TrophyScreen';
 import { showDailyScreen } from '../ui/DailyScreen';
 import { esc, insigniaSvg } from '../ui/serviceCommon';
+import { num, tx } from '../i18n';
 import '../ui/career.css';
 
 const STREAK_WINDOW = 9;   // seconds between kills to keep a streak (same as Game)
@@ -84,7 +85,7 @@ export class ServiceRecord {
     this.daily.onPerfect = () => {
       this.career.dailyPerfectDays++;
       saveCareer(this.career);
-      this.toast('ALL ORDERS COMPLETE', 'Clean sheet: every daily order carried out', '');
+      this.toast(tx('ALL ORDERS COMPLETE'), tx('Clean sheet: every daily order carried out'), '');
     };
     this.chainEvents();
     achievements.checkStats(this.career);
@@ -139,9 +140,9 @@ export class ServiceRecord {
     };
     const done = this.daily.doneCount();
     const r = rankFor(this.career.xp);
-    add('daily', `Daily Orders <small>${done}/3 done · Daily Run</small>${done < 3 ? '<i class="svc-dot" aria-label="orders waiting"></i>' : ''}`, () => this.openDaily());
-    add('career', `Career <small>${r.rank.name} · ${this.career.xp.toLocaleString()} XP</small>`, () => this.openCareer());
-    add('trophies', `Trophies <small>${achievements.count()} unlocked</small>`, () => this.openTrophies());
+    add('daily', `${tx('Daily Orders')} <small>${tx('{done}/3 done · Daily Run', { done })}</small>${done < 3 ? `<i class="svc-dot" aria-label="${tx('orders waiting')}"></i>` : ''}`, () => this.openDaily());
+    add('career', `${tx('Career')} <small>${tx(r.rank.name)} · ${tx('{n} XP', { n: num(this.career.xp) })}</small>`, () => this.openCareer());
+    add('trophies', `${tx('Trophies')} <small>${tx('{n} unlocked', { n: achievements.count() })}</small>`, () => this.openTrophies());
     menu.classList.add('svc-long');
   }
 
@@ -231,7 +232,7 @@ export class ServiceRecord {
     for (let i = before.index + 1; i <= after.index; i++) {
       const r: Reward | null = PROMOTION_REWARDS[i] ?? null;
       const res = r ? grantReward(r, prog, c.cosmetics) : null;
-      promotions.push({ label: `Promoted to ${RANKS[i].name}`, text: res?.text ?? '' });
+      promotions.push({ label: tx('Promoted to {rank}', { rank: tx(RANKS[i].name) }), text: res?.text ?? '' });
     }
     this.buf = null;   // kept until here so orders completed above are listed as this mission's
     saveCareer(c);
@@ -270,7 +271,7 @@ export class ServiceRecord {
     this.game.prog.earn(d.merit);
     saveCareer(c);
     this.buf?.dailies.push(d);
-    this.toast('DAILY ORDER COMPLETE', d.text, `+${d.merit} merit · +${d.xp} XP`);
+    this.toast(tx('DAILY ORDER COMPLETE'), tx(d.text), tx('+{merit} merit · +{xp} XP', { merit: d.merit, xp: d.xp }));
     achievements.checkStats(c);
   }
 
@@ -299,7 +300,7 @@ export class ServiceRecord {
     const promoted = r.index > rankBefore;
     const orders = this.daily.list().map((o) => {
       const v = Math.min(o.goal, this.daily.value(o.kind)), done = this.daily.isDone(o), now = dailies.some((x) => x.id === o.id);
-      return `<li class="${done ? 'done' : ''} ${now ? 'now' : ''}"><span class="svc-box">${done ? '✔' : ''}</span><span class="svc-otext">${esc(o.text)}</span><span class="svc-oval">${done ? (now ? `+${o.merit}` : 'done') : `${v}/${o.goal}`}</span></li>`;
+      return `<li class="${done ? 'done' : ''} ${now ? 'now' : ''}"><span class="svc-box">${done ? '✔' : ''}</span><span class="svc-otext">${esc(tx(o.text))}</span><span class="svc-oval">${done ? (now ? `+${o.merit}` : tx('done')) : `${v}/${o.goal}`}</span></li>`;
     }).join('');
     const sec = document.createElement('div');
     sec.className = 'svc-debrief';
@@ -307,22 +308,22 @@ export class ServiceRecord {
       <div class="svc-dhead">
         <div class="svc-ins">${insigniaSvg(r.index)}</div>
         <div class="svc-dmain">
-          <div class="svc-k">SERVICE RECORD · ${esc(r.rank.name.toUpperCase())}</div>
-          <div class="svc-xpline"><b>+${gained} XP</b> · ${this.career.xp.toLocaleString()} XP total${r.next ? ` · ${(r.next.xp - this.career.xp).toLocaleString()} to ${esc(r.next.name)}` : ' · highest rank'}</div>
+          <div class="svc-k">${tx('SERVICE RECORD · {rank}', { rank: esc(tx(r.rank.name).toUpperCase()) })}</div>
+          <div class="svc-xpline"><b>${tx('+{n} XP', { n: gained })}</b> · ${tx('{n} XP total', { n: num(this.career.xp) })}${r.next ? ` · ${tx('{n} to {rank}', { n: num(r.next.xp - this.career.xp), rank: esc(tx(r.next.name)) })}` : ` · ${tx('highest rank')}`}</div>
           <div class="svc-bar"><i style="width:${pct}%"></i></div>
         </div>
-        ${promoted ? '<div class="svc-stamp svc-stamp-anim">PROMOTED</div>' : ''}
+        ${promoted ? `<div class="svc-stamp svc-stamp-anim">${tx('PROMOTED')}</div>` : ''}
       </div>
       ${promos.length || medals.length ? `<ul class="svc-rewards">
-        ${promos.map((p) => `<li class="promo"><span class="svc-rib svc-rib-promo"></span><b>${esc(p.label)}</b><span>${esc(p.text)}</span></li>`).join('')}
-        ${medals.map((m) => `<li><span class="svc-rib" style="background:${m.ribbon}"></span><b>${esc(m.label)}</b>${m.first ? '<em>FIRST AWARD</em>' : ''}<span>${esc(m.text)}</span></li>`).join('')}
+        ${promos.map((p) => `<li class="promo"><span class="svc-rib svc-rib-promo"></span><b>${esc(p.label)}</b><span>${esc(tx(p.text))}</span></li>`).join('')}
+        ${medals.map((m) => `<li><span class="svc-rib" style="background:${m.ribbon}"></span><b>${esc(tx(m.label))}</b>${m.first ? `<em>${tx('FIRST AWARD')}</em>` : ''}<span>${esc(tx(m.text))}</span></li>`).join('')}
       </ul>` : ''}
-      <div class="svc-k" style="margin-top:12px">DAILY ORDERS</div>
+      <div class="svc-k" style="margin-top:12px">${tx('DAILY ORDERS')}</div>
       <ul class="svc-orders">${orders}</ul>`;
     const row = Array.from(box.children).filter((x) => x.classList.contains('row')).pop();
     box.insertBefore(sec, row ?? null);
     const pts = box.querySelector<HTMLElement>('[data-a="armory"]');
-    if (pts && d.points !== undefined) pts.textContent = `Armory · ${this.game.prog.points} pts`;
+    if (pts && d.points !== undefined) pts.textContent = tx('Armory · {n} pts', { n: this.game.prog.points });
   }
 
   // The Daily Run posts to today's daily board instead of the Survival board

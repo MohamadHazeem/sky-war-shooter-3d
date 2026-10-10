@@ -8,6 +8,7 @@ import { Aircraft, Fighter } from '../world/Aircraft';
 import { Atmos } from '../render/Atmosphere';
 import { Replay } from './Replay';
 import { CamSnapshot, CineOverlay, HudHider, ModelReveal, cineLens } from './CineShared';
+import { tx } from '../i18n';
 
 // Cinematic moments: kill cam, end-of-mission fly-by and the best-moment replay (Replay.ts).
 //
@@ -232,8 +233,8 @@ export class Cinematics {
     this.snap.capture(e);
     if (g.mission?.role === 'gunner') this.reveal.reveal(g.world.playerBomber?.model);
     this.hud.hide(this.ui.canvas);
-    const what = v instanceof Fighter && v.label ? v.label.toUpperCase() : 'BANDIT';
-    this.overlay.show(true, 'KILL CAM', `${what} · DESTROYED`, 'CLICK TO SKIP');
+    const what = v instanceof Fighter && v.label ? v.label.toUpperCase() : tx('BANDIT');
+    this.overlay.show(true, tx('KILL CAM'), tx('{what} · DESTROYED', { what }), tx('CLICK TO SKIP'));
     this.overlay.setFade(0);
     this.fadeIn = 0;
     const off = Atmos.originOffset;
@@ -331,7 +332,7 @@ export class Cinematics {
     this.snap.capture(e);
     this.reveal.reveal(w.playerBomber?.model);
     this.hud.hide(this.ui.canvas);
-    this.overlay.show(true, '', '', 'CLICK TO SKIP');
+    this.overlay.show(true, '', '', tx('CLICK TO SKIP'));
     this.fadeIn = 0;
     this.flyT = 0;
     this.mode = 'flyby';
@@ -375,7 +376,7 @@ export class Cinematics {
     cam.rotateZ(this.flySide * THREE.MathUtils.lerp(0.05, -0.025, su));
     cineLens(e, THREE.MathUtils.lerp(32, 27, su));
     const m = this.game.mission;
-    this.overlay.setCard(t > 0.55 && t < FLY_DUR - 0.75, 'MISSION COMPLETE', m ? (m.number ? `Mission ${m.number} · ${m.title}` : m.title) : '');
+    this.overlay.setCard(t > 0.55 && t < FLY_DUR - 0.75, tx('MISSION COMPLETE'), m ? (m.number ? tx('Mission {n} · {title}', { n: m.number, title: tx(m.title) }) : tx(m.title)) : '');
     // dip in from the gun view, dip out to the debrief
     this.overlay.setFade(Math.max(1 - t / 0.3, t > FLY_DUR - 0.3 ? (t - (FLY_DUR - 0.3)) / 0.3 : 0));
   }
@@ -405,7 +406,7 @@ export class Cinematics {
     const b = document.createElement('button');
     b.className = 'btn ghost';
     b.dataset.replay = '1';
-    b.textContent = '▶ Replay best moment';
+    b.textContent = tx('▶ Replay best moment');
     b.addEventListener('click', () => this.startReplay());
     row.prepend(b);
   }
@@ -419,7 +420,7 @@ export class Cinematics {
     if (this.game.mission?.role === 'gunner') this.reveal.reveal(this.replay.liveModel);
     this.hud.hide(this.ui.canvas);
     document.getElementById('debrief')?.classList.remove('show');
-    this.overlay.show(true, 'REPLAY', 'BEST MOMENT', 'CLICK TO SKIP');
+    this.overlay.show(true, tx('REPLAY'), tx('BEST MOMENT'), tx('CLICK TO SKIP'));
     this.overlay.setFade(1);
     this.fadeIn = FADE_IN;
     cineLens(e, 50);

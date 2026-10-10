@@ -5,6 +5,8 @@ import type { Mission } from './Missions';
 import {
   type CareerData, RANKS, heavyKills, lifetimeAccuracy, stationsScored, totalMedals, typesDowned,
 } from './Career';
+import { tx } from '../i18n';
+import { fmtDate } from '../ui/serviceCommon';
 
 const STORE_KEY = 'sws3d.achievements.v1';
 const TOAST_MS = 4200;
@@ -191,7 +193,7 @@ class Achievements {
     }
     const el = document.createElement('div');
     el.className = 'achv-toast';
-    el.innerHTML = `<div class="achv-star">★</div><div><div class="achv-k">Achievement unlocked · ${RARITY_LABEL[def.rarity]}</div><div class="achv-n">${def.name}</div><div class="achv-d">${def.desc}</div></div>`;
+    el.innerHTML = `<div class="achv-star">★</div><div><div class="achv-k">${tx('Achievement unlocked · {rarity}', { rarity: tx(RARITY_LABEL[def.rarity]) })}</div><div class="achv-n">${tx(def.name)}</div><div class="achv-d">${tx(def.desc)}</div></div>`;
     this.toastHost.appendChild(el);
     requestAnimationFrame(() => el.classList.add('show'));
     setTimeout(() => {
@@ -204,10 +206,10 @@ class Achievements {
   listHtml(): string {
     ensureStyle();
     const got = ACHIEVEMENTS.filter((a) => this.has(a.id)).sort((a, b) => this.unlocked[b.id] - this.unlocked[a.id]);
-    const rows = got.slice(0, 6).map((a) => `<li class="got"><span class="achv-mark">★</span><span>${a.name} — ${a.desc}<small>Unlocked ${new Date(this.unlocked[a.id]).toLocaleDateString()}</small></span></li>`).join('');
-    return `<div class="achv-head"><div class="kicker">ACHIEVEMENTS</div><span class="achv-count">${got.length}/${ACHIEVEMENTS.length}</span></div>
-      <ul class="achv-list">${rows || '<li>None yet: fly a mission.</li>'}</ul>
-      <div class="achv-d" style="margin-top:8px">The full trophy cabinet is on the title menu: Trophies.</div>`;
+    const rows = got.slice(0, 6).map((a) => `<li class="got"><span class="achv-mark">★</span><span>${tx(a.name)} — ${tx(a.desc)}<small>${tx('Unlocked {date}', { date: fmtDate(this.unlocked[a.id]) })}</small></span></li>`).join('');
+    return `<div class="achv-head"><div class="kicker">${tx('ACHIEVEMENTS')}</div><span class="achv-count">${got.length}/${ACHIEVEMENTS.length}</span></div>
+      <ul class="achv-list">${rows || `<li>${tx('None yet: fly a mission.')}</li>`}</ul>
+      <div class="achv-d" style="margin-top:8px">${tx('The full trophy cabinet is on the title menu: Trophies.')}</div>`;
   }
 }
 

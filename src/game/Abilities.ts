@@ -6,6 +6,7 @@ import type { Gun } from '../world/Aircraft';
 import { AbilityBar, AbilitySlotView } from '../ui/AbilityBar';
 import { playAbilityCue, playAbilityDenied, playAbilityReady } from '../audio/AbilitySounds';
 import { spawnSweep, SweepPilot, SWEEP_TIME } from './MustangSweep';
+import { tx } from '../i18n';
 
 const MUSTANG_INBOUND = 4; // seconds of dive before the sweep proper
 
@@ -180,7 +181,7 @@ export class Abilities {
     if (!this.tipShown && this.missionT > 18 && g.state === 'playing') {
       this.tipShown = true;
       const k = (i: number) => `<kbd>${this.slots[i].view.key}</kbd>`;
-      this.ui.tip(`Abilities: ${k(0)} call the Mustangs · ${k(1)} Overdrive · ${k(2)} Focus`, 5000);
+      this.ui.tip(tx('Abilities: {a} call the Mustangs · {b} Overdrive · {c} Focus', { a: k(0), b: k(1), c: k(2) }), 5000);
     }
 
     this.bar.update(this.views);

@@ -10,6 +10,7 @@ import type { Mission } from './Missions';
 import type { UI } from '../ui/UI';
 import { sound } from '../audio/Sound';
 import { BossDrone } from '../audio/BossDrone';
+import { tx } from '../i18n';
 import { drawBossHud } from '../ui/BossHud';
 
 /**
@@ -212,7 +213,7 @@ export class BossBattle {
     }
     this.shipsAtStart = count;
     this.groupName = count === 4 ? 'SCHLACHTGESCHWADER GÖTTERDÄMMERUNG' : 'LUFTKREUZER-GESCHWADER';
-    this.objective = `Destroy the battle group — ${count} warships`;
+    this.objective = tx('Destroy the battle group — {n} warships', { n: count });
     if (!this.rockets.length) {
       for (let i = 0; i < 36; i++) {
         const obj = new THREE.Mesh(BOSS_ROCKET_GEO, BOSS_ROCKET_MAT);
@@ -300,7 +301,7 @@ export class BossBattle {
       this.scheduleHeavy(dt);
       this.escorts(dt);
       const left = this.alive;
-      this.objective = left > 0 ? `Battle group — ${left} warship${left > 1 ? 's' : ''} · ${Math.round(this.groupHealth * 100)}%` : 'Battle group destroyed';
+      this.objective = left > 0 ? tx(left > 1 ? 'Battle group — {n} warships · {p}%' : 'Battle group — {n} warship · {p}%', { n: left, p: Math.round(this.groupHealth * 100) }) : tx('Battle group destroyed');
     }
     this.updateShells(dt);
     this.updateRockets(dt);
@@ -662,7 +663,7 @@ export class BossBattle {
     const n = s.ship.def.name;
     this.ui.feed(`${n} ENRAGED`, 'loss');
     this.say([['Top Turret', `${n}'s mad as hell — she's throwing everything at us!`], ['Navigator', `${n} is hurt and angry! Watch her guns!`]], 'b_enrage', 6, 2);
-    this.flash.title = 'ENRAGED'; this.flash.sub = `${s.ship.def.title} ${n}`; this.flash.color = '255,140,40'; this.flash.t = 2.2;
+    this.flash.title = tx('ENRAGED'); this.flash.sub = `${tx(s.ship.def.title)} ${tx(n)}`; this.flash.color = '255,140,40'; this.flash.t = 2.2;
     this.launchEscorts(s, 2);
     this.heavyCd = Math.min(this.heavyCd, 4);
   }
@@ -670,14 +671,14 @@ export class BossBattle {
   private despair(s: ShipState) {
     s.desperate = true; s.enraged = true;
     this.say([['Pilot', `${s.ship.def.name} is the last one — she's desperate! Brace yourselves!`]], 'b_despair', 0, 3);
-    this.flash.title = 'LAST STAND'; this.flash.sub = `${s.ship.def.title} ${s.ship.def.name}`; this.flash.color = '255,60,40'; this.flash.t = 2.6;
+    this.flash.title = tx('LAST STAND'); this.flash.sub = `${tx(s.ship.def.title)} ${tx(s.ship.def.name)}`; this.flash.color = '255,60,40'; this.flash.t = 2.6;
     this.heavyCd = Math.min(this.heavyCd, 3);
   }
 
   private onBreach(s: ShipState) {
     s.breachShown = true;
     const sh = s.ship, w = this.world;
-    this.flash.title = 'ARMOUR BREACHED'; this.flash.sub = `${sh.def.title} ${sh.def.name} — hit the hull!`; this.flash.color = '255,70,45'; this.flash.t = 2.8;
+    this.flash.title = tx('ARMOUR BREACHED'); this.flash.sub = tx('{ship} — hit the hull!', { ship: `${tx(sh.def.title)} ${tx(sh.def.name)}` }); this.flash.color = '255,70,45'; this.flash.t = 2.8;
     this.say([['Top Turret', `${sh.def.name}'s armour is cracked wide open — pour it into her hull!`], ['Pilot', `Her plating's gone! Hit ${sh.def.name} anywhere now!`]], 'b_breach', 3, 3);
     sound.confirm('kill_confirm');
     for (let i = 0; i < 4; i++) {
@@ -686,7 +687,7 @@ export class BossBattle {
     }
     sound.play('explosion', sh.pos, { gain: 1.8, ref: 250, reverb: 0.8 });
     this.hooks.score(400);
-    this.popup(sh.pos, '+400  ARMOUR BREACHED', '255,120,80');
+    this.popup(sh.pos, tx('+400  ARMOUR BREACHED'), '255,120,80');
   }
 
   private onPartDestroyed(s: ShipState, p: ShipPart) {
@@ -698,7 +699,7 @@ export class BossBattle {
     if (w.player) w.events.shake?.(Math.max(0, 1 - _v3.distanceTo(w.player.pos) / 900) * (p.kind === 'fuel' ? 0.8 : 0.4));
     const pts = p.kind === 'fuel' ? 300 : p.kind === 'bridge' || p.kind === 'flak' ? 250 : 150;
     this.hooks.score(pts);
-    this.popup(_v3, `+${pts}  ${PART_LABEL[p.kind]} DESTROYED`, '255,214,120');
+    this.popup(_v3, tx('+{pts}  {what} DESTROYED', { pts, what: tx(PART_LABEL[p.kind]) }), '255,214,120');
     sound.confirm('hit_confirm');
     w.events.hitMarker?.(true);
     const n = sh.def.name;
@@ -802,12 +803,12 @@ export class BossBattle {
     this.hooks.score(pts);
     w.stats.kills++;
     this.ui.feed(`${sh.def.title} ${sh.def.name} destroyed — +${pts}`, 'mine');
-    this.popup(sh.pos, `+${pts}  ${sh.def.name.toUpperCase()} DESTROYED`, '255,214,120');
+    this.popup(sh.pos, tx('+{pts}  {what} DESTROYED', { pts, what: tx(sh.def.name).toUpperCase() }), '255,214,120');
     this.bigBlast(sh.pos, sh.vel, 3.5);
     sound.play('explosion', sh.pos, { gain: 2.2, ref: 400, reverb: 1 });
     sound.confirm('kill_confirm');
     w.events.hitMarker?.(true);
-    this.flash.title = `${sh.def.name.toUpperCase()} IS GOING DOWN`; this.flash.sub = last ? 'The battle group is finished' : `${this.alive} warship${this.alive === 1 ? '' : 's'} left`; this.flash.color = '255,214,120'; this.flash.t = 3;
+    this.flash.title = tx('{name} IS GOING DOWN', { name: tx(sh.def.name).toUpperCase() }); this.flash.sub = last ? tx('The battle group is finished') : tx(this.alive === 1 ? '{n} warship left' : '{n} warships left', { n: this.alive }); this.flash.color = '255,214,120'; this.flash.t = 3;
     this.say(last
       ? [['Pilot', 'She\'s breaking up! That\'s the last of them!'], ['Top Turret', 'Look at her go — she\'s breaking in two!']]
       : [['Tail', `${sh.def.name} is breaking up! She's going down!`], ['Navigator', `Scratch ${sh.def.name}! She's finished!`]], 'b_kill', 0, 3);
@@ -909,6 +910,6 @@ export class BossBattle {
     this.ui.feed(`Battle group destroyed — +${bonus}`, 'mine');
     this.hooks.perk('BATTLE GROUP DESTROYED');
     w.callout('b_victory', this.role === 'gunner' ? 'Pilot' : 'Lead', 'That\'s the last of them! Scratch one battle group — drinks are on me!', 0, 3);
-    this.objective = 'Battle group destroyed — clear the last fighters';
+    this.objective = tx('Battle group destroyed — clear the last fighters');
   }
 }

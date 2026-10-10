@@ -65,13 +65,13 @@
 #crate.shake .cr-box { animation: crShake 1.15s ease-in forwards; transform: none; }
 #crate.burst .cr-box { animation: crBreak 0.3s ease-in forwards; }
 .g-common { --gc: #8a7f62; } .g-rare { --gc: #4f86c0; } .g-epic { --gc: #9862c8; } .g-legendary { --gc: #e0a42c; }
-.cr-body { position: absolute; inset: 22px 0 0; border: 4px solid #2a2014;
+.cr-box .cr-body { position: absolute; inset: 22px 0 0; border: 4px solid #2a2014;
   background: repeating-linear-gradient(0deg, #8b6a3e 0 34px, #6d5230 34px 37px), #8b6a3e;
   box-shadow: inset 0 0 26px rgba(0, 0, 0, 0.55), 0 18px 30px rgba(0, 0, 0, 0.6);
   display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(25, 20, 12, 0.78); font: 700 26px 'Oswald', sans-serif; letter-spacing: 3px; white-space: nowrap; overflow: hidden; }
-.cr-body::before, .cr-body::after { content: ''; position: absolute; top: -4px; bottom: -4px; width: 16px; background: var(--gc); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35); }
-.cr-body::before { left: 28px; } .cr-body::after { right: 28px; }
-.cr-body small { font: 11px 'IBM Plex Mono', monospace; letter-spacing: 2px; }
+.cr-box .cr-body::before, .cr-box .cr-body::after { content: ''; position: absolute; top: -4px; bottom: -4px; width: 16px; background: var(--gc); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35); }
+.cr-box .cr-body::before { left: 28px; } .cr-box .cr-body::after { right: 28px; }
+.cr-box .cr-body small { font: 11px 'IBM Plex Mono', monospace; letter-spacing: 2px; }
 .cr-lid { position: absolute; left: -8px; right: -8px; top: 0; height: 28px; border: 4px solid #2a2014; background: repeating-linear-gradient(90deg, #977445 0 40px, #7a5c35 40px 43px); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3); transform-origin: 0 100%; }
 .cr-glow { position: absolute; left: 0; right: 0; top: 18px; height: 10px; background: var(--rc); filter: blur(6px); opacity: 0; }
 #crate.shake .cr-glow { animation: crGlow 1.15s ease-in forwards; }

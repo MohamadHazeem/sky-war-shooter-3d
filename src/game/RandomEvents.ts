@@ -3,6 +3,7 @@ import { Aircraft, Bomber, Fighter, HitZone } from '../world/Aircraft';
 import { STATIONS, StationId } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
 import type { Mark } from './Objectives';
+import { tx } from '../i18n';
 
 // Random in-flight events (scheduled by MidRound every 60–120 s): each one is announced on
 // the radio, shows a prompt under the sight and asks for a quick interaction. All of them
@@ -100,9 +101,9 @@ class EngineFire extends RandomEvent {
       return;
     }
     c.hud.showPrompt({
-      kicker: `ENGINE FIRE · NUMBER ${this.n}${this.spread ? ' · SPREADING' : ''}`,
-      action: '<kbd>X</kbd> HOLD OR MASH — EXTINGUISHER',
-      hint: this.spread ? 'The wing is burning' : 'Put it out before it spreads',
+      kicker: `${tx('ENGINE FIRE · NUMBER {n}', { n: this.n })}${this.spread ? ' · ' + tx('SPREADING') : ''}`,
+      action: tx('<kbd>X</kbd> HOLD OR MASH — EXTINGUISHER'),
+      hint: this.spread ? tx('The wing is burning') : tx('Put it out before it spreads'),
       fill: this.fill, timeFrac: 1 - this.t / this.limit, danger: this.spread || this.t > 5,
     });
   }
@@ -178,11 +179,11 @@ class JammedGun extends RandomEvent {
       c.ui.tip('Gun cleared — back in action', 1600);
       return;
     }
-    const label = this.station ? STATIONS[this.station].label.toUpperCase() : 'GUNS';
+    const label = this.station ? tx(STATIONS[this.station].label).toUpperCase() : tx('GUNS');
     c.hud.showPrompt({
-      kicker: `${label} JAMMED`,
-      action: '<kbd>R</kbd> TAP FAST OR HOLD — CLEAR THE JAM',
-      hint: here ? 'Work the charging handle' : `Your other guns still fire — or go back with ${STATIONS[this.station!].key}`,
+      kicker: tx('{gun} JAMMED', { gun: label }),
+      action: tx('<kbd>R</kbd> TAP FAST OR HOLD — CLEAR THE JAM'),
+      hint: here ? tx('Work the charging handle') : tx('Your other guns still fire — or go back with {key}', { key: STATIONS[this.station!].key }),
       fill: this.fill, timeFrac: 1 - this.t / this.limit,
     });
   }
@@ -225,9 +226,9 @@ class OxygenFailure extends RandomEvent {
         c.ui.tip('Spare bottle on — breathe easy', 1600);
       } else {
         c.hud.showPrompt({
-          kicker: 'OXYGEN FAILURE',
-          action: '<kbd>O</kbd> OPEN THE SPARE BOTTLE',
-          hint: 'You are blacking out',
+          kicker: tx('OXYGEN FAILURE'),
+          action: tx('<kbd>O</kbd> OPEN THE SPARE BOTTLE'),
+          hint: tx('You are blacking out'),
           fill: 1 - this.k, timeFrac: 1 - this.t / this.limit, danger: this.k > 0.55,
         });
       }
@@ -274,9 +275,9 @@ class Straggler extends RandomEvent {
     // every attacker on her shot down: she's safe early
     if (left === 0 && this.t > 4) { this.save(c); return; }
     c.hud.showPrompt({
-      kicker: `STRAGGLER · ${this.b.name.toUpperCase()}`,
-      action: 'COVER HER — DOWN THE FIGHTERS ON HER',
-      hint: `${left} fighter${left === 1 ? '' : 's'} on her · hold ${Math.max(0, Math.ceil(this.limit - this.t))} s`,
+      kicker: tx('STRAGGLER · {name}', { name: this.b.name.toUpperCase() }),
+      action: tx('COVER HER — DOWN THE FIGHTERS ON HER'),
+      hint: tx(left === 1 ? '{n} fighter on her · hold {s} s' : '{n} fighters on her · hold {s} s', { n: left, s: Math.max(0, Math.ceil(this.limit - this.t)) }),
       fill: this.t / this.limit, timeFrac: 1 - this.t / this.limit, danger: this.b.integrity < 0.55,
     });
   }
@@ -288,7 +289,7 @@ class Straggler extends RandomEvent {
   private save(c: MidRound) {
     this.state = 'won';
     this.b.straggling = false;   // she holds where she is, under the box's guns
-    c.reward(120 + 25 * this.downed, `${this.b.name} protected`);
+    c.reward(120 + 25 * this.downed, tx('{name} protected', { name: this.b.name }));
     c.radio('stragok', this.b.name, `${this.b.name} here — thanks for the cover. We'll make it home.`);
   }
 

@@ -1,6 +1,7 @@
 import type { Input } from '../core/Input';
 import { dragToMouse, stickValue, STICK_RATE } from '../core/Touch';
 import { STATIONS, StationId } from '../world/B17Layout';
+import { tx } from '../i18n';
 
 // On-screen controls for phones and tablets (shown only in touch mode during a mission).
 //
@@ -43,16 +44,16 @@ export class TouchHud {
     el.innerHTML = `
       <div class="th-stick"><i></i></div>
       <div class="th-top">
-        <button data-t="map" aria-label="Map">MAP</button>
-        <button data-t="help" aria-label="Controls">?</button>
-        <button data-t="pause" aria-label="Pause"><span class="th-pause"></span></button>
-        ${document.fullscreenEnabled ? '<button data-t="full" aria-label="Full screen">⛶</button>' : ''}
+        <button data-t="map" aria-label="${tx('Map')}">${tx('MAP')}</button>
+        <button data-t="help" aria-label="${tx('Controls')}">?</button>
+        <button data-t="pause" aria-label="${tx('Pause')}"><span class="th-pause"></span></button>
+        ${document.fullscreenEnabled ? `<button data-t="full" aria-label="${tx('Full screen')}">⛶</button>` : ''}
       </div>
       <div class="th-abil"></div>
-      <div class="th-thr" aria-label="Throttle"><div class="th-track"><i></i></div><span>THR</span></div>
-      <button class="th-view" data-t="view">VIEW</button>
-      <button class="th-zoom" aria-label="Zoom">ZOOM</button>
-      <button class="th-fire" aria-label="Fire">FIRE</button>`;
+      <div class="th-thr" aria-label="${tx('Throttle')}"><div class="th-track"><i></i></div><span>${tx('THR')}</span></div>
+      <button class="th-view" data-t="view">${tx('VIEW')}</button>
+      <button class="th-zoom" aria-label="${tx('Zoom')}">${tx('ZOOM')}</button>
+      <button class="th-fire" aria-label="${tx('Fire')}">${tx('FIRE')}</button>`;
     document.body.appendChild(el);
     this.el = el;
     this.stickEl = el.querySelector('.th-stick')!;
@@ -94,7 +95,7 @@ export class TouchHud {
     const b = document.createElement('button');
     b.dataset.ab = id;
     b.dataset.code = code;
-    b.textContent = label;
+    b.textContent = tx(label);
     this.abil.appendChild(b);
   }
   removeAbility(id: string) { this.abil.querySelector(`[data-ab="${CSS.escape(id)}"]`)?.remove(); }

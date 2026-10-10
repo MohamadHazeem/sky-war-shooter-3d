@@ -9,6 +9,7 @@ import {
   crewRoster, GUNNERS, HEAL_COST, levelOf, manDef, ManId, MAX_CREW_LEVEL, MEN, Post, POST_CREW, POST_LABEL, POSTS,
   ROOKIES, Stat, STAT_LABEL, xpFor,
 } from '../game/CrewRoster';
+import { tx } from '../i18n';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
@@ -30,7 +31,7 @@ function mountHud(): HTMLElement | null {
   if (list.dataset.cp !== '1') {
     list.dataset.cp = '1';
     list.classList.add('cp');
-    list.innerHTML = CREW.map((m) => `<span data-c="${m.id}"><img alt=""><i></i><em></em><b>OK</b></span>`).join('');
+    list.innerHTML = CREW.map((m) => `<span data-c="${m.id}"><img alt=""><i></i><em></em><b>${tx('OK')}</b></span>`).join('');
   }
   return list;
 }
@@ -46,13 +47,13 @@ function refreshHud(levelUp?: ManId) {
     const src = portraitUrl(id ? manDef(id).look : ROOKIES[c].look, 40);
     if (img.getAttribute('src') !== src) img.setAttribute('src', src);
     const name = id ? manDef(id).last : ROOKIES[c].last;
-    setText(row.querySelector('i')!, `${HUD_LABEL[c]} · ${name}`);
-    setText(row.querySelector('em')!, id ? `L${crewRoster.level(id)}` : 'NEW');
+    setText(row.querySelector('i')!, `${tx(HUD_LABEL[c])} · ${tx(name)}`);
+    setText(row.querySelector('em')!, id ? tx('L{n}', { n: crewRoster.level(id) }) : tx('NEW'));
     const w = crewRoster.posWounded(c);
     row.classList.toggle('wnd', w);
     row.classList.toggle('rk', !id && !w);
-    setText(row.querySelector('b')!, w ? 'WOUNDED' : id ? 'OK' : 'ROOKIE');
-    row.title = id ? `${manDef(id).call} "${manDef(id).nick}" — level ${crewRoster.level(id)}` : `${ROOKIES[c].call} — replacement rookie`;
+    setText(row.querySelector('b')!, tx(w ? 'WOUNDED' : id ? 'OK' : 'ROOKIE'));
+    row.title = id ? tx('{who} "{nick}" — level {n}', { who: tx(manDef(id).call), nick: tx(manDef(id).nick), n: crewRoster.level(id) }) : tx('{who} — replacement rookie', { who: tx(ROOKIES[c].call) });
     if (levelUp && id === levelUp) {
       row.classList.remove('lvup'); void row.offsetWidth; row.classList.add('lvup');
       if (flashT) clearTimeout(flashT);
@@ -112,33 +113,33 @@ function manCard(id: ManId, post: Post | null): string {
   const d = manDef(id), st = crewRoster.men[id], lv = levelOf(st.xp);
   const next = lv >= MAX_CREW_LEVEL ? 1 : (st.xp - xpFor(lv)) / (xpFor(lv + 1) - xpFor(lv));
   const station = post && post !== 'radio' ? post as StationId : null;
-  const spec = d.specialty ? `${STATIONS[d.specialty].label} specialist` : d.gunner ? 'All-rounder' : manDef(id).home === 'pilot' ? 'Pilot' : CREW.find((c) => c.id === d.home)!.label;
-  const star = station && d.specialty === station ? '<span class="cr-star" title="Specialist in his own seat">★</span>' : '';
+  const spec = d.specialty ? tx('{station} specialist', { station: tx(STATIONS[d.specialty].label) }) : d.gunner ? tx('All-rounder') : manDef(id).home === 'pilot' ? tx('Pilot') : tx(CREW.find((c) => c.id === d.home)!.label);
+  const star = station && d.specialty === station ? `<span class="cr-star" title="${tx('Specialist in his own seat')}">★</span>` : '';
   const stats = d.gunner ? `<div class="cr-stats">${(['acc', 'trav', 'disc'] as Stat[]).map((s) => {
     const v = crewRoster.stat(id, s);
-    return `<div><span>${STAT_LABEL[s]}</span>${bar(v)}<b>${v}</b></div>`;
+    return `<div><span>${tx(STAT_LABEL[s])}</span>${bar(v)}<b>${v}</b></div>`;
   }).join('')}</div>` : '';
   let bonus = '';
   if (d.bonus) {
     const at = station ?? d.specialty;
     const pct = Math.round(crewRoster.bonusAt(at ?? 'waistL', id) * 100);
     const sign = d.bonus.kind === 'spread' || d.bonus.kind === 'heat' ? '−' : '+';
-    const where = station ? `when you man the ${STATIONS[station].label.toLowerCase()}` : at ? `on the ${STATIONS[at].label.toLowerCase()}, his seat` : 'at any gun';
-    bonus = `<div class="cr-bonus">${sign}${pct}% ${d.bonus.what} ${where}</div>`;
+    const where = station ? tx('when you man the {station}', { station: tx(STATIONS[station].label).toLowerCase() }) : at ? tx('on the {station}, his seat', { station: tx(STATIONS[at].label).toLowerCase() }) : tx('at any gun');
+    bonus = `<div class="cr-bonus">${tx('{sign}{pct}% {what} {where}', { sign, pct, what: tx(d.bonus.what), where })}</div>`;
   }
   const s = statusOf(id);
   const heal = s.cls === 'bad' && !crewRoster.benched.has(id) && rosterProg
-    ? `<button class="btn ghost cr-heal" data-heal="${id}" ${rosterProg.points < HEAL_COST ? 'disabled' : ''}>Flight surgeon · ${HEAL_COST}</button>` : '';
-  const isNew = fresh.has(id) ? '<span class="cr-new">LEVEL UP</span>' : '';
+    ? `<button class="btn ghost cr-heal" data-heal="${id}" ${rosterProg.points < HEAL_COST ? 'disabled' : ''}>${tx('Flight surgeon · {n}', { n: HEAL_COST })}</button>` : '';
+  const isNew = fresh.has(id) ? `<span class="cr-new">${tx('LEVEL UP')}</span>` : '';
   return `<div class="cr-man ${s.cls === 'bad' ? 'out' : ''}">
     <img class="cr-face" src="${portraitUrl(d.look, 96)}" alt="">
     <div class="cr-body">
-      <div class="cr-name">${esc(d.rank)} ${esc(d.first)} “${esc(d.nick)}” ${esc(d.last)} ${star}</div>
-      <div class="cr-spec">${esc(spec)} · <b>Level ${lv}</b>${isNew}</div>
+      <div class="cr-name">${esc(tx(d.rank))} ${esc(tx(d.first))} “${esc(tx(d.nick))}” ${esc(tx(d.last))} ${star}</div>
+      <div class="cr-spec">${esc(spec)} · <b>${tx('Level {n}', { n: lv })}</b>${isNew}</div>
       <div class="cr-xp" title="${st.xp} XP">${bar(next * 100)}</div>
-      <div class="cr-bio">${esc(d.bio)}</div>
+      <div class="cr-bio">${esc(tx(d.bio))}</div>
       ${stats}${bonus}
-      <div class="cr-status ${s.cls}">${esc(s.text)} · ${st.kills} kills · ${st.missions} missions ${heal}</div>
+      <div class="cr-status ${s.cls}">${esc(tx(s.text))} · ${tx('{n} kills', { n: st.kills })} · ${tx('{n} missions', { n: st.missions })} ${heal}</div>
     </div></div>`;
 }
 
@@ -147,17 +148,17 @@ function renderRoster() {
   if (!host) return;
   const seat = (p: Post) => {
     const id = crewRoster.seats[p];
-    const rookie = crewRoster.isOut(id) ? `<div class="cr-rookie">${esc(ROOKIES[POST_CREW[p]].call)} (rookie) mans it meanwhile</div>` : '';
+    const rookie = crewRoster.isOut(id) ? `<div class="cr-rookie">${esc(tx('{who} (rookie) mans it meanwhile', { who: tx(ROOKIES[POST_CREW[p]].call) }))}</div>` : '';
     return `<div class="cr-seat ${picked === p ? 'picked' : ''} ${p === 'radio' ? 'spare' : ''}" data-post="${p}">
-      <div class="cr-post">${POST_LABEL[p]}${p === 'radio' ? ' · spare gunner' : ''}</div>${manCard(id, p)}${rookie}</div>`;
+      <div class="cr-post">${tx(POST_LABEL[p])}${p === 'radio' ? tx(' · spare gunner') : ''}</div>${manCard(id, p)}${rookie}</div>`;
   };
   const officers = MEN.filter((m) => !m.gunner);
   host.innerHTML = `
-    <div class="hsec">CREW · ${GUNNERS.length} GUNNERS</div>
-    <div class="cr-hint">${picked ? `Moving ${esc(manDef(crewRoster.seats[picked]).call)} — click another seat to swap, or the same one to cancel.` : 'Click a gunner, then another seat, to swap them. ★ specialist in his own seat: better AI shooting and the full seat bonus.'}${crewRoster.active ? ' Changes apply from the next round.' : ''}</div>
+    <div class="hsec">${tx('CREW · {n} GUNNERS', { n: GUNNERS.length })}</div>
+    <div class="cr-hint">${picked ? tx('Moving {who} — click another seat to swap, or the same one to cancel.', { who: esc(tx(manDef(crewRoster.seats[picked]).call)) }) : tx('Click a gunner, then another seat, to swap them. ★ specialist in his own seat: better AI shooting and the full seat bonus.')}${crewRoster.active ? tx(' Changes apply from the next round.') : ''}</div>
     ${crewRoster.notes.length ? `<div class="cr-notes">${crewRoster.notes.map((n) => `<div>${esc(n)}</div>`).join('')}</div>` : ''}
     <div class="cr-grid">${POSTS.map(seat).join('')}</div>
-    <div class="hsec">OFFICERS</div>
+    <div class="hsec">${tx('OFFICERS')}</div>
     <div class="cr-grid off">${officers.map((m) => `<div class="cr-seat officer">${manCard(m.id, null)}</div>`).join('')}</div>`;
   host.querySelectorAll<HTMLElement>('[data-post]').forEach((el) => el.addEventListener('click', (e) => {
     if ((e.target as HTMLElement).closest('[data-heal]')) return;

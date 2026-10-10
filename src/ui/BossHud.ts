@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { BossBattle } from '../game/BossBattle';
 import type { BossShip, PartKind } from '../world/BossShip';
+import { tx, CANVAS_MONO, CANVAS_SANS } from '../i18n';
 
 /**
  * Boss battle HUD on the 2D overlay canvas: the battle group's health bar and one bar per
@@ -10,7 +11,7 @@ import type { BossShip, PartKind } from '../world/BossShip';
  * blip for the radar (drawBossBlip, called from Radar.draw).
  */
 
-const MONO = '"IBM Plex Mono", monospace';
+const MONO = CANVAS_MONO;
 const KIND_COL: Record<PartKind, string> = {
   turret: '255,196,80', flak: '255,150,60', rockets: '255,150,60', engine: '255,120,60', fuel: '255,80,60', bridge: '235,235,220',
 };
@@ -56,7 +57,7 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
     ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(232,214,160,0.95)';
     ctx.font = `600 12px ${MONO}`;
     ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 4;
-    ctx.fillText(b.groupName, x0, y0 - 6);
+    ctx.fillText(tx(b.groupName), x0, y0 - 6);
     ctx.textAlign = 'right';
     ctx.fillText(`${Math.round(b.groupHealth * 100)}%`, x0 + bw, y0 - 6);
     ctx.shadowBlur = 0;
@@ -69,16 +70,16 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
       ctx.textAlign = 'left';
       ctx.font = `600 10px ${MONO}`;
       ctx.fillStyle = dead ? 'rgba(160,150,130,0.6)' : 'rgba(240,228,200,0.95)';
-      ctx.fillText(sh.def.name.toUpperCase(), x, y - 4);
-      if (dead) { ctx.fillRect(x, y - 8, ctx.measureText(sh.def.name.toUpperCase()).width, 1); }
+      ctx.fillText(tx(sh.def.name).toUpperCase(), x, y - 4);
+      if (dead) { ctx.fillRect(x, y - 8, ctx.measureText(tx(sh.def.name).toUpperCase()).width, 1); }
       bar(ctx, x, y, sw, 5, sh.health, s.lag, s.enraged ? 'rgba(255,120,40,0.95)' : 'rgba(214,52,36,0.95)');
       // status tag
       let tag = '', col = '170,170,160';
-      if (dead) { tag = 'DESTROYED'; col = '150,140,120'; }
-      else if (s.desperate) { tag = 'LAST STAND'; col = '255,60,40'; }
-      else if (sh.breached) { tag = 'BREACHED'; col = '255,80,50'; }
-      else { tag = `ARMOURED ${sh.partsLost}/${sh.breachNeed}`; col = '190,200,210'; }
-      if (s.enraged && !dead && !s.desperate) tag += ' · ENRAGED';
+      if (dead) { tag = tx('DESTROYED'); col = '150,140,120'; }
+      else if (s.desperate) { tag = tx('LAST STAND'); col = '255,60,40'; }
+      else if (sh.breached) { tag = tx('BREACHED'); col = '255,80,50'; }
+      else { tag = tx('ARMOURED {n}/{m}', { n: sh.partsLost, m: sh.breachNeed }); col = '190,200,210'; }
+      if (s.enraged && !dead && !s.desperate) tag += ' · ' + tx('ENRAGED');
       const blink = (s.desperate || (sh.breached && !dead)) ? 0.65 + 0.35 * Math.sin(t * 8) : 1;
       ctx.fillStyle = `rgba(${col},${0.95 * blink})`;
       ctx.font = `9px ${MONO}`;
@@ -86,7 +87,7 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
       if (s.heavy && s.heavy.t < s.heavy.charge && !dead) {
         ctx.fillStyle = `rgba(255,70,40,${0.6 + 0.4 * Math.sin(t * 14)})`;
         ctx.textAlign = 'right';
-        ctx.fillText('CHARGING', x + sw, y - 4);
+        ctx.fillText(tx('CHARGING'), x + sw, y - 4);
       }
     });
   }
@@ -107,7 +108,7 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
       const pr = project(cam, _w, W, H);
       const charging = part.charge > 0;
       if (!pr.on) {
-        if (charging && s.heavy?.part === part) edgeArrow(ctx, W, H, pr, t, `${sh.def.name.toUpperCase()} · ${KIND_TAG[part.kind]}`);
+        if (charging && s.heavy?.part === part) edgeArrow(ctx, W, H, pr, t, `${tx(sh.def.name).toUpperCase()} · ${tx(KIND_TAG[part.kind])}`);
         continue;
       }
       const sz = THREE.MathUtils.clamp((part.zone.radius / pd) * focal * 0.9, 5, 22);
@@ -119,7 +120,7 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
         if (s.heavy?.part === part || part.kind === 'bridge') {
           ctx.fillStyle = 'rgba(255,90,60,0.95)'; ctx.textAlign = 'center'; ctx.font = `700 12px ${MONO}`;
           const left = s.heavy ? Math.max(0, s.heavy.charge - s.heavy.t) : 0;
-          ctx.fillText(`! ${KIND_TAG[part.kind]} ${left.toFixed(1)}s`, pr.x, pr.y - sz * 1.8 - 4);
+          ctx.fillText(`! ${tx(KIND_TAG[part.kind])} ${tx('{n}s', { n: left.toFixed(1) })}`, pr.x, pr.y - sz * 1.8 - 4);
         }
       } else {
         const hit = part.hitT < 0.12;
@@ -134,7 +135,7 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
       }
       if (showTags && !charging) {
         ctx.fillStyle = `rgba(${KIND_COL[part.kind]},0.8)`; ctx.textAlign = 'center'; ctx.font = `9px ${MONO}`;
-        ctx.fillText(KIND_TAG[part.kind], pr.x, pr.y - sz - 3);
+        ctx.fillText(tx(KIND_TAG[part.kind]), pr.x, pr.y - sz - 3);
       }
     }
     const c = project(cam, sh.pos, W, H);
@@ -146,10 +147,10 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
         ctx.strokeStyle = `rgba(255,70,45,${0.7 + 0.3 * pulse})`; ctx.lineWidth = 2.2;
         ctx.beginPath(); ctx.moveTo(c.x, c.y - r); ctx.lineTo(c.x + r, c.y); ctx.lineTo(c.x, c.y + r); ctx.lineTo(c.x - r, c.y); ctx.closePath(); ctx.stroke();
         ctx.fillStyle = 'rgba(255,90,60,0.95)'; ctx.textAlign = 'center'; ctx.font = `700 10px ${MONO}`;
-        ctx.fillText('HULL EXPOSED', c.x, c.y + r + 13);
+        ctx.fillText(tx('HULL EXPOSED'), c.x, c.y + r + 13);
       } else if (s.armourPing > 0) {
         ctx.fillStyle = `rgba(200,210,220,${Math.min(1, s.armourPing * 2)})`; ctx.textAlign = 'center'; ctx.font = `700 11px ${MONO}`;
-        ctx.fillText('ARMOURED', c.x, c.y + 26);
+        ctx.fillText(tx('ARMOURED'), c.x, c.y + 26);
       }
     }
   }
@@ -158,9 +159,9 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
     const h = s.heavy;
     if (!h || h.kind !== 'ram' || s.deathT >= 0) continue;
     const a = 0.6 + 0.4 * Math.sin(t * 10);
-    ctx.fillStyle = `rgba(255,60,40,${a})`; ctx.textAlign = 'center'; ctx.font = `700 26px Oswald, sans-serif`;
+    ctx.fillStyle = `rgba(255,60,40,${a})`; ctx.textAlign = 'center'; ctx.font = `700 26px ${CANVAS_SANS}`;
     ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 8;
-    ctx.fillText(h.t < h.charge ? `${s.ship.def.name.toUpperCase()} IS TURNING TO RAM` : 'RAMMING RUN — SHOOT HER DOWN', W / 2, H * 0.2);
+    ctx.fillText(h.t < h.charge ? tx('{name} IS TURNING TO RAM', { name: tx(s.ship.def.name).toUpperCase() }) : tx('RAMMING RUN — SHOOT HER DOWN'), W / 2, H * 0.2);
     ctx.shadowBlur = 0;
   }
 
@@ -171,7 +172,7 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.85)'; ctx.shadowBlur = 10;
     ctx.fillStyle = `rgba(${f.color},${a})`;
-    ctx.font = `600 ${Math.round(40 * pop)}px Oswald, sans-serif`;
+    ctx.font = `600 ${Math.round(40 * pop)}px ${CANVAS_SANS}`;
     ctx.fillText(f.title, W / 2, H * 0.4);
     ctx.font = `600 13px ${MONO}`;
     ctx.fillStyle = `rgba(240,228,200,${a})`;
@@ -181,7 +182,7 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
 
   // ---------------- pop-ups ----------------
   ctx.textAlign = 'center';
-  ctx.font = '600 18px Oswald, sans-serif';
+  ctx.font = `600 18px ${CANVAS_SANS}`;
   for (const p of b.popups) {
     if (!p.live) continue;
     const pr = project(cam, p.pos, W, H);
@@ -219,6 +220,6 @@ export function drawBossBlip(ctx: CanvasRenderingContext2D, x: number, y: number
   ctx.restore();
   if (expanded > 0.5 && !clipped) {
     ctx.fillStyle = 'rgba(255,120,90,0.95)'; ctx.font = `600 10px ${MONO}`; ctx.textAlign = 'left';
-    ctx.fillText(ship.def.name.toUpperCase(), x + s + 4, y + 3);
+    ctx.fillText(tx(ship.def.name).toUpperCase(), x + s + 4, y + 3);
   }
 }

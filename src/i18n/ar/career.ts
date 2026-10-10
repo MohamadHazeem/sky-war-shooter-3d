@@ -1,0 +1,322 @@
+import type { PhraseTable } from '../types';
+
+// Arabic for the career texts, keyed by the exact English shown in game.
+// Covers: ranks, medals and their rewards, the service record (Career screen), Trophies and
+// achievements (toast + Credits list), Daily Orders and the Daily Run, the online leaderboard
+// panel and the cloud-save panel.
+
+// Reward labels that grantReward() (Career.ts) puts into '... unlocked' / '... already owned'.
+// Most are weapon / aircraft names whose Arabic lives in the loadout table (tr() finds them).
+const REWARD_LABELS = [
+  'Stinger twin-feed .50', 'Hispano 20 mm cannon', 'P-51D "Iron Mustang"', 'P-51H Lightweight', 'M2 "Hellfire" AP-I',
+  'Heavy battery (+30% fire)', '20 mm cannons (P-51)', 'B-17F "Lucky Lady"', 'YB-40 Gunship', 'Captain\'s nose art',
+];
+const LABEL_RE = REWARD_LABELS.map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+
+// Arabic counted noun: 3-10 take the plural, 11+ the singular (accusative)
+const count = (n: number, plural: string, singular: string) => `${n} ${n >= 3 && n <= 10 ? plural : singular}`;
+
+const BOARD_ROLE: Record<string, string> = { 'B-17 GUNNER': 'رامي B-17', 'P-51 ESCORT': 'مرافقة P-51' };
+const MODE_UPPER: Record<string, string> = { SURVIVAL: 'البقاء', 'ACE HUNT': 'صيد الآسات', 'TIME ATTACK': 'سباق الزمن' };
+
+const table: PhraseTable = {
+  phrases: {
+    // ---- ranks ----
+    'Private': 'جندي',
+    'Staff Sergeant': 'رقيب أول',
+    'Master Sergeant': 'رقيب رئيسي',
+    'Lieutenant': 'ملازم أول',
+    'Captain': 'نقيب',
+    'Major': 'رائد',
+
+    // ---- medals ----
+    'Air Medal': 'وسام الطيران',
+    'Distinguished Flying Cross': 'صليب الطيران المتميز',
+    'Silver Star': 'النجمة الفضية',
+    'Purple Heart': 'القلب الأرجواني',
+    'Ace in a Day': 'آس في يوم واحد',
+    'Gunner\'s Wings': 'جناحا الرامي',
+    'Fortress Defender': 'حامي القلعة الطائرة',
+    'Giant Killer': 'قاهر العمالقة',
+    'Complete a campaign mission.': 'أكمل مهمة من الحملة.',
+    'Five kills in a B-17 gunner mission.': 'خمسة إسقاطات في مهمة رامٍ على B-17.',
+    'Eight kills with at most one bomber lost.': 'ثمانية إسقاطات مع خسارة قاذفة واحدة على الأكثر.',
+    'Wounded in action.': 'أُصيب أثناء القتال.',
+    'Five confirmed kills in one mission.': 'خمسة إسقاطات مؤكدة في مهمة واحدة.',
+    'Complete a gunner mission with 25%+ accuracy over 150+ rounds.': 'أكمل مهمة رامٍ بدقة 25%+ على مدى 150+ طلقة.',
+    'Complete a campaign mission without losing a bomber.': 'أكمل مهمة من الحملة دون خسارة أي قاذفة.',
+    'Bring down a boss.': 'أسقِط إحدى الطائرات العملاقة.',
+    // rewards unique to the career (weapon / aircraft names are in the loadout table)
+    '20 mm cannons (P-51)': 'مدافع 20 mm (P-51)',
+    'Captain\'s nose art': 'رسم مقدمة النقيب',
+    'Captain\'s nose art · +2500 merit': 'رسم مقدمة النقيب · +2500 نقطة استحقاق',
+    '+{n} merit': '+{n} نقطة استحقاق',
+    'merit': 'استحقاق',
+
+    // ---- title menu entries and toasts (ServiceRecord) ----
+    'Daily Orders': 'أوامر اليوم',
+    '{done}/3 done · Daily Run': '{done}/3 منجزة · الطلعة اليومية',
+    'orders waiting': 'أوامر بانتظارك',
+    'Career': 'المسيرة',
+    '{n} XP': '{n} خبرة',
+    '+{n} XP': '+{n} خبرة',
+    'Trophies': 'الجوائز',
+    '{n} unlocked': '{n} مفتوحة',
+    'ALL ORDERS COMPLETE': 'اكتملت كل الأوامر',
+    'Clean sheet: every daily order carried out': 'سجل نظيف: نُفِّذت كل أوامر اليوم',
+    'DAILY ORDER COMPLETE': 'اكتمل أمر يومي',
+    '+{merit} merit · +{xp} XP': '+{merit} نقطة استحقاق · +{xp} خبرة',
+    'Promoted to {rank}': 'الترقية إلى رتبة {rank}',
+
+    // ---- debrief service-record section ----
+    'SERVICE RECORD · {rank}': 'سجل الخدمة · {rank}',
+    '{n} XP total': 'إجمالي الخبرة {n}',
+    '{n} to {rank}': 'باقٍ {n} حتى رتبة {rank}',
+    'highest rank': 'أعلى رتبة',
+    'PROMOTED': 'تمت الترقية',
+    'FIRST AWARD': 'أول منح',
+    'DAILY ORDERS': 'أوامر اليوم',
+    'done': 'منجز',
+    'Armory · {n} pts': 'الترسانة · {n} نقطة',
+
+    // ---- Daily Run mission (briefing / debrief) ----
+    'Daily Run — Gunner': 'الطلعة اليومية — رامٍ',
+    'Daily Run — Escort': 'الطلعة اليومية — مرافقة',
+    'Today\'s Daily Run: the same skies and the same enemy schedule for every crew on the board. One score per sortie goes to the daily leaderboard. Make it count.':
+      'طلعة اليوم: السماء نفسها وجدول الأعداء نفسه لكل طاقم على اللوحة. تُرسَل نتيجة واحدة عن كل طلعة إلى لوحة صدارة اليوم. فاجعلها تستحق.',
+    'Survive as many rounds as possible': 'اصمد لأكبر عدد ممكن من الجولات',
+    'Post a score on today\'s board': 'سجّل نتيجة في لوحة اليوم',
+
+    // ---- daily orders without numbers ----
+    'Win a campaign mission without losing a bomber': 'انتصر في مهمة من الحملة دون خسارة أي قاذفة',
+    'Complete a campaign mission': 'أكمل مهمة من الحملة',
+    'Fly today\'s Daily Run': 'نفّذ الطلعة اليومية لهذا اليوم',
+
+    // ---- Daily Orders screen ----
+    'CARRIED OUT': 'نُفِّذ',
+    'PRIORITY': 'عاجل',
+    'HQ VIII BOMBER COMMAND · TELETYPE': 'قيادة القاذفات الثامنة · برقية',
+    'ORDERS OF THE DAY · {date}': 'أوامر اليوم · {date}',
+    'The same three orders for every crew. New orders in <b data-reset>{time}</b> (00:00 UTC).':
+      'الأوامر الثلاثة نفسها لكل طاقم. أوامر جديدة بعد <b data-reset>{time}</b> (00:00 UTC).',
+    'DAILY RUN · SEED {seed}': 'الطلعة اليومية · البذرة {seed}',
+    'A Survival sortie with today\'s fixed weather and enemy schedule, identical for everyone. Fly it as often as you like; post your best to today\'s board.':
+      'طلعة بقاء بطقس اليوم الثابت وجدول أعدائه، متطابقة للجميع. نفّذها كلما شئت، وسجّل أفضل نتيجة لك في لوحة اليوم.',
+    'Fly as B-17 gunner': 'انطلق رامياً على B-17',
+    'Fly as P-51 escort': 'انطلق مرافقاً بطائرة P-51',
+    'Your best today: gunner <b>{g}</b> · escort <b>{p}</b>': 'أفضل نتائجك اليوم: الرامي <b>{g}</b> · المرافقة <b>{p}</b>',
+    'TODAY · B-17 GUNNER · TOP 10': 'اليوم · رامي B-17 · أفضل 10',
+    'TODAY · P-51 ESCORT · TOP 10': 'اليوم · مرافقة P-51 · أفضل 10',
+    'DAILY RUN · B-17 GUNNER · TOP 10': 'الطلعة اليومية · رامي B-17 · أفضل 10',
+    'DAILY RUN · P-51 ESCORT · TOP 10': 'الطلعة اليومية · مرافقة P-51 · أفضل 10',
+
+    // ---- durations ----
+    '{m} min': '{m} دقيقة',
+    '{h} h {m} min': '{h} س {m} د',
+    '{h}h {m}m': '{h}س {m}د',
+
+    // ---- Career screen (A.A.F. Form 5) ----
+    'Unnamed airman': 'طيار بلا اسم',
+    'RESTRICTED': 'سرّي',
+    'WAR DEPARTMENT · ARMY AIR FORCES': 'وزارة الحربية · القوات الجوية للجيش',
+    'A.A.F. FORM 5 · INDIVIDUAL FLIGHT RECORD': 'نموذج A.A.F. رقم 5 · سجل الطيران الفردي',
+    'NAME': 'الاسم',
+    'SERIAL NO.': 'الرقم العسكري',
+    'GRADE': 'الرتبة',
+    'ORGANIZATION': 'الوحدة',
+    '401ST BOMB SQ · 8TH AIR FORCE': 'سرب القصف 401 · القوة الجوية الثامنة',
+    'ON STRENGTH SINCE': 'في الخدمة منذ',
+    'CAREER XP': 'خبرة المسيرة',
+    'I. GRADE AND PROMOTION': 'أولاً: الرتبة والترقية',
+    '{n} XP to <b>{rank}</b>': 'باقٍ {n} خبرة حتى رتبة <b>{rank}</b>',
+    'reward: {reward}': 'المكافأة: {reward}',
+    'Highest grade attained.': 'بلغتَ أعلى رتبة.',
+    'APPROVED': 'مُعتمد',
+    'II. SERVICE': 'ثانياً: الخدمة',
+    'Missions flown': 'المهام المنفّذة',
+    'Missions completed': 'المهام المكتملة',
+    'Shot down / out of action': 'أُسقطتَ / خرجتَ من المعركة',
+    'Time in the air': 'الوقت في الجو',
+    'Rounds fired': 'الطلقات المُطلقة',
+    'Accuracy': 'الدقة',
+    'Best kill streak': 'أفضل سلسلة إسقاطات',
+    'Bosses downed': 'الطائرات العملاقة المُسقطة',
+    'Bombers brought home': 'القاذفات العائدة إلى القاعدة',
+    'Bombers lost': 'القاذفات المفقودة',
+    'Best survival round': 'أفضل جولة في البقاء',
+    'Overdrive used': 'مرات استخدام التعزيز الأقصى',
+    'Daily orders carried out': 'الأوامر اليومية المنفّذة',
+    'Daily Runs flown': 'الطلعات اليومية المنفّذة',
+    'III. CONFIRMED VICTORIES · {n}': 'ثالثاً: الإسقاطات المؤكدة · {n}',
+    'As B-17 gunner': 'رامياً على B-17',
+    'As P-51 pilot': 'طياراً على P-51',
+    'BY GUN POSITION': 'حسب موقع المدفع',
+    'Left Waist': 'الجانب الأيسر',
+    'Right Waist': 'الجانب الأيمن',
+    'Top Turret': 'البرج العلوي',
+    'Ball Turret': 'البرج الكروي',
+    'Tail Gun': 'مدفع الذيل',
+    'IV. DECORATIONS · {n} AWARDED': 'رابعاً: الأوسمة · {n} ممنوحة',
+    'Repeat award: +{n} merit': 'المنح المتكرر: +{n} نقطة استحقاق',
+    'First award: {reward}': 'أول منح: {reward}',
+    'Achievements: {n}/{m}': 'الإنجازات: {n}/{m}',
+    'CERTIFIED CORRECT': 'صحيح ومُصدَّق',
+    'Back': 'رجوع',
+
+    // ---- Trophies screen ----
+    'TROPHY ROOM · 401ST BOMB SQUADRON': 'قاعة الجوائز · سرب القصف 401',
+    'All': 'الكل',
+    'Unlocked': 'مفتوحة',
+    'Locked': 'مقفلة',
+    'Unlocked {date}': 'فُتحت في {date}',
+    'Nothing here yet.': 'لا شيء هنا بعد.',
+    'Common': 'شائع',
+    'Uncommon': 'غير شائع',
+    'Rare': 'نادر',
+    'Epic': 'ملحمي',
+    'Legendary': 'أسطوري',
+
+    // ---- achievements: toast and Credits list ----
+    'Achievement unlocked · {rarity}': 'إنجاز جديد · {rarity}',
+    'ACHIEVEMENTS': 'الإنجازات',
+    'None yet: fly a mission.': 'لا شيء بعد: انطلق في مهمة.',
+    'The full trophy cabinet is on the title menu: Trophies.': 'خزانة الجوائز الكاملة في القائمة الرئيسية: الجوائز.',
+
+    // ---- achievements: names and descriptions ----
+    'First Blood': 'أول إسقاط',
+    'Confirm your first kill.': 'حقّق أول إسقاط مؤكد لك.',
+    'Confirm 5 kills in a single mission.': 'حقّق 5 إسقاطات مؤكدة في مهمة واحدة.',
+    'Untouchable': 'لا يُمَس',
+    'Complete a mission without taking a single hit.': 'أكمل مهمة دون أن تتلقى إصابة واحدة.',
+    'Flak Survivor': 'الناجي من الفلاك',
+    'Complete a mission that flies through flak.': 'أكمل مهمة تعبر نيران المضادات (فلاك).',
+    'Sharpshooter': 'القنّاص',
+    'Finish a mission with over 30% accuracy (50+ rounds fired).': 'أنهِ مهمة بدقة تتجاوز 30% (50+ طلقة).',
+    'Wing Clipper': 'قاصّ الأجنحة',
+    'Shoot a wing off an enemy fighter.': 'اقطع جناح مقاتلة معادية بنيرانك.',
+    'Survivor': 'الناجي',
+    'Reach survival round 5.': 'ابلغ الجولة 5 في وضع البقاء.',
+    'Bandit Hunter': 'صائد الأعداء',
+    'Confirm 25 kills.': 'حقّق 25 إسقاطاً مؤكداً.',
+    'Centurion': 'صاحب المئة',
+    'Confirm 100 kills.': 'حقّق 100 إسقاط مؤكد.',
+    'Scourge of the Luftwaffe': 'آفة اللوفتفافه',
+    'Confirm 500 kills.': 'حقّق 500 إسقاط مؤكد.',
+    'Legend of the Eighth': 'أسطورة القوة الجوية الثامنة',
+    'Confirm 1,000 kills.': 'حقّق 1,000 إسقاط مؤكد.',
+    'Butcher-Bird Hunter': 'صائد الطائر الجزّار',
+    'Down 50 Fw 190s.': 'أسقِط 50 طائرة Fw 190.',
+    'Gustav Grounded': 'غوستاف على الأرض',
+    'Down 25 Bf 109s.': 'أسقِط 25 طائرة Bf 109.',
+    'Heavy Hitter': 'الضارب الثقيل',
+    'Down 10 heavies (Bf 110 / Ju 88).': 'أسقِط 10 طائرات ثقيلة (Bf 110 / Ju 88).',
+    'Destroyer of Destroyers': 'مدمّر المدمّرات',
+    'Down 50 heavies (Bf 110 / Ju 88).': 'أسقِط 50 طائرة ثقيلة (Bf 110 / Ju 88).',
+    'Jet Age': 'عصر النفاثات',
+    'Down 5 Me 262 jets.': 'أسقِط 5 نفاثات Me 262.',
+    'Komet Catcher': 'صائد الكوميت',
+    'Down an Me 163 rocket fighter.': 'أسقِط مقاتلة صاروخية Me 163.',
+    'Know Your Enemy': 'اعرف عدوك',
+    'Down every enemy type: Fw 190, Bf 109, Bf 110, Ju 88, Me 262 and Me 163.': 'أسقِط كل أنواع العدو: Fw 190 وBf 109 وBf 110 وJu 88 وMe 262 وMe 163.',
+    'Dragon Slayer': 'قاتل التنين',
+    'Bring down 10 bosses.': 'أسقِط 10 طائرات عملاقة.',
+    'Triple Threat': 'التهديد الثلاثي',
+    'Chain a 3-kill streak.': 'حقّق سلسلة من 3 إسقاطات.',
+    'Chain Reaction': 'تفاعل متسلسل',
+    'Chain a 6-kill streak.': 'حقّق سلسلة من 6 إسقاطات.',
+    'Mustang Ace': 'آس الموستانغ',
+    'Down 50 fighters flying the P-51.': 'أسقِط 50 مقاتلة وأنت تقود P-51.',
+    'Every Gun Position': 'كل مواقع المدافع',
+    'Score kills from all five B-17 gun positions.': 'حقّق إسقاطات من مواقع المدافع الخمسة في B-17.',
+    'Marksman': 'الرامي الماهر',
+    'Hold 25%+ lifetime accuracy over 3,000+ rounds.': 'حافظ على دقة إجمالية 25%+ على مدى 3,000+ طلقة.',
+    'Ten in the Logbook': 'عشر في السجل',
+    'Fly 10 missions.': 'نفّذ 10 مهام.',
+    'Tour of Duty': 'جولة الخدمة',
+    'Complete 25 missions, a full 1944 bomber tour.': 'أكمل 25 مهمة، جولة خدمة كاملة لطاقم قاذفة عام 1944.',
+    'Second Tour': 'الجولة الثانية',
+    'Complete 50 missions.': 'أكمل 50 مهمة.',
+    'Big Week Veteran': 'مخضرم الأسبوع الكبير',
+    'Complete 7 different campaign missions.': 'أكمل 7 مهام مختلفة من الحملة.',
+    'Big Friends\' Friend': 'صديق الأصدقاء الكبار',
+    'Bring 100 bombers home from successful missions.': 'أعِد 100 قاذفة إلى القاعدة من مهام ناجحة.',
+    'Logbook': 'سجل الطيران',
+    'Spend an hour in the air.': 'اقضِ ساعة في الجو.',
+    'Old Hand': 'المحنّك',
+    'Spend ten hours in the air.': 'اقضِ عشر ساعات في الجو.',
+    'Pour It On': 'زِد الضغط',
+    'Use Overdrive 25 times.': 'استخدم التعزيز الأقصى 25 مرة.',
+    'Commissioned': 'ضابط مُفوَّض',
+    'Earn a commission: reach Lieutenant.': 'انل رتبة ضابط: ابلغ رتبة ملازم أول.',
+    'The Major': 'الرائد',
+    'Reach the rank of Major.': 'ابلغ رتبة رائد.',
+    'Fruit Salad': 'صدر مزيّن',
+    'Earn 10 medals.': 'انل 10 أوسمة.',
+    'Chest Full of Ribbons': 'صدر مليء بالأشرطة',
+    'Earn 50 medals.': 'انل 50 وساماً.',
+    'Walking Wounded': 'الجريح الصامد',
+    'Earn 3 Purple Hearts.': 'انل 3 أوسمة القلب الأرجواني.',
+    'Orders Received': 'استُلمت الأوامر',
+    'Complete a daily order.': 'نفّذ أمراً يومياً.',
+    'Reliable': 'يُعتمد عليه',
+    'Complete 25 daily orders.': 'نفّذ 25 أمراً يومياً.',
+    'Clean Sheet': 'سجل نظيف',
+    'Complete all three daily orders in one day.': 'نفّذ أوامر اليوم الثلاثة كلها في يوم واحد.',
+    'Daily Sortie': 'الطلعة اليومية',
+    'Fly a Daily Run.': 'نفّذ طلعة يومية.',
+
+    // ---- online leaderboard panel ----
+    'ONLINE LEADERBOARD': 'لوحة الصدارة عبر الإنترنت',
+    'No scores yet — be the first.': 'لا نتائج بعد — كن الأول.',
+    '{n} kills': '{n} إسقاط',
+    'Your name': 'اسمك',
+    'Submit score': 'أرسل النتيجة',
+    'Loading…': 'جارٍ التحميل…',
+    'Sending…': 'جارٍ الإرسال…',
+    'Could not submit (offline, or wait 20 s between scores)': 'تعذّر الإرسال (لا اتصال، أو انتظر 20 ثانية بين النتائج)',
+
+    // ---- cloud save panel ----
+    'CLOUD SAVE': 'الحفظ السحابي',
+    'Your transfer code:': 'رمز النقل الخاص بك:',
+    'Copy': 'نسخ',
+    'Save now': 'احفظ الآن',
+    'Code from another device': 'رمز من جهاز آخر',
+    'Load profile': 'تحميل الملف الشخصي',
+    'Progress saves to the cloud after every mission. Keep the code private.': 'يُحفظ تقدمك في السحابة بعد كل مهمة. احتفظ بالرمز سراً.',
+    'Code copied.': 'نُسخ الرمز.',
+    'Saving…': 'جارٍ الحفظ…',
+    'Saved to the cloud.': 'حُفظ في السحابة.',
+    'Could not reach the cloud (offline?).': 'تعذّر الوصول إلى السحابة (لا اتصال؟).',
+    'Profile loaded — restarting…': 'حُمِّل الملف الشخصي — جارٍ إعادة التشغيل…',
+    'No profile with that code.': 'لا يوجد ملف شخصي بهذا الرمز.',
+  },
+  patterns: [
+    // ---- rewards (Career.grantReward / rewardLabel) ----
+    [new RegExp(`^\\+(\\d+) merit \\((${LABEL_RE}) already owned\\)$`), (m, tr) => `+${m[1]} نقطة استحقاق (${tr(m[2])} مملوك مسبقاً)`],
+    [new RegExp(`^(${LABEL_RE}) unlocked$`), (m, tr) => `فُتح: ${tr(m[1])}`],
+    [new RegExp(`^(${LABEL_RE}) · \\+(\\d+) merit$`), (m, tr) => `${tr(m[1])} · +${m[2]} نقطة استحقاق`],
+    [/^\+(\d+) merit$/, '+$1 نقطة استحقاق'],
+
+    // ---- daily orders (Dailies.DAILY_TEMPLATES) ----
+    [/^Down (\d+) fighters in Survival$/, (m) => `أسقِط ${count(+m[1], 'مقاتلات', 'مقاتلة')} في وضع البقاء`],
+    [/^Down (\d+) heavies \(Bf 110 \/ Ju 88\)$/, (m) => `أسقِط ${count(+m[1], 'طائرات ثقيلة', 'طائرة ثقيلة')} (Bf 110 / Ju 88)`],
+    [/^Use Overdrive (\d+) times$/, (m) => `استخدم التعزيز الأقصى ${count(+m[1], 'مرات', 'مرة')}`],
+    [/^Confirm (\d+) kills in any mode$/, (m) => `حقّق ${count(+m[1], 'إسقاطات مؤكدة', 'إسقاطاً مؤكداً')} في أي وضع`],
+    [/^Chain a (\d+)-kill streak$/, (m) => `حقّق سلسلة من ${count(+m[1], 'إسقاطات', 'إسقاطاً')}`],
+    [/^Complete (\d+) campaign missions$/, (m) => (+m[1] === 2 ? 'أكمل مهمتين من الحملة' : `أكمل ${count(+m[1], 'مهام', 'مهمة')} من الحملة`)],
+    [/^Down (\d+) fighters flying the P-51$/, (m) => `أسقِط ${count(+m[1], 'مقاتلات', 'مقاتلة')} وأنت تقود P-51`],
+    [/^Down (\d+) fighters from the B-17's guns$/, (m) => `أسقِط ${count(+m[1], 'مقاتلات', 'مقاتلة')} بمدافع B-17`],
+    [/^Down (\d+) rocket or jet fighters \(Me 163 \/ Me 262\)$/, (m) => (+m[1] === 2
+      ? 'أسقِط مقاتلتين صاروخيتين أو نفاثتين (Me 163 / Me 262)'
+      : `أسقِط ${count(+m[1], 'مقاتلات صاروخية أو نفاثة', 'مقاتلة صاروخية أو نفاثة')} (Me 163 / Me 262)`)],
+    [/^Finish a mission with (\d+)%\+ accuracy \(100\+ rounds\)$/, 'أنهِ مهمة بدقة $1%+ (100+ طلقة)'],
+    [/^Reach round (\d+) in Survival$/, 'ابلغ الجولة $1 في وضع البقاء'],
+
+    // ---- Daily Run mission date line ----
+    [/^Daily Run · (\d\d\.\d\d\.\d{4})$/, 'الطلعة اليومية · $1'],
+
+    // ---- leaderboard titles from Modes.ts ----
+    [/^ONLINE TOP 10 — (.+) · (B-17 GUNNER|P-51 ESCORT)$/, (m, tr) => `أفضل 10 عبر الإنترنت — ${MODE_UPPER[m[1]] ?? tr(m[1])} · ${BOARD_ROLE[m[2]]}`],
+  ],
+};
+export default table;

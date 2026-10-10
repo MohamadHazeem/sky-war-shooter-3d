@@ -18,6 +18,7 @@ import type { PortraitLook } from '../render/Portraits';
 import type { Loadout } from './Upgrades';
 import type { World } from '../world/World';
 import { VOICE_LINES } from '../audio/voiceLines';
+import { tx } from '../i18n';
 
 export type ManId = 'brenner' | 'doyle' | 'stern' | 'kessler' | 'mendez' | 'gallo' | 'reilly' | 'price' | 'walsh' | 'dawson';
 export type Post = StationId | 'radio';                        // the six enlisted positions
@@ -262,7 +263,7 @@ export class CrewRoster {
   heal(id: ManId, why = 'Flight surgeon') {
     this.men[id].rest = 0;
     this.resting.delete(id); this.wounded.delete(id); this.benched.delete(id);
-    this.note(`${why}: ${manDef(id).call} is fit for duty`);
+    this.note(tx('{why}: {who} is fit for duty', { why: tx(why), who: tx(manDef(id).call) }));
     this.save();
     if (!this.active) this.placeAll();
     this.emit('change');
@@ -294,7 +295,7 @@ export class CrewRoster {
     this.place();
     for (const m of MEN) if (this.resting.has(m.id)) {
       const pos = m.gunner ? POST_CREW[this.postOf(m.id)!] : m.home;
-      ui.feed(`${m.call} is resting — ${ROOKIES[pos].call} (rookie) takes his place`, 'loss');
+      ui.feed(tx('{who} is resting — {rookie} (rookie) takes his place', { who: tx(m.call), rookie: tx(ROOKIES[pos].call) }), 'loss');
     }
     this.emit('mission');
   }
@@ -334,11 +335,11 @@ export class CrewRoster {
     if (perks.includes('medic') && this.wounded.size) {
       const id = [...this.wounded][0];
       this.wounded.delete(id);
-      ui?.feed(`Crew Chief patched up ${manDef(id).call} — back on his gun`, 'mine');
+      ui?.feed(tx('Crew Chief patched up {who} — back on his gun', { who: tx(manDef(id).call) }), 'mine');
     }
     for (const id of [...this.wounded]) if (Math.random() < 0.2) {
       this.wounded.delete(id);
-      ui?.feed(`${manDef(id).call}: just a scratch — staying on his gun`, 'mine');
+      ui?.feed(tx('{who}: just a scratch — staying on his gun', { who: tx(manDef(id).call) }), 'mine');
     }
     this.benched.clear();
     for (const id of this.wounded) this.benched.add(id);
@@ -349,7 +350,7 @@ export class CrewRoster {
     for (const id of this.benched) {
       const m = manDef(id);
       const pos = m.gunner ? POST_CREW[this.postOf(id)!] : m.home;
-      ui?.feed(`${ROOKIES[pos].call} (rookie) takes over from ${m.call}`, 'loss');
+      ui?.feed(tx('{rookie} (rookie) takes over from {who}', { rookie: tx(ROOKIES[pos].call), who: tx(m.call) }), 'loss');
     }
     this.emit('change');
   }
@@ -365,8 +366,8 @@ export class CrewRoster {
       if (this.flew.has(m.id) && completed) { st.missions++; this.award(m.id, success ? XP_MISSION_OK : XP_MISSION_FAIL, false); }
       if (this.wounded.has(m.id)) {
         st.rest = 1;
-        if (success && Math.random() < 0.3) { st.rest = 0; this.note(`Flight surgeon: ${m.call}'s wound was light, fit for the next mission`); }
-        else this.note(`${m.call} is wounded and misses the next mission`);
+        if (success && Math.random() < 0.3) { st.rest = 0; this.note(tx('Flight surgeon: {who}\'s wound was light, fit for the next mission', { who: tx(m.call) })); }
+        else this.note(tx('{who} is wounded and misses the next mission', { who: tx(m.call) }));
       }
     }
     if (this.world) this.world.crew.onWound = null;
@@ -396,10 +397,10 @@ export class CrewRoster {
     this.save();
     if (after <= before) { this.emit('change', id); return; }
     const m = manDef(id);
-    this.note(`${m.call} reached level ${after}`);
+    this.note(tx('{who} reached level {n}', { who: tx(m.call), n: after }));
     if (loud && this.ui && this.world) {
-      const gain = `+${STAT_PER_LEVEL * (after - before)} gun skills`;
-      this.ui.banner(`LEVEL ${after} · ${m.rank.toUpperCase()} ${m.last.toUpperCase()}`, `"${m.nick}" · ${gain}`, 2800);
+      const gain = tx('+{n} gun skills', { n: STAT_PER_LEVEL * (after - before) });
+      this.ui.banner(tx('LEVEL {n} · {who}', { n: after, who: tx(`${m.rank.toUpperCase()} ${m.last.toUpperCase()}`) }), `"${tx(m.nick)}" · ${gain}`, 2800);
       if (m.gunner) this.world.callout('lvl_' + id, m.voice, LEVEL_LINES[Math.floor(Math.random() * LEVEL_LINES.length)], 0, 2);
     }
     this.emit('levelup', id);

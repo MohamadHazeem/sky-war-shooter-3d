@@ -29,6 +29,8 @@ export interface PromptView {
 
 export interface TagView { x: number; y: number; label: string; dist: number; edge: boolean; kind: 'target' | 'friend' }
 
+import { tx } from '../i18n';
+
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
 export class ObjectiveHud {
@@ -45,7 +47,7 @@ export class ObjectiveHud {
   constructor() {
     this.card.id = 'objCard';
     this.card.innerHTML = `
-      <div class="oc-k"><span class="oc-kl">BONUS OBJECTIVE</span><span class="oc-m"></span></div>
+      <div class="oc-k"><span class="oc-kl">${tx('BONUS OBJECTIVE')}</span><span class="oc-m"></span></div>
       <div class="oc-t"></div>
       <div class="oc-d"></div>
       <div class="oc-row"><div class="oc-bar"><i></i></div><span class="oc-p"></span></div>
@@ -76,9 +78,10 @@ export class ObjectiveHud {
     const key = v.title + '|' + v.desc + '|' + v.merit;
     if (key !== this.cardKey) {
       this.cardKey = key;
+      this.q(c, '.oc-kl').textContent = tx('BONUS OBJECTIVE');
       this.q(c, '.oc-t').textContent = v.title;
       this.q(c, '.oc-d').textContent = v.desc;
-      this.q(c, '.oc-m').textContent = `+${v.merit} MERIT`;
+      this.q(c, '.oc-m').textContent = tx('+{n} MERIT', { n: v.merit });
       this.q(c, '.oc-res').textContent = '';
       c.classList.remove('won', 'lost');
     }
@@ -168,7 +171,7 @@ export class ObjectiveHud {
       const label = esc(v.label);
       const b = t.firstElementChild as HTMLElement, s = t.lastElementChild as HTMLElement;
       if (b.innerHTML !== label) b.innerHTML = label;
-      const d = v.dist < 1000 ? `${Math.round(v.dist)} m` : `${(v.dist / 1000).toFixed(1)} km`;
+      const d = v.dist < 1000 ? tx('{n} m', { n: Math.round(v.dist) }) : tx('{n} km', { n: (v.dist / 1000).toFixed(1) });
       if (s.textContent !== d) s.textContent = d;
       t.classList.toggle('edge', v.edge);
       t.classList.toggle('friend', v.kind === 'friend');

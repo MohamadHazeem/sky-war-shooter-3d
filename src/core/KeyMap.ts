@@ -6,6 +6,7 @@
 // key no longer triggers it.
 //
 // Saved in localStorage under its own key so it never collides with the main Settings.
+import { tx } from '../i18n';
 
 export type ActionId = 'fire' | 'zoom' | 'reload' | 'map' | 'seat1' | 'seat2' | 'seat3' | 'seat4' | 'seat5' | 'pause' | 'help';
 
@@ -89,7 +90,7 @@ export class KeyMap {
 
   /** Bind an action to a physical key. Another action holding that key swaps onto the old one. */
   bind(id: ActionId, code: string): BindResult {
-    if (RESERVED[code]) return { ok: false, reason: `${keyLabel(code)} is used for ${RESERVED[code]}` };
+    if (RESERVED[code]) return { ok: false, reason: tx('{key} is used for {what}', { key: keyLabel(code), what: tx(RESERVED[code]) }) };
     const old = this.bindings[id];
     let swapped: ActionId | undefined;
     for (const a of ACTIONS) if (a.id !== id && this.bindings[a.id] === code) { this.bindings[a.id] = old; swapped = a.id; }
@@ -123,9 +124,9 @@ export function keyLabel(code: string): string {
   if (!code) return '—';
   if (code.startsWith('Key')) return code.slice(3);
   if (code.startsWith('Digit')) return code.slice(5);
-  if (code.startsWith('Numpad')) return 'Num ' + code.slice(6);
+  if (code.startsWith('Numpad')) return tx('Num {n}', { n: code.slice(6) });
   const names: Record<string, string> = {
-    Space: 'Space', Tab: 'Tab', Backquote: '`', Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']',
+    Space: tx('Space'), Tab: 'Tab', Backquote: '`', Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']',
     Backslash: '\\', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', CapsLock: 'Caps',
     Backspace: 'Bksp', Delete: 'Del', Insert: 'Ins', Home: 'Home', End: 'End', PageUp: 'PgUp', PageDown: 'PgDn',
   };

@@ -6,6 +6,7 @@ import { isPortrait, isTouchDevice } from '../core/Touch';
 import { access } from '../core/Accessibility';
 import { TouchHud } from '../ui/TouchHud';
 import { STATION_ORDER } from '../world/B17Layout';
+import { tx } from '../i18n';
 import '../ui/devices.css';
 
 // Touch controls, gamepad and accessibility preferences, wired up from main.ts so Game.ts
@@ -43,7 +44,7 @@ export class DeviceControls {
         g.requestStation(STATION_ORDER[(i + dir + STATION_ORDER.length) % STATION_ORDER.length]);
       },
       togglePause: () => this.togglePause(),
-      onConnect: (name, on) => this.toast(on ? `Gamepad connected — ${shortName(name)}` : 'Gamepad disconnected'),
+      onConnect: (name, on) => this.toast(on ? tx('Gamepad connected — {name}', { name: shortName(name) }) : tx('Gamepad disconnected')),
     });
     this.toastEl = document.createElement('div');
     this.toastEl.id = 'devToast';
@@ -51,7 +52,7 @@ export class DeviceControls {
     document.body.appendChild(this.toastEl);
     const rot = document.createElement('div');
     rot.id = 'rotateOverlay';
-    rot.innerHTML = '<div class="ro-phone"></div><div class="ro-t">Rotate your phone</div><div class="ro-d">Sky War Shooter plays in landscape</div>';
+    rot.innerHTML = `<div class="ro-phone"></div><div class="ro-t">${tx('Rotate your phone')}</div><div class="ro-d">${tx('Sky War Shooter plays in landscape')}</div>`;
     document.body.appendChild(rot);
 
     // touch mode follows the device actually being used
@@ -125,5 +126,5 @@ export class DeviceControls {
 
 function shortName(id: string) {
   const s = id.replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim();
-  return s.length > 34 ? s.slice(0, 32) + '…' : s || 'controller';
+  return s.length > 34 ? s.slice(0, 32) + '…' : s || tx('controller');
 }

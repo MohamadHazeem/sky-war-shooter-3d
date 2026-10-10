@@ -1,4 +1,5 @@
 // Small helpers shared by the Career, Trophies and Daily Orders screens.
+import { isAr, tx } from '../i18n';
 
 export const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
@@ -47,10 +48,13 @@ export function insigniaSvg(rank: number, size = 56): string {
 
 export const fmtHours = (sec: number) => {
   const m = Math.floor(sec / 60);
-  return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min`;
+  return m < 60 ? tx('{m} min', { m }) : tx('{h} h {m} min', { h: Math.floor(m / 60), m: String(m % 60).padStart(2, '0') });
 };
+
+// A date as the browser shows it in English; Arabic keeps Western digits (day/month/year)
+export const fmtDate = (t: number) => (isAr() ? new Date(t).toLocaleDateString('en-GB') : new Date(t).toLocaleDateString());
 
 export const fmtCountdown = (ms: number) => {
   const s = Math.max(0, Math.floor(ms / 1000));
-  return `${Math.floor(s / 3600)}h ${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}m`;
+  return tx('{h}h {m}m', { h: Math.floor(s / 3600), m: String(Math.floor((s % 3600) / 60)).padStart(2, '0') });
 };

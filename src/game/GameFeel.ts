@@ -8,6 +8,7 @@ import { Combo, FIRE_KILLS, FIRE_SCORE } from './Combo';
 import { sound } from '../audio/Sound';
 import { playCue } from '../audio/FeedbackCues';
 import { access } from '../core/Accessibility';
+import { tx, CANVAS_MONO } from '../i18n';
 
 // Game feel ("juice") for kills and hits, plus the streak meter / ON FIRE presentation.
 //
@@ -46,8 +47,8 @@ interface Popup {
 
 const fontCache = new Map<number, string>();
 const subCache = new Map<number, string>();
-const font = (px: number) => { let f = fontCache.get(px); if (!f) { f = `700 ${px}px Oswald, "Arial Narrow", sans-serif`; fontCache.set(px, f); } return f; };
-const subFont = (px: number) => { let f = subCache.get(px); if (!f) { f = `600 ${px}px "IBM Plex Mono", monospace`; subCache.set(px, f); } return f; };
+const font = (px: number) => { let f = fontCache.get(px); if (!f) { f = `700 ${px}px Oswald, "Arial Narrow", "Noto Kufi Arabic", sans-serif`; fontCache.set(px, f); } return f; };
+const subFont = (px: number) => { let f = subCache.get(px); if (!f) { f = `600 ${px}px ${CANVAS_MONO}`; subCache.set(px, f); } return f; };
 const CHAIN_LABEL = ['', '', 'DOUBLE KILL', 'TRIPLE KILL', 'QUAD KILL', 'RAMPAGE'];
 
 const _p = new THREE.Vector3();
@@ -121,7 +122,7 @@ export class GameFeel {
     p.rel.copy(victim.pos).sub(this.engine.camera.position);
     p.pts = `+${pts}`;
     p.hot = this.combo.onFire;
-    p.sub = this.chain >= 2 ? CHAIN_LABEL[Math.min(5, this.chain)] : p.hot ? `ON FIRE ×${FIRE_SCORE}` : `${victim.label.toUpperCase()} DOWN`;
+    p.sub = this.chain >= 2 ? tx(CHAIN_LABEL[Math.min(5, this.chain)]) : p.hot ? tx('ON FIRE ×{n}', { n: FIRE_SCORE }) : tx('{label} DOWN', { label: victim.label.toUpperCase() });
     p.size = Math.round(Math.min(56, 30 + 7 * size + 5 * Math.min(4, this.chain - 1)));
     for (const q of this.popups) if (q !== p && q.active) q.lift += p.size * 1.3;
   }
@@ -247,7 +248,7 @@ export class GameFeel {
     if (!this.meter?.isConnected) {
       const m = document.createElement('div');
       m.id = 'streakMeter';
-      m.innerHTML = '<div class="sm-head"><span class="sm-label">STREAK</span></div><div class="sm-bar"><i></i><b></b><b></b><b></b><b></b></div>';
+      m.innerHTML = '<div class="sm-head"><span class="sm-label">' + tx('STREAK') + '</span></div><div class="sm-bar"><i></i><b></b><b></b><b></b><b></b></div>';
       hud.appendChild(m);
       this.meter = m;
       this.meterFill = m.querySelector('i');
@@ -275,7 +276,7 @@ export class GameFeel {
     if (fire !== this.shownFire) {
       this.shownFire = fire;
       this.meter!.classList.toggle('fire', fire);
-      this.meterLabel!.textContent = fire ? `ON FIRE  ×${FIRE_SCORE}` : 'STREAK';
+      this.meterLabel!.textContent = fire ? tx('ON FIRE  ×{n}', { n: FIRE_SCORE }) : tx('STREAK');
       this.frame!.classList.toggle('on', fire);
     }
   }
