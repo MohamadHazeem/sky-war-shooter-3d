@@ -1,7 +1,8 @@
 # Sky War Shooter 3D
 
-A WWII air-combat game for desktop browsers. Man the .50-calibre guns of a B-17G Flying Fortress
-in a combat box at 25,000 ft, or fly a P-51D Mustang as close escort, against Focke-Wulf Fw 190s.
+A WWII air-combat game for the browser. Man the .50-calibre guns of a B-17G Flying Fortress
+in a combat box at 25,000 ft, or fly a P-51D Mustang as close escort, against the Luftwaffe:
+Fw 190s, Bf 109s, Bf 110s, Ju 88s, Me 262 jets, Me 163 rockets and battle groups of giant warships.
 
 ![Left waist gunner](docs/screenshots/waist-gunner.jpg)
 
@@ -17,23 +18,34 @@ the bomber formation above a sea of cumulus. Reference frames are in `reference/
 
 ## Play
 
+**Live:** https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev (installable; plays offline after the first visit).
+
 ```bash
 npm install
-npm run dev
+npm run dev        # http://127.0.0.1:5173
 ```
 
-Open http://127.0.0.1:5173 in a desktop browser (Chrome, Edge, Firefox or Safari) with hardware
-acceleration enabled. Mouse and keyboard only.
-
-* Click the game to capture the mouse. If the browser refuses capture (some embedded views do), the game still works with a free cursor: move the mouse to aim, and hold the cursor near a screen edge to keep turning.
-* **Esc** pauses.
+Desktop browsers with mouse and keyboard, gamepads, and phones/tablets (touch controls) are supported.
+English and Arabic (right-to-left) under Settings → Language.
 
 ### Modes
-* **Campaign**: seven missions (Emden, Bremen, Ludwigshafen, Leipzig escort, Schweinfurt, a lone
-  straggler fighting its way home, and the Berlin escort). Each mission unlocks the next; medals and
-  best scores are saved in the browser.
-* **Survival**: endless, escalating waves as a B-17 gunner or a P-51 escort pilot, with a local
-  high-score table.
+* **Campaign**: 12 story missions from Emden (Sept 1943) to the Berlin finale (1944) with voiced
+  briefings, played on a **strategic campaign map**. Between story missions you can fly optional
+  side raids (rail yards, airfields, oil, U-boat pens, factories) that change Luftwaffe strength,
+  squadron size, crew morale and escort availability. Missions m5, m7 and m12 end in a **boss
+  battle** against a group of giant flying warships.
+* **Survival**: endless rounds as a B-17 gunner or P-51 pilot, with a hangar between rounds
+  (aircraft, weapons, upgrades), weather that changes per round and a boss group every third round.
+* **Ace Hunt, Time Attack, Daily Run, Weekly Challenge**: online leaderboards (Firebase).
+* **Custom Battle**: pick role, seat, enemy types, numbers, skill, rounds, weather, time of day,
+  boss round, special events, flak and escorts.
+* **Co-op (beta)**: two players crew one B-17 over the internet (6-character room code).
+* **Training**: a 2-minute gunnery course.
+
+### Progression
+Career ranks and medals, 42 achievements, daily orders, a persistent **skill tree** (18 skills in
+three branches), loot crates with weapon mods and cosmetics, bomber customisation (name, nose art,
+paint), a crew of ten named men with levels and wounds, and cloud save via a private transfer code.
 
 ### Controls
 
@@ -42,27 +54,34 @@ acceleration enabled. Mouse and keyboard only.
 | Input | Action |
 |---|---|
 | Mouse | Traverse the gun (heavy, sprung mount) |
-| Left button | Fire (short bursts: the barrel overheats) |
-| Right button | Look down the sight (zoom) |
+| Left button / Space | Fire (short bursts: the barrel overheats) |
+| Right button / B | Look down the sight (zoom) |
 | 1–5 | Left waist, right waist, top turret, ball turret, tail gun |
 | R | Reload |
+| Q / E / G | Abilities: call the Mustangs, Overdrive, Focus |
+| X / O | Random events: fire extinguisher, oxygen check |
+| Tab | Big radar map (shows where the next wave will come from) |
+| F | Photo mode |
+| H | Controls card |
 
 **P-51D pilot**
 
 | Input | Action |
 |---|---|
 | Mouse | Mouse-aim flight: the aircraft flies where you look |
-| Left button / Space | Fire the six .50s (harmonised at 300 yd) |
+| Left button / Space | Fire the six .50s (harmonised at 250 m) |
 | W / S | Throttle |
 | Q / E, A / D | Roll, rudder overrides |
+| T | Padlock view on the nearest bandit |
 | V | Cockpit / chase view |
 | C (hold) | Free look |
 | M | Toggle mouse aim / direct stick |
-| Right button | Zoom |
+| Z / X / G | Abilities |
 
-Settings cover difficulty (Recruit adds a lead indicator; Ace is harsher), mouse sensitivity,
-Y inversion, volume, music, radio voices, graphics quality (auto-lowered on slow machines),
-target markers (switch off for a purer simulation) and the P-51 control mode.
+Keys are remappable (Settings → Controls). Settings also cover difficulty, aim assist, lead
+indicator, field of view, volumes, radio voices, graphics quality (Low/Medium/High/Ultra, with
+dynamic resolution and 120/144 Hz support), an FPS counter, colour-blind markers, subtitle size,
+reduced shake/flashes, kill cam and anonymous stats.
 
 ## Combat design
 
