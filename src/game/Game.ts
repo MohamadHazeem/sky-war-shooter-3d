@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Engine } from '../core/Engine';
 import { Input } from '../core/Input';
-import { UI, Settings, Progress, DebriefData } from '../ui/UI';
+import { UI, Settings, Progress, DebriefData, PauseInfo } from '../ui/UI';
 import { World, ALTITUDE } from '../world/World';
 import { randomEnemyType } from '../world/EnemyTypes';
 import { Aircraft, Bomber, Fighter } from '../world/Aircraft';
@@ -638,7 +638,22 @@ export class Game {
       restart: () => { this.resume(); this.startMission(this.mission!); },
       settings: () => this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => {}),
       quit: () => { this.ui.hidePause(); this.engine.paused = false; sound.ctx?.resume(); sound.stopSpeech(); this.startMenu(); },
-    }, this.mission?.role ?? 'gunner');
+    }, this.mission?.role ?? 'gunner', this.pauseInfo());
+  }
+
+  // Snapshot of the mission state for the pause screen (same figures as the debrief)
+  private pauseInfo(): PauseInfo | undefined {
+    const m = this.mission;
+    if (!m) return undefined;
+    const w = this.world;
+    const acc = w.stats.shots > 0 ? w.stats.hits / w.stats.shots : 0;
+    return {
+      objectives: m.objectives,
+      kills: w.stats.kills,
+      accuracy: acc,
+      bombersAlive: w.bombers().filter((b) => b.alive).length,
+      bombersTotal: m.bombers,
+    };
   }
 
   resume() {
