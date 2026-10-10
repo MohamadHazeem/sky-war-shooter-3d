@@ -74,6 +74,7 @@ export interface WorldView {
   playerArc(): THREE.Vector3 | null; // world direction the player's gun position covers (gunner mode)
   playerGunPos(): THREE.Vector3 | null; // world position of the player's gun (gunner mode)
   playerStationId(): string | null;
+  enemyAimMult: number;              // perk: >1 spoils the attackers' aim
 }
 
 const _y = new THREE.Vector3(0, 1, 0);
@@ -148,10 +149,10 @@ export class EnemyPilot {
     }
   }
 
-  private beginAttack() {
+  private beginAttack(w: WorldView) {
     this.state = 'attack'; this.timer = 0; this.calloutDone = false;
     // every firing pass has its own aiming error; better pilots are tighter
-    this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((this.fromArc ? 9 + Math.random() * 16 : 4 + Math.random() * 10) / this.skill);
+    this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((this.fromArc ? 9 + Math.random() * 16 : 4 + Math.random() * 10) / this.skill * w.enemyAimMult);
     this.passOffset.set(Math.random() - 0.5, 0.4 + Math.random() * 0.4, Math.random() - 0.5).normalize().multiplyScalar(30 + Math.random() * 25);
   }
 
@@ -230,7 +231,7 @@ export class EnemyPilot {
             if (dist > 480 && dist < 1600 && rel.normalize().angleTo(arc) < 0.7) ready = true;
           }
         }
-        if (ready) this.beginAttack();
+        if (ready) this.beginAttack(w);
         break;
       }
       case 'attack': {
@@ -336,7 +337,7 @@ export class EnemyPilot {
       case 'dogfight': {
         const t = this.target;
         if (!t || !t.alive || this.timer > 40) { this.state = 'approach'; this.target = null; this.timer = 0; break; }
-        if (Math.floor(this.timer / 3) !== Math.floor((this.timer - dt) / 3)) this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((6 + Math.random() * 12) / this.skill);
+        if (Math.floor(this.timer / 3) !== Math.floor((this.timer - dt) / 3)) this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((6 + Math.random() * 12) / this.skill * w.enemyAimMult);
         leadPoint(me.pos, me.vel, t, 760, this.aim).add(this.aimOffset);
         const dir = _d.copy(this.aim).sub(me.pos);
         const dist = dir.length();

@@ -61,7 +61,12 @@ export class World implements WorldView {
   readonly wrecks: Wrecks;
   playerFocus = 0.7;
   playerAimDir = new THREE.Vector3(1, 0, 0);
-  playerIncendiary = false;
+  playerIncendiary = 0;       // perk/weapon: chance a player hit sets an enemy engine alight
+  playerLucky = 0;            // perk: share of hits on the player that glance off
+  playerWingDmg = 1;          // perk: damage multiplier on wings and tails
+  playerExplosive = 0;        // perk: chance a player hit explodes for triple damage
+  playerSplash = 0;           // cannon shells: extra structure damage per hit
+  enemyAimMult = 1;           // perk: >1 spoils the enemy's aim
   playerExecute = 1;          // perk: damage multiplier vs fighters below half structure   // perk: player hits can set enemy engines alight
   formationCenter = new THREE.Vector3(0, ALTITUDE, 0);
   formationForward = new THREE.Vector3(0, 0, 1);
@@ -380,7 +385,15 @@ export class World implements WorldView {
     if (t.remove) return;
     const z = e.zone;
     const wasAlive = t.alive;
-    if (t === this.player) e.damage *= this.playerDamageScale;
+    if (t === this.player) {
+      if (this.playerLucky && Math.random() < this.playerLucky) { this.effects.sparks(e.point, t.vel, false); return; }
+      e.damage *= this.playerDamageScale;
+    }
+    if (e.playerShot) {
+      if (/^(wing|tail)/.test(z.name)) e.damage *= this.playerWingDmg;
+      if (this.playerExplosive && Math.random() < this.playerExplosive) { e.damage *= 3; this.effects.explosion(e.point, t.vel, 0.22); }
+      if (this.playerSplash) { t.structure -= e.damage * this.playerSplash; this.effects.hitFlash(e.point, t.vel); }
+    }
     if (e.playerShot && t instanceof Fighter && t.structureFrac < 0.5) e.damage *= this.playerExecute;
     z.hp -= e.damage;
     t.damageTaken += e.damage;
@@ -393,7 +406,7 @@ export class World implements WorldView {
       t.playerDamage += e.damage;
       t.lastPlayerHit = this.time;
       this.effects.hitFlash(e.point, t.vel);
-      if (this.playerIncendiary && t instanceof Fighter && t.team === 'axis' && Math.random() < 0.06) {
+      if (this.playerIncendiary && t instanceof Fighter && t.team === 'axis' && Math.random() < this.playerIncendiary) {
         const eng = t.zone('engine');
         if (eng && !eng.burning) { eng.burning = true; this.effects.sparks(e.point, t.vel, true); }
       }

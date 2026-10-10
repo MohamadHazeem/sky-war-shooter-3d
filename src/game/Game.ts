@@ -8,7 +8,7 @@ import { Aircraft, Bomber, Fighter } from '../world/Aircraft';
 import { GunnerController } from './GunnerController';
 import { PilotController } from './PilotController';
 import { PhotoMode } from './PhotoMode';
-import { CAMPAIGN, Mission, Round, survivalMission, SpawnFrom, Wave } from './Missions';
+import { CAMPAIGN, Mission, Round, roundDef, survivalMission, SpawnFrom, Wave } from './Missions';
 import { STATIONS, STATION_ORDER, StationId } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
 import { DistantBattle } from '../audio/DistantBattle';
@@ -16,7 +16,7 @@ import { INTERPHONE_LEAD_S } from '../audio/Interphone';
 import type { AttackType } from '../world/AI';
 import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
 import * as Radar from '../ui/Radar';
-import { Progression, PerkDef } from './Upgrades';
+import { Progression } from './Upgrades';
 import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
 import { CombatTally } from './CombatTally';
@@ -58,8 +58,17 @@ export class Game {
   private perkWave = 0;        // last wave a perk was offered after
   private killsSincePerk = 0;  // every 5 kills also earns a perk
   private spawnCd = 0;         // director: time to the next group
+  private roundIdx = 0;        // rounds: harder each time, a hangar break between them
+  private roundT0 = 0;
+  private roundClear = false;
+  private roundsComplete = false;
+  private scoreBanked = 0;     // score already paid out as merit at round ends
+  private roundKills0 = 0;
   private groups = 0;
   private loadout = this.prog.loadout();
+  private baseDamageScale = 1;
+  private berserkT = 0;
+  private killCount = 0;
   private mapOpen = false;
   private mapT = 0;
   private incomingOff: THREE.Vector3 | null = null;  // relative to the formation centre
@@ -172,10 +181,7 @@ export class Game {
     sound.radioEnabled = s.radio;
     sound.setMusic(s.music);
     this.pilot.mode = s.flightMode;
-    const assist = s.aimAssist === 'off' ? 0 : s.aimAssist === 'low' ? 0.5 : 1;
-    this.gunner.assist = assist;
-    this.pilot.assist = assist;
-    if (this.loadout) this.updateHitScale();
+    if (this.loadout) this.applyAssist();
     // Base FOV from Settings (clamped; the views derive their zoom from it each frame)
     const fov = THREE.MathUtils.clamp(Number.isFinite(s.fov) ? s.fov : 62, 50, 80);
     this.gunner.baseFov = fov;
@@ -199,13 +205,16 @@ export class Game {
       if (victim.team === 'axis') {
         if (byPlayer) {
           // paid at the multiplier held going in; the kill then builds the next step
-          const pts = Math.round(100 * (1 + this.survivalWave * 0.1) * this.combo.mult);
+          const pts = Math.round(100 * (1 + this.survivalWave * 0.1) * this.combo.mult * this.loadout.scoreMult);
           this.score += pts;
           this.combo.onKill();
           this.killsSincePerk++;
-          if (this.loadout.killRepair) {
+          this.killCount++;
+          if (this.loadout.berserk) this.berserkT = 6;
+          const repair = this.loadout.killRepair + (this.loadout.vampire && this.killCount % 3 === 0 ? 0.1 : 0);
+          if (repair) {
             const pl = w.player;
-            if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * this.loadout.killRepair);
+            if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * repair);
             if (this.mission?.role === 'gunner') this.gunner.coolBarrel();
           }
           this.popups.push({ pos: victim.pos.clone(), text: `+${pts}  KILL`, life: 1.6 });
@@ -230,7 +239,7 @@ export class Game {
             w.callout('ace', 'Pilot', 'That\'s five! You\'re an ace, gunner — drinks are on me tonight!', 0, 3);
           }
           this.killMarkerT = 0.45;
-          this.slowmo = 0.55;
+          this.slowmo = this.loadout.bulletTime ? 1.1 : 0.4;
           const lines = ['Got him! He\'s going down!', 'You got him! Nice shooting!', 'He\'s smoking — he\'s finished!', victim.label === 'Bf 109' ? 'Scratch one Messerschmitt!' : 'Scratch one Focke-Wulf!'];
           w.callout('kill', ['Tail', 'Pilot', 'Top Turret', 'Navigator'][Math.floor(Math.random() * 4)], lines[Math.floor(Math.random() * lines.length)], 3, 2);
         } else {
@@ -383,6 +392,7 @@ export class Game {
     this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false; this.trauma = 0;
     this.incoming = null; this.incomingOff = null; this.mapOpen = false; this.mapT = 0;
     this.prog.perks = []; this.perkWave = 0; this.killsSincePerk = 0; this.spawnCd = 0; this.groups = 0;
+    this.roundIdx = 0; this.roundT0 = 0; this.roundClear = false; this.roundsComplete = false; this.scoreBanked = 0; this.roundKills0 = 0;
     this.combo.reset();
     this.tally.reset();
     achievements.beginMission(m);
@@ -415,8 +425,10 @@ export class Game {
         this.world.spawnEscort(start.clone().add(new THREE.Vector3((i + 1) * 40 * (i % 2 ? 1 : -1), 10, -30 * (i + 1))), new THREE.Vector3((i - 1.5) * 250, 380, 150));
       }
     }
+    this.prog.role = m.role;
+    this.baseDamageScale = this.world.playerDamageScale;
+    this.berserkT = 0; this.killCount = 0;
     this.applyLoadout(true);
-    this.world.playerDamageScale *= this.loadout.armor;
     if (!this.prewarmed) { this.prewarmed = true; this.world.prewarm(() => this.engine.render(1 / 60), this.engine.camera); }
     this.state = 'playing';
     this.distantBattle.reset();
@@ -440,51 +452,63 @@ export class Game {
   private applyLoadout(refill = false) {
     const l = this.loadout = this.prog.loadout();
     this.gunner.applyLoadout(l, refill);
-    this.world.playerIncendiary = l.incendiary;
-    const f = this.world.playerFighter;
-    if (f && this.mission?.role === 'pilot') for (const g of f.guns) {
-      const b = g as any;
-      b.baseDamage ??= g.damage; b.baseRate ??= g.rate; b.baseVel ??= g.muzzleVel;
-      g.damage = b.baseDamage * l.damage; g.rate = b.baseRate * l.rate; g.muzzleVel = b.baseVel * l.velocity;
-      g.ammo = Infinity; // unlimited belts: the fight never stops for ammunition
+    const w = this.world;
+    w.playerIncendiary = l.incendiary;
+    w.playerExecute = l.execute;
+    w.playerLucky = l.lucky;
+    w.playerWingDmg = l.wingDmg;
+    w.playerExplosive = l.explosive;
+    w.playerSplash = l.splash;
+    w.enemyAimMult = l.enemyAim;
+    w.playerDamageScale = this.baseDamageScale * l.armor;
+    const f = w.playerFighter;
+    if (f && this.mission?.role === 'pilot') {
+      const wp = l.weapon;
+      for (const g of f.guns) {
+        g.damage = wp.damage * l.damage; g.rate = wp.rate * l.rate; g.muzzleVel = wp.velocity * l.velocity;
+        g.spread = wp.spread * l.spread; g.cannon = !!wp.cannon; g.tracerEvery = wp.tracerEvery; g.tracerColor = wp.tracer;
+        g.ammo = Infinity; // unlimited belts: the fight never stops for ammunition
+      }
+      const fb = f.fm as any;
+      fb.basePower ??= f.fm.p.power;
+      f.fm.p = { ...f.fm.p, power: fb.basePower * l.power };
     }
-    this.world.playerExecute = l.execute;
-    this.updateHitScale();
+    this.applyAssist();
   }
 
-  // bullet magnetism: aim assist setting x Gyro Gunsight upgrade
-  private updateHitScale() {
+  // aim assist: Settings level x Hawkeye perk; bullet magnetism x Gyro Gunsight / Gyro Lock
+  private applyAssist() {
     const a = this.settings.aimAssist === 'off' ? 0 : this.settings.aimAssist === 'low' ? 0.5 : 1;
+    this.gunner.assist = Math.min(1.6, a * this.loadout.assist);
+    this.pilot.assist = Math.min(1.6, a * this.loadout.assist);
     this.world.ballistics.playerHitScale = (1 + 0.4 * a) * this.loadout.hitScale;
   }
 
-  // Wave cleared: freeze the action and offer three perks
-  private offerPerk(label: string) {
-    this.state = 'paused';
-    this.engine.paused = true;
-    this.input.unlock();
-    sound.play('click', null, { gain: 0.6 });
-    this.ui.perkChoice(this.prog.offer(), label, (p: PerkDef) => {
-      this.prog.perks.push(p.id);
-      if (p.id === 'repair') {
-        const pl = this.world.player;
-        if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * 0.35);
-      }
-      this.applyLoadout();
-      this.ui.feed(`${p.name}: ${p.desc}`, 'mine');
-      this.state = 'playing';
-      this.engine.paused = false;
-      this.input.lock();
-    });
+  // Field upgrade: a random perk, applied on the spot with a short card (no pause)
+  private awardPerk(label: string) {
+    const p = this.prog.award();
+    if (p.id === 'repair') {
+      const pl = this.world.player;
+      if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * 0.35);
+    }
+    this.applyLoadout();
+    this.ui.perkToast(label, p.name, p.desc);
+    sound.confirm('kill_confirm');
   }
 
   // Continuous engagement: keep the sky full. Groups of 2-4 arrive whenever fewer fighters
   // are in the air than the round's ramping target; the next group shows on the radar.
   private director(dt: number, m: Mission, r: Round, enemies: number) {
-    const w = this.world, t = w.time;
-    const ramp = THREE.MathUtils.clamp((t - r.start) / (Number.isFinite(r.duration) ? r.duration * 0.6 : 420), 0, 1);
+    const w = this.world, t = w.time - this.roundT0;
+    const ramp = THREE.MathUtils.clamp((t - r.start) / (r.duration * 0.6), 0, 1);
     const target = Math.round(r.min + (r.max - r.min) * ramp);
-    if (t < r.start || t >= r.duration) { this.updateIncoming(null, null); return; }
+    // round over: stop sending fighters; once the sky is clear (or 30 s on) the round ends
+    if (t >= r.duration) {
+      this.updateIncoming(null, null);
+      if (!this.roundClear && (enemies === 0 || t >= r.duration + 30) && this.state === 'playing') { this.roundClear = true; this.endRound(m); }
+      return;
+    }
+    if (t < r.start) { this.updateIncoming(null, null); return; }
     this.spawnCd -= dt;
     const want = target - enemies;
     if (want <= 0) { this.updateIncoming(null, null); return; }
@@ -507,6 +531,45 @@ export class Game {
     }
     this.groups++;
     this.spawnCd = THREE.MathUtils.lerp(7, 3.5, ramp) + Math.random() * 3;
+  }
+
+  // A round is over: the last round of a campaign mission completes it; otherwise the
+  // merit earned so far is paid out and the hangar opens before the next, harder round.
+  private endRound(m: Mission) {
+    const w = this.world;
+    const last = Number.isFinite(m.rounds ?? 1) && this.roundIdx >= (m.rounds ?? 1) - 1;
+    if (last) { this.roundsComplete = true; return; }
+    const earned = Math.round((this.score - this.scoreBanked) * this.loadout.scoreMult);
+    this.prog.earn(earned);
+    this.scoreBanked = this.score;
+    const kills = w.stats.kills - this.roundKills0;
+    this.state = 'paused';
+    this.engine.paused = true;
+    this.input.unlock();
+    w.callout('roundend', 'Pilot', 'That\'s the last of them for now. Catch your breath, they\'ll be back.', 0, 3);
+    this.ui.hangar(this.prog, m.role, {
+      title: `ROUND ${this.roundIdx + 1} CLEARED`,
+      sub: `${kills} kills this round · +${earned} merit`,
+      next: Number.isFinite(m.rounds ?? 1) ? `Round ${this.roundIdx + 2} of ${m.rounds}` : `Round ${this.roundIdx + 2}`,
+    }, () => this.startNextRound());
+  }
+
+  private startNextRound() {
+    const w = this.world;
+    this.roundIdx++;
+    this.roundT0 = w.time;
+    this.roundClear = false;
+    this.groups = 0; this.spawnCd = 0;
+    this.roundKills0 = w.stats.kills;
+    // ground crew patch-up between rounds
+    const pl = w.player;
+    if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * 0.3);
+    this.applyLoadout(true);
+    this.state = 'playing';
+    this.engine.paused = false;
+    this.input.lock();
+    this.ui.banner(`ROUND ${this.roundIdx + 1}`, this.roundIdx >= 3 ? 'They\'re sending everything they have' : 'More fighters inbound', 2800);
+    w.callout('roundstart', 'Pilot', 'Here they come again! Look sharp, gunners!', 0, 3);
   }
 
   private spawnPos(from: SpawnFrom): THREE.Vector3 {
@@ -560,26 +623,25 @@ export class Game {
     const t = w.time;
     const enemies = w.activeEnemies().length;
     // field promotion: every 5 kills, once the kill's slow-motion beat has played
-    if (this.killsSincePerk >= 5 && t - this.lastKillAt > 1.2 && this.state === 'playing' && w.player?.alive) {
+    if (this.killsSincePerk >= 6 && t - this.lastKillAt > 1.2 && this.state === 'playing' && w.player?.alive) {
       this.killsSincePerk = 0;
-      this.offerPerk('5 KILLS · FIELD PROMOTION');
-      return;
+      this.awardPerk('6 KILLS · FIELD UPGRADE');
     }
     if (m.round) {
-      this.director(dt, m, m.round, enemies);
+      this.director(dt, m, roundDef(m, this.roundIdx), enemies);
     } else if (m.waves.length) {
       this.waveTimer += dt;
       const next = m.waves[this.waveIdx];
       // field promotion: every 5 kills, once the kill's slow-motion beat has played
       if (this.killsSincePerk >= 5 && t - this.lastKillAt > 1.2 && this.state === 'playing' && w.player?.alive) {
         this.killsSincePerk = 0;
-        this.offerPerk('5 KILLS · FIELD PROMOTION');
+        this.awardPerk('5 KILLS · FIELD PROMOTION');
         return;
       }
       // a wave wiped out with more to come: pick a perk (the next wave waits)
       if (next && enemies === 0 && this.waveIdx > 0 && this.perkWave < this.waveIdx && this.waveTimer > 2.5 && this.state === 'playing' && w.player?.alive) {
         this.perkWave = this.waveIdx; this.killsSincePerk = 0;
-        this.offerPerk(`WAVE ${this.waveIdx} CLEARED`);
+        this.awardPerk(`WAVE ${this.waveIdx} CLEARED`);
         return;
       }
       if (next) {
@@ -600,7 +662,7 @@ export class Game {
       if (enemies === 0 || this.waveTimer > 90) {
         if (enemies === 0 && this.survivalWave > 0 && this.perkWave < this.survivalWave && this.state === 'playing' && w.player?.alive) {
           this.perkWave = this.survivalWave;
-          this.offerPerk(`WAVE ${this.survivalWave} SURVIVED`);
+          this.awardPerk(`WAVE ${this.survivalWave} SURVIVED`);
           return;
         }
         this.survivalBreak -= dt;
@@ -692,7 +754,7 @@ export class Game {
       this.finish(false, `Too many bombers lost — ${w.stats.bombersLost} Fortresses went down.`);
       return;
     }
-    const roundDone = m.round ? t >= m.round.duration && (enemies === 0 || t >= m.round.duration + 45) : false;
+    const roundDone = m.round ? this.roundsComplete : false;
     if (roundDone || (!m.round && m.waves.length && this.waveIdx >= m.waves.length && enemies === 0 && t >= Math.min(m.duration, (m.flak?.end ?? 0) + 5))) {
       if (!m.bombsAway || this.bombsDropped) {
         if (!m.escortArrive || this.escortsSpawned) this.finish(true, m.success ?? (m.role === 'gunner' ? 'The formation fought its way through. Good shooting, gunner.' : 'The bombers made it through. Outstanding work, Blue Leader.'));
@@ -798,7 +860,7 @@ export class Game {
     if (w.stats.kills >= 8 && w.stats.bombersLost <= 1) medals.push('Silver Star');
     if (w.crewWounded > 0) medals.push('Purple Heart');
     if (survival) {
-      this.progress.survival.push({ name: 'You', score: this.score, waves: Math.max(0, this.survivalWave - (r.success ? 0 : 1)), role: m.role, date: new Date().toLocaleDateString() });
+      this.progress.survival.push({ name: 'You', score: this.score, waves: m.round ? this.roundIdx + (r.success ? 1 : 0) : Math.max(0, this.survivalWave - (r.success ? 0 : 1)), role: m.role, date: new Date().toLocaleDateString() });
       this.progress.survival.sort((a, b) => b.score - a.score);
       this.progress.survival = this.progress.survival.slice(0, 20);
     } else {
@@ -811,13 +873,13 @@ export class Game {
     }
     save(PROGRESS_KEY, this.progress);
     // merit for the Armory: the mission score (half if it failed)
-    const merit = Math.round(this.score * (r.success ? 1 : 0.5));
+    const merit = Math.round((this.score - this.scoreBanked) * (r.success ? 1 : 0.5) * this.loadout.scoreMult);
     this.prog.earn(merit);
     const idx = CAMPAIGN.findIndex((c) => c.id === m.id);
     const d: DebriefData = {
       success: r.success, title: m.title, reason: r.reason, kills: w.stats.kills, accuracy: acc,
       bombersLost: w.stats.bombersLost, bombersTotal: m.bombers, time: w.time, score: this.score, medals,
-      survival, waves: Math.max(0, this.survivalWave - 1), nextAvailable: r.success && idx >= 0 && idx < CAMPAIGN.length - 1,
+      survival, waves: m.round ? this.roundIdx + (r.success ? 1 : 0) : Math.max(0, this.survivalWave - 1), nextAvailable: r.success && idx >= 0 && idx < CAMPAIGN.length - 1,
       rounds: w.stats.shots, hits: w.stats.hits, bestStreak: this.tally.bestStreak,
       closestKill: this.tally.closestKill === Infinity ? null : this.tally.closestKill,
       killsByGun: m.role === 'gunner' ? this.tally.killsByGun() : undefined,
@@ -878,6 +940,8 @@ export class Game {
     const canvas = this.engine.renderer.domElement;
     const cur = playing ? 'crosshair' : 'default';
     if (canvas.style.cursor !== cur) canvas.style.cursor = cur;
+    this.berserkT = Math.max(0, this.berserkT - dt);
+    this.gunner.rateBoost = this.berserkT > 0 ? 1.4 : 1;
     // Brief slow-motion beat on a confirmed kill
     if (this.slowmo > 0) {
       this.slowmo -= dt / Math.max(0.05, this.engine.timeScale);
@@ -988,10 +1052,12 @@ export class Game {
     const alive = w.bombers().filter((b) => b.alive).length;
     const enemies = w.activeEnemies().length;
     let objective = m.objectives[0];
-    if (m.round && Number.isFinite(m.round.duration)) {
-      const left = Math.max(0, Math.ceil(m.round.duration - w.time));
-      objective = left > 0 ? `Hold them off — ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} · ${enemies} fighters` : `Clear the last ${enemies} fighter${enemies === 1 ? '' : 's'}`;
-    } else if (m.round) objective = `${Math.floor(w.time / 60)}:${String(Math.floor(w.time % 60)).padStart(2, '0')} survived · ${enemies} fighters`;
+    if (m.round) {
+      const r = roundDef(m, this.roundIdx);
+      const left = Math.max(0, Math.ceil(r.duration - (w.time - this.roundT0)));
+      const rn = Number.isFinite(m.rounds ?? 1) ? `Round ${this.roundIdx + 1}/${m.rounds}` : `Round ${this.roundIdx + 1}`;
+      objective = left > 0 ? `${rn} — ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} · ${enemies} fighters` : `${rn} — clear the last ${enemies} fighter${enemies === 1 ? '' : 's'}`;
+    }
     else if (m.duration === Infinity) objective = this.survivalWave ? `Wave ${this.survivalWave} — ${enemies} fighters remaining` : 'Stand by — enemy fighters approaching';
     else if (m.flak && w.time >= m.flak.start && w.time <= m.flak.end) objective = 'Hold steady through the flak';
     else if (m.escortArrive && !this.escortsSpawned) objective = `Hold out — escort ETA ${Math.max(0, Math.ceil(m.escortArrive - w.time))}s`;

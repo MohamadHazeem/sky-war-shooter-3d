@@ -1,7 +1,7 @@
 import type { Mission } from '../game/Missions';
 import { achievementsHtml } from '../game/Achievements';
 import { STATION_ORDER, STATIONS, StationId } from '../world/B17Layout';
-import { MAX_LEVEL, PerkDef, Progression, UPGRADES, upgradeCost } from '../game/Upgrades';
+import { AIRCRAFT, MAX_LEVEL, PerkDef, Progression, UPGRADES, upgradeCost, WEAPONS } from '../game/Upgrades';
 import { sound } from '../audio/Sound';
 import { playMedalFanfare } from '../audio/Fanfare';
 
@@ -95,7 +95,9 @@ export class UI {
       <div id="debrief" class="layer"></div>
       <div id="credits" class="layer"></div>
       <div id="armory" class="layer"></div>
+      <div id="hangar"></div>
       <div id="perks"></div>
+      <div id="perkToast"></div>
     `);
     this.canvas = $('#hudCanvas') as HTMLCanvasElement;
     this.ctx = this.canvas.getContext('2d')!;
@@ -186,7 +188,7 @@ export class UI {
       <p style="color:var(--ink-dim);font-size:15px;line-height:1.5">Waves of Fw 190s, each one larger and more aggressive than the last. Bombers lost between waves are not replaced.</p>
       <div class="row" style="margin:18px 0"><button class="btn" data-r="gunner">B-17 Gunner</button><button class="btn" data-r="pilot">P-51 Escort</button></div>
       <div class="hud-label">Best scores</div>
-      <table class="leader">${prog.survival.slice(0, 8).map((r, i) => `<tr><td>${i + 1}</td><td>${r.role === 'pilot' ? 'P-51' : 'B-17'}</td><td>${r.waves} waves</td><td style="text-align:right">${r.score}</td><td style="text-align:right;color:var(--ink-dim)">${esc(r.date)}</td></tr>`).join('') || '<tr><td style="color:var(--ink-dim)">No scores yet</td></tr>'}</table>
+      <table class="leader">${prog.survival.slice(0, 8).map((r, i) => `<tr><td>${i + 1}</td><td>${r.role === 'pilot' ? 'P-51' : 'B-17'}</td><td>${r.waves} rounds</td><td style="text-align:right">${r.score}</td><td style="text-align:right;color:var(--ink-dim)">${esc(r.date)}</td></tr>`).join('') || '<tr><td style="color:var(--ink-dim)">No scores yet</td></tr>'}</table>
       <div class="row" style="margin-top:20px"><button class="btn ghost" data-back>Back</button></div>
     </div></div>`;
     s.querySelectorAll<HTMLButtonElement>('[data-r]').forEach((b) => b.addEventListener('click', () => onPick(b.dataset.r as any)));
@@ -468,6 +470,72 @@ export class UI {
     this.show('armory');
   }
 
+  // Between rounds: swap aircraft and weapon, buy upgrades, then launch the next round
+  hangar(prog: Progression, role: 'gunner' | 'pilot', info: { title: string; sub: string; next: string }, onLaunch: () => void) {
+    const el = $('#hangar');
+    const card = (id: string, name: string, desc: string, cost: number, selected: boolean, kind: string) => {
+      const owned = prog.unlocked.has(id);
+      const state = selected ? 'EQUIPPED' : owned ? 'EQUIP' : `UNLOCK · ${cost}`;
+      const off = !owned && prog.points < cost;
+      return `<button class="hcard ${selected ? 'sel' : ''} ${off ? 'off' : ''}" data-${kind}="${id}" ${off ? 'disabled' : ''}>
+        <div class="t">${esc(name)}</div><div class="d">${esc(desc)}</div><div class="s">${state}</div></button>`;
+    };
+    const render = () => {
+      const planes = AIRCRAFT.filter((a) => a.role === role), guns = WEAPONS.filter((w) => w.role === role);
+      el.innerHTML = `<div class="hwrap panel">
+        <div class="kicker">${esc(info.title)} · ${esc(info.sub)}</div>
+        <h2>Hangar</h2>
+        <div class="pts">Merit points: <b>${prog.points}</b></div>
+        <div class="hsec">AIRCRAFT</div>
+        <div class="hgrid">${planes.map((a) => card(a.id, a.name, a.desc, a.cost, prog.aircraft[role] === a.id, 'a')).join('')}</div>
+        <div class="hsec">WEAPON</div>
+        <div class="hgrid">${guns.map((w) => card(w.id, w.name, w.desc, w.cost, prog.weapon[role] === w.id, 'w')).join('')}</div>
+        <div class="hsec">UPGRADES</div>
+        <div class="ugrid">${UPGRADES.map((u) => {
+          const lv = prog.levels[u.id], cost = upgradeCost(lv), maxed = lv >= MAX_LEVEL;
+          return `<div class="ucard"><div class="t">${esc(u.name)}</div><div class="d">${esc(u.per)} per level</div>
+            <div class="pips">${Array.from({ length: MAX_LEVEL }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</div>
+            <button class="btn ${maxed || prog.points < cost ? 'ghost' : ''}" data-u="${u.id}" ${maxed || prog.points < cost ? 'disabled' : ''}>${maxed ? 'Maxed' : `Upgrade · ${cost}`}</button></div>`;
+        }).join('')}</div>
+        <div class="row" style="margin-top:18px"><button class="btn" data-go>Launch — ${esc(info.next)}</button></div>
+      </div>`;
+      el.querySelectorAll<HTMLButtonElement>('[data-a]').forEach((b) => b.addEventListener('click', () => {
+        const a = AIRCRAFT.find((x) => x.id === b.dataset.a)!;
+        if (prog.unlock(a.id, a.cost)) { prog.selectAircraft(a); sound.play('click', null, { gain: 0.6 }); render(); }
+      }));
+      el.querySelectorAll<HTMLButtonElement>('[data-w]').forEach((b) => b.addEventListener('click', () => {
+        const w = WEAPONS.find((x) => x.id === b.dataset.w)!;
+        if (prog.unlock(w.id, w.cost)) { prog.selectWeapon(w); sound.play('click', null, { gain: 0.6 }); render(); }
+      }));
+      el.querySelectorAll<HTMLButtonElement>('[data-u]').forEach((b) => b.addEventListener('click', () => {
+        if (prog.buy(b.dataset.u as any)) { sound.play('click', null, { gain: 0.6 }); render(); }
+      }));
+      el.querySelector('[data-go]')!.addEventListener('click', launch);
+    };
+    const key = (e: KeyboardEvent) => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); launch(); } };
+    const launch = () => { removeEventListener('keydown', key, true); el.classList.remove('show'); onLaunch(); };
+    addEventListener('keydown', key, true);
+    render();
+    el.classList.add('show');
+  }
+
+  // Random field upgrade: a card slides in at the top, holds, and fades (no pause)
+  private toastQ: [string, string, string][] = [];
+  private toastBusy = false;
+  perkToast(label: string, name: string, desc: string) {
+    this.toastQ.push([label, name, desc]);
+    if (!this.toastBusy) this.nextToast();
+  }
+  private nextToast() {
+    const next = this.toastQ.shift();
+    const el = $('#perkToast');
+    if (!next) { this.toastBusy = false; return; }
+    this.toastBusy = true;
+    el.innerHTML = `<div class="k">${esc(next[0])}</div><div class="t">${esc(next[1])}</div><div class="d">${esc(next[2])}</div>`;
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    setTimeout(() => { el.classList.remove('show'); setTimeout(() => this.nextToast(), 450); }, 3200);
+  }
+
   // Between waves: pick one of three perks (click or keys 1-3); the HUD stays visible behind
   perkChoice(cards: PerkDef[], title: string, onPick: (p: PerkDef) => void) {
     const el = $('#perks');
@@ -505,7 +573,7 @@ export class UI {
     }
     e.innerHTML = `<div class="screen-center"><div class="box panel">
       <div class="kicker">${d.survival ? 'SURVIVAL REPORT' : 'MISSION DEBRIEFING'} · ${esc(d.title)}</div>
-      <div class="result ${d.success ? 'ok' : 'fail'}">${d.survival ? `${d.waves ?? 0} waves` : d.success ? 'Mission complete' : 'Mission failed'}</div>
+      <div class="result ${d.success ? 'ok' : 'fail'}">${d.survival ? `${d.waves ?? 0} rounds` : d.success ? 'Mission complete' : 'Mission failed'}</div>
       <div style="color:var(--ink-dim);font-family:'Special Elite',monospace">${esc(d.reason)}</div>
       <div class="stats">
         <div class="stat"><div class="hud-label">Confirmed kills</div><div class="v">${d.kills}</div></div>

@@ -40,6 +40,7 @@ export interface Mission {
   sun?: { el: number; az: number };
   coverage?: number;
   round?: Round;              // continuous engagement (replaces the wave list when set)
+  rounds?: number;            // the round is split into this many rounds, a hangar break between them (Infinity = survival)
 }
 
 // A round of continuous combat: fighters keep coming in groups, the number in the air
@@ -179,14 +180,37 @@ for (const m of CAMPAIGN) {
   if (!r) continue;
   m.round = r;
   m.duration = r.duration;
+  m.rounds = m.number <= 2 ? 2 : 3;
   if (m.maxBombersLost !== undefined && m.maxBombersLost < 99) m.maxBombersLost += 3; // more fighters, more losses allowed
 }
 
 export function survivalMission(role: 'gunner' | 'pilot'): Mission {
   return {
     round: { duration: Infinity, start: 6, min: 3, max: 16, skill: [0.8, 1.5], rockets: 0.25 },
+    rounds: Infinity,
     id: 'survival-' + role, number: 0, title: role === 'gunner' ? 'Survival — Gunner' : 'Survival — Escort', target: 'Endless waves', date: 'Somewhere over the Reich', role,
     station: 'waistL', briefing: ['Endless waves of fighters, growing stronger every time. How long can you hold out?'],
     objectives: ['Survive as many waves as possible'], bombers: 12, escorts: role === 'pilot' ? 2 : 0, waves: [], duration: Infinity, maxBombersLost: 99,
+  };
+}
+
+// Round i (0-based) of a mission: campaign missions split their engagement into rounds that
+// get harder one after another; survival rounds escalate without end.
+export function roundDef(m: Mission, i: number): Round {
+  const base = m.round!;
+  const n = m.rounds ?? 1;
+  if (!Number.isFinite(n)) {
+    return {
+      duration: 100, start: 5, min: Math.min(14, 3 + i), max: Math.min(20, 5 + 2 * i),
+      skill: [Math.min(1.5, 0.8 + 0.06 * i), Math.min(1.65, 0.9 + 0.07 * i)], rockets: i >= 2 ? Math.min(0.4, 0.1 * i) : 0,
+    };
+  }
+  const f0 = i / n, f1 = (i + 1) / n;
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+  return {
+    duration: Math.round(base.duration / n), start: i === 0 ? base.start : 4,
+    min: Math.round(lerp(base.min, base.max, f0 * 0.8)), max: Math.round(lerp(base.min, base.max, f1)),
+    skill: [lerp(base.skill[0], base.skill[1], f0), lerp(base.skill[0], base.skill[1], f1)],
+    rockets: base.rockets && i > 0 ? base.rockets : 0,
   };
 }

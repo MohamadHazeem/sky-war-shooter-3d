@@ -256,3 +256,27 @@ kbd { font-family: 'IBM Plex Mono', monospace; font-size: 12px; border: 1px soli
 .stations span.threat { border-color: rgba(235,90,60,0.9); color: #ffb7a8; }
 .stations span.best { animation: seatPulse 0.9s ease-in-out infinite; }
 @keyframes seatPulse { 50% { background: rgba(216,67,44,0.55); color: #fff; } }
+
+/* random field upgrade card */
+#perkToast { position: fixed; top: 92px; left: 50%; transform: translate(-50%, -20px); opacity: 0; pointer-events: none; z-index: 35; text-align: center; padding: 12px 26px 14px; background: rgba(14,18,12,0.82); border: 1px solid var(--khaki); transition: opacity .35s, transform .35s; min-width: 300px; }
+#perkToast.show { opacity: 1; transform: translate(-50%, 0); }
+#perkToast .k { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 3px; color: var(--ink-dim); }
+#perkToast .t { font-size: 24px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--khaki); margin: 2px 0; }
+#perkToast .d { font-size: 14px; color: var(--ink); }
+
+/* hangar between rounds */
+#hangar { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(5,7,6,0.6); z-index: 41; padding: 16px; }
+#hangar.show { display: flex; }
+.hwrap { width: min(1000px, 100%); max-height: 94vh; overflow: auto; padding: 24px 30px; }
+.hwrap h2 { margin: 4px 0 6px; }
+.hwrap .pts { color: var(--ink-dim); font-family: 'IBM Plex Mono', monospace; margin-bottom: 8px; }
+.hwrap .pts b { color: var(--khaki); font-size: 20px; }
+.hsec { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 3px; color: var(--ink-dim); margin: 14px 0 6px; }
+.hgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.hcard { text-align: left; background: rgba(255,255,255,0.03); border: 1px solid var(--line); color: var(--ink); padding: 12px 14px; cursor: pointer; font-family: inherit; }
+.hcard:hover:not(:disabled) { border-color: var(--khaki); }
+.hcard.sel { border-color: var(--khaki); background: rgba(185,167,111,0.14); }
+.hcard.off { opacity: 0.45; cursor: not-allowed; }
+.hcard .t { font-size: 17px; letter-spacing: 1px; text-transform: uppercase; }
+.hcard .d { color: var(--ink-dim); font-size: 13px; margin: 4px 0 8px; }
+.hcard .s { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--khaki); }

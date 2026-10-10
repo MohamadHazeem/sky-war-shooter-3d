@@ -50,6 +50,7 @@ export class GunnerController {
   zoom = false;
   fov = 62;
   assist = 1;    // aim assist strength 0..1 (Settings)
+  rateBoost = 1; // Berserker perk
   assistTarget: Fighter | null = null;
   private assistYaw = 0;
   private assistPitch = 0;
@@ -321,7 +322,8 @@ export class GunnerController {
     if (def.yaw[1] - def.yaw[0] < Math.PI * 1.99) s.tYaw = THREE.MathUtils.clamp(s.tYaw, def.yaw[0], def.yaw[1]);
     else s.tYaw = wrapAngle(s.tYaw);
     s.tPitch = THREE.MathUtils.clamp(s.tPitch, def.pitch[0] - def.rest.pitch, def.pitch[1] - def.rest.pitch);
-    const k = def.type === 'waist' ? 190 : 260, damp = def.type === 'waist' ? 22 : 28;
+    const tv = this.loadout.traverse;
+    const k = (def.type === 'waist' ? 190 : 260) * tv * tv, damp = (def.type === 'waist' ? 22 : 28) * tv;
     let dy = s.tYaw - s.yaw;
     if (def.yaw[1] - def.yaw[0] >= Math.PI * 1.99) dy = wrapAngle(dy);
     s.vYaw += (dy * k - s.vYaw * damp) * dt;
@@ -357,7 +359,8 @@ export class GunnerController {
       if (this.beltTickT <= 0) { this.beltTickT = 0.6; sound.play('beltTick', null, { gain: 0.55, reverb: 0.4 }); }
     } else this.beltTickT = 0;
     const guns = this.guns[this.station]!;
-    const rate = (def.twin ? 13 * 2 : 13) * this.loadout.rate;
+    const W = this.loadout.weapon;
+    const rate = W.rate * this.loadout.rate * this.rateBoost;
     if (wantFire) {
       while (this.cooldown <= 0) {
         this.cooldown += 1 / rate;
@@ -365,7 +368,7 @@ export class GunnerController {
         this.fireRound(g, def);
         this.shotCount++;
         // unlimited belts: the counter never runs down
-        s.heat += (def.twin ? 0.0075 : 0.011) * this.loadout.heat;
+        s.heat += W.heat * this.loadout.heat;
         if (s.heat >= 1) { s.overheated = true; this.onNotice?.('BARREL OVERHEATED — let it cool'); this.world.callout('hot', 'Pilot', 'Short bursts! You\'ll burn out that barrel!', 15); }
         if (s.ammo <= 0) break;
       }
@@ -408,7 +411,7 @@ export class GunnerController {
       if (!f.alive) continue;
       const d = f.pos.distanceTo(pivot);
       if (d > 1400) continue;
-      const tof = d / (870 * this.loadout.velocity);
+      const tof = d / (this.loadout.weapon.velocity * this.loadout.velocity);
       _pb.copy(f.vel).sub(b.vel).multiplyScalar(tof).add(f.pos);
       _pb.y += 0.5 * 9.81 * tof * tof;
       const local = b.worldToLocal(_pb).sub(def.pivot);
@@ -439,12 +442,13 @@ export class GunnerController {
     const b = this.bomber!;
     const muzzle = g.muzzles[0].getWorldPosition(new THREE.Vector3());
     const dir = new THREE.Vector3(0, 0, 1).applyQuaternion(g.muzzles[0].getWorldQuaternion(_q));
-    const spread = 0.0022 * this.loadout.spread;
+    const W = this.loadout.weapon;
+    const spread = W.spread * this.loadout.spread;
     dir.x += R() * spread; dir.y += R() * spread; dir.z += R() * spread;
     dir.normalize();
-    const vel = dir.clone().multiplyScalar(870 * this.loadout.velocity).add(b.vel);
-    const tracer = this.shotCount % 3 === 0;
-    this.world.ballistics.fire(muzzle, vel, 'allied', 12 * this.loadout.damage, tracer, [10, 2.6, 0.9], b, false, true);
+    const vel = dir.clone().multiplyScalar(W.velocity * this.loadout.velocity).add(b.vel);
+    const tracer = this.shotCount % W.tracerEvery === 0;
+    this.world.ballistics.fire(muzzle, vel, 'allied', W.damage * this.loadout.damage, tracer, W.tracer, b, !!W.cannon, true);
     this.world.stats.shots++;
     if (this.shotCount % 2 === 0) this.world.effects.playerMuzzle(muzzle, dir, b.vel);
     if (this.shotCount % 2 === 0) this.world.effects.gunSmoke(muzzle, b.vel.clone().multiplyScalar(0.9));
@@ -456,7 +460,7 @@ export class GunnerController {
     const s = this.state;
     s.vYaw += R() * 0.09 * this.loadout.recoil;
     s.vPitch += (0.05 + Math.random() * 0.07) * this.loadout.recoil;
-    sound.playerGun(def.twin);
+    sound.playerGun(false, !!W.cannon);
     g.belt?.advance(1);
     if (g.belt && s.ammo < 60) { g.belt.visibleRounds = Math.max(0, Math.floor(s.ammo * 0.8)); }
     this.ejectCasing(g);

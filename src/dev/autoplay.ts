@@ -19,6 +19,8 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
     // between-wave perk cards: take the first one
     const card = document.querySelector<HTMLElement>('#perks.show .pcard');
     if (card) { card.click(); perks++; }
+    const go = document.querySelector<HTMLElement>('#hangar.show [data-go]');
+    if (go) go.click();
     inp.locked = true;
     inp.buttons = 0;
     if (mission.role === 'gunner') {

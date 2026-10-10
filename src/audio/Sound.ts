@@ -930,16 +930,23 @@ export class Sound {
   whizby(pos: THREE.Vector3, gain: number) { this.whizbyFx?.play(pos, gain); }
 
   // Player's own guns: un-positioned, close, with the fuselage ringing around them
-  playerGun(twin: boolean) {
+  playerGun(twin: boolean, cannon = false) {
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
     if (now - this.lastShot < 0.028) return;
     this.lastShot = now;
     const rev = this.mode === 'bomber' ? 0.7 : 0;
     // recorded report + synthesized blast + bolt: reads as a heavy weapon, each round a small explosion
-    this.play('m2', null, { gain: twin ? 0.9 : 0.8, reverb: rev });
-    this.play('m2thump', null, { gain: twin ? 1.15 : 1.0, reverb: rev * 0.8 });
-    this.play('m2mech', null, { gain: 0.28, reverb: rev * 0.4 });
+    if (cannon) {
+      // 20 mm: a slower, deeper boom with the same blast layer pitched down
+      this.play('cannon', null, { gain: 1.0, reverb: rev });
+      this.play('m2thump', null, { gain: 1.3, rate: 0.72, reverb: rev * 0.9 });
+      this.play('m2mech', null, { gain: 0.35, rate: 0.8, reverb: rev * 0.4 });
+    } else {
+      this.play('m2', null, { gain: twin ? 0.9 : 0.8, reverb: rev });
+      this.play('m2thump', null, { gain: twin ? 1.15 : 1.0, reverb: rev * 0.8 });
+      this.play('m2mech', null, { gain: 0.28, reverb: rev * 0.4 });
+    }
     // the guns drown out everything else for an instant
     this.duckFor(0.09, 0.5);
     if (Math.random() < 0.35) setTimeout(() => this.play('casing', null, { gain: 0.07, rate: 0.9 + Math.random() * 0.4, reverb: 0.3 }), 150 + Math.random() * 250);
