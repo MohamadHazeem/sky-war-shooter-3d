@@ -1,33 +1,51 @@
 import * as THREE from 'three';
 import { Atmos } from './Atmosphere';
 
-// Procedural sprite atlas (2 frames side by side): 0 = soft billowy puff, 1 = hot glow.
+// Procedural sprite atlas (2x2): 0 = soft billowy puff, 1 = hot glow,
+// 2 = turbulent fireball, 3 = shockwave ring.
 function makeAtlas(): THREE.Texture {
   const S = 256;
   const c = document.createElement('canvas');
-  c.width = S * 2; c.height = S;
+  c.width = S * 2; c.height = S * 2;
   const g = c.getContext('2d')!;
-  // Puff: many overlapping soft blobs for a cauliflower edge
   const rnd = mulberry(7);
-  for (let i = 0; i < 90; i++) {
-    const a = rnd() * Math.PI * 2, r = Math.pow(rnd(), 0.7) * S * 0.28;
-    const x = S / 2 + Math.cos(a) * r, y = S / 2 + Math.sin(a) * r;
-    const br = S * (0.08 + rnd() * 0.14);
-    const grd = g.createRadialGradient(x, y, 0, x, y, br);
-    grd.addColorStop(0, 'rgba(255,255,255,0.22)');
-    grd.addColorStop(1, 'rgba(255,255,255,0)');
-    g.fillStyle = grd;
-    g.beginPath(); g.arc(x, y, br, 0, Math.PI * 2); g.fill();
-  }
-  // Glow
-  const grd = g.createRadialGradient(S * 1.5, S / 2, 0, S * 1.5, S / 2, S / 2);
+  const blobs = (ox: number, oy: number, n: number, spread: number, rmin: number, rmax: number, amin: number, amax: number) => {
+    for (let i = 0; i < n; i++) {
+      const a = rnd() * Math.PI * 2, r = Math.pow(rnd(), 0.7) * S * spread;
+      const x = ox + S / 2 + Math.cos(a) * r, y = oy + S / 2 + Math.sin(a) * r;
+      const br = S * (rmin + rnd() * (rmax - rmin));
+      const grd = g.createRadialGradient(x, y, 0, x, y, br);
+      grd.addColorStop(0, `rgba(255,255,255,${amin + rnd() * (amax - amin)})`);
+      grd.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = grd;
+      g.beginPath(); g.arc(x, y, br, 0, Math.PI * 2); g.fill();
+    }
+  };
+  // 0: puff
+  blobs(0, 0, 90, 0.28, 0.08, 0.22, 0.22, 0.22);
+  // 1: glow
+  let grd = g.createRadialGradient(S * 1.5, S / 2, 0, S * 1.5, S / 2, S / 2);
   grd.addColorStop(0, 'rgba(255,255,255,1)');
   grd.addColorStop(0.15, 'rgba(255,255,255,0.75)');
   grd.addColorStop(0.45, 'rgba(255,255,255,0.18)');
   grd.addColorStop(1, 'rgba(255,255,255,0)');
   g.fillStyle = grd;
   g.fillRect(S, 0, S, S);
+  // 2: fireball — dense core with many small hot tongues
+  g.save();
+  g.beginPath(); g.rect(0, S, S, S); g.clip();
+  blobs(0, S, 60, 0.18, 0.1, 0.24, 0.35, 0.6);
+  blobs(0, S, 160, 0.34, 0.025, 0.08, 0.2, 0.7);
+  g.restore();
+  // 3: shockwave ring
+  grd = g.createRadialGradient(S * 1.5, S * 1.5, S * 0.3, S * 1.5, S * 1.5, S * 0.5);
+  grd.addColorStop(0, 'rgba(255,255,255,0)');
+  grd.addColorStop(0.75, 'rgba(255,255,255,0.55)');
+  grd.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grd;
+  g.fillRect(S, S, S, S);
   const tex = new THREE.CanvasTexture(c);
+  tex.flipY = false;
   tex.colorSpace = THREE.NoColorSpace;
   tex.generateMipmaps = true;
   tex.minFilter = THREE.LinearMipmapLinearFilter;
@@ -55,7 +73,7 @@ export interface ParticleOpts {
   color1?: THREE.Color | [number, number, number];
   alpha0?: number;
   alpha1?: number;
-  frame?: number; // 0 puff, 1 glow
+  frame?: number; // 0 puff, 1 glow, 2 fire, 3 ring
   drag?: number;
   rise?: number; // upward accel (m/s^2), negative = gravity
   rotVel?: number;
@@ -114,7 +132,8 @@ export class ParticleSystem {
           vec2 p = mat2(c, s, -s, c) * position.xy * iSR.x;
           mv.xy += p;
           gl_Position = projectionMatrix * mv;
-          vUv = vec2((uv.x + iFrame) * 0.5, uv.y);
+          // atlas rows: canvas top = frames 0/1 (texture is not flipped, so v grows downward)
+          vUv = vec2((uv.x + mod(iFrame, 2.0)) * 0.5, (1.0 - uv.y + floor(iFrame / 2.0)) * 0.5);
           vCol = iCol;
         }`,
       fragmentShader: /* glsl */ `
