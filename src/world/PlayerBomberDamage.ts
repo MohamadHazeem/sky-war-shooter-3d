@@ -77,26 +77,58 @@ const EMBER_MAT = decalMat(0x0b0a09, 1, 0, -3);
 EMBER_MAT.emissive.setRGB(1.8, 0.45, 0.06);
 
 // ---------- see-through damage: discard airframe fragments inside ragged voids ----------
-// One material for the player's airframe skin, shared across missions so its program is
-// compiled once (menu formation / World.prewarm) and never mid-game. Each void is a
-// rounded box (centre, radius, half extents, jag) in model space; its edge is broken up
-// with value noise and charred, with a thin line of bare metal right at the tear.
+// Void-capable clones of the player's airframe skin, cached across missions; they all share
+// one program (same cache key), so it is compiled once (menu formation / World.prewarm) and
+// never mid-game. Each void is a rounded box (centre, radius, half extents, jag) in the model
+// frame (metres, +Z nose: the frame the hit code and the SkinGrid work in); its edge is broken
+// up with value noise and charred, with a thin line of bare metal right at the tear.
+//
+// Spaces: the models are quantized (KHR_mesh_quantization, tools/compress_models.mjs), so the
+// raw vertex positions (`transformed` in the shader) are normalised integers and the mesh's
+// node carries the dequantize scale + offset (B-17 airframe: x15.76, offset (0, 1.70, -5.10)).
+// The shader therefore maps geometry space to the model frame with a per-material matrix,
+// uVoidM = inverse(model world) * mesh world (meshToModel); every mesh with its own node
+// transform gets its own clone (same program, own uniform). Voids stay in model metres, so
+// radii, extents and the edge noise need no rescaling.
 const voidA = Array.from({ length: VOIDS }, () => new THREE.Vector4(0, 0, 0, -1e4));
 const voidB = Array.from({ length: VOIDS }, () => new THREE.Vector4());
 const voidUniforms = { uVoidA: { value: voidA }, uVoidB: { value: voidB } };
-let voidMat: THREE.MeshStandardMaterial | null = null;
-let voidSrc: THREE.Material | null = null;
+const voidMats = new Map<string, THREE.MeshStandardMaterial>();   // source material + mesh transform -> clone
 
-function makeVoidMat(src: THREE.MeshStandardMaterial) {
+// Geometry space of `mesh` -> the model frame of `root` (its ancestor): includes every node
+// transform in between, the quantization node's scale and offset among them. Built from the
+// local matrices, so it does not depend on where the aircraft is (stable cache keys).
+export function meshToModel(mesh: THREE.Object3D, root: THREE.Object3D, out = new THREE.Matrix4()) {
+  out.identity();
+  for (let o: THREE.Object3D | null = mesh; o && o !== root; o = o.parent) {
+    if (o.matrixAutoUpdate) o.updateMatrix();
+    out.premultiply(o.matrix);
+  }
+  return out;
+}
+
+// The void-capable skin for `mesh` (whose material is `src`) under the model `root`.
+export function skinVoidMaterial(src: THREE.MeshStandardMaterial, mesh: THREE.Object3D, root: THREE.Object3D) {
+  const xf = meshToModel(mesh, root);
+  const key = src.uuid + '|' + xf.elements.map((e) => e.toFixed(4)).join(',');
+  let m = voidMats.get(key);
+  if (!m) voidMats.set(key, m = makeVoidMat(src, xf));
+  return m;
+}
+
+function makeVoidMat(src: THREE.MeshStandardMaterial, xf: THREE.Matrix4) {
   const m = src.clone();
   m.name = 'GD-L-damage';
-  m.customProgramCacheKey = () => 'sws-player-voids-1' + surfaceKey(m);   // + panel lines / weathering (SurfaceDetail.ts)
+  const uVoidM = { value: xf.clone() };
+  m.userData.voidM = uVoidM.value;
+  m.customProgramCacheKey = () => 'sws-player-voids-2' + surfaceKey(m);   // + panel lines / weathering (SurfaceDetail.ts)
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uVoidA = voidUniforms.uVoidA;
     sh.uniforms.uVoidB = voidUniforms.uVoidB;
+    sh.uniforms.uVoidM = uVoidM;
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vVoidP;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvVoidP = transformed;');
+      .replace('#include <common>', '#include <common>\nvarying vec3 vVoidP;\nuniform mat4 uVoidM;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvVoidP = ( uVoidM * vec4( transformed, 1.0 ) ).xyz;');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
 varying vec3 vVoidP;
@@ -331,13 +363,12 @@ export class PlayerBomberDamage {
     let g = grids.get(key);
     if (!g) grids.set(key, g = new SkinGrid(meshes, b.model));
     this.grid = g;
-    // the skin material: swapped for the shared void-capable clone
+    // the skin material: swapped for the void-capable clone matching this mesh's transform
     for (const m of meshes) {
       const mat = m.material as THREE.MeshStandardMaterial;
       if (Array.isArray(mat) || !mat.isMeshStandardMaterial || mat.name === 'engine') continue;
-      if (!voidMat || voidSrc !== mat) { voidMat = makeVoidMat(mat); voidSrc = mat; }
       this.skinMeshes.push(m); this.skinOrig.push(mat);
-      m.material = voidMat;
+      m.material = skinVoidMaterial(mat, m, b.model);
     }
     for (let i = 0; i < VOIDS; i++) { voidA[i].set(0, 0, 0, -1e4); voidB[i].set(0, 0, 0, 0); }
     this.flakVoids = 0;
@@ -390,7 +421,7 @@ export class PlayerBomberDamage {
   warmup(scene: THREE.Scene, at: THREE.Vector3): () => void {
     if (this.world.playerBomber && this.b !== this.world.playerBomber) this.attach(this.world.playerBomber);
     const objs: THREE.Object3D[] = [RIM_MAT, HOLE_MAT, SCORCH_MAT, EMBER_MAT].map((m) => new THREE.Mesh(RIM_GEOS[0], m));
-    if (voidMat) objs.push(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), voidMat));
+    for (const m of voidMats.values()) objs.push(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), m));
     objs.forEach((o, i) => { o.position.copy(at); o.position.x += i * 1.5; scene.add(o); });
     return () => objs.forEach((o) => { scene.remove(o); if (o instanceof THREE.Mesh && o.geometry.type === 'BoxGeometry') o.geometry.dispose(); });
   }
