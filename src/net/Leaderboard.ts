@@ -48,6 +48,9 @@ async function connect(): Promise<Fb> {
   return { db: fs.getFirestore(app), uid: cred.user.uid, fs };
 }
 
+// shared with CloudSave
+export function fbConnect(): Promise<Fb> { return fb(); }
+
 function fb(): Promise<Fb> {
   if (!ready) ready = connect().catch((e) => { ready = null; throw e; });
   return ready;

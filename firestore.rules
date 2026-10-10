@@ -17,6 +17,16 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // cloud saves: the 20-character random document id is the secret transfer code
+    match /saves/{code} {
+      allow get: if request.auth != null && code.size() == 20;
+      allow list, delete: if false;
+      allow create, update: if request.auth != null && code.size() == 20
+        && request.resource.data.keys().hasOnly(['data', 'updatedAt', 'v'])
+        && request.resource.data.data is string && request.resource.data.data.size() < 900000
+        && request.resource.data.updatedAt == request.time && request.resource.data.v == 1;
+    }
+
     match /scores/{id} {
       allow read: if true;
       allow update, delete: if false;

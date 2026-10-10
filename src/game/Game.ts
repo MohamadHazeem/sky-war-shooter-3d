@@ -20,6 +20,8 @@ import * as Radar from '../ui/Radar';
 import { Progression } from './Upgrades';
 import * as Chatter from './RadioChatter';
 import { mountLeaderboard } from '../ui/LeaderboardPanel';
+import { mountCloudSave } from '../ui/CloudSavePanel';
+import { pushSave } from '../net/CloudSave';
 import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
 import { CombatTally } from './CombatTally';
@@ -313,7 +315,7 @@ export class Game {
         if (host) { mountLeaderboard(host, 'survival-gunner', 'ONLINE TOP 10 — B-17 GUNNER'); mountLeaderboard(host, 'survival-pilot', 'ONLINE TOP 10 — P-51 ESCORT'); }
       },
       armory: () => this.ui.hangar(this.prog, 'gunner', { title: 'ARMORY', sub: 'B-17 gunner loadout (P-51 loadout: between rounds)', next: 'Back' }, () => this.startMenu()),
-      settings: () => this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => this.startMenu()),
+      settings: () => { this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => this.startMenu()); this.mountCloud(); },
       credits: () => this.ui.credits(() => this.startMenu()),
     });
     this.ui.fade(false);
@@ -504,6 +506,11 @@ export class Game {
     this.gunner.assist = Math.min(1.6, a * this.loadout.assist);
     this.pilot.assist = Math.min(1.6, a * this.loadout.assist);
     this.world.ballistics.playerHitScale = (1 + 0.4 * a) * this.loadout.hitScale;
+  }
+
+  private mountCloud() {
+    const host = document.querySelector<HTMLElement>('#settings .box');
+    if (host) mountCloudSave(host);
   }
 
   // Field upgrade: a random perk, applied on the spot with a short card (no pause)
@@ -932,6 +939,7 @@ export class Game {
       armory: () => this.ui.armory(this.prog, () => this.ui.debrief({ ...d, merit: undefined, points: this.prog.points }, h)),
     };
     this.ui.debrief(d, h);
+    pushSave(); // progress to the cloud after every mission
     // online leaderboard: survival per role, campaign per mission
     const host = document.querySelector<HTMLElement>('#debrief .box');
     if (host) mountLeaderboard(host, survival ? `survival-${m.role}` : `campaign-${m.id}`, 'ONLINE LEADERBOARD',
@@ -948,7 +956,7 @@ export class Game {
     this.ui.pause({
       resume: () => this.resume(),
       restart: () => { this.resume(); this.startMission(this.mission!); },
-      settings: () => this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => {}),
+      settings: () => { this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => {}); this.mountCloud(); },
       quit: () => { this.ui.hidePause(); this.engine.paused = false; sound.ctx?.resume(); sound.stopSpeech(); this.startMenu(); },
     }, this.mission?.role ?? 'gunner', this.pauseInfo());
   }

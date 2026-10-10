@@ -289,3 +289,7 @@ kbd { font-family: 'IBM Plex Mono', monospace; font-size: 12px; border: 1px soli
 .lb-status { color: var(--ink-dim); font-size: 13px; font-family: 'IBM Plex Mono', monospace; }
 .lb-empty { color: var(--ink-dim); font-size: 13px; padding: 6px 0; }
 table.lb tr.me td { color: var(--khaki); }
+.cloud .cs-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
+.cloud .cs-code { font-family: 'IBM Plex Mono', monospace; color: var(--khaki); letter-spacing: 1px; }
+.cloud input { background: rgba(0,0,0,0.4); border: 1px solid var(--line); color: var(--ink); padding: 7px 9px; font-family: 'IBM Plex Mono', monospace; width: 260px; }
+.cloud .btn { padding: 6px 12px; font-size: 13px; }
