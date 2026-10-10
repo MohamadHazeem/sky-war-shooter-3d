@@ -497,7 +497,7 @@ export class UI {
             <div class="pips">${Array.from({ length: MAX_LEVEL }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</div>
             <button class="btn ${maxed || prog.points < cost ? 'ghost' : ''}" data-u="${u.id}" ${maxed || prog.points < cost ? 'disabled' : ''}>${maxed ? 'Maxed' : `Upgrade · ${cost}`}</button></div>`;
         }).join('')}</div>
-        <div class="row" style="margin-top:18px"><button class="btn" data-go>Launch — ${esc(info.next)}</button></div>
+        <div class="row" style="margin-top:18px"><button class="btn" data-go>${info.next === 'Back' ? 'Back' : `Launch — ${esc(info.next)}`}</button></div>
       </div>`;
       el.querySelectorAll<HTMLButtonElement>('[data-a]').forEach((b) => b.addEventListener('click', () => {
         const a = AIRCRAFT.find((x) => x.id === b.dataset.a)!;
