@@ -7,10 +7,10 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 ## Graphics
 | # | Goal | Status |
 |---|---|---|
-| 1 | Cloud quality: temporal reprojection (more detail at the same cost), sharper silver linings, cloud shadows on the cloud sea | |
+| 1 | Cloud quality: temporal reprojection (more detail at the same cost), sharper silver linings, cloud shadows on the cloud sea | Done — quarter-res temporal reprojection with jitter + neighbourhood clamp (High 12–20 % faster), sharp forward-scatter silver linings, cloud shadows on the cloud sea and on the formation |
 | 2 | Aircraft surfaces: procedural panel lines, rivets, weathering, oil streaks, chipped paint, roughness variation (B-17 + fighters) | Done — procedural panel lines + rivets (object-space projection), panel tone patchwork, chipped leading edges and walkways, exhaust/oil streaks per engine, grime, roughness wear; per model, composes with tints/paint/nose art/damage; distance fade (no shimmer); Low off, Medium lines, High/Ultra all |
 | 3 | Volumetric-looking explosions: raymarched or flipbook fireballs, shockwave distortion | Done — raymarched noise fireballs (white core → orange → red → sunlit black smoke), shock shells, burning debris with smoke trails, cook-off pops, multi-stage heavy and warship blasts, lumpy flak puffs; pooled + LOD, no new shader compiles |
-| 4 | Heat haze and distortion: engine exhausts, explosions, muzzle blast (screen-space refraction) | |
+| 4 | Heat haze and distortion: engine exhausts, explosions, muzzle blast (screen-space refraction) | Done — screen-space heat haze: B-17 nacelle plumes, P-51 / Fw 190 exhausts, muzzle-blast shimmer, explosion shock ripples (off on Low, halved with reduced motion) |
 | 5 | Explosion and muzzle light on clouds and aircraft; glowing tracers lighting the scene | Done — 4 pooled combat lights (explosions, heavy-gun muzzle flashes, hits) tint nearby aircraft and the player\'s gun; fixed light count, no recompiles. Tracer glow sprites not done |
 | 6 | Night mission: moonlight, searchlights, flares, flak flashes in cloud, exhaust flames, night-fighter attacks | Partly — night mood with moonlight, searchlights, exhaust flames and night fighters (Night Fighter operation); flares and flak flashes in cloud not done |
 | 7 | Living interior: the other waist gunner and crew visible and animated, spent brass piles, breath fog at altitude | Done — the other waist gunner (tracks and fires with flash, recoil and brass; slumps when wounded, rookie replaces him), radio room through the open door, ball turret top turning in the floor, tail gunner down the tunnel, brass piling up (900 cap), breath fog in ADS, frost growing on the windows, swinging sun shafts, free look (hold C) |
@@ -31,7 +31,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 ## Extra goals (added overnight)
 | # | Goal | Status |
 |---|---|---|
-| 17 | New German aircraft from FlightGear (He 111 bomber, Me 410 with BK 5 cannon, optionally He 219 / Ta 152 / Do 335) as new enemy types | In progress |
+| 17 | New German aircraft from FlightGear (He 111 bomber, Me 410 with BK 5 cannon, optionally He 219 / Ta 152 / Do 335) as new enemy types | Done — He 111 (raid bomber formations, dorsal gunner) and Do 335 (diving slashing interceptor) converted from FlightGear (GPL v2); Me 410 with telegraphed BK 5 50 mm cannon runs and rear barbettes on the Bf 110 airframe (no GPL Me 410 model exists); He 219 / Ta 152 not available |
 | 18 | P-51 ground attack: strafing trains, flak towers and airfields at low level | In progress |
 | 19 | Arabic for every screen added overnight (campaign map, skills, custom battle, weekly, co-op, theatre, wingman) | Done — campaign map, skills, custom battle, weekly, theatre, FPS counter, raid missions + wingman, co-op lobby texts pending; RTL mirroring, Arabic number agreement, coverage tests |
 | 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | |
@@ -48,3 +48,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 00:01 living interior merged; full regression running; started canopy/turret glass effects (8).
 - 00:04 aircraft surface detail merged; checking B-17 bullet-hole placement (possible quantized-space bug).
 - 00:04 Arabic catch-up merged (272 tests).
+- 00:11 new aircraft + clouds/haze merged (274 tests).
