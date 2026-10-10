@@ -120,6 +120,12 @@
       "aliases": [],
       "voice": "Reed (English (UK))",
       "rate": 196
+    },
+    "tower": {
+      "speaker": "Tower",
+      "aliases": [],
+      "voice": "Grandpa (English (US))",
+      "rate": 178
     }
   },
   "clock": {
@@ -1773,6 +1779,72 @@
       ],
       "text": "That Me 410 Experte is hanging back — he'll use the big gun!",
       "say": "That M E four-ten Experte is hanging back, he will use the big gun!"
+    },
+    {
+      "group": "mission bookends: take-off and landing at Deenethorpe (src/game/Bookends.ts)"
+    },
+    {
+      "id": "bk_clear",
+      "role": "tower",
+      "text": "Deenethorpe tower to Sky Queen: you are cleared for take-off. Good hunting.",
+      "say": "Deenthorpe tower to Sky Queen: you are cleared for take-off. Good hunting."
+    },
+    {
+      "id": "bk_tailwheel",
+      "role": "pilot",
+      "text": "Tail wheel locked… full power.",
+      "say": "Tail wheel locked... full power."
+    },
+    {
+      "id": "bk_flying",
+      "role": "copilot",
+      "text": "Ninety… one-ten… she's flying! Gear up.",
+      "say": "Ninety... one ten... she's flying! Gear up!",
+      "urgent": true
+    },
+    {
+      "id": "bk_climb",
+      "role": "pilot",
+      "text": "Pilot to crew: climbing through the overcast. We form up on top."
+    },
+    {
+      "id": "bk_letdown",
+      "role": "pilot",
+      "text": "Pilot to crew: letting down through the overcast. We're nearly home."
+    },
+    {
+      "id": "bk_land",
+      "role": "tower",
+      "text": "Sky Queen, you are number one to land. Welcome home."
+    },
+    {
+      "id": "bk_flares",
+      "role": "pilot",
+      "text": "Wounded aboard — firing red flares!",
+      "urgent": true
+    },
+    {
+      "id": "bk_crash_crew",
+      "role": "tower",
+      "text": "Crash crew, stand by! Ambulances to the runway!",
+      "urgent": true
+    },
+    {
+      "id": "bk_belly",
+      "role": "pilot",
+      "text": "The gear won't come down — brace for a belly landing!",
+      "urgent": true
+    },
+    {
+      "id": "bk_out",
+      "role": "copilot",
+      "text": "We're down! Everybody out — move!",
+      "urgent": true
+    },
+    {
+      "id": "bk_home",
+      "role": "copilot",
+      "text": "Home in one piece. Nice work, everybody."
     },
     {
       "group": "Phase 5 night + weather fronts (RaidDefence.ts pathfinders / World.weatherFront)"

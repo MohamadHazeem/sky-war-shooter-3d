@@ -104,7 +104,7 @@ class EngineFire extends RandomEvent {
       kicker: `${tx('ENGINE FIRE · NUMBER {n}', { n: this.n })}${this.spread ? ' · ' + tx('SPREADING') : ''}`,
       action: tx('<kbd>X</kbd> HOLD OR MASH — EXTINGUISHER'),
       hint: this.spread ? tx('The wing is burning') : tx('Put it out before it spreads'),
-      fill: this.fill, timeFrac: 1 - this.t / this.limit, danger: this.spread || this.t > 5,
+      fill: this.fill, timeFrac: 1 - this.t / this.limit, danger: this.spread || this.t > 5, code: KEY_EXTINGUISH,
     });
   }
 
@@ -184,7 +184,7 @@ class JammedGun extends RandomEvent {
       kicker: tx('{gun} JAMMED', { gun: label }),
       action: tx('<kbd>R</kbd> TAP FAST OR HOLD — CLEAR THE JAM'),
       hint: here ? tx('Work the charging handle') : tx('Your other guns still fire — or go back with {key}', { key: STATIONS[this.station!].key }),
-      fill: this.fill, timeFrac: 1 - this.t / this.limit,
+      fill: this.fill, timeFrac: 1 - this.t / this.limit, code: here ? KEY_CLEAR_JAM : undefined,
     });
   }
 
@@ -229,7 +229,7 @@ class OxygenFailure extends RandomEvent {
           kicker: tx('OXYGEN FAILURE'),
           action: tx('<kbd>O</kbd> OPEN THE SPARE BOTTLE'),
           hint: tx('You are blacking out'),
-          fill: 1 - this.k, timeFrac: 1 - this.t / this.limit, danger: this.k > 0.55,
+          fill: 1 - this.k, timeFrac: 1 - this.t / this.limit, danger: this.k > 0.55, code: KEY_OXYGEN,
         });
       }
     }

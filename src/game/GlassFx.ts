@@ -144,7 +144,8 @@ const FRAG = /* glsl */ `
       float len = cs * (0.25 + 0.2 * hh.y);
       float line = (1.0 - smoothstep(0.0, w, across)) * (1.0 - smoothstep(len * 0.6, len, along));
       vec2 ts = toScr * t;
-      float facing = pow(1.0 - abs(dot(ts, rs)) / max(length(ts), 1e-6), 3.0);
+      float tl = length(ts);
+      float facing = tl > 1e-20 ? pow(clamp(1.0 - abs(dot(ts / tl, rs)), 0.0, 1.0), 3.0) : 0.0;
       acc += line * facing * (0.35 + 0.65 * h12(id + 5.5));
     }
     return acc;
@@ -188,8 +189,9 @@ const FRAG = /* glsl */ `
       vec2 rs = (ndc - uSunNdc) * vec2(uAspect, 1.0);
       rs /= max(length(rs), 1e-4);
       // inverse of the pixel -> surface Jacobian: surface directions as seen on screen
-      float det = duvx.x * duvy.y - duvy.x * duvx.y;
-      mat2 toScr = mat2(duvy.y, -duvx.y, -duvy.x, duvx.x) / (abs(det) > 1e-14 ? det : 1e-14);
+      // (only the direction of a mapped vector is used, and |dot| ignores its sign, so the adjugate
+      // is enough: dividing by a near-zero determinant overflowed to Inf -> NaN -> black dashes)
+      mat2 toScr = mat2(duvy.y, -duvx.y, -duvy.x, duvx.x);
       float sc = scratches(uv0, 0.012, toScr, rs, px0) + 0.7 * scratches(uv0 + 0.37, 0.0055, toScr, rs, px0);
       float g2 = gk * gk;
       col += uSunCol * uGlint * (sc * (2.0 + 10.0 * g2) * gk + uDust * dust * 0.8 * g2 * gk + 0.06 * g2 * g2);

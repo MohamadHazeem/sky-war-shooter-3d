@@ -124,6 +124,7 @@ export const en = {
   'settings.recruitOnly': 'Recruit only',
   'settings.always': 'Always',
   'settings.killCam': 'Kill cam',
+  'settings.bookends': 'Takeoff & landing scenes',
   'settings.flightMode': 'P-51 flight controls',
   'settings.mouseAim': 'Mouse aim',
   'settings.direct': 'Direct (mouse = stick)',

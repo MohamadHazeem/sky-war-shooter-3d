@@ -101,6 +101,13 @@ const table: PhraseTable = {
     '<kbd>Move the mouse</kbd> to fly where you look · <kbd>Left button</kbd> fires': '<kbd>حرّك الفأرة</kbd> لتطير حيث تنظر · <kbd>الزر الأيسر</kbd> للإطلاق',
     'Put the K-14 sight ahead of the bandit and fire · <kbd>W/S</kbd> throttle': 'ضع منظار K-14 أمام الطائرة المعادية وأطلق · <kbd>W/S</kbd> الخانق',
     'Fw 190s will come for you — keep turning · <kbd>V</kbd> chase view': 'ستلاحقك طائرات Fw 190 — واصل الانعطاف · <kbd>V</kbd> منظر المطاردة',
+    // the same tips with the touch controls
+    '<kbd>Drag</kbd> to swing the gun · <kbd>Hold FIRE</kbd> to shoot': '<kbd>اسحب بإصبعك</kbd> لتوجيه الرشاش · <kbd>اضغط مطوّلاً على إطلاق</kbd> للرمي',
+    'Lead the fighters — aim where they will be · <kbd>ZOOM</kbd> for the ring sight': 'تقدّم على المقاتلات — صوّب حيث ستكون · <kbd>تقريب</kbd> للمهداف الحلقي',
+    'Short bursts keep the barrel cool · tap a gun position to change seats': 'الرشقات القصيرة تُبقي السبطانة باردة · المس موقع رشاش للانتقال إليه',
+    '<kbd>Drag</kbd> on the left to fly · <kbd>FIRE</kbd> shoots': '<kbd>اسحب</kbd> في الجهة اليسرى لتطير · <kbd>إطلاق</kbd> للرمي',
+    'Put the K-14 sight ahead of the bandit and fire · <kbd>THR</kbd> lever for power': 'ضع منظار K-14 أمام الطائرة المعادية وأطلق · ذراع <kbd>خانق</kbd> للقدرة',
+    'Fw 190s will come for you — keep turning · <kbd>VIEW</kbd> chase view': 'ستلاحقك طائرات Fw 190 — واصل الانعطاف · <kbd>منظر</kbd> منظر المطاردة',
     'Guns topped up': 'أُعيد تذخير الرشاشات',
     'RELOADING — new ammunition box': 'إعادة التلقيم — صندوق ذخيرة جديد',
     'BARREL OVERHEATED — let it cool': 'السبطانة محمّاة — دعها تبرد',

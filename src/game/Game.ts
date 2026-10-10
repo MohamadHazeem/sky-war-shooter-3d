@@ -44,6 +44,7 @@ import { crewRoster } from './CrewRoster';
 import { BailOutCinematic, BAIL_TOTAL } from './BailOutCinematic';
 import { TargetArea } from '../world/TargetArea';
 import { Cinematics } from './Cinematics';
+import { Bookends } from './Bookends';
 import { ServiceRecord } from './ServiceRecord';
 import { SkillRuntime } from './SkillRuntime';
 import { Pacing } from './Pacing';
@@ -140,6 +141,7 @@ export class Game {
   private feel: GameFeel;          // kill juice, streak meter / ON FIRE (GameFeel.ts)
   private combat: CombatFeedback;  // damage arcs, lining-up warning (CombatFeedback.ts)
   readonly cine: Cinematics;       // kill cam, mission fly-by, best-moment replay (Cinematics.ts)
+  readonly bookends: Bookends;     // take-off / landing scenes at Deenethorpe (Bookends.ts)
   private lastKillAt = -99;
   private aceAwarded = false;
   private tally = new CombatTally();
@@ -167,6 +169,7 @@ export class Game {
     this.photo = new PhotoMode(engine, input, this.world);
     this.feel = new GameFeel(engine, this.world, ui, this.combo); this.combat = new CombatFeedback(engine, this.world);
     this.cine = new Cinematics(engine, input, ui, this);
+    this.bookends = new Bookends(engine, ui, this);
     this.abilities = new Abilities(engine, input, ui, this);
     this.boss = new BossBattle(this.world, ui, { score: (n) => { this.score += n; }, slowmo: (s) => { this.slowmo = Math.max(this.slowmo, s); }, perk: (l) => this.awardPerk(l), merit: (n) => this.prog.earn(n) });
     this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: true, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 65 });
@@ -418,6 +421,7 @@ export class Game {
     this.state = 'briefing';
     prepareCampaignMission(m, this.progress); // campaign state modifiers (CampaignState.ts)
     this.ui.briefing(m, () => this.startMission(m), () => (m.number || isSideRaid(m) ? this.showCampaign() : this.startMenu()));
+    this.bookends.prepare(m); // take-off scene: build the base behind the sheet, prewarm its shaders
   }
 
   // Cinematic camera over the formation behind the menus
@@ -468,6 +472,7 @@ export class Game {
   startMission(m: Mission) {
     // Models and gameplay sounds stream in behind the menu: wait for them (loading screen)
     if (!isMissionReady()) { whenMissionReady(this.ui, () => this.startMission(m)); return; }
+    if (this.bookends.takeoff(m, () => this.startMission(m))) return; // take-off scene first (Bookends.ts)
     prepareCampaignMission(m, this.progress); // campaign state: formation size, enemy count/skill, P-51 escort
     sound.init();
     this.photo.exit();
@@ -558,9 +563,15 @@ export class Game {
     setTimeout(() => this.ui.fade(false), 50);
     this.input.lock();
     this.ui.banner(m.number ? `MISSION ${m.number} · ${m.target.toUpperCase()}` : m.date.toUpperCase(), m.title, 3800);
-    const tips = m.role === 'gunner'
-      ? ['<kbd>Move the mouse</kbd> to swing the gun · <kbd>Hold left button</kbd> to fire', 'Lead the fighters — aim where they will be · <kbd>Right button</kbd> to zoom', 'Short bursts keep the barrel cool · <kbd>1–5</kbd> change gun position']
-      : ['<kbd>Move the mouse</kbd> to fly where you look · <kbd>Left button</kbd> fires', 'Put the K-14 sight ahead of the bandit and fire · <kbd>W/S</kbd> throttle', 'Fw 190s will come for you — keep turning · <kbd>V</kbd> chase view'];
+    // opening tips (touch controls get their own wording); Gunnery School teaches with its own cards
+    const touch = document.body.classList.contains('touch');
+    const tips = m.tutorial ? [] : m.role === 'gunner'
+      ? touch
+        ? ['<kbd>Drag</kbd> to swing the gun · <kbd>Hold FIRE</kbd> to shoot', 'Lead the fighters — aim where they will be · <kbd>ZOOM</kbd> for the ring sight', 'Short bursts keep the barrel cool · tap a gun position to change seats']
+        : ['<kbd>Move the mouse</kbd> to swing the gun · <kbd>Hold left button</kbd> to fire', 'Lead the fighters — aim where they will be · <kbd>Right button</kbd> to zoom', 'Short bursts keep the barrel cool · <kbd>1–5</kbd> change gun position']
+      : touch
+        ? ['<kbd>Drag</kbd> on the left to fly · <kbd>FIRE</kbd> shoots', 'Put the K-14 sight ahead of the bandit and fire · <kbd>THR</kbd> lever for power', 'Fw 190s will come for you — keep turning · <kbd>VIEW</kbd> chase view']
+        : ['<kbd>Move the mouse</kbd> to fly where you look · <kbd>Left button</kbd> fires', 'Put the K-14 sight ahead of the bandit and fire · <kbd>W/S</kbd> throttle', 'Fw 190s will come for you — keep turning · <kbd>V</kbd> chase view'];
     tips.forEach((t, i) => setTimeout(() => { if (this.state === 'playing' && this.mission === m) this.ui.tip(t, 4200); }, 4200 + i * 4600));
     setTimeout(() => {
       if (this.state !== 'playing') return;
@@ -963,6 +974,7 @@ export class Game {
   }
 
   private showDebrief() {
+    if (this.endResult?.success && this.bookends.landing(this.mission!, () => this.showDebrief())) return; // landing scene first
     const m = this.mission!;
     const w = this.world;
     const r = this.endResult!;
@@ -1100,6 +1112,7 @@ export class Game {
       this.input.endFrame();
       return;
     }
+    if (this.bookends.frame(dt)) { this.input.endFrame(); return; } // take-off / landing scene owns the frame
     if (this.state === 'paused') { this.drawOverlay(); this.input.endFrame(); return; }
     w.update(dt);
     this.coop.update(dt);

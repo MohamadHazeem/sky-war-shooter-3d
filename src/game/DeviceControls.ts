@@ -11,7 +11,7 @@ import { keyMap } from '../core/KeyMap';
 import '../ui/devices.css';
 
 // Touch controls, gamepad and accessibility preferences, wired up from main.ts so Game.ts
-// needs no device code. Runs just before Game.frame() each frame (it wraps engine.onFrame)
+// needs no device code. Runs just before Game.frame() each frame (engine.beforeFrame)
 // so the aim it adds is consumed by the controllers in the same frame.
 //
 // Touch mode (body.touch): 'auto' = a phone/tablet, or as soon as a finger touches the
@@ -46,6 +46,10 @@ export class DeviceControls {
         g.requestStation(STATION_ORDER[(i + dir + STATION_ORDER.length) % STATION_ORDER.length]);
       },
       togglePause: () => this.togglePause(),
+      promptKey: () => {
+        const p = document.querySelector<HTMLElement>('#evPrompt.show');
+        return p?.dataset.code || null;
+      },
       onConnect: (name, on) => this.toast(on ? tx('Gamepad connected — {name}', { name: shortName(name) }) : tx('Gamepad disconnected')),
     });
     // P-51 wingman orders (Wingman.ts listens for the number keys): a row of small buttons
@@ -71,9 +75,9 @@ export class DeviceControls {
     access.onChange(() => { this.refreshMode(); this.touch.sensitivity = access.prefs.touchSens; });
     access.apply();
 
-    // run before the game's frame
-    const frame = engine.onFrame;
-    engine.onFrame = (dt, t) => { this.update(dt); frame?.(dt, t); };
+    // run before the game's frame (engine.beforeFrame, so the replay theatre taking over
+    // engine.onFrame keeps the gamepad working)
+    engine.beforeFrame = (dt) => this.update(dt);
   }
 
   private flying() {
@@ -128,6 +132,12 @@ export class DeviceControls {
       this.touch.addAbility('focus', 'FOCUS', keys[2]);
     }
     this.touch.show(role);
+    // the P-51's wingman row pushes the score block down (devices.css)
+    const tp = role === 'pilot';
+    if (document.body.classList.contains('touch-pilot') !== tp) document.body.classList.toggle('touch-pilot', tp);
+    // Gunnery School: no ability buttons (Abilities hides its bar there too)
+    const school = !!g.mission?.tutorial;
+    if (this.touch.el.classList.contains('school') !== school) this.touch.el.classList.toggle('school', school);
     this.touch.update(real, g.pilot.throttleCmd);
     // portrait on a phone: hold the game until it is turned sideways
     if (this.touchMode && g.state === 'playing' && isPortrait()) g.pause();

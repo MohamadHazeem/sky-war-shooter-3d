@@ -72,6 +72,9 @@ export class Engine {
   height = 1;
   pixelRatio = 1;
   onFrame?: (dt: number, time: number) => void;
+  // Runs just before onFrame, and keeps running when a screen takes over onFrame (the replay
+  // theatre does): touch / gamepad input (DeviceControls)
+  beforeFrame?: (dt: number) => void;
   fps = 60;
   // Dynamic resolution: the render scale drops when frames run long and creeps back up
   // when there is headroom; a scale that proved too slow becomes a ceiling for a while.
@@ -295,6 +298,7 @@ export class Engine {
     this.time += dt;
     Atmos.windOffset.addScaledVector(Atmos.wind, dt);
     for (const u of this.updatables) u.update(dt, this.time);
+    this.beforeFrame?.(dt);
     this.onFrame?.(dt, this.time);
     this.heatHaze.update(dt);
     // after the game moved the formation, so the distant boxes stay locked to it
