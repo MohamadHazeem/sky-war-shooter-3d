@@ -41,6 +41,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 25 | Weather fronts mid-mission (storm wall approaching, smooth transitions) + night flares, flak glow in cloud, night tracers | Done — `weather.front: { at, to, duration }` (Weather.ts) blends cover, sun, sky, haze and rain on the glass per frame without history resets; a cumulonimbus wall (StormWall.ts) closes in over the last 95 s and lightning starts once the storm is overhead; m9 flies from clear air into the front, m3's overcast breaks up before the bomb run; Survival rounds roll for an occasional front; Custom Battle has a "Weather front" option |
 | 26 | Balance pass: autoplay statistics at near-perfect and human-like bot skill across all modes; tune boss length, raid fairness, round lengths; docs/BALANCE.md | In progress |
 | 27 | Formation drama set pieces: neighbour B-17 downed by flak with chutes counted, mid-air collision, bomb-bay explosion buffeting the formation, straggler, P-51s diving past the window | In progress |
+| 28 | "What's new" screen with Try-it buttons + aircraft recognition gallery (3D viewer, spec cards, quiz) | In progress |
 | 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | Done — Game.ts 1469 → 536 lines + Director, MissionFlow, WorldEvents, GameHud, MenuScene; docs/ARCHITECTURE.md (loop order, where to hook features); README layout; A/B regression of all 12 missions (no behaviour change) |
 
 ## Log
