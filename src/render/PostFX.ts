@@ -172,6 +172,7 @@ uniform sampler2D tCloud;
 uniform sampler2D tDirt;
 uniform float uDirt;
 uniform float uAspect;
+uniform float uDesat;   // 0..1 wounded crew: drain colour and pulse the edges
 
 float sunVisibility() {
   if (uSunOn <= 0.0) return 0.0;
@@ -308,10 +309,17 @@ void main() {
   // Damage tint
   col = mix(col, col * vec3(1.4, 0.55, 0.5), uDamageFlash);
 
+  // Wounded: slow drain of colour toward grey (linear light, so it reads as fatigue, not a filter)
+  col = mix(col, vec3(dot(col, vec3(0.2126, 0.7152, 0.0722))), uDesat * 0.7);
+
   // Vignette
   vec2 q = vUv - 0.5;
   float vig = 1.0 - dot(q, q) * uVignette;
   col *= clamp(vig, 0.0, 1.0);
+  // Wounded: a dark edge that breathes slowly with the pulse of the wound
+  float pulse = 0.5 + 0.5 * sin(uTime * 2.4);
+  float edge = smoothstep(0.12, 0.62, length(q));
+  col *= 1.0 - uDesat * edge * (0.18 + 0.12 * pulse);
 
   // linear -> sRGB
   col = pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2));
@@ -345,6 +353,7 @@ export class PostFX {
   // Extra film-grain amplitude in shadows (added on top of the uniform grain)
   grainDark = 0.03;
   damageFlash = 0;
+  desat = 0;   // wounded-crew look, 0..1 (set per frame by Game)
   flash = 0;
   noBlurDist = 1.5;
   flareStrength = 1;
@@ -364,6 +373,7 @@ export class PostFX {
         uRes: { value: new THREE.Vector2() }, uFlash: { value: 0 }, uNoBlurDist: { value: 1.5 },
         uSunUV: { value: new THREE.Vector2() }, uSunOn: { value: 0 }, uSunCol: { value: new THREE.Vector3() },
         tCloud: { value: null }, tDirt: { value: makeDirt() }, uDirt: { value: 0.6 }, uAspect: { value: 1 },
+        uDesat: { value: 0 },
       },
       vertexShader: vert,
       fragmentShader: finalFrag,
@@ -401,6 +411,7 @@ export class PostFX {
     u.uDofStrength.value = this.dofStrength;
     u.uTime.value = time;
     u.uDamageFlash.value = this.damageFlash;
+    u.uDesat.value = this.desat;
     u.uVignette.value = this.vignette;
     u.uGrain.value = this.grain;
     u.uGrainDark.value = this.grainDark;
