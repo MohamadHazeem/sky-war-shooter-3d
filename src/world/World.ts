@@ -13,6 +13,7 @@ import { Contrails } from '../render/Contrails';
 import { Wrecks, BreakKind } from './Wrecks';
 import { updateExhausts } from './Exhaust';
 import { WingVapor } from './WingVapor';
+import { makeDropTank } from './Props';
 
 export const ENEMY_SCALE = 1.7;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 260; // ~20 hits from a .50 to wear one down
@@ -95,12 +96,8 @@ export class World implements WorldView {
     this.ballistics.onNearMiss = (p, cannon) => {
       if (Math.random() < 0.35) sound.play('crack', p, { gain: cannon ? 0.5 : 0.3, delay: false });
     };
-    // Yellow 300 L drop tank
-    const tank = new THREE.Mesh(new THREE.CapsuleGeometry(0.33, 1.3, 6, 12), new THREE.MeshStandardMaterial({ color: 0xd9a51e, roughness: 0.5, metalness: 0.2 }));
-    tank.rotation.x = Math.PI / 2;
-    tank.castShadow = true;
-    const g = new THREE.Group(); g.add(tank);
-    this.tankProto = g;
+    // Yellow 300 L drop tank prototype, cloned per fighter
+    this.tankProto = makeDropTank();
   }
 
   // ---------- WorldView ----------
