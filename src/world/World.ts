@@ -9,6 +9,7 @@ import { AI_EXTRA, dirFromYawPitch, inArc, STATIONS, STATION_ORDER, StationDef }
 import { sound } from '../audio/Sound';
 import { Contrails } from '../render/Contrails';
 import { Wrecks, BreakKind } from './Wrecks';
+import { WingVapor } from './WingVapor';
 
 export const ENEMY_SCALE = 1.7;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 260; // ~20 hits from a .50 to wear one down
@@ -44,6 +45,7 @@ export class World implements WorldView {
   readonly ballistics = new Ballistics(6000);
   readonly effects: Effects;
   readonly contrails = new Contrails(64);
+  private wingVapor: WingVapor;
   readonly wrecks: Wrecks;
   playerFocus = 0.7;
   playerAimDir = new THREE.Vector3(1, 0, 0);
@@ -81,6 +83,7 @@ export class World implements WorldView {
     this.scene = engine.scene;
     this.effects = new Effects(this.scene);
     this.wrecks = new Wrecks(this.scene, this.effects);
+    this.wingVapor = new WingVapor(this.effects);
     this.scene.add(this.ballistics.tracers.mesh);
     this.scene.add(this.contrails.mesh);
     this.ballistics.onHit = (e) => this.onHit(e);
@@ -482,6 +485,7 @@ export class World implements WorldView {
       this.fireGuns(a, dt);
       this.damageEffects(a, dt);
     }
+    this.wingVapor.update(this.aircraft, dt, this.listener);
     this.bomberGunners(dt);
     this.flak(dt);
     this.updateRockets(dt);
@@ -734,6 +738,7 @@ export class World implements WorldView {
     this.effects.rebase(off);
     // rockets are scene children (shifted by the engine); nothing else to do
     this.contrails.rebase(off);
+    this.wingVapor.rebase(off);
     for (const p of this.pilots.values()) if (p instanceof EnemyPilot) p.setupPoint.sub(off);
   }
 
