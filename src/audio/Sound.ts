@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Music } from './Music';
 import { AirframeCreaks } from './Creaks';
+import { Breathing } from './Breathing';
 
 // Procedural audio engine (no sample files).
 // - Engines are synthesised as looping firing-pulse trains: Wright R-1820 Cyclones
@@ -49,6 +50,7 @@ export class Sound {
   private radioBed: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
   readonly music = new Music();
   private creaks: AirframeCreaks | null = null;
+  private breathing: Breathing | null = null;
   volume = 0.8;
   radioEnabled = true;
   musicEnabled = true;
@@ -81,6 +83,7 @@ export class Sound {
     this.creaks = new AirframeCreaks(ctx, this.amb, this.revInSend);
     this.buildBuffers();
     this.startAmbience();
+    this.breathing = new Breathing(ctx, this.amb);
     for (let i = 0; i < 6; i++) this.voices.push(this.makeVoice());
     this.music.init(ctx, this.duck, this.revOutSend);
     this.music.enabled = this.musicEnabled;
@@ -456,6 +459,8 @@ export class Sound {
     if (mode === 'fighter') this.ensurePlayerEngine();
     else if (this.playerEngine) this.playerEngine.gain.gain.setTargetAtTime(0, t, 0.3);
     this.music.setScene(mode === 'menu' ? 'menu' : 'mission');
+    // Oxygen-mask breathing runs in the aircraft, silent on the menus
+    if (mode === 'menu') this.breathing?.stop(); else this.breathing?.start();
   }
 
   private ensurePlayerEngine() {
@@ -549,6 +554,7 @@ export class Sound {
     }
     for (const v of this.voices) if (!used.has(v)) { v.gain.gain.setTargetAtTime(0, t, 0.25); v.whooshGain.gain.setTargetAtTime(0, t, 0.1); v.owner = -1; }
     this.music.setIntensity(fighters.length ? Math.max(intensity, 0.35) : 0);
+    this.breathing?.setIntensity(fighters.length ? intensity : 0);
   }
 
   play(name: BufName, pos: THREE.Vector3 | null, opts: { gain?: number; rate?: number; delay?: boolean; ref?: number; reverb?: number } = {}) {
