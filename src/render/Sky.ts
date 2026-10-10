@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Atmos, atmosUniforms, skyGLSL } from './Atmosphere';
+import { TARGET_GLSL, targetUniforms } from './TargetGround';
 
 // Sky dome that follows the camera. Writes depth at the far plane only via the
 // depthWrite=false + renderOrder trick, so clouds/aerial-perspective treat it as infinity.
@@ -9,7 +10,7 @@ export class SkyDome {
   constructor() {
     const geo = new THREE.SphereGeometry(1, 64, 32);
     const mat = new THREE.ShaderMaterial({
-      uniforms: { ...atmosUniforms, uGroundXZ: { value: new THREE.Vector2() } },
+      uniforms: { ...atmosUniforms, ...targetUniforms, uGroundXZ: { value: new THREE.Vector2() } },
       vertexShader: /* glsl */ `
         varying vec3 vDir;
         void main() {
@@ -29,6 +30,7 @@ export class SkyDome {
           return mix(mix(h2(i), h2(i + vec2(1, 0)), u.x), mix(h2(i + vec2(0, 1)), h2(i + vec2(1, 1)), u.x), u.y);
         }
         float fbm(vec2 p) { float a = 0.5, s = 0.0; for (int i = 0; i < 5; i++) { s += a * vnoise(p); p = p * 2.03 + 17.1; a *= 0.5; } return s; }
+        ${TARGET_GLSL}
 
         // High cirrus: thin ice streaks on a plane ~11 km up. Noise is stretched along the
         // wind axis and domain-warped so the filaments curl; only the noise peaks show.
@@ -44,6 +46,8 @@ export class SkyDome {
         vec3 terrain(vec2 xz, float dist) {
           vec2 p = xz / 1000.0;
           float land = fbm(p * 0.035 + 3.0);
+          // the bombing target always stands on dry land
+          if (uTgt.w > 0.0) land += 0.4 * (1.0 - smoothstep(uTgt.z * 1.2, uTgt.z * 2.6, length(xz - uTgt.xy)));
           if (land < 0.4) return mix(vec3(0.025, 0.05, 0.075), vec3(0.04, 0.07, 0.09), fbm(p * 0.6)); // sea
           // field grid with varied crops
           vec2 cell = floor(p * vec2(3.1, 2.3) + vec2(fbm(p * 0.3) * 2.0));
@@ -64,10 +68,19 @@ export class SkyDome {
         void main() {
           vec3 d = normalize(vDir);
           vec3 col = skyRadiance(d);
+          // ground point relative to the bombing target, and its pixel footprint (m), taken
+          // outside the branch so the derivatives stay defined
+          float tg = uCamAlt / max(-d.y, 1e-3);
+          vec2 relG = (uGroundXZ - uTgt.xy) + d.xz * tg;
+          float fw = max(length(dFdx(relG)), length(dFdy(relG)));
           if (d.y < -0.002) {
             float t = uCamAlt / -d.y;
             vec2 xz = uGroundXZ + d.xz * t;
-            vec3 g = terrain(xz, t) * (0.35 + 0.65 * max(uSunDir.y, 0.0)) * (uSunColor / 4.0);
+            vec3 light = (0.35 + 0.65 * max(uSunDir.y, 0.0)) * (uSunColor / 4.0);
+            vec3 alb = terrain(xz, t);
+            vec3 g;
+            if (uTgt.w > 0.0) g = targetGround(relG, alb, fw, light, uGroundXZ - uTgt.xy, d);
+            else g = alb * light;
             // 7 km of air: strong blue haze, heavier toward the horizon
             float haze = 1.0 - exp(-t / 24000.0);
             col = mix(g + uHorizon * 0.22, col, haze);

@@ -94,6 +94,11 @@ export const VOICE_LINES = {
   start_pilot: { speakers: ["Lead"], text: "Blue flight, form up on the bombers. Keep your eyes peeled for bandits." },
   strag_player: { speakers: ["Pilot"], text: "We can't hold formation. We're falling behind — keep those guns hot!" },
   tanks: { speakers: ["Navigator"], text: "They're dropping their belly tanks — here they come!" },
+  tgt_burn: { speakers: ["Tail"], text: "Smoke all the way to the river. The whole works is burning!" },
+  tgt_doors: { speakers: ["Bombardier"], text: "Bomb bay doors coming open. Hold her steady…" },
+  tgt_hit: { speakers: ["Ball Turret"], text: "Look at that… we hit it square!" },
+  tgt_hit_escort: { speakers: ["Big Friend"], text: "Bombs on target! Look at it burn!" },
+  tgt_secondary: { speakers: ["Tail", "Big Friend"], text: "Secondary explosion! Something big just went up down there!" },
   wound: { speakers: ["Navigator"], text: "Gunner's hit! Stay on that gun if you can!" },
 } as const;
 

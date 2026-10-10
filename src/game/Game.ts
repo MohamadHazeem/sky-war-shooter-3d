@@ -29,6 +29,7 @@ import { CombatTally } from './CombatTally';
 import { achievements } from './Achievements';
 import { GameFeel } from './GameFeel';
 import { CombatFeedback, killFeedText } from '../ui/CombatFeedback';
+import { TargetArea } from '../world/TargetArea';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -119,12 +120,13 @@ export class Game {
   private menuMode = true;
   private distantBattle = new DistantBattle();
   private menuGunner = false;
-  private bombs: { obj: THREE.Object3D; vel: THREE.Vector3; life: number }[] = [];
+  private target: TargetArea;      // bomb run: target city, bomb stream, impacts (TargetArea.ts)
   private bombGeo = new THREE.CapsuleGeometry(0.2, 1.1, 4, 8);
   private bombMat = new THREE.MeshStandardMaterial({ color: 0x3c3f33, roughness: 0.6, metalness: 0.4 });
 
   constructor(private engine: Engine, private input: Input, private ui: UI) {
     this.world = new World(engine);
+    this.target = new TargetArea(engine, this.world);
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
     this.photo = new PhotoMode(engine, input, this.world);
@@ -845,41 +847,11 @@ export class Game {
     }
   }
 
-  private dropBombs() {
-    for (const b of this.world.bombers()) {
-      if (!b.alive) continue;
-      for (let i = 0; i < 6; i++) {
-        setTimeout(() => {
-          if (!b.alive) return;
-          const m = new THREE.Mesh(this.bombGeo, this.bombMat);
-          m.rotation.x = Math.PI / 2;
-          const g = new THREE.Group(); g.add(m);
-          g.position.copy(b.localToWorld(new THREE.Vector3(R() * 0.3, -1.6, 1.5 - i * 0.4)));
-          g.castShadow = true;
-          this.engine.scene.add(g);
-          this.bombs.push({ obj: g, vel: b.vel.clone(), life: 18 });
-        }, i * 260 + Math.random() * 300);
-      }
-    }
-  }
+  private dropBombs() { this.target.bombsAway(); }
 
-  private clearBombs() {
-    for (const b of this.bombs) b.obj.removeFromParent();
-    this.bombs = [];
-  }
+  private clearBombs() { this.target.clear(); }
 
-  private updateBombs(dt: number) {
-    for (const b of this.bombs) {
-      b.life -= dt;
-      b.vel.y -= 9.81 * dt;
-      b.vel.multiplyScalar(Math.exp(-0.02 * dt));
-      b.obj.position.addScaledVector(b.vel, dt);
-      // nose tips down as it falls
-      b.obj.lookAt(b.obj.position.clone().add(b.vel));
-      if (b.life <= 0) b.obj.removeFromParent();
-    }
-    this.bombs = this.bombs.filter((b) => b.life > 0);
-  }
+  private updateBombs(dt: number) { this.target.update(dt, this.menuMode ? null : this.mission); }
 
   private finish(success: boolean, reason: string, bailOut = false) {
     if (this.endResult) return;
