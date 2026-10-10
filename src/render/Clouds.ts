@@ -49,6 +49,8 @@ uniform vec3 uWind;
 uniform vec4 uLow;   // base, top, coverage, density
 uniform vec4 uHigh;
 uniform float uTime;
+uniform vec3 uShapeDrift;   // slow churn of the shape lookup (tile units)
+uniform vec3 uDetailDrift;  // slow churn of the detail lookup (tile units)
 uniform float uSteps;
 uniform float uAmb;
 #define Atmos_hazeDist 60000.0
@@ -73,13 +75,14 @@ float density(vec3 p, vec4 L, float layerSel, bool cheap) {
   float topH = clamp(cov * 1.05, 0.05, 1.0);
   float prof = smoothstep(0.0, 0.08, h) * (1.0 - smoothstep(topH * 0.25, topH, h));
   float scale = mix(5600.0, 3800.0, layerSel);
-  vec4 n = texture(tShape, q / scale);
+  // Shape drifts against the weather field, so cells deform and churn instead of only sliding with the wind
+  vec4 n = texture(tShape, q / scale + uShapeDrift);
   float fbm = n.g * 0.625 + n.b * 0.25 + n.a * 0.125;
   float base = remap(n.r, -(1.0 - fbm), 1.0, 0.0, 1.0);
   base = remap(base * prof, 1.0 - cov * 0.85, 1.0, 0.0, 1.0);
   if (base <= 0.0) return 0.0;
   if (!cheap) {
-    float dn = texture(tDetail, q / (scale * 0.14) + vec3(0.0, uTime * 0.002, 0.0)).r;
+    float dn = texture(tDetail, q / (scale * 0.14) + vec3(0.0, uTime * 0.002, 0.0) + uDetailDrift).r;
     float dmod = mix(dn, 1.0 - dn, clamp(h * 4.0, 0.0, 1.0));
     base = remap(base, dmod * 0.42, 1.0, 0.0, 1.0);
   }
@@ -248,6 +251,8 @@ export class CloudRenderer {
         tWeather: { value: createWeatherMap(256) },
         uWind: { value: Atmos.windOffset },
         uTime: { value: 0 },
+        uShapeDrift: { value: new THREE.Vector3() },
+        uDetailDrift: { value: new THREE.Vector3() },
         uSteps: { value: this.steps },
         uAmb: { value: 1.0 },
         uWeatherScale: { value: 17000 },
@@ -293,6 +298,13 @@ export class CloudRenderer {
       u.uHigh.value.set(Atmos.highBase, Atmos.highTop, Atmos.highCoverage, Atmos.highDensity);
     }
     this.mat.uniforms.uTime.value = time;
+    // Bounded sinusoidal drift (never grows, so no float precision loss in texture coords).
+    // Incommensurate frequencies keep the motion from visibly repeating.
+    this.mat.uniforms.uShapeDrift.value.set(
+      Math.sin(time * 0.021) * 0.05 + Math.sin(time * 0.057 + 1.3) * 0.02,
+      Math.sin(time * 0.013 + 2.1) * 0.03,
+      Math.cos(time * 0.017) * 0.05 + Math.cos(time * 0.043) * 0.02);
+    this.mat.uniforms.uDetailDrift.value.set(Math.cos(time * 0.031) * 0.06, 0, Math.sin(time * 0.037 + 0.7) * 0.06);
     this.mat.uniforms.uSteps.value = this.steps;
     this.mat.uniforms.uAmb.value = Atmos.cloudAmbient;
     atmosUniforms.uCamAlt.value = camera.position.y;
