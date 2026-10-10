@@ -726,6 +726,7 @@ export class Game {
     this.floatingOrigin();
     sound.setListener(this.engine.camera);
     this.distantBattle.update(dt, this.engine.camera, this.state === 'playing' && !this.menuMode);
+    sound.updateWind(dt);
     w.listener = this.engine.camera.position;
     sound.updateFighterVoices(w.fighterSoundInfo());
     // damaged B-17 engines change the interior drone (Sound.setEngineHealth caches repeats)
