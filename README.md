@@ -57,25 +57,32 @@ acceleration enabled. Mouse and keyboard only. Click the game to capture the mou
 | M | Toggle mouse aim / direct stick |
 | Right button | Zoom |
 
-Settings cover mouse sensitivity, Y inversion, volume, radio voices, graphics quality, target
-markers (switch off for a purer simulation) and the P-51 control mode.
+Settings cover difficulty (Recruit adds a lead indicator; Ace is harsher), mouse sensitivity,
+Y inversion, volume, music, radio voices, graphics quality (auto-lowered on slow machines),
+target markers (switch off for a purer simulation) and the P-51 control mode.
 
 ## How it works
 
 * **Rendering**: Three.js (WebGL 2) with a reversed-Z depth buffer.
-  * Raymarched volumetric clouds: a dense cumulus layer below the formation plus scattered cumulus above.
-  * Aerial perspective, PBR aircraft lit by the sky's environment map, and sun shadows.
-  * HDR post-processing: bloom, camera motion blur, near-field depth of field like the film, filmic tone mapping and grading.
+  * Raymarched volumetric clouds with depth-aware upsampling, and per-mission time of day (from high summer sun to golden-hour winter light).
+  * Condensation trails streaming from every bomber engine.
+  * A second pass draws transparent effects (contrails, tracers, smoke, glass) over the clouds.
+  * HDR post-processing: bloom with lens dirt, sun lens flare (occluded by aircraft and clouds), camera motion blur, near-field depth of field, filmic grading and trauma-based camera shake.
+  * Procedural riveted-aluminium interior and parkerised gun textures. Bullet holes let in pinpoints of daylight and dusty sunbeams.
+  * Explosions with fireball, shockwave, burning debris and lingering smoke.
 * **Simulation**:
-  * Fixed-wing flight model: power and drag, lift from angle of attack with stall, G limit and G blackout.
+  * Fixed-wing flight model: power and drag, lift from angle of attack with stall, AoA and G limiter in mouse-aim mode, G blackout.
   * Ballistic rounds with gravity and inherited aircraft velocity, so you have to lead your target.
-  * Per-zone damage for engines, wings, tail and cockpit, with fires, smoke trails, explosions, bail-outs and flak.
+  * Per-zone damage with fires that spread into the wing, the pilot's engine fire extinguishers, bail-outs, flak and Wgr. 21 rocket salvos fired into the formation.
 * **AI**:
-  * Luftwaffe pilots run head-on, stern, beam and high-side attacks. They drop their belly tanks, break away under the box, extend and come back. They turn to fight escorts that jump them.
-  * Your own crew and every other bomber's gunners man their turrets.
+  * Luftwaffe pilots run head-on, stern, beam and high-side attacks, each pass with its own aiming error. They drop their belly tanks, break away under the box, extend and come back. They turn to fight escorts that jump them.
+  * Turrets on every bomber visibly track their crews' targets.
 * **Audio**: fully procedural Web Audio.
-  * Wright Cyclone drone inside the bomber, Merlin engine, Doppler-shifted fighter fly-bys, and positioned gunfire, flak and impacts with speed-of-sound delay.
-  * Crew radio callouts with subtitles, spoken through the browser's speech synthesis.
+  * Engines are synthesised from firing pulses and propeller blade-pass: four beating Wright Cyclones inside the bomber, BMW 801s on the Fw 190s, and the Merlin in the P-51.
+  * HRTF positioning, Doppler fly-bys with an air rush, and convolution reverb: a metallic fuselage inside, open air outside.
+  * Layered weapons and impacts, flak shrapnel rattling on the skin, and speed-of-sound delays.
+  * Crew radio with interphone squelch and static, and quiet-time intercom chatter.
+  * A dynamic D-minor score (strings, horn, snare, timpani) that rises with combat intensity, with victory and defeat stingers.
 
 ```
 src/

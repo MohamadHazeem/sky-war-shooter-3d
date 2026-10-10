@@ -140,7 +140,7 @@ export const CAMPAIGN: Mission[] = [
       'You lead the escort for our box. There will be more fighters than you can count — pick your targets, protect the bombers, and keep your speed up. Ammunition is limited: six hundred seconds of combat will not last six hundred seconds.',
     ],
     objectives: ['Protect the bombers', 'Destroy as many attackers as possible', 'Lose no more than 6 bombers'],
-    bombers: 12, escorts: 4, waves: [
+    bombers: 12, escorts: 5, waves: [
       { at: 15, count: 6, from: 'front', attack: 'headon', skill: 1.1, radio: ['Lead', 'Here they come. Big gaggle at twelve o\'clock — drop tanks and go!'] },
       { at: 0, afterClear: true, count: 8, from: 'rear', attack: 'stern', skill: 1.15, rockets: 0.4 },
       { at: 0, afterClear: true, count: 8, from: 'high', attack: 'high', skill: 1.2 },

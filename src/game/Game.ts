@@ -295,6 +295,7 @@ export class Game {
     this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false; this.trauma = 0;
     this.world.spawnFormation(m.bombers, 1);
     const pb = this.world.playerBomber!;
+    if (m.role === 'pilot') for (const b of this.world.bombers()) for (const z of b.zones) { z.hp *= 1.25; z.maxHp *= 1.25; }
     if (m.role === 'gunner') {
       this.gunner.resetAmmo();
       this.gunner.attach(pb, m.station ?? 'waistL');
