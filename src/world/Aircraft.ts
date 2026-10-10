@@ -207,9 +207,9 @@ export class Bomber extends Aircraft {
     H('engine2', 3.0, -0.5, 2.5, 1.1, 130, { engine: 1 });
     H('engine3', -3.0, -0.5, 2.5, 1.1, 130, { engine: 2 });
     H('engine4', -6.5, -0.15, 2.0, 1.1, 130, { engine: 3 });
-    H('wingL', 6.0, 0.0, 0.2, 2.5, 300, { critical: true });
+    H('wingL', 6.0, 0.0, 0.2, 2.5, 420, { critical: true });
     H('wingLtip', 11.6, 0.3, -0.9, 2.1, 180);
-    H('wingR', -6.0, 0.0, 0.2, 2.5, 300, { critical: true });
+    H('wingR', -6.0, 0.0, 0.2, 2.5, 420, { critical: true });
     H('wingRtip', -11.6, 0.3, -0.9, 2.1, 180);
   }
 

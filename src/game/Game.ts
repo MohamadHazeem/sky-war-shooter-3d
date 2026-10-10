@@ -45,6 +45,7 @@ export class Game {
   private hitMarkerT = 0;
   private killMarkerT = 0;
   private damageT = 0;
+  private slowmo = 0;
   private menuShot = 0;
   private menuShotT = 0;
   private menuMode = true;
@@ -116,6 +117,7 @@ export class Game {
           this.score += Math.round(100 * (1 + this.survivalWave * 0.1));
           this.ui.feed(`Fw 190 destroyed — confirmed`, 'mine');
           this.killMarkerT = 0.45;
+          this.slowmo = 0.55;
           const lines = ['Got him! He\'s going down!', 'You got him! Nice shooting!', 'He\'s smoking — he\'s finished!', 'Scratch one Focke-Wulf!'];
           w.callout('kill', ['Tail', 'Pilot', 'Top Turret', 'Navigator'][Math.floor(Math.random() * 4)], lines[Math.floor(Math.random() * lines.length)], 3, 2);
         } else {
@@ -223,6 +225,8 @@ export class Game {
     sound.init();
     this.mission = m;
     this.menuMode = false;
+    this.slowmo = 0;
+    this.engine.timeScale = 1;
     this.menuGunner = false;
     this.gunner.detach();
     this.pilot.detach();
@@ -241,6 +245,7 @@ export class Game {
     this.damageT = 0;
     this.engine.post.resetHistory();
     this.world.playerDamageScale = m.role === 'gunner' ? 0.6 : 0.75;
+    this.world.aiGunnerFactor = m.role === 'pilot' ? 1.8 : 1;
     this.world.spawnFormation(m.bombers, 1);
     const pb = this.world.playerBomber!;
     if (m.role === 'gunner') {
@@ -385,7 +390,7 @@ export class Game {
     }
     if (m.waves.length && this.waveIdx >= m.waves.length && enemies === 0 && t >= Math.min(m.duration, (m.flak?.end ?? 0) + 5)) {
       if (!m.bombsAway || this.bombsDropped) {
-        if (!m.escortArrive || this.escortsSpawned) this.finish(true, m.role === 'gunner' ? 'The formation fought its way through. Good shooting, gunner.' : 'The bombers made it through. Outstanding work, Blue Leader.');
+        if (!m.escortArrive || this.escortsSpawned) this.finish(true, m.success ?? (m.role === 'gunner' ? 'The formation fought its way through. Good shooting, gunner.' : 'The bombers made it through. Outstanding work, Blue Leader.'));
       }
     }
   }
@@ -501,6 +506,11 @@ export class Game {
   // ---------------- Frame ----------------
   private frame(dt: number) {
     const w = this.world;
+    // Brief slow-motion beat on a confirmed kill
+    if (this.slowmo > 0) {
+      this.slowmo -= dt / Math.max(0.05, this.engine.timeScale);
+      this.engine.timeScale = this.slowmo > 0 ? 0.35 : 1;
+    }
     if (this.state === 'paused') { this.drawOverlay(); this.input.endFrame(); return; }
     w.update(dt);
     this.updateBombs(dt);

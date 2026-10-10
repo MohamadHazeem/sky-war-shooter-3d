@@ -134,6 +134,8 @@ export class World implements WorldView {
         b.isPlayer = true; this.playerBomber = b; this.player = b;
         // The player's ship is tougher than the rest: one bad pass shouldn't end the mission
         for (const z of b.zones) { const k = z.critical ? 2.4 : 1.5; z.hp *= k; z.maxHp *= k; }
+      } else {
+        for (const z of b.zones) { z.hp *= 1.3; z.maxHp *= 1.3; }
       }
       this.placeBomber(b, 0);
       this.add(b);
@@ -492,7 +494,7 @@ export class World implements WorldView {
       this.flakAcc -= 1;
       const bs = this.bombers().filter((b) => b.alive);
       if (!bs.length) return;
-      const target = Math.random() < 0.25 && this.playerBomber?.alive ? this.playerBomber : bs[Math.floor(Math.random() * bs.length)];
+      const target = Math.random() < 0.15 && this.playerBomber?.alive ? this.playerBomber : bs[Math.floor(Math.random() * bs.length)];
       const p = target.pos.clone().add(new THREE.Vector3(R() * 180, R() * 90 + 20, R() * 220 + 60));
       this.effects.flak(p);
       sound.play('flak', p, { gain: 1.3, ref: 80 });
@@ -501,7 +503,7 @@ export class World implements WorldView {
         if (!a.alive) continue;
         const d = a.pos.distanceTo(p);
         if (d < 55) {
-          const dmg = (1 - d / 55) * 60;
+          const dmg = (1 - d / 55) * 40;
           const zone = a.zones[Math.floor(Math.random() * a.zones.length)];
           this.onHit({ target: a, zone, point: a.localToWorld(zone.offset, new THREE.Vector3()), damage: dmg, cannon: d < 25, shooter: null, bulletVel: new THREE.Vector3(), playerShot: false });
         }

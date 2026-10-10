@@ -85,6 +85,7 @@ export class EnemyPilot {
   private aim = new THREE.Vector3();
   calloutDone = false;
   attackCount = 0;
+  private aimOffset = new THREE.Vector3();
 
   constructor(public me: Fighter, preferred?: AttackType, skill = 1) {
     this.skill = skill * (0.8 + Math.random() * 0.4);
@@ -147,7 +148,11 @@ export class EnemyPilot {
         if (me.dropTankAttached && d < 4500) w.dropTank(me);
         steerTo(fm, _d.copy(this.setupPoint).sub(me.pos), 1, 0.6);
         fm.throttle = 1;
-        if (me.pos.distanceTo(this.setupPoint) < 500 || this.timer > 40) { this.state = 'attack'; this.timer = 0; }
+        if (me.pos.distanceTo(this.setupPoint) < 500 || this.timer > 40) {
+          this.state = 'attack'; this.timer = 0;
+          // Every firing pass has its own aiming error; better pilots are tighter
+          this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((4 + Math.random() * 10) / this.skill);
+        }
         // keep setup point moving with the formation
         this.setupPoint.addScaledVector(w.formationForward, 75 * dt);
         break;
@@ -155,7 +160,7 @@ export class EnemyPilot {
       case 'attack': {
         const t = this.target;
         if (!t || !t.alive) { this.state = 'extend'; this.timer = 0; break; }
-        leadPoint(me.pos, me.vel, t, 760, this.aim);
+        leadPoint(me.pos, me.vel, t, 760, this.aim).add(this.aimOffset);
         // aim slightly at the cockpit/engines of the bomber
         const aimDir = _d.copy(this.aim).sub(me.pos);
         const dist = aimDir.length();
