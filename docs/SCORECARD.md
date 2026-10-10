@@ -39,3 +39,20 @@ Every target gets a measurable check so "done" is not a matter of opinion.
 | 5 | Own aircraft blocks the view (seat 3) | Turret view free of struts/ring/sight body | Done — dome struts removed, ring dropped below eye line, sight body hidden, guns lowered and wider |
 | 6 | Damage should build up visibly | 4 visible stages before destruction | Done — wisps → torn skin + dark trail → oily sputter, canopy gone, wobble → fire, explosions, glowing holes → breakup |
 | 7 | Not a swarm; want 3–5 min continuous rounds, unlimited shooting | 4–14 fighters in the air at once, rounds 180–300 s, no reloads | Done — spawn director keeps the sky full (ramping), incoming groups on the radar, unlimited belts |
+
+## Round 3 — 2026-10-10 (player feedback)
+
+| # | Request | Status |
+|---|---|---|
+| 1 | Perks interrupt play; want random, automatic, more of them | Done — a random perk every 6 kills, shown as a small card (no pause); 20 perks |
+| 2 | New enemy types (heavy/tough, fast/fragile, more ideas) | Done — real models: Bf 110 & Ju 88 (heavy, 2.6–3.4× health, bigger), Me 262 jet & Me 163 rocket (very fast, fragile), Bf 109 (agile); mix grows heavier each round; first-sighting radio calls |
+| 3 | Own aircraft flies too steady | Done — formation weave and climbs, evasive jinks (more under attack), turbulence, lurch on heavy hits |
+| 4 | Pilot/crew should talk on the radio | Done — 450 recorded radio clips (macOS voices, radio filter, queue), every callout voiced, new instruction lines |
+| 5 | Rounds that get harder, even in survival; change aircraft/weapons/upgrades between rounds | Done — campaign 2–3 rounds per mission, survival endless rounds; hangar between rounds: 3 bomber + 3 fighter variants, 4 gunner + 3 pilot weapons, upgrades |
+| 6 | Shooting view too close to own aircraft (~60% sky) | Done — waist head position out past the window frame, wider default FOV (65°) |
+| 7 | Enemies bigger | Done — 6× scale (heavies normalised to ~1.3× a fighter) |
+| 8 | Destruction the same for every aircraft | Done — 6 death types (fireball breakup, wing off, tail off + dive, engine fire dive + explode, bail-out, dead pilot spin) |
+| 9 | Seat 3 POV unplayable | Done — raised eye, no struts/ring/sight body/cracked glass, HUD reticle |
+| 10 | Only seats 1–2 get used | Done — half the incoming groups attack another gun position; radio names the seat; seat finder badges |
+| 11 | Graphics to the next level | Done (pass 1) — tracers actually render now (were never drawn), hot-core tracer streaks, real fireball explosions with lingering smoke and cook-off pops, less sun glare, cleaner HUD |
+| 12 | Satisfying hit sound | Done — layered clank/tick/thud with streak escalation, damage-stage crunch, big kill sound |
