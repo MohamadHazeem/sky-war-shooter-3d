@@ -96,7 +96,10 @@ async function boot() {
     };
     // autoplay starts a mission synchronously: it appears once every model and gameplay sound is in
     while (!isMissionReady()) await new Promise((r) => setTimeout(r, 100));
-    (window as any).sws.autoplay = (m: any, steps?: number) => autoplay(engine, game, m, steps);
+    (window as any).sws.autoplay = (m: any, steps?: number, opts?: any) => autoplay(engine, game, m, steps, opts);
+    // Balance harness: queued autoplay runs, one per page load (src/dev/balance.ts, docs/BALANCE.md)
+    const { installBalance } = await import('./dev/balance');
+    installBalance(engine, game);
     // Before/after screenshot gallery (tools/gallery/README.md)
     const { gallery } = await import('./dev/gallery');
     (window as any).sws.gallery = gallery(engine, game);
