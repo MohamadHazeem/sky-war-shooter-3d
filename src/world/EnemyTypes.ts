@@ -58,14 +58,29 @@ export const ENEMY_VARIANTS: Record<EnemyType, EnemyVariant> = {
 
 // (Me 163 Komet: rocket interceptor, appended below)
 // The mix gets heavier and faster as the rounds go on
-export function randomEnemyType(round = 0): EnemyType {
-  const w: [EnemyType, number][] = round <= 0 ? [['fw190', 0.7], ['bf109', 0.3]]
+export function enemyWeights(round = 0): [EnemyType, number][] {
+  return round <= 0 ? [['fw190', 0.7], ['bf109', 0.3]]
     : round === 1 ? [['fw190', 0.5], ['bf109', 0.25], ['bf110', 0.25]]
     : round === 2 ? [['fw190', 0.35], ['bf109', 0.2], ['bf110', 0.2], ['me262', 0.15], ['ju88', 0.1]]
     : [['fw190', 0.22], ['bf109', 0.18], ['bf110', 0.18], ['me262', 0.17], ['ju88', 0.15], ['me163', 0.1]];
+}
+
+export function randomEnemyType(round = 0): EnemyType {
   let r = Math.random();
-  for (const [t, p] of w) { r -= p; if (r <= 0) return t; }
+  for (const [t, p] of enemyWeights(round)) { r -= p; if (r <= 0) return t; }
   return 'fw190';
+}
+
+// A type from a restricted list (custom battles): the round's usual weights among the allowed
+// types; types the round would not send yet still get a small share, so any list works.
+export function pickEnemyType(allowed: readonly EnemyType[], round = 0, rnd: () => number = Math.random): EnemyType {
+  if (!allowed.length) return randomEnemyType(round);
+  if (allowed.length === 1) return allowed[0];
+  const base = new Map(enemyWeights(Math.max(round, 1)));
+  const w = allowed.map((t): [EnemyType, number] => [t, Math.max(0.08, base.get(t) ?? 0)]);
+  let r = rnd() * w.reduce((a, [, p]) => a + p, 0);
+  for (const [t, p] of w) { r -= p; if (r <= 0) return t; }
+  return w[w.length - 1][0];
 }
 
 // Give one aircraft its own copies of the materials and multiply the paint colour.

@@ -4,7 +4,7 @@ import { paceAt, paceMarks, finalWaveSize, splitFormations, DEFAULT_PROFILE, AIR
 import { MODES, ACE_HUNT, TIME_ATTACK, SURVIVAL_MODE, leaderboardMode, modeFor } from '../src/game/Modes';
 
 // The leaderboard modes firestore.rules accepts
-const RULES = /^(survival-(gunner|pilot)|campaign-m[0-9]{1,2}|daily-(gunner|pilot)-[0-9]{8}|(acehunt|timeattack)-(gunner|pilot))$/;
+const RULES = /^(survival-(gunner|pilot)|campaign-m[0-9]{1,2}|daily-(gunner|pilot)-[0-9]{8}|weekly-(gunner|pilot)-[0-9]{6}|(acehunt|timeattack)-(gunner|pilot))$/;
 
 const rounds = (): Round[] => [
   ...CAMPAIGN.flatMap((m) => Array.from({ length: m.rounds! }, (_, i) => roundDef(m, i))),

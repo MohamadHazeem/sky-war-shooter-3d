@@ -27,11 +27,11 @@ export const NAME_PRESETS: NamePreset[] = [
 
 // Every collectable in one list (the hangar's collection view and the crate pool)
 export type ItemKind = 'mod' | 'nose' | 'paint' | 'name';
-export interface Collectable { key: string; kind: ItemKind; id: string; name: string; desc: string; rarity: Rarity; free: boolean }
+export interface Collectable { key: string; kind: ItemKind; id: string; name: string; desc: string; rarity: Rarity; free: boolean; exclusive?: string }   // exclusive: earned one way only (no crates, no merit)
 
 export const COLLECTABLES: Collectable[] = [
   ...WEAPON_MODS.map((m): Collectable => ({ key: 'mod:' + m.id, kind: 'mod', id: m.id, name: m.name, desc: m.desc, rarity: m.rarity, free: false })),
-  ...NOSE_ARTS.filter((n) => n.id !== 'none').map((n): Collectable => ({ key: 'nose:' + n.id, kind: 'nose', id: n.id, name: n.name, desc: 'Painted on the nose of your B-17 · pick it in the hangar', rarity: n.rarity, free: !!n.free })),
+  ...NOSE_ARTS.filter((n) => n.id !== 'none').map((n): Collectable => ({ key: 'nose:' + n.id, kind: 'nose', id: n.id, name: n.name, desc: 'Painted on the nose of your B-17 · pick it in the hangar', rarity: n.rarity, free: !!n.free, exclusive: n.exclusive })),
   ...PAINTS.map((p): Collectable => ({ key: 'paint:' + p.id, kind: 'paint', id: p.id, name: p.name, desc: p.desc, rarity: p.rarity, free: !!p.free })),
   ...NAME_PRESETS.map((n): Collectable => ({ key: 'name:' + n.name, kind: 'name', id: n.name, name: `"${n.name}"`, desc: 'A name for your B-17 · pick it in the hangar', rarity: n.rarity, free: !!n.free })),
 ];

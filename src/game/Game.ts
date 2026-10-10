@@ -45,6 +45,7 @@ import { ServiceRecord } from './ServiceRecord';
 import { Pacing } from './Pacing';
 import { ModeRunner, mountModePanel, leaderboardMode } from './Modes';
 import { SpecialEvents } from './SpecialEvents';
+import '../ui/CustomBattleScreen'; // registers the Custom Battle and Weekly Challenge modes + their Survival-screen tabs
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 

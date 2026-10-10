@@ -6,7 +6,7 @@ import { ENEMY_VARIANTS, randomEnemyType } from '../world/EnemyTypes';
 import { BossShip, ShipPart, SHIP_DEFS, PART_LABEL, BOSS_ROCKET_GEO, BOSS_ROCKET_MAT, PartKind } from '../world/BossShip';
 import type { AttackType } from '../world/AI';
 import type { ParticleOpts } from '../render/Particles';
-import type { Mission } from './Missions';
+import { isBossRound, type Mission } from './Missions';
 import type { UI } from '../ui/UI';
 import { sound } from '../audio/Sound';
 import { BossDrone } from '../audio/BossDrone';
@@ -30,13 +30,8 @@ export interface BossHooks {
   merit(n: number): void;          // Armory merit (Progression.earn)
 }
 
-// Survival: every 3rd round (index 2, 5, 8 ...). Campaign: the final round of missions 5 and 7.
-export function isBossRound(m: Mission, roundIdx: number): boolean {
-  if (!m.round) return false;
-  const n = m.rounds ?? 1;
-  if (!Number.isFinite(n)) return roundIdx % 3 === 2;
-  return ['m5', 'm7', 'm12'].includes(m.id) && roundIdx === n - 1; // Sturmgruppe, Big Week and the campaign finale
-}
+// isBossRound lives in Missions.ts (pure, unit-tested); re-exported for the existing importers
+export { isBossRound };
 
 type HeavyKind = 'flak' | 'rockets' | 'broadside' | 'ram';
 interface Heavy { kind: HeavyKind; part: ShipPart | null; t: number; charge: number; fire: number; fired: number; hit: boolean }

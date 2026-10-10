@@ -9,7 +9,9 @@ function table(rows: BoardRow[], highlight?: number) {
 
 // Online leaderboard block appended to a screen (debrief or survival menu). With an entry it
 // offers to submit it under the player's name; it always shows the current top 10.
+// An empty mode is a mission that never posts (custom battles): nothing is shown.
 export function mountLeaderboard(host: HTMLElement, mode: string, title: string, entry?: ScoreEntry) {
+  if (!mode) return;
   const box = document.createElement('div');
   box.className = 'lb-panel';
   host.appendChild(box);
