@@ -6,6 +6,7 @@ import { World, ALTITUDE } from '../world/World';
 import { randomEnemyType, ENEMY_VARIANTS, EnemyType } from '../world/EnemyTypes';
 import { Aircraft, Bomber, Fighter } from '../world/Aircraft';
 import { GunnerController } from './GunnerController';
+import { missionCold } from './LivingInterior';
 import { PilotController } from './PilotController';
 import { PilotOps } from './PilotOps';
 import { PhotoMode } from './PhotoMode';
@@ -512,6 +513,7 @@ export class Game {
     if (m.role === 'gunner') {
       this.gunner.resetAmmo();
       this.gunner.attach(pb, m.station ?? 'waistL');
+      this.gunner.cold = missionCold(m); // frost on the waist windows (LivingInterior)
       sound.setMode('bomber');
       if (m.playerDamaged) {
         for (const name of ['engine2', 'engine4']) {

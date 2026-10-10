@@ -96,6 +96,7 @@ const table: PhraseTable = {
     'More raiders — and night fighters hunting you': 'مزيد من المغيرين — ومقاتلات ليلية تطاردك',
     'The main bomber stream': 'تيار القاذفات الرئيسي',
     'more raiders inbound': 'مزيد من المغيرين قادمون',
+    'Free look (hold): look around the fuselage': 'نظر حر (استمر بالضغط): تلفّت داخل جسم الطائرة',
     'Padlock the nearest bandit': 'ثبّت النظر على أقرب معادٍ',
   },
   patterns,
