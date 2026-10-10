@@ -56,6 +56,7 @@ export class Game {
   // radar: Tab toggles the big map; the next wave's arrival point is decided early so it can be shown
   readonly prog = new Progression();
   private perkWave = 0;        // last wave a perk was offered after
+  private killsSincePerk = 0;  // every 5 kills also earns a perk
   private loadout = this.prog.loadout();
   private mapOpen = false;
   private mapT = 0;
@@ -188,6 +189,7 @@ export class Game {
           const pts = Math.round(100 * (1 + this.survivalWave * 0.1) * this.combo.mult);
           this.score += pts;
           this.combo.onKill();
+          this.killsSincePerk++;
           if (this.loadout.killRefill) {
             if (this.mission?.role === 'gunner') this.gunner.onKillRefill(this.loadout.killRefill);
             else w.playerFighter?.guns.forEach((g) => (g.ammo = Math.min(Math.round(((g as any).baseAmmo ?? 500) * this.loadout.ammo), g.ammo + 150)));
@@ -366,7 +368,7 @@ export class Game {
     if (diff === 'recruit') this.world.aiGunnerFactor *= 1.2;
     this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false; this.trauma = 0;
     this.incoming = null; this.incomingOff = null; this.mapOpen = false; this.mapT = 0;
-    this.prog.perks = []; this.perkWave = 0;
+    this.prog.perks = []; this.perkWave = 0; this.killsSincePerk = 0;
     this.combo.reset();
     this.tally.reset();
     achievements.beginMission(m);
@@ -506,9 +508,15 @@ export class Game {
     if (m.waves.length) {
       this.waveTimer += dt;
       const next = m.waves[this.waveIdx];
+      // field promotion: every 5 kills, once the kill's slow-motion beat has played
+      if (this.killsSincePerk >= 5 && t - this.lastKillAt > 1.2 && this.state === 'playing' && w.player?.alive) {
+        this.killsSincePerk = 0;
+        this.offerPerk('5 KILLS · FIELD PROMOTION');
+        return;
+      }
       // a wave wiped out with more to come: pick a perk (the next wave waits)
       if (next && enemies === 0 && this.waveIdx > 0 && this.perkWave < this.waveIdx && this.waveTimer > 2.5 && this.state === 'playing' && w.player?.alive) {
-        this.perkWave = this.waveIdx;
+        this.perkWave = this.waveIdx; this.killsSincePerk = 0;
         this.offerPerk(`WAVE ${this.waveIdx} CLEARED`);
         return;
       }

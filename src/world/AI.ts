@@ -171,6 +171,8 @@ export class EnemyPilot {
     const side = _t.copy(this.me.vel).sub(this.target!.vel).dot(this.duelS);
     this.duelRate = (side >= 0 ? 1 : -1) * (0.34 + Math.random() * 0.1);
     this.duelLen = 10 + Math.random() * 6 * this.skill;
+    // weaving spoils their aim: the duel is a fight, not an execution
+    this.aimOffset.multiplyScalar(2.2);
   }
 
   private endDuel(t: Aircraft | null) {
@@ -300,7 +302,7 @@ export class EnemyPilot {
         const toGun = _u.copy(gp).sub(me.pos);
         const dg = toGun.length();
         toGun.divideScalar(Math.max(dg, 1));
-        if (dg < 820 && me.forward(_t).dot(toGun) > 0.8 && (this.timer % 2.6) < 1.1) {
+        if (dg < 820 && me.forward(_t).dot(toGun) > 0.8 && (this.timer % 3.0) < 0.9) {
           leadPoint(me.pos, me.vel, t, 760, this.aim).add(this.aimOffset).add(_r.copy(gp).sub(t.pos));
           me.gunAim = keepAim ?? new THREE.Vector3();
           me.gunAim.copy(this.aim).sub(me.pos).normalize();
