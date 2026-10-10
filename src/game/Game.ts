@@ -6,6 +6,7 @@ import { World, ALTITUDE } from '../world/World';
 import { Aircraft, Bomber, Fighter } from '../world/Aircraft';
 import { GunnerController } from './GunnerController';
 import { PilotController } from './PilotController';
+import { PhotoMode } from './PhotoMode';
 import { CAMPAIGN, Mission, survivalMission, SpawnFrom, Wave } from './Missions';
 import { STATIONS } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
@@ -30,6 +31,7 @@ export class Game {
   readonly world: World;
   readonly gunner: GunnerController;
   readonly pilot: PilotController;
+  readonly photo: PhotoMode;
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -67,6 +69,7 @@ export class Game {
     this.world = new World(engine);
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
+    this.photo = new PhotoMode(engine, input, this.world);
     this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, radio: false, music: true, quality: 'high', markers: true, flightMode: 'mouseAim', difficulty: 'veteran' });
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
@@ -84,6 +87,7 @@ export class Game {
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Escape' && this.state === 'playing' && !this.input.locked) this.pause();
       if (e.code === 'KeyP' && this.state === 'playing') this.pause();
+      if (e.code === 'KeyF' && !e.repeat && this.state === 'playing') this.photo.toggle();
     });
     engine.onFrame = (dt) => this.frame(dt);
     // Browsers only allow audio after a user gesture: start it on the first one
@@ -187,6 +191,7 @@ export class Game {
 
   // ---------------- Menu ----------------
   startMenu() {
+    this.photo.exit();
     this.state = 'menu';
     this.menuMode = true;
     this.input.unlock();
@@ -267,6 +272,7 @@ export class Game {
   // ---------------- Missions ----------------
   startMission(m: Mission) {
     sound.init();
+    this.photo.exit();
     this.mission = m;
     this.menuMode = false;
     this.slowmo = 0;
@@ -579,6 +585,7 @@ export class Game {
 
   pause() {
     if (this.state !== 'playing') return;
+    this.photo.exit();   // restore the camera before the pause menu takes over
     this.state = 'paused';
     this.engine.paused = true;
     this.input.unlock();
@@ -611,6 +618,15 @@ export class Game {
     if (this.slowmo > 0) {
       this.slowmo -= dt / Math.max(0.05, this.engine.timeScale);
       this.engine.timeScale = this.slowmo > 0 ? 0.35 : 1;
+    }
+    // Photo mode: the mission is frozen (engine.paused) and only the free camera moves
+    if (this.photo.active) {
+      this.photo.update();
+      sound.setListener(this.engine.camera);
+      this.ui.redVignette(0);
+      this.ui.ctx.clearRect(0, 0, innerWidth, innerHeight);
+      this.input.endFrame();
+      return;
     }
     if (this.state === 'paused') { this.drawOverlay(); this.input.endFrame(); return; }
     w.update(dt);
