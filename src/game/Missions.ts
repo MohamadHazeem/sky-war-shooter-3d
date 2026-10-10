@@ -329,7 +329,11 @@ for (const m of CAMPAIGN) {
   m.round = r;
   m.duration = r.duration;
   m.rounds = m.rounds ?? (m.number <= 2 ? 2 : 3);
-  if (m.maxBombersLost !== undefined && m.maxBombersLost < 99) m.maxBombersLost += 3; // more fighters, more losses allowed
+  if (m.maxBombersLost !== undefined && m.maxBombersLost < 99) {
+    m.maxBombersLost += 3; // more fighters, more losses allowed
+    // keep the objective text in step with the real limit
+    m.objectives = m.objectives.map((o) => o.replace(/Lose no more than \d+ bombers/, `Lose no more than ${m.maxBombersLost} bombers`));
+  }
 }
 
 export function survivalMission(role: 'gunner' | 'pilot'): Mission {

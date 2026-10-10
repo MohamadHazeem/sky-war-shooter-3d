@@ -35,7 +35,7 @@ export function isBossRound(m: Mission, roundIdx: number): boolean {
   if (!m.round) return false;
   const n = m.rounds ?? 1;
   if (!Number.isFinite(n)) return roundIdx % 3 === 2;
-  return (m.number === 5 || m.number === 7) && roundIdx === n - 1;
+  return ['m5', 'm7', 'm12'].includes(m.id) && roundIdx === n - 1; // Sturmgruppe, Big Week and the campaign finale
 }
 
 type HeavyKind = 'flak' | 'rockets' | 'broadside' | 'ram';
@@ -190,8 +190,8 @@ export class BossBattle {
     this.active = true; this.cleared = false; this.bossRound = roundIdx; this.victoryT = -1;
     this.time = 0; this.introT = 0; this.heavyCd = 16; this.escortCd = 16; this.escortsLaunched = 0;
     const survival = !Number.isFinite(m.rounds ?? 1);
-    const count = forced || (survival ? roundIdx >= 5 : m.number >= 7) ? 4 : 3;
-    const tier = survival ? Math.floor(roundIdx / 3) : m.number >= 7 ? 1 : 0;
+    const count = forced || (survival ? roundIdx >= 5 : m.id !== 'm5') ? 4 : 3;
+    const tier = survival ? Math.floor(roundIdx / 3) : m.id === 'm12' ? 2 : m.id === 'm7' ? 1 : 0;
     this.hpScale = (m.role === 'gunner' ? 0.5 : 0.85) * (0.85 + 0.15 * w.difficulty) * (1 + 0.12 * tier);
     this.dmgScale = w.difficulty * (1 + 0.06 * tier);
     const base = ENEMY_SCALE * ENEMY_VARIANTS.ju88.scale;
