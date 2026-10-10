@@ -20,15 +20,16 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | # | Goal | Status |
 |---|---|---|
 | 9 | Online co-op prototype: two players in one bomber (different seats) via Firebase signalling + WebRTC | In progress |
-| 10 | Custom battle: pick role, enemies, numbers, weather, time of day, boss on/off | In progress |
+| 10 | Custom battle: pick role, enemies, numbers, weather, time of day, boss on/off | Done — Custom Battle screen (role/seat, enemy types, counts, skill, rounds/endless, weather, sun, boss round, events/flak/escorts), saved setup, no leaderboard |
 | 11 | Role reversal: P-51 interceptor mission against a Ju 88 / He 111 raid, and a night-fighter defence | In progress |
 | 12 | Wingman commands in pilot mode (attack my target, cover me, protect bombers) | In progress |
-| 13 | Persistent pilot/gunner skill tree (perk points from rank-ups) | In progress |
-| 14 | Dynamic campaign map: choose the next target, consequences (losses, morale, Luftwaffe strength) | In progress |
-| 15 | Weekly challenge event with its own leaderboard and a special reward | In progress |
+| 13 | Persistent pilot/gunner skill tree (perk points from rank-ups) | Done — 18 nodes in 3 branches (Marksman / Gunnery Sergeant / Survivor) with capstones (Deadeye, Iron Lungs, Fortress), points from promotions + every 3,000 XP past Major, respec for merit, blueprint screen + hangar section |
+| 14 | Dynamic campaign map: choose the next target, consequences (losses, morale, Luftwaffe strength) | Done — procedural 1943–44 strategic map, Luftwaffe strength / squadron / morale / escort gauges with real effects, 2–3 side raids per gap (rail, airfields, oil, U-boat pens, factories), intelligence reports, tour summary, save migration |
+| 15 | Weekly challenge event with its own leaderboard and a special reward | Done — seeded ISO-week scenario, its own online leaderboard per role, +2000 merit + weekly ribbon + exclusive "Lightning Shield" nose art, countdown card |
 | 16 | Replay theatre: save best moments, scrub, free camera, export screenshots | In progress |
 
 ## Log
 - 23:00 started co-op (9), custom battle + weekly (10, 15), skill tree (13), living interior (7), campaign map (14).
 - 23:10 started role reversal + wingman commands (11, 12), replay theatre (16).
 - 23:20 started volumetric explosions + combat light (3, 5). Goals 1, 2, 4, 6, 8 wait for the Phase 4 graphics pass (same files).
+- 23:22 campaign map, skill tree, custom battle + weekly merged (226 tests); debrief "Next mission" now opens the campaign map.
