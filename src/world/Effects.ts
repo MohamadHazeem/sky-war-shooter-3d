@@ -1,27 +1,57 @@
 import * as THREE from 'three';
 import { disposeOwned, markOwned } from '../render/Dispose';
-import { ParticleSystem } from '../render/Particles';
+import { ParticleSystem, type ParticleOpts } from '../render/Particles';
 import { chuteTexture } from '../render/ChuteTexture';
+import { VolumeFX, type Vol } from '../render/Explosions';
 
 const _v = new THREE.Vector3();
 const _p = new THREE.Vector3();
+const _d = new THREE.Vector3();
 const R = () => Math.random() * 2 - 1;
 
-interface Debris { mesh: THREE.Object3D; vel: THREE.Vector3; spin: THREE.Vector3; life: number; smoke: boolean; fire: boolean }
-interface Chute { obj: THREE.Group; vel: THREE.Vector3; life: number; open: number; phase: number }
-interface Light { light: THREE.PointLight; life: number; max: number; intensity: number }
-interface PendingFlak { t: number; pos: THREE.Vector3; scale: number }
+// Explosion classes, by what blew up. 'small' covers partial blasts (a wing shearing off,
+// engine fires, explosive rounds, bomber secondaries); 'boss' is a warship (warshipBlast).
+export type ExplosionKind = 'small' | 'fighter' | 'heavy' | 'boss';
 
-// Visual effects layer: smoke/fire/flash particles, debris, falling drop tanks, parachutes.
+interface Debris {
+  mesh: THREE.Object3D; vel: THREE.Vector3; spin: THREE.Vector3; life: number; max: number;
+  smoke: boolean; fire: boolean; acc: number; active: boolean; pooled: boolean;
+}
+interface Chute { obj: THREE.Group; vel: THREE.Vector3; life: number; open: number; phase: number }
+interface LightSlot { light: THREE.PointLight; life: number; max: number; intensity: number }
+interface Pending { t: number; pos: THREE.Vector3; vel: THREE.Vector3; k: number; kind: 0 | 1 | 2; active: boolean }
+
+const LIGHTS = 4;          // fixed combat-light count: lights never change the shader programs
+const DEBRIS_POOL = 72;
+const PENDING_MAX = 48;
+const VOL_FAR = 4500;      // m: beyond this explosions are particles only
+const VOL_MID = 1800;      // m: beyond this no sub-lobes, shock rings or debris
+const SMOKE_HARD = 8300;   // smoke particle pool (9000) fill above which trails thin out
+
+const C_FLAME0: [number, number, number] = [9, 3.6, 0.8];
+const C_FLAME1: [number, number, number] = [1.6, 0.3, 0.05];
+const C_TRAIL: [number, number, number] = [0.08, 0.075, 0.07];
+const C_EMBER: [number, number, number] = [24, 11, 2.5];
+const C_EMBER1: [number, number, number] = [6, 1.4, 0.2];
+const C_FLASH: [number, number, number] = [32, 24, 13];
+const C_HALO: [number, number, number] = [2.4, 1.3, 0.5];
+const C_CLOUDGLOW: [number, number, number] = [0.5, 0.24, 0.07];
+const C_WISP0: [number, number, number] = [0.11, 0.07, 0.045];
+const C_WISP1: [number, number, number] = [0.085, 0.08, 0.075];
+
+// Visual effects layer: volumetric fireballs and smoke balls, shock rings, combat light,
+// smoke/fire/flash particles, burning debris, falling drop tanks, parachutes.
 export class Effects {
   readonly smoke = new ParticleSystem(9000, false);
   readonly glow = new ParticleSystem(5000, true);
+  readonly vol = new VolumeFX(128);
+  // false: the older particle-only explosions (A/B comparisons, very weak GPUs)
+  volumetric = true;
   private debris: Debris[] = [];
   private chutes: Chute[] = [];
-  private lights: Light[] = [];
-  private lightPool: THREE.PointLight[] = [];
+  private lights: LightSlot[] = [];
   private figureGeo = new THREE.CapsuleGeometry(0.25, 1.0, 4, 8);
-  private pendingFlak: PendingFlak[] = [];
+  private pending: Pending[] = [];
   private debrisGeo = [
     new THREE.BoxGeometry(0.9, 0.05, 0.5),
     new THREE.BoxGeometry(0.4, 0.04, 1.2),
@@ -37,29 +67,60 @@ export class Effects {
   private chuteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, map: chuteTexture(), roughness: 0.9, side: THREE.DoubleSide });
   private figureMat = new THREE.MeshStandardMaterial({ color: 0x4a3b2a, roughness: 0.9 });
   private lineMat = new THREE.LineBasicMaterial({ color: 0x777777 });
+  // reusable particle options for the per-frame emitters (no allocation per spawn)
+  private o: ParticleOpts = { pos: new THREE.Vector3(), life: 1, size0: 1, size1: 1, color0: [1, 1, 1] };
 
   constructor(private scene: THREE.Scene) {
-    scene.add(this.smoke.mesh, this.glow.mesh);
+    scene.add(this.smoke.mesh, this.glow.mesh, this.vol.mesh);
     const g = new THREE.SphereGeometry(3.4, 18, 8, 0, Math.PI * 2, 0, Math.PI * 0.42);
     this.chuteGeo = g;
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < LIGHTS; i++) {
       const l = new THREE.PointLight(0xffaa55, 0, 45, 2);
       l.userData.noRebase = true;
-      l.userData.free = true;
-      this.lightPool.push(l);
       scene.add(l);
+      this.lights.push({ light: l, life: 0, max: 1, intensity: 0 });
     }
+    // debris meshes live in the scene, hidden, and are reused
+    for (let i = 0; i < DEBRIS_POOL; i++) {
+      const m = new THREE.Mesh(this.debrisGeo[i % this.debrisGeo.length], this.debrisMat[(i >> 2) % this.debrisMat.length]);
+      m.castShadow = true;
+      m.visible = false;
+      scene.add(m);
+      this.debris.push({ mesh: m, vel: new THREE.Vector3(), spin: new THREE.Vector3(), life: 0, max: 1, smoke: false, fire: false, acc: 0, active: false, pooled: true });
+    }
+    for (let i = 0; i < PENDING_MAX; i++) this.pending.push({ t: 0, pos: new THREE.Vector3(), vel: new THREE.Vector3(), k: 1, kind: 0, active: false });
   }
 
-  flashLight(pos: THREE.Vector3, intensity: number, life: number, color = 0xffaa55) {
-    const l = this.lightPool.find((x) => x.userData.free) ?? this.lights.sort((a, b) => a.life - b.life)[0]?.light;
-    if (!l) return;
-    l.userData.free = false;
-    l.color.set(color);
-    l.position.copy(pos);
-    l.intensity = intensity;
-    this.lights = this.lights.filter((x) => x.light !== l);
-    this.lights.push({ light: l, life, max: life, intensity });
+  // Fill the shared options object for one particle
+  private emit(sys: ParticleSystem, pos: THREE.Vector3, vel: THREE.Vector3 | undefined, life: number, s0: number, s1: number,
+    c0: [number, number, number], c1: [number, number, number] | undefined, a0: number, a1: number, frame: number, drag: number, rise: number, lit: boolean, rotVel?: number) {
+    const o = this.o;
+    o.pos = pos; o.vel = vel; o.life = life; o.size0 = s0; o.size1 = s1; o.color0 = c0; o.color1 = c1;
+    o.alpha0 = a0; o.alpha1 = a1; o.frame = frame; o.drag = drag; o.rise = rise; o.lit = lit; o.rotVel = rotVel;
+    sys.spawn(o);
+  }
+
+  // ---------------- combat light ----------------
+  // A pool of LIGHTS point lights that never leaves the scene (intensity 0 when idle), so
+  // the light count, and with it every lit shader program, stays constant. A new flash
+  // takes a free light, or replaces the one contributing least to what the camera sees.
+  flashLight(pos: THREE.Vector3, intensity: number, life: number, color = 0xffaa55, range = 45) {
+    const cam = this.vol.camPos, seen = this.vol.hasCam;
+    const weight = (p: THREE.Vector3, r: number) => (seen ? 1 / (1 + p.distanceToSquared(cam) / (r * r)) : 1);
+    let pick: LightSlot | null = null, low = Infinity;
+    for (const s of this.lights) {
+      if (s.life <= 0) { pick = s; low = -1; break; }
+      const k = s.life / s.max;
+      const v = s.intensity * k * k * weight(s.light.position, s.light.distance);
+      if (v < low) { low = v; pick = s; }
+    }
+    if (!pick || (low >= 0 && low > intensity * weight(pos, range))) return;
+    pick.light.color.set(color);
+    pick.light.position.copy(pos);
+    pick.light.distance = range;
+    pick.light.intensity = intensity;
+    pick.intensity = intensity;
+    pick.life = pick.max = life;
   }
 
   // The player's own muzzle: short, dim flame tongues ahead of the muzzle, so the
@@ -73,6 +134,8 @@ export class Effects {
     this.glow.spawn({ pos, vel, life: 0.05, size0: 0.55 * scale, size1: 0.9 * scale, color0: [40, 26, 10], alpha0: 1, alpha1: 0, frame: 1 });
     _p.copy(pos).addScaledVector(dir, 0.35 * scale);
     this.glow.spawn({ pos: _p, vel, life: 0.04, size0: 0.4 * scale, size1: 0.7 * scale, color0: [30, 16, 4], alpha0: 1, alpha1: 0, frame: 1 });
+    // heavy guns (enemy cannon, bomber turrets, warship batteries) flicker light on what is near
+    if (scale >= 1.4) this.flashLight(pos, 45 * scale * scale, 0.06, 0xffb060, 14 * scale);
   }
 
   // Bright strike flash so the player sees their rounds connect, even at range
@@ -95,6 +158,7 @@ export class Effects {
       _v.set(R(), R(), R()).normalize().multiplyScalar(18 + Math.random() * 22).add(vel);
       this.smoke.spawn({ pos, vel: _v, life: 0.5 + Math.random() * 0.3, size0: 0.22, size1: 0.08, color0: [0.07, 0.065, 0.06], alpha0: 1, alpha1: 0.2, drag: 1.2, rise: -9 });
     }
+    this.flashLight(pos, 260, 0.07, 0xffb366, 40);
   }
 
   gunSmoke(pos: THREE.Vector3, vel: THREE.Vector3) {
@@ -110,7 +174,7 @@ export class Effects {
     this.glow.spawn({ pos, vel, life: 0.07, size0: heavy ? 2.5 : 1.0, size1: heavy ? 3.5 : 1.5, color0: [25, 16, 7], alpha0: 1, alpha1: 0, frame: 1 });
     if (heavy) {
       this.smoke.spawn({ pos, vel, life: 1.5, size0: 1, size1: 6, color0: [0.12, 0.11, 0.1], alpha0: 0.75, alpha1: 0, drag: 1.2, lit: true });
-      this.flashLight(pos, 150, 0.1);
+      this.flashLight(pos, 900, 0.12, 0xffaa55, 70);
     } else {
       this.smoke.spawn({ pos, vel, life: 0.6, size0: 0.3, size1: 1.6, color0: [0.35, 0.33, 0.3], alpha0: 0.5, alpha1: 0, drag: 2, lit: true });
     }
@@ -135,72 +199,185 @@ export class Effects {
 
   // Size of explosions relative to the aircraft (the enemies are drawn enlarged)
   explosionScale = 1;
-  private pendingPops: { t: number; pos: THREE.Vector3; vel: THREE.Vector3; k: number }[] = [];
 
-  explosion(pos: THREE.Vector3, vel: THREE.Vector3, scale = 1) {
-    const k = scale * this.explosionScale;
-    this.flashLight(pos, 900 * k, 0.45, 0xff8a3a);
-    // short orange-white flash (not a white bulb) and a faint expanding shock ring
-    this.glow.spawn({ pos, vel, life: 0.11, size0: 7 * k, size1: 18 * k, color0: [16, 9, 3.2], alpha0: 1, alpha1: 0, frame: 1 });
-    this.glow.spawn({ pos, vel, life: 0.35, size0: 4 * k, size1: 40 * k, color0: [1.1, 0.9, 0.75], alpha0: 0.28, alpha1: 0, frame: 3, rotVel: 0 });
-    // the heart of the fireball: holds for a moment before it breaks up
-    this.glow.spawn({ pos, vel, life: 0.7, size0: 9 * k, size1: 14 * k, color0: [9, 3.6, 0.9], color1: [1.4, 0.3, 0.05], alpha0: 0.95, alpha1: 0, frame: 2, rotVel: 0.6 });
-    // rolling fireball: billows that burn from yellow through orange to dull red
-    for (let i = 0; i < 24 * scale; i++) {
-      _v.set(R(), R(), R()).normalize().multiplyScalar((4 + Math.random() * 13) * k).add(vel);
-      _p.copy(pos).addScaledVector(_v, 0.02);
-      const hot = Math.random();
-      this.glow.spawn({ pos: _p, vel: _v, life: 0.8 + Math.random() * 1.0, size0: (3.5 + Math.random() * 4) * k, size1: (10 + Math.random() * 9) * k,
-        color0: [7 + hot * 5, 2.4 + hot * 1.8, 0.5], color1: [0.9, 0.18, 0.04], alpha0: 1, alpha1: 0, frame: 2, drag: 2.2, rise: -1.5, rotVel: (Math.random() - 0.5) * 3 });
+  private later(t: number, pos: THREE.Vector3, vel: THREE.Vector3, k: number, kind: 0 | 1 | 2) {
+    for (const p of this.pending) {
+      if (p.active) continue;
+      p.active = true; p.t = t; p.pos.copy(pos); p.vel.copy(vel); p.k = k; p.kind = kind;
+      return;
     }
-    // smoke: fire-lit brown at first, settling into a dark grey cloud that lingers
-    for (let i = 0; i < 20 * scale; i++) {
-      _v.set(R(), R(), R()).normalize().multiplyScalar((3 + Math.random() * 10) * k).add(_p.copy(vel).multiplyScalar(0.7));
-      this.smoke.spawn({ pos, vel: _v, life: 9 + Math.random() * 6, size0: 6 * k, size1: (20 + Math.random() * 16) * k, color0: [0.11, 0.065, 0.04], color1: [0.085, 0.08, 0.075], alpha0: 0.92, alpha1: 0, drag: 1.0, rise: 0.4, lit: true });
+  }
+
+  // ---------------- volumetric pieces ----------------
+  // Rolling fireball: hot (white-yellow) at birth, cooling through orange and dark red to
+  // black smoke within ~1.2 s while it swells and breaks up, then fading.
+  private fireball(pos: THREE.Vector3, vel: THREE.Vector3, r: number, heat = 1.35, tau = 0.38, delay = 0, life = 3.2): Vol | null {
+    const s = this.vol.alloc(3);
+    if (!s) return null;
+    s.pos.copy(pos); s.vel.copy(vel);
+    s.delay = delay; s.life = life;
+    s.r0 = r * 0.55; s.r1 = r * 1.5; s.growTau = 0.16; s.growth = r * 0.07;
+    s.heat0 = heat; s.tau = tau; s.grey = 0.06; s.dens = 1.5;
+    s.billow0 = 0.7; s.billow1 = 1.2; s.drag = 2.2; s.rise = r * 0.05;
+    s.fadeIn = 0.03; s.fadeOut = 0.55;
+    return s;
+  }
+
+  // Lingering smoke ball: drifts with the wind and climbs a little, lit by the sun
+  private smokeBall(pos: THREE.Vector3, vel: THREE.Vector3, r: number, life: number, grey = 0.085, delay = 0.25, warm = 0.3): Vol | null {
+    const s = this.vol.alloc(1);
+    if (!s) return null;
+    s.pos.copy(pos); s.vel.copy(vel).multiplyScalar(0.5);
+    s.delay = delay; s.life = life;
+    s.r0 = r * 0.7; s.r1 = r * 1.9; s.growTau = 2.2; s.growth = r * 0.035;
+    s.heat0 = warm; s.tau = 0.5; s.grey = grey; s.dens = 1.1;
+    s.billow0 = 1.0; s.billow1 = 1.35; s.drag = 0.8; s.rise = 0.25 + r * 0.02; s.windK = 1;
+    s.fadeIn = 0.6; s.fadeOut = 0.55;
+    return s;
+  }
+
+  // Shockwave: a thin shell racing out, bright only along its rim
+  private shock(pos: THREE.Vector3, vel: THREE.Vector3, r: number, life = 0.42, bright = 1) {
+    const s = this.vol.alloc(2);
+    if (!s) return;
+    s.type = 1;
+    s.pos.copy(pos); s.vel.copy(vel); s.drag = 0.5;
+    s.life = life; s.r0 = r * 0.25; s.r1 = r; s.growTau = life * 0.35;
+    s.heat0 = bright; s.fadeIn = 0.01; s.fadeOut = 0;
+  }
+
+  // Shared body of every volumetric blast. r = fireball radius (m).
+  private blast(pos: THREE.Vector3, vel: THREE.Vector3, r: number, lobes: number, shock: number, smokeBalls: number, smokeLife: number,
+    embers: number, light: number, range: number, glowSprite: boolean, smokeDelay = 0.25) {
+    const dist = this.vol.camDist(pos);
+    const mid = dist > VOL_MID;
+    if (mid) { lobes = Math.min(lobes, 1); embers = Math.ceil(embers / 3); if (r < 25) shock = 0; }
+    if (this.vol.free < 24) { lobes = Math.min(lobes, 1); smokeBalls = Math.min(smokeBalls, 1); }
+    // flash: a white-hot core for a few frames and a broad warm halo
+    this.emit(this.glow, pos, vel, 0.09, r * 1.1, r * 2.4, C_FLASH, undefined, 1, 0, 1, 0, 0, false, 0);
+    this.emit(this.glow, pos, vel, 0.16, r * 1.8, r * 3.2, C_HALO, undefined, 0.7, 0, 1, 0, 0, false, 0);
+    if (glowSprite) this.emit(this.glow, pos, vel, 0.75, r * 6, r * 9, C_CLOUDGLOW, undefined, 0.8, 0, 1, 0, 0, false, 0);
+    this.flashLight(pos, light, 0.5, 0xff8a3a, range);
+    this.fireball(pos, vel, r);
+    for (let i = 0; i < lobes; i++) {
+      _d.set(R(), R() * 0.7, R()).normalize();
+      _p.copy(pos).addScaledVector(_d, r * (0.35 + Math.random() * 0.35));
+      _v.copy(vel).addScaledVector(_d, r * (0.9 + Math.random() * 1.1));
+      const f = this.fireball(_p, _v, r * (0.45 + Math.random() * 0.25), 1.05 + Math.random() * 0.3, 0.28 + Math.random() * 0.2, Math.random() * 0.12, 2.4 + Math.random() * 0.8);
+      if (f) f.drag = 2.8;
+    }
+    if (shock > 0) this.shock(pos, vel, r * shock);
+    for (let i = 0; i < smokeBalls; i++) {
+      _d.set(R(), R() * 0.5 + 0.2, R()).normalize();
+      _p.copy(pos).addScaledVector(_d, i === 0 ? 0 : r * 0.6);
+      this.smokeBall(_p, vel, r * (i === 0 ? 1 : 0.75), smokeLife * (0.8 + Math.random() * 0.4), 0.075 + Math.random() * 0.03, smokeDelay + i * 0.15);
     }
     // burning fragments arcing away
-    for (let i = 0; i < 30 * scale; i++) {
-      _v.set(R(), R(), R()).normalize().multiplyScalar((30 + Math.random() * 70) * Math.sqrt(k));
-      this.glow.spawn({ pos, vel: _v.add(vel), life: 0.7 + Math.random() * 1.1, size0: 0.5 * Math.sqrt(k), size1: 0.12, color0: [24, 11, 2.5], alpha0: 1, alpha1: 0, frame: 1, drag: 1.4, rise: -9 });
+    for (let i = 0; i < embers; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar((30 + Math.random() * 70) * Math.sqrt(r / 5)).add(vel);
+      this.emit(this.glow, pos, _v, 0.7 + Math.random() * 1.1, 0.5 * Math.sqrt(r / 5), 0.12, C_EMBER, C_EMBER1, 1, 0, 1, 1.4, -9, false);
     }
-    this.spawnDebris(pos, vel, Math.floor(12 * scale), true);
-    // fuel and ammunition cooking off a moment later: two or three smaller pops
-    if (scale >= 0.8) {
-      const n = 2 + (Math.random() < 0.5 ? 1 : 0);
-      for (let i = 0; i < n; i++) {
-        _v.set(R(), R() * 0.6, R()).normalize().multiplyScalar((4 + Math.random() * 6) * k);
-        this.pendingPops.push({ t: 0.12 + Math.random() * 0.55, pos: pos.clone().add(_v), vel: vel.clone(), k: k * (0.35 + Math.random() * 0.2) });
+    // a few soft particle wisps around the ball so its edge never reads as a hard sphere
+    if (!mid) {
+      for (let i = 0; i < 4; i++) {
+        _v.set(R(), R(), R()).normalize().multiplyScalar(r * (0.3 + Math.random() * 0.6)).add(_p.copy(vel).multiplyScalar(0.6));
+        this.emit(this.smoke, pos, _v, 6 + Math.random() * 4, r * 0.6, r * (2 + Math.random()), C_WISP0, C_WISP1, 0.5, 0, 0, 1.2, 0.4, true);
       }
     }
   }
 
-  private pop(pos: THREE.Vector3, vel: THREE.Vector3, k: number) {
-    this.flashLight(pos, 400 * k, 0.2, 0xff9944);
-    for (let i = 0; i < 8; i++) {
-      _v.set(R(), R(), R()).normalize().multiplyScalar((3 + Math.random() * 8) * k).add(vel);
-      this.glow.spawn({ pos, vel: _v, life: 0.5 + Math.random() * 0.5, size0: 3 * k, size1: 9 * k, color0: [9, 3.4, 0.7], color1: [1, 0.2, 0.04], alpha0: 1, alpha1: 0, frame: 2, drag: 2.5, rotVel: 1.5 });
-    }
-    for (let i = 0; i < 4; i++) {
-      _v.set(R(), R(), R()).normalize().multiplyScalar(4 * k).add(vel);
-      this.smoke.spawn({ pos, vel: _v, life: 6 + Math.random() * 4, size0: 4 * k, size1: 14 * k, color0: [0.1, 0.06, 0.04], color1: [0.085, 0.08, 0.075], alpha0: 0.8, alpha1: 0, drag: 1.2, rise: 0.3, lit: true });
+  explosion(pos: THREE.Vector3, vel: THREE.Vector3, scale = 1, kind?: ExplosionKind) {
+    if (!this.volumetric) { this.legacyExplosion(pos, vel, scale); return; }
+    const k = scale * this.explosionScale;
+    kind ??= scale < 0.6 ? 'small' : 'fighter';
+    if (kind === 'boss') { this.warshipBlast(pos, vel, k / 2); return; }
+    const dist = this.vol.camDist(pos);
+    if (dist > VOL_FAR) { this.farBlast(pos, vel, k); return; }
+    const near = dist < VOL_MID;
+    if (kind === 'heavy') {
+      // Bf 110 / Ju 88: two engines and a full fuel load, a bigger ball and a second stage
+      const r = 6.3 * k;
+      this.blast(pos, vel, r, 5, 3.8, 3, 16, Math.round(36 * scale), 10000 * k, 160 + 60 * k, true);
+      if (near) this.spawnDebris(pos, vel, Math.round(14 * scale), true);
+      _v.set(R(), R() * 0.5, R()).normalize().multiplyScalar(r * 0.8);
+      this.later(0.2 + Math.random() * 0.12, _p.copy(pos).add(_v), vel, k * 0.6, 0);
+      _v.set(R(), R() * 0.5, R()).normalize().multiplyScalar(r * 0.9);
+      this.later(0.45 + Math.random() * 0.25, _p.copy(pos).add(_v), vel, k * 0.45, 0);
+    } else if (kind === 'fighter') {
+      const r = 5 * k;
+      this.blast(pos, vel, r, 3, 3.3, 2, 13, Math.round(26 * scale), 6000 * k, 120 + 50 * k, false);
+      if (near) this.spawnDebris(pos, vel, Math.floor(12 * scale), true);
+      // fuel and ammunition cooking off a moment later: two or three smaller pops
+      const n = 2 + (Math.random() < 0.5 ? 1 : 0);
+      for (let i = 0; i < n; i++) {
+        _v.set(R(), R() * 0.6, R()).normalize().multiplyScalar((4 + Math.random() * 6) * k);
+        this.later(0.12 + Math.random() * 0.55, _p.copy(pos).add(_v), vel, k * (0.35 + Math.random() * 0.2), 0);
+      }
+    } else {
+      const r = 4.4 * k;
+      this.blast(pos, vel, r, k > 1 ? 1 : 0, k > 1.2 ? 3.5 : 0, 1, 9, Math.round(18 * scale), 5000 * k, 70 + 40 * k, false);
+      if (near) this.spawnDebris(pos, vel, Math.floor(12 * scale), true);
     }
   }
 
-  // Flak burst: a bright core, a spray of fast glowing fragments, and 3-6 dark puffs of
-  // varying size and darkness. Sometimes a smaller second burst follows a moment later.
+  // Far away: a flash, a fireball sprite and a smoke puff are all that read at this range
+  private farBlast(pos: THREE.Vector3, vel: THREE.Vector3, k: number) {
+    this.emit(this.glow, pos, vel, 0.12, 8 * k, 16 * k, C_FLASH, undefined, 1, 0, 1, 0, 0, false, 0);
+    this.emit(this.glow, pos, vel, 0.8, 9 * k, 15 * k, C_FLAME0, C_FLAME1, 0.95, 0, 2, 0, 0, false, 0.6);
+    for (let i = 0; i < 3; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar(4 * k).add(vel);
+      this.emit(this.smoke, pos, _v, 10 + Math.random() * 5, 6 * k, 22 * k, C_WISP0, C_WISP1, 0.9, 0, 0, 1, 0.4, true);
+    }
+  }
+
+  // Cook-off pop a beat after the main blast
+  private pop(pos: THREE.Vector3, vel: THREE.Vector3, k: number) {
+    if (!this.volumetric) { this.legacyPop(pos, vel, k); return; }
+    if (this.vol.camDist(pos) > VOL_FAR) { this.farBlast(pos, vel, k * 0.7); return; }
+    const r = 4.2 * k;
+    this.flashLight(pos, 3500 * k, 0.25, 0xff9944, 60 + 40 * k);
+    this.emit(this.glow, pos, vel, 0.08, r * 1.2, r * 2.2, C_FLASH, undefined, 1, 0, 1, 0, 0, false, 0);
+    this.fireball(pos, vel, r, 1.2, 0.3, 0, 2.4);
+    this.smokeBall(pos, vel, r * 0.9, 9 + Math.random() * 3, 0.08, 0.2);
+  }
+
+  // Warship-sized blast (k ~1..5): a huge multi-stage fireball, shockwave, a rolling smoke
+  // cloud and secondary explosions marching out from the first one
+  warshipBlast(pos: THREE.Vector3, vel: THREE.Vector3, k: number) {
+    if (!this.volumetric) { this.legacyWarshipBlast(pos, vel, k); return; }
+    const r = 13 * k;
+    const lobes = Math.min(7, 3 + Math.floor(k));
+    this.blast(pos, vel, r, lobes, k >= 2.5 ? 4 : 3, k >= 3 ? 3 : 2, 22, 24, 9000 * k, 300 + 120 * k, true, 0.7);
+    this.spawnDebris(pos, vel, Math.round(12 * Math.min(1, 0.4 + k * 0.2)), true);
+    if (k >= 3) {
+      const n = 3 + (Math.random() < 0.5 ? 1 : 0);
+      for (let i = 0; i < n; i++) {
+        _v.set(R(), R() * 0.5, R()).normalize().multiplyScalar(r * (0.9 + Math.random() * 0.6));
+        this.later(0.15 + i * 0.22 + Math.random() * 0.15, _p.copy(pos).add(_v), vel, k * 0.5, 2);
+      }
+    }
+  }
+
+  // Secondary blast of a warship stage
+  private stage(pos: THREE.Vector3, vel: THREE.Vector3, k: number) {
+    const r = 13 * k;
+    this.blast(pos, vel, r, 2, 0, 1, 18, 10, 6000 * k, 200 + 100 * k, false, 0.6);
+  }
+
+  // Flak burst: a brief orange core inside a dark, swelling puff, a spray of fast glowing
+  // fragments, and sometimes a smaller second burst a moment later.
   flak(pos: THREE.Vector3) {
     this.flakBurst(pos, 1, true);
     if (Math.random() < 0.3) {
       _v.set(R(), R() * 0.5 + 0.2, R()).normalize().multiplyScalar(8 + Math.random() * 8);
-      this.pendingFlak.push({ t: 0.2 + Math.random() * 0.35, pos: pos.clone().add(_v), scale: 0.55 + Math.random() * 0.25 });
+      this.later(0.2 + Math.random() * 0.35, _p.copy(pos).add(_v), _d.set(0, 0, 0), 0.55 + Math.random() * 0.25, 1);
     }
   }
 
   private flakBurst(pos: THREE.Vector3, scale: number, core: boolean) {
-    this.flashLight(pos, 700 * scale, 0.15, 0xffaa66);
-    if (core) this.glow.spawn({ pos, life: 0.12, size0: 6, size1: 14, color0: [40, 22, 8], alpha0: 1, alpha1: 0, frame: 1 });
-    this.glow.spawn({ pos, life: 0.35, size0: 5 * scale, size1: 10 * scale, color0: [9, 3.5, 0.8], alpha0: 1, alpha1: 0, frame: 2, rotVel: 2 });
-    this.glow.spawn({ pos, life: 0.3, size0: 3 * scale, size1: 40 * scale, color0: [3, 2.6, 2.2], alpha0: 0.7, alpha1: 0, frame: 3, rotVel: 0 });
+    if (!this.volumetric || this.vol.camDist(pos) > VOL_FAR) { this.legacyFlakBurst(pos, scale, core); return; }
+    this.flashLight(pos, 2600 * scale, 0.16, 0xffaa66, 110);
+    if (core) this.glow.spawn({ pos, life: 0.1, size0: 5, size1: 11, color0: [40, 22, 8], alpha0: 1, alpha1: 0, frame: 1 });
     // fragment spray: hot streaks thrown out fast, bent down by gravity and slowed by drag
     const nF = Math.round((8 + Math.random() * 7) * scale);
     for (let i = 0; i < nF; i++) {
@@ -208,39 +385,62 @@ export class Effects {
       const hot = 0.6 + Math.random() * 0.6;
       this.glow.spawn({ pos, vel: _v, life: 0.12 + Math.random() * 0.2, size0: 0.22 * scale, size1: 0.04, color0: [30 * hot, 18 * hot, 6 * hot], color1: [8, 2, 0.5], alpha0: 1, alpha1: 0, frame: 1, drag: 2.5, rise: -9 });
     }
-    // 3-6 sub-puffs scattered around the burst centre, each with its own size and darkness
-    const nP = 3 + Math.floor(Math.random() * 4);
+    this.shock(pos, _d.set(0, 0, 0), 22 * scale, 0.3, 0.6);
+    // the puff itself: near-black, a short-lived orange heart, then a slow drifting cloud
+    const g = 0.015 + Math.random() * 0.035;
+    const s = this.vol.alloc(1.5);
+    if (s) {
+      s.pos.copy(pos); s.vel.set(R(), R() * 0.5 + 0.5, R()).multiplyScalar(2.5);
+      s.life = 10 + Math.random() * 5;
+      s.r0 = 3 * scale; s.r1 = 8 * scale; s.growTau = 0.45; s.growth = 0.12 * scale;
+      s.heat0 = 0.95; s.tau = 0.075; s.grey = g; s.dens = 1.7;
+      s.billow0 = 0.8; s.billow1 = 1.25; s.drag = 1.2; s.rise = 0.25; s.windK = 1;
+      s.fadeIn = 0.03; s.fadeOut = 0.5;
+    }
+    // 2-3 smaller lumps around it, so the burst is never a perfect ball
+    const nP = 2 + (Math.random() < 0.5 ? 1 : 0);
     for (let i = 0; i < nP; i++) {
-      _v.set(R() * 4, R() * 1.5 + 1, R() * 4);
-      _p.copy(pos).addScaledVector(_v, scale);
-      const k = 0.7 + Math.random() * 0.7;
-      const g = 0.015 + Math.random() * 0.07;
-      _v.set(R(), R() * 0.6, R()).multiplyScalar((5 + Math.random() * 6) * scale);
-      this.smoke.spawn({ pos: _p, vel: _v, life: 12 + Math.random() * 10, size0: 4.5 * k * scale, size1: (13 + Math.random() * 9) * k * scale,
-        color0: [g, g, g], color1: [g + 0.06, g + 0.06, g + 0.06], alpha0: 0.85 + Math.random() * 0.15, alpha1: 0, drag: 1.6, rise: 0.2, lit: true });
+      _v.set(R(), R() * 0.6 + 0.2, R()).normalize().multiplyScalar(4 + Math.random() * 2.5);
+      const q = this.vol.alloc(1.2);
+      if (!q) break;
+      q.pos.copy(pos).addScaledVector(_v, scale);
+      q.vel.set(R(), R() * 0.6, R()).multiplyScalar((3 + Math.random() * 4) * scale);
+      q.delay = Math.random() * 0.05;
+      q.life = 7 + Math.random() * 4;
+      q.r0 = 2 * scale; q.r1 = (4.5 + Math.random() * 2.5) * scale; q.growTau = 0.5; q.growth = 0.1 * scale;
+      q.heat0 = 0.5; q.tau = 0.06; q.grey = g + 0.02; q.dens = 1.4;
+      q.billow0 = 0.9; q.billow1 = 1.3; q.drag = 1.6; q.rise = 0.2; q.windK = 1;
+      q.fadeIn = 0.05; q.fadeOut = 0.5;
     }
   }
 
   spawnDebris(pos: THREE.Vector3, vel: THREE.Vector3, count: number, burning: boolean) {
+    const sz = Math.sqrt(this.explosionScale);
     for (let i = 0; i < count; i++) {
-      const m = new THREE.Mesh(this.debrisGeo[i % this.debrisGeo.length], this.debrisMat[i % this.debrisMat.length]);
-      m.position.copy(pos);
-      m.scale.setScalar(0.6 + Math.random() * 1.4);
-      m.castShadow = true;
-      this.scene.add(m);
-      this.debris.push({
-        mesh: m,
-        vel: new THREE.Vector3(R(), R() + 0.3, R()).multiplyScalar(15 + Math.random() * 30).add(vel),
-        spin: new THREE.Vector3(R(), R(), R()).multiplyScalar(8),
-        life: 6 + Math.random() * 4, smoke: burning && Math.random() < 0.4, fire: burning && Math.random() < 0.25,
-      });
+      let d: Debris | null = null;
+      for (const x of this.debris) if (x.pooled && !x.active) { d = x; break; }
+      if (!d) {
+        // pool exhausted: reuse the piece closest to the end of its fall
+        for (const x of this.debris) if (x.pooled && (!d || x.life < d.life)) d = x;
+        if (!d) return;
+      }
+      d.active = true;
+      d.mesh.visible = true;
+      d.mesh.position.copy(pos);
+      d.mesh.scale.setScalar((0.6 + Math.random() * 1.4) * sz);
+      d.vel.set(R(), R() + 0.3, R()).multiplyScalar(15 + Math.random() * 30).add(vel);
+      d.spin.set(R(), R(), R()).multiplyScalar(8);
+      d.life = d.max = 6 + Math.random() * 4;
+      d.fire = burning && Math.random() < 0.35;
+      d.smoke = d.fire || (burning && Math.random() < 0.45);
+      d.acc = Math.random() * 0.04;
     }
   }
 
   // Jettisoned drop tank (the yellow 300 l tanks the Fw 190s drop before attacking)
   dropTank(obj: THREE.Object3D, vel: THREE.Vector3) {
     this.scene.add(obj);
-    this.debris.push({ mesh: obj, vel: vel.clone().add(new THREE.Vector3(0, -3, 0)), spin: new THREE.Vector3(0.6, 0.1, 0.2), life: 14, smoke: false, fire: false });
+    this.debris.push({ mesh: obj, vel: vel.clone().add(new THREE.Vector3(0, -3, 0)), spin: new THREE.Vector3(0.6, 0.1, 0.2), life: 14, max: 14, smoke: false, fire: false, acc: 0, active: true, pooled: false });
   }
 
   // scale > 1 draws the chute (and its jumper) larger, like the 4.2x enemy fighters, so a
@@ -265,7 +465,9 @@ export class Effects {
     this.chutes.push({ obj, vel: vel.clone(), life: 60, open: -1.5 - Math.random() * 1.5, phase: Math.random() * Math.PI * 2 });
   }
 
-  // Objects using every material this layer can spawn, for shader pre-compilation
+  // Objects using every material this layer can spawn, for shader pre-compilation.
+  // (The volume, particle and light objects are permanent scene members, so a compile of
+  // the scene already covers them.)
   warmupObjects(): THREE.Object3D[] {
     const objs: THREE.Object3D[] = this.debrisGeo.map((g, i) => new THREE.Mesh(g, this.debrisMat[i % this.debrisMat.length]));
     objs.push(new THREE.Mesh(this.chuteGeo, this.chuteMat), new THREE.Mesh(this.chuteGeo, this.figureMat));
@@ -276,39 +478,62 @@ export class Effects {
   rebase(off: THREE.Vector3) {
     this.smoke.rebase(off);
     this.glow.rebase(off);
+    this.vol.rebase(off);
     for (const l of this.lights) l.light.position.sub(off);
-    for (const p of this.pendingFlak) p.pos.sub(off);
-    for (const p of this.pendingPops) p.pos.sub(off);
+    for (const p of this.pending) if (p.active) p.pos.sub(off);
   }
 
   update(dt: number) {
     this.smoke.update(dt);
     this.glow.update(dt);
-    if (this.pendingPops.length) {
-      for (const p of this.pendingPops) { p.t -= dt; if (p.t <= 0) this.pop(p.pos, p.vel, p.k); }
-      this.pendingPops = this.pendingPops.filter((p) => p.t > 0);
+    for (const p of this.pending) {
+      if (!p.active) continue;
+      p.t -= dt;
+      p.pos.addScaledVector(p.vel, dt * 0.6);
+      if (p.t > 0) continue;
+      p.active = false;
+      if (p.kind === 0) this.pop(p.pos, p.vel, p.k);
+      else if (p.kind === 1) this.flakBurst(p.pos, p.k, false);
+      else this.stage(p.pos, p.vel, p.k);
     }
-    if (this.pendingFlak.length) {
-      for (const p of this.pendingFlak) { p.t -= dt; if (p.t <= 0) this.flakBurst(p.pos, p.scale, false); }
-      this.pendingFlak = this.pendingFlak.filter((p) => p.t > 0);
+    this.vol.update(dt);
+    for (const s of this.lights) {
+      if (s.life <= 0) continue;
+      s.life -= dt;
+      const k = Math.max(0, s.life / s.max);
+      s.light.intensity = s.life > 0 ? s.intensity * k * k : 0;
     }
-    for (const l of this.lights) {
-      l.life -= dt;
-      l.light.intensity = Math.max(0, l.intensity * (l.life / l.max));
-      if (l.life <= 0) { l.light.intensity = 0; l.light.userData.free = true; }
-    }
-    this.lights = this.lights.filter((l) => l.life > 0);
+    const cam = this.vol.camPos, seen = this.vol.hasCam;
+    let ext = 0;
     for (const d of this.debris) {
+      if (!d.active) continue;
       d.life -= dt;
       d.vel.y -= 9.81 * dt;
       d.vel.multiplyScalar(Math.exp(-0.25 * dt));
       d.mesh.position.addScaledVector(d.vel, dt);
       d.mesh.rotation.x += d.spin.x * dt; d.mesh.rotation.y += d.spin.y * dt; d.mesh.rotation.z += d.spin.z * dt;
-      if (d.smoke && Math.random() < 0.5) this.smoke.spawn({ pos: d.mesh.position, life: 3, size0: 0.6, size1: 3, color0: [0.1, 0.1, 0.1], alpha0: 0.5, alpha1: 0, lit: true });
-      if (d.fire && Math.random() < 0.6) this.glow.spawn({ pos: d.mesh.position, life: 0.3, size0: 1.2, size1: 0.4, color0: [9, 3.6, 0.8], alpha0: 1, alpha1: 0, frame: 2, rotVel: 4 });
-      if (d.life <= 0) this.scene.remove(d.mesh);
+      if (d.smoke) {
+        // burning pieces leave a continuous smoke trail, emitted at a fixed rate (thinner far away)
+        const far = seen ? d.mesh.position.distanceTo(cam) : 0;
+        const tick = far > 1500 ? 0.1 : 0.04;
+        d.acc += dt;
+        const burn = d.life / d.max;
+        while (d.acc >= tick) {
+          d.acc -= tick;
+          if (far > 3000 || this.smoke.count > SMOKE_HARD) continue;
+          const sc = d.mesh.scale.x;
+          this.emit(this.smoke, d.mesh.position, undefined, 2.2 + burn * 1.6, 0.5 * sc, (2.2 + burn * 2.5) * sc, C_TRAIL, undefined, 0.35 + burn * 0.3, 0, 0, 0, 0.5, true);
+          if (d.fire && burn > 0.35) this.emit(this.glow, d.mesh.position, undefined, 0.22, 1.1 * sc, 0.35 * sc, C_FLAME0, C_FLAME1, 1, 0, 2, 0, 0, false, 4);
+        }
+      }
+      if (d.life <= 0) {
+        d.active = false;
+        if (d.pooled) d.mesh.visible = false;
+        else { this.scene.remove(d.mesh); continue; }
+      }
+      if (!d.pooled) this.debris[DEBRIS_POOL + ext++] = d;
     }
-    this.debris = this.debris.filter((d) => d.life > 0);
+    this.debris.length = DEBRIS_POOL + ext;
     for (const c of this.chutes) {
       c.life -= dt;
       c.open += dt;
@@ -330,16 +555,100 @@ export class Effects {
       c.obj.position.addScaledVector(c.vel, dt);
       if (c.life <= 0) { this.scene.remove(c.obj); disposeOwned(c.obj); }
     }
-    this.chutes = this.chutes.filter((c) => c.life > 0);
+    if (this.chutes.some((c) => c.life <= 0)) this.chutes = this.chutes.filter((c) => c.life > 0);
   }
 
   clear() {
-    this.smoke.clear(); this.glow.clear();
-    for (const d of this.debris) this.scene.remove(d.mesh);
+    this.smoke.clear(); this.glow.clear(); this.vol.clear();
+    for (const d of this.debris) {
+      d.active = false;
+      if (d.pooled) d.mesh.visible = false; else this.scene.remove(d.mesh);
+    }
+    this.debris.length = DEBRIS_POOL;
     for (const c of this.chutes) { this.scene.remove(c.obj); disposeOwned(c.obj); }
-    this.debris = []; this.chutes = []; this.pendingPops = [];
-    for (const l of this.lights) { l.light.intensity = 0; l.light.userData.free = true; }
-    this.lights = [];
-    this.pendingFlak = [];
+    this.chutes = [];
+    for (const p of this.pending) p.active = false;
+    for (const s of this.lights) { s.life = 0; s.light.intensity = 0; }
+  }
+
+  // ---------------- particle-only explosions (volumetric = false, and far LOD) ----------------
+  private legacyExplosion(pos: THREE.Vector3, vel: THREE.Vector3, scale = 1) {
+    const k = scale * this.explosionScale;
+    this.flashLight(pos, 900 * k, 0.45, 0xff8a3a);
+    this.glow.spawn({ pos, vel, life: 0.11, size0: 7 * k, size1: 18 * k, color0: [16, 9, 3.2], alpha0: 1, alpha1: 0, frame: 1 });
+    this.glow.spawn({ pos, vel, life: 0.35, size0: 4 * k, size1: 40 * k, color0: [1.1, 0.9, 0.75], alpha0: 0.28, alpha1: 0, frame: 3, rotVel: 0 });
+    this.glow.spawn({ pos, vel, life: 0.7, size0: 9 * k, size1: 14 * k, color0: [9, 3.6, 0.9], color1: [1.4, 0.3, 0.05], alpha0: 0.95, alpha1: 0, frame: 2, rotVel: 0.6 });
+    for (let i = 0; i < 24 * scale; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar((4 + Math.random() * 13) * k).add(vel);
+      _p.copy(pos).addScaledVector(_v, 0.02);
+      const hot = Math.random();
+      this.glow.spawn({ pos: _p, vel: _v, life: 0.8 + Math.random() * 1.0, size0: (3.5 + Math.random() * 4) * k, size1: (10 + Math.random() * 9) * k,
+        color0: [7 + hot * 5, 2.4 + hot * 1.8, 0.5], color1: [0.9, 0.18, 0.04], alpha0: 1, alpha1: 0, frame: 2, drag: 2.2, rise: -1.5, rotVel: (Math.random() - 0.5) * 3 });
+    }
+    for (let i = 0; i < 20 * scale; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar((3 + Math.random() * 10) * k).add(_p.copy(vel).multiplyScalar(0.7));
+      this.smoke.spawn({ pos, vel: _v, life: 9 + Math.random() * 6, size0: 6 * k, size1: (20 + Math.random() * 16) * k, color0: [0.11, 0.065, 0.04], color1: [0.085, 0.08, 0.075], alpha0: 0.92, alpha1: 0, drag: 1.0, rise: 0.4, lit: true });
+    }
+    for (let i = 0; i < 30 * scale; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar((30 + Math.random() * 70) * Math.sqrt(k));
+      this.glow.spawn({ pos, vel: _v.add(vel), life: 0.7 + Math.random() * 1.1, size0: 0.5 * Math.sqrt(k), size1: 0.12, color0: [24, 11, 2.5], alpha0: 1, alpha1: 0, frame: 1, drag: 1.4, rise: -9 });
+    }
+    this.spawnDebris(pos, vel, Math.floor(12 * scale), true);
+    if (scale >= 0.8) {
+      const n = 2 + (Math.random() < 0.5 ? 1 : 0);
+      for (let i = 0; i < n; i++) {
+        _v.set(R(), R() * 0.6, R()).normalize().multiplyScalar((4 + Math.random() * 6) * k);
+        this.later(0.12 + Math.random() * 0.55, _p.copy(pos).add(_v), vel, k * (0.35 + Math.random() * 0.2), 0);
+      }
+    }
+  }
+
+  private legacyPop(pos: THREE.Vector3, vel: THREE.Vector3, k: number) {
+    this.flashLight(pos, 400 * k, 0.2, 0xff9944);
+    for (let i = 0; i < 8; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar((3 + Math.random() * 8) * k).add(vel);
+      this.glow.spawn({ pos, vel: _v, life: 0.5 + Math.random() * 0.5, size0: 3 * k, size1: 9 * k, color0: [9, 3.4, 0.7], color1: [1, 0.2, 0.04], alpha0: 1, alpha1: 0, frame: 2, drag: 2.5, rotVel: 1.5 });
+    }
+    for (let i = 0; i < 4; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar(4 * k).add(vel);
+      this.smoke.spawn({ pos, vel: _v, life: 6 + Math.random() * 4, size0: 4 * k, size1: 14 * k, color0: [0.1, 0.06, 0.04], color1: [0.085, 0.08, 0.075], alpha0: 0.8, alpha1: 0, drag: 1.2, rise: 0.3, lit: true });
+    }
+  }
+
+  // The original BossBattle.bigBlast look (particles only)
+  private legacyWarshipBlast(pos: THREE.Vector3, vel: THREE.Vector3, k: number) {
+    this.legacyExplosion(pos, vel, Math.min(1, 0.4 + k * 0.2));
+    this.flashLight(pos, 1400 * k, 0.4, 0xff8a3a);
+    for (let i = 0; i < 10; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar((6 + Math.random() * 14) * k).add(vel);
+      this.glow.spawn({ pos, vel: _v, life: 0.9 + Math.random() * 0.9, size0: (8 + Math.random() * 8) * k, size1: (22 + Math.random() * 14) * k, color0: [9, 3.6, 0.8], color1: [1.2, 0.25, 0.04], alpha0: 1, alpha1: 0, frame: 2, drag: 2, rise: -1 });
+    }
+    for (let i = 0; i < 8; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar((4 + Math.random() * 9) * k).add(_p.copy(vel).multiplyScalar(0.6));
+      this.smoke.spawn({ pos, vel: _v, life: 12 + Math.random() * 8, size0: 12 * k, size1: (40 + Math.random() * 25) * k, color0: [0.1, 0.07, 0.05], color1: [0.085, 0.08, 0.075], alpha0: 0.9, alpha1: 0, drag: 1, rise: 0.5, lit: true });
+    }
+  }
+
+  private legacyFlakBurst(pos: THREE.Vector3, scale: number, core: boolean) {
+    this.flashLight(pos, 700 * scale, 0.15, 0xffaa66);
+    if (core) this.glow.spawn({ pos, life: 0.12, size0: 6, size1: 14, color0: [40, 22, 8], alpha0: 1, alpha1: 0, frame: 1 });
+    this.glow.spawn({ pos, life: 0.35, size0: 5 * scale, size1: 10 * scale, color0: [9, 3.5, 0.8], alpha0: 1, alpha1: 0, frame: 2, rotVel: 2 });
+    this.glow.spawn({ pos, life: 0.3, size0: 3 * scale, size1: 40 * scale, color0: [3, 2.6, 2.2], alpha0: 0.7, alpha1: 0, frame: 3, rotVel: 0 });
+    const nF = Math.round((8 + Math.random() * 7) * scale);
+    for (let i = 0; i < nF; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar((40 + Math.random() * 60) * scale);
+      const hot = 0.6 + Math.random() * 0.6;
+      this.glow.spawn({ pos, vel: _v, life: 0.12 + Math.random() * 0.2, size0: 0.22 * scale, size1: 0.04, color0: [30 * hot, 18 * hot, 6 * hot], color1: [8, 2, 0.5], alpha0: 1, alpha1: 0, frame: 1, drag: 2.5, rise: -9 });
+    }
+    const nP = 3 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < nP; i++) {
+      _v.set(R() * 4, R() * 1.5 + 1, R() * 4);
+      _p.copy(pos).addScaledVector(_v, scale);
+      const k = 0.7 + Math.random() * 0.7;
+      const g = 0.015 + Math.random() * 0.07;
+      _v.set(R(), R() * 0.6, R()).multiplyScalar((5 + Math.random() * 6) * scale);
+      this.smoke.spawn({ pos: _p, vel: _v, life: 12 + Math.random() * 10, size0: 4.5 * k * scale, size1: (13 + Math.random() * 9) * k * scale,
+        color0: [g, g, g], color1: [g + 0.06, g + 0.06, g + 0.06], alpha0: 0.85 + Math.random() * 0.15, alpha1: 0, drag: 1.6, rise: 0.2, lit: true });
+    }
   }
 }

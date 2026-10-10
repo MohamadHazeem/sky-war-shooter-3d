@@ -131,6 +131,8 @@ const _wts = [0, 0, 0, 0, 0, 0];
 function shake(w: World, pos: THREE.Vector3, k: number) {
   if (w.player) w.events.shake?.(Math.max(0, 1 - pos.distanceTo(w.player.pos) / 300) * k);
 }
+// Bf 110 / Ju 88 go up in a bigger, two-stage blast (Effects 'heavy')
+const blastKind = (f: Fighter) => (f.enemyType === 'bf110' || f.enemyType === 'ju88' ? 'heavy' : 'fighter');
 function debrisSound(w: World, pos: THREE.Vector3) {
   if (w.player && pos.distanceTo(w.player.pos) < 500) sound.play('debris', pos, { gain: 0.7, ref: 40 });
 }
@@ -150,7 +152,7 @@ export function startFighterDeath(f: Fighter, cause: string, w: World) {
   if (kind === 'fireball') {
     w.wrecks.break(f, 'blowup');
     f.remove = true;
-    fx.explosion(f.pos, f.vel, 1.5);
+    fx.explosion(f.pos, f.vel, 1.5, blastKind(f));
     // fuel tanks and ammunition going up a beat later: two more blasts in the cloud of wreckage
     for (let i = 0; i < 2; i++) {
       const t = i === 0 ? 0.15 + Math.random() * 0.15 : 0.4 + Math.random() * 0.3;
@@ -265,7 +267,7 @@ function fly(f: Fighter, dt: number, follow: number, cruise: number) {
 function boom(s: Seq) {
   const { f, w } = s;
   w.wrecks.break(f, 'blowup');
-  w.effects.explosion(f.pos, f.vel, 1.3);
+  w.effects.explosion(f.pos, f.vel, 1.3, blastKind(f));
   sound.play('explosion', f.pos, { gain: 1.5, ref: 150, reverb: 0.75 });
   shake(w, f.pos, 0.9);
   debrisSound(w, f.pos);
