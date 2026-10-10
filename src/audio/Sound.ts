@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Music } from './Music';
 import { AirframeCreaks } from './Creaks';
 import { Breathing } from './Breathing';
+import { Whizby } from './Whizby';
 
 // Procedural audio engine (no sample files).
 // - Engines are synthesised as looping firing-pulse trains: Wright R-1820 Cyclones
@@ -51,6 +52,7 @@ export class Sound {
   readonly music = new Music();
   private creaks: AirframeCreaks | null = null;
   private breathing: Breathing | null = null;
+  private whizbyFx: Whizby | null = null;
   volume = 0.8;
   radioEnabled = true;
   musicEnabled = true;
@@ -85,6 +87,7 @@ export class Sound {
     this.startAmbience();
     this.breathing = new Breathing(ctx, this.amb);
     for (let i = 0; i < 6; i++) this.voices.push(this.makeVoice());
+    this.whizbyFx = new Whizby(ctx, this.sfx);
     this.music.init(ctx, this.duck, this.revOutSend);
     this.music.enabled = this.musicEnabled;
     void this.loadSamples();
@@ -626,6 +629,9 @@ export class Sound {
     if (this.interior && (opts.reverb ?? 0) > 0) { const s = ctx.createGain(); s.gain.value = opts.reverb!; out.connect(s).connect(this.revInSend); }
     src.start(when);
   }
+
+  // Enemy round passing close to the listener: a zip panned to where the round is (rate-limited in Whizby.ts)
+  whizby(pos: THREE.Vector3, gain: number) { this.whizbyFx?.play(pos, gain); }
 
   // Player's own guns: un-positioned, close, with the fuselage ringing around them
   playerGun(twin: boolean) {

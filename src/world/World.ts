@@ -96,6 +96,7 @@ export class World implements WorldView {
     this.scene.add(this.contrails.mesh);
     this.ballistics.onHit = (e) => this.onHit(e);
     this.ballistics.onNearMiss = (p, cannon) => {
+      sound.whizby(p, cannon ? 0.6 : 0.4);
       if (Math.random() < 0.35) sound.play('crack', p, { gain: cannon ? 0.5 : 0.3, delay: false });
     };
     // Yellow 300 L drop tank prototype, cloned per fighter
