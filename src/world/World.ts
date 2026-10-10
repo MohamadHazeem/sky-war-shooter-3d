@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Engine } from '../core/Engine';
 import { Aircraft, Bomber, Fighter, makeGun } from './Aircraft';
+import { hasModel, ModelKind } from './Models';
 import { Ballistics, HitEvent } from './Ballistics';
 import { Effects } from './Effects';
 import { EnemyPilot, EscortPilot, AttackType, WorldView } from './AI';
@@ -333,14 +334,16 @@ export class World implements WorldView {
 
   spawnEnemy(pos: THREE.Vector3, attack?: AttackType, skill = 1, dropTank = true, rockets = false, type: EnemyType = 'fw190'): Fighter {
     const variant = ENEMY_VARIANTS[type];
-    const f = new Fighter('fw190', 'axis', variant.params);
+    const own = hasModel(variant.model as ModelKind);
+    const f = new Fighter((own ? variant.model : 'fw190') as ModelKind, 'axis', variant.params, own ? variant.propRadius : 1.65);
+    f.enemyType = type;
     f.root.position.copy(pos);
     const dir = _v.copy(this.formationCenter).sub(pos).setY(0).normalize();
     f.root.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
     f.fm.vel.copy(dir).multiplyScalar(180);
     f.vel.copy(f.fm.vel);
     // Bf 109 paint: done before the drop tank and rockets are fitted so they keep their colours
-    if (variant.tint) tintModel(f.model, variant.tint);
+    if (variant.tint && !own) tintModel(f.model, variant.tint);
     // Fw 190 A-8: 2x MG 131 (13 mm) cowling, 4x MG 151/20 wing cannon
     const tracerY: [number, number, number] = [10, 8, 3.5];
     f.guns = [
@@ -369,7 +372,7 @@ export class World implements WorldView {
         f.rocketTubes.push(tube);
       }
     }
-    f.setScale(ENEMY_SCALE);
+    f.setScale(ENEMY_SCALE * variant.scale);
     for (const z of f.zones) { z.hp *= ENEMY_ZONE_HP; z.maxHp *= ENEMY_ZONE_HP; }
     f.structure = f.maxStructure = ENEMY_STRUCTURE * (0.85 + 0.15 * this.difficulty) * variant.structure;
     f.label = variant.label;

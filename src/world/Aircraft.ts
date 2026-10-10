@@ -140,8 +140,10 @@ export class Fighter extends Aircraft {
   rocketTubes: THREE.Object3D[] = [];
   gunAim: THREE.Vector3 | null = null; // world direction guns are laid on (AI), overrides boresight
 
-  constructor(kind: 'fw190' | 'p51d', team: Team, params: FlightParams) {
-    super(kind, team, kind === 'fw190' ? 1.65 : 1.7);
+  enemyType = '';          // EnemyType for axis aircraft (score, radio)
+
+  constructor(kind: ModelKind, team: Team, params: FlightParams, propRadius = kind === 'p51d' ? 1.7 : 1.65) {
+    super(kind, team, propRadius);
     this.fm = new FlightModel(params, this.root.position, this.root.quaternion);
     this.radius = 7;
     const H = (name: string, x: number, y: number, z: number, r: number, hp: number, extra: Partial<HitZone> = {}) =>

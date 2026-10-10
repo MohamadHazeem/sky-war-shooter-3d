@@ -3,7 +3,7 @@ import { Engine } from '../core/Engine';
 import { Input } from '../core/Input';
 import { UI, Settings, Progress, DebriefData, PauseInfo } from '../ui/UI';
 import { World, ALTITUDE } from '../world/World';
-import { randomEnemyType } from '../world/EnemyTypes';
+import { randomEnemyType, ENEMY_VARIANTS, EnemyType } from '../world/EnemyTypes';
 import { Aircraft, Bomber, Fighter } from '../world/Aircraft';
 import { GunnerController } from './GunnerController';
 import { PilotController } from './PilotController';
@@ -64,6 +64,7 @@ export class Game {
   private roundsComplete = false;
   private scoreBanked = 0;     // score already paid out as merit at round ends
   private roundKills0 = 0;
+  private seenTypes = new Set<string>();
   private groups = 0;
   private loadout = this.prog.loadout();
   private baseDamageScale = 1;
@@ -207,7 +208,8 @@ export class Game {
       if (victim.team === 'axis') {
         if (byPlayer) {
           // paid at the multiplier held going in; the kill then builds the next step
-          const pts = Math.round(100 * (1 + this.survivalWave * 0.1) * this.combo.mult * this.loadout.scoreMult);
+          const base = victim instanceof Fighter ? (ENEMY_VARIANTS[victim.enemyType as EnemyType]?.score ?? 100) : 100;
+          const pts = Math.round(base * (1 + this.roundIdx * 0.1) * this.combo.mult * this.loadout.scoreMult);
           this.score += pts;
           this.combo.onKill();
           this.killsSincePerk++;
@@ -394,7 +396,7 @@ export class Game {
     this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false; this.trauma = 0;
     this.incoming = null; this.incomingOff = null; this.mapOpen = false; this.mapT = 0;
     this.prog.perks = []; this.perkWave = 0; this.killsSincePerk = 0; this.spawnCd = 0; this.groups = 0;
-    this.roundIdx = 0; this.roundT0 = 0; this.roundClear = false; this.roundsComplete = false; this.scoreBanked = 0; this.roundKills0 = 0;
+    this.seenTypes.clear(); this.roundIdx = 0; this.roundT0 = 0; this.roundClear = false; this.roundsComplete = false; this.scoreBanked = 0; this.roundKills0 = 0;
     this.combo.reset();
     this.tally.reset();
     achievements.beginMission(m);
@@ -630,7 +632,15 @@ export class Game {
       const p = fromArc || w.from !== 'mixed' ? base.clone().add(new THREE.Vector3(R() * 150 + i * 45, R() * 60, R() * 150)) : this.spawnPos('mixed');
       let attack: AttackType | undefined = w.attack;
       if (!attack) attack = (['headon', 'stern', 'beam', 'high'] as AttackType[])[Math.floor(Math.random() * 4)];
-      const f = this.world.spawnEnemy(p, attack, w.skill, true, Math.random() < (w.rockets ?? 0), randomEnemyType());
+      const tier = this.roundIdx + (this.mission && this.mission.number > 0 ? Math.floor((this.mission.number - 1) / 2) : 0);
+      const type = randomEnemyType(tier);
+      const f = this.world.spawnEnemy(p, attack, w.skill, true, Math.random() < (w.rockets ?? 0), type);
+      // first sighting of a new type: the crew calls out what it is
+      if (!this.seenTypes.has(type) && type !== 'fw190') {
+        this.seenTypes.add(type);
+        const v = ENEMY_VARIANTS[type];
+        this.world.callout('type' + type, 'Navigator', `${v.label}s coming in — ${v.blurb}!`, 1, 3);
+      }
       if (fromArc && w.station) this.world.assignStation(f, w.station);
     }
     if (w.radio) this.world.callout('wave' + this.waveIdx, w.radio[0], w.radio[1], 0, 3);
