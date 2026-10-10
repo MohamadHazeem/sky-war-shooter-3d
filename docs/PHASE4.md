@@ -89,3 +89,4 @@ Player notes given at the start:
 - 23:13 share/social card/trailer/analytics merged (squashed); m5 boss regression 3/3 OK.
 - 23:16 deploy #6 (pilot overhaul, Arabic, share/analytics, field dressing).
 - 23:25 graphics pass merged (goals 8, 24, 27); grouped title menu (28).
+- 23:39 full 12-mission regression 12/12, no errors; deploy #7 (graphics pass, campaign map, skills, custom/weekly, theatre, co-op beta, grouped menu).
