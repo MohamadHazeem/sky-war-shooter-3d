@@ -3,6 +3,7 @@ import type { World } from '../world/World';
 import { Bomber, Fighter } from '../world/Aircraft';
 import { BossShip } from '../world/BossShip';
 import { drawBossBlip } from './BossHud';
+import { radarCues } from '../world/Tactics';
 
 /**
  * Plan-view radar plot, north-up = the formation's heading. Compact in the bottom-left
@@ -94,6 +95,19 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
     ctx.fillStyle = 'rgba(255,110,80,0.95)'; ctx.textAlign = 'center';
     ctx.font = `600 ${e > 0.5 ? 13 : 10}px "IBM Plex Mono", monospace`;
     ctx.fillText(e > 0.5 ? `${incoming.count} FIGHTERS  ${Math.ceil(incoming.eta)}s` : `${Math.ceil(incoming.eta)}s`, m.x, m.y - 12 - 6 * e);
+  }
+
+  // enemy tactics (world/Tactics.ts): amber diamond where a coordinated attack is forming up
+  for (const c of radarCues) {
+    if (!c.on || time > c.until) continue;
+    toMap(c.pos, m);
+    const pulse = 0.5 + 0.5 * Math.sin(time * 8);
+    const s = 6 + 3 * pulse + 4 * e;
+    ctx.strokeStyle = `rgba(255,196,60,${0.55 + 0.4 * pulse})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(m.x, m.y - s); ctx.lineTo(m.x + s, m.y); ctx.lineTo(m.x, m.y + s); ctx.lineTo(m.x - s, m.y); ctx.closePath(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,206,90,0.95)'; ctx.textAlign = 'center';
+    ctx.font = `600 ${e > 0.5 ? 12 : 9}px "IBM Plex Mono", monospace`;
+    ctx.fillText(c.label, m.x, m.y - s - 4);
   }
 
   // aircraft
