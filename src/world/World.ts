@@ -7,6 +7,7 @@ import { EnemyPilot, EscortPilot, AttackType, WorldView } from './AI';
 import { FW190_PARAMS, P51_PARAMS } from './FlightModel';
 import { AI_EXTRA, dirFromYawPitch, inArc, STATIONS, STATION_ORDER, StationDef } from './B17Layout';
 import { sound } from '../audio/Sound';
+import { Contrails } from '../render/Contrails';
 
 export const CRUISE = 75;          // m/s formation speed (~170 mph)
 export const ALTITUDE = 7600;      // m (25,000 ft)
@@ -34,6 +35,7 @@ export class World implements WorldView {
   aircraft: Aircraft[] = [];
   readonly ballistics = new Ballistics(6000);
   readonly effects: Effects;
+  readonly contrails = new Contrails(64);
   formationCenter = new THREE.Vector3(0, ALTITUDE, 0);
   formationForward = new THREE.Vector3(0, 0, 1);
   player: Aircraft | null = null;
@@ -61,6 +63,7 @@ export class World implements WorldView {
     this.scene = engine.scene;
     this.effects = new Effects(this.scene);
     this.scene.add(this.ballistics.tracers.mesh);
+    this.scene.add(this.contrails.mesh);
     this.ballistics.onHit = (e) => this.onHit(e);
     this.ballistics.onNearMiss = (p, cannon) => {
       if (Math.random() < 0.35) sound.play('crack', p, { gain: cannon ? 0.5 : 0.3, delay: false });
@@ -106,6 +109,7 @@ export class World implements WorldView {
     this.pilots.clear();
     this.ballistics.clear();
     this.effects.clear();
+    this.contrails.clear();
     this.player = this.playerBomber = this.playerFighter = null;
     this.formationCenter.set(0, ALTITUDE, 0);
     this.formationForward.set(0, 0, 1);
@@ -139,6 +143,9 @@ export class World implements WorldView {
       }
       this.placeBomber(b, 0);
       this.add(b);
+      // contrails from behind each engine nacelle
+      const engines = [[6.5, -0.05, 0.6], [3.02, -0.4, 1.0], [-3.02, -0.4, 1.0], [-6.5, -0.05, 0.6]];
+      engines.forEach(([x, y, z], k) => this.contrails.add(() => (b.remove || b.engineDead[k] ? null : b.localToWorld(new THREE.Vector3(x, y, z)))));
       const gs: AIGunner[] = [];
       for (const id of STATION_ORDER) gs.push({ key: id, def: STATIONS[id], station: STATIONS[id], cooldown: Math.random(), burst: 0, target: null, retarget: Math.random() });
       for (const x of AI_EXTRA) gs.push({ key: 'chin', def: x, cooldown: Math.random(), burst: 0, target: null, retarget: Math.random() });
@@ -388,6 +395,7 @@ export class World implements WorldView {
     this.flak(dt);
     this.ballistics.update(dt, this.aircraft);
     this.effects.update(dt);
+    this.contrails.update(this.time);
     this.radioChatter(dt);
 
     // cleanup
@@ -536,6 +544,7 @@ export class World implements WorldView {
     this.formationCenter.sub(off);
     this.ballistics.rebase(off);
     this.effects.rebase(off);
+    this.contrails.rebase(off);
     for (const p of this.pilots.values()) if (p instanceof EnemyPilot) p.setupPoint.sub(off);
   }
 

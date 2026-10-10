@@ -10,6 +10,7 @@ import { CAMPAIGN, Mission, survivalMission, SpawnFrom, Wave } from './Missions'
 import { STATIONS } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
 import type { AttackType } from '../world/AI';
+import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -98,6 +99,15 @@ export class Game {
     this.engine.scene.remove(g);
   }
 
+  private weatherKey = '';
+  private setWeather(w: Weather) {
+    const key = JSON.stringify(w);
+    this.world.contrails.enabled = w.contrails !== false;
+    if (key === this.weatherKey) return;
+    this.weatherKey = key;
+    applyWeather(this.engine, w);
+  }
+
   applySettings() {
     const s = this.settings;
     this.input.sensitivity = s.sensitivity;
@@ -158,6 +168,7 @@ export class Game {
     this.pilot.detach();
     this.world.reset();
     this.clearBombs();
+    this.setWeather(DEFAULT_WEATHER);
     this.world.spawnFormation(12, 1);
     for (let i = 0; i < 3; i++) this.world.spawnEscort(new THREE.Vector3(R() * 300, ALTITUDE + 300 + i * 40, -200 + i * 80), new THREE.Vector3(200 * (i - 1), 350, 200));
     this.menuShot = 0;
@@ -251,6 +262,9 @@ export class Game {
     this.score = 0;
     this.damageT = 0;
     this.engine.post.resetHistory();
+    // survival picks a random time of day
+    const presets: Weather[] = CAMPAIGN.map((c) => c.weather!).filter(Boolean);
+    this.setWeather(m.weather ?? (m.duration === Infinity ? presets[Math.floor(Math.random() * presets.length)] : DEFAULT_WEATHER));
     this.world.playerDamageScale = m.playerArmor ?? (m.role === 'gunner' ? 0.6 : 0.75);
     this.world.aiGunnerFactor = m.role === 'pilot' ? 1.6 : 0.8;
     this.world.spawnFormation(m.bombers, 1);

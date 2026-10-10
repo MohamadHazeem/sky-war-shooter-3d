@@ -295,6 +295,10 @@ export class CloudRenderer {
     this.quad.render(renderer);
     this.compMat.uniforms.tScene.value = sceneRT.texture;
     renderer.setRenderTarget(out);
+    // `out` shares the scene depth texture: overwrite colour only, keep depth
+    const ac = renderer.autoClear;
+    renderer.autoClear = false;
     this.compQuad.render(renderer);
+    renderer.autoClear = ac;
   }
 }

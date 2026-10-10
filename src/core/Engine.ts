@@ -4,6 +4,7 @@ import { CloudRenderer } from '../render/Clouds';
 import { PostFX } from '../render/PostFX';
 import { buildEnvironment, SkyDome } from '../render/Sky';
 import { envRef } from '../render/EnvRef';
+import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 
 export type Quality = 'low' | 'medium' | 'high';
 
@@ -23,6 +24,13 @@ export class Engine {
   readonly reversed: boolean;
   private sceneRT: THREE.WebGLRenderTarget;
   private hdrRT: THREE.WebGLRenderTarget;
+  private copyMat = new THREE.ShaderMaterial({
+    uniforms: { tSrc: { value: null } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: 'uniform sampler2D tSrc; varying vec2 vUv; void main(){ gl_FragColor = texture2D(tSrc, vUv); }',
+    depthTest: false, depthWrite: false,
+  });
+  private copyQuad = new FullScreenQuad(this.copyMat);
   private updatables = new Set<Updatable>();
   private last = 0;
   time = 0;
@@ -96,6 +104,17 @@ export class Engine {
     this.resize();
   }
 
+  // Re-derive sun light and the sky environment map after the atmosphere changed
+  refreshLighting() {
+    this.sun.color.copy(Atmos.sunColor);
+    this.sun.intensity = Atmos.sunIntensity * 0.95;
+    const old = this.scene.environment;
+    this.scene.environment = buildEnvironment(this.renderer, this.sky);
+    envRef.tex = this.scene.environment;
+    old?.dispose();
+    this.post.resetHistory();
+  }
+
   add(u: Updatable) { this.updatables.add(u); }
   remove(u: Updatable) { this.updatables.delete(u); }
 
@@ -157,9 +176,36 @@ export class Engine {
     const r = this.renderer;
     r.setRenderTarget(this.sceneRT);
     r.clear();
+    // Pass 1: opaque geometry (layer 0) -> HDR + depth
+    this.sortLayers();
+    cam.layers.set(0);
     r.render(this.scene, cam);
+    // Clouds + aerial perspective composite
     this.clouds.render(r, cam, this.sceneRT, this.hdrRT, this.time);
-    this.post.render(r, cam, this.hdrRT, this.sceneRT.depthTexture!, this.time, dt);
+    // Copy the composite back over the scene colour (keeping its depth buffer), then
+    // pass 2: transparent effects (layer 1) on top of the clouds, depth-tested.
+    r.autoClear = false;
+    r.setRenderTarget(this.sceneRT);
+    this.copyMat.uniforms.tSrc.value = this.hdrRT.texture;
+    this.copyQuad.render(r);
+    cam.layers.set(1);
+    r.shadowMap.autoUpdate = false;
+    r.render(this.scene, cam);
+    r.shadowMap.autoUpdate = true;
+    r.autoClear = true;
+    cam.layers.set(0);
+    this.post.render(r, cam, this.sceneRT, this.sceneRT.depthTexture!, this.time, dt);
+  }
+
+  // Transparent materials go to layer 1 (drawn after the clouds), everything else layer 0
+  private sortLayers() {
+    this.scene.traverse((o) => {
+      if ((o as THREE.Light).isLight) { o.layers.enableAll(); return; }
+      const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+      if (!m) return;
+      const transparent = Array.isArray(m) ? m.some((x) => x.transparent) : m.transparent;
+      o.layers.set(transparent && o !== this.sky.mesh ? 1 : 0);
+    });
   }
 
   // Floating origin: shift the whole world so the camera stays near the origin horizontally.
