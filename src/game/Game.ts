@@ -47,6 +47,10 @@ export class Game {
   private killMarkerT = 0;
   private damageT = 0;
   private slowmo = 0;
+  private streak = 0;
+  private lastKillAt = -99;
+  private aceAwarded = false;
+  private chatterT = 0;
   private slowFrames = 0;
   private autoQualityDone = false;
   private menuShot = 0;
@@ -61,7 +65,7 @@ export class Game {
     this.world = new World(engine);
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
-    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, radio: true, music: true, quality: 'high', markers: true, flightMode: 'mouseAim' });
+    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, radio: true, music: true, quality: 'high', markers: true, flightMode: 'mouseAim', difficulty: 'veteran' });
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
@@ -133,6 +137,20 @@ export class Game {
         if (byPlayer) {
           this.score += Math.round(100 * (1 + this.survivalWave * 0.1));
           this.ui.feed(`Fw 190 destroyed — confirmed`, 'mine');
+          // streaks: kills in quick succession
+          this.streak = w.time - this.lastKillAt < 9 ? this.streak + 1 : 1;
+          this.lastKillAt = w.time;
+          if (this.streak >= 2) {
+            const label = this.streak === 2 ? 'Double' : this.streak === 3 ? 'Triple' : `${this.streak}×`;
+            this.score += 50 * this.streak;
+            this.ui.feed(`${label} — +${50 * this.streak}`, 'mine');
+          }
+          if (w.stats.kills >= 5 && !this.aceAwarded) {
+            this.aceAwarded = true;
+            this.score += 500;
+            this.ui.banner('FIVE CONFIRMED', 'Ace in a day', 3500);
+            w.callout('ace', 'Pilot', 'That\'s five! You\'re an ace, gunner — drinks are on me tonight!', 0, 3);
+          }
           this.killMarkerT = 0.45;
           this.slowmo = 0.55;
           const lines = ['Got him! He\'s going down!', 'You got him! Nice shooting!', 'He\'s smoking — he\'s finished!', 'Scratch one Focke-Wulf!'];
@@ -268,6 +286,11 @@ export class Game {
     this.setWeather(m.weather ?? (m.duration === Infinity ? presets[Math.floor(Math.random() * presets.length)] : DEFAULT_WEATHER));
     this.world.playerDamageScale = m.playerArmor ?? (m.role === 'gunner' ? 0.6 : 0.75);
     this.world.aiGunnerFactor = m.role === 'pilot' ? 1.6 : 0.8;
+    const diff = this.settings.difficulty;
+    this.world.difficulty = diff === 'recruit' ? 0.8 : diff === 'ace' ? 1.2 : 1;
+    this.world.playerDamageScale *= diff === 'recruit' ? 0.7 : diff === 'ace' ? 1.3 : 1;
+    if (diff === 'recruit') this.world.aiGunnerFactor *= 1.2;
+    this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false;
     this.world.spawnFormation(m.bombers, 1);
     const pb = this.world.playerBomber!;
     if (m.role === 'gunner') {
@@ -331,7 +354,7 @@ export class Game {
       const p = w.from === 'mixed' ? this.spawnPos('mixed') : base.clone().add(new THREE.Vector3(R() * 120 + i * 40, R() * 50, R() * 120));
       let attack: AttackType | undefined = w.attack;
       if (!attack) attack = (['headon', 'stern', 'beam', 'high'] as AttackType[])[Math.floor(Math.random() * 4)];
-      this.world.spawnEnemy(p, attack, w.skill, true);
+      this.world.spawnEnemy(p, attack, w.skill, true, Math.random() < (w.rockets ?? 0));
     }
     if (w.radio) this.world.callout('wave' + this.waveIdx, w.radio[0], w.radio[1], 0, 3);
   }
@@ -358,7 +381,7 @@ export class Game {
           const n = Math.min(14, 2 + Math.floor(this.survivalWave * 1.4));
           const skill = Math.min(1.5, 0.75 + this.survivalWave * 0.06);
           const from: SpawnFrom = this.survivalWave % 3 === 0 ? 'mixed' : (['front', 'rear', 'left', 'right', 'high'] as SpawnFrom[])[this.survivalWave % 5];
-          this.spawnWave({ at: 0, count: n, from, skill });
+          this.spawnWave({ at: 0, count: n, from, skill, rockets: this.survivalWave >= 3 ? 0.3 : 0 });
           this.ui.banner('INCOMING', `Wave ${this.survivalWave}`, 2500);
           this.survivalBreak = 8;
           this.waveTimer = 0;
@@ -387,6 +410,31 @@ export class Game {
       this.escortsSpawned = true;
       for (let i = 0; i < 4; i++) w.spawnEscort(w.formationCenter.clone().add(new THREE.Vector3(R() * 400, 600, -1500 - i * 80)), new THREE.Vector3((i - 1.5) * 200, 300, 0));
       w.callout('escort', 'Radio', 'Little friends at six o\'clock high! The Mustangs are here!', 0, 3);
+    }
+
+    // Crew intercom during lulls in the fighting
+    this.chatterT += dt;
+    if (enemies === 0 && this.chatterT > 32 && t > 12) {
+      this.chatterT = Math.random() * 8;
+      const gunner: [string, string][] = [
+        ['Pilot', 'Pilot to crew, oxygen check. Sound off.'],
+        ['Tail', 'Tail gunner, oxygen okay.'],
+        ['Navigator', 'Navigator to pilot: on course, two-seven minutes to the IP.'],
+        ['Ball Turret', 'Ball turret. Nothing below but cloud. Guns are clear.'],
+        ['Radio', 'Radio to pilot: group says keep it tight, fighters reported ahead.'],
+        ['Top Turret', 'Engineer to pilot: number three\'s running a little hot. Watching it.'],
+        ['Bombardier', 'Bombardier here. Keep your eyes open, they like to come out of the sun.'],
+        ['Pilot', 'Stay off the interphone unless you see fighters. Keep scanning.'],
+      ];
+      const pilot: [string, string][] = [
+        ['Lead', 'Blue flight, check your fuel. Weave over the big friends.'],
+        ['Big Friend', 'Little friends, little friends, thanks for the company.'],
+        ['Lead', 'Keep your heads on a swivel. They\'ll come out of the sun.'],
+        ['Blue Three', 'Blue Three, engine temps okay. Holding high cover.'],
+      ];
+      const lines = m.role === 'gunner' ? gunner : pilot;
+      const [who, text] = lines[Math.floor(Math.random() * lines.length)];
+      w.callout('chatter', who, text, 25, 1);
     }
 
     // ---- End conditions ----
@@ -631,6 +679,42 @@ export class Game {
     }
   }
 
+  private drawLeadPip(ctx: CanvasRenderingContext2D, W: number, H: number) {
+    const w = this.world, cam = this.engine.camera;
+    const pilot = this.mission?.role === 'pilot';
+    const shooter = pilot ? w.playerFighter! : w.playerBomber!;
+    const origin = pilot ? shooter.pos : cam.position;
+    const aim = pilot ? shooter.forward(new THREE.Vector3()) : this.gunner.aimDirection();
+    const muzzle = pilot ? 880 : 870;
+    let best: Fighter | null = null, bestAng = THREE.MathUtils.degToRad(pilot ? 18 : 25);
+    for (const f of w.fighters('axis')) {
+      if (!f.alive) continue;
+      const to = f.pos.clone().sub(origin);
+      const d = to.length();
+      if (d > 1300) continue;
+      const ang = to.normalize().angleTo(aim);
+      if (ang < bestAng) { bestAng = ang; best = f; }
+    }
+    if (!best) return;
+    const rel = best.vel.clone().sub(shooter.vel);
+    let t = best.pos.distanceTo(origin) / muzzle;
+    const p = new THREE.Vector3();
+    for (let i = 0; i < 3; i++) { p.copy(best.pos).addScaledVector(rel, t); t = p.distanceTo(origin) / muzzle; }
+    p.y += 0.5 * 9.81 * t * t;
+    const sp = p.clone().project(cam), tp = best.pos.clone().project(cam);
+    if (sp.z > 1 || Math.abs(sp.x) > 1.1 || Math.abs(sp.y) > 1.1) return;
+    const x = (sp.x * 0.5 + 0.5) * W, y = (-sp.y * 0.5 + 0.5) * H;
+    const tx = (tp.x * 0.5 + 0.5) * W, ty = (-tp.y * 0.5 + 0.5) * H;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,200,90,0.55)'; ctx.lineWidth = 1;
+    ctx.setLineDash([3, 4]);
+    ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(x, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = 'rgba(255,200,90,0.95)'; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.moveTo(x, y - 7); ctx.lineTo(x + 7, y); ctx.lineTo(x, y + 7); ctx.lineTo(x - 7, y); ctx.closePath(); ctx.stroke();
+    ctx.restore();
+  }
+
   // 2D overlay: target markers, gunsight, hit markers
   private drawOverlay() {
     const ctx = this.ui.ctx;
@@ -676,6 +760,8 @@ export class Game {
         }
       }
     }
+    // Recruit aim aid: lead pip for the enemy nearest the line of fire
+    if (this.settings.difficulty === 'recruit' && pl?.alive) this.drawLeadPip(ctx, W, H);
     // Pilot gunsight
     if (this.mission?.role === 'pilot' && w.playerFighter?.alive) {
       const g = this.pilot.gunsight;

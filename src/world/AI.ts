@@ -168,6 +168,8 @@ export class EnemyPilot {
         fm.throttle = this.attack === 'headon' ? 0.85 : 1;
         const range = 650 + 150 * this.skill;
         if (dist < range && err < 0.05 + (1 - this.skill) * 0.03) me.trigger = true;
+        // Wgr. 21 rockets are lobbed into the formation from ~1 km, before closing in
+        if (me.rockets > 0 && dist < 1250 && dist > 800 && err < 0.06) me.fireRockets = true;
         const breakDist = this.attack === 'headon' ? 220 : 160;
         if (dist < breakDist || this.timer > 30) {
           this.state = 'break'; this.timer = 0; this.attackCount++;

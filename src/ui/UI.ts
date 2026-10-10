@@ -10,6 +10,7 @@ export interface Settings {
   quality: 'low' | 'medium' | 'high';
   markers: boolean;
   flightMode: 'mouseAim' | 'direct';
+  difficulty: 'recruit' | 'veteran' | 'ace';
 }
 
 export interface Progress { unlocked: number; medals: Record<string, string[]>; best: Record<string, number>; survival: { name: string; score: number; waves: number; role: string; date: string }[] }
@@ -287,6 +288,7 @@ export class UI {
     const st = $('#settings');
     st.innerHTML = `<div class="screen-center"><div class="box panel">
       <div class="kicker">CONFIGURATION</div><h2 class="h2">Settings</h2>
+      <label class="setting">Difficulty <select data-k="difficulty"><option value="recruit" ${s.difficulty === 'recruit' ? 'selected' : ''}>Recruit (lead indicator)</option><option value="veteran" ${s.difficulty === 'veteran' ? 'selected' : ''}>Veteran</option><option value="ace" ${s.difficulty === 'ace' ? 'selected' : ''}>Ace</option></select></label>
       <label class="setting">Mouse sensitivity <input type="range" min="0.3" max="2.5" step="0.05" data-k="sensitivity" value="${s.sensitivity}"></label>
       <label class="setting">Invert mouse Y <select data-k="invertY"><option value="false">Off</option><option value="true" ${s.invertY ? 'selected' : ''}>On</option></select></label>
       <label class="setting">Volume <input type="range" min="0" max="1" step="0.05" data-k="volume" value="${s.volume}"></label>

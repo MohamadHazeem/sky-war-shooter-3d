@@ -28,6 +28,8 @@ export interface WorldEvents {
 
 interface AIGunner { key: string; def: { pivot: THREE.Vector3; rest: { yaw: number; pitch: number }; yaw: [number, number]; pitch: [number, number] }; station?: StationDef; cooldown: number; burst: number; target: Fighter | null; retarget: number }
 
+interface Rocket { obj: THREE.Object3D; pos: THREE.Vector3; vel: THREE.Vector3; fuse: number; age: number; owner: Fighter }
+
 const BOMBER_NAMES = ['Sky Queen', 'Miss Fortune', 'Ole Rattler', 'Hell\'s Angel II', 'Dinah Might', 'Lucky Lady', 'Iron Maiden', 'Sweet Sue', 'Big Stoop', 'Night Owl', 'Wabash Cannonball', 'Patches', 'Belle of Ohio', 'Tondelayo II', 'Blue Streak', 'Short Snorter'];
 
 // The air battle: bomber formation, fighters, guns, damage, flak and effects.
@@ -50,6 +52,11 @@ export class World implements WorldView {
   flakIntensity = 0;   // bursts per second around the formation
   private flakAcc = 0;
   private gunners = new Map<Bomber, AIGunner[]>();
+  private rockets: Rocket[] = [];
+  private rocketGeo = new THREE.CylinderGeometry(0.105, 0.105, 1.0, 10).rotateX(Math.PI / 2);
+  private rocketMat = new THREE.MeshStandardMaterial({ color: 0x3a3c33, roughness: 0.6, metalness: 0.4 });
+  private extinguishers = new Map<string, number>(); // player engine -> bottles left
+  private fireTimers = new Map<string, number>();
   private pilots = new Map<Fighter, EnemyPilot | EscortPilot>();
   private tankProto: THREE.Object3D;
   private radioCooldown = 0;
@@ -111,6 +118,10 @@ export class World implements WorldView {
     this.ballistics.clear();
     this.effects.clear();
     this.contrails.clear();
+    for (const r of this.rockets) r.obj.removeFromParent();
+    this.rockets = [];
+    this.extinguishers.clear();
+    this.fireTimers.clear();
     this.player = this.playerBomber = this.playerFighter = null;
     this.formationCenter.set(0, ALTITUDE, 0);
     this.formationForward.set(0, 0, 1);
@@ -176,7 +187,7 @@ export class World implements WorldView {
     this.scene.add(a.root);
   }
 
-  spawnEnemy(pos: THREE.Vector3, attack?: AttackType, skill = 1, dropTank = true): Fighter {
+  spawnEnemy(pos: THREE.Vector3, attack?: AttackType, skill = 1, dropTank = true, rockets = false): Fighter {
     const f = new Fighter('fw190', 'axis', FW190_PARAMS);
     f.root.position.copy(pos);
     const dir = _v.copy(this.formationCenter).sub(pos).setY(0).normalize();
@@ -199,6 +210,17 @@ export class World implements WorldView {
       f.model.add(t);
       f.dropTank = t;
       f.dropTankAttached = true;
+    }
+    if (rockets) {
+      // two underwing Wgr. 21 mortar tubes
+      f.rockets = 2;
+      for (const x of [1.9, -1.9]) {
+        const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1.3, 10).rotateX(Math.PI / 2), this.rocketMat);
+        tube.position.set(x, -0.62, -0.1);
+        tube.castShadow = true;
+        f.model.add(tube);
+        f.rocketTubes.push(tube);
+      }
     }
     f.label = 'Fw 190';
     this.add(f);
@@ -301,6 +323,12 @@ export class World implements WorldView {
     } else if (e.playerShot) {
       sound.play('hit', e.point, { gain: 0.35, delay: false, ref: 60 });
       this.events.hitMarker?.(false);
+      // visible battle damage: panels and cowling pieces tearing off
+      if (z.hp < z.maxHp * 0.55 && !(z as any).shed) {
+        (z as any).shed = true;
+        this.effects.spawnDebris(e.point, t.vel, 3, false);
+        this.effects.smoke.spawn({ pos: e.point, vel: t.vel, life: 1.6, size0: 1.2, size1: 5, color0: [0.25, 0.24, 0.22], alpha0: 0.7, alpha1: 0, drag: 1.5, lit: true });
+      }
     }
 
     if (z.hp <= 0 && !(z as any).destroyed) {
@@ -399,6 +427,8 @@ export class World implements WorldView {
     }
     this.bomberGunners(dt);
     this.flak(dt);
+    this.updateRockets(dt);
+    this.fires(dt);
     this.ballistics.update(dt, this.aircraft);
     this.effects.update(dt);
     this.contrails.update(this.time);
@@ -409,8 +439,91 @@ export class World implements WorldView {
     this.aircraft = this.aircraft.filter((a) => !a.remove);
   }
 
+  private launchRockets(f: Fighter) {
+    f.fireRockets = false;
+    if (f.rockets <= 0) return;
+    const target = this.bombers().filter((b) => b.alive).sort((x, y) => x.pos.distanceTo(f.pos) - y.pos.distanceTo(f.pos))[0];
+    for (const tube of f.rocketTubes) {
+      const pos = tube.getWorldPosition(new THREE.Vector3());
+      const dir = f.forward(new THREE.Vector3());
+      // aimed slightly high (they drop a lot); time fuse set to the range of the target
+      dir.y += 0.035;
+      dir.normalize();
+      const obj = new THREE.Mesh(this.rocketGeo, this.rocketMat);
+      obj.position.copy(pos);
+      this.scene.add(obj);
+      const range = target ? target.pos.distanceTo(f.pos) : 1000;
+      this.rockets.push({ obj, pos: obj.position, vel: dir.multiplyScalar(320).add(f.vel), fuse: range / 330 + (Math.random() - 0.5) * 1.1, age: 0, owner: f });
+      tube.removeFromParent();
+    }
+    f.rocketTubes = [];
+    f.rockets = 0;
+    sound.play('rocket', f.pos, { gain: 1.2, ref: 80 });
+    this.callout('rockets', 'Tail', 'Rockets! They\'re firing rockets into the formation!', 8, 2);
+  }
+
+  private updateRockets(dt: number) {
+    for (const r of this.rockets) {
+      r.age += dt;
+      r.vel.y -= 9.81 * dt;
+      r.pos.addScaledVector(r.vel, dt);
+      r.obj.lookAt(r.pos.clone().add(r.vel));
+      // sizzling smoke trail and motor flame
+      this.effects.smoke.spawn({ pos: r.pos, vel: r.vel.clone().multiplyScalar(0.05), life: 3.5, size0: 0.8, size1: 4.5, color0: [0.85, 0.85, 0.83], alpha0: 0.55, alpha1: 0, drag: 1, lit: true });
+      if (r.age < 1.6) this.effects.glow.spawn({ pos: r.pos, life: 0.06, size0: 1.4, size1: 0.6, color0: [14, 7, 2], alpha0: 1, alpha1: 0, frame: 1 });
+      let boom = r.age >= r.fuse;
+      if (!boom) for (const a of this.aircraft) if (a.alive && a.team === 'allied' && a.pos.distanceTo(r.pos) < 22) { boom = true; break; }
+      if (boom) {
+        r.fuse = -1;
+        r.obj.removeFromParent();
+        this.effects.explosion(r.pos, new THREE.Vector3(), 0.9);
+        sound.play('explosion', r.pos, { gain: 1.5, ref: 150, reverb: 0.7 });
+        for (const a of this.aircraft) {
+          if (!a.alive || a.team !== 'allied') continue;
+          const d = a.pos.distanceTo(r.pos);
+          if (d > 40) continue;
+          for (let k = 0; k < 2; k++) {
+            const zone = a.zones[Math.floor(Math.random() * a.zones.length)];
+            this.onHit({ target: a, zone, point: a.localToWorld(zone.offset, new THREE.Vector3()), damage: (1 - d / 40) * 45, cannon: true, shooter: r.owner, bulletVel: r.vel.clone(), playerShot: false });
+          }
+        }
+      }
+    }
+    this.rockets = this.rockets.filter((r) => r.fuse >= 0 && r.age < 8);
+  }
+
+  // Fires: burning engines eat into the wing; on the player's ship the pilot fights them
+  private fires(dt: number) {
+    for (const b of this.bombers()) {
+      if (!b.alive) continue;
+      for (const z of b.zones) {
+        if (!z.burning || z.engine === undefined) continue;
+        const wing = b.zone(z.engine < 2 ? 'wingL' : 'wingR');
+        if (wing && wing.hp > 0) {
+          wing.hp -= dt * (b.isPlayer ? 2.2 : 3.5);
+          if (wing.hp <= 0 && !(wing as any).destroyed) { (wing as any).destroyed = true; this.killAircraft(b, false, 'fire'); }
+        }
+        if (!b.isPlayer) continue;
+        const key = z.name;
+        const t = (this.fireTimers.get(key) ?? 0) + dt;
+        this.fireTimers.set(key, t);
+        if (t > 0.1 && t - dt <= 0.1) this.callout('fire' + key, 'Top Turret', `Fire in number ${z.engine + 1} engine!`, 1, 3);
+        if (t > 4.5) {
+          const bottles = this.extinguishers.get(key) ?? 1;
+          this.fireTimers.set(key, -6); // next attempt (if any) later
+          if (bottles > 0) {
+            this.extinguishers.set(key, bottles - 1);
+            if (Math.random() < 0.75) { z.burning = false; this.fireTimers.delete(key); this.callout('fireout' + key, 'Pilot', `Extinguisher's in. Fire's out on number ${z.engine + 1}.`, 1, 3); }
+            else this.callout('firestill' + key, 'Pilot', `Extinguisher didn't take! Number ${z.engine + 1} is still burning!`, 1, 3);
+          }
+        }
+      }
+    }
+  }
+
   private fireGuns(a: Aircraft, dt: number) {
     if (!(a instanceof Fighter) || !a.alive) return;
+    if (a.fireRockets) this.launchRockets(a);
     for (const g of a.guns) {
       g.cooldown -= dt;
       if (!a.trigger || g.ammo <= 0) { if (g.cooldown < 0) g.cooldown = 0; continue; }
@@ -550,6 +663,7 @@ export class World implements WorldView {
     this.formationCenter.sub(off);
     this.ballistics.rebase(off);
     this.effects.rebase(off);
+    // rockets are scene children (shifted by the engine); nothing else to do
     this.contrails.rebase(off);
     for (const p of this.pilots.values()) if (p instanceof EnemyPilot) p.setupPoint.sub(off);
   }

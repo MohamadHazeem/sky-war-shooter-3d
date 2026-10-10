@@ -438,7 +438,10 @@ export class Sound {
     const arr = this.bufs.get(name);
     if (!arr) return;
     const src = ctx.createBufferSource();
-    src.buffer = arr[Math.floor(Math.random() * arr.length)];
+    let buffer = arr[Math.floor(Math.random() * arr.length)];
+    // distant explosions lose their crack: use the rolling far variant
+    if (name === 'explosion' && pos && pos.distanceTo(this.listenerPos) > 2500) buffer = (this.bufs.get('explosionFar') ?? arr)[0];
+    src.buffer = buffer;
     src.playbackRate.value = (opts.rate ?? 1) * (0.95 + Math.random() * 0.1);
     const g = ctx.createGain();
     g.gain.value = opts.gain ?? 1;
@@ -447,8 +450,6 @@ export class Sound {
     if (pos) {
       const d = pos.distanceTo(this.listenerPos);
       if (d > 12000) return;
-      // distant explosions lose their crack: use the rolling far variant
-      if (name === 'explosion' && d > 2500) src.buffer = (this.bufs.get('explosionFar') ?? arr)[0];
       const f = ctx.createBiquadFilter();
       f.type = 'lowpass';
       f.frequency.value = Math.max(150, 18000 * Math.exp(-d / 1000)) * (this.interior ? 0.55 : 1);

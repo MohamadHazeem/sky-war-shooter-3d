@@ -125,6 +125,9 @@ export class Fighter extends Aircraft {
   bailedOut = false;
   dropTankAttached = false;
   dropTank: THREE.Object3D | null = null;
+  rockets = 0;            // Wgr. 21 tubes still loaded
+  fireRockets = false;    // set by the AI when it wants to launch
+  rocketTubes: THREE.Object3D[] = [];
 
   constructor(kind: 'fw190' | 'p51d', team: Team, params: FlightParams) {
     super(kind, team, kind === 'fw190' ? 1.65 : 1.7);

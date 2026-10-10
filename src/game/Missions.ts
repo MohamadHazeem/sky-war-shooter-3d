@@ -11,6 +11,7 @@ export interface Wave {
   attack?: AttackType;
   from: SpawnFrom;
   skill: number;
+  rockets?: number;           // fraction of the wave carrying Wgr. 21 rockets
   radio?: [string, string];
 }
 
@@ -82,7 +83,7 @@ export const CAMPAIGN: Mission[] = [
     objectives: ['Fight through to the target', 'Survive the flak belt over the target', 'Defend the formation on the way home'],
     bombers: 12, waves: [
       { at: 12, count: 4, from: 'right', attack: 'beam', skill: 0.95, radio: ['Ball Turret', 'Fighters, three o\'clock level! Coming in from the right!'] },
-      { at: 0, afterClear: true, count: 4, from: 'rear', attack: 'stern', skill: 1.0 },
+      { at: 0, afterClear: true, count: 4, from: 'rear', attack: 'stern', skill: 1.0, rockets: 0.5 },
       { at: 150, count: 6, from: 'mixed', skill: 1.05, radio: ['Pilot', 'We\'re through the flak. Here come the fighters again — watch the cripples.'] },
       { at: 0, afterClear: true, count: 5, from: 'mixed', skill: 1.1 },
     ],
@@ -109,13 +110,13 @@ export const CAMPAIGN: Mission[] = [
       'Intelligence reports a new kind of German unit: the Sturmgruppe. Heavily armoured Fw 190 A-8s that close to point-blank range from astern, in line abreast, and do not break off.',
       'You are the tail gunner. They will be coming straight at you. Open fire early and keep firing — armour glass in their windscreens will stop a lot of what you throw at them.',
     ],
-    objectives: ['Stop the Sturmgruppe attack from astern', 'Survive the mission', 'Lose no more than 4 bombers'], playerArmor: 0.45,
+    objectives: ['Stop the Sturmgruppe attack from astern', 'Survive the mission', 'Lose no more than 5 bombers'], playerArmor: 0.45,
     bombers: 12, waves: [
       { at: 15, count: 3, from: 'rear', attack: 'stern', skill: 1.0, radio: ['Navigator', 'Fighters assembling behind us, six o\'clock level. Lots of them.'] },
-      { at: 0, afterClear: true, count: 8, from: 'rear', attack: 'stern', skill: 1.15, radio: ['Pilot', 'Here comes the whole gaggle! Tail, they\'re all yours!'] },
+      { at: 0, afterClear: true, count: 8, from: 'rear', attack: 'stern', skill: 1.15, rockets: 0.5, radio: ['Pilot', 'Here comes the whole gaggle! Tail, they\'re all yours!'] },
       { at: 0, afterClear: true, count: 6, from: 'mixed', skill: 1.1 },
     ],
-    duration: 160, maxBombersLost: 4,
+    duration: 160, maxBombersLost: 5,
   },
   {
     id: 'm6', weather: { sunEl: 11, sunAz: 250, low: 0.7, high: 0.5 }, success: "The Mustangs drove them off. The Sky Queen limps home across the North Sea on two engines.", number: 6, title: 'The Long Way Home', target: 'Return leg — over the Netherlands', date: '6 March 1944', role: 'gunner', station: 'waistL',
@@ -141,7 +142,7 @@ export const CAMPAIGN: Mission[] = [
     objectives: ['Protect the bombers', 'Destroy as many attackers as possible', 'Lose no more than 6 bombers'],
     bombers: 12, escorts: 4, waves: [
       { at: 15, count: 6, from: 'front', attack: 'headon', skill: 1.1, radio: ['Lead', 'Here they come. Big gaggle at twelve o\'clock — drop tanks and go!'] },
-      { at: 0, afterClear: true, count: 8, from: 'mixed', skill: 1.15 },
+      { at: 0, afterClear: true, count: 8, from: 'rear', attack: 'stern', skill: 1.15, rockets: 0.4 },
       { at: 0, afterClear: true, count: 8, from: 'high', attack: 'high', skill: 1.2 },
       { at: 0, afterClear: true, count: 10, from: 'mixed', skill: 1.25, radio: ['Big Friend', 'More bandits! They\'re everywhere!'] },
     ],
