@@ -29,6 +29,7 @@ import { CombatTally } from './CombatTally';
 import { achievements } from './Achievements';
 import { GameFeel } from './GameFeel';
 import { CombatFeedback, killFeedText } from '../ui/CombatFeedback';
+import { BailOutCinematic, BAIL_TOTAL } from './BailOutCinematic';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -43,10 +44,8 @@ function save(key: string, v: unknown) { try { localStorage.setItem(key, JSON.st
 const _v = new THREE.Vector3();
 const R = () => Math.random() * 2 - 1;
 
-// Bail-out sequence when a gunner's B-17 is shot down (before the debrief)
-const BAIL_SEQ_TIME = 6.5;                            // seconds of sequence
-const BAIL_STRIKES = 4, BAIL_GAP = 0.7;               // alarm bell strikes (each also jolts the camera)
-const BAIL_CHUTES = [0.9, 1.1, 1.4, 1.8, 2.4, 3.1];   // when each crewman's chute is released
+// Bail-out sequence when a gunner's B-17 is shot down (before the debrief): BailOutCinematic.ts
+const BAIL_SEQ_TIME = BAIL_TOTAL;
 
 export class Game {
   state: State = 'menu';
@@ -88,8 +87,7 @@ export class Game {
   private endTimer = 0;
   private endResult: { success: boolean; reason: string } | null = null;
   private bailT = -1;     // seconds into the bail-out sequence, -1 when inactive
-  private bailBell = 0;   // alarm strikes rung so far
-  private bailCue = 0;    // crew chutes released so far
+  private bailCine = new BailOutCinematic();
   private score = 0;
   private hudAcc = 0;
   private threats: Partial<Record<StationId, number>> = {};
@@ -890,37 +888,20 @@ export class Game {
     else this.ui.banner(success ? 'ALL GUNS SECURE' : 'MISSION FAILED', success ? 'Mission complete' : 'Shot down', 3500);
   }
 
-  // Gunner's B-17 shot down: the crew bails out before the debrief. Driven from the ending
-  // state, so it freezes with the game; chutes are spawned from the live bomber each time,
-  // so floating-origin rebases stay correct.
+  // Gunner's B-17 shot down: the crew bails out before the debrief (BailOutCinematic.ts).
+  // Driven from the ending state, so it freezes with the game; a key skips it.
   private startBailOut() {
     this.bailT = 0;
-    this.bailBell = 0;
-    this.bailCue = 0;
     this.ui.banner('BAIL OUT! BAIL OUT!', 'Crew, abandon the aircraft', 3000);
-    sound.alarmBell(BAIL_STRIKES, BAIL_GAP);
+    this.bailCine.start(this.engine, this.world, this.gunner, this.ui);
   }
 
   private updateBailOut(dt: number) {
     this.bailT += dt;
-    // each alarm strike jolts the camera and flashes red
-    if (this.bailBell < BAIL_STRIKES && this.bailT >= this.bailBell * BAIL_GAP) {
-      this.bailBell++;
-      this.trauma = Math.min(1, this.trauma + 0.45);
-      this.damageT = Math.max(this.damageT, 0.6);
-    }
-    while (this.bailCue < BAIL_CHUTES.length && this.bailT >= BAIL_CHUTES[this.bailCue]) {
-      this.bailCue++;
-      this.releaseCrewChute();
-    }
-  }
-
-  private releaseCrewChute() {
-    const b = this.world.player;
-    if (!b || b.remove) return;
-    // crew leave through the waist, bomb bay and tail hatches: scattered along the fuselage
-    const exit = new THREE.Vector3(R() * 3.5, -1.2 + Math.random() * 0.8, -5 + Math.random() * 7);
-    this.world.effects.parachute(b.localToWorld(exit), b.vel.clone().multiplyScalar(0.5));
+    const f = this.bailCine.update(dt, this.input);
+    this.trauma = Math.min(1, this.trauma + f.jolt);
+    this.damageT = Math.max(this.damageT, f.flash);
+    if (f.done) this.endTimer = 0;
   }
 
   private showDebrief() {

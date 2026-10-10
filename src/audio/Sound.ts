@@ -629,9 +629,12 @@ export class Sound {
     src.start();
   }
 
+  private baseRate = new WeakMap<AudioBufferSourceNode, number>(); // loop rates before the dead-engine sag
+
   private loopSrc(buf: AudioBuffer, rate = 1) {
     const s = this.ctx!.createBufferSource();
     s.buffer = buf; s.loop = true; s.playbackRate.value = rate;
+    this.baseRate.set(s, rate);
     s.start(this.ctx!.currentTime + Math.random() * 0.2);
     return s;
   }
@@ -775,6 +778,28 @@ export class Sound {
     const t = this.ctx.currentTime;
     this.b17Sputter.gain.setTargetAtTime(0.2 + 0.2 * a, t, 0.4);
     this.b17Depth.gain.setTargetAtTime(0.04 * (4 - a), t, 0.4);
+    // the drone sags a little in pitch as the remaining engines labour
+    for (const s of this.b17?.srcs ?? []) s.playbackRate.setTargetAtTime((this.baseRate.get(s) ?? 1) * (1 - 0.022 * (4 - a)), t, 1.4);
+  }
+
+  // One of the gunner's own engines dies (0..3, left to right): a low growl winding down
+  // with a couple of backfire coughs, panned toward that engine. Synthesised, one-shot.
+  engineFail(index: number) {
+    if (!this.ctx || !ok(index) || this.mode !== 'bomber') return;
+    const ctx = this.ctx, t = ctx.currentTime + 0.02;
+    const pan = ctx.createStereoPanner(); pan.pan.value = [-0.7, -0.3, 0.3, 0.7][Math.max(0, Math.min(3, index | 0))];
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.22, t + 0.05);
+    g.gain.setTargetAtTime(0.0001, t + 0.6, 0.7);
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(700, t); f.frequency.exponentialRampToValueAtTime(140, t + 2.6);
+    const o = ctx.createOscillator(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(88, t); o.frequency.exponentialRampToValueAtTime(22, t + 2.8);
+    o.connect(f).connect(g).connect(pan).connect(this.sfx);
+    o.start(t); o.stop(t + 3.2);
+    o.onended = () => { o.disconnect(); f.disconnect(); g.disconnect(); pan.disconnect(); };
+    // backfire coughs
+    for (const dt of [0.15, 0.55 + Math.random() * 0.3]) setTimeout(() => this.play('cannon', null, { gain: 0.25, rate: 0.5, reverb: 0.3 }), dt * 1000);
   }
 
   private tmpPos = new THREE.Vector3();
