@@ -26,6 +26,8 @@ MODELS=(
   "bf109|bf109/Models/bf109g14.ac|tools/convert_models/output/bf109.glb"
   "ju88|Ju-88/Models/ju88a4.ac|tools/convert_models/output/ju88.glb"
   "me163|me163/Models/me163.ac|tools/convert_models/output/me163.glb"
+  "he111|Heinkel-He-111/Models/he111.xml|tools/convert_models/output/he111.glb"
+  "do335|DO-335/Models/do335.xml|tools/convert_models/output/do335.glb"
 )
 
 want=("$@")

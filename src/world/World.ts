@@ -26,6 +26,7 @@ import { prewarmBoss } from './BossShip';
 import { bomberName, dressPlayerBomber } from '../game/Customize';
 import { aiGunnerSkill } from '../game/CrewRoster';
 import { PlayerBomberDamage } from './PlayerBomberDamage';
+import { dressEnemy } from './EnemyDress';
 
 export const ENEMY_SCALE = 6.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 460; // ~40 hits from a .50 to wear one down
@@ -370,6 +371,7 @@ export class World implements WorldView {
     f.vel.copy(f.fm.vel);
     // Bf 109 paint: done before the drop tank and rockets are fitted so they keep their colours
     if (variant.tint && !own) tintModel(f.model, variant.tint);
+    dressEnemy(f, type, own); // late-war types: own hit zones, Me 410 cannon + barbettes (EnemyDress.ts)
     // Fw 190 A-8: 2x MG 131 (13 mm) cowling, 4x MG 151/20 wing cannon
     const tracerY: [number, number, number] = [10, 8, 3.5];
     f.guns = [

@@ -84,7 +84,8 @@ export interface WorldView {
 // shared waypoints and timing (group attacks, per-type behaviour). fly() returns true when it
 // has flown the aircraft this frame, false to let the normal state machine fly it. Dropped
 // when the pilot withdraws; skipped while it is dogfighting / evading escorts.
-export interface PilotOverride { fly(p: EnemyPilot, dt: number, w: WorldView): boolean }
+// steady: never breaks off to dogfight / evade a fighter on its tail (bomber raids, Raid.ts).
+export interface PilotOverride { fly(p: EnemyPilot, dt: number, w: WorldView): boolean; steady?: boolean }
 
 const _y = new THREE.Vector3(0, 1, 0);
 const _u = new THREE.Vector3();
@@ -221,7 +222,7 @@ export class EnemyPilot {
     if (this.state === 'withdraw') this.override = null;
 
     // Jumped by an escort (allied fighter close behind)?
-    if (this.state !== 'withdraw' && this.state !== 'evade' && this.state !== 'dogfight') {
+    if (this.state !== 'withdraw' && this.state !== 'evade' && this.state !== 'dogfight' && !this.override?.steady) {
       for (const a of w.fighters('allied')) {
         if (!a.alive) continue;
         const toMe = _d.copy(me.pos).sub(a.pos);

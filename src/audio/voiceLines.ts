@@ -4,6 +4,10 @@
 
 export const VOICE_LINES = {
   ace: { speakers: ["Pilot"], text: "That's five! You're an ace, gunner — drinks are on me tonight!" },
+  bk5_down: { speakers: ["Top Turret", "Big Friend"], text: "Got the Me 410 before he could fire!" },
+  bk5_fire: { speakers: ["Pilot", "Big Friend"], text: "He's firing the big gun! Kill him before he reloads!" },
+  bk5_lineup: { speakers: ["Navigator", "Big Friend"], text: "Me 410 lining up with the big gun!" },
+  bk5_spotted: { speakers: ["Navigator", "Big Friend"], text: "Me 410 hanging back out of range — he's carrying a fifty-millimetre cannon!" },
   bombs: { speakers: ["Bombardier"], text: "Bombs away! Let's get out of here!" },
   chat_ball_clear: { speakers: ["Ball Turret"], text: "Ball turret. Nothing below but cloud. Guns are clear." },
   chat_bigfriend_thanks: { speakers: ["Big Friend"], text: "Little friends, little friends, thanks for the company." },
@@ -80,6 +84,7 @@ export const VOICE_LINES = {
   p4_tutorial_9: { speakers: ["Pilot"], text: "Short bursts! Watch your tracers and walk them in." },
   p4_world_0: { speakers: ["Pilot"], text: "Hang on — evasive action!" },
   pace_lot: { speakers: ["Pilot"], text: "That's the lot of them! They're breaking off!" },
+  pfeil: { speakers: ["Tail"], text: "Do 335 diving on us from high astern — he's as fast as a jet!" },
   pfx_bandit_coming: { speakers: ["Pilot", "Navigator", "Tail", "Top Turret", "Ball Turret", "Bombardier"], text: "Bandit coming in," },
   pfx_bandits: { speakers: ["Tail", "Navigator", "Lead"], text: "Bandits," },
   pfx_fighters: { speakers: ["Pilot", "Navigator", "Tail", "Top Turret", "Ball Turret", "Bombardier", "Lead"], text: "Fighters," },
@@ -113,6 +118,8 @@ export const VOICE_LINES = {
   pilot_8: { speakers: ["Lead"], text: "Bandits twelve o'clock low, climbing for the bombers. Get between them and the big friends!" },
   pilot_9: { speakers: ["Big Friend"], text: "Little friends, twin-engine bandits closing at our six — they've got rockets!" },
   playerdown: { speakers: ["Pilot"], text: "We've had it! Bail out! Bail out!" },
+  raid_he111_lead: { speakers: ["Lead"], text: "Heinkels! A whole formation of bombers — get into them before they reach the target!" },
+  raid_he111_nav: { speakers: ["Navigator"], text: "German bombers crossing ahead — a whole formation of Heinkels!" },
   rc_ammo_low: { speakers: ["Top Turret"], text: "Ammo's getting low back there. Make 'em count!" },
   rc_ammo_short: { speakers: ["Pilot"], text: "Watch your ammo, short bursts!" },
   rc_bigfriend_thanks: { speakers: ["Big Friend"], text: "Thanks, little friends. That was close!" },

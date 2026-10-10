@@ -1,0 +1,36 @@
+{
+ "name": "do335",
+ "_comment": "FlightGear model coords (x aft, y right, z up, metres) of DO-335/Models/do335.xml. Push-pull layout: prop_1 = front tractor prop, prop_2 = rear pusher prop behind the cruciform tail; both spin about local +Z. The .ac has the tricycle gear modelled down and every gear door closed (do335.xml door animations are 0 deg at position-norm 0), so the struts and wheels are dropped. Instrument panel, shadow, lights and the interior-only glass are dropped.",
+ "submodels": {"include": ["^Models/Interior/interior\\.xml$", "^Models/Pilot/pilot\\.xml$"], "exclude": []},
+ "exclude_objects": [
+  "main/prop(disc|blur).*",
+  "main/(axe[ADG][12]|roue[ADG]|articule0[12])",
+  "interior/int(verriere2|vitres)"
+ ],
+ "texture_files": {"texture.png": "Models/Liveries/1024x1024/Do335.png"},
+ "max_texture": 1024,
+ "nodes": [
+  {"name": "prop_1", "objects": ["main/heliceA", "main/bolA"], "axis": [[-5.64, 0.0, 0.084], [-6.64, 0.0, 0.084]]},
+  {"_comment": "rear pusher prop: still spins about the forward axis (local +Z)",
+   "name": "prop_2", "objects": ["main/heliceB", "main/bolB"], "axis": [[7.454, 0.0, 0.584], [6.454, 0.0, 0.584]]}
+ ],
+ "decimate": {"main/echappe(AV|AR)": 0.25, "pilot.*/(tete|manche|avantbrasG|coprs)": 0.4},
+ "groups": [
+  {"name": "glass", "objects": ["main/verriere2", "main/vitres"]},
+  {"name": "pilot", "objects": ["pilot.*/.*"]},
+  {"name": "interior", "objects": ["interior/.*"]}
+ ],
+ "markers": {
+  "eye_pilot": [-2.6, 0.0, 1.05],
+  "muzzle_cannon_left": [-4.0, -2.092, -0.17],
+  "muzzle_cannon_right": [-4.0, 2.092, -0.17],
+  "muzzle_hub": [-6.95, 0.0, 0.084],
+  "exhaust_rear": [1.5, 0.0, 0.47]
+ },
+ "origin": {"auto": {"wing": ["main/ailes"], "fuselage": ["main/fuselage"], "station": 0.9, "chord_frac": 0.27}},
+ "materials": {"roughness": 0.65, "metallic": 0.12},
+ "preview_shots": [
+  {"name": "tail", "eye": [11.0, -3.5, 2.5], "target": [5.0, 0, 0.5], "lens": 35},
+  {"name": "cockpit", "eye": [-6.0, -2.0, 2.0], "target": [-2.6, 0, 0.9], "lens": 35}
+ ]
+}

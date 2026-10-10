@@ -1,0 +1,46 @@
+{
+ "name": "he111",
+ "_comment": "FlightGear model coords (x aft, y right, z up, metres) of Heinkel-He-111/Models/he111.xml. The .ac has the main gear modelled down and the gear doors closed (he111.xml door animations are 0 deg at position-norm 0), so the main struts and wheels are dropped; the tail wheel is turned up by its retraction rotation. Guns (Models/Interior/Guns/guns.xml, three instances in interior.xml): guns = nose (A-Stand), guns#1 = ventral gondola (C-Stand, aft), guns#2 = dorsal (B-Stand, aft) -> gun_rear. Instrument panel, shadow, lights and the interior-only glass are dropped.",
+ "submodels": {
+  "include": ["^Models/Interior/interior\\.xml$", "^Models/Pilot/pilot\\.xml$", "^Models/Interior/Guns/guns\\.xml$"],
+  "exclude": []
+ },
+ "exclude_objects": [
+  "main/prop(disc|blur).*",
+  "main/(axe[GD][HBCDE]|roue[GD])",
+  "interior/intvitre.*"
+ ],
+ "texture_files": {},
+ "max_texture": 1024,
+ "rotations": [
+  {"_comment": "tail wheel retracted (gear[2] position-norm 0 -> -45 deg about FG +y)",
+   "objects": ["main/axeA", "main/roueA"], "center": [5.924, 0.0, -0.324], "axis": [0, 1, 0], "angle": 45}
+ ],
+ "nodes": [
+  {"name": "prop_1", "objects": ["main/heliceG", "main/bolG"], "axis": [[-6.7, -2.678, -0.422], [-7.7, -2.678, -0.422]]},
+  {"name": "prop_2", "objects": ["main/heliceD", "main/bolD"], "axis": [[-6.7, 2.678, -0.422], [-7.7, 2.678, -0.422]]},
+  {"_comment": "dorsal MG 15 (B-Stand) behind the cockpit glazing; rest pose points aft and 20 deg up (interior.xml offsets). Pivot = the gun's mount (guns.xml origin)",
+   "name": "gun_rear", "objects": ["guns#2/guns"], "pivot": [-2.022, 0.0, 1.223]}
+ ],
+ "decimate": {"guns.*/guns": 0.3, "main/echappes": 0.3, "main/antennes": 0.5, "pilot.*/(tete|manche|avantbrasG|coprs)": 0.4},
+ "groups": [
+  {"name": "glass", "objects": ["main/vitres", "main/vitretourelle"]},
+  {"name": "crew", "objects": ["pilot.*/.*"]},
+  {"name": "interior", "objects": ["interior/.*"]}
+ ],
+ "markers": {
+  "eye_pilot": [-6.0, -0.27, 0.75],
+  "eye_gunner": [-1.4, 0.0, 1.1],
+  "muzzle_nose": {"instance": "guns", "local": [-0.53, 0, 0.005]},
+  "muzzle_ventral": {"instance": "guns#1", "local": [-0.53, 0, 0.005]},
+  "muzzle_rear": {"instance": "guns#2", "local": [-0.53, 0, 0.005], "parent": "gun_rear"}
+ },
+ "origin": {"auto": {"wing": ["main/ailes"], "fuselage": ["main/fuselage"], "station": 1.2, "chord_frac": 0.27}},
+ "materials": {"roughness": 0.7, "metallic": 0.1,
+               "by_texture": {"guns.png": {"roughness": 0.45, "metallic": 0.3}}},
+ "preview_shots": [
+  {"name": "tail", "eye": [14.0, -4.0, 3.5], "target": [6.0, 0, 0.8], "lens": 35},
+  {"name": "dorsal", "eye": [1.5, -3.0, 2.5], "target": [-2.0, 0, 1.2], "lens": 35},
+  {"name": "nose", "eye": [-12.0, -3.0, 1.0], "target": [-7.5, 0, 0.0], "lens": 35}
+ ]
+}

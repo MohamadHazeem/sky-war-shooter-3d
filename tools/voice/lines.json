@@ -1359,6 +1359,63 @@
       "text": "Last push — they're throwing everything at the box!"
     },
     {
+      "group": "Phase 5 late-war aircraft: Me 410 big gun, Do 335, He 111 raids (Tactics.ts / Raid.ts)"
+    },
+    {
+      "id": "bk5_spotted",
+      "roles": [
+        "nav",
+        "bigfriend"
+      ],
+      "text": "Me 410 hanging back out of range — he's carrying a fifty-millimetre cannon!",
+      "say": "M E four-ten hanging back out of range — he's carrying a fifty-millimetre cannon!"
+    },
+    {
+      "id": "bk5_lineup",
+      "roles": [
+        "nav",
+        "bigfriend"
+      ],
+      "text": "Me 410 lining up with the big gun!",
+      "say": "M E four-ten lining up with the big gun!",
+      "urgent": true
+    },
+    {
+      "id": "bk5_fire",
+      "roles": [
+        "pilot",
+        "bigfriend"
+      ],
+      "text": "He's firing the big gun! Kill him before he reloads!",
+      "urgent": true
+    },
+    {
+      "id": "bk5_down",
+      "roles": [
+        "top",
+        "bigfriend"
+      ],
+      "text": "Got the Me 410 before he could fire!",
+      "say": "Got the M E four-ten before he could fire!"
+    },
+    {
+      "id": "pfeil",
+      "role": "tail",
+      "text": "Do 335 diving on us from high astern — he's as fast as a jet!",
+      "say": "Dornier three-thirty-five diving on us from high astern — he's as fast as a jet!",
+      "urgent": true
+    },
+    {
+      "id": "raid_he111_lead",
+      "role": "lead",
+      "text": "Heinkels! A whole formation of bombers — get into them before they reach the target!"
+    },
+    {
+      "id": "raid_he111_nav",
+      "role": "nav",
+      "text": "German bombers crossing ahead — a whole formation of Heinkels!"
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {

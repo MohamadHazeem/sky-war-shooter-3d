@@ -34,6 +34,8 @@ git clone https://github.com/FGMEMBERS/ME-262.git && git -C ME-262 checkout b9f6
 git clone https://github.com/FGMEMBERS/bf109.git  && git -C bf109  checkout 11bc9d86a24bf8295651414ab545976617761aa3
 git clone https://github.com/FGMEMBERS/Ju-88.git  && git -C Ju-88  checkout 2104ecaf355192323faf232c5c3bcd9657dcaa60
 git clone https://github.com/FGMEMBERS/me163.git  && git -C me163  checkout 5dea5449e6090940af08bab279b3e76ee9065216
+git clone https://github.com/FGMEMBERS/Heinkel-He-111.git && git -C Heinkel-He-111 checkout 0625f5535e022166045c9470668f5243dbcab2dd
+git clone https://github.com/FGMEMBERS/DO-335.git && git -C DO-335 checkout 135d343e0aa0ae2c4b6fe1d986d811ef208104b5
 ```
 
 ## Rebuild
@@ -75,6 +77,8 @@ Output (`public/models/X.glb` is the compressed version of `tools/convert_models
 | `public/models/bf109.glb` | `bf109/Models/bf109g14.ac` + sub-models as `extra_models` | `bf109g.png` ("Dayfighter green") |
 | `public/models/ju88.glb` | `Ju-88/Models/ju88a4.ac` | `ju88-1.png` |
 | `public/models/me163.glb` | `me163/Models/me163.ac` | `me163-1.png` |
+| `public/models/he111.glb` | `Heinkel-He-111/Models/he111.xml` | `texture.png` (default, RLM 70/71 splinter, crosses only) |
+| `public/models/do335.glb` | `DO-335/Models/do335.xml` | `Liveries/1024x1024/Do335.png` (Alex Kerr, "ZH", no swastika) |
 
 The Bf 109 and Ju 88 are converted from the `.ac`, not the model XML: their XML has a top-level `<offsets>`
 that `convert_ac.py` applies to the main `.ac` only, which would misalign the sub-models.
@@ -115,6 +119,8 @@ side-by-side renders in `tools/model_compare.html` differ by < 0.3/255 on averag
   * Fw 190: `prop_1`, `cooling_fan` (the engine fan; it spins faster than the prop).
   * Bf 109: `prop_1`. Bf 110 and Ju 88: `prop_1` = left engine (+X), `prop_2` = right engine (−X).
   * Bf 110: `gun_rear` (rear MG; the rest pose points aft; yaw about local Y, pitch about local X). The `muzzle_rear` marker is its child.
+  * He 111: `prop_1` = left engine (+X), `prop_2` = right; `gun_rear` = the dorsal MG 15 (B-Stand; the rest pose points aft and 20 deg up), `muzzle_rear` its child; static `muzzle_nose`, `muzzle_ventral` markers.
+  * Do 335: `prop_1` = nose (tractor) prop, `prop_2` = the pusher behind the cruciform tail; both spin about local +Z like every prop.
   * Me 262 and Me 163 have **no props**. `fan_1`/`fan_2` (Me 262 intake fans) and `fan_1` (Me 163 nose generator
     windmill) spin about local +Z like props, but `setupProps` (`/^prop_\d+$/`) does not pick them up.
     The markers `exhaust_left`/`exhaust_right` (Me 262) and `exhaust` (Me 163) are the jet/rocket nozzles.
@@ -123,6 +129,10 @@ side-by-side renders in `tools/model_compare.html` differ by < 0.3/255 on averag
 
 Exact numbers are in `reports/<model>.json`. Gear exceptions: the Bf 110 keeps its fixed tail wheel, the Bf 109 keeps its
 main wheels in the open wells (FlightGear models them retracted), and the Ju 88 tail wheel is turned up by its retraction rotation.
+
+There is no GPL Me 410 in FGMEMBERS, FGAddon or anywhere else on GitHub (searched October 2026), so the game's Me 410
+flies the Bf 110 model as a stand-in, repainted and fitted with a BK 5 cannon and side barbettes at spawn (`src/world/EnemyDress.ts`).
+No He 219 or Ta 152 model exists there either.
 
 ## Adding another FG aircraft
 

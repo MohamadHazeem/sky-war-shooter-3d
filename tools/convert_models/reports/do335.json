@@ -1,0 +1,240 @@
+{
+ "name": "do335",
+ "origin_fg": [
+  -1.9131975807249546,
+  0.0,
+  0.3096869885921478
+ ],
+ "nodes": {
+  "prop_1": {
+   "triangles": 700,
+   "primitives": 1,
+   "materials": [
+    "Do335"
+   ],
+   "bbox_min": [
+    -1.7208,
+    -1.9405,
+    4.4338
+   ],
+   "bbox_max": [
+    1.1839,
+    1.1513,
+    5.0207
+   ],
+   "pivot": [
+    0.0,
+    -0.2257,
+    4.7864
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "prop_2": {
+   "triangles": 700,
+   "primitives": 1,
+   "materials": [
+    "Do335"
+   ],
+   "bbox_min": [
+    -1.2204,
+    -1.5465,
+    -8.8107
+   ],
+   "bbox_max": [
+    1.6699,
+    1.582,
+    -7.9207
+   ],
+   "pivot": [
+    0.0,
+    0.2743,
+    -8.4394
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  }
+ },
+ "markers": {
+  "eye_pilot": {
+   "position": [
+    0.0,
+    0.7403,
+    0.6868
+   ],
+   "parent": null
+  },
+  "muzzle_cannon_left": {
+   "position": [
+    2.092,
+    -0.4797,
+    2.0868
+   ],
+   "parent": null
+  },
+  "muzzle_cannon_right": {
+   "position": [
+    -2.092,
+    -0.4797,
+    2.0868
+   ],
+   "parent": null
+  },
+  "muzzle_hub": {
+   "position": [
+    0.0,
+    -0.2257,
+    5.0368
+   ],
+   "parent": null
+  },
+  "exhaust_rear": {
+   "position": [
+    0.0,
+    0.1603,
+    -3.4132
+   ],
+   "parent": null
+  }
+ },
+ "groups": {
+  "airframe": {
+   "triangles": 11838,
+   "primitives": 1,
+   "materials": [
+    "Do335"
+   ],
+   "bbox_min": [
+    -6.886,
+    -1.7415,
+    -7.9202
+   ],
+   "bbox_max": [
+    6.8864,
+    2.1458,
+    4.4624
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "glass": {
+   "triangles": 122,
+   "primitives": 1,
+   "materials": [
+    "transparent_glass"
+   ],
+   "bbox_min": [
+    -0.5565,
+    0.2173,
+    0.0541
+   ],
+   "bbox_max": [
+    0.5564,
+    0.9371,
+    1.4919
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "interior": {
+   "triangles": 846,
+   "primitives": 1,
+   "materials": [
+    "interior"
+   ],
+   "bbox_min": [
+    -0.5762,
+    -0.5338,
+    0.0249
+   ],
+   "bbox_max": [
+    0.5767,
+    0.9419,
+    1.8175
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "pilot": {
+   "triangles": 1928,
+   "primitives": 1,
+   "materials": [
+    "ww2_pilot_old"
+   ],
+   "bbox_min": [
+    -0.2579,
+    -0.1663,
+    0.3795
+   ],
+   "bbox_max": [
+    0.2585,
+    0.7653,
+    1.4697
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  }
+ },
+ "bbox_min": [
+  -6.886,
+  -1.9405,
+  -8.8107
+ ],
+ "bbox_max": [
+  6.8864,
+  2.1458,
+  5.0207
+ ],
+ "triangles": 16134,
+ "primitives": 6,
+ "materials": [
+  "Do335",
+  "interior",
+  "transparent_glass",
+  "ww2_pilot_old"
+ ],
+ "excluded_objects": [
+  "main/articule01",
+  "main/articule02",
+  "main/axeA1",
+  "main/axeA2",
+  "main/axeD1",
+  "main/axeD2",
+  "main/axeG1",
+  "main/axeG2",
+  "main/propblurA",
+  "main/propblurB",
+  "main/propdiscA",
+  "main/propdiscB",
+  "main/roueA",
+  "main/roueD",
+  "main/roueG",
+  "interior/intverriere2",
+  "interior/intvitres"
+ ],
+ "file_bytes": 635072
+}

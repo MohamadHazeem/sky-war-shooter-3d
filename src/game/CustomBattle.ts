@@ -33,7 +33,7 @@ export interface CustomConfig {
   escorts: boolean;        // Mustang wingmen (pilot) / Mustangs joining the box (gunner)
 }
 
-export const ALL_ENEMIES: EnemyType[] = ['fw190', 'bf109', 'bf110', 'ju88', 'me262', 'me163'];
+export const ALL_ENEMIES: EnemyType[] = ['fw190', 'bf109', 'bf110', 'ju88', 'me262', 'me163', 'me410', 'do335', 'he111'];
 export const SEATS: StationId[] = ['waistL', 'waistR', 'top', 'ball', 'tail'];
 export const MOODS: Mood[] = ['clear', 'overcast', 'storm', 'dusk'];
 export const SKILLS: Skill[] = ['recruit', 'veteran', 'ace', 'insane'];
@@ -119,7 +119,7 @@ export function timeOfDayLabel(sunEl: number, mood?: Mood): string {
   return sunEl < 12 ? 'dawn' : sunEl < 30 ? 'morning sun' : 'noon';
 }
 
-const ENEMY_NAME: Record<EnemyType, string> = { fw190: 'Fw 190', bf109: 'Bf 109', bf110: 'Bf 110', ju88: 'Ju 88', me262: 'Me 262', me163: 'Me 163' };
+const ENEMY_NAME: Record<EnemyType, string> = { fw190: 'Fw 190', bf109: 'Bf 109', bf110: 'Bf 110', ju88: 'Ju 88', me262: 'Me 262', me163: 'Me 163', me410: 'Me 410', do335: 'Do 335', he111: 'He 111' };
 const SEAT_NAME: Record<StationId, string> = { waistL: 'Left Waist', waistR: 'Right Waist', top: 'Top Turret', ball: 'Ball Turret', tail: 'Tail Gun' };
 
 export function enemiesLabel(list: readonly EnemyType[]): string {
