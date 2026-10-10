@@ -37,7 +37,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 21 | Nemesis system: persistent named Luftwaffe aces with traits, grudges, scars, promotions and a dossier screen | Done — 8 Experten (name, rank, unit, aircraft, colours/emblem, trait-driven AI), appearances with radio memory + dossier card, outcomes persist (victories, promotions, escapes with patches and grudges, deaths, hospital), replacements, bounties + medal + achievements, "Luftwaffe Experten" screen |
 | 22 | Audio pass 3: engine voices for the new aircraft and warships, BK 5 / flak sounds, distance-aware explosions, waist ambience (wind, creaks, brass), ducking and mix check | Done — synthesised engine voices per type (Jumo/DB 603 twins, Do 335 push-pull, Me 262 turbine whine, Me 163 rocket, warship engine groups + hull throb), BK 5 thump, MG 81Z, 20 mm flak, distance-delayed/filtered explosions with stages, waist wind/rattles/other gunner/brass, ducking, Audio detail + breathing settings; 0 bytes added |
 | 23 | Mission bookends: dawn takeoff from the English base and landing afterwards (belly landing with fire trucks when badly damaged), skippable | In progress |
-| 24 | QA sweep: phone/touch, gamepad, first-time player flow, console errors across all new features | In progress |
+| 24 | QA sweep: phone/touch, gamepad, first-time player flow, console errors across all new features | Done — phone/tablet layouts (scrolling title menu, campaign map order, co-op lobby), ≥40 px touch targets, 7 HUD overlaps fixed, Arabic + touch HUD, LOOK button + touchable event prompts, gamepad menu navigation + abilities + free look, Training no longer buried in tips, controls card complete, console warnings fixed. Open: theatre cramped on phones, some gamepad gaps |
 | 25 | Weather fronts mid-mission (storm wall approaching, smooth transitions) + night flares, flak glow in cloud, night tracers | In progress |
 | 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | In progress |
 
@@ -58,3 +58,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 01:00 ground attack merged (311 tests).
 - 01:05 audio pass 3 merged (326 tests).
 - 01:08 glass effects merged.
+- 01:34 QA sweep merged.
