@@ -116,10 +116,12 @@ export class Game {
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
     this.photo = new PhotoMode(engine, input, this.world);
-    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: false, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 55 });
+    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: false, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 65 });
     // settings saved before aim assist existed: switch the lead indicator on with it
     let raw = ''; try { raw = localStorage.getItem(SETTINGS_KEY) ?? ''; } catch { /* */ }
-    if (raw && !raw.includes('aimAssist')) { this.settings.aimAssist = 'high'; this.settings.leadPip = 'always'; if (this.settings.fov === 62) this.settings.fov = 55; }
+    if (raw && !raw.includes('aimAssist')) { this.settings.aimAssist = 'high'; this.settings.leadPip = 'always'; if (this.settings.fov === 62) this.settings.fov = 65; }
+    // wider view by default (enemies were enlarged to match): move old 55/62 defaults to 65
+    if (raw && !raw.includes('"fovV"')) { if (this.settings.fov === 55 || this.settings.fov === 62) this.settings.fov = 65; (this.settings as any).fovV = 2; }
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
@@ -514,8 +516,14 @@ export class Game {
     if (want <= 0) { this.updateIncoming(null, null); return; }
     const sides: SpawnFrom[] = ['front', 'rear', 'left', 'right', 'high'];
     const n = Math.min(want, 2 + Math.floor(Math.random() * 3));
+    // gunner: every other group goes for a gun position the player is not manning
+    let station: string | undefined;
+    if (this.mission?.role === 'gunner' && this.groups > 0 && Math.random() < 0.55) {
+      const others = STATION_ORDER.filter((s) => s !== this.gunner.station);
+      station = others[Math.floor(Math.random() * others.length)];
+    }
     const next: Wave = {
-      at: 0, count: Math.max(1, n),
+      at: 0, count: Math.max(1, n), station,
       from: this.groups % 3 === 2 ? sides[Math.floor(Math.random() * sides.length)] : (this.mission?.role === 'gunner' ? 'mixed' : sides[this.groups % sides.length]),
       skill: THREE.MathUtils.lerp(r.skill[0], r.skill[1], ramp), rockets: r.rockets ?? 0,
     };
@@ -525,7 +533,17 @@ export class Game {
     if (this.spawnCd > 0) return;
     this.spawnWave(next);
     if (this.groups === 0 && m.waves[0]?.radio) w.callout('round', m.waves[0].radio[0], m.waves[0].radio[1], 0, 3);
-    else if (w.player) {
+    else if (next.station) {
+      const calls: Record<string, [string, string]> = {
+        tail: ['Tail', 'Fighters coming in at six o\'clock — get on the tail gun!'],
+        ball: ['Ball', 'Bandits coming up underneath — ball turret, they\'re yours!'],
+        top: ['Top Turret', 'Bandits high, twelve o\'clock — top turret!'],
+        waistL: ['Navigator', 'Left waist! Fighters at nine o\'clock!'],
+        waistR: ['Navigator', 'Right waist! Fighters at three o\'clock!'],
+      };
+      const c = calls[next.station];
+      if (c) w.callout('st' + next.station, c[0], `${c[1]} Press ${STATIONS[next.station as StationId].key}.`, 7, 2);
+    } else if (w.player) {
       const p = this.world.fighters('axis').filter((f) => f.alive).pop();
       if (p) w.callout('grp' + (this.groups % 4), Math.random() < 0.5 ? 'Tail' : 'Navigator', `${n > 2 ? 'More bandits' : 'Bandits'}, ${w.clockPosition(w.player, p.pos)}!`, 6, 2);
     }
@@ -591,7 +609,7 @@ export class Game {
   // Where the next wave will appear, relative to the formation centre. Gunner missions:
   // out where the player's gun is pointing, so the fighters are seen forming up and coming in.
   private predictWave(w: Wave): THREE.Vector3 {
-    const arc = this.mission?.role === 'gunner' ? this.world.playerArc() : null;
+    const arc = this.mission?.role === 'gunner' ? (w.station ? this.world.stationArc(w.station) : this.world.playerArc()) : null;
     const base = arc ? this.world.playerBomber!.pos.clone().addScaledVector(arc, 1700).add(new THREE.Vector3(R() * 300, 250 + Math.random() * 300, R() * 300)) : this.spawnPos(w.from === 'mixed' ? 'front' : w.from);
     return base.sub(this.world.formationCenter);
   }
@@ -604,7 +622,7 @@ export class Game {
   }
 
   private spawnWave(w: Wave) {
-    const arc = this.mission?.role === 'gunner' ? this.world.playerArc() : null;
+    const arc = this.mission?.role === 'gunner' ? (w.station ? this.world.stationArc(w.station) : this.world.playerArc()) : null;
     const base = this.world.formationCenter.clone().add(this.incomingOff ?? this.predictWave(w));
     this.incomingOff = null; this.incoming = null;
     for (let i = 0; i < w.count; i++) {
@@ -612,7 +630,8 @@ export class Game {
       const p = fromArc || w.from !== 'mixed' ? base.clone().add(new THREE.Vector3(R() * 150 + i * 45, R() * 60, R() * 150)) : this.spawnPos('mixed');
       let attack: AttackType | undefined = w.attack;
       if (!attack) attack = (['headon', 'stern', 'beam', 'high'] as AttackType[])[Math.floor(Math.random() * 4)];
-      this.world.spawnEnemy(p, attack, w.skill, true, Math.random() < (w.rockets ?? 0), randomEnemyType());
+      const f = this.world.spawnEnemy(p, attack, w.skill, true, Math.random() < (w.rockets ?? 0), randomEnemyType());
+      if (fromArc && w.station) this.world.assignStation(f, w.station);
     }
     if (w.radio) this.world.callout('wave' + this.waveIdx, w.radio[0], w.radio[1], 0, 3);
   }

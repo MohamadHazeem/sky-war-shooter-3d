@@ -13,6 +13,7 @@ export interface Wave {
   skill: number;
   rockets?: number;           // fraction of the wave carrying Wgr. 21 rockets
   radio?: [string, string];
+  station?: string;           // gunner missions: the gun position this group goes for (unset = the player's)
 }
 
 export interface Mission {

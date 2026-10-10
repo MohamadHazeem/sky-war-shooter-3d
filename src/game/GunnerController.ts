@@ -55,7 +55,7 @@ export class GunnerController {
   private assistYaw = 0;
   private assistPitch = 0;
   ads = 0;       // 0 = over-the-gun view, 1 = eye down the ring sight (RMB)
-  hipWaist = new THREE.Vector3(0, 0.1, 0.3);  // head offset in the unzoomed view (gun frame)
+  hipWaist = new THREE.Vector3(0, 0.14, 0.7);  // head offset in the unzoomed view (gun frame)
   baseFov = 62;   // set from Settings; zoom-in keeps the original 34/62 magnification ratio
   bomber: Bomber | null = null;
   private casings: { m: THREE.Mesh; v: THREE.Vector3; life: number }[] = [];

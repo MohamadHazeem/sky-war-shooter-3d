@@ -19,7 +19,7 @@ import { setup as setupDamageLook, update as updateDamageLook } from './DamageLo
 import { update as updateDamageStages } from './DamageStages';
 import { Crew, STATION_CREW } from './Crew';
 
-export const ENEMY_SCALE = 4.2;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
+export const ENEMY_SCALE = 6.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 460; // ~40 hits from a .50 to wear one down
 export const ENEMY_ZONE_HP = 2.2;   // vital zones (cockpit, engine, wings) toughened to match
 const FORMATION_SPREAD = 1.8;       // spacing between B-17s, so friends never crowd the sight picture
@@ -67,6 +67,14 @@ export class World implements WorldView {
   playerExplosive = 0;        // perk: chance a player hit explodes for triple damage
   playerSplash = 0;           // cannon shells: extra structure damage per hit
   enemyAimMult = 1;           // perk: >1 spoils the enemy's aim
+  // Action flying: the whole box drifts and climbs, and the player's ship jinks under attack
+  private formOff = new THREE.Vector3();
+  private formRoll = 0;
+  private jinkT = 0;
+  private jinkDur = 0;
+  private jinkSide = 1;
+  private nextJink = 12;
+  private lurch = 0;
   playerExecute = 1;          // perk: damage multiplier vs fighters below half structure   // perk: player hits can set enemy engines alight
   formationCenter = new THREE.Vector3(0, ALTITUDE, 0);
   formationForward = new THREE.Vector3(0, 0, 1);
@@ -126,6 +134,24 @@ export class World implements WorldView {
     if (!b || !b.alive || !st || this.player !== b) return null;
     if (st.type === 'turret') return this.playerAimDir.clone().setY(Math.max(-0.4, Math.min(0.5, this.playerAimDir.y))).normalize();
     return dirFromYawPitch(st.rest.yaw, st.rest.pitch).applyQuaternion(b.quat).normalize();
+  }
+
+  stationArc(id: string): THREE.Vector3 | null {
+    const b = this.playerBomber, st = (STATIONS as any)[id] as StationDef | undefined;
+    if (!b || !b.alive || !st || this.player !== b) return null;
+    return dirFromYawPitch(st.rest.yaw, st.type === 'turret' ? Math.max(st.rest.pitch, st.id === 'ball' ? -0.5 : 0.25) : st.rest.pitch).applyQuaternion(b.quat).normalize();
+  }
+
+  stationGunPos(id: string): THREE.Vector3 | null {
+    const b = this.playerBomber, st = (STATIONS as any)[id] as StationDef | undefined;
+    if (!b || !b.alive || !st || this.player !== b) return null;
+    return b.localToWorld(st.pivot.clone());
+  }
+
+  // gunner missions: send this fighter at a particular gun position on the player's ship
+  assignStation(f: Fighter, id: string) {
+    const p = this.pilots.get(f);
+    if (p instanceof EnemyPilot) p.station = id;
   }
 
   playerStationId(): string | null { return this.player === this.playerBomber && this.playerStation ? this.playerStation.id : null; }
@@ -241,6 +267,28 @@ export class World implements WorldView {
     }
   }
 
+  // Formation weave (~50 s side to side, slow climbs and dives) plus the player's evasive
+  // jinks, which come more often while fighters are pressing an attack.
+  private maneuver(dt: number) {
+    const t = this.time;
+    const wx = 0.12, wy = 0.09;
+    this.formOff.set(Math.sin(t * wx) * 60, Math.sin(t * wy + 1) * 35, 0);
+    // bank into the weave: lateral acceleration over g
+    this.formRoll = Math.atan((60 * wx * wx * Math.sin(t * wx)) / 9.81) * 1.6;
+    const pb = this.playerBomber;
+    if (!pb || !pb.alive) return;
+    let near = 0;
+    for (const f of this.fighters('axis')) if (f.alive && f.pos.distanceTo(pb.pos) < 900) near++;
+    this.nextJink -= dt * (near >= 3 ? 1.8 : near >= 1 ? 1.2 : 0.6);
+    if (this.jinkT >= this.jinkDur && this.nextJink <= 0) {
+      this.jinkT = 0; this.jinkDur = 4 + Math.random() * 2.5; this.jinkSide = Math.random() < 0.5 ? -1 : 1;
+      this.nextJink = 9 + Math.random() * 9;
+      if (near >= 2 && Math.random() < 0.5) this.callout('jink', 'Pilot', 'Hang on — evasive action!', 1, 2);
+    }
+    if (this.jinkT < this.jinkDur) this.jinkT += dt;
+    this.lurch *= Math.exp(-dt * 2.5);
+  }
+
   private placeBomber(b: Bomber, dt: number) {
     const t = this.time + b.wobblePhase;
     let ph = holdPhase.get(b);
@@ -253,6 +301,17 @@ export class World implements WorldView {
       b.slot.z -= dt * 3.5 * Math.max(1, b.enginesOut);
       b.slot.y -= dt * 2.0 * b.enginesOut;
     }
+    wob.add(this.formOff);
+    // player's ship: jink sideways and down, banking into it (sin^2 profile, bank leads the slide)
+    let jinkRoll = 0, jinkPitch = 0, turb = 0;
+    if (b.isPlayer && this.jinkT < this.jinkDur) {
+      const u = this.jinkT / this.jinkDur, s = Math.sin(Math.PI * u);
+      wob.x += this.jinkSide * 24 * s * s;
+      wob.y -= 14 * s;
+      jinkRoll = -this.jinkSide * 0.32 * Math.sin(2 * Math.PI * u);
+      jinkPitch = -0.06 * Math.sin(2 * Math.PI * u);
+    }
+    if (b.isPlayer) turb = (Math.sin(this.time * 7.3) * 0.5 + Math.sin(this.time * 11.1 + 1) * 0.3) * 0.006;
     const target = _v2.copy(b.slot).add(wob).add(this.formationCenter);
     if (dt > 0) b.vel.copy(target).sub(b.root.position).divideScalar(dt);
     else b.vel.copy(this.formationForward).multiplyScalar(CRUISE);
@@ -260,10 +319,10 @@ export class World implements WorldView {
     // Lateral rate of the sway (m/s), which drives the bank and yaw so they follow the drift
     const latRate = Math.cos(t * 0.31) * 0.68 * b.wobbleAmp;
     // Roll: a counter-bank against the drift plus a weak pull back toward the slot (positive roll tilts the lift toward -x)
-    const roll = latRate * 0.045 + wob.x * 0.004 + (b.straggling ? 0.05 * b.enginesOut : 0);
+    const roll = latRate * 0.045 + (wob.x - this.formOff.x) * 0.004 + (b.straggling ? 0.05 * b.enginesOut : 0) + this.formRoll + jinkRoll + (b.isPlayer ? this.lurch + turb : 0);
     // Yaw: slight heading wander that follows the lateral drift, plus a slow independent wander
     const yaw = latRate * 0.02 + Math.sin(this.time * 0.07 + ph.yaw) * 0.008;
-    const pitch = Math.cos(t * 0.47) * 0.012 * b.wobbleAmp;
+    const pitch = Math.cos(t * 0.47) * 0.012 * b.wobbleAmp + Math.cos(this.time * 0.09 + 1) * 35 * 0.09 / CRUISE + jinkPitch + turb * 0.6;
     b.root.quaternion.setFromEuler(new THREE.Euler(-pitch, yaw, roll, 'YXZ'));
   }
 
@@ -416,6 +475,7 @@ export class World implements WorldView {
     if (t === this.player || t === this.playerBomber) {
       sound.playerImpact(heavy);
       this.events.shake?.(heavy ? 0.25 : 0.05);
+      if (heavy && t === this.playerBomber) this.lurch += (Math.random() - 0.5) * 0.12;
       this.events.playerHit?.(z.name, heavy);
       if (t === this.playerBomber && /fuselage|tail|nose/.test(z.name)) {
         const local = t.worldToLocal(e.point.clone());
@@ -550,6 +610,7 @@ export class World implements WorldView {
     this.time += dt;
     this.radioCooldown -= dt;
     this.formationCenter.addScaledVector(this.formationForward, CRUISE * dt);
+    this.maneuver(dt);
 
     for (const a of this.aircraft) {
       if (a instanceof Bomber && a.alive) this.placeBomber(a, dt);

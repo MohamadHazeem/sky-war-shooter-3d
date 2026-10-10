@@ -74,6 +74,8 @@ export interface WorldView {
   playerArc(): THREE.Vector3 | null; // world direction the player's gun position covers (gunner mode)
   playerGunPos(): THREE.Vector3 | null; // world position of the player's gun (gunner mode)
   playerStationId(): string | null;
+  stationArc(id: string): THREE.Vector3 | null;    // a gun position's direction on the player's ship
+  stationGunPos(id: string): THREE.Vector3 | null;
   enemyAimMult: number;              // perk: >1 spoils the attackers' aim
 }
 
@@ -109,6 +111,11 @@ export class EnemyPilot {
   private duelRate = 0.4;
   private duelLen = 12;
   private duelStation: string | null = null;
+  // gunner missions: a fixed gun position on the player's ship to attack (null = whichever
+  // one the player is manning), so attacks come from every quarter and switching seats pays
+  station: string | null = null;
+  private arcOf(w: WorldView) { return this.station ? w.stationArc(this.station) : w.playerArc(); }
+  private gunOf(w: WorldView) { return this.station ? w.stationGunPos(this.station) : w.playerGunPos(); }
 
   constructor(public me: Fighter, preferred?: AttackType, skill = 1) {
     this.skill = skill * (0.8 + Math.random() * 0.4);
@@ -128,7 +135,7 @@ export class EnemyPilot {
   private computeSetup(w: WorldView, near = false) {
     const t = this.target!;
     const fwd = w.formationForward;
-    const arc = t.isPlayer ? w.playerArc() : null;
+    const arc = t.isPlayer ? this.arcOf(w) : null;
     const p = this.setupPoint.copy(t.pos);
     this.fromArc = !!arc;
     if (arc) {
@@ -157,7 +164,7 @@ export class EnemyPilot {
   }
 
   private beginDuel(w: WorldView, gp: THREE.Vector3) {
-    const arc = w.playerArc();
+    const arc = this.arcOf(w);
     if (!arc) return;
     this.state = 'duel'; this.timer = 0; this.attackCount++;
     this.duelStation = w.playerStationId();
@@ -224,7 +231,7 @@ export class EnemyPilot {
         let ready = me.pos.distanceTo(this.setupPoint) < 300 || this.timer > 12;
         // arc attacks: start the run as soon as the fighter is out in the gunner's arc
         if (this.fromArc && !ready && this.timer > 1.5) {
-          const arc = w.playerArc(), gp = w.playerGunPos();
+          const arc = this.arcOf(w), gp = this.gunOf(w);
           if (arc && gp) {
             const rel = _u.copy(me.pos).sub(gp);
             const dist = rel.length();
@@ -238,13 +245,13 @@ export class EnemyPilot {
         const t = this.target;
         if (!t || !t.alive) { this.state = 'approach'; this.target = null; this.timer = 0; break; }
         leadPoint(me.pos, me.vel, t, 760, this.aim).add(this.aimOffset);
-        const gp0 = this.fromArc ? w.playerGunPos() : null;
+        const gp0 = this.fromArc ? this.gunOf(w) : null;
         if (gp0) this.aim.add(_u.copy(gp0).sub(t.pos));
         const aimDir = _d.copy(this.aim).sub(me.pos);
         const dist = aimDir.length();
         aimDir.divideScalar(Math.max(dist, 1));
         let err: number;
-        const gunPos0 = this.fromArc ? w.playerGunPos() : null;
+        const gunPos0 = this.fromArc ? this.gunOf(w) : null;
         // aim the run to pass close by the gun position, not through it
         const gunPos = gunPos0 ? _p.copy(gunPos0).add(this.passOffset) : null;
         if (gunPos) {
@@ -286,9 +293,9 @@ export class EnemyPilot {
       }
       case 'duel': {
         const t = this.target;
-        const gp = w.playerGunPos(), arc = w.playerArc();
+        const gp = this.gunOf(w), arc = this.arcOf(w);
         // the gunner changed position (or the target is gone): break off and set up again
-        if (!t || !t.alive || !gp || !arc || w.playerStationId() !== this.duelStation || this.timer > this.duelLen) { this.endDuel(t); break; }
+        if (!t || !t.alive || !gp || !arc || (!this.station && w.playerStationId() !== this.duelStation) || this.timer > this.duelLen) { this.endDuel(t); break; }
         this.duelPhase += this.duelRate * dt;
         const ph = this.duelPhase;
         const A = 200, B = 140, R0 = 300, C = 60;
