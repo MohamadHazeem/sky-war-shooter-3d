@@ -92,6 +92,7 @@ export class PilotOps {
     this.incomingOff = null;
     this.raid.start(m);
     this.wing.raidTargets = this.raid.active ? () => this.raid.inbound() : null;
+    this.wing.callsign = this.raid.active ? 'Blue Two' : 'Blue Four'; // escort missions: the player is Lead's Blue Two
     this.wing.start(!!this.mission && !!this.world.playerFighter && m.id !== 'duel'); // no wingman on the dev duel bench
     // raid missions: Blue Two starts out on the bombers
     if (this.raid.active) this.wing.command('bombers');

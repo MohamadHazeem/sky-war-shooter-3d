@@ -6,6 +6,7 @@ import { EscortPilot, leadPoint, steerTo, type WorldView } from '../world/AI';
 import type { FlightParams } from '../world/FlightModel';
 import type { UI } from '../ui/UI';
 import type { PilotController } from './PilotController';
+import { tx } from '../i18n';
 
 // "Blue Two": the player's wingman in every P-51 mission, a friendly Mustang flown by AI that
 // takes orders from his leader (the player):
@@ -262,6 +263,10 @@ export class Wingman {
   active = false;
   log: string[] = [];              // order / target log (dev, playtests)
   raidTargets: (() => Fighter[]) | null = null;
+  // Blue Two when the player leads the flight (raid missions); in escort missions the player is
+  // Lead's Blue Two, so the wingman flies as Blue Four (PilotOps sets this before start)
+  callsign: 'Blue Two' | 'Blue Four' = 'Blue Two';
+  private line(text: string) { return text.replace(/Blue Two/g, this.callsign); }
   private watched = new Set<Fighter>();
   private lastReason = '';
   private flash = 0;               // HUD highlight after an order
@@ -294,7 +299,7 @@ export class Wingman {
     f.vel.copy(f.fm.vel);
     for (const g of f.guns) { g.damage = 14 * GUN_DAMAGE; g.tracerEvery = 3; }
     for (const z of f.zones) { z.hp *= 1.5; z.maxHp *= 1.5; }
-    f.label = 'Blue Two';
+    f.label = this.callsign;
     const p = new WingmanPilot(f, w);
     p.lead = pf;
     p.raidTargets = this.raidTargets;
@@ -303,7 +308,7 @@ export class Wingman {
     w.setPilot(f, p);
     this.plane = f; this.pilot = p;
     this.downCalled = false;
-    if (replacement) w.callout('wing_join', 'Blue Two', WING_RADIO.join, 0, 3);
+    if (replacement) w.callout('wing_join', this.callsign, this.line(WING_RADIO.join), 0, 3);
   }
 
   // Between rounds: a replacement for a lost wingman
@@ -323,7 +328,7 @@ export class Wingman {
       if (pf) target = pickAttackTarget(pf.pos, pf.forward(_f), w.fighters('axis'), this.lead?.padlock ?? null);
       if (!target) {
         this.note('attack: no target in front');
-        w.callout('wing_none', 'Blue Two', WING_RADIO.noTarget, 0, 3);
+        w.callout('wing_none', this.callsign, this.line(WING_RADIO.noTarget), 0, 3);
         return null;
       }
     }
@@ -331,7 +336,7 @@ export class Wingman {
     p.order(cmd, target);
     p.raidTargets = this.raidTargets;
     const text = cmd === 'attack' ? WING_RADIO.attack : cmd === 'cover' ? WING_RADIO.cover : cmd === 'form' ? WING_RADIO.form : this.raidTargets ? WING_RADIO.raid : WING_RADIO.bombers;
-    w.callout('wing_' + cmd, 'Blue Two', text, 0, 3);
+    w.callout('wing_' + cmd, this.callsign, this.line(text), 0, 3);
     this.note(`order ${cmd}${target ? ` -> ${target.label} @${Math.round(target.pos.distanceTo(f.pos))}m` : ''}`);
     return target;
   }
@@ -357,7 +362,7 @@ export class Wingman {
     if (p.reason && p.reason !== this.lastReason) {
       this.lastReason = p.reason;
       this.note(`target (${p.cmd}) ${p.reason}`);
-      if (p.cmd === 'cover' && p.reason.startsWith('on lead')) w.callout('wing_six', 'Blue Two', WING_RADIO.six, 20, 2);
+      if (p.cmd === 'cover' && p.reason.startsWith('on lead')) w.callout('wing_six', this.callsign, this.line(WING_RADIO.six), 20, 2);
     }
     // his kills: an axis fighter going down with Blue Two the last to hit it
     for (const e of w.fighters('axis')) if (e.alive) this.watched.add(e);
@@ -367,15 +372,15 @@ export class Wingman {
       if (!e.alive && e.lastAttacker === f) {
         this.kills++;
         this.note(`kill ${e.label}`);
-        w.callout('wing_splash', 'Blue Two', WING_RADIO.splash, 12, 2);
+        w.callout('wing_splash', this.callsign, this.line(WING_RADIO.splash), 12, 2);
       }
     }
     if (!f.alive && !this.downCalled) {
       this.downCalled = true;
       this.lost++;
       this.note('shot down');
-      w.callout('wing_hit', 'Blue Two', WING_RADIO.hit, 0, 3);
-      this.ui.feed('Blue Two is down — a replacement joins next round', 'loss');
+      w.callout('wing_hit', this.callsign, this.line(WING_RADIO.hit), 0, 3);
+      this.ui.feed(this.line('Blue Two is down — a replacement joins next round'), 'loss');
     }
   }
 
@@ -392,7 +397,7 @@ export class Wingman {
     ctx.fillRect(x - 6, y - 14, 210, 46);
     ctx.textAlign = 'left';
     ctx.fillStyle = this.flash > 0 ? `rgba(255,230,140,${0.6 + 0.4 * Math.sin(this.flash * 12)})` : 'rgba(233,226,207,0.92)';
-    ctx.fillText(`BLUE TWO · ${alive ? WING_LABEL[this.cmd] : 'DOWN'}`, x, y);
+    ctx.fillText(`${tx(this.callsign).toUpperCase()} · ${alive ? WING_LABEL[this.cmd] : 'DOWN'}`, x, y);
     if (alive) {
       // health bar
       ctx.fillStyle = 'rgba(233,226,207,0.25)';
@@ -415,7 +420,7 @@ export class Wingman {
         ctx.strokeStyle = 'rgba(120,200,255,0.85)'; ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.arc(sx, sy, 9, 0, Math.PI * 2); ctx.stroke();
         ctx.fillStyle = 'rgba(120,200,255,0.95)'; ctx.textAlign = 'center';
-        ctx.fillText('2', sx, sy + 4);
+        ctx.fillText(this.callsign === 'Blue Two' ? '2' : '4', sx, sy + 4);
       }
     }
     ctx.restore();

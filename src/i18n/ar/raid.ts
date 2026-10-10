@@ -46,6 +46,20 @@ const table: PhraseTable = {
     'Blue Two — splash one!': 'أزرق اثنان — أسقطت واحدة!',
     'Blue Two is down — a replacement joins next round': 'سقط أزرق اثنان — تنضم طائرة بديلة في الجولة القادمة',
 
+    // the same wingman lines as Blue Four (escort missions)
+    'Blue Four': 'أزرق أربعة',
+    "Blue Four, engaging your target!": "أزرق أربعة، أشتبك مع هدفك!",
+    "Blue Four, going to the bombers!": "أزرق أربعة، متّجه إلى القاذفات!",
+    "Blue Four, covering your six!": "أزرق أربعة، أغطّي ذيلك!",
+    "Blue Four, forming up on your wing.": "أزرق أربعة، أعود إلى جناحك.",
+    "Blue Four, replacement aircraft joining on your wing.": "أزرق أربعة، طائرة بديلة تنضم إلى جناحك.",
+    "Blue Four — no target in front of you, staying on your wing.": "أزرق أربعة — لا هدف أمامك، أبقى على جناحك.",
+    "Blue Four, going after the bombers!": "أزرق أربعة، ألاحق القاذفات!",
+    "Bandit on your tail — Blue Four is on him!": "معادٍ على ذيلك — أزرق أربعة يلاحقه!",
+    "Blue Four — splash one!": "أزرق أربعة — أسقطت واحدة!",
+    "Blue Four is down — a replacement joins next round": "سقط أزرق أربعة — تنضم طائرة بديلة في الجولة القادمة",
+    "Blue Four, I'm hit! I'm going down!": 'أزرق أربعة، أُصبت! أنا أسقط!',
+
     // missions and modes
     'Defend the Field': 'الدفاع عن المطار',
     'Night Fighter': 'المقاتلة الليلية',

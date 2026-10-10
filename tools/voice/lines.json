@@ -114,6 +114,12 @@
       "bitrate": 16000,
       "noTable": true,
       "_doc": "Mission briefings, one clip per paragraph (brief_<mission>_<n>), read in the briefing room: played clean by src/audio/BriefingVoice.ts, not through the radio chain. Generated from src/game/Missions.ts by tools/voice/briefings.mjs."
+    },
+    "blue4": {
+      "speaker": "Blue Four",
+      "aliases": [],
+      "voice": "Reed (English (UK))",
+      "rate": 196
     }
   },
   "clock": {
@@ -1474,6 +1480,59 @@
       "role": "blue2",
       "text": "Searchlights have one coned! Get him while he's lit!",
       "urgent": true
+    },
+    {
+      "group": "Wingman as Blue Four (escort missions)"
+    },
+    {
+      "id": "wing4_0",
+      "role": "blue4",
+      "text": "Blue Four, engaging your target!"
+    },
+    {
+      "id": "wing4_1",
+      "role": "blue4",
+      "text": "Blue Four — no target in front of you, staying on your wing."
+    },
+    {
+      "id": "wing4_2",
+      "role": "blue4",
+      "text": "Blue Four, covering your six!"
+    },
+    {
+      "id": "wing4_3",
+      "role": "blue4",
+      "text": "Blue Four, going to the bombers!"
+    },
+    {
+      "id": "wing4_4",
+      "role": "blue4",
+      "text": "Blue Four, going after the bombers!"
+    },
+    {
+      "id": "wing4_5",
+      "role": "blue4",
+      "text": "Blue Four, forming up on your wing."
+    },
+    {
+      "id": "wing4_6",
+      "role": "blue4",
+      "text": "Bandit on your tail — Blue Four is on him!"
+    },
+    {
+      "id": "wing4_7",
+      "role": "blue4",
+      "text": "Blue Four — splash one!"
+    },
+    {
+      "id": "wing4_8",
+      "role": "blue4",
+      "text": "Blue Four, I'm hit! I'm going down!"
+    },
+    {
+      "id": "wing4_9",
+      "role": "blue4",
+      "text": "Blue Four, replacement aircraft joining on your wing."
     },
     {
       "group": "briefings (tools/voice/briefings.mjs)"
