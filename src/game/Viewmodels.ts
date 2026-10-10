@@ -474,5 +474,93 @@ export function buildTailInterior(): THREE.Group {
   mk(0.035, 0.62, 0.04, -0.34, 0.14, 0.5, fmat);
   mk(0.72, 0.035, 0.04, 0, 0.46, 0.5, fmat);
   mk(0.72, 0.05, 0.05, 0, -0.17, 0.5, fmat);
+
+  // Armour plate bolted to the sill below the window, with a rivet row top and bottom
+  const armour = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.07, 0.075, 0.06), roughness: 0.45, metalness: 0.6, envMap: envRef.tex, envMapIntensity: 0.15 });
+  const plate = new THREE.Mesh(new RoundedBoxGeometry(0.72, 0.24, 0.03, 2, 0.008), armour);
+  plate.position.set(0, -0.27, 0.53);
+  plate.castShadow = true; plate.receiveShadow = true;
+  g.add(plate);
+  const rivetGeo = new THREE.SphereGeometry(0.007, 6, 4);
+  for (const yy of [-0.2, -0.35]) for (let i = 0; i < 6; i++) {
+    const r = new THREE.Mesh(rivetGeo, fmat);
+    r.position.set(-0.3 + i * 0.12, yy, 0.547);
+    g.add(r);
+  }
+
+  // Ammunition feed: sheet-metal troughs running back from each gun to an ammo can
+  // beside the seat. Gun pivots sit at x = +/-0.15 and the receiver ends at z = -0.45.
+  const feedMat = linkMat();
+  const canMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.1, 0.11, 0.06), roughness: 0.7, metalness: 0.35 });
+  const mkSolid = (d: [number, number, number], x: number, y: number, z: number, m: THREE.Material) => {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(d[0], d[1], d[2]), m);
+    b.position.set(x, y, z); b.castShadow = true; b.receiveShadow = true; g.add(b);
+  };
+  // U-shaped trough: two side walls and a floor, built along x or z
+  const trough = (x: number, y: number, z: number, len: number, axis: 'x' | 'z') => {
+    const w = 0.035, h = 0.03, t = 0.004;
+    const off = (w - t) / 2;
+    const sideDims: [number, number, number] = axis === 'z' ? [t, h, len] : [len, h, t];
+    const floorDims: [number, number, number] = axis === 'z' ? [w, t, len] : [len, t, w];
+    const ox = axis === 'z' ? off : 0, oz = axis === 'z' ? 0 : off;
+    mkSolid(sideDims, x - ox, y, z - oz, feedMat);
+    mkSolid(sideDims, x + ox, y, z + oz, feedMat);
+    mkSolid(floorDims, x, y - (h - t) / 2, z, feedMat);
+  };
+  for (const s of [1, -1]) {
+    trough(s * 0.15, -0.085, -0.26, 0.4, 'z');        // runs back under the gun
+    trough(s * 0.24, -0.085, -0.46, 0.18, 'x');       // turns outward at the back
+    mkSolid([0.1, 0.2, 0.26], s * 0.36, -0.2, -0.5, canMat); // ammo can
+  }
+
+  // Padded seat back and cushion: the gunner's back rests on the front face at z = -0.56
+  const padMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.16, 0.1, 0.06), roughness: 0.85, metalness: 0.0 });
+  const back = new THREE.Mesh(new RoundedBoxGeometry(0.44, 0.44, 0.12, 4, 0.05), padMat);
+  back.position.set(0, -0.08, -0.62);
+  back.castShadow = true; back.receiveShadow = true;
+  g.add(back);
+  const buttonGeo = new THREE.SphereGeometry(0.008, 6, 4);
+  const buttonMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.04, 0.025, 0.015), roughness: 0.6 });
+  for (const bx of [-0.13, 0, 0.13]) for (const by of [-0.22, -0.08, 0.06]) {
+    const btn = new THREE.Mesh(buttonGeo, buttonMat);
+    btn.position.set(bx, by, -0.553);
+    g.add(btn);
+  }
+  const cushion = new THREE.Mesh(new RoundedBoxGeometry(0.44, 0.06, 0.34, 3, 0.02), padMat);
+  cushion.position.set(0, -0.33, -0.42);
+  cushion.castShadow = true; cushion.receiveShadow = true;
+  g.add(cushion);
+
+  // Thin perspex pane filling the window opening (about x +/-0.32, y -0.145..0.44).
+  // Transparent materials are routed to the post-cloud pass automatically.
+  const pane = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.5875, 0.006), new THREE.MeshStandardMaterial({
+    color: new THREE.Color(0.55, 0.65, 0.7), transparent: true, opacity: 0.08, roughness: 0.06, metalness: 0,
+    envMap: envRef.tex, envMapIntensity: 0.6, depthWrite: false,
+  }));
+  pane.position.set(0, 0.14875, 0.5);
+  g.add(pane);
+  // Faint reflection streaks on the inner face, additive so they only brighten
+  const rc = document.createElement('canvas');
+  rc.width = rc.height = 256;
+  const rg = rc.getContext('2d')!;
+  const band = (x: number, w: number, a: number) => {
+    const grd = rg.createLinearGradient(x, 0, x + w, 0);
+    grd.addColorStop(0, 'rgba(255,255,255,0)');
+    grd.addColorStop(0.5, `rgba(255,255,255,${a})`);
+    grd.addColorStop(1, 'rgba(255,255,255,0)');
+    rg.fillStyle = grd;
+    rg.beginPath();
+    rg.moveTo(x, 256); rg.lineTo(x + w * 0.5, 0); rg.lineTo(x + w, 256); rg.closePath();
+    rg.fill();
+  };
+  band(40, 70, 0.55);
+  band(150, 36, 0.3);
+  const reflTex = new THREE.CanvasTexture(rc);
+  reflTex.colorSpace = THREE.SRGBColorSpace;
+  const refl = new THREE.Mesh(new THREE.PlaneGeometry(0.64, 0.5875), new THREE.MeshBasicMaterial({
+    map: reflTex, transparent: true, opacity: 0.12, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+  }));
+  refl.position.set(0, 0.14875, 0.496);
+  g.add(refl);
   return g;
 }
