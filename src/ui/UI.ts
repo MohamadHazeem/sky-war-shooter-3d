@@ -89,7 +89,11 @@ export class UI {
 
   title(h: { campaign(): void; survival(): void; settings(): void; credits(): void }) {
     const t = $('#title');
+    // Cinematic dressing (letterbox, film grain, scratches, stencil tag) is decorative and
+    // pointer-events:none, so the buttons below keep their handlers untouched.
     t.innerHTML = `
+      <div class="tt-bars" aria-hidden="true"><i></i><i></i></div>
+      <div class="tt-stencil">8TH AIR FORCE</div>
       <div class="wrap">
         <div class="eyebrow">EIGHTH AIR FORCE · 1943–1944</div>
         <h1>Sky War<br/><span>Shooter</span> 3D</h1>
@@ -101,8 +105,21 @@ export class UI {
           <button data-a="credits">Credits</button>
         </div>
       </div>
-      <div class="foot">Mouse + keyboard · Chrome / Edge / Firefox / Safari recommended</div>`;
+      <div class="foot">Mouse + keyboard · Chrome / Edge / Firefox / Safari recommended</div>
+      <div class="tt-grain" aria-hidden="true"></div>
+      <div class="tt-scratch" aria-hidden="true"></div>`;
     t.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => (h as any)[b.dataset.a!]()));
+    // Arrow keys move between menu items (Tab still works natively); the listener lives on
+    // the freshly built .menu, so repeated title() calls never stack handlers.
+    const menu = t.querySelector<HTMLElement>('.menu');
+    menu?.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      const items = Array.from(menu.querySelectorAll<HTMLButtonElement>('button'));
+      const i = items.indexOf(e.target as HTMLButtonElement);
+      const next = (i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length;
+      e.preventDefault();
+      items[next].focus();
+    });
     this.show('title');
   }
 
