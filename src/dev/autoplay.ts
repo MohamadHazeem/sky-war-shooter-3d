@@ -118,10 +118,11 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
     }
     for (let i = 0; i < 3; i++) engine.frame(1 / 60, false);
     if (k % 600 === 0) log.push(`${w.time.toFixed(0)}s kills ${w.stats.kills} enemies ${w.activeEnemies().length} bombers ${w.bombers().filter((b) => b.alive).length} ${game.state}`
+      + (game.boss.active ? ` BOSS ${game.boss.ships.map((s) => s.deathT >= 0 ? 'X' : `${(s.ship.core / s.ship.coreMax * 100).toFixed(0)}%/${(s.ship.partsFrac * 100).toFixed(0)}%`).join(' ')}` : '')
       + (w.playerFighter ? ` hp ${(w.playerFighter.integrity * 100).toFixed(0)}% score ${(game as any).score} | ${document.getElementById('hObjective')?.textContent ?? ''}` : ''));
     if (game.state === 'debrief') break;
   }
-  const res = document.querySelector('#debrief .result')?.textContent ?? game.state;
+  const res = game.state === 'debrief' ? document.querySelector('#debrief .result')?.textContent ?? game.state : `TIMEOUT (${game.state})`;
   w.events.playerHitFrom = prevHit;
   if (mission.role === 'pilot') log.push(`BFM modes (samples): ${JSON.stringify(modes)} · BFM firing samples ${fired} · hits taken ${taken}`);
   log.push(`RESULT: ${res} — perks ${perks}, kills ${w.stats.kills}, accuracy ${(w.stats.hits / Math.max(1, w.stats.shots) * 100).toFixed(0)}%, bombers lost ${w.stats.bombersLost}, t=${w.time.toFixed(0)}s`);

@@ -43,7 +43,7 @@ Player notes given at the start:
 | 7 | Special events (ace squadrons, Zerstörer waves, rocket barrages) || Done — ace squadron (named leader, yellow noses), Zerstörer wave, rocket barrage |
 | 8 | Visual match to Yarnhub reference | |
 | 9 | Cinematics (kill cam, replay, fly-by) || Done — kill cam (special kills, skippable, setting), mission fly-by, best-moment replay |
-| 10 | Pilot mode overhaul | |
+| 10 | Pilot mode overhaul | Done — dogfight AI (breaks, scissors, spirals, extend/zoom, wingman pairs, per-type styles), Bf 110/Ju 88 rear gunners, K-14 gyro sight, G head-lean + buffet, chase cam, padlock view (T), wing-gun FX, 3-round m4/m7 (intercept, sweep, save the straggler), bomber-protection scoring |
 | 11 | Audio pass 2 || Done — threat-driven adaptive music + climax track + synced layers, loudness-balanced mix, limiter, more variation |
 | 12 | Controls & accessibility (gamepad, colour-blind, subtitles, remap) || Done — gamepad, colour-blind markers, subtitle size/opacity, key remapping, reduce shake/flash |
 | 13 | Phone/tablet touch support || Done — drag-aim, FIRE/ZOOM/MAP/seat/ability buttons, pilot stick+throttle, compact HUD, rotate prompt |
@@ -82,3 +82,6 @@ Player notes given at the start:
 - 22:30 touch/gamepad/accessibility + loot/customisation merged.
 - 22:20–22:45 crew, bomber damage, bombing run, cinematics, career/trophies/dailies, pacing+modes, audio pass 2 merged; voice clips for all new lines; CI lockfile fixed.
 - 22:55 tactics + special events merged; frozen regression server (tools/regression_server.sh); graphics, Arabic, share/analytics, pilot agents running.
+- 23:00 Phase 5 tracker; launched co-op, custom battle + weekly, skill tree, living interior, campaign map agents.
+- 23:05 field dressing (heals a gunner wound after 100 quiet s) after m5 regression failed on wounds; 7 missing callout clips.
+- 23:15 pilot-mode overhaul merged (+26 radio clips, briefings regenerated).
