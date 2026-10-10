@@ -7,6 +7,7 @@ import type { Mission } from './Missions';
 import { Aircraft, Fighter } from '../world/Aircraft';
 import { Atmos } from '../render/Atmosphere';
 import { Replay } from './Replay';
+import { Theatre } from './Theatre';
 import { CamSnapshot, CineOverlay, HudHider, ModelReveal, cineLens } from './CineShared';
 import { tx } from '../i18n';
 
@@ -53,6 +54,7 @@ const _l = new THREE.Vector3();
 
 export class Cinematics {
   readonly replay: Replay;
+  readonly theatre: Theatre;       // replay theatre: 90 s recorder + playback screen (Theatre.ts)
   private mode: Mode = 'none';
   private overlay = new CineOverlay();
   private snap = new CamSnapshot();
@@ -99,6 +101,7 @@ export class Cinematics {
 
   constructor(private engine: Engine, private input: Input, private ui: UI, private game: Game) {
     this.replay = new Replay(engine, game.world);
+    this.theatre = new Theatre(engine, input, ui, game);
   }
 
   // ---------------- hooks ----------------
@@ -109,6 +112,7 @@ export class Cinematics {
     const heavy = fighter && HEAVY.includes((victim as Fighter).enemyType);
     const special = !!((victim as any).boss || (victim as any).ace);
     this.replay.onKill(victim, 1 + (heavy ? 1 : 0) + (special ? 2 : 0) + Math.max(0, streak - 1) * 0.5);
+    this.theatre.onPlayerKill(victim, streak);
     if (special || heavy || streak >= 3) {
       this.pending = victim;
       this.pendingDur = special ? DUR_SPECIAL : heavy ? DUR_HEAVY : DUR_STREAK;
@@ -166,6 +170,8 @@ export class Cinematics {
     if (this.mode !== 'none' && (g.state === 'menu' || g.state === 'briefing')) this.end();
 
     const inPlay = g.state === 'playing' || g.state === 'ending';
+    this.theatre.record(dt, inPlay);      // the controller's view (before any override below)
+    if (g.state === 'menu') this.theatre.mountTitle(real);
     if (inPlay) {
       this.replay.record(dt, e.camera);   // the controller's view (we override it below)
       this.trackHealth(real);
@@ -399,6 +405,7 @@ export class Cinematics {
     this.mountT -= real;
     if (this.mountT > 0) return;
     this.mountT = 0.25;
+    this.theatre.mountDebrief();
     if (!this.replay.hasClip) return;
     // the debrief panel is rebuilt by UI.debrief (e.g. back from the Armory): re-add the button
     const row = document.querySelector('#debrief.show .row');
@@ -491,6 +498,7 @@ export class Cinematics {
   private newMission() {
     if (this.mode !== 'none') this.end();
     this.replay.reset();
+    this.theatre.newMission();
     this.lastKillCam = -1e9;
     this.pending = null;
     this.flyQueued = false;
