@@ -224,14 +224,16 @@ export class World implements WorldView {
     const fwd = camera.getWorldDirection(new THREE.Vector3());
     const kinds: BreakKind[] = ['wingL', 'tail', 'blowup'];
     const dummies: Fighter[] = [];
-    kinds.forEach((k, i) => {
-      const f = new Fighter('fw190', 'axis', ENEMY_VARIANTS.fw190.params);
+    // every enemy model that loaded, so the first kill of a new type doesn't stall either
+    const models = [...new Set(Object.values(ENEMY_VARIANTS).map((v) => v.model))].filter((m) => hasModel(m as ModelKind));
+    models.forEach((m, j) => kinds.forEach((k, i) => {
+      const f = new Fighter(m as ModelKind, 'axis', ENEMY_VARIANTS.fw190.params);
       f.setScale(ENEMY_SCALE);
-      f.root.position.copy(camera.position).addScaledVector(fwd, 60 + i * 15);
+      f.root.position.copy(camera.position).addScaledVector(fwd, 60 + i * 15 + j * 40);
       this.scene.add(f.root);
       dummies.push(f);
       this.wrecks.break(f, k);
-    });
+    }));
     const at = camera.position.clone().addScaledVector(fwd, 80);
     this.effects.explosion(at, new THREE.Vector3(), 1);
     this.effects.parachute(at, new THREE.Vector3());
@@ -376,7 +378,7 @@ export class World implements WorldView {
         f.rocketTubes.push(tube);
       }
     }
-    f.setScale(ENEMY_SCALE * variant.scale);
+    f.setScale(ENEMY_SCALE * (own ? variant.scale : variant.fallbackScale));
     for (const z of f.zones) { z.hp *= ENEMY_ZONE_HP; z.maxHp *= ENEMY_ZONE_HP; }
     f.structure = f.maxStructure = ENEMY_STRUCTURE * (0.85 + 0.15 * this.difficulty) * variant.structure;
     f.label = variant.label;
