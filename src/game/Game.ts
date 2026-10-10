@@ -67,7 +67,7 @@ export class Game {
     this.world = new World(engine);
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
-    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, radio: true, music: true, quality: 'high', markers: true, flightMode: 'mouseAim', difficulty: 'veteran' });
+    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, radio: false, music: true, quality: 'high', markers: true, flightMode: 'mouseAim', difficulty: 'veteran' });
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
