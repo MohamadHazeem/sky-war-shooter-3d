@@ -93,6 +93,8 @@ export class Ballistics {
   }
 
   playerHitScale = 1; // aim assist: the player's rounds count hits a little wider
+  // ON FIRE (GameFeel): 0..1 makes the player's own tracers burn hotter, whiter and wider
+  playerTracerHeat = 0;
 
   clear() { this.n = 0; this.owner.fill(null); }
 
@@ -151,15 +153,21 @@ export class Ballistics {
   renderTracers(camera: THREE.PerspectiveCamera, screenH: number) {
     const tr = this.tracers;
     tr.begin();
+    // hot tracers: brighter, shifted toward white-yellow, wider and a touch longer
+    const ht = this.playerTracerHeat;
+    const hg = 1 + 0.6 * ht, hw = 1 + 0.55 * ht, hl = 1 + 0.25 * ht;
     for (let i = 0; i < this.n; i++) {
       if (!this.tracer[i]) continue;
-      const len = this.cannon[i] ? 0.03 : this.player[i] ? 0.045 : 0.034;
+      const pl = this.player[i] === 1;
+      const len = (this.cannon[i] ? 0.03 : pl ? 0.045 : 0.034) * (pl ? hl : 1);
       const x = this.px[i], y = this.py[i], z = this.pz[i];
       // fade slightly as the tracer compound burns out
       // everyone else's tracers a little dimmer than the player's own
-      const k = Math.min(1, this.ttl[i] / 0.6) * (this.player[i] ? 1 : 0.55);
-      tr.push(x - this.vx[i] * len, y - this.vy[i] * len, z - this.vz[i] * len, x, y, z,
-        this.col[i * 3] * k, this.col[i * 3 + 1] * k, this.col[i * 3 + 2] * k, this.cannon[i] ? 0.3 : this.player[i] ? 0.17 : 0.09);
+      const k = Math.min(1, this.ttl[i] / 0.6) * (pl ? hg : 0.55);
+      let r = this.col[i * 3] * k, g = this.col[i * 3 + 1] * k, b = this.col[i * 3 + 2] * k;
+      if (pl && ht > 0) { g += r * 0.32 * ht; b += r * 0.08 * ht; }
+      const wd = this.cannon[i] ? 0.3 : pl ? 0.17 : 0.09;
+      tr.push(x - this.vx[i] * len, y - this.vy[i] * len, z - this.vz[i] * len, x, y, z, r, g, b, pl ? wd * hw : wd);
     }
     tr.end(camera, screenH);
   }

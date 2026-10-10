@@ -162,11 +162,31 @@ kbd { font-family: 'IBM Plex Mono', monospace; font-size: 12px; border: 1px soli
 .combo.hot .combo-val { color: var(--warn); }
 .combo-bar { width: 120px; height: 3px; margin: 3px 0 0 auto; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); }
 .combo-bar div { height: 100%; width: 0; background: var(--warn); }
+/* streak meter (GameFeel): top centre, fills with kills and drains; full = ON FIRE */
+#streakMeter { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); width: 220px; text-align: center; opacity: 0.55; transition: opacity 0.3s; }
+#streakMeter.warm, #streakMeter.fire { opacity: 1; }
+#streakMeter .sm-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--ink-dim); text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
+#streakMeter .sm-bar { position: relative; height: 6px; margin-top: 3px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.22); overflow: hidden; }
+#streakMeter .sm-bar i { position: absolute; inset: 0; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, #b9a76f, #e0b445 60%, #ff8a2a); transition: transform 0.1s linear; }
+#streakMeter .sm-bar b { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.55); }
+#streakMeter .sm-bar b:nth-of-type(1) { left: 20%; } #streakMeter .sm-bar b:nth-of-type(2) { left: 40%; }
+#streakMeter .sm-bar b:nth-of-type(3) { left: 60%; } #streakMeter .sm-bar b:nth-of-type(4) { left: 80%; }
+#streakMeter.fire .sm-label { color: #ffb25a; font-weight: 600; text-shadow: 0 0 8px rgba(255,110,20,0.9), 0 1px 3px #000; animation: smflick 0.9s infinite alternate; }
+#streakMeter.fire .sm-bar { border-color: rgba(255,160,70,0.8); box-shadow: 0 0 10px rgba(255,100,20,0.7); }
+#streakMeter.fire .sm-bar i { background: linear-gradient(90deg, #ff5a14, #ffb030 45%, #fff0b0 70%, #ff7a1a); background-size: 200% 100%; animation: smburn 0.7s linear infinite; }
+@keyframes smburn { from { background-position: 0 0; } to { background-position: -200% 0; } }
+@keyframes smflick { from { opacity: 0.8; } to { opacity: 1; } }
+/* ON FIRE: a burning frame around the HUD (opacity-only animation, composited) */
+#fireFrame { position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 0.5s;
+  background: radial-gradient(ellipse at center, transparent 58%, rgba(255,110,20,0.10) 76%, rgba(255,70,0,0.34) 100%),
+    linear-gradient(180deg, rgba(255,120,30,0.30), transparent 7%, transparent 93%, rgba(255,90,10,0.38)); }
+#fireFrame.on { opacity: 1; animation: fireflick 0.45s ease-in-out infinite alternate; }
+@keyframes fireflick { from { opacity: 0.72; } to { opacity: 1; } }
 #subs { position: absolute; left: 50%; bottom: 3.2vh; transform: translateX(-50%); text-align: center; max-width: 56vw; }
 #subs .line { display: inline-block; background: rgba(0,0,0,0.55); color: #fff; font-family: 'Oswald', sans-serif; font-weight: 400; font-size: clamp(14px, 1.25vw, 19px); padding: 3px 12px; margin-top: 4px; letter-spacing: 0.3px; animation: subin 0.2s ease-out; }
 #subs .who { color: var(--khaki); margin-right: 8px; font-size: 0.75em; letter-spacing: 2px; text-transform: uppercase; }
 @keyframes subin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-#feed { position: absolute; right: 22px; top: 96px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+#feed { position: absolute; right: 22px; top: 236px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 #feed div { background: rgba(0,0,0,0.55); padding: 3px 10px; font-size: 14px; letter-spacing: 1px; animation: subin 0.2s; }
 #feed div.mine { border-left: 3px solid var(--khaki); }
 #feed div.loss { border-left: 3px solid var(--bad); }
