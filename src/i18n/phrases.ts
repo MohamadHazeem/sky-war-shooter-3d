@@ -9,8 +9,12 @@ import career from './ar/career';
 import combat from './ar/combat';
 import misc from './ar/misc';
 import pilot from './ar/pilot';
+import campaign from './ar/campaign';
+import skills from './ar/skills';
+import battle from './ar/battle';
+import theatre from './ar/theatre';
 
-const TABLES: PhraseTable[] = [missions, radio, game, loadout, career, combat, misc, pilot];
+const TABLES: PhraseTable[] = [missions, radio, game, loadout, career, combat, misc, pilot, campaign, skills, battle, theatre];
 
 export const PHRASES: Record<string, string> = Object.assign({}, ...TABLES.map((t) => t.phrases));
 export const PATTERNS: Pattern[] = TABLES.flatMap((t) => t.patterns ?? []);

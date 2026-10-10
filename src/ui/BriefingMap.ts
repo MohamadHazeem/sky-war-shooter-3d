@@ -147,14 +147,14 @@ export function briefingMapSvg(m: Mission): string {
   for (let la = Math.ceil(latMin); la <= latMax; la++) {
     const y = Y(-la);
     // Labels stay clear of the frame and of the scale bar in the bottom-left corner.
-    const lbl = y > H - 34 ? '' : `<text x="9" y="${f(y - 3)}">${la}°N</text>`;
+    const lbl = y > H - 34 ? '' : `<text x="9" y="${f(y - 3)}">${txt('{n}°N', { n: la })}</text>`;
     grid.push(`<line x1="0" x2="${W}" y1="${f(y)}" y2="${f(y)}"/>${lbl}`);
   }
   const lonW = (cx - w / 2) / KX, lonE = (cx + w / 2) / KX;
   const step = lonE - lonW > 8 ? 2 : 1;
   for (let lo = Math.ceil(lonW / step) * step; lo <= lonE; lo += step) {
     const x = X(lo * KX);
-    const lbl = x < 60 ? '' : `<text x="${f(x + 3)}" y="16">${Math.abs(lo)}°${lo < 0 ? 'W' : 'E'}</text>`;
+    const lbl = x < 60 ? '' : `<text x="${f(x + 3)}" y="16">${txt(lo < 0 ? '{n}°W' : '{n}°E', { n: Math.abs(lo) })}</text>`;
     grid.push(`<line x1="${f(x)}" x2="${f(x)}" y1="0" y2="${H}"/>${lbl}`);
   }
 
@@ -210,7 +210,7 @@ export function briefingMapSvg(m: Mission): string {
       <circle r="15" fill="${PAPER}" fill-opacity=".7" stroke="${INK}" stroke-width=".8"/>
       <path d="M0 -15L3 0L-3 0Z" fill="${INK}"/><path d="M0 15L3 0L-3 0Z" fill="${PAPER}" stroke="${INK}" stroke-width=".6"/>
       <path d="M-15 0L0 -2.5L15 0L0 2.5Z" fill="none" stroke="${INK}" stroke-width=".6"/>
-      <text y="-19" text-anchor="middle" font-size="11" font-weight="700" fill="${INK}">N</text></g>`;
+      <text y="-19" text-anchor="middle" font-size="11" font-weight="700" fill="${INK}">${txt('N (compass)').replace(' (compass)', '')}</text></g>`;   // compass north: "N", Arabic "ش"
   const scale = `<g transform="translate(14 ${H - 14})" font-size="9" fill="${INK}">
       <rect x="0" y="-4" width="${f(barLen / 2)}" height="4" fill="${INK}"/>
       <rect x="${f(barLen / 2)}" y="-4" width="${f(barLen / 2)}" height="4" fill="${PAPER}" stroke="${INK}" stroke-width=".6"/>

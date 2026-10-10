@@ -135,3 +135,28 @@
   .sk-name { font-size: 12px; }
   .sk-node.cap .sk-name { font-size: 13px; }
 }
+
+/* ---------- Arabic: Arabic faces behind the drafting lettering; the sheet reads from the right ----------
+   (SkillTreeScreen.ts mirrors the card columns and drafting lines itself) */
+html[lang=ar] .sk-bp, html[lang=ar] .sk-node, html[lang=ar] .sk-tip, html[lang=ar] .sk-motto, html[lang=ar] .sk-sub, html[lang=ar] .sk-hdr,
+html[lang=ar] .sk-plate, html[lang=ar] .sk-tip .d, html[lang=ar] .sk-tip .r { font-family: 'Special Elite', 'Noto Naskh Arabic', 'Courier New', monospace; }
+html[lang=ar] .sk-name, html[lang=ar] .sk-pts span, html[lang=ar] .sk-respec, html[lang=ar] .sk-stamp, html[lang=ar] .sk-tip .k, html[lang=ar] .sk-tip .t,
+html[lang=ar] .sk-branch h3, html[lang=ar] .sk-titlerow h2 { font-family: 'Oswald', 'Noto Kufi Arabic', sans-serif !important; }
+html[lang=ar] .sk-state, html[lang=ar] .sk-ledger, html[lang=ar] .sk-legend, html[lang=ar] .sk-tip .s, html[lang=ar] .sk-bown { font-family: 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; }
+html[lang=ar] .sk-name { font-size: 13px; line-height: 1.35; }
+html[lang=ar] .sk-state { font-size: 10px; }
+html[lang=ar] .sk-motto { font-style: normal; }
+html[lang=ar] .sk-tip .d { line-height: 1.6; }
+html[dir=rtl] .sk-branch + .sk-branch { border-left: none; border-right: 1px dashed var(--bp-faint); }
+html[dir=rtl] .sk-code { left: auto; right: 5px; }
+html[dir=rtl] .sk-cost { right: auto; left: 4px; }
+html[dir=rtl] .sk-stamp { right: auto; left: -6px; transform: rotate(9deg); }
+html[dir=rtl] .sk-plate { right: auto; left: 30px; }
+html[dir=rtl] .sk-legend .lg::before { margin-right: 0; margin-left: 6px; }
+html[dir=rtl] .sk-hint { margin-left: 0; margin-right: auto; }
+html[dir=rtl] .sk-tip { border-left: none; border-right: 4px solid #123d6e; }
+html[dir=rtl] .sk-node.just .sk-stamp { animation-name: skStampRtl; }
+@keyframes skStampRtl { from { transform: rotate(9deg) scale(2.6); opacity: 0; } to { transform: rotate(9deg) scale(1); opacity: 0.88; } }
+@media (max-width: 760px) {
+  html[dir=rtl] .sk-branch + .sk-branch { border-right: none; }
+}

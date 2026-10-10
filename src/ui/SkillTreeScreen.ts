@@ -10,6 +10,7 @@ import {
   BRANCHES, SKILLS, TREE_COST, nextPointAt, skillDef, skillPointsFor, careerXp, type SkillDef, type SkillId, type NodeState,
 } from '../game/Skills';
 import { esc, onBackKey, showLayer } from './serviceCommon';
+import { tx, isAr, num } from '../i18n';
 import './skills.css';
 
 export interface TreeCtx { prog: Progression; xp(): number; onChange?(kind: 'buy' | 'respec'): void }
@@ -17,26 +18,30 @@ export interface TreeCtx { prog: Progression; xp(): number; onChange?(kind: 'buy
 const ROW = 118;            // px between tiers
 const TOP = 54;             // centre of the first row
 const COL_X: Record<-1 | 0 | 1, number> = { [-1]: 25, 0: 50, 1: 75 };
+// Arabic mirrors the branch columns (cards and drafting lines alike): the tree reads from the right
+const colX = (c: -1 | 0 | 1) => COL_X[(isAr() ? -c : c) as -1 | 0 | 1];
 const HEIGHT = TOP + 3 * ROW + 56;
 const STATE_LABEL: Record<NodeState, string> = { owned: 'QUALIFIED', available: 'AVAILABLE', short: 'NOT ENOUGH POINTS', locked: 'LOCKED' };
 
-const fmt = (n: number) => n.toLocaleString('en-US');
-const pts = (n: number) => `${n} pt${n === 1 ? '' : 's'}`;
-const code = (d: SkillDef) => `${d.branch[0].toUpperCase()}-${d.tier + 1}${d.col < 0 ? 'L' : d.col > 0 ? 'R' : ''}`;
+const fmt = num;
+const pts = (n: number) => tx(`${n} pt${n === 1 ? '' : 's'}`);
+const stateLabel = (s: NodeState) => tx(STATE_LABEL[s]);
+// drawing code of a card: branch letter, row, and the side of the sheet it is drawn on
+const code = (d: SkillDef) => { const c = isAr() ? -d.col : d.col; return `${d.branch[0].toUpperCase()}-${d.tier + 1}${c < 0 ? 'L' : c > 0 ? 'R' : ''}`; };
 
 // ---------------- full screen ----------------
 
 export function showSkillTree(h: { prog: Progression; xp(): number; back(): void }) {
   const el = showLayer('sk-screen');
   el.innerHTML = `<div class="screen-center"><div class="sk-bp sk-sheet">
-    <div class="sk-hdr"><span>WAR DEPARTMENT · ARMY AIR FORCES</span><span>TECHNICAL MANUAL TM 1-SK · AERIAL GUNNERY QUALIFICATION</span></div>
+    <div class="sk-hdr"><span>${tx('WAR DEPARTMENT · ARMY AIR FORCES')}</span><span>${tx('TECHNICAL MANUAL TM 1-SK · AERIAL GUNNERY QUALIFICATION')}</span></div>
     <div class="sk-titlerow">
-      <h2>Skills</h2>
-      <div class="sk-sub">Long-term qualifications. Points come with every promotion and every ${fmt(3000)} XP past Major.</div>
+      <h2>${tx('Skills')}</h2>
+      <div class="sk-sub">${tx('Long-term qualifications. Points come with every promotion and every {n} XP past Major.', { n: fmt(3000) })}</div>
     </div>
     <div class="sk-host"></div>
-    <div class="sk-foot"><button class="btn ghost" data-back>Back</button></div>
-    <div class="sk-plate">DRAWING NO. SK-1944 · SHEET 1 OF 1 · SCALE NONE</div>
+    <div class="sk-foot"><button class="btn ghost" data-back>${tx('Back')}</button></div>
+    <div class="sk-plate">${tx('DRAWING NO. SK-1944 · SHEET 1 OF 1 · SCALE NONE')}</div>
   </div></div>`;
   const host = el.querySelector<HTMLElement>('.sk-host')!;
   renderTree(host, { prog: h.prog, xp: h.xp });
@@ -53,7 +58,7 @@ export function mountSkillSection(wrap: HTMLElement, prog: Progression, rerender
   const anchor = wrap.querySelector<HTMLElement>(':scope > .row:last-of-type');
   const sec = document.createElement('div');
   sec.className = 'sk-hangar';
-  sec.innerHTML = '<div class="hsec">SKILLS · LONG-TERM QUALIFICATIONS</div><div class="sk-bp sk-inline"><div class="sk-host"></div></div>';
+  sec.innerHTML = `<div class="hsec">${tx('SKILLS · LONG-TERM QUALIFICATIONS')}</div><div class="sk-bp sk-inline"><div class="sk-host"></div></div>`;
   wrap.insertBefore(sec, anchor);
   renderTree(sec.querySelector<HTMLElement>('.sk-host')!, {
     prog, xp: careerXp,
@@ -77,17 +82,17 @@ export function renderTree(host: HTMLElement, ctx: TreeCtx, compact = false) {
     const next = nextPointAt(xp);
     host.innerHTML = `
       <div class="sk-counter">
-        <div class="sk-pts"><b>${avail}</b><span>SKILL POINT${avail === 1 ? '' : 'S'}<br/>AVAILABLE</span></div>
+        <div class="sk-pts"><b>${avail}</b><span>${tx(avail === 1 ? 'SKILL POINT<br/>AVAILABLE' : 'SKILL POINTS<br/>AVAILABLE')}</span></div>
         <div class="sk-ledger">
-          <div>Earned <b>${earned}</b> · spent <b>${spent}</b> of ${TREE_COST}</div>
-          <div>Next point at <b>${fmt(next)} XP</b> (${fmt(Math.max(0, next - xp))} to go)</div>
+          <div>${tx('Earned <b>{e}</b> · spent <b>{s}</b> of {t}', { e: earned, s: spent, t: TREE_COST })}</div>
+          <div>${tx('Next point at <b>{n} XP</b> ({m} to go)', { n: fmt(next), m: fmt(Math.max(0, next - xp)) })}</div>
         </div>
         <button class="sk-respec ${respecArmed ? 'armed' : ''}" data-respec ${cost <= 0 || ctx.prog.points < cost ? 'disabled' : ''}
-          title="Refund every skill point. Costs merit.">${cost <= 0 ? 'Respec' : respecArmed ? `Confirm respec · ${fmt(cost)} merit` : `Respec · ${fmt(cost)} merit`}</button>
+          title="${tx('Refund every skill point. Costs merit.')}">${cost <= 0 ? tx('Respec') : tx(respecArmed ? 'Confirm respec · {n} merit' : 'Respec · {n} merit', { n: fmt(cost) })}</button>
       </div>
       <div class="sk-branches ${compact ? 'compact' : ''}">${BRANCHES.map((b) => branchHtml(b, ctx, xp, armed)).join('')}</div>
-      <div class="sk-legend"><span class="lg owned">Qualified</span><span class="lg available">Available</span><span class="lg short">Short of points</span><span class="lg locked">Locked</span>
-        <span class="sk-hint">Hover a card for details · click twice to qualify</span></div>`;
+      <div class="sk-legend"><span class="lg owned">${tx('Qualified')}</span><span class="lg available">${tx('Available')}</span><span class="lg short">${tx('Short of points')}</span><span class="lg locked">${tx('Locked')}</span>
+        <span class="sk-hint">${tx('Hover a card for details · click twice to qualify')}</span></div>`;
     wire();
   };
 
@@ -136,7 +141,7 @@ function branchHtml(b: (typeof BRANCHES)[number], ctx: TreeCtx, xp: number, arme
   // drafting lines: an elbow from the bottom of each prerequisite to the top of the node
   const lines = nodes.flatMap((n) => n.req.map((r) => {
     const p = skillDef(r)!;
-    const x1 = COL_X[p.col], y1 = TOP + p.tier * ROW + 30, x2 = COL_X[n.col], y2 = TOP + n.tier * ROW - 30, ym = (y1 + y2) / 2;
+    const x1 = colX(p.col), y1 = TOP + p.tier * ROW + 30, x2 = colX(n.col), y2 = TOP + n.tier * ROW - 30, ym = (y1 + y2) / 2;
     const live = book.has(r);
     const cls = book.has(n.id) && live ? 'own' : live ? 'open' : '';
     return `<path class="${cls}" d="M${x1} ${y1} V${ym} H${x2} V${y2}" vector-effect="non-scaling-stroke"/>`;
@@ -144,17 +149,18 @@ function branchHtml(b: (typeof BRANCHES)[number], ctx: TreeCtx, xp: number, arme
   const cards = nodes.map((n) => {
     const st = book.state(n.id, xp);
     const isArmed = armed === n.id && st === 'available';
-    const label = isArmed ? `CONFIRM · ${pts(n.cost)}` : st === 'owned' ? 'QUALIFIED' : st === 'available' ? `QUALIFY · ${pts(n.cost)}` : st === 'short' ? `NEEDS ${pts(n.cost)}` : 'LOCKED';
+    const p = pts(n.cost);
+    const label = isArmed ? tx('CONFIRM · {pts}', { pts: p }) : st === 'owned' ? tx('QUALIFIED') : st === 'available' ? tx('QUALIFY · {pts}', { pts: p }) : st === 'short' ? tx('NEEDS {pts}', { pts: p }) : tx('LOCKED');
     return `<button class="sk-node ${st} ${n.capstone ? 'cap' : ''} ${isArmed ? 'armed' : ''}" data-id="${n.id}"
-        style="left:${COL_X[n.col]}%;top:${TOP + n.tier * ROW}px" aria-label="${esc(`${n.name}: ${n.desc} ${STATE_LABEL[st]}, costs ${pts(n.cost)}`)}">
+        style="left:${colX(n.col)}%;top:${TOP + n.tier * ROW}px" aria-label="${esc(tx('{name}: {desc} {state}, costs {pts}', { name: tx(n.name), desc: tx(n.desc), state: stateLabel(st), pts: p }))}">
       <span class="sk-code">${code(n)}</span><span class="sk-cost">${n.cost}</span>
-      <span class="sk-name">${esc(n.name)}</span>
+      <span class="sk-name">${esc(tx(n.name))}</span>
       <span class="sk-state">${label}</span>
-      ${st === 'owned' ? '<span class="sk-stamp">QUALIFIED</span>' : ''}
+      ${st === 'owned' ? `<span class="sk-stamp">${tx('QUALIFIED')}</span>` : ''}
     </button>`;
   }).join('');
   return `<section class="sk-branch" data-branch="${b.id}">
-    <header><span class="sk-bcode">${esc(b.code)}</span><h3>${esc(b.name)}</h3><span class="sk-bown">${owned}/${nodes.length}</span><div class="sk-motto">${esc(b.motto)}</div></header>
+    <header><span class="sk-bcode">${esc(b.code)}</span><h3>${esc(tx(b.name))}</h3><span class="sk-bown">${owned}/${nodes.length}</span><div class="sk-motto">${esc(tx(b.motto))}</div></header>
     <div class="sk-field" style="height:${HEIGHT}px">
       <svg class="sk-lines" viewBox="0 0 100 ${HEIGHT}" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>
       ${cards}
@@ -177,13 +183,13 @@ function showTip(anchor: HTMLElement, id: SkillId, ctx: TreeCtx) {
     document.body.appendChild(tipEl);
     addEventListener('keydown', (e) => { if (e.code !== 'Tab') hideTip(); }, true);   // e.g. Space launching the hangar
   }
-  const reqs = d.req.map((r) => `<span class="${book.has(r) ? 'ok' : ''}">${esc(skillDef(r)!.name)}</span>`).join(d.reqAny ? ' <i>or</i> ' : ' <i>and</i> ');
+  const reqs = d.req.map((r) => `<span class="${book.has(r) ? 'ok' : ''}">${esc(tx(skillDef(r)!.name))}</span>`).join(` <i>${tx(d.reqAny ? 'or' : 'and')}</i> `);
   const branch = BRANCHES.find((b) => b.id === d.branch)!;
-  tipEl.innerHTML = `<div class="k">${esc(branch.name.toUpperCase())} · ${code(d)}${d.capstone ? ' · CAPSTONE' : ''}</div>
-    <div class="t">${esc(d.name)}</div>
-    <div class="d">${esc(d.desc)}</div>
-    ${d.req.length ? `<div class="r">Requires: ${reqs}</div>` : ''}
-    <div class="s s-${st}">${STATE_LABEL[st]} · ${pts(d.cost)}${st === 'available' ? ' · click twice to qualify' : ''}</div>`;
+  tipEl.innerHTML = `<div class="k">${esc(tx(branch.name).toUpperCase())} · ${code(d)}${d.capstone ? ` · ${tx('CAPSTONE')}` : ''}</div>
+    <div class="t">${esc(tx(d.name))}</div>
+    <div class="d">${esc(tx(d.desc))}</div>
+    ${d.req.length ? `<div class="r">${tx('Requires: {list}', { list: reqs })}</div>` : ''}
+    <div class="s s-${st}">${stateLabel(st)} · ${pts(d.cost)}${st === 'available' ? ` · ${tx('click twice to qualify')}` : ''}</div>`;
   const r = anchor.getBoundingClientRect();
   tipEl.classList.add('show');
   const tw = tipEl.offsetWidth, th = tipEl.offsetHeight;

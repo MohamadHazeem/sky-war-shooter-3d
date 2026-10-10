@@ -2,6 +2,7 @@
 // speed controls, camera modes and the aircraft list, photo settings, screenshot and
 // "save moment"; plus the saved-moments library opened from the title menu.
 // All logic lives in Theatre.ts behind the TheatreControl interface.
+import { tx, isAr } from '../i18n';
 
 export type CamMode = 'player' | 'orbit' | 'free' | 'director';
 export const SPEEDS = [0.25, 0.5, 1, 2];
@@ -76,6 +77,20 @@ const CSS = `
 #theatre .th-time { font: 13px/1 "IBM Plex Mono", monospace; margin-left: 8px; letter-spacing: 1px; }
 #theatre .th-mark { font: 12px/1 "Special Elite", monospace; color: var(--khaki, #b9a76f); margin-left: 10px; }
 #theatre .th-hint { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); font: 11px/1 "IBM Plex Mono", monospace; letter-spacing: 2px; color: rgba(255,255,255,.55); display: none; text-shadow: 0 1px 4px #000; }
+/* Arabic: the side panels mirror and read from the right; the timeline and transport stay
+   left-to-right (time runs left to right) */
+html[lang=ar] #theatre { font-family: Oswald, "Noto Kufi Arabic", "Arial Narrow", sans-serif; }
+html[lang=ar] #theatre .th-k, html[lang=ar] #theatre .th-h, html[lang=ar] #theatre .th-help, html[lang=ar] #theatre label, html[lang=ar] #theatre select,
+html[lang=ar] #theatre .th-status, html[lang=ar] #theatre .th-time, html[lang=ar] #theatre .th-hint, html[lang=ar] #theatreLib .card .d { font-family: "IBM Plex Mono", "IBM Plex Sans Arabic", monospace; }
+html[lang=ar] #theatre .th-mark, html[lang=ar] #theatreLib .empty { font-family: "Special Elite", "Noto Naskh Arabic", monospace; }
+html[lang=ar] #theatre .th-h, html[lang=ar] #theatre label { font-size: 12px; line-height: 1.3; }
+html[lang=ar] #theatre .th-help { font-size: 11px; line-height: 1.7; }
+html[dir=rtl] #theatre .th-left { left: auto; right: 16px; }
+html[dir=rtl] #theatre .th-right { right: auto; left: 16px; }
+html[dir=rtl] #theatre .th-list button { text-align: right; }
+html[dir=rtl] #theatre label span { float: left; }
+html[dir=rtl] #theatre .th-bottom { direction: ltr; }
+html[dir=rtl] #theatre .th-mark { direction: rtl; unicode-bidi: isolate; }
 #theatre.hide .th-hint { display: block; }
 #theatreLib { position: fixed; inset: 0; z-index: 11; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,.35); }
 #theatreLib .box { width: min(900px, 100%); max-height: 92vh; overflow: auto; padding: 28px 32px; }
@@ -91,10 +106,12 @@ const CSS = `
 @media (max-width: 760px) {
   #theatre .th-left, #theatre .th-right { top: auto; bottom: 120px; width: calc(50% - 22px); max-height: 38vh; overflow: auto; }
 }
+html[dir=rtl] #theatreLib .box { text-align: right; }
 `;
 
 const TICK_COL: Record<number, string> = { 2: '#e0b445', 3: '#d9573f', 4: '#d9573f', 5: '#6fb3d9', 6: '#6fb3d9' };
 const MODES: [CamMode, string][] = [['player', 'Player'], ['orbit', 'Orbit'], ['free', 'Free'], ['director', 'Director']];
+const SEC = (s: string) => tx('{n} s', { n: s });
 
 const fmt = (s: number) => {
   s = Math.max(0, s);
@@ -131,42 +148,42 @@ export class TheatreScreen {
     const r = document.createElement('div');
     r.id = 'theatre';
     r.innerHTML = `
-      <div class="th-top th-panel"><div class="th-k">REPLAY THEATRE</div><div class="th-title">${esc(c.title)}</div><div class="th-sp"></div>
-        <button data-a="hide" title="Hide the interface (H)">Hide UI</button><button data-a="exit" title="Back (Esc)">Exit</button></div>
+      <div class="th-top th-panel"><div class="th-k">${tx('REPLAY THEATRE')}</div><div class="th-title">${esc(tx(c.title))}</div><div class="th-sp"></div>
+        <button data-a="hide" title="${tx('Hide the interface (H)')}">${tx('Hide UI')}</button><button data-a="exit" title="${tx('Back (Esc)')}">${tx('Exit')}</button></div>
       <div class="th-left th-panel">
-        <div class="th-h">Camera</div>
-        <div class="th-modes">${MODES.map(([m, l], i) => `<button data-m="${m}" title="${l} (${i + 1})">${l}</button>`).join('')}</div>
-        <div class="th-h">Aircraft <small>· Tab cycles</small></div>
+        <div class="th-h">${tx('Camera')}</div>
+        <div class="th-modes">${MODES.map(([m, l], i) => `<button data-m="${m}" title="${tx(l)} (${i + 1})">${tx(l)}</button>`).join('')}</div>
+        <div class="th-h">${tx('Aircraft')} <small>${tx('· Tab cycles')}</small></div>
         <div class="th-list"></div>
-        <div class="th-help">Space play/pause · ←/→ frame · Shift+←/→ 5 s · ,/. moments · 1–4 camera · Free: WASD Q/E, drag to look, Shift fast · Orbit: drag, wheel · H hide UI · Esc exit</div>
+        <div class="th-help">${tx('Space play/pause · ←/→ frame · Shift+←/→ 5 s · ,/. moments · 1–4 camera · Free: WASD Q/E, drag to look, Shift fast · Orbit: drag, wheel · H hide UI · Esc exit')}</div>
       </div>
       <div class="th-right th-panel">
-        <div class="th-h">Photo</div>
-        <label>Field of view <span data-v="fov"></span><input type="range" data-p="fov" min="12" max="100" step="1"></label>
-        <button data-a="fovauto" style="margin-top:4px;font-size:11px;padding:3px 8px">Auto FOV</button>
-        <label>Depth of field <span data-v="dof"></span><input type="range" data-p="dof" min="0" max="1" step="0.05"></label>
-        <label>Focus distance <span data-v="focus"></span><input type="range" data-p="focus" min="2" max="400" step="1"></label>
-        <label>Exposure <span data-v="exposure"></span><input type="range" data-p="exposure" min="0.3" max="2.5" step="0.05"></label>
-        <label>Resolution<select data-p="res"><option value="1">Screen</option><option value="2">2× screen</option><option value="3">3× screen</option></select></label>
-        <button class="th-btn" data-a="shot">Save screenshot</button>
-        <div class="th-h" style="margin-top:16px">Moments</div>
-        <button class="th-btn" data-a="moment" title="Keep the 15 s around the playhead (up to 5 saved)">Save moment</button>
+        <div class="th-h">${tx('Photo')}</div>
+        <label>${tx('Field of view')} <span data-v="fov"></span><input type="range" data-p="fov" min="12" max="100" step="1"></label>
+        <button data-a="fovauto" style="margin-top:4px;font-size:11px;padding:3px 8px">${tx('Auto FOV')}</button>
+        <label>${tx('Depth of field')} <span data-v="dof"></span><input type="range" data-p="dof" min="0" max="1" step="0.05"></label>
+        <label>${tx('Focus distance')} <span data-v="focus"></span><input type="range" data-p="focus" min="2" max="400" step="1"></label>
+        <label>${tx('Exposure')} <span data-v="exposure"></span><input type="range" data-p="exposure" min="0.3" max="2.5" step="0.05"></label>
+        <label>${tx('Resolution')}<select data-p="res"><option value="1">${tx('Screen')}</option><option value="2">${tx('2× screen')}</option><option value="3">${tx('3× screen')}</option></select></label>
+        <button class="th-btn" data-a="shot">${tx('Save screenshot')}</button>
+        <div class="th-h" style="margin-top:16px">${tx('Moments')}</div>
+        <button class="th-btn" data-a="moment" title="${tx('Keep the 15 s around the playhead (up to 5 saved)')}">${tx('Save moment')}</button>
         <div class="th-status"></div>
       </div>
       <div class="th-bottom th-panel">
         <div class="th-track"><div class="th-fill"></div><div class="th-ticks"></div><div class="th-head"></div></div>
         <div class="th-ctrl">
-          <button data-a="prevmark" title="Previous moment (,)">⏮</button>
-          <button data-a="back" title="Step back one frame (←)">◂|</button>
-          <button data-a="play" title="Play / pause (Space)">▶</button>
-          <button data-a="fwd" title="Step forward one frame (→)">|▸</button>
-          <button data-a="nextmark" title="Next moment (.)">⏭</button>
+          <button data-a="prevmark" title="${tx('Previous moment (,)')}">⏮</button>
+          <button data-a="back" title="${tx('Step back one frame (←)')}">◂|</button>
+          <button data-a="play" title="${tx('Play / pause (Space)')}">▶</button>
+          <button data-a="fwd" title="${tx('Step forward one frame (→)')}">|▸</button>
+          <button data-a="nextmark" title="${tx('Next moment (.)')}">⏭</button>
           <span class="th-time"></span><span class="th-mark"></span>
           <span class="th-sp"></span>
           ${SPEEDS.map((s) => `<button data-s="${s}">${s}×</button>`).join('')}
         </div>
       </div>
-      <div class="th-hint">H — SHOW INTERFACE</div>`;
+      <div class="th-hint">${tx('H — SHOW INTERFACE')}</div>`;
     document.body.appendChild(r);
     this.root = r;
     const q = (s: string) => r.querySelector<HTMLElement>(s)!;
@@ -200,7 +217,7 @@ export class TheatreScreen {
 
   toggleHidden() { this.root?.classList.toggle('hide'); }
 
-  status(text: string) { if (this.els.status) this.els.status.textContent = text; }
+  status(text: string) { if (this.els.status) this.els.status.textContent = tx(text); }
 
   /** Rebuilds the moment ticks (after a save the list is the same; on open it changes). */
   refreshMarks() {
@@ -211,7 +228,7 @@ export class TheatreScreen {
     this.els.ticks.innerHTML = this.marks.map((m, i) => {
       const left = ((m.t - c.t0) / span) * 100;
       const col = TICK_COL[m.type];
-      return `<div class="th-tick${m.major ? '' : ' min'}" data-i="${i}" title="${esc(m.label)} · ${fmt(m.t - c.t0)}" style="left:${left.toFixed(3)}%${m.major && col ? `;background:${col}` : ''}"></div>`;
+      return `<div class="th-tick${m.major ? '' : ' min'}" data-i="${i}" title="${esc(tx(m.label))} · ${fmt(m.t - c.t0)}" style="left:${left.toFixed(3)}%${m.major && col ? `;background:${col}` : ''}"></div>`;
     }).join('');
     this.els.ticks.querySelectorAll<HTMLElement>('.th-tick').forEach((el) => {
       el.addEventListener('pointerdown', (e) => {
@@ -230,7 +247,7 @@ export class TheatreScreen {
     for (const a of c.aircraft()) {
       const b = document.createElement('button');
       b.className = a.player ? 'pl' : a.team === 1 ? 'ax' : '';
-      b.innerHTML = `<i></i>${esc(a.label)}`;
+      b.innerHTML = `<i></i><bdi>${esc(tx(a.label))}</bdi>`;
       b.addEventListener('click', () => c.setOrbit(a.id));
       b.addEventListener('mousedown', (e) => e.preventDefault());
       list.appendChild(b);
@@ -248,9 +265,9 @@ export class TheatreScreen {
       const lab = r.querySelector(`[data-v="${k}"]`);
       if (lab) lab.textContent = txt;
     };
-    set('fov', p.fov || 50, p.fov ? `${Math.round(p.fov)}°` : 'auto');
-    set('dof', p.dof, p.dof ? p.dof.toFixed(2) : 'off');
-    set('focus', p.focus, `${Math.round(p.focus)} m`);
+    set('fov', p.fov || 50, p.fov ? `${Math.round(p.fov)}°` : tx('auto'));
+    set('dof', p.dof, p.dof ? p.dof.toFixed(2) : tx('off'));
+    set('focus', p.focus, tx('{n} m', { n: Math.round(p.focus) }));
     set('exposure', p.exposure, p.exposure.toFixed(2));
     const sel = r.querySelector<HTMLSelectElement>('[data-p="res"]');
     if (sel) sel.value = String(p.res);
@@ -320,7 +337,7 @@ export class TheatreScreen {
         b.classList.toggle('on', id === c.orbitId && c.mode === 'orbit');
       }
       let label = '';
-      for (const m of this.marks) if (m.major && Math.abs(m.t - c.t) < 2.5) { label = `✦ ${m.label}`; break; }
+      for (const m of this.marks) if (m.major && Math.abs(m.t - c.t) < 2.5) { label = `✦ ${tx(m.label)}`; break; }
       if (label !== L.mark) { L.mark = label; e.mark.textContent = label; }
     }
   }
@@ -334,17 +351,18 @@ export class TheatreScreen {
     this.hideLibrary();
     const d = document.createElement('div');
     d.id = 'theatreLib';
-    const date = (ms: number) => new Date(ms).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    // Arabic month names with Western digits, like the rest of the Arabic interface
+    const date = (ms: number) => new Date(ms).toLocaleString(isAr() ? 'ar-u-nu-latn' : undefined, { dateStyle: isAr() ? 'long' : 'medium', timeStyle: 'short' });
     d.innerHTML = `<div class="box panel">
-      <div class="kicker">REPLAY THEATRE</div>
-      <h2>Saved moments</h2>
+      <div class="kicker">${tx('REPLAY THEATRE')}</div>
+      <h2>${tx('Saved moments')}</h2>
       ${items.length ? `<div class="cards">${items.map((m) => `
         <div class="card">${m.thumb ? `<img src="${m.thumb}" alt="">` : '<img alt="">'}
-          <div class="m"><div class="t">${esc(m.title)}</div><div class="d">${date(m.created)} · ${m.duration.toFixed(1)} s</div>
-          <div class="row"><button class="btn" data-play="${m.key}">Watch</button><button class="btn ghost" data-del="${m.key}">Delete</button></div></div>
+          <div class="m"><div class="t">${esc(tx(m.title))}</div><div class="d">${date(m.created)} · ${SEC(m.duration.toFixed(1))}</div>
+          <div class="row"><button class="btn" data-play="${m.key}">${tx('Watch')}</button><button class="btn ghost" data-del="${m.key}">${tx('Delete')}</button></div></div>
         </div>`).join('')}</div>`
-        : '<div class="empty">No saved moments yet. After a mission, open the Replay theatre from the debriefing and press “Save moment” (up to 5 are kept).</div>'}
-      <div class="row"><button class="btn ghost" data-a="back">Back</button></div>
+        : `<div class="empty">${tx('No saved moments yet. After a mission, open the Replay theatre from the debriefing and press “Save moment” (up to 5 are kept).')}</div>`}
+      <div class="row"><button class="btn ghost" data-a="back">${tx('Back')}</button></div>
     </div>`;
     document.body.appendChild(d);
     this.lib = d;

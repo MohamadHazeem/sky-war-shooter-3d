@@ -25,6 +25,7 @@ import type { BossShip } from '../world/BossShip';
 import type { Loadout } from './Upgrades';
 import { SKILLS, interceptVelocity, skillDefaults, type SkillLoadout } from './Skills';
 import { hideTip, showSkillTree } from '../ui/SkillTreeScreen';
+import { tx } from '../i18n';
 
 const DEADEYE_CONE = THREE.MathUtils.degToRad(8);
 const DEADEYE_RANGE = 1300;
@@ -125,7 +126,8 @@ export class SkillRuntime {
     const n = book.available(this.xp());
     const b = document.createElement('button');
     b.dataset.a = 'skills';
-    b.innerHTML = `Skills <small>${n ? `${n} point${n > 1 ? 's' : ''} to spend` : `${book.owned.size}/${SKILLS.length} qualified`}</small>${n ? '<i class="svc-dot" aria-label="skill points waiting"></i>' : ''}`;
+    const sub = n ? (n > 1 ? tx('{n} points to spend', { n }) : tx('1 point to spend')) : tx('{n}/{total} qualified', { n: book.owned.size, total: SKILLS.length });
+    b.innerHTML = `${tx('Skills')} <small>${sub}</small>${n ? `<i class="svc-dot" aria-label="${tx('skill points waiting')}"></i>` : ''}`;
     b.addEventListener('click', () => this.open());
     const armory = menu.querySelector('[data-a="armory"]');
     menu.insertBefore(b, armory ? armory.nextSibling : null);

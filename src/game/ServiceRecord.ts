@@ -250,7 +250,7 @@ export class ServiceRecord {
     }
     // skill tree (Skills.ts): points from promotions and from every 3,000 XP past Major
     const sp = skillPointsFor(c.xp) - skillPointsFor(b.xpStart);
-    if (sp > 0) promotions.push({ label: `+${sp} skill point${sp > 1 ? 's' : ''}`, text: 'Spend in Skills (title menu or hangar)' });
+    if (sp > 0) promotions.push({ label: sp > 1 ? tx('+{n} skill points', { n: sp }) : tx('+1 skill point'), text: 'Spend in Skills (title menu or hangar)' });
     this.buf = null;   // kept until here so orders completed above are listed as this mission's
     saveCareer(c);
     achievements.checkStats(c);
