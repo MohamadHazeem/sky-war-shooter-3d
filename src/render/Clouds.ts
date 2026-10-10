@@ -81,7 +81,7 @@ float density(vec3 p, vec4 L, float layerSel, bool cheap) {
   if (!cheap) {
     float dn = texture(tDetail, q / (scale * 0.14) + vec3(0.0, uTime * 0.002, 0.0)).r;
     float dmod = mix(dn, 1.0 - dn, clamp(h * 4.0, 0.0, 1.0));
-    base = remap(base, dmod * 0.3, 1.0, 0.0, 1.0);
+    base = remap(base, dmod * 0.42, 1.0, 0.0, 1.0);
   }
   return clamp(base, 0.0, 1.0) * L.w;
 }
@@ -122,8 +122,8 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
       // Multiple-scattering approximation (sum of attenuated octaves)
       float beer = exp(-ls) + 0.3 * exp(-ls * 0.25) + 0.12 * exp(-ls * 0.06);
       float powder = 1.0 - exp(-dens * 2.0 * dt * sigma * 2.0);
-      vec3 sun = uSunColor * beer * phase * mix(0.55, 1.0, powder) * 0.36;
-      vec3 amb = mix(uHorizon * 0.35 + vec3(0.03), uZenith * 0.7 + uHorizon * 0.45, h) * uAmb;
+      vec3 sun = uSunColor * beer * phase * mix(0.45, 1.0, powder) * 0.44;
+      vec3 amb = mix(uHorizon * 0.3 + vec3(0.02), uZenith * 0.7 + uHorizon * 0.45, h) * uAmb * mix(0.5, 1.0, h);
       vec3 S = (sun + amb) * dens * sigma;
       float sE = max(dens * sigma, 1e-6);
       float Tr = exp(-sE * dt);
@@ -156,7 +156,7 @@ void main() {
   // March nearer layer first
   if (th.x >= 0.0 && (tl.x < 0.0 || th.x < tl.x)) {
     vec3 c1 = vec3(0.0); float T1 = 1.0;
-    marchLayer(ro, rd, th, sceneD, uHigh, 1.0, steps / 2 + 8, jitter, c1, T1, hitHigh);
+    marchLayer(ro, rd, th, min(sceneD, 55000.0), uHigh, 1.0, steps * 3 / 4 + 8, jitter, c1, T1, hitHigh);
     col += c1; T *= T1;
     vec3 c2 = vec3(0.0); float T2 = 1.0;
     marchLayer(ro, rd, tl, sceneD, uLow, 0.0, steps, jitter, c2, T2, hitLow);
@@ -166,7 +166,7 @@ void main() {
     marchLayer(ro, rd, tl, sceneD, uLow, 0.0, steps, jitter, c1, T1, hitLow);
     col += c1; T *= T1;
     vec3 c2 = vec3(0.0); float T2 = 1.0;
-    marchLayer(ro, rd, th, sceneD, uHigh, 1.0, steps / 2 + 8, jitter, c2, T2, hitHigh);
+    marchLayer(ro, rd, th, min(sceneD, 55000.0), uHigh, 1.0, steps * 3 / 4 + 8, jitter, c2, T2, hitHigh);
     col += c2 * T; T *= T2;
   }
   // Distance haze on the clouds themselves

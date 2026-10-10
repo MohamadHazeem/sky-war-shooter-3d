@@ -51,6 +51,7 @@ export class Game {
   private lastKillAt = -99;
   private aceAwarded = false;
   private chatterT = 0;
+  private trauma = 0;
   private slowFrames = 0;
   private autoQualityDone = false;
   private menuShot = 0;
@@ -175,6 +176,7 @@ export class Game {
       }
     };
     w.events.fuselageHit = (local, dir) => { if (this.mission?.role === 'gunner') this.gunner.fuselageHit(local, dir); };
+    w.events.shake = (a) => { this.trauma = Math.min(1, this.trauma + a); };
     w.events.hitMarker = (kill) => { if (kill) this.killMarkerT = 0.45; else this.hitMarkerT = 0.12; };
   }
 
@@ -290,7 +292,7 @@ export class Game {
     this.world.difficulty = diff === 'recruit' ? 0.8 : diff === 'ace' ? 1.2 : 1;
     this.world.playerDamageScale *= diff === 'recruit' ? 0.7 : diff === 'ace' ? 1.3 : 1;
     if (diff === 'recruit') this.world.aiGunnerFactor *= 1.2;
-    this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false;
+    this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false; this.trauma = 0;
     this.world.spawnFormation(m.bombers, 1);
     const pb = this.world.playerBomber!;
     if (m.role === 'gunner') {
@@ -596,6 +598,16 @@ export class Game {
         this.endTimer -= dt;
         if (this.endTimer <= 0) this.showDebrief();
       }
+    }
+    // trauma-based camera shake (explosions, flak, hits), applied after the controllers
+    if (this.trauma > 0 && !this.menuMode) {
+      const k = this.trauma * this.trauma;
+      const cam = this.engine.camera;
+      const tt = w.time * 40;
+      cam.rotateX((Math.sin(tt * 1.3) * 0.5 + (Math.random() - 0.5)) * 0.012 * k);
+      cam.rotateY((Math.sin(tt * 1.7 + 1) * 0.5 + (Math.random() - 0.5)) * 0.012 * k);
+      cam.rotateZ((Math.random() - 0.5) * 0.02 * k);
+      this.trauma = Math.max(0, this.trauma - dt * 1.4);
     }
     this.autoQuality(dt);
     this.floatingOrigin();

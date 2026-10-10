@@ -24,6 +24,7 @@ export interface WorldEvents {
   playerHit(zone: string, heavy: boolean): void;
   hitMarker(kill: boolean): void;
   fuselageHit(local: THREE.Vector3, dir: THREE.Vector3): void;
+  shake(amount: number): void;
 }
 
 interface AIGunner { key: string; def: { pivot: THREE.Vector3; rest: { yaw: number; pitch: number }; yaw: [number, number]; pitch: [number, number] }; station?: StationDef; cooldown: number; burst: number; target: Fighter | null; retarget: number }
@@ -304,6 +305,7 @@ export class World implements WorldView {
     this.effects.sparks(e.point, t.vel, heavy);
     if (t === this.player || t === this.playerBomber) {
       sound.playerImpact(heavy);
+      this.events.shake?.(heavy ? 0.45 : 0.15);
       this.events.playerHit?.(z.name, heavy);
       if (t === this.playerBomber && /fuselage|tail|nose/.test(z.name)) {
         const local = t.worldToLocal(e.point.clone());
@@ -373,6 +375,7 @@ export class World implements WorldView {
         // blows up in mid-air
         this.effects.explosion(a.pos, a.vel, 1);
         sound.play('explosion', a.pos, { gain: 1.4, ref: 120, reverb: 0.7 });
+        if (this.player) this.events.shake?.(Math.max(0, 1 - a.pos.distanceTo(this.player.pos) / 300) * 0.8);
         if (this.player && a.pos.distanceTo(this.player.pos) < 400) sound.play('debris', a.pos, { gain: 0.6, ref: 40 });
         a.remove = true;
       } else {
@@ -478,6 +481,7 @@ export class World implements WorldView {
         r.obj.removeFromParent();
         this.effects.explosion(r.pos, new THREE.Vector3(), 0.9);
         sound.play('explosion', r.pos, { gain: 1.5, ref: 150, reverb: 0.7 });
+        if (this.player) this.events.shake?.(Math.max(0, 1 - r.pos.distanceTo(this.player.pos) / 300));
         for (const a of this.aircraft) {
           if (!a.alive || a.team !== 'allied') continue;
           const d = a.pos.distanceTo(r.pos);
@@ -627,6 +631,7 @@ export class World implements WorldView {
       this.effects.flak(p);
       const dl = this.player ? p.distanceTo(this.player.pos) : 9999;
       if (dl < 160) { sound.play('flakClose', p, { gain: 1.5, ref: 60, reverb: 0.5 }); if (dl < 75) setTimeout(() => sound.rattle(), 120); }
+      if (dl < 400) this.events.shake?.(Math.max(0, 1 - dl / 400) * 0.9);
       else sound.play('flak', p, { gain: 1.3, ref: 80, reverb: 0.6 });
       // shrapnel
       for (const a of this.aircraft) {
