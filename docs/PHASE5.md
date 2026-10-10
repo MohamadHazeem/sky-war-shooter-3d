@@ -34,6 +34,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 17 | New German aircraft from FlightGear (He 111 bomber, Me 410 with BK 5 cannon, optionally He 219 / Ta 152 / Do 335) as new enemy types | Done — He 111 (raid bomber formations, dorsal gunner) and Do 335 (diving slashing interceptor) converted from FlightGear (GPL v2); Me 410 with telegraphed BK 5 50 mm cannon runs and rear barbettes on the Bf 110 airframe (no GPL Me 410 model exists); He 219 / Ta 152 not available |
 | 18 | P-51 ground attack: strafing trains, flak towers and airfields at low level | In progress |
 | 19 | Arabic for every screen added overnight (campaign map, skills, custom battle, weekly, co-op, theatre, wingman) | Done — campaign map, skills, custom battle, weekly, theatre, FPS counter, raid missions + wingman, co-op lobby texts pending; RTL mirroring, Arabic number agreement, coverage tests |
+| 21 | Nemesis system: persistent named Luftwaffe aces with traits, grudges, scars, promotions and a dossier screen | In progress |
 | 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | |
 
 ## Log
