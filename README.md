@@ -118,7 +118,10 @@ src/
   core/      Engine (renderer + frame pipeline), Input
   render/    Sky, volumetric Clouds, PostFX, Particles/tracers, noise, atmosphere
   world/     Aircraft, FlightModel, AI, Ballistics, Effects, World, B-17 station layout
-  game/      Game (menus, director, scoring), Missions, Gunner/Pilot controllers, Viewmodels
+  game/      Game (hub: construction, frame loop, menus, settings), Missions, Gunner/Pilot controllers, Viewmodels
+             Director (waves, rounds, end conditions), MissionFlow (mission start, rounds, debrief),
+             WorldEvents (kill scoring, streaks, radio), GameHud (HUD + 2D overlay), MenuScene (menu camera)
+             -> docs/ARCHITECTURE.md: the frame loop and where to hook new features
   audio/     Sound (procedural)
   ui/        UI (DOM screens, HUD)
   dev/       autoplay harness for automated playtests (dev builds only)
