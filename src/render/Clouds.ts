@@ -56,6 +56,8 @@ uniform float uAmb;
 #define Atmos_hazeDist 60000.0
 uniform float uWeatherScale;
 uniform vec2 uRes;
+uniform vec4 uGap;   // break in the low deck over the bombing target: x, z (local), radius, strength
+uniform vec4 uGlow;  // fire / flash light from the target on the deck: x, z (local), radius, intensity
 varying vec2 vUv;
 
 float remap(float v, float a, float b, float c, float d) { return c + (v - a) / (b - a) * (d - c); }
@@ -71,6 +73,12 @@ float density(vec3 p, vec4 L, float layerSel, bool cheap) {
   vec4 wm = texture2D(tWeather, q.xz / mix(uWeatherScale, 26000.0, layerSel) + vec2(layerSel * 0.37));
   vec4 wm2 = texture2D(tWeather, q.xz / 90000.0 + vec2(0.61, 0.13));
   float cov = clamp((wm.r * 0.7 + wm2.r * 0.5) * 1.35 - 0.45 + (L.z - 0.6) * 1.8, 0.0, 1.0);
+  if (layerSel < 0.5 && uGap.w > 0.0) {
+    vec2 gq = p.xz - uGap.xy;
+    float gd = length(gq + vec2(sin(gq.y * 0.0007), cos(gq.x * 0.0006)) * uGap.z * 0.15);
+    cov = clamp(cov - uGap.w * (1.0 - smoothstep(uGap.z * 0.4, uGap.z, gd)), 0.0, 1.0);
+    if (cov < 0.01) return 0.0;
+  }
   // Cumulus: cloud top height follows local coverage, so every cell becomes a dome.
   float topH = clamp(cov * 1.05, 0.05, 1.0);
   float prof = smoothstep(0.0, 0.08, h) * (1.0 - smoothstep(topH * 0.25, topH, h));
@@ -127,6 +135,10 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
       float powder = 1.0 - exp(-dens * 2.0 * dt * sigma * 2.0);
       vec3 sun = uSunColor * beer * phase * mix(0.45, 1.0, powder) * 0.44;
       vec3 amb = mix(uHorizon * 0.3 + vec3(0.02), uZenith * 0.7 + uHorizon * 0.45, h) * uAmb * mix(0.5, 1.0, h);
+      if (sel < 0.5 && uGlow.w > 0.0) {
+        vec2 gq = p.xz - uGlow.xy;
+        amb += vec3(1.0, 0.45, 0.15) * uGlow.w * exp(-dot(gq, gq) / (uGlow.z * uGlow.z)) * (1.0 - h);
+      }
       vec3 S = (sun + amb) * dens * sigma;
       float sE = max(dens * sigma, 1e-6);
       float Tr = exp(-sE * dt);
@@ -221,6 +233,12 @@ varying vec2 vUv;
 void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }
 `;
 
+// Bombing target (TargetArea.ts): a hole in the low deck and the glow of the fires below it
+export const cloudTargetUniforms = {
+  uGap: { value: new THREE.Vector4() },
+  uGlow: { value: new THREE.Vector4() },
+};
+
 export class CloudRenderer {
   readonly rt: THREE.WebGLRenderTarget;
   private quad: FullScreenQuad;
@@ -258,6 +276,7 @@ export class CloudRenderer {
         uWeatherScale: { value: 17000 },
         uRes: { value: new THREE.Vector2() },
         uFullTexel: { value: new THREE.Vector2() },
+        ...cloudTargetUniforms,
       },
       vertexShader: vert,
       fragmentShader: cloudFrag,

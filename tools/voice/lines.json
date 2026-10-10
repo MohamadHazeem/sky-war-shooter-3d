@@ -1250,6 +1250,34 @@
         "tail"
       ],
       "text": "Starting to see 'em before they see me."
+    },
+    {
+      "id": "tgt_doors",
+      "role": "bombardier",
+      "text": "Bomb bay doors coming open. Hold her steady…"
+    },
+    {
+      "id": "tgt_hit",
+      "role": "ball",
+      "text": "Look at that… we hit it square!"
+    },
+    {
+      "id": "tgt_hit_escort",
+      "role": "bigfriend",
+      "text": "Bombs on target! Look at it burn!"
+    },
+    {
+      "id": "tgt_burn",
+      "role": "tail",
+      "text": "Smoke all the way to the river. The whole works is burning!"
+    },
+    {
+      "id": "tgt_secondary",
+      "roles": [
+        "tail",
+        "bigfriend"
+      ],
+      "text": "Secondary explosion! Something big just went up down there!"
     }
   ]
 }
