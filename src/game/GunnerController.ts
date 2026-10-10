@@ -8,6 +8,7 @@ import { buildM2, buildTailInterior, buildTurret, buildWaistInterior, GunModel }
 import { sound } from '../audio/Sound';
 import { bulletHoleTexture } from '../render/Textures';
 import { Atmos } from '../render/Atmosphere';
+import { DustMotes } from './DustMotes';
 
 interface StationState {
   def: StationDef;
@@ -32,6 +33,8 @@ export class GunnerController {
   private interiors: Partial<Record<StationId, THREE.Object3D>> = {};
   private guns: Partial<Record<StationId, GunModel[]>> = {};
   private waistInterior: THREE.Group | null = null;
+  private dust: DustMotes | null = null;
+  private sunLocal = new THREE.Vector3();
   private muzzleLight = new THREE.PointLight(0xffb060, 0, 6, 2);
   private cooldown = 0;
   private shotCount = 0;
@@ -74,6 +77,10 @@ export class GunnerController {
     const wl = STATIONS.waistL.pivot, wr = STATIONS.waistR.pivot;
     this.waistInterior = buildWaistInterior((wl.z + wr.z) / 2, wl.z, wr.z);
     bomber.root.add(this.waistInterior);
+    // sunlit dust specks in the waist section, hidden with the interior
+    this.dust?.dispose();
+    this.dust = new DustMotes(new THREE.Vector3(0, STATIONS.waistL.pivot.y, (wl.z + wr.z) / 2), wl.z, wr.z);
+    this.waistInterior.add(this.dust.points);
     this.interiors.waistL = this.waistInterior;
     this.interiors.waistR = this.waistInterior;
     this.guns.waistL = [buildM2({ ringSight: true, belt: true, beltSide: 1 })];
@@ -324,6 +331,11 @@ export class GunnerController {
     this.gunPivot.quaternion.setFromEuler(new THREE.Euler(-pitch, yaw, 0, 'YXZ'));
 
     this.updateCasings(dt);
+    // dust motes only matter while the waist interior is on screen
+    if (this.dust && this.waistInterior?.visible) {
+      this.sunLocal.copy(Atmos.sunDir).applyQuaternion(this.bomber.root.getWorldQuaternion(_q).invert());
+      this.dust.update(dt, this.sunLocal, this.engine.renderer.domElement.height);
+    }
     this.updateCamera(dt);
     this.world.playerAimDir.copy(this.aimDirection());
   }
