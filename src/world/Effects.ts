@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 import { ParticleSystem } from '../render/Particles';
+import { chuteTexture } from '../render/ChuteTexture';
 
 const _v = new THREE.Vector3();
 const _p = new THREE.Vector3();
 const R = () => Math.random() * 2 - 1;
 
 interface Debris { mesh: THREE.Object3D; vel: THREE.Vector3; spin: THREE.Vector3; life: number; smoke: boolean; fire: boolean }
-interface Chute { obj: THREE.Group; vel: THREE.Vector3; life: number; open: number }
+interface Chute { obj: THREE.Group; vel: THREE.Vector3; life: number; open: number; phase: number }
 interface Light { light: THREE.PointLight; life: number; max: number; intensity: number }
 
 // Visual effects layer: smoke/fire/flash particles, debris, falling drop tanks, parachutes.
@@ -29,7 +30,7 @@ export class Effects {
     new THREE.MeshStandardMaterial({ color: 0x8a8d86, roughness: 0.5, metalness: 0.6 }),
   ];
   private chuteGeo: THREE.BufferGeometry;
-  private chuteMat = new THREE.MeshStandardMaterial({ color: 0xe8e2d0, roughness: 0.9, side: THREE.DoubleSide });
+  private chuteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, map: chuteTexture(), roughness: 0.9, side: THREE.DoubleSide });
   private figureMat = new THREE.MeshStandardMaterial({ color: 0x4a3b2a, roughness: 0.9 });
   private lineMat = new THREE.LineBasicMaterial({ color: 0x777777 });
 
@@ -204,7 +205,7 @@ export class Effects {
     obj.add(canopy, body, lines);
     obj.position.copy(pos);
     this.scene.add(obj);
-    this.chutes.push({ obj, vel: vel.clone(), life: 60, open: -1.5 - Math.random() * 1.5 });
+    this.chutes.push({ obj, vel: vel.clone(), life: 60, open: -1.5 - Math.random() * 1.5, phase: Math.random() * Math.PI * 2 });
   }
 
   // Objects using every material this layer can spawn, for shader pre-compilation
@@ -247,7 +248,9 @@ export class Effects {
       const canopy = c.obj.children[0];
       if (c.open > 0) {
         const s = Math.min(1, c.open / 1.2);
-        canopy.scale.set(s, s * (0.8 + 0.2 * Math.sin(c.open * 2)), s);
+        // slow, slightly out-of-phase breathing of the open canopy (+/-2.5%)
+        const breath = 1 + 0.025 * Math.sin(c.open * 1.7 + c.phase);
+        canopy.scale.set(s * breath, s * breath * (0.8 + 0.2 * Math.sin(c.open * 2)), s * breath);
         c.obj.children[2].visible = s > 0.5;
         // decelerate to ~6 m/s descent, drift with the wind
         c.vel.multiplyScalar(Math.exp(-2.2 * dt));
