@@ -36,6 +36,7 @@ export interface Settings {
   difficulty: 'recruit' | 'veteran' | 'ace';
   fov: number;   // base field of view in degrees (gunner and P-51 views); zoom scales from it
   killCam?: boolean;   // cinematic kill cam on special kills (Cinematics.ts); undefined = on
+  bookends?: boolean;  // take-off and landing scenes around B-17 campaign missions (Bookends.ts); undefined = on
 }
 
 export interface Progress { unlocked: number; medals: Record<string, string[]>; best: Record<string, number>; survival: { name: string; score: number; waves: number; role: string; date: string }[] }
@@ -452,6 +453,7 @@ export class UI {
       <label class="setting">${t('settings.aimAssist')} <select data-k="aimAssist"><option value="off" ${s.aimAssist === 'off' ? 'selected' : ''}>${t('common.off')}</option><option value="low" ${s.aimAssist === 'low' ? 'selected' : ''}>${t('settings.low')}</option><option value="high" ${s.aimAssist === 'high' || !s.aimAssist ? 'selected' : ''}>${t('settings.high')}</option></select></label>
       <label class="setting">${t('settings.leadPip')} <select data-k="leadPip"><option value="off" ${s.leadPip === 'off' ? 'selected' : ''}>${t('common.off')}</option><option value="recruit" ${s.leadPip === 'recruit' || !s.leadPip ? 'selected' : ''}>${t('settings.recruitOnly')}</option><option value="always" ${s.leadPip === 'always' ? 'selected' : ''}>${t('settings.always')}</option></select></label>
       <label class="setting">${t('settings.killCam')} <select data-k="killCam"><option value="true">${t('common.on')}</option><option value="false" ${s.killCam === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
+      <label class="setting">${t('settings.bookends')} <select data-k="bookends"><option value="true">${t('common.on')}</option><option value="false" ${s.bookends === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
       <label class="setting">${t('settings.flightMode')} <select data-k="flightMode"><option value="mouseAim">${t('settings.mouseAim')}</option><option value="direct" ${s.flightMode === 'direct' ? 'selected' : ''}>${t('settings.direct')}</option></select></label>
       <div class="row" style="margin-top:22px"><button class="btn" data-back>${t('settings.done')}</button></div>
     </div></div>`;
@@ -459,7 +461,7 @@ export class UI {
       const k = i.dataset.k as keyof Settings;
       let v: any = i.value;
       if (k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume' || k === 'fov') v = parseFloat(v);
-      if (k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'killCam' || k === 'fpsCounter') v = v === 'true';
+      if (k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'killCam' || k === 'bookends' || k === 'fpsCounter') v = v === 'true';
       (s as any)[k] = v;
       if (k === 'fov') { const b = i.closest('label')?.querySelector('.fov-val'); if (b) b.textContent = `${v}°`; }
       onChange(s);

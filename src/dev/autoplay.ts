@@ -17,6 +17,7 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
   const w = game.world, gun = game.gunner, pilot = game.pilot;
   const inp = (game as any).input;
   const ids: StationId[] = ['waistL', 'waistR', 'top', 'ball', 'tail'];
+  game.bookends.auto = true;   // no take-off / landing scenes in automated runs
   game.startMission(mission);
   const log: string[] = [];
   let perks = 0;
