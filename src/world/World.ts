@@ -75,6 +75,7 @@ export class World implements WorldView {
   private lastWound = -99;
   lastKillCause = '';
   private lastConfirm = 0;
+  listener: THREE.Vector3 | null = null; // camera position (set by the game)
 
   constructor(private engine: Engine) {
     this.scene = engine.scene;
@@ -465,6 +466,15 @@ export class World implements WorldView {
       if (p && a.alive) p.update(dt, this);
       a.update(dt, this.time);
       if (a.hitFlash > 0) a.hitFlash -= dt;
+      if (a instanceof Fighter && a.alive && !a.isPlayer && this.listener) {
+        // close fly-by: roar of the engine and a buffet
+        const d = a.pos.distanceTo(this.listener);
+        if (d < 160 && this.time - ((a as any).lastWhoosh ?? -99) > 4) {
+          (a as any).lastWhoosh = this.time;
+          sound.play('whoosh', a.pos, { gain: 1.3, ref: 50, delay: false });
+          this.events.shake?.(0.25 * (1 - d / 160));
+        }
+      }
       if (a instanceof Fighter && a.alive) {
         if (a.pos.y < 250) { a.alive = false; a.remove = !a.isPlayer; if (a.isPlayer) { a.falling = false; } }
         else if (!a.isPlayer && a.pos.distanceTo(this.formationCenter) > ((this.pilots.get(a) as EnemyPilot | undefined)?.state === 'withdraw' ? 4500 : 9000)) a.remove = true; // left the battle

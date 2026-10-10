@@ -333,6 +333,10 @@ export class Game {
     setTimeout(() => this.ui.fade(false), 50);
     this.input.lock();
     this.ui.banner(m.number ? `MISSION ${m.number} · ${m.target.toUpperCase()}` : m.date.toUpperCase(), m.title, 3800);
+    const tips = m.role === 'gunner'
+      ? ['<kbd>Move the mouse</kbd> to swing the gun · <kbd>Hold left button</kbd> to fire', 'Lead the fighters — aim where they will be · <kbd>Right button</kbd> to zoom', 'Short bursts keep the barrel cool · <kbd>1–5</kbd> change gun position']
+      : ['<kbd>Move the mouse</kbd> to fly where you look · <kbd>Left button</kbd> fires', 'Put the K-14 sight ahead of the bandit and fire · <kbd>W/S</kbd> throttle', 'Fw 190s will come for you — keep turning · <kbd>V</kbd> chase view'];
+    tips.forEach((t, i) => setTimeout(() => { if (this.state === 'playing' && this.mission === m) this.ui.tip(t, 4200); }, 4200 + i * 4600));
     setTimeout(() => {
       if (this.state !== 'playing') return;
       if (m.role === 'gunner') this.world.callout('start', 'Pilot', `Pilot to crew: we're at altitude. Test fire your guns, and keep your eyes open.`, 0, 3);
@@ -627,6 +631,7 @@ export class Game {
     this.autoQuality(dt);
     this.floatingOrigin();
     sound.setListener(this.engine.camera);
+    w.listener = this.engine.camera.position;
     sound.updateFighterVoices(w.fighterSoundInfo());
     // screen effects
     this.damageT = Math.max(0, this.damageT - dt * 1.8);

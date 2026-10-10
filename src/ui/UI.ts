@@ -180,6 +180,7 @@ export class UI {
       <div class="hud-br hud-text" id="hBR"></div>
       <div id="subs"></div>
       <div id="banner"><div class="b1" id="bannerA"></div><div class="b2" id="bannerB"></div></div>
+      <div id="tip"></div>
       <div id="lockHint">CLICK TO TAKE CONTROL</div>`;
     if (role === 'gunner') {
       $('#hBL').innerHTML = `
@@ -264,6 +265,14 @@ export class UI {
     e.classList.add('show');
     if (this.bannerTimer) clearTimeout(this.bannerTimer);
     this.bannerTimer = window.setTimeout(() => e.classList.remove('show'), ms);
+  }
+
+  tip(text: string, ms = 5000) {
+    const e = document.getElementById('tip');
+    if (!e) return;
+    e.innerHTML = text;
+    e.classList.add('show');
+    window.setTimeout(() => { if (e.innerHTML === text) e.classList.remove('show'); }, ms);
   }
 
   redVignette(a: number) { $('#vignetteRed').style.opacity = String(Math.min(1, a)); }
