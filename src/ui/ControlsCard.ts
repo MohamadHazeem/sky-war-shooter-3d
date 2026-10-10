@@ -15,6 +15,7 @@ const GUNNER = (): [string, string][] => [
   [k('Mouse') + ' / ' + k('↑↓←→') + ' / ' + k('I', 'J', 'K', 'L'), 'Swing the gun'],
   [k('Left button') + ' / ' + k(b('fire')), 'Fire — short bursts keep the barrel cool'],
   [k('Right button') + ' / ' + k(b('zoom')), 'Look down the ring sight (zoom)'],
+  [k('C'), 'Free look (hold): look around the fuselage'],
   [k(...STATION_ORDER.map((s) => b(('seat' + STATIONS[s].key) as ActionId))), 'Change gun position: ' + STATION_ORDER.map((s) => `${b(('seat' + STATIONS[s].key) as ActionId)} ${STATIONS[s].label}`).join(' · ')],
   [k(b('reload')), 'Reload'],
   [k(b('map')), 'Big radar map'],

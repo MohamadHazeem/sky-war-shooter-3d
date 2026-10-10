@@ -25,6 +25,7 @@ import { Crew, STATION_CREW } from './Crew';
 import { prewarmBoss } from './BossShip';
 import { bomberName, dressPlayerBomber } from '../game/Customize';
 import { aiGunnerSkill } from '../game/CrewRoster';
+import { warmLivingInterior } from '../game/LivingInterior';
 import { PlayerBomberDamage } from './PlayerBomberDamage';
 
 export const ENEMY_SCALE = 6.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
@@ -160,6 +161,9 @@ export class World implements WorldView {
     return b.localToWorld(st.pivot.clone());
   }
 
+  // Living interior (GunnerController): the AI gunner at one of the player's own gun positions
+  crewGunner(key: string): Readonly<{ target: Fighter | null; burst: number }> | undefined { const gs = this.playerBomber ? this.gunners.get(this.playerBomber) : undefined; if (gs) for (let i = 0; i < gs.length; i++) if (gs[i].key === key) return gs[i]; return undefined; }
+
   enemyPilot(f: Fighter): EnemyPilot | undefined { const p = this.pilots.get(f); return p instanceof EnemyPilot ? p : undefined; }
 
   // gunner missions: send this fighter at a particular gun position on the player's ship
@@ -253,8 +257,10 @@ export class World implements WorldView {
     this.effects.parachute(at, new THREE.Vector3());
     const unwarmBoss = prewarmBoss(this.scene, camera.position, fwd);
     const unwarm = this.bomberDamage.warmup(this.scene, at);
+    const unwarmCrew = warmLivingInterior(this.scene, at); // gunner interior: crew, brass, shafts, frost, breath
     render();
     unwarm();
+    unwarmCrew();
     unwarmBoss();
     for (const f of dummies) this.scene.remove(f.root);
     this.wrecks.clear();

@@ -14,6 +14,7 @@ import { DustMotes } from './DustMotes';
 import { KeyAim, KEY_AIM_RATE } from './KeyAim';
 import { access } from '../core/Accessibility';
 import { crewSeatLoadout } from './CrewRoster';
+import { LivingInterior } from './LivingInterior';
 
 interface StationState {
   def: StationDef;
@@ -35,6 +36,14 @@ const OVERDRIVE_TRACER: [number, number, number] = [14, 5.5, 1.6]; // white-hot 
 
 const _pa = new THREE.Vector3();
 const _pb = new THREE.Vector3();
+const _eye = new THREE.Vector3();
+const _mouth = new THREE.Vector3();
+const _vent = new THREE.Vector3();
+const _ventX = new THREE.Vector3();
+const _cq = new THREE.Quaternion();
+const _ce = new THREE.Euler();
+const _flip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+const LOOK_YAW: Record<StationDef['type'], number> = { waist: 2.7, turret: 1.2, tail: 1.1 };
 export class GunnerController {
   station: StationId = 'waistL';
   private states = new Map<StationId, StationState>();
@@ -46,6 +55,14 @@ export class GunnerController {
   private dust: DustMotes | null = null;
   private sunLocal = new THREE.Vector3();
   private muzzleLight = new THREE.PointLight(0xffb060, 0, 6, 2);
+  private crewLight = new THREE.PointLight(0xffb060, 0, 5, 2);   // the other waist gunner's muzzle flash
+  // living interior: the other waist gunner, crew glimpses, brass pile, shafts, frost, breath
+  private living: LivingInterior;
+  cold = 0.5;      // 0..1 how cold the mission is (frost on the windows; set by Game per mission)
+  // free look (hold C): the head turns away from the gun to look around the compartment
+  look = 0;
+  private lookYaw = 0;
+  private lookPitch = 0;
   private cooldown = 0;
   private shotCount = 0;
   private recoilT = 0;
@@ -68,15 +85,14 @@ export class GunnerController {
   assistTarget: Fighter | null = null;
   private assistYaw = 0;
   private assistPitch = 0;
-  ads = 0;       // 0 = over-the-gun view, 1 = eye down the ring sight (RMB)
+  private adsK = 0;
+  // 0 = over-the-gun view, 1 = eye down the ring sight (RMB) or turned into the cabin (free look)
+  get ads() { return Math.max(this.adsK, this.look); }
   hipWaist = new THREE.Vector3(0, 0.14, 0.7);  // head offset in the unzoomed view (gun frame)
   baseFov = 62;   // set from Settings; zoom-in keeps the original 34/62 magnification ratio
   bomber: Bomber | null = null;
-  private casings: { m: THREE.Mesh; v: THREE.Vector3; life: number }[] = [];
   private burstT = 0;        // seconds the trigger has been held continuously
   private clatterClock = 0;  // time until the next spent-brass tinkle on the floor
-  private casingGeo = new THREE.CylinderGeometry(0.0105, 0.0105, 0.099, 8);
-  private casingMat = new THREE.MeshStandardMaterial({ color: 0xc48a3c, roughness: 0.3, metalness: 1 });
   firing = false;
   jammed = false;   // MidRound/RandomEvents: this gun position is jammed (R clears it)
   private holes: THREE.Object3D[] = [];
@@ -104,6 +120,9 @@ export class GunnerController {
     // detaching the gunner never changes the light count and forces shader recompiles.
     this.muzzleLight.userData.noRebase = true;
     engine.scene.add(this.muzzleLight);
+    this.crewLight.userData.noRebase = true;
+    engine.scene.add(this.crewLight);
+    this.living = new LivingInterior(world, this.crewLight);
 
   }
 
@@ -144,6 +163,8 @@ export class GunnerController {
     sightGun.group.position.set(0, 0.12, 0.25);
     this.interiors.tail.add(sightGun.group);
     this.guns.tail = tg;
+    this.living.build(bomber, this.waistInterior, (wl.z + wr.z) / 2, wl.z, wr.z, this.guns.waistL[0], this.guns.waistR[0]);
+    this.lookYaw = this.lookPitch = this.look = 0;
     this.setStation(station, true);
   }
 
@@ -156,8 +177,7 @@ export class GunnerController {
     this.gunPivot.clear();
     this.rig.children.filter((c) => c !== this.gunPivot).forEach((c) => this.rig.remove(c));
     this.muzzleLight.intensity = 0;
-    for (const c of this.casings) c.m.removeFromParent();
-    this.casings = [];
+    this.living.detach();
     this.burstT = 0;
     this.clatterClock = 0;
     for (const h of this.holes) h.removeFromParent();
@@ -290,6 +310,7 @@ export class GunnerController {
     for (const g of guns) this.gunPivot.add(g.group);
     if (def.type === 'turret') this.gunPivot.add(this.interiors[id]!);
     if (def.type === 'tail') this.gunPivot.add(this.interiors.tail!);
+    this.living.setStation(id); // the other waist gun goes to its crewman
     const s = this.states.get(id)!;
     if (immediate) { s.yaw = s.tYaw = 0; s.pitch = s.tPitch = 0; }
     this.applyModelVisibility(id);
@@ -303,9 +324,10 @@ export class GunnerController {
     const hide: Record<string, boolean> = {
       interior: id !== null,
       glass: id !== null,
-      crew: id === 'tail',
-      gun_waist_left: id === 'waistL',
-      gun_waist_right: id === 'waistR',
+      crew: id === 'tail' || id === 'waistL' || id === 'waistR', // the interior has its own crew (LivingInterior)
+      // at either waist window both external waist guns go: the interior has its own
+      gun_waist_left: id === 'waistL' || id === 'waistR',
+      gun_waist_right: id === 'waistL' || id === 'waistR',
       turret_top: id === 'top',
       turret_ball: id === 'ball',
       gun_tail: id === 'tail',
@@ -353,7 +375,21 @@ export class GunnerController {
     // aim friction: the mouse slows down while the sight is on a fighter's lead point
     const sens = 0.0018 * inp.sensitivity * (this.zoom ? 0.55 : 1) * (1 - 0.4 * lock * this.assist);
     const push = inp.edgePush();
-    const mdx = inp.mouseDX + push.x * 900 * adt, mdy = inp.mouseDY + push.y * 700 * adt;
+    let mdx = inp.mouseDX + push.x * 900 * adt, mdy = inp.mouseDY + push.y * 700 * adt;
+    // free look (hold C): the mouse turns the head, the gun stays laid where it was
+    const looking = inp.down('KeyC') && this.transition <= 0;
+    if (looking) {
+      const ls = 0.0024 * inp.sensitivity;
+      const ly = LOOK_YAW[def.type];
+      this.lookYaw = THREE.MathUtils.clamp(this.lookYaw - mdx * ls, -ly, ly);
+      this.lookPitch = THREE.MathUtils.clamp(this.lookPitch - mdy * ls * (inp.invertY ? -1 : 1), -1.0, 0.8);
+      mdx = mdy = 0;
+    } else {
+      const back = Math.min(1, adt * 7);
+      this.lookYaw -= this.lookYaw * back;
+      this.lookPitch -= this.lookPitch * back;
+    }
+    this.look += ((looking ? 1 : 0) - this.look) * Math.min(1, adt * 8);
     s.tYaw -= mdx * sens;
     s.tPitch -= mdy * sens * (inp.invertY ? -1 : 1);
     // keyboard traverse (arrows / I-J-K-L) moves the same target, slower when sighting
@@ -438,7 +474,6 @@ export class GunnerController {
 
     for (const g of guns) g.belt?.tick(dt);
     this.updateOverdriveFx(guns);
-    this.updateCasings(dt);
     // dust motes only matter while the waist interior is on screen
     if (this.dust && this.waistInterior?.visible) {
       this.sunLocal.copy(Atmos.sunDir).applyQuaternion(this.bomber.root.getWorldQuaternion(_q).invert());
@@ -446,6 +481,24 @@ export class GunnerController {
     }
     this.updateCamera(adt);
     this.world.playerAimDir.copy(this.aimDirection());
+    this.updateLiving(dt);
+  }
+
+  // Living interior: crew, brass, sun shafts, frost and the gunner's own breath
+  private updateLiving(dt: number) {
+    const b = this.bomber!;
+    if (!(this.dust && this.waistInterior?.visible)) this.sunLocal.copy(Atmos.sunDir).applyQuaternion(b.root.getWorldQuaternion(_q).invert());
+    // mask exhaust: just below and ahead of the eye, venting down and forward (gun frame)
+    const eye = this.eyeLocal;
+    _mouth.set(eye.x, eye.y - 0.07, eye.z - 0.02).applyQuaternion(this.gunPivot.quaternion).add(this.rig.position);
+    // the A-14's exhalation valves vent forward and a little to either side of the chin; the warm
+    // breath drifts up past the receiver into the bottom of the sight picture
+    _vent.set(0, 0.12, 1).applyQuaternion(this.gunPivot.quaternion);
+    _ventX.set(0.3, 0, 0).applyQuaternion(this.gunPivot.quaternion);
+    const effort = Math.min(1, this.burstT * 0.5 + this.shake);
+    // breath and the cabin effects belong to the waist (in a turret the puffs would sit on the sight)
+    const eyeIn = this.def.type === 'waist' ? this.ads : 0;
+    this.living.update(dt, this.station, this.sunLocal, eyeIn, this.cold, _mouth, _vent, _ventX, 0.27 + 0.28 * effort, this.engine.renderer.domElement.height);
   }
 
   // Overdrive: a red-hot glow along the exposed barrel (and through the cooling-jacket holes),
@@ -529,7 +582,7 @@ export class GunnerController {
     this.world.stats.shots++;
     if (this.shotCount % 2 === 0) this.world.effects.playerMuzzle(muzzle, dir, b.vel);
     if (this.shotCount % 2 === 0) this.world.effects.gunSmoke(muzzle, b.vel.clone().multiplyScalar(0.9));
-    this.muzzleLight.position.copy(muzzle).addScaledVector(dir, -0.4);
+    this.muzzleLight.position.copy(muzzle).addScaledVector(dir, -0.75); // at the window: the flash lights the compartment
     this.muzzleLight.intensity = 3 + Math.random() * 2;
     this.recoilT = 1;
     this.shake = Math.min(1, this.shake + 0.35);
@@ -544,15 +597,11 @@ export class GunnerController {
   }
 
   private ejectCasing(g: GunModel) {
-    if (this.casings.length > 50) { const c = this.casings.shift()!; c.m.removeFromParent(); }
-    const m = new THREE.Mesh(this.casingGeo, this.casingMat);
-    const p = g.ejectPort.getWorldPosition(new THREE.Vector3());
-    this.bomber!.root.worldToLocal(p);
-    m.position.copy(p);
-    m.castShadow = true;
-    this.bomber!.root.add(m);
-    const v = new THREE.Vector3(R() * 0.4, -1.2 - Math.random(), R() * 0.4);
-    this.casings.push({ m, v, life: 1.2 });
+    const br = this.living.brass;
+    if (!br || !this.bomber) return;
+    g.ejectPort.getWorldPosition(_pa);
+    this.bomber.root.worldToLocal(_pa);
+    br.eject(_pa, _pb.set(R() * 0.4, -1.2 - Math.random(), R() * 0.4), this.def.type === 'waist');
   }
 
   // Long bursts: spent brass rattles across the bomber floor. Tinkles come faster and
@@ -573,17 +622,7 @@ export class GunnerController {
     });
   }
 
-  private updateCasings(dt: number) {
-    const floorY = -0.85;
-    for (const c of this.casings) {
-      c.life -= dt;
-      c.v.y -= 9.81 * dt;
-      c.m.position.addScaledVector(c.v, dt);
-      c.m.rotation.x += 15 * dt; c.m.rotation.z += 9 * dt;
-      if (c.m.position.y < floorY) { c.m.position.y = floorY; c.v.y *= -0.3; c.v.x *= 0.5; c.v.z *= 0.5; if (Math.random() < 0.2) sound.play('casing', null, { gain: 0.05 }); }
-    }
-    this.casings = this.casings.filter((c) => { if (c.life <= 0) c.m.removeFromParent(); return c.life > 0; });
-  }
+  private eyeLocal = new THREE.Vector3(); // eye in the gun frame (before shake), for the breath
 
   private updateCamera(dt: number) {
     const cam = this.engine.camera;
@@ -591,17 +630,22 @@ export class GunnerController {
     const guns = this.guns[this.station]!;
     // eye: behind the sight (waist/tail) or centred in the turret between the guns
     // top turret: head raised in the dome so the ship's own back drops out of the picture
-    const eye = def.type === 'turret' ? new THREE.Vector3(0, def.id === 'top' ? 0.32 : 0.05, def.id === 'top' ? -0.12 : -0.05) : guns[0].eye.clone();
-    if (def.type === 'tail') eye.set(0, 0.242, -0.2);
+    const eye = _eye;
+    if (def.type === 'turret') eye.set(0, def.id === 'top' ? 0.32 : 0.05, def.id === 'top' ? -0.12 : -0.05);
+    else if (def.type === 'tail') eye.set(0, 0.242, -0.2);
+    else eye.copy(guns[0].eye);
     // Unzoomed, the head sits up and forward over the gun so the receiver and window frame
-    // drop out of the picture; RMB brings the eye down onto the ring sight.
-    this.ads += ((this.zoom ? 1 : 0) - this.ads) * Math.min(1, dt * 9);
-    const hip = 1 - this.ads;
+    // drop out of the picture; RMB brings the eye down onto the ring sight. Free look (C)
+    // brings the head back inside too, standing a little taller behind the gun.
+    this.adsK += ((this.zoom ? 1 : 0) - this.adsK) * Math.min(1, dt * 9);
+    const eyeIn = this.ads;
     if (def.type === 'waist') {
-      eye.addScaledVector(this.hipWaist, hip);
+      eye.addScaledVector(this.hipWaist, 1 - eyeIn);
+      eye.y += 0.05 * this.look * (1 - this.adsK);
       // the ring would fill the screen from this close: show it only once the eye is on it
-      for (const g of guns) for (const o of g.sight) o.visible = this.ads > 0.6;
+      for (const g of guns) for (const o of g.sight) o.visible = eyeIn > 0.6;
     }
+    this.eyeLocal.copy(eye);
     // buffeting and gun shake
     const t = this.world.time;
     const buffet = 0.0025;
@@ -618,9 +662,18 @@ export class GunnerController {
     const worldEye = this.gunPivot.localToWorld(eye);
     cam.position.copy(worldEye);
     if (cam.parent !== this.engine.scene) this.engine.scene.add(cam);
-    const q = this.gunPivot.getWorldQuaternion(new THREE.Quaternion());
-    // camera looks down -Z; gun forward is +Z
-    cam.quaternion.copy(q).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI));
+    // camera looks down -Z; gun forward is +Z. Free look turns the head about the airframe's
+    // vertical, so the horizon stays level while looking down the fuselage.
+    if (this.look > 0.001 || Math.abs(this.lookYaw) > 1e-4 || Math.abs(this.lookPitch) > 1e-4) {
+      const s = this.state;
+      const pitch = THREE.MathUtils.clamp(def.rest.pitch + s.pitch + this.lookPitch, -1.35, 1.35);
+      _ce.set(-pitch, def.rest.yaw + s.yaw + this.lookYaw, 0, 'YXZ');
+      this.bomber!.root.getWorldQuaternion(_cq);
+      cam.quaternion.copy(_cq).multiply(_q.setFromEuler(_ce)).multiply(_flip);
+    } else {
+      this.gunPivot.getWorldQuaternion(_cq);
+      cam.quaternion.copy(_cq).multiply(_flip);
+    }
     if (shake > 0) cam.rotateZ(R() * shake * 0.003);
     if (bz > 0) { cam.rotateZ(Math.sin(t * 57.1) * 0.0012 * bz * access.shake); cam.rotateX(Math.sin(t * 63.7 + 0.7) * 0.0009 * bz * access.shake); }
     cam.fov = this.fov;

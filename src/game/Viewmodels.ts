@@ -263,6 +263,10 @@ export function buildM2(opts: { ringSight: boolean; belt: boolean; beltSide: 1 |
   return { group: g, muzzles: [muzzle], recoil: [recoilGroup], eye, belt, ejectPort: eject, sight };
 }
 
+// Openings in the waist bulkheads (LivingInterior builds the rooms behind them)
+export const WAIST_DOOR_W = 0.5, WAIST_DOOR_TOP = 0.62;
+export const TUNNEL_A = 0.6, TUNNEL_B = 0.64, TUNNEL_Y = 0.06;
+
 // Fuselage interior around the waist windows: an elliptical tube with real window
 // openings (left forward, right aft as on the B-17G), ribs, stringers and floor.
 export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: number): THREE.Group {
@@ -410,13 +414,41 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
     new THREE.Vector3(0.3, yC + b - 0.1, z0), new THREE.Vector3(0.35, yC + b - 0.14, zCenter), new THREE.Vector3(0.28, yC + b - 0.1, z1),
   ]), 20, 0.012, 6), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.6 }));
   g.add(cable);
-  // Bulkheads closing the ends
+  // Bulkheads closing the ends: the forward one has the open door to the radio room, the aft
+  // one the opening into the tail tunnel (both furnished by LivingInterior)
+  const floorTop = yC - b * 0.78 + 0.015;
   for (const z of [z0, z1]) {
-    const bh = new THREE.Mesh(new THREE.CircleGeometry(1, 32), mat);
-    bh.scale.set(a, b, 1);
+    const shape = new THREE.Shape().absellipse(0, 0, a, b, 0, Math.PI * 2, false, 0);
+    const hole = new THREE.Path();
+    if (z === z1) {
+      const dw = WAIST_DOOR_W / 2, y0 = floorTop - yC, y1 = WAIST_DOOR_TOP - yC, r = 0.12;
+      hole.moveTo(-dw, y0); hole.lineTo(dw, y0); hole.lineTo(dw, y1 - r);
+      hole.quadraticCurveTo(dw, y1, dw - r, y1); hole.lineTo(-dw + r, y1);
+      hole.quadraticCurveTo(-dw, y1, -dw, y1 - r); hole.lineTo(-dw, y0);
+    } else hole.absellipse(0, TUNNEL_Y - yC, TUNNEL_A, TUNNEL_B, 0, Math.PI * 2, true, 0);
+    shape.holes.push(hole);
+    const bh = new THREE.Mesh(new THREE.ShapeGeometry(shape, 24), mat);
     bh.position.set(0, yC, z);
     if (z === z1) bh.rotation.y = Math.PI; // face the inside of the tube
+    bh.receiveShadow = true;
     g.add(bh);
+    // door frame / tunnel coaming
+    if (z === z1) {
+      const dw = WAIST_DOOR_W / 2;
+      for (const sx of [-1, 1]) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.04, WAIST_DOOR_TOP - floorTop, 0.06), fmat);
+        post.position.set(sx * (dw + 0.02), (WAIST_DOOR_TOP + floorTop) / 2, z - 0.02);
+        g.add(post);
+      }
+      const lintel = new THREE.Mesh(new THREE.BoxGeometry(WAIST_DOOR_W + 0.08, 0.05, 0.06), fmat);
+      lintel.position.set(0, WAIST_DOOR_TOP + 0.02, z - 0.02);
+      g.add(lintel);
+    } else {
+      const coaming = new THREE.Mesh(new THREE.TorusGeometry(1, 0.03, 5, 32), fmat);
+      coaming.scale.set(TUNNEL_A + 0.02, TUNNEL_B + 0.02, 1);
+      coaming.position.set(0, TUNNEL_Y, z + 0.02);
+      g.add(coaming);
+    }
   }
   addWaistProps(g, zCenter);
   return g;
