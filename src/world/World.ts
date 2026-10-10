@@ -274,7 +274,7 @@ export class World implements WorldView {
     const wx = 0.12, wy = 0.09;
     this.formOff.set(Math.sin(t * wx) * 60, Math.sin(t * wy + 1) * 35, 0);
     // bank into the weave: lateral acceleration over g
-    this.formRoll = Math.atan((60 * wx * wx * Math.sin(t * wx)) / 9.81) * 1.6;
+    this.formRoll = Math.atan((60 * wx * wx * Math.sin(t * wx)) / 9.81) * 1.1;
     const pb = this.playerBomber;
     if (!pb || !pb.alive) return;
     let near = 0;
@@ -308,7 +308,7 @@ export class World implements WorldView {
       const u = this.jinkT / this.jinkDur, s = Math.sin(Math.PI * u);
       wob.x += this.jinkSide * 24 * s * s;
       wob.y -= 14 * s;
-      jinkRoll = -this.jinkSide * 0.32 * Math.sin(2 * Math.PI * u);
+      jinkRoll = -this.jinkSide * 0.17 * Math.sin(2 * Math.PI * u);
       jinkPitch = -0.06 * Math.sin(2 * Math.PI * u);
     }
     if (b.isPlayer) turb = (Math.sin(this.time * 7.3) * 0.5 + Math.sin(this.time * 11.1 + 1) * 0.3) * 0.006;

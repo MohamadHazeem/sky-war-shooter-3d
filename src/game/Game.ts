@@ -260,7 +260,7 @@ export class Game {
       sound.airframeHit(heavy);
       achievements.onPlayerHit();
       this.damageT = Math.min(0.5, this.damageT + (heavy ? 0.22 : 0.08));
-      if (heavy && this.mission?.role === 'gunner' && this.gunner.def.type !== 'waist' && Math.random() < 0.35) this.cracks.hit(); // waist windows are open: no glass
+      // (cracked-glass overlay retired: it blocked the sight picture)
       if (zone === 'gunner') {
         this.ui.feed('You are wounded', 'loss');
         w.callout('wound', 'Navigator', 'Gunner\'s hit! Stay on that gun if you can!', 10, 2);
@@ -1237,8 +1237,8 @@ export class Game {
     const leadMode = this.settings.leadPip ?? 'recruit';
     if (pl?.alive && (this.loadout.leadPip || leadMode === 'always' || (leadMode === 'recruit' && this.settings.difficulty === 'recruit'))) this.drawLeadPip(ctx, W, H);
     // Gunner hip reticle: waist guns without the ring sight up (fades as RMB brings the eye down)
-    if (this.mission?.role === 'gunner' && this.gunner.def.type === 'waist' && this.gunner.ads < 0.6) {
-      const a = 0.85 * (1 - this.gunner.ads / 0.6);
+    if (this.mission?.role === 'gunner' && ((this.gunner.def.type === 'waist' && this.gunner.ads < 0.6) || this.gunner.def.id === 'top')) {
+      const a = this.gunner.def.id === 'top' ? 0.85 : 0.85 * (1 - this.gunner.ads / 0.6);
       const r = Math.min(W, H) * 0.05;
       ctx.save();
       ctx.strokeStyle = `rgba(255,236,190,${a})`; ctx.fillStyle = ctx.strokeStyle; ctx.lineWidth = 1.5;

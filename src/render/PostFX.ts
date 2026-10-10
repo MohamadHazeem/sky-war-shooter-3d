@@ -196,7 +196,7 @@ vec3 lensFlare(vec2 uv, float vis) {
   vec2 d = (uv - uSunUV) * asp;
   float r = length(d);
   float ang = atan(d.y, d.x);
-  vec3 f = uSunCol * (exp(-r * 9.0) * 0.18 + exp(-r * 40.0) * 0.5);
+  vec3 f = uSunCol * (exp(-r * 14.0) * 0.07 + exp(-r * 40.0) * 0.45); // tight glow: facing the sun no longer milks out the frame
   f += uSunCol * pow(abs(cos(ang * 3.0)), 60.0) * exp(-r * 5.0) * 0.14;      // 6-point starburst
   f += uSunCol * exp(-pow((r - 0.42) / 0.012, 2.0)) * 0.012 * vec3(0.8, 0.9, 1.2); // halo ring
   vec2 toC = vec2(0.5) - uSunUV;
@@ -317,7 +317,7 @@ void main() {
   col += bloom * texture2D(tDirt, vUv).rgb * uDirt;
   float sv = sunVisibility();
   col += lensFlare(vUv, sv);
-  col += texture2D(tDirt, vUv).rgb * uSunCol * sv * 0.05 * exp(-length((vUv - uSunUV) * vec2(uAspect, 1.0)) * 2.5);
+  col += texture2D(tDirt, vUv).rgb * uSunCol * sv * 0.025 * exp(-length((vUv - uSunUV) * vec2(uAspect, 1.0)) * 2.5);
   col += godRays(vUv);
   col += vec3(1.0, 0.85, 0.6) * uFlash;
   col *= uExposure;
@@ -400,7 +400,7 @@ export class PostFX {
         uGrainDark: { value: 0.03 }, uChroma: { value: 0.6 },
         uRes: { value: new THREE.Vector2() }, uFlash: { value: 0 }, uNoBlurDist: { value: 1.5 },
         uSunUV: { value: new THREE.Vector2() }, uSunOn: { value: 0 }, uSunCol: { value: new THREE.Vector3() },
-        tCloud: { value: null }, tDirt: { value: makeDirt() }, uDirt: { value: 0.6 }, uAspect: { value: 1 },
+        tCloud: { value: null }, tDirt: { value: makeDirt() }, uDirt: { value: 0.35 }, uAspect: { value: 1 },
         uDesat: { value: 0 },
         uShafts: { value: 0.35 },
       },

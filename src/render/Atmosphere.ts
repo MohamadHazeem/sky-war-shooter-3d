@@ -74,7 +74,7 @@ vec3 skyRadiance(vec3 d) {
     col = mix(uHorizon * 0.92, mix(uHorizon * 0.55, uGround, 0.55), t);
   }
   float mu = max(dot(d, uSunDir), 0.0);
-  col += uSunColor * (pow(mu, 6.0) * 0.035 + pow(mu, 48.0) * 0.09 + pow(mu, 600.0) * 0.6);
+  col += uSunColor * (pow(mu, 6.0) * 0.02 + pow(mu, 48.0) * 0.06 + pow(mu, 600.0) * 0.6);
   return col;
 }
 `;

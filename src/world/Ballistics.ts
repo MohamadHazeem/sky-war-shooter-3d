@@ -153,12 +153,12 @@ export class Ballistics {
     tr.begin();
     for (let i = 0; i < this.n; i++) {
       if (!this.tracer[i]) continue;
-      const len = this.cannon[i] ? 0.022 : 0.03;
+      const len = this.cannon[i] ? 0.03 : this.player[i] ? 0.045 : 0.034;
       const x = this.px[i], y = this.py[i], z = this.pz[i];
       // fade slightly as the tracer compound burns out
       const k = Math.min(1, this.ttl[i] / 0.6);
       tr.push(x - this.vx[i] * len, y - this.vy[i] * len, z - this.vz[i] * len, x, y, z,
-        this.col[i * 3] * k, this.col[i * 3 + 1] * k, this.col[i * 3 + 2] * k, this.cannon[i] ? 0.2 : 0.11);
+        this.col[i * 3] * k, this.col[i * 3 + 1] * k, this.col[i * 3 + 2] * k, this.cannon[i] ? 0.3 : this.player[i] ? 0.17 : 0.13);
     }
     tr.end(camera, screenH);
   }

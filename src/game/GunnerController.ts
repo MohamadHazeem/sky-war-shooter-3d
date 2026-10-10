@@ -105,6 +105,7 @@ export class GunnerController {
     this.guns.waistL = [buildM2({ ringSight: true, belt: true, beltSide: 1 })];
     this.guns.waistR = [buildM2({ ringSight: true, belt: true, beltSide: -1 })];
     const top = buildTurret('top');
+    top.sight.visible = false; // the eye sits above it now; the HUD reticle takes over
     this.guns.top = top.guns;
     this.interiors.top = top.group;
     const ball = buildTurret('ball');
@@ -513,7 +514,8 @@ export class GunnerController {
     const def = this.def;
     const guns = this.guns[this.station]!;
     // eye: behind the sight (waist/tail) or centred in the turret between the guns
-    const eye = def.type === 'turret' ? new THREE.Vector3(0, 0.05, -0.05) : guns[0].eye.clone();
+    // top turret: head raised in the dome so the ship's own back drops out of the picture
+    const eye = def.type === 'turret' ? new THREE.Vector3(0, def.id === 'top' ? 0.32 : 0.05, def.id === 'top' ? -0.12 : -0.05) : guns[0].eye.clone();
     if (def.type === 'tail') eye.set(0, 0.242, -0.2);
     // Unzoomed, the head sits up and forward over the gun so the receiver and window frame
     // drop out of the picture; RMB brings the eye down onto the ring sight.

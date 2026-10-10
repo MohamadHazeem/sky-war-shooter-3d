@@ -281,9 +281,13 @@ export class TracerRenderer {
       fragmentShader: /* glsl */ `
         varying vec2 vQ; varying vec4 vC;
         void main() {
-          float across = 1.0 - abs(vQ.x);
-          float along = smoothstep(0.0, 0.7, vQ.y);
-          gl_FragColor = vec4(vC.rgb * across * across * along, 1.0);
+          // white-hot core inside a soft coloured glow; the head burns brightest
+          float a = abs(vQ.x);
+          float core = 1.0 - smoothstep(0.0, 0.35, a);
+          float glow = (1.0 - a) * (1.0 - a);
+          float along = smoothstep(0.0, 0.7, vQ.y) * (0.75 + 0.25 * vQ.y);
+          vec3 c = vC.rgb * glow * 0.8 + vec3(dot(vC.rgb, vec3(0.33))) * core * 0.9;
+          gl_FragColor = vec4(c * along, 1.0);
         }`,
       transparent: true,
       depthWrite: false,
