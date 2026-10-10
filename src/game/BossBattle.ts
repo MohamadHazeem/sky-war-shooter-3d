@@ -769,20 +769,9 @@ export class BossBattle {
     }
   }
 
-  // Warship-sized blast: Effects.explosion kept small (it spawns debris meshes) plus a
-  // fireball and smoke cloud sized k times larger, from particles only
+  // Warship-sized blast: volumetric multi-stage fireball, shockwave and smoke (Effects)
   private bigBlast(pos: THREE.Vector3, vel: THREE.Vector3, k: number) {
-    const fx = this.world.effects;
-    fx.explosion(pos, vel, Math.min(1, 0.4 + k * 0.2));
-    fx.flashLight(pos, 1400 * k, 0.4, 0xff8a3a);
-    for (let i = 0; i < 10; i++) {
-      _v2.set(R(), R(), R()).normalize().multiplyScalar((6 + Math.random() * 14) * k).add(vel);
-      fx.glow.spawn(po(pos, _v2, 0.9 + Math.random() * 0.9, (8 + Math.random() * 8) * k, (22 + Math.random() * 14) * k, C_FIRE0, C_BURN1, 1, 2, -1, false, 2));
-    }
-    for (let i = 0; i < 8; i++) {
-      _v2.set(R(), R(), R()).normalize().multiplyScalar((4 + Math.random() * 9) * k).add(_v3.copy(vel).multiplyScalar(0.6));
-      fx.smoke.spawn(po(pos, _v2, 12 + Math.random() * 8, 12 * k, (40 + Math.random() * 25) * k, C_COL0, C_COL1, 0.9, 1, 0.5, true, 0));
-    }
+    this.world.effects.warshipBlast(pos, vel, k);
   }
 
   // ---------------- death ----------------
