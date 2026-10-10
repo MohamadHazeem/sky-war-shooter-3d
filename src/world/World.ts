@@ -9,6 +9,7 @@ import { AI_EXTRA, dirFromYawPitch, inArc, STATIONS, STATION_ORDER, StationDef }
 import { sound } from '../audio/Sound';
 import { Contrails } from '../render/Contrails';
 import { Wrecks, BreakKind } from './Wrecks';
+import { updateExhausts } from './Exhaust';
 
 export const ENEMY_SCALE = 1.7;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 260; // ~20 hits from a .50 to wear one down
@@ -482,6 +483,7 @@ export class World implements WorldView {
       this.fireGuns(a, dt);
       this.damageEffects(a, dt);
     }
+    updateExhausts(this.aircraft, this.effects.glow);
     this.bomberGunners(dt);
     this.flak(dt);
     this.updateRockets(dt);
