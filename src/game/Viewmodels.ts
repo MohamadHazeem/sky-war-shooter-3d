@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { envRef } from '../render/EnvRef';
 import { gunTextures, interiorTextures } from '../render/Textures';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
+import { addWaistProps } from './InteriorProps';
 
 // Procedural first-person geometry for the B-17 gun positions: fuselage interior,
 // Browning AN/M2 .50 cal with ring-and-post sight, ammunition belt, turret frames.
@@ -393,6 +394,7 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
     if (z === z1) bh.rotation.y = Math.PI; // face the inside of the tube
     g.add(bh);
   }
+  addWaistProps(g, zCenter);
   return g;
 }
 
