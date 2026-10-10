@@ -135,11 +135,12 @@ export function installBalance(engine: Engine, game: Game) {
     if (!j) return;
     write(QKEY, q);
     (window as any).__balRunning = jobName(j);
+    document.title = `BAL ${read<unknown[]>(RKEY, []).length + 1}/${read<unknown[]>(RKEY, []).length + q.length + 1} ${jobName(j)}`;
     let res: JobResult | { job: Job; error: string };
     try { res = runJob(engine, game, j); } catch (e) { res = { job: j, error: String((e as Error)?.stack ?? e) }; }
     write(RKEY, [...read<unknown[]>(RKEY, []), res]);
     cleanProfile();
     if (read<Job[]>(QKEY, []).length) location.reload();
     else (window as any).__balRunning = 'done';
-  }, 400);
+  }, 2500);   // a window for the driver to read the results between runs
 }
