@@ -21,7 +21,7 @@ const _qi = new THREE.Quaternion();
 const _hit = new THREE.Vector3();
 
 // Ray-segment vs sphere: returns t in [0,1] of first intersection or -1.
-function segSphere(ax: number, ay: number, az: number, bx: number, by: number, bz: number,
+export function segSphere(ax: number, ay: number, az: number, bx: number, by: number, bz: number,
   cx: number, cy: number, cz: number, r: number): number {
   const dx = bx - ax, dy = by - ay, dz = bz - az;
   const fx = ax - cx, fy = ay - cy, fz = az - cz;
