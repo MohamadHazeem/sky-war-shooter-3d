@@ -247,7 +247,12 @@ export class Game {
             w.callout('ace', 'Pilot', 'That\'s five! You\'re an ace, gunner — drinks are on me tonight!', 0, 3);
           }
           this.killMarkerT = 0.45;
-          this.slowmo = this.loadout.bulletTime ? 1.1 : 0.4;
+          // slow motion only for kills that deserve it: heavies, bosses and aces, or a triple streak
+          const big = victim instanceof Fighter && ['bf110', 'ju88'].includes(victim.enemyType);
+          const special = victim instanceof Fighter && ((victim as any).boss || (victim as any).ace);
+          if (special) this.slowmo = 1.4;
+          else if (big || this.streak >= 3) this.slowmo = this.loadout.bulletTime ? 1.1 : 0.6;
+          else if (this.loadout.bulletTime) this.slowmo = 0.35;
           const lines = ['Got him! He\'s going down!', 'You got him! Nice shooting!', 'He\'s smoking — he\'s finished!', victim.label === 'Bf 109' ? 'Scratch one Messerschmitt!' : 'Scratch one Focke-Wulf!'];
           w.callout('kill', ['Tail', 'Pilot', 'Top Turret', 'Navigator'][Math.floor(Math.random() * 4)], lines[Math.floor(Math.random() * lines.length)], 3, 2);
           Chatter.onFighterKilled(this.streak);
