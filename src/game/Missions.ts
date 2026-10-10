@@ -42,6 +42,7 @@ export interface Mission {
   coverage?: number;
   round?: Round;              // continuous engagement (replaces the wave list when set)
   rounds?: number;            // the round is split into this many rounds, a hangar break between them (Infinity = survival)
+  tutorial?: boolean;         // Gunnery School: Game's director skips it, Tutorial.ts drives the spawns
 }
 
 // A round of continuous combat: fighters keep coming in groups, the number in the air
