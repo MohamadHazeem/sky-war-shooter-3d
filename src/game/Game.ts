@@ -46,6 +46,7 @@ export class Game {
   private hitMarkerT = 0;
   private killMarkerT = 0;
   private damageT = 0;
+  private woundT = 0;   // eased wounded-crew amount for the PostFX desaturation
   private slowmo = 0;
   private streak = 0;
   private lastKillAt = -99;
@@ -644,6 +645,10 @@ export class Game {
     // screen effects
     this.damageT = Math.max(0, this.damageT - dt * 1.8);
     this.engine.post.damageFlash = this.damageT * 0.35;
+    // wounded gunner (crewWounded 0..4): the picture drains of colour, easing in and out slowly
+    const woundTarget = this.menuMode ? 0 : Math.min(1, w.crewWounded / 4);
+    this.woundT += (woundTarget - this.woundT) * (1 - Math.exp(-dt * 0.6));
+    this.engine.post.desat = this.woundT < 0.002 ? 0 : this.woundT;
     this.ui.redVignette(this.damageT * 0.8 + (this.mission?.role === 'gunner' && !this.menuMode ? w.crewWounded * 0.12 : 0));
     if (this.mission?.role === 'pilot' && !this.menuMode) { /* pilot sets exposure/vignette */ }
     else { this.engine.post.vignette = 0.9; this.engine.post.exposure = 1; }
