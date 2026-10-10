@@ -64,7 +64,7 @@ export class MidRound {
     const g = this.game, w = g.world, m = g.mission;
     if (m !== this.mission || w.time < this.lastTime - 1e-6) this.resetMission(m);
     this.lastTime = w.time;
-    const live = g.state === 'playing' && !!m && !!w.player && w.player.alive;
+    const live = g.state === 'playing' && !!m && !!w.player && w.player.alive && m.midRound !== false;
     if (!live) { this.stopAll(); return; }
     if (roundIdx !== this.roundIdx || roundT0 !== this.roundT0) this.newRound(roundIdx, roundT0);
     const r = m!.round ? roundDef(m!, roundIdx) : { duration: Number.isFinite(m!.duration) ? m!.duration : 120, start: 7 };

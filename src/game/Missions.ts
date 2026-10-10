@@ -49,6 +49,7 @@ export interface Mission {
   flatRounds?: boolean;       // every round uses round's own numbers (round.duration is per round), see roundDef
   boss?: { first: number; every?: number } | false;  // battle-group rounds, 0-based (every: repeat interval); false = none (BossBattle.isBossRound)
   specials?: boolean;         // false: no special events (SpecialEvents)
+  midRound?: boolean;         // false: no mid-round objectives or random events (MidRound)
   roundFlak?: number;         // a flak barrage through the middle of every normal round at this intensity (ModeRunner.tick)
 }
 

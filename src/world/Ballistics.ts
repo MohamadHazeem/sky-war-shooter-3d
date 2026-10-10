@@ -49,6 +49,10 @@ export class Ballistics {
   // Near-miss callback for "bullets cracking past" audio
   onNearMiss?: (pos: THREE.Vector3, cannon: boolean) => void;
   listener = new THREE.Vector3();
+  // Ground layer (low-level operations, GroundTargets.ts): asked about every round that hit no
+  // aircraft this step, with the step's segment; returns true when the round struck a ground
+  // target or the terrain (the round is then spent). null = no ground in play.
+  ground: ((ax: number, ay: number, az: number, bx: number, by: number, bz: number, axis: boolean, damage: number, player: boolean, owner: Aircraft | null, cannon: boolean) => boolean) | null = null;
 
   constructor(max = 5000) {
     this.max = max;
@@ -140,6 +144,7 @@ export class Ballistics {
         this.kill(i);
         continue;
       }
+      if (this.ground && this.ground(ax, ay, az, bx, by, bz, team === 1, this.dmg[i], this.player[i] === 1, this.owner[i], this.cannon[i] === 1)) { this.kill(i); continue; }
       // near-miss crack (enemy rounds passing close to the listener)
       if (team === 1 && this.onNearMiss) {
         const t = segSphere(ax, ay, az, bx, by, bz, L.x, L.y, L.z, 6);
@@ -159,14 +164,16 @@ export class Ballistics {
     for (let i = 0; i < this.n; i++) {
       if (!this.tracer[i]) continue;
       const pl = this.player[i] === 1;
-      const len = (this.cannon[i] ? 0.03 : pl ? 0.045 : 0.034) * (pl ? hl : 1);
+      // ground flak (axis rounds with no aircraft behind them, GroundTargets.ts): long, bright streaks
+      const gf = this.team[i] === 1 && this.owner[i] === null;
+      const len = gf ? 0.065 : (this.cannon[i] ? 0.03 : pl ? 0.045 : 0.034) * (pl ? hl : 1);
       const x = this.px[i], y = this.py[i], z = this.pz[i];
       // fade slightly as the tracer compound burns out
       // everyone else's tracers a little dimmer than the player's own
-      const k = Math.min(1, this.ttl[i] / 0.6) * (pl ? hg : 0.55);
+      const k = Math.min(1, this.ttl[i] / 0.6) * (pl ? hg : gf ? 1 : 0.55);
       let r = this.col[i * 3] * k, g = this.col[i * 3 + 1] * k, b = this.col[i * 3 + 2] * k;
       if (pl && ht > 0) { g += r * 0.32 * ht; b += r * 0.08 * ht; }
-      const wd = this.cannon[i] ? 0.3 : pl ? 0.17 : 0.09;
+      const wd = gf ? 0.4 : this.cannon[i] ? 0.3 : pl ? 0.17 : 0.09;
       tr.push(x - this.vx[i] * len, y - this.vy[i] * len, z - this.vz[i] * len, x, y, z, r, g, b, pl ? wd * hw : wd);
     }
     tr.end(camera, screenH);

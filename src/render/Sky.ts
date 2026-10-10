@@ -2,6 +2,10 @@ import * as THREE from 'three';
 import { Atmos, atmosUniforms, skyGLSL } from './Atmosphere';
 import { TARGET_GLSL, targetUniforms } from './TargetGround';
 
+// Ground haze distance (m) for the dome's far terrain. Low-level operations (Countryside.ts) shorten
+// it to match the haze on their own ground mesh, so the seam where the mesh ends disappears.
+export const skyGround = { uGroundHaze: { value: 24000 } };
+
 // Sky dome that follows the camera. Writes depth at the far plane only via the
 // depthWrite=false + renderOrder trick, so clouds/aerial-perspective treat it as infinity.
 export class SkyDome {
@@ -10,7 +14,7 @@ export class SkyDome {
   constructor() {
     const geo = new THREE.SphereGeometry(1, 64, 32);
     const mat = new THREE.ShaderMaterial({
-      uniforms: { ...atmosUniforms, ...targetUniforms, uGroundXZ: { value: new THREE.Vector2() } },
+      uniforms: { ...atmosUniforms, ...targetUniforms, ...skyGround, uGroundXZ: { value: new THREE.Vector2() } },
       vertexShader: /* glsl */ `
         varying vec3 vDir;
         void main() {
@@ -21,6 +25,7 @@ export class SkyDome {
       fragmentShader: /* glsl */ `
         ${skyGLSL}
         uniform vec2 uGroundXZ;
+        uniform float uGroundHaze;
         varying vec3 vDir;
 
         float h2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -82,7 +87,7 @@ export class SkyDome {
             if (uTgt.w > 0.0) g = targetGround(relG, alb, fw, light, uGroundXZ - uTgt.xy, d);
             else g = alb * light;
             // 7 km of air: strong blue haze, heavier toward the horizon
-            float haze = 1.0 - exp(-t / 24000.0);
+            float haze = 1.0 - exp(-t / max(uGroundHaze, 1.0));
             col = mix(g + uHorizon * 0.22, col, haze);
           }
           // Faint cirrus above the horizon, fading toward the horizon and the zenith. Skipped
@@ -118,7 +123,7 @@ export function buildEnvironment(renderer: THREE.WebGLRenderer, sky: SkyDome): T
   const scene = new THREE.Scene();
   const dome = sky.mesh.clone();
   dome.material = (sky.mesh.material as THREE.ShaderMaterial).clone();
-  (dome.material as THREE.ShaderMaterial).uniforms = { ...atmosUniforms };
+  (dome.material as THREE.ShaderMaterial).uniforms = { ...atmosUniforms, uGroundHaze: { value: 24000 } };
   scene.add(dome);
   // Cloud-sea floor so the lower hemisphere reflects bright white like the real thing.
   const floor = new THREE.Mesh(
