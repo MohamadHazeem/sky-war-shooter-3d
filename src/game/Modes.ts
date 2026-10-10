@@ -141,6 +141,14 @@ export function leaderboardMode(m: Mission): string | null {
   return modeFor(m)?.board(m.role) ?? null;
 }
 
+// Enemy-mix providers for missions no mode claims (the campaign's side raids register one in
+// ui/CampaignMap.ts); the first non-null answer wins, null everywhere = the normal mix
+export const ENEMY_MIX: ((m: Mission, tier: number) => EnemyType | null)[] = [];
+function enemyMixFor(m: Mission, tier: number): EnemyType | null {
+  for (const f of ENEMY_MIX) { const t = f(m, tier); if (t) return t; }
+  return null;
+}
+
 export interface ModeHooks {
   comboMult(): number;
   setScore(n: number): void;
@@ -176,7 +184,7 @@ export class ModeRunner {
   // Game.spawnWave: the enemy type for the next fighter (null = the normal mix)
   enemyType(m: Mission | null, tier: number): EnemyType | null {
     this.check(m);
-    return this.def?.enemyType?.(tier) ?? null;
+    return this.def?.enemyType?.(tier) ?? (m ? enemyMixFor(m, tier) : null);
   }
 
   onSpawn(f: Fighter) {
