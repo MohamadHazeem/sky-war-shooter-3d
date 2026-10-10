@@ -23,6 +23,7 @@ import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
 import { CombatTally } from './CombatTally';
 import { achievements } from './Achievements';
+import { queueCrate } from './Loot';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -568,6 +569,7 @@ export class Game {
     this.state = 'paused';
     this.engine.paused = true;
     this.input.unlock();
+    queueCrate(this.prog, { kills, merit: earned, round: this.roundIdx + 1 });
     this.ui.hangar(this.prog, m.role, {
       title: `ROUND ${this.roundIdx + 1} CLEARED`,
       sub: `${kills} kills this round · +${earned} merit`,

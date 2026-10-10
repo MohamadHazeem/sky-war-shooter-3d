@@ -21,6 +21,7 @@ import { hitSounds } from '../audio/HitSounds';
 import { setup as setupDamageLook, update as updateDamageLook } from './DamageLook';
 import { update as updateDamageStages, stageOf, damageStage } from './DamageStages';
 import { Crew, STATION_CREW } from './Crew';
+import { bomberName, dressPlayerBomber } from '../game/Customize';
 
 export const ENEMY_SCALE = 6.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 460; // ~40 hits from a .50 to wear one down
@@ -249,7 +250,7 @@ export class World implements WorldView {
     const vic = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(36, -8, -34), new THREE.Vector3(-36, -8, -34)];
     const elements = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(95, 45, -70), new THREE.Vector3(-95, -45, -80), new THREE.Vector3(0, -90, -160), new THREE.Vector3(120, 30, -220), new THREE.Vector3(-120, 60, -230)];
     for (const e of elements) for (const v of vic) slots.push(e.clone().add(v).multiplyScalar(FORMATION_SPREAD));
-    const names = [...BOMBER_NAMES];
+    const names = BOMBER_NAMES.map((n) => (n === bomberName() ? 'Sky Queen' : n));  // no AI ship shares the player's name
     for (let i = 0; i < count && i < slots.length; i++) {
       const b = new Bomber();
       b.slot.copy(slots[i]);
@@ -257,6 +258,7 @@ export class World implements WorldView {
       b.wobbleAmp = 0.6 + Math.random() * 0.8;
       if (i === playerSlot) {
         b.isPlayer = true; this.playerBomber = b; this.player = b;
+        dressPlayerBomber(b);  // name, paint scheme, nose art (Customize.ts)
         // The player's ship is tougher than the rest: one bad pass shouldn't end the mission
         for (const z of b.zones) { const k = z.name.startsWith('wing') && z.critical ? 3.5 : z.critical ? 2.4 : 1.5; z.hp *= k; z.maxHp *= k; }
       } else {
