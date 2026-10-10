@@ -4,6 +4,9 @@ import { ParticleSystem, type ParticleOpts } from '../render/Particles';
 import { chuteTexture } from '../render/ChuteTexture';
 import { VolumeFX, type Vol } from '../render/Explosions';
 import { heatHaze } from '../render/HeatHaze';
+import { cloudLights } from '../render/CloudLights';
+import { weatherNow } from '../render/WeatherState';
+import { Flares } from './Flares';
 
 const _v = new THREE.Vector3();
 const _p = new THREE.Vector3();
@@ -46,6 +49,7 @@ export class Effects {
   readonly smoke = new ParticleSystem(9000, false);
   readonly glow = new ParticleSystem(5000, true);
   readonly vol = new VolumeFX(128);
+  readonly flares: Flares;   // parachute flares / target markers (night)
   // false: the older particle-only explosions (A/B comparisons, very weak GPUs)
   volumetric = true;
   private debris: Debris[] = [];
@@ -90,6 +94,7 @@ export class Effects {
       this.debris.push({ mesh: m, vel: new THREE.Vector3(), spin: new THREE.Vector3(), life: 0, max: 1, smoke: false, fire: false, acc: 0, active: false, pooled: true });
     }
     for (let i = 0; i < PENDING_MAX; i++) this.pending.push({ t: 0, pos: new THREE.Vector3(), vel: new THREE.Vector3(), k: 1, kind: 0, active: false });
+    this.flares = new Flares(this.glow, (pos, intensity, range, color) => this.steadyLight(pos, intensity, range, color));
   }
 
   // Fill the shared options object for one particle
@@ -109,7 +114,9 @@ export class Effects {
     const cam = this.vol.camPos, seen = this.vol.hasCam;
     const weight = (p: THREE.Vector3, r: number) => (seen ? 1 / (1 + p.distanceToSquared(cam) / (r * r)) : 1);
     let pick: LightSlot | null = null, low = Infinity;
-    for (const s of this.lights) {
+    for (let i = 0; i < LIGHTS; i++) {
+      const s = this.lights[i];
+      if (i === LIGHTS - 1 && this.steadyFrames > 0) continue;   // held by a flare
       if (s.life <= 0) { pick = s; low = -1; break; }
       const k = s.life / s.max;
       const v = s.intensity * k * k * weight(s.light.position, s.light.distance);
@@ -124,14 +131,36 @@ export class Effects {
     pick.life = pick.max = life;
   }
 
+  // A steady light this frame (the nearest burning flare): takes the pool's last slot while it is
+  // refreshed every frame, so the light count never changes
+  private steadyFrames = 0;
+  steadyLight(pos: THREE.Vector3, intensity: number, range: number, color: number) {
+    const s = this.lights[LIGHTS - 1];
+    s.life = 0;
+    s.light.position.copy(pos);
+    s.light.intensity = intensity;
+    s.light.distance = range;
+    s.light.color.setHex(color);
+    this.steadyFrames = 2;
+  }
+
+  // Guns firing right by the camera (the player's own): the glass catches the flash, and at
+  // night the flash lights the cockpit / turret around it
+  private nearMuzzle(pos: THREE.Vector3, k: number) {
+    weatherNow.muzzle = Math.min(1, weatherNow.muzzle + 0.45 * k);
+    if (weatherNow.dark > 0.3) this.flashLight(pos, 70 * k * weatherNow.dark, 0.05, 0xffa860, 9);
+  }
+
   // The player's own muzzle: short, dim flame tongues ahead of the muzzle, so the
   // ring sight is never washed out
   playerMuzzle(pos: THREE.Vector3, dir: THREE.Vector3, vel: THREE.Vector3) {
     _p.copy(pos).addScaledVector(dir, 0.25);
     this.glow.spawn({ pos: _p, vel, life: 0.03, size0: 0.16, size1: 0.26, color0: [7, 4, 1.5], alpha0: 1, alpha1: 0, frame: 2, rotVel: 0 });
+    this.nearMuzzle(pos, 1);
   }
 
   muzzleFlash(pos: THREE.Vector3, dir: THREE.Vector3, scale = 1, vel?: THREE.Vector3) {
+    if (this.vol.hasCam && pos.distanceToSquared(this.vol.camPos) < 400) this.nearMuzzle(pos, 0.8);
     this.glow.spawn({ pos, vel, life: 0.05, size0: 0.55 * scale, size1: 0.9 * scale, color0: [40, 26, 10], alpha0: 1, alpha1: 0, frame: 1 });
     _p.copy(pos).addScaledVector(dir, 0.35 * scale);
     this.glow.spawn({ pos: _p, vel, life: 0.04, size0: 0.4 * scale, size1: 0.7 * scale, color0: [30, 16, 4], alpha0: 1, alpha1: 0, frame: 1 });
@@ -259,6 +288,7 @@ export class Effects {
     this.emit(this.glow, pos, vel, 0.16, r * 1.8, r * 3.2, C_HALO, undefined, 0.7, 0, 1, 0, 0, false, 0);
     if (glowSprite) this.emit(this.glow, pos, vel, 0.75, r * 6, r * 9, C_CLOUDGLOW, undefined, 0.8, 0, 1, 0, 0, false, 0);
     this.flashLight(pos, light, 0.5, 0xff8a3a, range);
+    cloudLights.flash(pos, 1.0, 0.48, 0.18, 3, 120 + r * 10, 0.7);   // the cloud around it glows (night)
     this.fireball(pos, vel, r);
     for (let i = 0; i < lobes; i++) {
       _d.set(R(), R() * 0.7, R()).normalize();
@@ -324,6 +354,7 @@ export class Effects {
 
   // Far away: a flash, a fireball sprite and a smoke puff are all that read at this range
   private farBlast(pos: THREE.Vector3, vel: THREE.Vector3, k: number) {
+    cloudLights.flash(pos, 1.0, 0.48, 0.18, 2.6, 120 + k * 40, 0.6);
     this.emit(this.glow, pos, vel, 0.12, 8 * k, 16 * k, C_FLASH, undefined, 1, 0, 1, 0, 0, false, 0);
     this.emit(this.glow, pos, vel, 0.8, 9 * k, 15 * k, C_FLAME0, C_FLAME1, 0.95, 0, 2, 0, 0, false, 0.6);
     for (let i = 0; i < 3; i++) {
@@ -378,6 +409,8 @@ export class Effects {
   }
 
   private flakBurst(pos: THREE.Vector3, scale: number, core: boolean) {
+    // a brief orange glow inside the cloud it bursts in or near (CloudLights; dark skies only)
+    cloudLights.flash(pos, 1.0, 0.55, 0.22, 3 * scale, 150 * scale, 0.35);
     if (!this.volumetric || this.vol.camDist(pos) > VOL_FAR) { this.legacyFlakBurst(pos, scale, core); return; }
     this.flashLight(pos, 2600 * scale, 0.16, 0xffaa66, 110);
     if (core) this.glow.spawn({ pos, life: 0.1, size0: 5, size1: 11, color0: [40, 22, 8], alpha0: 1, alpha1: 0, frame: 1 });
@@ -482,6 +515,8 @@ export class Effects {
     this.smoke.rebase(off);
     this.glow.rebase(off);
     this.vol.rebase(off);
+    this.flares.rebase(off);
+    cloudLights.rebase(off);
     for (const l of this.lights) l.light.position.sub(off);
     for (const p of this.pending) if (p.active) p.pos.sub(off);
   }
@@ -500,6 +535,9 @@ export class Effects {
       else this.stage(p.pos, p.vel, p.k);
     }
     this.vol.update(dt);
+    this.flares.update(dt, this.vol.hasCam ? this.vol.camPos : null);
+    weatherNow.muzzle = weatherNow.muzzle > 1e-3 ? weatherNow.muzzle * Math.exp(-dt * 22) : 0;
+    if (this.steadyFrames > 0 && --this.steadyFrames === 0) this.lights[LIGHTS - 1].light.intensity = 0;
     for (const s of this.lights) {
       if (s.life <= 0) continue;
       s.life -= dt;
@@ -572,6 +610,9 @@ export class Effects {
     this.chutes = [];
     for (const p of this.pending) p.active = false;
     for (const s of this.lights) { s.life = 0; s.light.intensity = 0; }
+    this.steadyFrames = 0;
+    this.flares.clear();
+    cloudLights.clear();
   }
 
   // ---------------- particle-only explosions (volumetric = false, and far LOD) ----------------

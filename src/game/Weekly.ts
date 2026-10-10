@@ -120,6 +120,7 @@ export function weeklyScenario(key = weekKey()): WeeklyScenario {
     // special events bring their own aircraft: only in mixed-type weeks
     specials: theme.enemies.length >= 3 && rng() < 0.7,
     flak: rng() < 0.5, escorts: rng() < 0.5,
+    front: false,   // the weekly sky stays as announced
   };
   const tod = timeOfDayLabel(sky.sunEl, sky.mood);
   const weather = sky.mood === 'clear' || sky.mood === 'dusk' ? tod : `${sky.mood}, ${tod}`;

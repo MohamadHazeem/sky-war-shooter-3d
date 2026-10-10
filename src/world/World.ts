@@ -30,6 +30,7 @@ import { aiGunnerSkill } from '../game/CrewRoster';
 import { warmLivingInterior } from '../game/LivingInterior';
 import { PlayerBomberDamage } from './PlayerBomberDamage';
 import { dressEnemy } from './EnemyDress';
+import { updateWeather, weatherRestart, weatherEvents, frontState, FRONT_EVENT } from '../render/Weather';
 
 export const ENEMY_SCALE = 6.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 460; // ~40 hits from a .50 to wear one down
@@ -141,6 +142,8 @@ export class World implements WorldView {
     };
     // Yellow 300 L drop tank prototype, cloned per fighter
     this.tankProto = makeDropTank();
+    // a weather front's storm (Weather.ts): thunder rolls in after its lightning
+    weatherEvents.thunder = (dist) => setTimeout(() => sound.play('explosionFar', null, { gain: 0.9, rate: 0.45 + Math.random() * 0.15, reverb: 0.8 }), (dist / 343) * 1000);
   }
 
   // ---------- WorldView ----------
@@ -239,6 +242,7 @@ export class World implements WorldView {
     this.lastKillCause = '';
     this.lastCallout.clear();
     this.bomberDamage.reset();
+    weatherRestart();   // a restarted mission under the same weather starts its front over
   }
 
   // Compile every shader variant a kill can need (clipped wreck materials, shadow casters,
@@ -648,6 +652,7 @@ export class World implements WorldView {
     }
     this.formationCenter.addScaledVector(this.formationForward, CRUISE * dt);
     this.maneuver(dt);
+    this.weatherFront(dt);
 
     for (const a of this.aircraft) {
       if (a instanceof Bomber && a.alive) this.placeBomber(a, dt);
@@ -878,6 +883,32 @@ export class World implements WorldView {
         } else if (g.cooldown < 0) g.cooldown = 0;
       }
     }
+  }
+
+  // A weather front (Weather.ts) runs on flying time; the crew calls it, contrails follow the air
+  private weatherFront(dt: number) {
+    const ev = updateWeather(this.engine, dt, this.formationForward);
+    if (!ev) return;
+    const fs = frontState();
+    const gunner = !!this.playerBomber && this.player === this.playerBomber;
+    if (ev === FRONT_EVENT.sighted) {
+      if (gunner) this.callout('wx_front', 'Pilot', 'Storm front dead ahead. Tighten it up — we\'re going right through it.', 30, 2);
+      else this.callout('wx_front', 'Lead', 'Blue flight, storm front dead ahead. Close it up and stay on my wing in the murk.', 30, 2);
+    } else if (ev === FRONT_EVENT.clearing) {
+      if (gunner) this.callout('wx_clear', 'Pilot', 'We\'re breaking out of the cloud — clear sky ahead. They\'ll see us coming now.', 30, 2);
+      else this.callout('wx_clear', 'Lead', 'Blue flight, the cloud\'s breaking up. Clear sky ahead — keep your eyes open.', 30, 2);
+    } else if (ev === FRONT_EVENT.done && fs) {
+      this.contrails.enabled = fs.to === 'clear' || fs.to === 'dusk';
+    }
+  }
+
+  // A heavy flak burst with no fragments (searchlight-directed AA at night, RaidDefence): the
+  // burst, its light in the cloud, the sound and a shake when it is close
+  flakBurst(p: THREE.Vector3) {
+    this.effects.flak(p);
+    sound.flakBurst(p);
+    const dl = this.player ? p.distanceTo(this.player.pos) : 9999;
+    if (dl < 400) this.events.shake?.(Math.max(0, 1 - dl / 400) * 0.6);
   }
 
   private flak(dt: number) {

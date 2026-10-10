@@ -5,7 +5,7 @@ import type { HitEvent } from '../world/Ballistics';
 import type { Engine } from '../core/Engine';
 import type { StationId } from '../world/B17Layout';
 import { Atmos } from '../render/Atmosphere';
-import { weatherNow } from '../render/Weather';
+import { weatherNow, rainFor } from '../render/WeatherState';
 import { access } from '../core/Accessibility';
 import { frostTexture } from './InteriorFx';
 
@@ -43,7 +43,7 @@ const VERT = /* glsl */ `
 
 const FRAG = /* glsl */ `
   uniform float uShape, uR, uTime, uRain, uSpeedK, uFlowV, uGlint, uDust, uOil, uSpat, uFrost, uCrackN, uAimK, uAspect;
-  uniform vec3 uC, uAxis, uUp, uFlow, uFlowUp, uSun, uSunCol, uSky;
+  uniform vec3 uC, uAxis, uUp, uFlow, uFlowUp, uSun, uSunCol, uSky, uFlash;
   uniform vec4 uEdge, uAim;
   uniform vec2 uOilMask, uSunNdc;
   uniform vec4 uCrackP[${MAX_CRACKS}], uCrackA[${MAX_CRACKS}], uCrackB[${MAX_CRACKS}];
@@ -198,6 +198,15 @@ const FRAG = /* glsl */ `
      }
     }
 
+    // the guns' muzzle flashes light up the dust and scuffs on the perspex (strongest at night)
+    float fz = uFlash.r + uFlash.g + uFlash.b;
+    if (fz > 0.001) {
+      vec2 fp = vec2(dot(vP, vec3(0.8, 0.1, 0.6)), dot(vP, vec3(-0.3, 0.9, 0.3)));
+      float fd = vnoise(fp * 70.0) * (0.4 + 0.6 * vnoise(fp * 11.0 + 4.3));
+      col += uFlash * (0.035 + uDust * fd * 0.55);
+      a += min(fz, 1.0) * 0.015;
+    }
+
     // rain (uniform branch: derivatives inside stay valid)
     if (uRain > 0.0) {
       // flow-aligned coordinates (u downstream, v across), metres
@@ -243,6 +252,7 @@ const FRAG = /* glsl */ `
       float trail = d1.w * (1.0 - body);
       a += rim * 0.36 + body * 0.08 + trail * 0.08 + uRain * 0.03;
       col += uSky * (body * (1.0 - rim) * 0.12 + trail * 0.02) + (uSky * 0.9 + uSunCol * uGlint * 0.5) * spot * 0.6;
+      col += uFlash * (spot * 0.9 + rim * 0.25 + body * 0.08);   // every drop catches the muzzle flash
     }
 
     // oil film and spatter
@@ -319,7 +329,7 @@ const FRAG = /* glsl */ `
       float lines = min(1.0, radial + ring) * (0.55 + 0.45 * fade);
       // fractured faces: greyer than the sky behind, lighter than the ground, glinting toward the sun
       a += lines * 0.62 + core * 0.6;
-      col += lines * (uSky * 0.45 + uSunCol * uGlint * (0.03 + 0.8 * gk)) + core * (uSky * 0.9 + uSunCol * uGlint * 0.1);
+      col += lines * (uSky * 0.45 + uSunCol * uGlint * (0.03 + 0.8 * gk) + uFlash * 0.6) + core * (uSky * 0.9 + uSunCol * uGlint * 0.1 + uFlash * 0.4);
       col *= 1.0 - hole; a *= 1.0 - hole * 0.85;   // the hole itself is open
     }
 
@@ -338,6 +348,7 @@ const env = {
   uSunCol: { value: new THREE.Color() },
   uSky: { value: new THREE.Color() },
   uGlint: { value: 0 },
+  uFlash: { value: new THREE.Color(0, 0, 0) },   // muzzle-flash light on the glass (weatherNow.muzzle)
   uAspect: { value: 1 },
   uAim: { value: new THREE.Vector4(0, 0, 0.2, 0) },
   uAimK: { value: 0.6 },
@@ -539,17 +550,18 @@ export class GlassPane {
 
 // ---------------- shared weather / environment ----------------
 
-// rain intensity by mood: storms pour, overcast skies drift through showers now and then
+// rain intensity by mood: storms pour, overcast skies drift through showers now and then; a
+// weather front (Weather.ts) blends the two moods as it passes
 export function rainTarget(time: number): number {
-  const m = weatherNow.mood;
-  if (m === 'storm') return 1;
-  if (m === 'overcast') {
-    const s = 0.5 + 0.5 * Math.sin(time * 0.045 + 1.1) * Math.sin(time * 0.017 + 0.4);
-    return 0.4 * THREE.MathUtils.smoothstep(s, 0.45, 0.75);
-  }
-  return 0;
+  const w = weatherNow;
+  if (w.k <= 0) return rainFor(w.mood, time);
+  return rainFor(w.from, time) * (1 - w.k) + rainFor(w.to, time) * w.k;
 }
 const SUN_VIS: Record<string, number> = { clear: 1, dusk: 0.9, overcast: 0.3, storm: 0.08, night: 0.35 };
+const sunVis = () => {
+  const w = weatherNow;
+  return w.k <= 0 ? (SUN_VIS[w.mood] ?? 1) : (SUN_VIS[w.from] ?? 1) * (1 - w.k) + (SUN_VIS[w.to] ?? 1) * w.k;
+};
 
 const _sp = new THREE.Vector3();
 const _cd = new THREE.Vector3();
@@ -567,7 +579,10 @@ function updateEnv(engine: Engine, time: number, aimX: number, aimY: number, aim
     _sp.copy(cam.position).addScaledVector(Atmos.sunDir, 1000).project(cam);
     env.uSunNdc.value.set(_sp.x, _sp.y);
   }
-  env.uGlint.value = front ? (SUN_VIS[weatherNow.mood ?? 'clear'] ?? 1) * sunUp * access.flash : 0;
+  env.uGlint.value = front ? sunVis() * sunUp * access.flash : 0;
+  // muzzle flash on the glass: warm, mostly a night thing (by day the sun swamps it)
+  const fl = weatherNow.muzzle * (0.12 + 0.88 * weatherNow.dark) * access.flash;
+  env.uFlash.value.setRGB(1.0 * fl, 0.62 * fl, 0.3 * fl);
   env.uAspect.value = cam.aspect;
   env.uAim.value.set(aimX, aimY, aimR, 0);
   env.uAimK.value = aimK;

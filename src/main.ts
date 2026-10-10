@@ -70,6 +70,9 @@ async function boot() {
       trailer: (o?: any) => trailer(engine, game, o),
       ogCard: (o?: any) => ogCard(engine, game, o),
     });
+    // Weather fronts / night effects: sws.weather.front() (progress), .now (weatherNow), .flares (pool)
+    const wx = await import('./render/Weather');
+    (window as any).sws.weather = { front: wx.frontState, now: wx.weatherNow, get flares() { return game.world.effects.flares; } };
     // Boss battle now (starts a survival mission first when not flying): sws.boss('pilot')
     (window as any).sws.boss = (role: 'gunner' | 'pilot' = 'gunner') => {
       if (game.state !== 'playing' || !game.mission) game.startMission(survivalMission(role));

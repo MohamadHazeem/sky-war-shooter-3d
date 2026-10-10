@@ -172,7 +172,9 @@ export class Engine {
   }
 
   // Re-derive sun light and the sky environment map after the atmosphere changed
-  refreshLighting() {
+  // resetHistory = false: a gradual change (Weather.ts fronts rebuild the environment every few
+  // seconds as the sky turns): the temporal cloud / post history stays, so nothing pops
+  refreshLighting(resetHistory = true) {
     this.sun.color.copy(Atmos.sunColor);
     this.sun.intensity = Atmos.sunIntensity * 0.95;
     const old = this.scene.environment;
@@ -182,6 +184,7 @@ export class Engine {
     retargetEnvMaps(this.scene, old, envRef.tex);
     syncAircraftLook(this.hemi);
     retireEnv(old);
+    if (!resetHistory) return;
     this.post.resetHistory();
     this.clouds.resetHistory();
   }

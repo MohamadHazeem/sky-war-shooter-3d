@@ -55,8 +55,10 @@ function beamMaterial() {
       void main() {
         float edge = abs(dot(normalize(vN), normalize(vV)));
         // no glow right at the lamp: seen from the bomber stream far above, the narrow lamp end
-        // faced the camera and bloomed into white blobs ringed by the cone's last segments
-        float along = pow(1.0 - vT, 1.6) * smoothstep(0.04, 0.3, vT);
+        // faced the camera and bloomed into white blobs ringed by the cone's last segments.
+        // 1 - vT is clamped: vT interpolates a hair past 1 at the open end, and pow() of a
+        // negative is NaN (bloom spread those NaN pixels into white blobs at the beam tips too)
+        float along = pow(clamp(1.0 - vT, 0.0, 1.0), 1.6) * smoothstep(0.04, 0.3, vT);
         float a = min(uIntensity * along * pow(edge, 1.4), 0.14);
         gl_FragColor = vec4(uColor * a, a);
       }`,
