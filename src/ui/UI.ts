@@ -9,6 +9,7 @@ import { playMedalFanfare } from '../audio/Fanfare';
 const medalDelay = (i: number) => 0.8 + i * 0.5;
 import { CREW, CrewId } from '../world/Crew';
 import { briefingMapSvg } from './BriefingMap';
+import { campaignSize, decorateBriefing } from './BriefingExtras';
 
 export interface Settings {
   sensitivity: number;
@@ -135,7 +136,7 @@ export class UI {
         <h1>Sky War<br/><span>Shooter</span> 3D</h1>
         <div class="sub">Man the guns of a B-17 Flying Fortress. Fly escort in a P-51 Mustang.</div>
         <div class="menu">
-          <button data-a="campaign">Campaign <small>7 missions</small></button>
+          <button data-a="campaign">Campaign <small>${campaignSize()} missions</small></button>
           <button data-a="survival">Survival <small>endless waves</small></button>
           <button data-a="armory">Armory <small>upgrade your guns</small></button>
           <button data-a="settings">Settings</button>
@@ -218,6 +219,7 @@ export class UI {
     </div></div>`;
     b.querySelector('[data-go]')!.addEventListener('click', onStart);
     b.querySelector('[data-back]')!.addEventListener('click', onBack);
+    decorateBriefing(b, m);
     this.show('briefing');
   }
 

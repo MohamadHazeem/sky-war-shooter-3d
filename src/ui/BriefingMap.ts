@@ -20,12 +20,15 @@ const BASE: Geo = { lat: 52.52, lon: -0.61 };    // Deenethorpe, Northants (401s
 const NORFOLK: Geo = { lat: 52.93, lon: 1.35 };  // North Sea crossing off Cromer
 const ESSEX: Geo = { lat: 51.8, lon: 1.2 };      // southern crossing for the Rhine / Franconia targets
 const BERLIN: Geo = { lat: 52.52, lon: 13.4 };   // flak origin for the homeward leg
+const FRANKFURT: Geo = { lat: 50.11, lon: 8.68 };
+const KENT: Geo = { lat: 51.3, lon: 1.38 };      // Manston, the emergency field on the Kent coast
 
 interface Place extends Geo {
   key: string;      // fragment matched against Mission.target
   eng?: Geo;        // English coast crossing (default NORFOLK)
   ip?: Geo;         // continental coast point the route turns in from
   home?: boolean;   // homeward leg rather than a bomb run
+  from?: Geo;       // homeward leg: where it starts (default Berlin)
 }
 
 const PLACES: Place[] = [
@@ -36,6 +39,10 @@ const PLACES: Place[] = [
   { key: 'Schweinfurt', lat: 50.05, lon: 10.23, eng: ESSEX, ip: { lat: 51.3, lon: 3.3 } },
   { key: 'Berlin', lat: 52.52, lon: 13.4, ip: { lat: 53.3, lon: 5.4 } },
   { key: 'Netherlands', lat: 52.6, lon: 5.0, home: true },
+  { key: 'Kiel', lat: 54.32, lon: 10.14, ip: { lat: 54.45, lon: 8.55 } },
+  { key: 'Regensburg', lat: 49.01, lon: 12.1, eng: ESSEX, ip: { lat: 51.25, lon: 3.2 } },
+  { key: 'Oschersleben', lat: 52.03, lon: 11.25, ip: { lat: 52.55, lon: 4.6 } },
+  { key: 'Channel', lat: 51.05, lon: 2.35, home: true, from: FRANKFURT, eng: KENT },
 ];
 
 // Coastline outlines, [lon, lat]. Rough by design: enough to read as a chart.
@@ -77,7 +84,7 @@ const f = (n: number) => n.toFixed(1);
 interface Leg { pts: Geo[]; dashed: boolean }
 
 function legsFor(p: Place): Leg[] {
-  if (p.home) return [{ pts: [BERLIN, p, NORFOLK, BASE], dashed: false }];
+  if (p.home) return [{ pts: [p.from ?? BERLIN, p, p.eng ?? NORFOLK, BASE], dashed: false }];
   const inbound: Geo[] = [BASE, p.eng ?? NORFOLK, ...(p.ip ? [p.ip] : []), p];
   // The homeward track is drawn a little north of the inbound one so both stay visible.
   const homeward = inbound.slice().reverse().map((q) => ({ lat: q.lat + 0.22, lon: q.lon }));
