@@ -77,6 +77,19 @@ export class Effects {
       _v.set(R(), R(), R()).normalize().multiplyScalar(25 + Math.random() * 35).add(vel);
       this.glow.spawn({ pos, vel: _v, life: 0.25 + Math.random() * 0.2, size0: 0.35, size1: 0.1, color0: [30, 18, 6], alpha0: 1, alpha1: 0, frame: 1, drag: 2, rise: -9 });
     }
+    // Grey-brown paint and skin puffs plus a tiny dark fragment or two, so each hit
+    // reads as material breaking off the airframe. Smoke layer is normal-blended,
+    // which keeps the fragments dark instead of additive-invisible.
+    const puffs = 2 + (Math.random() < 0.5 ? 1 : 0);
+    for (let i = 0; i < puffs; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar(6 + Math.random() * 10).add(vel);
+      this.smoke.spawn({ pos, vel: _v, life: 0.8, size0: 0.4, size1: 2.2, color0: [0.6, 0.55, 0.46], alpha0: 0.7, alpha1: 0, drag: 2.5, lit: true });
+    }
+    const frags = 1 + (Math.random() < 0.5 ? 1 : 0);
+    for (let i = 0; i < frags; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar(18 + Math.random() * 22).add(vel);
+      this.smoke.spawn({ pos, vel: _v, life: 0.5 + Math.random() * 0.3, size0: 0.22, size1: 0.08, color0: [0.07, 0.065, 0.06], alpha0: 1, alpha1: 0.2, drag: 1.2, rise: -9 });
+    }
   }
 
   gunSmoke(pos: THREE.Vector3, vel: THREE.Vector3) {
