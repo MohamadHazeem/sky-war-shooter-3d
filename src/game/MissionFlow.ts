@@ -40,6 +40,7 @@ export class MissionFlow {
     const g = this.g;
     // Models and gameplay sounds stream in behind the menu: wait for them (loading screen)
     if (!isMissionReady()) { whenMissionReady(g.ui, () => g.startMission(m)); return; }
+    if (g.bookends.takeoff(m, () => g.startMission(m))) return; // take-off scene first (Bookends.ts)
     prepareCampaignMission(m, g.progress); // campaign state: formation size, enemy count/skill, P-51 escort
     sound.init();
     g.photo.exit();
@@ -228,6 +229,7 @@ export class MissionFlow {
 
   showDebrief() {
     const g = this.g;
+    if (g.endResult?.success && g.bookends.landing(g.mission!, () => g.showDebrief())) return; // landing scene first
     const m = g.mission!;
     const w = g.world;
     const r = g.endResult!;

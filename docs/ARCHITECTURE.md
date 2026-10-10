@@ -37,7 +37,8 @@ The order matters. Several systems read values that an earlier step wrote in the
 1. Surface detail sync, `input.active`, `onboarding.update`, the cursor, `storm` (lightning).
 2. Berserk timer, then the slow-motion beat (`engine.timeScale`).
 3. `cine.preFrame`, `abilities.update`, `skills.update`.
-4. Photo mode: draw only the free camera, then return. Paused: draw the overlay only, then return.
+4. Photo mode: draw only the free camera, then return. Take-off / landing scene (`bookends.frame`):
+   the scene owns the frame, then return. Paused: draw the overlay only, then return.
 5. `world.update(dt)` (AI, flight, ballistics, damage; this fires `world.events`, handled in
    `WorldEvents`), then `coop.update` and the bomb run (`target.update`).
 6. Menu: `menuScene.update`. In a mission: `director.direct(dt)` (not on the debrief screen), then
@@ -69,6 +70,7 @@ Most features need one line in one of these places:
 | Do something when a mission starts | `MissionFlow.startMission()`, next to the `onboarding/service/skills.onMissionStart` calls at the end. Reset per-mission state in your own module's reset, called from the reset block. |
 | React to a round ending or starting | `MissionFlow.endRound()` / `startNextRound()`. |
 | React to the mission ending | `MissionFlow.finish()` (the moment it ends) or `MissionFlow.showDebrief()` (the debrief screen, next to `service.onDebrief` / `specials.nemesis.onDebrief`). |
+| Play a scene before or after the mission | `Bookends.ts` holds the pattern: `bookends.takeoff()` at the top of `MissionFlow.startMission`, `bookends.landing()` at the top of `MissionFlow.showDebrief`, and `bookends.frame()` in `Game.frame()` before the paused check. Each one returns `true` while the scene runs and calls back when it ends. |
 | React to a kill, a loss or a hit on the player | `WorldEvents.wire()`, in the matching `world.events` handler. |
 | Draw on the 2D overlay | `GameHud.drawOverlay()`. Mind the order: the cracked glass is drawn last. |
 | Show a value in the HUD panels | `GameHud.updateHud()`. |
