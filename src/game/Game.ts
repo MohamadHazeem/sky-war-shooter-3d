@@ -33,6 +33,7 @@ import { Onboarding } from './Onboarding';
 import { Abilities } from './Abilities';
 import { MidRound } from './MidRound';
 import { isMissionReady, whenMissionReady } from '../core/Preload';
+import { ServiceRecord } from './ServiceRecord';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -61,6 +62,7 @@ export class Game {
   readonly onboarding: Onboarding;
   readonly abilities: Abilities;
   readonly midRound: MidRound;   // mid-round bonus objectives + random events
+  readonly service: ServiceRecord; // career, medal rewards, daily orders, trophies (ServiceRecord.ts)
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -169,6 +171,7 @@ export class Game {
     window.addEventListener('pointerdown', unlock);
     window.addEventListener('keydown', unlock);
     this.onboarding = new Onboarding(this, engine, input, ui, { awardPerk: (l) => this.awardPerk(l), showCampaign: () => this.showCampaign() });
+    this.service = new ServiceRecord(this, ui, { showBriefing: (m) => this.showBriefing(m) });
   }
 
   // Compile shaders for objects that only appear mid-mission (debris, chutes, bombs,
@@ -360,6 +363,7 @@ export class Game {
       credits: () => this.ui.credits(() => this.startMenu()),
     });
     this.onboarding.onTitle();
+    this.service.onTitle();
     this.ui.fade(false);
   }
 
@@ -517,6 +521,7 @@ export class Game {
       else this.world.callout('start', 'Lead', 'Blue flight, form up on the bombers. Keep your eyes peeled for bandits.', 0, 3);
     }, 2500);
     this.onboarding.onMissionStart(m);
+    this.service.onMissionStart(m);
   }
 
   // Armory levels + this mission's perks -> guns, ammo, fire, aim aid
@@ -958,6 +963,7 @@ export class Game {
     if (w.stats.kills >= 5) medals.push(m.role === 'pilot' ? 'Ace in a Day' : 'Distinguished Flying Cross');
     if (w.stats.kills >= 8 && w.stats.bombersLost <= 1) medals.push('Silver Star');
     if (w.crewWounded > 0) medals.push('Purple Heart');
+    medals.push(...this.service.bonusMedals(m, r.success, medals));
     if (survival) {
       this.progress.survival.push({ name: 'You', score: this.score, waves: m.round ? this.roundIdx + (r.success ? 1 : 0) : Math.max(0, this.survivalWave - (r.success ? 0 : 1)), role: m.role, date: new Date().toLocaleDateString() });
       this.progress.survival.sort((a, b) => b.score - a.score);
@@ -996,6 +1002,7 @@ export class Game {
     const host = document.querySelector<HTMLElement>('#debrief .box');
     if (host) mountLeaderboard(host, survival ? `survival-${m.role}` : `campaign-${m.id}`, 'ONLINE LEADERBOARD',
       { name: '', mode: survival ? `survival-${m.role}` : `campaign-${m.id}`, score: this.score, kills: w.stats.kills, rounds: this.roundIdx + 1 });
+    this.service.onDebrief(m, d, medals);
   }
 
   pause() {
