@@ -83,6 +83,6 @@ Player notes given at the start:
 - 22:20–22:45 crew, bomber damage, bombing run, cinematics, career/trophies/dailies, pacing+modes, audio pass 2 merged; voice clips for all new lines; CI lockfile fixed.
 - 22:55 tactics + special events merged; frozen regression server (tools/regression_server.sh); graphics, Arabic, share/analytics, pilot agents running.
 - 23:00 Phase 5 tracker; launched co-op, custom battle + weekly, skill tree, living interior, campaign map agents.
-- 23:05 field dressing (heals a gunner wound after 100 quiet s) after m5 regression failed on wounds; 7 missing callout clips.
-- 23:15 pilot-mode overhaul merged (+26 radio clips, briefings regenerated).
-- 23:22 Arabic (RTL) merged; Arabic for the pilot overhaul lines. Boss regression: m12 (4 warships) completes at 853 s; m7 completes.
+- 23:02 field dressing (heals a gunner wound after 100 quiet s) after m5 regression failed on wounds; 7 missing callout clips.
+- 23:05 pilot-mode overhaul merged (+26 radio clips, briefings regenerated).
+- 23:10 Arabic (RTL) merged; Arabic for the pilot overhaul lines. Boss regression: m12 (4 warships) completes at 853 s; m7 completes.
