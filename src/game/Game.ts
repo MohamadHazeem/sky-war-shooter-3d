@@ -140,6 +140,7 @@ export class Game {
         if (byPlayer) {
           this.score += Math.round(100 * (1 + this.survivalWave * 0.1));
           this.popups.push({ pos: victim.pos.clone(), text: '+100  KILL', life: 1.6 });
+          sound.confirm('kill_confirm');
           this.ui.feed(`Fw 190 destroyed — confirmed`, 'mine');
           // streaks: kills in quick succession
           this.streak = w.time - this.lastKillAt < 9 ? this.streak + 1 : 1;

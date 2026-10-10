@@ -290,7 +290,9 @@ void main() {
   float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
   col = mix(col, col * vec3(0.96, 0.99, 1.05), 1.0 - smoothstep(0.0, 0.5, l));
   col = mix(col, col * vec3(1.03, 1.0, 0.95), smoothstep(0.5, 1.0, l));
-  col = mix(vec3(l), col, 1.04);
+  col = mix(vec3(l), col, 1.12);
+  // gentle S-curve for punchier contrast
+  col = mix(col, col * col * (3.0 - 2.0 * col), 0.22);
 
   // Damage tint
   col = mix(col, col * vec3(1.4, 0.55, 0.5), uDamageFlash);

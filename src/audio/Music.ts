@@ -38,6 +38,54 @@ export class Music {
     for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
   }
 
+  // ---- recorded score (preferred when available) ----
+  private tracks: Record<string, AudioBuffer> | null = null;
+  private trackGain: Record<string, number> = {};
+  private current: { name: string; src: AudioBufferSourceNode; gain: GainNode } | null = null;
+  private lastSwitch = 0;
+
+  useTracks(tracks: Record<string, AudioBuffer>, gains: Record<string, number>) {
+    if (!Object.keys(tracks).length) return;
+    this.tracks = tracks;
+    this.trackGain = gains;
+    this.current = null;
+    this.pickTrack(true);
+  }
+
+  private playTrack(name: string) {
+    const ctx = this.ctx!;
+    const buf = this.tracks?.[name];
+    if (!buf || this.current?.name === name) return;
+    const t = ctx.currentTime;
+    if (this.current) {
+      const old = this.current;
+      old.gain.gain.cancelScheduledValues(t);
+      old.gain.gain.setTargetAtTime(0, t, 0.9);
+      old.src.stop(t + 5);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = name !== 'victory' && name !== 'defeat';
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.setTargetAtTime(this.trackGain[name] ?? 0.6, t, 0.8);
+    src.connect(gain).connect(this.out);
+    src.start(t);
+    this.current = { name, src, gain };
+    this.lastSwitch = t;
+  }
+
+  private pickTrack(force = false) {
+    if (!this.tracks || !this.ctx || !this.enabled) return;
+    if (this.current && (this.current.name === 'victory' || this.current.name === 'defeat') && this.scene !== 'menu') return;
+    const t = this.ctx.currentTime;
+    if (!force && t - this.lastSwitch < 9) return;
+    let want = 'menu';
+    if (this.scene === 'mission') want = this.smoothIntensity > 0.3 ? 'combat' : 'tension';
+    if (!this.tracks[want]) want = this.tracks.combat ? 'combat' : Object.keys(this.tracks)[0];
+    this.playTrack(want);
+  }
+
   setIntensity(x: number) { this.intensity = x; }
 
   setScene(s: 'menu' | 'mission') {
@@ -46,7 +94,8 @@ export class Music {
     this.beat = 0;
     const t = this.ctx.currentTime;
     this.out.gain.cancelScheduledValues(t);
-    this.out.gain.setTargetAtTime(this.enabled ? (s === 'menu' ? 0.5 : 0.32) : 0, t, 1.0);
+    this.out.gain.setTargetAtTime(this.enabled ? (this.tracks ? 1 : s === 'menu' ? 0.5 : 0.32) : 0, t, 1.0);
+    if (this.tracks) { this.lastSwitch = -99; this.pickTrack(true); }
     if (!this.timer) {
       this.nextTime = t + 0.1;
       this.timer = window.setInterval(() => this.schedule(), 50);
@@ -55,11 +104,13 @@ export class Music {
 
   stop() {
     if (!this.ctx) return;
+    if (this.current) { this.current.gain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.4); this.current = null; }
     this.out.gain.setTargetAtTime(0, this.ctx.currentTime, 0.4);
   }
 
   stinger(win: boolean) {
     if (!this.ctx || !this.enabled) return;
+    if (this.tracks && this.tracks[win ? 'victory' : 'defeat']) { this.playTrack(win ? 'victory' : 'defeat'); return; }
     const t = this.ctx.currentTime + 0.05;
     const chord = win ? [50, 54, 57, 62, 66] : [38, 45, 50, 53];
     for (const m of chord) this.pad(mtof(m), t, 4.5, 0.05, win ? 1600 : 700);
@@ -73,6 +124,7 @@ export class Music {
     const bpm = this.scene === 'menu' ? 64 : 96;
     const spb = 60 / bpm;
     this.smoothIntensity += (this.intensity - this.smoothIntensity) * 0.05;
+    if (this.tracks) { this.pickTrack(); this.nextTime = ctx.currentTime + 0.1; return; }
     while (this.nextTime < ctx.currentTime + 0.25) {
       this.playBeat(this.nextTime, spb);
       this.nextTime += spb;

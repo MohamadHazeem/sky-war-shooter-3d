@@ -74,6 +74,7 @@ export class World implements WorldView {
   crewWounded = 0;
   private lastWound = -99;
   lastKillCause = '';
+  private lastConfirm = 0;
 
   constructor(private engine: Engine) {
     this.scene = engine.scene;
@@ -355,6 +356,7 @@ export class World implements WorldView {
       }
     } else if (e.playerShot) {
       sound.play('hit', e.point, { gain: 0.35, delay: false, ref: 60 });
+      if (this.time - this.lastConfirm > 0.07) { this.lastConfirm = this.time; sound.confirm('hit_confirm'); }
       this.events.hitMarker?.(false);
       // visible battle damage: panels and cowling pieces tearing off
       if (z.hp < z.maxHp * 0.55 && !(z as any).shed) {

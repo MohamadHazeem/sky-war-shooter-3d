@@ -36,6 +36,9 @@ export class Sound {
   private revInSend!: GainNode;
   private revOutSend!: GainNode;
   private bufs = new Map<BufName, AudioBuffer[]>();
+  private gainMap = new Map<BufName, number>();
+  private windSrc: AudioBufferSourceNode | null = null;
+  samplesLoaded = false;
   private engineBufs: Record<'cyclone' | 'bmw' | 'merlin', AudioBuffer> = {} as any;
   private listenerPos = new THREE.Vector3();
   private b17: { gain: GainNode; filter: BiquadFilterNode; srcs: AudioBufferSourceNode[] } | null = null;
@@ -78,6 +81,7 @@ export class Sound {
     for (let i = 0; i < 6; i++) this.voices.push(this.makeVoice());
     this.music.init(ctx, this.duck, this.revOutSend);
     this.music.enabled = this.musicEnabled;
+    void this.loadSamples();
     this.setMode(this.mode);
   }
 
@@ -282,6 +286,85 @@ export class Sound {
     this.engineBufs.merlin = this.engineLoop(300, 72, { rough: 0.3, bright: 0.3, banks: 2 }); // Merlin V-1650 @ 3000 rpm, banks alternate
   }
 
+  // Real recordings (public/audio, see CREDITS.md) replace the synthesized sounds as
+  // soon as they are decoded; anything missing keeps its synthesized fallback.
+  private async loadSamples() {
+    const ctx = this.ctx!;
+    const base = import.meta.env.BASE_URL + 'audio/';
+    let man: any;
+    try { const r = await fetch(base + 'manifest.json'); if (!r.ok) return; man = await r.json(); } catch { return; }
+    const decode = async (f: string) => { try { const r = await fetch(base + f); return await ctx.decodeAudioData(await r.arrayBuffer()); } catch { return null; } };
+    const SFX: [BufName, string, number][] = [
+      ['m2', 'mg50_shot', 1], ['m2far', 'mg50_burst_far', 1], ['cannon', 'cannon_shot', 1], ['mg131', 'mg50_shot', 0.7],
+      ['hit', 'impact_metal', 1], ['hitHeavy', 'impact_heavy', 1], ['explosion', 'explosion_air', 1], ['explosionFar', 'explosion_far', 1],
+      ['flak', 'flak_burst', 1], ['flakClose', 'flak_burst', 1.2], ['rattle', 'shrapnel_rattle', 1], ['casing', 'casing', 1],
+      ['glass', 'glass_crack', 1], ['rocket', 'rocket_launch', 1], ['click', 'ui_click', 1], ['squelch', 'radio_squelch_on', 1],
+      ['debris', 'shrapnel_rattle', 0.8], ['whoosh', 'flyby', 1],
+    ];
+    await Promise.all(SFX.map(async ([name, key, g]) => {
+      const e = man.sfx?.[key];
+      if (!e) return;
+      const files: string[] = e.files ?? (e.file ? [e.file] : []);
+      const bufs = (await Promise.all(files.map(decode))).filter((b): b is AudioBuffer => !!b);
+      if (bufs.length) { this.bufs.set(name, bufs); this.gainMap.set(name, (e.gain ?? 1) * g); }
+    }));
+    for (const k of ['hit_confirm', 'kill_confirm'] as const) {
+      const e = man.sfx?.[k];
+      if (e) { const b = (await Promise.all((e.files ?? [e.file]).map(decode))).filter(Boolean) as AudioBuffer[]; if (b.length) { this.extra.set(k, b); this.extraGain.set(k, e.gain ?? 1); } }
+    }
+    const loop = async (k: string) => { const e = man.loops?.[k]; return e ? { buf: await decode(e.file), gain: e.gain ?? 1 } : null; };
+    const [b17, radial, merlin, wind, radio] = await Promise.all(['b17_interior', 'radial_exterior', 'merlin', 'wind', 'radio_static'].map(loop));
+    const t = ctx.currentTime;
+    if (b17?.buf && this.b17) {
+      for (const s of this.b17.srcs) { try { s.stop(); } catch { /* */ } s.disconnect(); }
+      // two slightly detuned copies of the cabin recording: a living, beating drone
+      this.b17.srcs = [1, 1.006].map((r, i) => {
+        const s = this.loopSrc(b17.buf!, r);
+        const g = ctx.createGain(); g.gain.value = b17.gain * (i ? 0.45 : 0.8);
+        s.connect(g).connect(this.b17!.filter);
+        return s;
+      });
+      this.b17.filter.frequency.setValueAtTime(this.mode === 'bomber' ? 2400 : 900, t);
+      this.b17Sampled = true;
+    }
+    if (radial?.buf) { this.engineBufs.bmw = radial.buf; this.voiceGain = radial.gain; for (const v of this.voices) this.reseat(v, radial.buf); }
+    if (merlin?.buf) { this.engineBufs.merlin = merlin.buf; this.merlinGain = merlin.gain; if (this.playerEngine) { this.playerEngine.src.stop(); this.playerEngine.src.disconnect(); this.playerEngine.src = this.loopSrc(merlin.buf); this.playerEngine.src.connect(this.playerEngine.filter); } }
+    if (wind?.buf && this.windSrc && this.wind) { this.windSrc.stop(); this.windSrc.disconnect(); this.windSrc = this.loopSrc(wind.buf); this.windSrc.connect(this.wind.filter); this.wind.filter.frequency.value = 6000; }
+    if (radio?.buf) this.radioStaticBuf = radio.buf;
+    if (man.music) {
+      const tracks: Record<string, AudioBuffer> = {};
+      await Promise.all(Object.entries(man.music).map(async ([k, e]: [string, any]) => { const b = await decode(e.file); if (b) tracks[k] = b; }));
+      this.music.useTracks(tracks, Object.fromEntries(Object.entries(man.music).map(([k, e]: [string, any]) => [k, e.gain ?? 0.6])));
+    }
+    this.samplesLoaded = true;
+    console.info('Audio: recorded samples loaded');
+  }
+
+  private extra = new Map<string, AudioBuffer[]>();
+  private extraGain = new Map<string, number>();
+  private b17Sampled = false;
+  private voiceGain = 1;
+  private merlinGain = 1;
+  private radioStaticBuf: AudioBuffer | null = null;
+
+  private reseat(v: Voice, buf: AudioBuffer) {
+    try { v.src.stop(); } catch { /* */ }
+    v.src.disconnect();
+    v.src = this.loopSrc(buf);
+    v.src.connect(v.filter);
+  }
+
+  // Satisfying feedback when the player's rounds connect / score a kill
+  confirm(kind: 'hit_confirm' | 'kill_confirm') {
+    const arr = this.extra.get(kind);
+    if (!this.ctx || !arr) { this.play(kind === 'kill_confirm' ? 'hitHeavy' : 'hit', null, { gain: kind === 'kill_confirm' ? 0.5 : 0.18 }); return; }
+    const src = this.ctx.createBufferSource();
+    src.buffer = arr[Math.floor(Math.random() * arr.length)];
+    const g = this.ctx.createGain(); g.gain.value = (kind === 'kill_confirm' ? 0.7 : 0.35) * (this.extraGain.get(kind) ?? 1);
+    src.connect(g).connect(this.sfx);
+    src.start();
+  }
+
   private loopSrc(buf: AudioBuffer, rate = 1) {
     const s = this.ctx!.createBufferSource();
     s.buffer = buf; s.loop = true; s.playbackRate.value = rate;
@@ -300,6 +383,7 @@ export class Sound {
     lfo.connect(lfoG).connect(flutter.gain); lfo.start();
     const wg = ctx.createGain(); wg.gain.value = 0;
     ws.connect(wf).connect(flutter).connect(wg).connect(this.amb);
+    this.windSrc = ws;
     this.wind = { gain: wg, filter: wf, flutter };
     // B-17 interior: four Cyclones, each slightly off-speed so they beat ("wow-wow")
     const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 520; filter.Q.value = 0.8;
@@ -316,6 +400,7 @@ export class Sound {
     const rg = ctx.createGain(); rg.gain.value = 0.55;
     rumble.connect(rg).connect(filter);
     filter.connect(gain).connect(this.amb);
+    srcs.push(rumble);
     this.b17 = { gain, filter, srcs };
   }
 
@@ -342,7 +427,7 @@ export class Sound {
     const t = this.ctx.currentTime;
     this.interior = mode === 'bomber' ? 1 : 0;
     this.b17?.gain.gain.setTargetAtTime(mode === 'bomber' ? 0.62 : mode === 'menu' ? 0.16 : 0.0, t, 0.6);
-    this.b17?.filter.frequency.setTargetAtTime(mode === 'bomber' ? 520 : 300, t, 0.3);
+    this.b17?.filter.frequency.setTargetAtTime(this.b17Sampled ? (mode === 'bomber' ? 2400 : 900) : mode === 'bomber' ? 520 : 300, t, 0.3);
     this.wind?.gain.gain.setTargetAtTime(mode === 'menu' ? 0.1 : mode === 'bomber' ? 0.3 : 0.18, t, 0.5);
     this.wind?.filter.frequency.setTargetAtTime(mode === 'bomber' ? 1400 : 800, t, 0.5);
     this.revInSend.gain.setTargetAtTime(mode === 'bomber' ? 0.55 : 0.0, t, 0.2);
@@ -367,7 +452,7 @@ export class Sound {
     const t = this.ctx.currentTime;
     this.playerEngine.src.playbackRate.setTargetAtTime(0.78 + throttle * 0.3 + speed * 0.0004, t, 0.15);
     this.playerEngine.filter.frequency.setTargetAtTime(380 + throttle * 1100, t, 0.1);
-    this.playerEngine.gain.gain.setTargetAtTime(0.26 + throttle * 0.2, t, 0.1);
+    this.playerEngine.gain.gain.setTargetAtTime((0.26 + throttle * 0.2) * this.merlinGain, t, 0.1);
     this.wind?.gain.gain.setTargetAtTime(0.05 + speed / 800, t, 0.2);
     this.wind?.filter.frequency.setTargetAtTime(350 + speed * 7, t, 0.2);
   }
@@ -422,7 +507,7 @@ export class Sound {
       v.src.playbackRate.setTargetAtTime((0.82 + f.throttle * 0.22) * dop, t, 0.04);
       v.filter.frequency.setTargetAtTime((this.interior ? 650 : 1600) * Math.max(0.3, Math.exp(-d / 2200)) + 160, t, 0.05);
       v.pan.positionX.setValueAtTime(f.pos.x, t); v.pan.positionY.setValueAtTime(f.pos.y, t); v.pan.positionZ.setValueAtTime(f.pos.z, t);
-      v.gain.gain.setTargetAtTime(this.interior ? 0.5 : 0.65, t, 0.08);
+      v.gain.gain.setTargetAtTime((this.interior ? 0.5 : 0.65) * this.voiceGain, t, 0.08);
       const close = Math.max(0, 1 - d / 450);
       v.whooshGain.gain.setTargetAtTime(close * close * 0.9, t, 0.05);
       v.whooshFilter.frequency.setTargetAtTime(500 + Math.max(0, vr) * 6, t, 0.05);
@@ -444,7 +529,7 @@ export class Sound {
     src.buffer = buffer;
     src.playbackRate.value = (opts.rate ?? 1) * (0.95 + Math.random() * 0.1);
     const g = ctx.createGain();
-    g.gain.value = opts.gain ?? 1;
+    g.gain.value = (opts.gain ?? 1) * (this.gainMap.get(name) ?? 1);
     let when = ctx.currentTime;
     let out: AudioNode = g;
     if (pos) {
@@ -517,8 +602,8 @@ export class Sound {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
     if (!this.radioBed) {
-      const src = this.loopSrc(this.noiseLoop(2, 'pink'));
-      const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 1.2;
+      const src = this.loopSrc(this.radioStaticBuf ?? this.noiseLoop(2, 'pink'));
+      const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = this.radioStaticBuf ? 0.3 : 1.2;
       const gain = this.ctx.createGain(); gain.gain.value = 0;
       src.connect(bp).connect(gain).connect(this.sfx);
       this.radioBed = { src, gain };

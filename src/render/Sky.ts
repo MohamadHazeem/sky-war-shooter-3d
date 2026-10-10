@@ -48,7 +48,7 @@ export class SkyDome {
           float river = 1.0 - smoothstep(0.0, 0.012, abs(fbm(p * 0.12 + 40.0) - 0.5));
           c = mix(c, vec3(0.04, 0.07, 0.09), river * 0.9);
           float coast = smoothstep(0.4, 0.43, land);
-          return mix(vec3(0.05, 0.06, 0.06), c, coast) * 1.1;
+          return mix(vec3(0.05, 0.06, 0.06), c, coast) * 1.35;
         }
 
         void main() {
@@ -59,7 +59,7 @@ export class SkyDome {
             vec2 xz = uGroundXZ + d.xz * t;
             vec3 g = terrain(xz, t) * (0.35 + 0.65 * max(uSunDir.y, 0.0)) * (uSunColor / 4.0);
             // 7 km of air: strong blue haze, heavier toward the horizon
-            float haze = 1.0 - exp(-t / 16000.0);
+            float haze = 1.0 - exp(-t / 24000.0);
             col = mix(g + uHorizon * 0.22, col, haze);
           }
           // Sun disk (very bright so bloom catches it)
