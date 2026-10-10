@@ -25,7 +25,7 @@ Player notes given at the start:
 | 31 | Game feel (freeze-frame, flashes, popups, pulses) | Done — hit-stop, flashes, camera punch, zoom pulse, escalating popups, hit ring |
 | 32 | Combo meter + "On Fire" mode | Done — streak meter, ON FIRE (+50% score, hot tracers, fiery frame, swell) |
 | 33 | Active abilities: Call the Mustangs, Overdrive, Focus || Done — Mustang sweep (Q), Overdrive (E), Focus (G); pilot Z/X/G |
-| 34 | Boss fights: battle group of giant flying warships, very hard | |
+| 34 | Boss fights: battle group of giant flying warships, very hard || Done — battle group of 3–4 giant Luftkreuzer warships: 12–17 weak points each, armour breach, telegraphed salvos, enrage, last stand, ramming, break-in-two deaths; survival every 3rd round, campaign m5/m7 finales |
 | 35 | Bonus objectives mid-round || Done — 6 objective types, 1–2 per round, merit rewards |
 | 36 | Random events (engine fire, jammed gun, oxygen, straggler) || Done — engine fire (X), jammed gun (R), oxygen (O), straggler |
 | 37 | Loot crates | |
@@ -77,3 +77,4 @@ Player notes given at the start:
 - 21:54 deploy #1 to Cloudflare.
 - 21:58 tutorial, abilities, objectives/events merged; deploy #2 (22:04).
 - 22:10 fast loading + PWA merged; deploy #3; live manifest/sw/headers verified.
+- 22:13 boss battle group merged; deploy #4. Launched tactics/special events + pacing/modes agents.
