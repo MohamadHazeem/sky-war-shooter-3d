@@ -58,6 +58,8 @@ export class PilotController {
 
   private applyViewVisibility() {
     if (!this.plane) return;
+    // From the cockpit the spinning prop is barely perceptible
+    for (const pr of this.plane.props) (pr.disc.material as THREE.MeshBasicMaterial).opacity = this.view === 'cockpit' ? 0.3 : 1;
     if (this.cockpit) this.cockpit.visible = this.view === 'cockpit';
     // hide the pilot figure from inside the cockpit
     this.plane.model.traverse((o) => {
@@ -82,6 +84,7 @@ export class PilotController {
     if (inp.down('KeyW')) this.throttleCmd = Math.min(1.1, this.throttleCmd + dt * 0.5);
     if (inp.down('KeyS')) this.throttleCmd = Math.max(0, this.throttleCmd - dt * 0.5);
     fm.throttle = this.throttleCmd;
+    fm.limiter = this.mode === 'mouseAim';
 
     const sens = 0.0016 * inp.sensitivity;
     if (p.alive) {

@@ -17,17 +17,30 @@ export function steerTo(fm: FlightModel, dir: THREE.Vector3, gain = 1, maxPull =
   fm.right(_r);
   const bank = Math.asin(THREE.MathUtils.clamp(-_r.y, -1, 1)); // + = right wing down
   const inverted = fm.up(_t).y < 0;
-  let rollErr = Math.atan2(-_l.x, _l.y);
+  const rollErr = Math.atan2(-_l.x, _l.y);
+  if (off < 0.18 && !inverted) {
+    // Fine tracking: bank-to-turn proportional to lateral error, pitch onto the target,
+    // rudder trims the last fraction of a degree.
+    const ex = Math.atan2(-_l.x, _l.z);           // + = target to the right
+    const ey = Math.atan2(_l.y, _l.z);            // + = target above the nose
+    const bankTarget = THREE.MathUtils.clamp(ex * 14, -1.3, 1.3);
+    const blend = THREE.MathUtils.smoothstep(off, 0.1, 0.18);
+    const fineRoll = (bankTarget - bank) * 2.5;
+    fm.roll = THREE.MathUtils.clamp(THREE.MathUtils.lerp(fineRoll, rollErr * 2.2, blend) * gain, -1, 1);
+    // pull in the direction of the target as seen in the banked frame
+    fm.pitch = THREE.MathUtils.clamp((ey * 9 + Math.abs(ex) * 2.5 * Math.cos(rollErr)) * gain, -0.6, maxPull);
+    fm.yaw = THREE.MathUtils.clamp(-ex * 9, -1, 1);
+    return off;
+  }
   const levelErr = inverted ? (bank >= 0 ? Math.PI - bank : -Math.PI - bank) : -bank;
-  const w = THREE.MathUtils.smoothstep(off, 0.04, 0.3);
+  const w = THREE.MathUtils.smoothstep(off, 0.012, 0.15);
   const rollCmd = THREE.MathUtils.lerp(levelErr * 1.2, rollErr * 2.2, w);
   fm.roll = THREE.MathUtils.clamp(rollCmd * gain, -1, 1);
-  const pitchErr = Math.atan2(_l.y, Math.max(_l.z, 0.05));
   const align = Math.max(0, Math.cos(rollErr));
-  let pitch = off > 0.3 ? (Math.abs(rollErr) < 1.2 ? maxPull * align + 0.15 : 0.15) : pitchErr * 4;
+  let pitch = Math.abs(rollErr) < 1.2 ? maxPull * align + 0.15 : 0.15;
   if (_l.z < 0 && Math.abs(rollErr) < 0.6) pitch = maxPull;
   fm.pitch = THREE.MathUtils.clamp(pitch * gain, -0.6, maxPull);
-  fm.yaw = THREE.MathUtils.clamp(Math.atan2(_l.x, Math.max(_l.z, 0.1)) * 2.5, -1, 1) * (off < 0.4 ? 1 : 0.2);
+  fm.yaw = THREE.MathUtils.clamp(Math.atan2(_l.x, Math.max(_l.z, 0.1)) * 4, -1, 1) * 0.2;
   return off;
 }
 
@@ -209,7 +222,11 @@ export class EnemyPilot {
       }
     }
 
-    // Ground/cloud-floor avoidance: stay above ~4.5 km
+    // Stay above the cloud deck: blend in a climb as the fighter gets low
+    if (me.pos.y < 5600 && this.state !== 'withdraw') {
+      const k = THREE.MathUtils.clamp((5600 - me.pos.y) / 1000, 0, 1);
+      if (k > 0.3) steerTo(fm, _d.copy(me.forward(_t)).setY(0).normalize().add(_r.set(0, 0.5 + k, 0)), 1.2, 1);
+    }
     if (me.pos.y < 4600) {
       steerTo(fm, _d.copy(me.forward(_t)).setY(0).normalize().add(_r.set(0, 0.8, 0)), 1.2, 1);
     }

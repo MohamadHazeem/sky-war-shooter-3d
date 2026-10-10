@@ -350,6 +350,10 @@ export class World implements WorldView {
       if (p && a.alive) p.update(dt, this);
       a.update(dt, this.time);
       if (a.hitFlash > 0) a.hitFlash -= dt;
+      if (a instanceof Fighter && a.alive) {
+        if (a.pos.y < 250) { a.alive = false; a.remove = !a.isPlayer; if (a.isPlayer) { a.falling = false; } }
+        else if (!a.isPlayer && a.pos.distanceTo(this.formationCenter) > 9000) a.remove = true; // left the battle
+      }
       this.fireGuns(a, dt);
       this.damageEffects(a, dt);
     }
@@ -368,7 +372,7 @@ export class World implements WorldView {
     if (!(a instanceof Fighter) || !a.alive) return;
     for (const g of a.guns) {
       g.cooldown -= dt;
-      if (!a.trigger || g.ammo <= 0) continue;
+      if (!a.trigger || g.ammo <= 0) { if (g.cooldown < 0) g.cooldown = 0; continue; }
       while (g.cooldown <= 0) {
         g.cooldown += 1 / g.rate;
         g.count++;
@@ -380,7 +384,7 @@ export class World implements WorldView {
         const vel = dir.clone().multiplyScalar(g.muzzleVel).add(a.vel);
         this.ballistics.fire(muzzle, vel, a.team, g.damage, g.count % g.tracerEvery === 0, g.tracerColor, a, !!g.cannon, a.isPlayer);
         if (a.isPlayer) this.stats.shots++;
-        if (g.count % 2 === 0) this.effects.muzzleFlash(muzzle, dir, g.cannon ? 1.4 : 1, a.vel);
+        if (g.count % 2 === 0) this.effects.muzzleFlash(muzzle, dir, a.isPlayer ? 0.4 : g.cannon ? 1.4 : 1, a.vel);
         if (g.count % 3 === 0) {
           if (a.isPlayer) sound.playerGun(true);
           else sound.play(g.cannon ? 'cannon' : 'mg131', muzzle, { gain: g.cannon ? 0.9 : 0.6, ref: 70 });

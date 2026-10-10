@@ -53,6 +53,7 @@ export class FlightModel {
   stalled = false;
   crashed = false;
   minAlt = 300;
+  limiter = true; // AoA/G limiter (mouse aim + AI); direct stick flying can stall
 
   constructor(public p: FlightParams, pos: THREE.Vector3, quat: THREE.Quaternion) {
     this.pos = pos;
@@ -105,7 +106,13 @@ export class FlightModel {
 
     // Angular dynamics: approach commanded rates; weathervane toward velocity
     const tc = 1 - Math.exp(-dt / 0.12);
-    const pitchCmd = this.pitch * p.pitchRate * auth2;
+    let pitchCmd = this.pitch * p.pitchRate * auth2;
+    if (this.limiter) {
+      // Keep AoA below the stall and the load below max G (the "instructor" won't stall you)
+      const aLim = Math.min(p.alphaStall * 0.88, (p.maxG * G) / (p.liftK * v * v));
+      if (pitchCmd > 0) pitchCmd *= THREE.MathUtils.clamp((aLim - this.alpha) / 0.07, -1, 1);
+      else if (pitchCmd < 0) pitchCmd *= THREE.MathUtils.clamp((aLim * 0.5 + this.alpha) / 0.07, -1, 1);
+    }
     const rollCmd = (this.roll + this.rollBias) * p.rollRate * auth2;
     const yawCmd = this.yaw * p.yawRate * auth2;
     // natural pitch/yaw stability pulls nose back toward the flight path
