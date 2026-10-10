@@ -29,6 +29,12 @@ export interface DebriefData {
   waves?: number;
   survival?: boolean;
   nextAvailable: boolean;
+  // combat record (optional so every debrief path can omit what it doesn't track)
+  rounds?: number;                 // rounds fired by the player
+  hits?: number;                   // rounds that struck an enemy
+  bestStreak?: number;             // longest run of confirmed kills in quick succession
+  closestKill?: number | null;     // metres from the player's aircraft; null when no kills
+  killsByGun?: { label: string; kills: number }[]; // gunner missions: kills per gun position
 }
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
@@ -336,6 +342,18 @@ export class UI {
   debrief(d: DebriefData, h: { next(): void; retry(): void; menu(): void }) {
     const e = $('#debrief');
     const mm = Math.floor(d.time / 60), ss = Math.floor(d.time % 60);
+    const tile = (label: string, value: string | number) => `<div class="stat"><div class="hud-label">${esc(label)}</div><div class="v">${value}</div></div>`;
+    const range = d.closestKill == null ? '—' : d.closestKill >= 1000 ? `${(d.closestKill / 1000).toFixed(1)} km` : `${Math.round(d.closestKill)} m`;
+    const extra: string[] = [];
+    if (d.rounds !== undefined) extra.push(tile('Rounds fired', d.rounds));
+    if (d.hits !== undefined) extra.push(tile('Rounds on target', d.hits));
+    if (d.bestStreak !== undefined) extra.push(tile('Best streak', d.bestStreak));
+    if (d.closestKill !== undefined) extra.push(tile('Closest kill', range));
+    if (d.killsByGun) {
+      // one tile per gun position that scored; a zero tile when none did
+      if (d.killsByGun.length) for (const g of d.killsByGun) extra.push(tile(`${g.label} kills`, g.kills));
+      else extra.push(tile('Gun kills', 0));
+    }
     e.innerHTML = `<div class="screen-center"><div class="box panel">
       <div class="kicker">${d.survival ? 'SURVIVAL REPORT' : 'MISSION DEBRIEFING'} · ${esc(d.title)}</div>
       <div class="result ${d.success ? 'ok' : 'fail'}">${d.survival ? `${d.waves ?? 0} waves` : d.success ? 'Mission complete' : 'Mission failed'}</div>
@@ -346,6 +364,7 @@ export class UI {
         <div class="stat"><div class="hud-label">Bombers lost</div><div class="v">${d.bombersLost}/${d.bombersTotal}</div></div>
         <div class="stat"><div class="hud-label">Time</div><div class="v">${mm}:${String(ss).padStart(2, '0')}</div></div>
         <div class="stat"><div class="hud-label">Score</div><div class="v">${d.score}</div></div>
+        ${extra.join('')}
       </div>
       <div>${d.medals.map((m) => `<span class="medal">✦ ${esc(m)}</span>`).join('')}</div>
       <div class="row" style="margin-top:22px">
