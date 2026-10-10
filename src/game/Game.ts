@@ -34,6 +34,8 @@ import { Abilities } from './Abilities';
 import { MidRound } from './MidRound';
 import { isMissionReady, whenMissionReady } from '../core/Preload';
 import { BossBattle } from './BossBattle';
+import { Pacing } from './Pacing';
+import { ModeRunner, mountModePanel, leaderboardMode } from './Modes';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -63,6 +65,8 @@ export class Game {
   readonly abilities: Abilities;
   readonly midRound: MidRound;   // mid-round bonus objectives + random events
   readonly boss: BossBattle;
+  readonly modes: ModeRunner;   // Ace Hunt / Time Attack rules and scores (Modes.ts)
+  readonly pacing: Pacing;      // build -> breather -> final wave inside each round (Pacing.ts)
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -149,6 +153,8 @@ export class Game {
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
+    this.modes = new ModeRunner(this.world, ui, { comboMult: () => this.combo.scoreMult, setScore: (n) => { this.score = n; } });
+    this.pacing = new Pacing(this.world, ui, engine, this.modes, { spawn: (wv) => { this.incomingOff = null; this.spawnWave(wv); }, score: (n) => { this.score += n; }, adaptive: this.adaptive, station: () => (this.mission?.role === 'gunner' ? this.gunner.station : null) });
     this.midRound = new MidRound(this, engine, input, ui);
     this.gunner.onNotice = (t) => this.ui.tip(t, 2200);
     // Esc releases pointer lock -> pause. If the browser never granted the lock the game
@@ -356,7 +362,7 @@ export class Game {
       survival: () => {
         this.ui.survivalMenu(this.progress, (r) => this.showBriefing(survivalMission(r)), () => this.startMenu());
         const host = document.querySelector<HTMLElement>('#survival .box');
-        if (host) { mountLeaderboard(host, 'survival-gunner', 'ONLINE TOP 10 — B-17 GUNNER'); mountLeaderboard(host, 'survival-pilot', 'ONLINE TOP 10 — P-51 ESCORT'); }
+        if (host) mountModePanel(host, (mm) => this.showBriefing(mm));
       },
       armory: () => this.ui.hangar(this.prog, 'gunner', { title: 'ARMORY', sub: 'B-17 gunner loadout (P-51 loadout: between rounds)', next: 'Back' }, () => this.startMenu()),
       settings: () => { this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => this.startMenu()); this.mountCloud(); },
@@ -580,17 +586,17 @@ export class Game {
   private director(dt: number, m: Mission, r: Round, enemies: number) {
     const w = this.world, t = w.time - this.roundT0;
     if (this.boss.director(dt, m, this.roundIdx)) { this.updateIncoming(null, null); if (this.boss.cleared && !this.roundClear && this.state === 'playing') { this.roundClear = true; this.endRound(m); } return; }
-    const ramp = THREE.MathUtils.clamp((t - r.start) / (r.duration * 0.6), 0, 1);
+    const pace = this.pacing.director(dt, m, r, t, enemies, this.roundIdx), ramp = pace.ramp;
     // adaptive difficulty: ease off when the player is struggling, push when dominating
     this.adaptive.update(w.time, dt, w.player ? w.player.integrity : 1);
-    const target = Math.max(1, Math.round((r.min + (r.max - r.min) * ramp) * this.adaptive.mult));
+    const target = Math.max(1, Math.round((r.min + (r.max - r.min) * ramp) * pace.scale * this.adaptive.mult));
     // round over: stop sending fighters; once the sky is clear (or 30 s on) the round ends
-    if (t >= r.duration) {
+    if (t >= r.duration || pace.done) {
       this.updateIncoming(null, null);
-      if (!this.roundClear && (enemies === 0 || t >= r.duration + 30) && this.state === 'playing') { this.roundClear = true; this.endRound(m); }
+      if (!this.roundClear && (pace.done || t >= r.duration + pace.grace) && this.state === 'playing') { this.roundClear = true; this.endRound(m); }
       return;
     }
-    if (t < r.start) { this.updateIncoming(null, null); return; }
+    if (t < r.start || pace.hold) { this.updateIncoming(null, null); return; }
     this.spawnCd -= dt;
     const want = target - enemies;
     if (want <= 0) { this.updateIncoming(null, null); return; }
@@ -621,7 +627,7 @@ export class Game {
       if (p) w.callout('grp' + (this.groups % 4), Math.random() < 0.5 ? 'Tail' : 'Navigator', `${n > 2 ? 'More bandits' : 'Bandits'}, ${w.clockPosition(w.player, p.pos)}!`, 6, 2);
     }
     this.groups++;
-    this.spawnCd = THREE.MathUtils.lerp(7, 3.5, ramp) + Math.random() * 3;
+    this.spawnCd = (THREE.MathUtils.lerp(7, 3.5, ramp) + Math.random() * 3) * pace.gap;
   }
 
   // A round is over: the last round of a campaign mission completes it; otherwise the
@@ -706,8 +712,9 @@ export class Game {
       let attack: AttackType | undefined = w.attack;
       if (!attack) attack = (['headon', 'stern', 'beam', 'high'] as AttackType[])[Math.floor(Math.random() * 4)];
       const tier = this.roundIdx + (this.mission && this.mission.number > 0 ? Math.floor((this.mission.number - 1) / 2) : 0);
-      const type = randomEnemyType(tier);
+      const type = this.modes.enemyType(this.mission, tier) ?? randomEnemyType(tier);
       const f = this.world.spawnEnemy(p, attack, w.skill, true, Math.random() < (w.rockets ?? 0), type);
+      this.modes.onSpawn(f);
       // first sighting of a new type: the crew calls out what it is
       if (!this.seenTypes.has(type) && type !== 'fw190') {
         this.seenTypes.add(type);
@@ -957,6 +964,7 @@ export class Game {
     const survivors = w.bombers().filter((b) => b.alive).length;
     const survival = m.duration === Infinity;
     if (r.success) this.score += 500 + survivors * 50 + Math.round(acc * 300);
+    this.score = this.modes.finalScore(m, this.score);
     const medals: string[] = [];
     if (r.success && !survival) medals.push('Air Medal');
     if (w.stats.kills >= 5) medals.push(m.role === 'pilot' ? 'Ace in a Day' : 'Distinguished Flying Cross');
@@ -998,8 +1006,8 @@ export class Game {
     pushSave(); // progress to the cloud after every mission
     // online leaderboard: survival per role, campaign per mission
     const host = document.querySelector<HTMLElement>('#debrief .box');
-    if (host) mountLeaderboard(host, survival ? `survival-${m.role}` : `campaign-${m.id}`, 'ONLINE LEADERBOARD',
-      { name: '', mode: survival ? `survival-${m.role}` : `campaign-${m.id}`, score: this.score, kills: w.stats.kills, rounds: this.roundIdx + 1 });
+    const board = leaderboardMode(m) ?? (survival ? `survival-${m.role}` : `campaign-${m.id}`);
+    if (host) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: this.score, kills: w.stats.kills, rounds: this.roundIdx + 1 });
   }
 
   pause() {
@@ -1105,6 +1113,7 @@ export class Game {
     w.listener = this.engine.camera.position;
     sound.updateFighterVoices(w.fighterSoundInfo());
     this.boss.update(dt);
+    this.pacing.frame(dt);
     // damaged B-17 engines change the interior drone (Sound.setEngineHealth caches repeats)
     if (this.mission?.role === 'gunner' && w.playerBomber) sound.setEngineHealth(4 - w.playerBomber.enginesOut);
     // screen effects
