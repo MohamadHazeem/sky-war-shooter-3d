@@ -1,6 +1,8 @@
 // Procedural score in D minor. Menu: slow string pads and a horn line. Missions: an
 // ostinato, a military snare and timpani that grow with combat intensity. Also short
 // victory/defeat stingers for the debrief.
+import { freeOnEnd } from './Safe';
+
 const mtof = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 
 type Chord = number[]; // MIDI notes, root first
@@ -24,10 +26,16 @@ export class Music {
   private smoothIntensity = 0;
   enabled = true;
 
+  // Also called again on a fresh context when Sound rebuilds the engine: the scene, the
+  // loaded tracks and the scheduler carry over, the clock-based state restarts.
   init(ctx: AudioContext, dest: AudioNode, reverb: AudioNode) {
+    const again = !!this.ctx;
     this.ctx = ctx;
     this.out = ctx.createGain();
-    this.out.gain.value = 0;
+    this.out.gain.value = again && this.enabled && this.scene !== 'none' ? (this.tracks ? 1 : this.scene === 'menu' ? 0.5 : 0.32) : 0;
+    this.nextTime = ctx.currentTime + 0.1;
+    this.lastSwitch = -99;
+    this.current = null; // the scheduler picks the track again on its next tick
     this.out.connect(dest);
     const send = ctx.createGain(); send.gain.value = 0.9;
     this.out.connect(send).connect(reverb);
@@ -70,6 +78,7 @@ export class Music {
     gain.gain.setValueAtTime(0, t);
     gain.gain.setTargetAtTime(this.trackGain[name] ?? 0.6, t, 0.8);
     src.connect(gain).connect(this.out);
+    freeOnEnd(src, [gain]);
     src.start(t);
     this.current = { name, src, gain };
     this.lastSwitch = t;
@@ -86,7 +95,7 @@ export class Music {
     this.playTrack(want);
   }
 
-  setIntensity(x: number) { this.intensity = x; }
+  setIntensity(x: number) { if (Number.isFinite(x)) this.intensity = Math.min(1, Math.max(0, x)); }
 
   setScene(s: 'menu' | 'mission') {
     if (!this.ctx || s === this.scene) return;
@@ -180,6 +189,7 @@ export class Music {
     for (const det of [-7, 6]) {
       const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = freq; o.detune.value = det;
       o.connect(f); o.start(t); o.stop(t + dur * 1.6);
+      freeOnEnd(o, [f, g]); // both stop together
     }
   }
 
@@ -187,7 +197,7 @@ export class Music {
     const ctx = this.ctx!;
     const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = freq;
     const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + 0.3); g.gain.setTargetAtTime(0, t + dur * 0.8, 0.3);
-    o.connect(g).connect(this.out); o.start(t); o.stop(t + dur + 1.5);
+    o.connect(g).connect(this.out); o.start(t); o.stop(t + dur + 1.5); freeOnEnd(o, [g]);
   }
 
   private pluck(freq: number, t: number, dur: number, gain: number) {
@@ -195,7 +205,7 @@ export class Music {
     const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = freq;
     const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(1400, t); f.frequency.exponentialRampToValueAtTime(300, t + dur);
     const g = ctx.createGain(); g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(f).connect(g).connect(this.out); o.start(t); o.stop(t + dur + 0.05);
+    o.connect(f).connect(g).connect(this.out); o.start(t); o.stop(t + dur + 0.05); freeOnEnd(o, [f, g]);
   }
 
   private horn(notes: number[], t: number, gain: number, dur = 1.2) {
@@ -207,6 +217,7 @@ export class Music {
       const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(500, t); f.frequency.linearRampToValueAtTime(1500, t + 0.25); f.Q.value = 1.5;
       const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.03 * gain * 3, t + 0.2); g.gain.setTargetAtTime(0, t + dur * 0.7, dur * 0.25);
       o.connect(f).connect(g).connect(this.out); o.start(t); o.stop(t + dur + 1);
+      freeOnEnd(o, [f, g, vib, vg]);
     }
   }
 
@@ -215,10 +226,10 @@ export class Music {
     const s = ctx.createBufferSource(); s.buffer = this.noise; s.playbackRate.value = 1 + Math.random() * 0.2;
     const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2400; f.Q.value = 0.8;
     const g = ctx.createGain(); g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
-    s.connect(f).connect(g).connect(this.out); s.start(t, Math.random() * 0.5); s.stop(t + 0.2);
+    s.connect(f).connect(g).connect(this.out); s.start(t, Math.random() * 0.5); s.stop(t + 0.2); freeOnEnd(s, [f, g]);
     const o = ctx.createOscillator(); o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(140, t + 0.06);
     const og = ctx.createGain(); og.gain.setValueAtTime(gain * 0.6, t); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
-    o.connect(og).connect(this.out); o.start(t); o.stop(t + 0.1);
+    o.connect(og).connect(this.out); o.start(t); o.stop(t + 0.1); freeOnEnd(o, [og]);
   }
 
   private snareRoll(t: number, len: number, gain: number) {
@@ -232,11 +243,11 @@ export class Music {
       const o = ctx.createOscillator(); o.type = 'sine';
       o.frequency.setValueAtTime(freq * mul * 1.04, t); o.frequency.exponentialRampToValueAtTime(freq * mul, t + 0.15);
       const g = ctx.createGain(); g.gain.setValueAtTime(gain * a * 0.4, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
-      o.connect(g).connect(this.out); o.start(t); o.stop(t + 1.7);
+      o.connect(g).connect(this.out); o.start(t); o.stop(t + 1.7); freeOnEnd(o, [g]);
     }
     const s = ctx.createBufferSource(); s.buffer = this.noise;
     const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 400;
     const g = ctx.createGain(); g.gain.setValueAtTime(gain * 0.25, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
-    s.connect(f).connect(g).connect(this.out); s.start(t); s.stop(t + 0.3);
+    s.connect(f).connect(g).connect(this.out); s.start(t); s.stop(t + 0.3); freeOnEnd(s, [f, g]);
   }
 }

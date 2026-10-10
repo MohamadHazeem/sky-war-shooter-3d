@@ -45,7 +45,7 @@ export function playRicochet(pos: THREE.Vector3) {
   const ctx = sound.ctx;
   if (!ctx) return;
   const now = ctx.currentTime;
-  if (now - lastAt < MIN_GAP) return;
+  if (now >= lastAt && now - lastAt < MIN_GAP) return; // (a rebuilt context restarts its clock at 0)
   lastAt = now;
   if (!bufs) bufs = [make(ctx), make(ctx), make(ctx)];
   sound.playBuffer(bufs[Math.floor(Math.random() * bufs.length)], pos, { gain: 0.3, ref: 60, delay: false });
