@@ -28,8 +28,8 @@ Player notes given at the start:
 | 34 | Boss fights: battle group of giant flying warships, very hard || Done — battle group of 3–4 giant Luftkreuzer warships: 12–17 weak points each, armour breach, telegraphed salvos, enrage, last stand, ramming, break-in-two deaths; survival every 3rd round, campaign m5/m7 finales |
 | 35 | Bonus objectives mid-round || Done — 6 objective types, 1–2 per round, merit rewards |
 | 36 | Random events (engine fire, jammed gun, oxygen, straggler) || Done — engine fire (X), jammed gun (R), oxygen (O), straggler |
-| 37 | Loot crates | |
-| 38 | Bomber customisation (name, nose art, paint) | |
+| 37 | Loot crates || Done — 4 crate grades, animated opening, merit/perks/10 weapon mods/cosmetics, collection (33 items) |
+| 38 | Bomber customisation (name, nose art, paint) || Done — bomber name everywhere, 9 nose-art designs on the hull, 4 paint schemes |
 | 39 | Crew with personalities | |
 | 40 | Pacing + final-wave climax | |
 | 41 | Modes: Ace Hunt, Time Attack, Daily Run | |
@@ -45,8 +45,8 @@ Player notes given at the start:
 | 9 | Cinematics (kill cam, replay, fly-by) | |
 | 10 | Pilot mode overhaul | |
 | 11 | Audio pass 2 | |
-| 12 | Controls & accessibility (gamepad, colour-blind, subtitles, remap) | |
-| 13 | Phone/tablet touch support | |
+| 12 | Controls & accessibility (gamepad, colour-blind, subtitles, remap) || Done — gamepad, colour-blind markers, subtitle size/opacity, key remapping, reduce shake/flash |
+| 13 | Phone/tablet touch support || Done — drag-aim, FIRE/ZOOM/MAP/seat/ability buttons, pilot stick+throttle, compact HUD, rotate prompt |
 | 14 | Arabic (RTL) | |
 | 15 | Cloud save (Firebase) | Done — Firestore profile under a private transfer code; auto-push after missions |
 | 16 | Secure leaderboard | Done — append-only, validated, plausibility-checked, 1 entry / 20 s; live rules test passes |
@@ -79,3 +79,4 @@ Player notes given at the start:
 - 22:10 fast loading + PWA merged; deploy #3; live manifest/sw/headers verified.
 - 22:13 boss battle group merged; deploy #4. Launched tactics/special events + pacing/modes agents.
 - 22:20 campaign 12 missions + voiced briefings merged.
+- 22:30 touch/gamepad/accessibility + loot/customisation merged.
