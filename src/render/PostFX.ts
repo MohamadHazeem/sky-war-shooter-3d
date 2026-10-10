@@ -1,5 +1,33 @@
 import * as THREE from 'three';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
+import { Atmos } from './Atmosphere';
+import { mulberry } from './Particles';
+
+// Procedural lens dirt: faint smudges, specks and a fingerprint-ish swirl
+function makeDirt(): THREE.Texture {
+  const W = 512, H = 288;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d')!;
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+  const rnd = mulberry(33);
+  for (let i = 0; i < 70; i++) {
+    const x = rnd() * W, y = rnd() * H, r = 8 + rnd() * 50;
+    const grd = g.createRadialGradient(x, y, 0, x, y, r);
+    const a = 0.05 + rnd() * 0.12;
+    grd.addColorStop(0, `rgba(255,240,220,${a})`); grd.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = grd; g.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  for (let i = 0; i < 260; i++) {
+    g.fillStyle = `rgba(255,255,255,${0.1 + rnd() * 0.3})`;
+    g.beginPath(); g.arc(rnd() * W, rnd() * H, 0.5 + rnd() * 1.6, 0, Math.PI * 2); g.fill();
+  }
+  g.strokeStyle = 'rgba(255,250,240,0.06)'; g.lineWidth = 3;
+  for (let k = 0; k < 6; k++) { g.beginPath(); g.ellipse(360, 90, 30 + k * 7, 20 + k * 5, 0.4, 0, Math.PI * 1.6); g.stroke(); }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.NoColorSpace;
+  return t;
+}
 
 const vert = /* glsl */ `
 varying vec2 vUv;
@@ -135,6 +163,50 @@ uniform float uVignette;
 uniform float uGrain;
 uniform vec2 uRes;
 uniform float uFlash;
+uniform vec2 uSunUV;
+uniform float uSunOn;
+uniform vec3 uSunCol;
+uniform sampler2D tCloud;
+uniform sampler2D tDirt;
+uniform float uDirt;
+uniform float uAspect;
+
+float sunVisibility() {
+  if (uSunOn <= 0.0) return 0.0;
+  float v = 0.0;
+  for (int i = 0; i < 9; i++) {
+    vec2 o = vec2(float(i % 3) - 1.0, float(i / 3) - 1.0) * 0.006;
+    vec2 uv = clamp(uSunUV + o, 0.0, 1.0);
+    float d = texture2D(tDepth, uv).r;
+    v += (uReversed > 0.5 ? d <= 0.0 : d >= 1.0) ? 1.0 : 0.0;
+  }
+  v /= 9.0;
+  v *= texture2D(tCloud, uSunUV).a;   // cloud transmittance toward the sun
+  return v * uSunOn;
+}
+
+// Sun glare, starburst, halo and lens ghosts
+vec3 lensFlare(vec2 uv, float vis) {
+  if (vis <= 0.001) return vec3(0.0);
+  vec2 asp = vec2(uAspect, 1.0);
+  vec2 d = (uv - uSunUV) * asp;
+  float r = length(d);
+  float ang = atan(d.y, d.x);
+  vec3 f = uSunCol * (exp(-r * 9.0) * 0.18 + exp(-r * 40.0) * 0.5);
+  f += uSunCol * pow(abs(cos(ang * 3.0)), 60.0) * exp(-r * 5.0) * 0.14;      // 6-point starburst
+  f += uSunCol * exp(-pow((r - 0.42) / 0.012, 2.0)) * 0.012 * vec3(0.8, 0.9, 1.2); // halo ring
+  vec2 toC = vec2(0.5) - uSunUV;
+  const int N = 5;
+  float gpos[5] = float[5](0.45, 0.8, 1.15, 1.45, 1.8);
+  float gsz[5] = float[5](0.05, 0.022, 0.09, 0.035, 0.12);
+  vec3 gcol[5] = vec3[5](vec3(0.9, 0.6, 0.3), vec3(0.4, 0.8, 0.6), vec3(0.5, 0.6, 1.0), vec3(1.0, 0.7, 0.9), vec3(0.6, 0.7, 0.9));
+  for (int i = 0; i < N; i++) {
+    vec2 gp = uSunUV + toC * gpos[i] * 2.0;
+    float gd = length((uv - gp) * asp);
+    f += gcol[i] * smoothstep(gsz[i], gsz[i] * 0.65, gd) * 0.025 * length(uSunCol) * 0.25;
+  }
+  return f * vis;
+}
 uniform float uNoBlurDist;
 varying vec2 vUv;
 
@@ -203,6 +275,11 @@ void main() {
 
   vec3 bloom = texture2D(tBloom, vUv).rgb;
   col += bloom * uBloomStrength;
+  // lens dirt lights up where the bloom is bright
+  col += bloom * texture2D(tDirt, vUv).rgb * uDirt;
+  float sv = sunVisibility();
+  col += lensFlare(vUv, sv);
+  col += texture2D(tDirt, vUv).rgb * uSunCol * sv * 0.05 * exp(-length((vUv - uSunUV) * vec2(uAspect, 1.0)) * 2.5);
   col += vec3(1.0, 0.85, 0.6) * uFlash;
   col *= uExposure;
 
@@ -246,6 +323,8 @@ export class PostFX {
   damageFlash = 0;
   flash = 0;
   noBlurDist = 1.5;
+  flareStrength = 1;
+  cloudTex: THREE.Texture | null = null;
   private rotOnly = new THREE.Matrix4();
 
   constructor(reversed: boolean) {
@@ -258,6 +337,8 @@ export class PostFX {
         uNearFocus: { value: 1 }, uDofStrength: { value: 1 }, uTime: { value: 0 },
         uDamageFlash: { value: 0 }, uVignette: { value: 0.9 }, uGrain: { value: 0.03 },
         uRes: { value: new THREE.Vector2() }, uFlash: { value: 0 }, uNoBlurDist: { value: 1.5 },
+        uSunUV: { value: new THREE.Vector2() }, uSunOn: { value: 0 }, uSunCol: { value: new THREE.Vector3() },
+        tCloud: { value: null }, tDirt: { value: makeDirt() }, uDirt: { value: 0.6 }, uAspect: { value: 1 },
       },
       vertexShader: vert,
       fragmentShader: finalFrag,
@@ -299,6 +380,17 @@ export class PostFX {
     u.uGrain.value = this.grain;
     u.uFlash.value = this.flash;
     u.uNoBlurDist.value = this.noBlurDist;
+    // sun position on screen for the lens flare
+    const sunW = new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld).addScaledVector(Atmos.sunDir, 5000);
+    const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const facing = fwd.dot(Atmos.sunDir);
+    sunW.project(camera);
+    u.uSunUV.value.set(sunW.x * 0.5 + 0.5, sunW.y * 0.5 + 0.5);
+    const inView = facing > 0 && Math.abs(sunW.x) < 1.1 && Math.abs(sunW.y) < 1.1;
+    u.uSunOn.value = inView ? this.flareStrength * THREE.MathUtils.smoothstep(facing, 0, 0.3) : 0;
+    u.uSunCol.value.set(Atmos.sunColor.r, Atmos.sunColor.g, Atmos.sunColor.b).multiplyScalar(Atmos.sunIntensity);
+    u.tCloud.value = this.cloudTex;
+    u.uAspect.value = camera.aspect;
     renderer.setRenderTarget(null);
     this.quad.render(renderer);
     this.prevViewProj.copy(curVP);

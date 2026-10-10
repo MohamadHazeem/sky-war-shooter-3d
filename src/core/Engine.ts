@@ -95,6 +95,7 @@ export class Engine {
 
     this.clouds = new CloudRenderer(this.reversed);
     this.post = new PostFX(this.reversed);
+    this.post.cloudTex = this.clouds.rt.texture;
 
     this.scene.environment = buildEnvironment(this.renderer, this.sky);
     envRef.tex = this.scene.environment;

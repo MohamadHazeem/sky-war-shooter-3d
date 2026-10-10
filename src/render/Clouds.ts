@@ -134,9 +134,17 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
   }
 }
 
+uniform vec2 uFullTexel;
 void main() {
   vec3 rd;
+  // Use the farthest depth in this low-res texel's footprint so clouds are never cut
+  // short at aircraft silhouettes (avoids haloes when upsampling).
   float sceneD = sceneDistance(vUv, rd);
+  vec3 rdTmp;
+  sceneD = max(sceneD, sceneDistance(vUv + uFullTexel * vec2(1.0, 0.0), rdTmp));
+  sceneD = max(sceneD, sceneDistance(vUv + uFullTexel * vec2(0.0, 1.0), rdTmp));
+  sceneD = max(sceneD, sceneDistance(vUv + uFullTexel * vec2(1.0, 1.0), rdTmp));
+  sceneD = max(sceneD, sceneDistance(vUv - uFullTexel, rdTmp));
   vec3 ro = uCamPos;
   float jitter = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))) + uTime * 0.0);
   vec3 col = vec3(0.0);
@@ -244,6 +252,7 @@ export class CloudRenderer {
         uAmb: { value: 1.0 },
         uWeatherScale: { value: 17000 },
         uRes: { value: new THREE.Vector2() },
+        uFullTexel: { value: new THREE.Vector2() },
       },
       vertexShader: vert,
       fragmentShader: cloudFrag,
@@ -263,6 +272,7 @@ export class CloudRenderer {
 
   setSize(w: number, h: number) {
     this.rt.setSize(Math.max(1, Math.floor(w * this.scale)), Math.max(1, Math.floor(h * this.scale)));
+    this.mat.uniforms.uFullTexel.value.set(1 / w, 1 / h);
     this.mat.uniforms.uRes.value.set(this.rt.width, this.rt.height);
   }
 
