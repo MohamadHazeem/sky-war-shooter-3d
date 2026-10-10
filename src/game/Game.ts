@@ -36,6 +36,7 @@ import { isMissionReady, whenMissionReady } from '../core/Preload';
 import { BossBattle } from './BossBattle';
 import { access } from '../core/Accessibility';
 import { queueCrate } from './Loot';
+import { crewRoster } from './CrewRoster';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -256,6 +257,7 @@ export class Game {
       }, INTERPHONE_LEAD_S * 1000);
     };
     w.events.kill = (victim, byPlayer, cause) => {
+      crewRoster.onKill(victim, byPlayer);
       if (victim.team === 'axis') {
         if (byPlayer) {
           // paid at the multiplier held going in; the kill then builds the next step
@@ -508,6 +510,7 @@ export class Game {
     this.state = 'playing';
     this.distantBattle.reset();
     this.ui.hud(m.role);
+    crewRoster.beginMission(this.world, this.ui, m.role);
     this.ui.fadeTo(1);
     setTimeout(() => this.ui.fade(false), 50);
     this.input.lock();
@@ -664,6 +667,7 @@ export class Game {
     this.state = 'playing';
     this.engine.paused = false;
     this.input.lock();
+    crewRoster.onRoundStart(this.prog.perks);
     this.ui.banner(`ROUND ${this.roundIdx + 1}`, this.roundIdx >= 3 ? 'They\'re sending everything they have' : 'More fighters inbound', 2800);
     Chatter.onRoundStart();
   }
@@ -957,6 +961,7 @@ export class Game {
     sound.setMode('menu');
     const acc = w.stats.shots > 0 ? w.stats.hits / w.stats.shots : 0;
     achievements.endMission(r.success, w.stats.shots, w.stats.hits);
+    crewRoster.endMission(r.success);
     const survivors = w.bombers().filter((b) => b.alive).length;
     const survival = m.duration === Infinity;
     if (r.success) this.score += 500 + survivors * 50 + Math.round(acc * 300);

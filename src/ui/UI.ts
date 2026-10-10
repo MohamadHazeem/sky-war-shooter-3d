@@ -13,6 +13,7 @@ import { campaignSize, decorateBriefing } from './BriefingExtras';
 import { mountAccessibilityPanel } from './AccessibilityPanel';
 import { mountHangarExtras } from './CrateUI';
 import { bomberName, withName } from '../game/Customize';
+import { mountCrewRoster } from './CrewPanel';
 
 export interface Settings {
   sensitivity: number;
@@ -505,6 +506,7 @@ export class UI {
         }).join('')}</div>
         <div class="row" style="margin-top:18px"><button class="btn" data-go>${info.next === 'Back' ? 'Back' : `Launch — ${esc(info.next)}`}</button></div>
       </div>`;
+      if (role === 'gunner') mountCrewRoster(el.querySelector('.hwrap')!, prog);
       el.querySelectorAll<HTMLButtonElement>('[data-a]').forEach((b) => b.addEventListener('click', () => {
         const a = AIRCRAFT.find((x) => x.id === b.dataset.a)!;
         if (prog.unlock(a.id, a.cost)) { prog.selectAircraft(a); sound.play('click', null, { gain: 0.6 }); render(); }

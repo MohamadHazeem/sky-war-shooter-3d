@@ -1,193 +1,1255 @@
 {
   "_doc": "Source of truth for the recorded crew voices. Run tools/voice/generate.py after editing. `text` must match the game's subtitle text exactly (that is how World.callout lines find their clip). `roles` makes one clip per role (id__role), `vars` expands {key} in id/text (one clip per value, {i} = 1-based index), `say` overrides what is spoken, `rate` overrides words per minute, `urgent` speaks faster.",
-  "audio": { "sampleRate": 16000, "bitrate": 24000, "urgentBoost": 22 },
+  "audio": {
+    "sampleRate": 16000,
+    "bitrate": 24000,
+    "urgentBoost": 22
+  },
   "roles": {
-    "pilot":      { "speaker": "Pilot",       "aliases": [],                   "voice": "Reed (English (US))",    "rate": 185 },
-    "copilot":    { "speaker": "Co-Pilot",    "aliases": ["Co-pilot", "Copilot"], "voice": "Eddy (English (US))", "rate": 192 },
-    "nav":        { "speaker": "Navigator",   "aliases": [],                   "voice": "Daniel (English (UK))",  "rate": 182 },
-    "tail":       { "speaker": "Tail",        "aliases": [],                   "voice": "Rocko (English (US))",   "rate": 200 },
-    "top":        { "speaker": "Top Turret",  "aliases": ["Engineer"],         "voice": "Ralph",                  "rate": 188 },
-    "ball":       { "speaker": "Ball Turret", "aliases": ["Ball"],             "voice": "Grandpa (English (US))", "rate": 205 },
-    "bombardier": { "speaker": "Bombardier",  "aliases": [],                   "voice": "Rocko (English (UK))",   "rate": 190 },
-    "radio":      { "speaker": "Radio",       "aliases": [],                   "voice": "Fred",                   "rate": 185 },
-    "waist":      { "speaker": "Waist",       "aliases": [],                   "voice": "Eddy (English (UK))",    "rate": 200 },
-    "lead":       { "speaker": "Lead",        "aliases": [],                   "voice": "Reed (English (UK))",    "rate": 195 },
-    "bigfriend":  { "speaker": "Big Friend",  "aliases": [],                   "voice": "Grandpa (English (UK))", "rate": 182 },
-    "blue3":      { "speaker": "Blue Three",  "aliases": [],                   "voice": "Eddy (English (UK))",    "rate": 195 },
-    "briefing":   { "speaker": "Intelligence Officer", "aliases": [],          "voice": "Daniel (English (UK))",  "rate": 168, "bitrate": 16000, "noTable": true, "_doc": "Mission briefings, one clip per paragraph (brief_<mission>_<n>), read in the briefing room: played clean by src/audio/BriefingVoice.ts, not through the radio chain. Generated from src/game/Missions.ts by tools/voice/briefings.mjs." }
+    "pilot": {
+      "speaker": "Pilot",
+      "aliases": [],
+      "voice": "Reed (English (US))",
+      "rate": 185
+    },
+    "copilot": {
+      "speaker": "Co-Pilot",
+      "aliases": [
+        "Co-pilot",
+        "Copilot"
+      ],
+      "voice": "Eddy (English (US))",
+      "rate": 192
+    },
+    "nav": {
+      "speaker": "Navigator",
+      "aliases": [],
+      "voice": "Daniel (English (UK))",
+      "rate": 182
+    },
+    "tail": {
+      "speaker": "Tail",
+      "aliases": [
+        "Dawson"
+      ],
+      "voice": "Rocko (English (US))",
+      "rate": 200
+    },
+    "top": {
+      "speaker": "Top Turret",
+      "aliases": [
+        "Engineer",
+        "Mendez"
+      ],
+      "voice": "Ralph",
+      "rate": 188
+    },
+    "ball": {
+      "speaker": "Ball Turret",
+      "aliases": [
+        "Ball",
+        "Reilly"
+      ],
+      "voice": "Grandpa (English (US))",
+      "rate": 205
+    },
+    "bombardier": {
+      "speaker": "Bombardier",
+      "aliases": [],
+      "voice": "Rocko (English (UK))",
+      "rate": 190
+    },
+    "radio": {
+      "speaker": "Radio",
+      "aliases": [
+        "Gallo"
+      ],
+      "voice": "Fred",
+      "rate": 185
+    },
+    "waist": {
+      "speaker": "Waist",
+      "aliases": [
+        "Price",
+        "Walsh"
+      ],
+      "voice": "Eddy (English (UK))",
+      "rate": 200
+    },
+    "lead": {
+      "speaker": "Lead",
+      "aliases": [],
+      "voice": "Reed (English (UK))",
+      "rate": 195
+    },
+    "bigfriend": {
+      "speaker": "Big Friend",
+      "aliases": [],
+      "voice": "Grandpa (English (UK))",
+      "rate": 182
+    },
+    "blue3": {
+      "speaker": "Blue Three",
+      "aliases": [],
+      "voice": "Eddy (English (UK))",
+      "rate": 195
+    },
+    "briefing": {
+      "speaker": "Intelligence Officer",
+      "aliases": [],
+      "voice": "Daniel (English (UK))",
+      "rate": 168,
+      "bitrate": 16000,
+      "noTable": true,
+      "_doc": "Mission briefings, one clip per paragraph (brief_<mission>_<n>), read in the briefing room: played clean by src/audio/BriefingVoice.ts, not through the radio chain. Generated from src/game/Missions.ts by tools/voice/briefings.mjs."
+    }
   },
   "clock": {
     "_doc": "Short clips 'nine o'clock low!' for every hour x high/level/low, per role. Lines like 'Fighters, nine o'clock low!' play as prefix clip + clock clip (+ suffix clip).",
-    "roles": ["pilot", "nav", "tail", "top", "ball", "bombardier", "lead"],
+    "roles": [
+      "pilot",
+      "nav",
+      "tail",
+      "top",
+      "ball",
+      "bombardier",
+      "lead"
+    ],
     "rateBoost": 20
   },
   "spoken": [
-    [" II", " the second"], ["Fw one-ninety", "F W one-ninety"], ["Focke-Wulf", "Focke Wulf"], ["the IP", "the I.P."],
-    ["Capt. ", "Captain "], ["Lt. ", "Lieutenant "], ["Sgt. ", "Sergeant "], ["—", ","], ["–", ","],
-    ["Staffel", "Shtaffel"], ["Messerschmitt", "Messer-shmit"]
+    [
+      " II",
+      " the second"
+    ],
+    [
+      "Fw one-ninety",
+      "F W one-ninety"
+    ],
+    [
+      "Focke-Wulf",
+      "Focke Wulf"
+    ],
+    [
+      "the IP",
+      "the I.P."
+    ],
+    [
+      "Capt. ",
+      "Captain "
+    ],
+    [
+      "Lt. ",
+      "Lieutenant "
+    ],
+    [
+      "Sgt. ",
+      "Sergeant "
+    ],
+    [
+      "—",
+      ","
+    ],
+    [
+      "–",
+      ","
+    ],
+    [
+      "Staffel",
+      "Shtaffel"
+    ],
+    [
+      "Messerschmitt",
+      "Messer-shmit"
+    ]
   ],
   "lines": [
-    { "group": "existing: World.ts" },
-    { "id": "tanks", "role": "nav", "text": "They're dropping their belly tanks — here they come!", "urgent": true },
-    { "id": "eng_hit_{i}", "role": "pilot", "text": "Number {n} engine is hit! Feathering number {n}!", "vars": { "n": ["1", "2", "3", "4"] }, "urgent": true },
-    { "id": "strag_player", "role": "pilot", "text": "We can't hold formation. We're falling behind — keep those guns hot!" },
-    { "id": "strag_{i}", "role": "tail", "text": "{name} is falling out of formation!", "vars": { "name": ["Miss Fortune", "Ole Rattler", "Hell's Angel II", "Dinah Might", "Lucky Lady", "Iron Maiden", "Sweet Sue", "Big Stoop", "Night Owl", "Wabash Cannonball", "Patches", "Belle of Ohio", "Tondelayo II", "Blue Streak", "Short Snorter"] } },
-    { "id": "crewwound_{i}", "role": "pilot", "text": "{who}! Somebody get him some help!", "vars": { "who": ["Capt. Hal Brenner is hit up front in the cockpit", "Lt. Frank Doyle is hit up front in the cockpit", "Lt. Eli Stern is hit at the nav table", "Lt. Ray Kessler is hit in the nose", "Sgt. Mendez is hit at the top turret", "Sgt. Tom Gallo is hit at the radio", "Sgt. Reilly is hit in the ball turret", "Sgt. Price is hit at the left waist gun", "Sgt. Walsh is hit at the right waist gun", "Sgt. Dawson is hit in the tail"] }, "urgent": true },
-    { "id": "rockets", "role": "tail", "text": "Rockets! They're firing rockets into the formation!", "urgent": true },
-    { "id": "fire_{i}", "role": "top", "text": "Fire in number {n} engine!", "vars": { "n": ["1", "2", "3", "4"] }, "urgent": true },
-    { "id": "fireout_{i}", "role": "pilot", "text": "Extinguisher's in. Fire's out on number {n}.", "vars": { "n": ["1", "2", "3", "4"] } },
-    { "id": "firestill_{i}", "role": "pilot", "text": "Extinguisher didn't take! Number {n} is still burning!", "vars": { "n": ["1", "2", "3", "4"] }, "urgent": true },
-    { "id": "pfx_fighters", "roles": ["pilot", "nav", "tail", "top", "ball", "bombardier", "lead"], "text": "Fighters,", "urgent": true },
-    { "id": "pfx_bandit_coming", "roles": ["pilot", "nav", "tail", "top", "ball", "bombardier"], "text": "Bandit coming in,", "urgent": true },
-    { "id": "pfx_here_he_comes", "roles": ["pilot", "nav", "tail", "top", "ball", "bombardier"], "text": "Here he comes,", "urgent": true },
-    { "id": "pfx_fw190", "roles": ["pilot", "nav", "tail", "top", "ball", "bombardier"], "text": "Fw one-ninety,", "urgent": true },
-    { "id": "sfx_get_him", "roles": ["pilot", "nav", "tail", "top", "ball", "bombardier"], "text": "Get him!", "urgent": true },
-
-    { "group": "existing: Game.ts" },
-    { "id": "ace", "role": "pilot", "text": "That's five! You're an ace, gunner — drinks are on me tonight!" },
-    { "id": "kill_going_down", "roles": ["tail", "pilot", "top", "nav"], "text": "Got him! He's going down!", "urgent": true },
-    { "id": "kill_nice_shooting", "roles": ["tail", "pilot", "top", "nav"], "text": "You got him! Nice shooting!", "urgent": true },
-    { "id": "kill_smoking", "roles": ["tail", "pilot", "top", "nav"], "text": "He's smoking — he's finished!", "urgent": true },
-    { "id": "kill_messerschmitt", "roles": ["tail", "pilot", "top", "nav"], "text": "Scratch one Messerschmitt!", "urgent": true },
-    { "id": "kill_focke_wulf", "roles": ["tail", "pilot", "top", "nav"], "text": "Scratch one Focke-Wulf!", "urgent": true },
-    { "id": "lost_{i}", "role": "tail", "text": "{name} is going down! Count the chutes!", "vars": { "name": ["Miss Fortune", "Ole Rattler", "Hell's Angel II", "Dinah Might", "Lucky Lady", "Iron Maiden", "Sweet Sue", "Big Stoop", "Night Owl", "Wabash Cannonball", "Patches", "Belle of Ohio", "Tondelayo II", "Blue Streak", "Short Snorter"] }, "urgent": true },
-    { "id": "playerdown", "role": "pilot", "text": "We've had it! Bail out! Bail out!", "urgent": true },
-    { "id": "wound", "role": "nav", "text": "Gunner's hit! Stay on that gun if you can!", "urgent": true },
-    { "id": "start_gunner", "role": "pilot", "text": "Pilot to crew: we're at altitude. Test fire your guns, and keep your eyes open." },
-    { "id": "start_pilot", "role": "lead", "text": "Blue flight, form up on the bombers. Keep your eyes peeled for bandits." },
-    { "id": "pfx_bandits", "roles": ["tail", "nav", "lead"], "text": "Bandits,", "urgent": true },
-    { "id": "pfx_more_bandits", "roles": ["tail", "nav", "lead"], "text": "More bandits,", "urgent": true },
-    { "id": "flak", "role": "nav", "text": "Flak ahead. Initial point in two minutes — here it comes." },
-    { "id": "bombs", "role": "bombardier", "text": "Bombs away! Let's get out of here!" },
-    { "id": "escort", "role": "radio", "text": "Little friends at six o'clock high! The Mustangs are here!" },
-    { "id": "chat_oxygen", "role": "pilot", "text": "Pilot to crew, oxygen check. Sound off." },
-    { "id": "chat_tail_oxygen", "role": "tail", "text": "Tail gunner, oxygen okay." },
-    { "id": "chat_nav_course", "role": "nav", "text": "Navigator to pilot: on course, two-seven minutes to the IP." },
-    { "id": "chat_ball_clear", "role": "ball", "text": "Ball turret. Nothing below but cloud. Guns are clear." },
-    { "id": "chat_radio_group", "role": "radio", "text": "Radio to pilot: group says keep it tight, fighters reported ahead." },
-    { "id": "chat_engineer_hot", "role": "top", "text": "Engineer to pilot: number three's running a little hot. Watching it." },
-    { "id": "chat_bombardier_sun", "role": "bombardier", "text": "Bombardier here. Keep your eyes open, they like to come out of the sun." },
-    { "id": "chat_interphone", "role": "pilot", "text": "Stay off the interphone unless you see fighters. Keep scanning." },
-    { "id": "chat_lead_fuel", "role": "lead", "text": "Blue flight, check your fuel. Weave over the big friends." },
-    { "id": "chat_bigfriend_thanks", "role": "bigfriend", "text": "Little friends, little friends, thanks for the company." },
-    { "id": "chat_lead_swivel", "role": "lead", "text": "Keep your heads on a swivel. They'll come out of the sun." },
-    { "id": "chat_blue3_temps", "role": "blue3", "text": "Blue Three, engine temps okay. Holding high cover." },
-
-    { "group": "existing: GunnerController.ts" },
-    { "id": "hot", "role": "pilot", "text": "Short bursts! You'll burn out that barrel!", "urgent": true },
-
-    { "group": "existing: Missions.ts radio" },
-    { "id": "m_coast_nine_low", "role": "nav", "text": "Fighters coming up from the coast, nine o'clock low. Stay sharp." },
-    { "id": "m_more_ahead", "role": "pilot", "text": "More of them up ahead. Twelve o'clock — here they come." },
-    { "id": "m_more_left", "role": "waist", "text": "More coming in on the left! Watch your nine!", "urgent": true },
-    { "id": "m_last_bunch", "role": "nav", "text": "Last bunch before the target. Make them count!" },
-    { "id": "m_staffel_high", "role": "bombardier", "text": "Bandits! Twelve o'clock high, a whole Staffel of them!", "urgent": true },
-    { "id": "m_out_of_sun", "role": "tail", "text": "Fighters up high, coming out of the sun!", "urgent": true },
-    { "id": "m_three_level", "role": "ball", "text": "Fighters, three o'clock level! Coming in from the right!", "urgent": true },
-    { "id": "m_through_flak", "role": "pilot", "text": "We're through the flak. Here come the fighters again — watch the cripples." },
-    { "id": "m_lead_climbing", "role": "lead", "text": "Bandits twelve o'clock low, climbing for the bombers. Let's go get them." },
-    { "id": "m_bigfriend_six", "role": "bigfriend", "text": "Little friends, little friends, we have bandits at our six o'clock!", "urgent": true },
-    { "id": "m_assembling_six", "role": "nav", "text": "Fighters assembling behind us, six o'clock level. Lots of them." },
-    { "id": "m_whole_gaggle", "role": "pilot", "text": "Here comes the whole gaggle! Tail, they're all yours!", "urgent": true },
-    { "id": "m_staffel_astern", "role": "tail", "text": "Another Staffel forming up astern!" },
-    { "id": "m_two_closing", "role": "tail", "text": "Two fighters closing from six o'clock. They've spotted us." },
-    { "id": "m_escort_sixty", "role": "radio", "text": "Escort reports sixty seconds out. Hang on!" },
-    { "id": "m_lead_drop_tanks", "role": "lead", "text": "Here they come. Big gaggle at twelve o'clock — drop tanks and go!", "urgent": true },
-    { "id": "m_bigfriend_everywhere", "role": "bigfriend", "text": "More bandits! They're everywhere!", "urgent": true },
-    { "id": "m_whole_luftwaffe", "role": "pilot", "text": "Here they come. Looks like the whole Luftwaffe is up today!", "urgent": true },
-    { "id": "m_lead_murk", "role": "lead", "text": "Bandits climbing out of the murk, twelve o'clock low. Blue flight, stay with me!", "urgent": true },
-    { "id": "m_low_on_water", "role": "tail", "text": "Fighters low on the water, six o'clock. They followed us out." },
-    { "id": "m_bomb_run_high", "role": "bombardier", "text": "Bandits up high, going for the lead ships. Keep them off me till we're on the bomb run!", "urgent": true },
-    { "id": "m_one_more_time", "role": "pilot", "text": "Pilot to crew, one more time. Fighters, twelve o'clock high, a lot of them!", "urgent": true },
-
-    { "group": "new: crew instructions (RadioChatter.ts)" },
-    { "id": "rc_threat_tail", "role": "pilot", "text": "Fighters coming in from six o'clock, get on the tail gun!", "urgent": true },
-    { "id": "rc_threat_ball", "role": "copilot", "text": "Ball turret, they're coming up from below!", "urgent": true },
-    { "id": "rc_threat_top", "role": "pilot", "text": "Top turret, bandits high at twelve!", "urgent": true },
-    { "id": "rc_threat_waist_left", "role": "copilot", "text": "Left waist, bandits coming in at nine o'clock!", "urgent": true },
-    { "id": "rc_threat_waist_right", "role": "copilot", "text": "Right waist, fighters at three o'clock!", "urgent": true },
-    { "id": "rc_threat_nose", "role": "bombardier", "text": "Bandits on the nose, twelve o'clock level!", "urgent": true },
-    { "id": "rc_switch_gun", "role": "pilot", "text": "Switch guns! They're coming in on the other side!", "urgent": true },
-    { "id": "rc_kill_good", "roles": ["pilot", "copilot", "tail", "top"], "text": "Good shooting, he's going down!", "urgent": true },
-    { "id": "rc_kill_flamer", "roles": ["tail", "top", "ball"], "text": "He's a flamer! Nice work!", "urgent": true },
-    { "id": "rc_kill_chute", "role": "nav", "text": "I see a chute. He's out of it." },
-    { "id": "rc_kill_streak", "role": "pilot", "text": "That's another one! Keep it up, gunner!", "urgent": true },
-    { "id": "rc_ammo_short", "role": "pilot", "text": "Watch your ammo, short bursts!" },
-    { "id": "rc_ammo_low", "role": "top", "text": "Ammo's getting low back there. Make 'em count!" },
-    { "id": "rc_lead_more", "role": "tail", "text": "Lead him more! Aim where he's going!", "urgent": true },
-    { "id": "rc_regroup", "role": "nav", "text": "They're regrouping, here they come again!", "urgent": true },
-    { "id": "rc_evasive", "role": "pilot", "text": "Hang on, evasive action!", "urgent": true },
-    { "id": "rc_hit", "role": "copilot", "text": "We're hit, we're hit!", "urgent": true },
-    { "id": "rc_hit_check", "role": "pilot", "text": "Pilot to crew, damage check. Everybody okay back there?" },
-    { "id": "rc_hit_holding", "role": "copilot", "text": "She's still flying. Stay on those guns!" },
-    { "id": "rc_close", "role": "tail", "text": "He's coming right at us! Keep firing!", "urgent": true },
-    { "id": "rc_cripples", "role": "nav", "text": "They're going after the stragglers. Cover them!", "urgent": true },
-    { "id": "rc_round_start", "role": "nav", "text": "Fighters forming up out there. Stand by, gunners." },
-    { "id": "rc_next_wave", "role": "pilot", "text": "Here comes the next wave, look sharp!", "urgent": true },
-    { "id": "rc_round_over", "role": "pilot", "text": "Round over. Nice work, gunners." },
-    { "id": "rc_lull", "role": "pilot", "text": "Keep scanning. They'll be back." },
-    { "id": "rc_going_home", "role": "pilot", "text": "That's the last of them. We're going home, boys." },
-
-    { "group": "new: P-51 flight (RadioChatter.ts)" },
-    { "id": "rc_lead_break_left", "role": "lead", "text": "Blue two, break left!", "urgent": true },
-    { "id": "rc_lead_break_right", "role": "lead", "text": "Blue two, break right!", "urgent": true },
-    { "id": "rc_lead_six", "role": "lead", "text": "Bandit on your six!", "urgent": true },
-    { "id": "rc_lead_check_six", "role": "lead", "text": "Check six, Blue two! Check six!", "urgent": true },
-    { "id": "rc_lead_splash", "role": "lead", "text": "Splash one!", "urgent": true },
-    { "id": "rc_lead_nice", "role": "lead", "text": "Nice shooting, Blue two!", "urgent": true },
-    { "id": "rc_blue3_splash", "role": "blue3", "text": "Blue three, splash one!", "urgent": true },
-    { "id": "rc_lead_bombers", "role": "lead", "text": "Bandits on the bombers! Go get 'em!", "urgent": true },
-    { "id": "rc_lead_smoke", "role": "lead", "text": "Blue two, you're trailing smoke!", "urgent": true },
-    { "id": "rc_lead_engage", "role": "lead", "text": "Tally ho! Blue flight, drop tanks and engage!", "urgent": true },
-    { "id": "rc_lead_regroup", "role": "lead", "text": "Blue flight, regroup on me." },
-    { "id": "rc_lead_clear", "role": "lead", "text": "Sky's clear. Good work, Blue flight." },
-    { "id": "rc_bigfriend_thanks", "role": "bigfriend", "text": "Thanks, little friends. That was close!" },
-
-    { "group": "briefings (tools/voice/briefings.mjs)" },
-    { "id": "brief_m1_1", "role": "briefing", "text": "Gentlemen, this is your first one. The group puts up eighteen ships against the U-boat yards at Emden. Bombing altitude twenty-five thousand feet." },
-    { "id": "brief_m1_2", "role": "briefing", "text": "You are left waist gunner aboard the Sky Queen, number two ship in the lead element. Expect single-engine fighters over the Frisian coast. They will come in fast and they will come in close." },
-    { "id": "brief_m1_3", "role": "briefing", "text": "Lead your target. A fighter crossing at three hundred miles an hour needs a lot of lead — watch your tracers and walk them in. Short bursts. Keep that barrel cool." },
-    { "id": "brief_m1_4", "role": "briefing", "text": "A word about your ship. The Sky Queen is brand new, and so is her crew. Captain Brenner flies her, Lieutenant Stern has promised to find Emden on the first try, and Sergeant Gallo has already painted a crown under the pilot's window. Twenty-five missions and you go home. This is number one." },
-    { "id": "brief_m2_1", "role": "briefing", "text": "The Luftwaffe has learned that the nose of a Fortress is its weak spot. Their fighters are making head-on passes at closing speeds of six hundred miles an hour." },
-    { "id": "brief_m2_2", "role": "briefing", "text": "You are flying the top turret today. Twin fifties, three hundred and sixty degrees of traverse. When they come in from twelve o'clock high you are the man who has to stop them." },
-    { "id": "brief_m2_3", "role": "briefing", "text": "Bremen is heavily defended. Expect repeated attacks before and after the target." },
-    { "id": "brief_m2_4", "role": "briefing", "text": "The Sky Queen came back from Emden with forty-one holes in her and not a scratch on her crew. Sergeant Reilly says the ball turret is the safest seat in the house, because the Germans cannot find him down there. Lieutenant Doyle says nobody else can either. Mission two. Keep it off the interphone once we cross the coast." },
-    { "id": "brief_m8_1", "role": "briefing", "text": "Gentlemen, the target is Schweinfurt. Half the ball bearings in Germany come out of five factories in one small town. Flatten them, and every tank, U-boat and fighter in the Reich will feel it. The Eighth is putting up nearly three hundred Fortresses, and the Luftwaffe knows we are coming.", "say": "Gentlemen, the target is Shvine-foort. Half the ball bearings in Germany come out of five factories in one small town. Flatten them, and every tank, U-boat and fighter in the Reich will feel it. The Eighth is putting up nearly three hundred Fortresses, and the Luftwaffe knows we are coming." },
-    { "id": "brief_m8_2", "role": "briefing", "text": "The escort turns back at Aachen. After that we are on our own for two hundred miles, and intelligence expects every fighter group in western Germany to be waiting: single-engine fighters head-on, twin-engine destroyers firing rockets from astern. They will hit us in relays, land, refuel and come up again.", "say": "The escort turns back at Ahken. After that we are on our own for two hundred miles, and intelligence expects every fighter group in western Germany to be waiting: single-engine fighters head-on, twin-engine destroyers firing rockets from astern. They will hit us in relays, land, refuel and come up again." },
-    { "id": "brief_m8_3", "role": "briefing", "text": "You are in the ball turret today. Keep it turning, keep calling them out, and watch the bellies of the low squadron. Nobody else can see what is coming up from below." },
-    { "id": "brief_m8_4", "role": "briefing", "text": "This is the Sky Queen's third mission. Lieutenant Doyle wants it on the record that he volunteered for a milk run and nobody offered him one. Fly tight. Today a tight formation is the only escort you will have." },
-    { "id": "brief_m9_1", "role": "briefing", "text": "Until now the bombers have gone into Germany alone the moment the escort ran short of fuel. As of today that changes. The Mustang can reach Kiel and come home again, and you are going all the way with them.", "say": "Until now the bombers have gone into Germany alone the moment the escort ran short of fuel. As of today that changes. The Mustang can reach Keel and come home again, and you are going all the way with them." },
-    { "id": "brief_m9_2", "role": "briefing", "text": "The weather is the worst we have flown in. A front lies across the North Sea from the Frisian Islands to Denmark: towering cloud, icing above eight thousand feet and lightning in the tops. Stay on your leader's wing in the murk. The German fighters will come at the bombers through the gaps." },
-    { "id": "brief_m9_3", "role": "briefing", "text": "The bomber crews are watching you today. The Sky Queen's tail gunner, Sergeant Dawson, has seen too many friends go down after the escort turned for home. He says that if a Mustang sticks with them all the way to Kiel, he will buy its pilot dinner for a month.", "say": "The bomber crews are watching you today. The Sky Queen's tail gunner, Sergeant Dawson, has seen too many friends go down after the escort turned for home. He says that if a Mustang sticks with them all the way to Keel, he will buy its pilot dinner for a month." },
-    { "id": "brief_m9_4", "role": "briefing", "text": "Mouse aim flies the aeroplane where you look. Keep your speed up, do not chase them into the cloud, and stay with the big friends." },
-    { "id": "brief_m3_1", "role": "briefing", "text": "The I.G. Farben works at Ludwigshafen is ringed by more than two hundred heavy flak guns. There is nothing you can do about flak but pray — and keep the fighters off us.", "say": "The I G Farben works at Lood-vigs-hahfen is ringed by more than two hundred heavy flak guns. There is nothing you can do about flak but pray — and keep the fighters off us." },
-    { "id": "brief_m3_2", "role": "briefing", "text": "You are right waist gunner. Fighters will hit us on the way in, then pull off when we reach the flak belt. Once bombs are away, they will be back for the cripples." },
-    { "id": "brief_m3_3", "role": "briefing", "text": "Stay at your gun through the bomb run. Do not get out of position." },
-    { "id": "brief_m3_4", "role": "briefing", "text": "Since Schweinfurt the bunks across the aisle have changed names twice. The Lucky Lady never came back from that one, and her crew had been with the Sky Queen since training. Sergeant Mendez has blessed every gun aboard with a Saint Christopher medal. Lieutenant Kessler wants only one thing for Christmas: the aiming point.", "say": "Since Shvine-foort the bunks across the aisle have changed names twice. The Lucky Lady never came back from that one, and her crew had been with the Sky Queen since training. Sergeant Mendez has blessed every gun aboard with a Saint Christopher medal. Lieutenant Kessler wants only one thing for Christmas: the aiming point." },
-    { "id": "brief_m10_1", "role": "briefing", "text": "Frankfurt is burning behind us, and so is the Sky Queen. Flak over the target knocked out two engines and put Lieutenant Doyle on the floor of the cockpit with a piece of steel in his leg. The group could not wait for us. We are alone, low on fuel, and the sun is going down." },
-    { "id": "brief_m10_2", "role": "briefing", "text": "Lieutenant Stern has plotted the shortest line home: across Belgium and out over the Channel past Dunkirk. Every fighter field in Flanders sits under that line. Sergeant Gallo is calling Air-Sea Rescue every five minutes, and the crew has thrown out everything that is not bolted down, except the guns." },
-    { "id": "brief_m10_3", "role": "briefing", "text": "The Germans love a straggler at dusk. They will come out of the dark side of the sky, low over the water where you cannot see them against the sea. Watch the east, and use every gun position, one through five." },
-    { "id": "brief_m10_4", "role": "briefing", "text": "Fighter Command has promised an escort off the coast. Hold out until it gets here. Captain Brenner says this is the Sky Queen's thirteenth mission, and he is not putting an old lady in the Channel on her thirteenth." },
-    { "id": "brief_m4_1", "role": "briefing", "text": "Big Week. The whole Eighth Air Force is going after the German aircraft industry, and this time the bombers will not go alone." },
-    { "id": "brief_m4_2", "role": "briefing", "text": "You are flying a P-51D Mustang on close escort for a box of twelve Fortresses. Your job is to break up the fighter attacks before they reach the bombers. Do not chase the enemy all over Germany — stay with the big friends.", "say": "You are flying a P fifty-one D Mustang on close escort for a box of twelve Fortresses. Your job is to break up the fighter attacks before they reach the bombers. Do not chase the enemy all over Germany — stay with the big friends." },
-    { "id": "brief_m4_3", "role": "briefing", "text": "Mouse aim flies the aircraft toward where you look. W and S for throttle. Your six fifties are harmonised at three hundred yards." },
-    { "id": "brief_m4_4", "role": "briefing", "text": "Some of you met the Sky Queen's crew in the pub at Oundle after Kiel. Their tail gunner, Sergeant Dawson, is still paying for dinners for the Mustang pilots who went all the way with them. He says there is a steak in it for anyone who sees them home from Leipzig.", "say": "Some of you met the Sky Queen's crew in the pub at Oundle after Keel. Their tail gunner, Sergeant Dawson, is still paying for dinners for the Mustang pilots who went all the way with them. He says there is a steak in it for anyone who sees them home from Leipzig." },
-    { "id": "brief_m5_1", "role": "briefing", "text": "Intelligence reports a new kind of German unit: the Sturmgruppe. Heavily armoured Fw 190 A-8s that close to point-blank range from astern, in line abreast, and do not break off.", "say": "Intelligence reports a new kind of German unit: the Shtoorm-groopa. Heavily armoured Focke-Wulf one-ninety A eights that close to point-blank range from astern, in line abreast, and do not break off." },
-    { "id": "brief_m5_2", "role": "briefing", "text": "You are the tail gunner. They will be coming straight at you. Open fire early and keep firing — armour glass in their windscreens will stop a lot of what you throw at them." },
-    { "id": "brief_m5_3", "role": "briefing", "text": "The Sky Queen is one of the senior ships in the group now, with eighteen missions behind her. Lieutenant Doyle is back from hospital with a piece of Frankfurt flak on his key ring, and nobody aboard will say the word Schweinfurt out loud. The last time we went there, sixty Fortresses stayed behind. Not today.", "say": "The Sky Queen is one of the senior ships in the group now, with eighteen missions behind her. Lieutenant Doyle is back from hospital with a piece of Frankfurt flak on his key ring, and nobody aboard will say the word Shvine-foort out loud. The last time we went there, sixty Fortresses stayed behind. Not today." },
-    { "id": "brief_m11_1", "role": "briefing", "text": "This is the last day of Big Week, and the target is the one the group paid for so dearly in August: the Messerschmitt works at Regensburg. Every Bf 109 that has come at you this week was built under that roof. Today we take the roof off.", "say": "This is the last day of Big Week, and the target is the one the group paid for so dearly in August: the Messerschmitt works at Ray-gens-boorg. Every Messerschmitt one-oh-nine that has come at you this week was built under that roof. Today we take the roof off." },
-    { "id": "brief_m11_2", "role": "briefing", "text": "The plant is ringed by heavy guns, and they will fire a box barrage straight up the bomb run. From the initial point to bombs away is four minutes of straight and level flying. No evasive action. The Sky Queen holds her place in the formation and takes it." },
-    { "id": "brief_m11_3", "role": "briefing", "text": "Lieutenant Kessler has waited nineteen missions for a target like this. He spent the night with the target photographs and says he could find the assembly hall in his sleep. Your job is to keep the fighters off him until he does. You have the top turret, and they will come for the lead ships from above." },
-    { "id": "brief_m11_4", "role": "briefing", "text": "Sergeant Mendez has asked me to remind everyone that he does not like flak, and that he has been saying so since September. Noted, Sergeant. Bombs away is what this whole war is about. Make it count." },
-    { "id": "brief_m6_1", "role": "briefing", "text": "Flak over Berlin knocked out two of our engines. We cannot hold formation and the group is pulling away from us. A lone Fortress is exactly what the Jagdflieger are looking for.", "say": "Flak over Berlin knocked out two of our engines. We cannot hold formation and the group is pulling away from us. A lone Fortress is exactly what the Yahkt-fleeger are looking for." },
-    { "id": "brief_m6_2", "role": "briefing", "text": "Every gun aboard is manned. Switch positions as they come in — one through five. P-51s are on the way to pick us up, but we have to hold out until they get here.", "say": "Every gun aboard is manned. Switch positions as they come in — one through five. P fifty-ones are on the way to pick us up, but we have to hold out until they get here." },
-    { "id": "brief_m6_3", "role": "briefing", "text": "Sergeant Gallo is calling every station that will listen. Lieutenant Stern has us on a heading for the coast, and Captain Brenner has told the crew that the Sky Queen did not carry them through twenty-one missions to let them down now. Hold on." },
-    { "id": "brief_m7_1", "role": "briefing", "text": "This is the big one. The Luftwaffe is throwing everything it has left at the bomber stream over Berlin." },
-    { "id": "brief_m7_2", "role": "briefing", "text": "You lead the escort for our box. There will be more fighters than you can count — pick your targets, protect the bombers, and keep your speed up. Ammunition is limited: six hundred seconds of combat will not last six hundred seconds." },
-    { "id": "brief_m7_3", "role": "briefing", "text": "The Sky Queen made it home on two engines two days ago. The ground crew worked on her all night, and she is flying today with the men who would not leave her. When you see a Fortress with a crown painted under the cockpit, give her a little extra cover. She has three missions to go." },
-    { "id": "brief_m12_1", "role": "briefing", "text": "Gentlemen, this is a maximum effort. Big Week broke the back of the German fighter arm; today we finish the job. More than nine hundred heavy bombers are going after the aircraft plants at Oschersleben, Bernburg and Stettin, and the Luftwaffe will throw everything it has left at us.", "say": "Gentlemen, this is a maximum effort. Big Week broke the back of the German fighter arm; today we finish the job. More than nine hundred heavy bombers are going after the aircraft plants at Oshers-layben, Bernburg and Stettin, and the Luftwaffe will throw everything it has left at us." },
-    { "id": "brief_m12_2", "role": "briefing", "text": "There are Mustangs all the way to the target now, so the Germans hit the bomber stream before the escort can join. Expect a heavy attack on the way in, flak over the target, and a last fight before the little friends arrive. Hold on until they get there." },
-    { "id": "brief_m12_3", "role": "briefing", "text": "For the Sky Queen this is mission twenty-five. When she lands, her crew goes home. Lieutenant Doyle is back in the right-hand seat with a new limp and the same old jokes, and Sergeant Gallo has already painted the twenty-fifth bomb under the cockpit window. In pencil, he says, so it does not count as bad luck." },
-    { "id": "brief_m12_4", "role": "briefing", "text": "You are back on the left waist gun, where you started at Emden. Think of the crews who are not here today: the Lucky Lady over Schweinfurt, and the new boys who never finished their first week. Fly this one for them. Then come home, all of you.", "say": "You are back on the left waist gun, where you started at Emden. Think of the crews who are not here today: the Lucky Lady over Shvine-foort, and the new boys who never finished their first week. Fly this one for them. Then come home, all of you." }
+    {
+      "group": "existing: World.ts"
+    },
+    {
+      "id": "tanks",
+      "role": "nav",
+      "text": "They're dropping their belly tanks — here they come!",
+      "urgent": true
+    },
+    {
+      "id": "eng_hit_{i}",
+      "role": "pilot",
+      "text": "Number {n} engine is hit! Feathering number {n}!",
+      "vars": {
+        "n": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
+      },
+      "urgent": true
+    },
+    {
+      "id": "strag_player",
+      "role": "pilot",
+      "text": "We can't hold formation. We're falling behind — keep those guns hot!"
+    },
+    {
+      "id": "strag_{i}",
+      "role": "tail",
+      "text": "{name} is falling out of formation!",
+      "vars": {
+        "name": [
+          "Miss Fortune",
+          "Ole Rattler",
+          "Hell's Angel II",
+          "Dinah Might",
+          "Lucky Lady",
+          "Iron Maiden",
+          "Sweet Sue",
+          "Big Stoop",
+          "Night Owl",
+          "Wabash Cannonball",
+          "Patches",
+          "Belle of Ohio",
+          "Tondelayo II",
+          "Blue Streak",
+          "Short Snorter"
+        ]
+      }
+    },
+    {
+      "id": "crewwound_{i}",
+      "role": "pilot",
+      "text": "{who}! Somebody get him some help!",
+      "vars": {
+        "who": [
+          "Capt. Hal Brenner is hit up front in the cockpit",
+          "Lt. Frank Doyle is hit up front in the cockpit",
+          "Lt. Eli Stern is hit at the nav table",
+          "Lt. Ray Kessler is hit in the nose",
+          "Sgt. Mendez is hit at the top turret",
+          "Sgt. Tom Gallo is hit at the radio",
+          "Sgt. Reilly is hit in the ball turret",
+          "Sgt. Price is hit at the left waist gun",
+          "Sgt. Walsh is hit at the right waist gun",
+          "Sgt. Dawson is hit in the tail"
+        ]
+      },
+      "urgent": true
+    },
+    {
+      "id": "rockets",
+      "role": "tail",
+      "text": "Rockets! They're firing rockets into the formation!",
+      "urgent": true
+    },
+    {
+      "id": "fire_{i}",
+      "role": "top",
+      "text": "Fire in number {n} engine!",
+      "vars": {
+        "n": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
+      },
+      "urgent": true
+    },
+    {
+      "id": "fireout_{i}",
+      "role": "pilot",
+      "text": "Extinguisher's in. Fire's out on number {n}.",
+      "vars": {
+        "n": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
+      }
+    },
+    {
+      "id": "firestill_{i}",
+      "role": "pilot",
+      "text": "Extinguisher didn't take! Number {n} is still burning!",
+      "vars": {
+        "n": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
+      },
+      "urgent": true
+    },
+    {
+      "id": "pfx_fighters",
+      "roles": [
+        "pilot",
+        "nav",
+        "tail",
+        "top",
+        "ball",
+        "bombardier",
+        "lead"
+      ],
+      "text": "Fighters,",
+      "urgent": true
+    },
+    {
+      "id": "pfx_bandit_coming",
+      "roles": [
+        "pilot",
+        "nav",
+        "tail",
+        "top",
+        "ball",
+        "bombardier"
+      ],
+      "text": "Bandit coming in,",
+      "urgent": true
+    },
+    {
+      "id": "pfx_here_he_comes",
+      "roles": [
+        "pilot",
+        "nav",
+        "tail",
+        "top",
+        "ball",
+        "bombardier"
+      ],
+      "text": "Here he comes,",
+      "urgent": true
+    },
+    {
+      "id": "pfx_fw190",
+      "roles": [
+        "pilot",
+        "nav",
+        "tail",
+        "top",
+        "ball",
+        "bombardier"
+      ],
+      "text": "Fw one-ninety,",
+      "urgent": true
+    },
+    {
+      "id": "sfx_get_him",
+      "roles": [
+        "pilot",
+        "nav",
+        "tail",
+        "top",
+        "ball",
+        "bombardier"
+      ],
+      "text": "Get him!",
+      "urgent": true
+    },
+    {
+      "group": "existing: Game.ts"
+    },
+    {
+      "id": "ace",
+      "role": "pilot",
+      "text": "That's five! You're an ace, gunner — drinks are on me tonight!"
+    },
+    {
+      "id": "kill_going_down",
+      "roles": [
+        "tail",
+        "pilot",
+        "top",
+        "nav"
+      ],
+      "text": "Got him! He's going down!",
+      "urgent": true
+    },
+    {
+      "id": "kill_nice_shooting",
+      "roles": [
+        "tail",
+        "pilot",
+        "top",
+        "nav"
+      ],
+      "text": "You got him! Nice shooting!",
+      "urgent": true
+    },
+    {
+      "id": "kill_smoking",
+      "roles": [
+        "tail",
+        "pilot",
+        "top",
+        "nav"
+      ],
+      "text": "He's smoking — he's finished!",
+      "urgent": true
+    },
+    {
+      "id": "kill_messerschmitt",
+      "roles": [
+        "tail",
+        "pilot",
+        "top",
+        "nav"
+      ],
+      "text": "Scratch one Messerschmitt!",
+      "urgent": true
+    },
+    {
+      "id": "kill_focke_wulf",
+      "roles": [
+        "tail",
+        "pilot",
+        "top",
+        "nav"
+      ],
+      "text": "Scratch one Focke-Wulf!",
+      "urgent": true
+    },
+    {
+      "id": "lost_{i}",
+      "role": "tail",
+      "text": "{name} is going down! Count the chutes!",
+      "vars": {
+        "name": [
+          "Miss Fortune",
+          "Ole Rattler",
+          "Hell's Angel II",
+          "Dinah Might",
+          "Lucky Lady",
+          "Iron Maiden",
+          "Sweet Sue",
+          "Big Stoop",
+          "Night Owl",
+          "Wabash Cannonball",
+          "Patches",
+          "Belle of Ohio",
+          "Tondelayo II",
+          "Blue Streak",
+          "Short Snorter"
+        ]
+      },
+      "urgent": true
+    },
+    {
+      "id": "playerdown",
+      "role": "pilot",
+      "text": "We've had it! Bail out! Bail out!",
+      "urgent": true
+    },
+    {
+      "id": "wound",
+      "role": "nav",
+      "text": "Gunner's hit! Stay on that gun if you can!",
+      "urgent": true
+    },
+    {
+      "id": "start_gunner",
+      "role": "pilot",
+      "text": "Pilot to crew: we're at altitude. Test fire your guns, and keep your eyes open."
+    },
+    {
+      "id": "start_pilot",
+      "role": "lead",
+      "text": "Blue flight, form up on the bombers. Keep your eyes peeled for bandits."
+    },
+    {
+      "id": "pfx_bandits",
+      "roles": [
+        "tail",
+        "nav",
+        "lead"
+      ],
+      "text": "Bandits,",
+      "urgent": true
+    },
+    {
+      "id": "pfx_more_bandits",
+      "roles": [
+        "tail",
+        "nav",
+        "lead"
+      ],
+      "text": "More bandits,",
+      "urgent": true
+    },
+    {
+      "id": "flak",
+      "role": "nav",
+      "text": "Flak ahead. Initial point in two minutes — here it comes."
+    },
+    {
+      "id": "bombs",
+      "role": "bombardier",
+      "text": "Bombs away! Let's get out of here!"
+    },
+    {
+      "id": "escort",
+      "role": "radio",
+      "text": "Little friends at six o'clock high! The Mustangs are here!"
+    },
+    {
+      "id": "chat_oxygen",
+      "role": "pilot",
+      "text": "Pilot to crew, oxygen check. Sound off."
+    },
+    {
+      "id": "chat_tail_oxygen",
+      "role": "tail",
+      "text": "Tail gunner, oxygen okay."
+    },
+    {
+      "id": "chat_nav_course",
+      "role": "nav",
+      "text": "Navigator to pilot: on course, two-seven minutes to the IP."
+    },
+    {
+      "id": "chat_ball_clear",
+      "role": "ball",
+      "text": "Ball turret. Nothing below but cloud. Guns are clear."
+    },
+    {
+      "id": "chat_radio_group",
+      "role": "radio",
+      "text": "Radio to pilot: group says keep it tight, fighters reported ahead."
+    },
+    {
+      "id": "chat_engineer_hot",
+      "role": "top",
+      "text": "Engineer to pilot: number three's running a little hot. Watching it."
+    },
+    {
+      "id": "chat_bombardier_sun",
+      "role": "bombardier",
+      "text": "Bombardier here. Keep your eyes open, they like to come out of the sun."
+    },
+    {
+      "id": "chat_interphone",
+      "role": "pilot",
+      "text": "Stay off the interphone unless you see fighters. Keep scanning."
+    },
+    {
+      "id": "chat_lead_fuel",
+      "role": "lead",
+      "text": "Blue flight, check your fuel. Weave over the big friends."
+    },
+    {
+      "id": "chat_bigfriend_thanks",
+      "role": "bigfriend",
+      "text": "Little friends, little friends, thanks for the company."
+    },
+    {
+      "id": "chat_lead_swivel",
+      "role": "lead",
+      "text": "Keep your heads on a swivel. They'll come out of the sun."
+    },
+    {
+      "id": "chat_blue3_temps",
+      "role": "blue3",
+      "text": "Blue Three, engine temps okay. Holding high cover."
+    },
+    {
+      "group": "existing: GunnerController.ts"
+    },
+    {
+      "id": "hot",
+      "role": "pilot",
+      "text": "Short bursts! You'll burn out that barrel!",
+      "urgent": true
+    },
+    {
+      "group": "existing: Missions.ts radio"
+    },
+    {
+      "id": "m_coast_nine_low",
+      "role": "nav",
+      "text": "Fighters coming up from the coast, nine o'clock low. Stay sharp."
+    },
+    {
+      "id": "m_more_ahead",
+      "role": "pilot",
+      "text": "More of them up ahead. Twelve o'clock — here they come."
+    },
+    {
+      "id": "m_more_left",
+      "role": "waist",
+      "text": "More coming in on the left! Watch your nine!",
+      "urgent": true
+    },
+    {
+      "id": "m_last_bunch",
+      "role": "nav",
+      "text": "Last bunch before the target. Make them count!"
+    },
+    {
+      "id": "m_staffel_high",
+      "role": "bombardier",
+      "text": "Bandits! Twelve o'clock high, a whole Staffel of them!",
+      "urgent": true
+    },
+    {
+      "id": "m_out_of_sun",
+      "role": "tail",
+      "text": "Fighters up high, coming out of the sun!",
+      "urgent": true
+    },
+    {
+      "id": "m_three_level",
+      "role": "ball",
+      "text": "Fighters, three o'clock level! Coming in from the right!",
+      "urgent": true
+    },
+    {
+      "id": "m_through_flak",
+      "role": "pilot",
+      "text": "We're through the flak. Here come the fighters again — watch the cripples."
+    },
+    {
+      "id": "m_lead_climbing",
+      "role": "lead",
+      "text": "Bandits twelve o'clock low, climbing for the bombers. Let's go get them."
+    },
+    {
+      "id": "m_bigfriend_six",
+      "role": "bigfriend",
+      "text": "Little friends, little friends, we have bandits at our six o'clock!",
+      "urgent": true
+    },
+    {
+      "id": "m_assembling_six",
+      "role": "nav",
+      "text": "Fighters assembling behind us, six o'clock level. Lots of them."
+    },
+    {
+      "id": "m_whole_gaggle",
+      "role": "pilot",
+      "text": "Here comes the whole gaggle! Tail, they're all yours!",
+      "urgent": true
+    },
+    {
+      "id": "m_staffel_astern",
+      "role": "tail",
+      "text": "Another Staffel forming up astern!"
+    },
+    {
+      "id": "m_two_closing",
+      "role": "tail",
+      "text": "Two fighters closing from six o'clock. They've spotted us."
+    },
+    {
+      "id": "m_escort_sixty",
+      "role": "radio",
+      "text": "Escort reports sixty seconds out. Hang on!"
+    },
+    {
+      "id": "m_lead_drop_tanks",
+      "role": "lead",
+      "text": "Here they come. Big gaggle at twelve o'clock — drop tanks and go!",
+      "urgent": true
+    },
+    {
+      "id": "m_bigfriend_everywhere",
+      "role": "bigfriend",
+      "text": "More bandits! They're everywhere!",
+      "urgent": true
+    },
+    {
+      "id": "m_whole_luftwaffe",
+      "role": "pilot",
+      "text": "Here they come. Looks like the whole Luftwaffe is up today!",
+      "urgent": true
+    },
+    {
+      "id": "m_lead_murk",
+      "role": "lead",
+      "text": "Bandits climbing out of the murk, twelve o'clock low. Blue flight, stay with me!",
+      "urgent": true
+    },
+    {
+      "id": "m_low_on_water",
+      "role": "tail",
+      "text": "Fighters low on the water, six o'clock. They followed us out."
+    },
+    {
+      "id": "m_bomb_run_high",
+      "role": "bombardier",
+      "text": "Bandits up high, going for the lead ships. Keep them off me till we're on the bomb run!",
+      "urgent": true
+    },
+    {
+      "id": "m_one_more_time",
+      "role": "pilot",
+      "text": "Pilot to crew, one more time. Fighters, twelve o'clock high, a lot of them!",
+      "urgent": true
+    },
+    {
+      "group": "new: crew instructions (RadioChatter.ts)"
+    },
+    {
+      "id": "rc_threat_tail",
+      "role": "pilot",
+      "text": "Fighters coming in from six o'clock, get on the tail gun!",
+      "urgent": true
+    },
+    {
+      "id": "rc_threat_ball",
+      "role": "copilot",
+      "text": "Ball turret, they're coming up from below!",
+      "urgent": true
+    },
+    {
+      "id": "rc_threat_top",
+      "role": "pilot",
+      "text": "Top turret, bandits high at twelve!",
+      "urgent": true
+    },
+    {
+      "id": "rc_threat_waist_left",
+      "role": "copilot",
+      "text": "Left waist, bandits coming in at nine o'clock!",
+      "urgent": true
+    },
+    {
+      "id": "rc_threat_waist_right",
+      "role": "copilot",
+      "text": "Right waist, fighters at three o'clock!",
+      "urgent": true
+    },
+    {
+      "id": "rc_threat_nose",
+      "role": "bombardier",
+      "text": "Bandits on the nose, twelve o'clock level!",
+      "urgent": true
+    },
+    {
+      "id": "rc_switch_gun",
+      "role": "pilot",
+      "text": "Switch guns! They're coming in on the other side!",
+      "urgent": true
+    },
+    {
+      "id": "rc_kill_good",
+      "roles": [
+        "pilot",
+        "copilot",
+        "tail",
+        "top"
+      ],
+      "text": "Good shooting, he's going down!",
+      "urgent": true
+    },
+    {
+      "id": "rc_kill_flamer",
+      "roles": [
+        "tail",
+        "top",
+        "ball"
+      ],
+      "text": "He's a flamer! Nice work!",
+      "urgent": true
+    },
+    {
+      "id": "rc_kill_chute",
+      "role": "nav",
+      "text": "I see a chute. He's out of it."
+    },
+    {
+      "id": "rc_kill_streak",
+      "role": "pilot",
+      "text": "That's another one! Keep it up, gunner!",
+      "urgent": true
+    },
+    {
+      "id": "rc_ammo_short",
+      "role": "pilot",
+      "text": "Watch your ammo, short bursts!"
+    },
+    {
+      "id": "rc_ammo_low",
+      "role": "top",
+      "text": "Ammo's getting low back there. Make 'em count!"
+    },
+    {
+      "id": "rc_lead_more",
+      "role": "tail",
+      "text": "Lead him more! Aim where he's going!",
+      "urgent": true
+    },
+    {
+      "id": "rc_regroup",
+      "role": "nav",
+      "text": "They're regrouping, here they come again!",
+      "urgent": true
+    },
+    {
+      "id": "rc_evasive",
+      "role": "pilot",
+      "text": "Hang on, evasive action!",
+      "urgent": true
+    },
+    {
+      "id": "rc_hit",
+      "role": "copilot",
+      "text": "We're hit, we're hit!",
+      "urgent": true
+    },
+    {
+      "id": "rc_hit_check",
+      "role": "pilot",
+      "text": "Pilot to crew, damage check. Everybody okay back there?"
+    },
+    {
+      "id": "rc_hit_holding",
+      "role": "copilot",
+      "text": "She's still flying. Stay on those guns!"
+    },
+    {
+      "id": "rc_close",
+      "role": "tail",
+      "text": "He's coming right at us! Keep firing!",
+      "urgent": true
+    },
+    {
+      "id": "rc_cripples",
+      "role": "nav",
+      "text": "They're going after the stragglers. Cover them!",
+      "urgent": true
+    },
+    {
+      "id": "rc_round_start",
+      "role": "nav",
+      "text": "Fighters forming up out there. Stand by, gunners."
+    },
+    {
+      "id": "rc_next_wave",
+      "role": "pilot",
+      "text": "Here comes the next wave, look sharp!",
+      "urgent": true
+    },
+    {
+      "id": "rc_round_over",
+      "role": "pilot",
+      "text": "Round over. Nice work, gunners."
+    },
+    {
+      "id": "rc_lull",
+      "role": "pilot",
+      "text": "Keep scanning. They'll be back."
+    },
+    {
+      "id": "rc_going_home",
+      "role": "pilot",
+      "text": "That's the last of them. We're going home, boys."
+    },
+    {
+      "group": "new: P-51 flight (RadioChatter.ts)"
+    },
+    {
+      "id": "rc_lead_break_left",
+      "role": "lead",
+      "text": "Blue two, break left!",
+      "urgent": true
+    },
+    {
+      "id": "rc_lead_break_right",
+      "role": "lead",
+      "text": "Blue two, break right!",
+      "urgent": true
+    },
+    {
+      "id": "rc_lead_six",
+      "role": "lead",
+      "text": "Bandit on your six!",
+      "urgent": true
+    },
+    {
+      "id": "rc_lead_check_six",
+      "role": "lead",
+      "text": "Check six, Blue two! Check six!",
+      "urgent": true
+    },
+    {
+      "id": "rc_lead_splash",
+      "role": "lead",
+      "text": "Splash one!",
+      "urgent": true
+    },
+    {
+      "id": "rc_lead_nice",
+      "role": "lead",
+      "text": "Nice shooting, Blue two!",
+      "urgent": true
+    },
+    {
+      "id": "rc_blue3_splash",
+      "role": "blue3",
+      "text": "Blue three, splash one!",
+      "urgent": true
+    },
+    {
+      "id": "rc_lead_bombers",
+      "role": "lead",
+      "text": "Bandits on the bombers! Go get 'em!",
+      "urgent": true
+    },
+    {
+      "id": "rc_lead_smoke",
+      "role": "lead",
+      "text": "Blue two, you're trailing smoke!",
+      "urgent": true
+    },
+    {
+      "id": "rc_lead_engage",
+      "role": "lead",
+      "text": "Tally ho! Blue flight, drop tanks and engage!",
+      "urgent": true
+    },
+    {
+      "id": "rc_lead_regroup",
+      "role": "lead",
+      "text": "Blue flight, regroup on me."
+    },
+    {
+      "id": "rc_lead_clear",
+      "role": "lead",
+      "text": "Sky's clear. Good work, Blue flight."
+    },
+    {
+      "id": "rc_bigfriend_thanks",
+      "role": "bigfriend",
+      "text": "Thanks, little friends. That was close!"
+    },
+    {
+      "group": "briefings (tools/voice/briefings.mjs)"
+    },
+    {
+      "id": "brief_m1_1",
+      "role": "briefing",
+      "text": "Gentlemen, this is your first one. The group puts up eighteen ships against the U-boat yards at Emden. Bombing altitude twenty-five thousand feet."
+    },
+    {
+      "id": "brief_m1_2",
+      "role": "briefing",
+      "text": "You are left waist gunner aboard the Sky Queen, number two ship in the lead element. Expect single-engine fighters over the Frisian coast. They will come in fast and they will come in close."
+    },
+    {
+      "id": "brief_m1_3",
+      "role": "briefing",
+      "text": "Lead your target. A fighter crossing at three hundred miles an hour needs a lot of lead — watch your tracers and walk them in. Short bursts. Keep that barrel cool."
+    },
+    {
+      "id": "brief_m1_4",
+      "role": "briefing",
+      "text": "A word about your ship. The Sky Queen is brand new, and so is her crew. Captain Brenner flies her, Lieutenant Stern has promised to find Emden on the first try, and Sergeant Gallo has already painted a crown under the pilot's window. Twenty-five missions and you go home. This is number one."
+    },
+    {
+      "id": "brief_m2_1",
+      "role": "briefing",
+      "text": "The Luftwaffe has learned that the nose of a Fortress is its weak spot. Their fighters are making head-on passes at closing speeds of six hundred miles an hour."
+    },
+    {
+      "id": "brief_m2_2",
+      "role": "briefing",
+      "text": "You are flying the top turret today. Twin fifties, three hundred and sixty degrees of traverse. When they come in from twelve o'clock high you are the man who has to stop them."
+    },
+    {
+      "id": "brief_m2_3",
+      "role": "briefing",
+      "text": "Bremen is heavily defended. Expect repeated attacks before and after the target."
+    },
+    {
+      "id": "brief_m2_4",
+      "role": "briefing",
+      "text": "The Sky Queen came back from Emden with forty-one holes in her and not a scratch on her crew. Sergeant Reilly says the ball turret is the safest seat in the house, because the Germans cannot find him down there. Lieutenant Doyle says nobody else can either. Mission two. Keep it off the interphone once we cross the coast."
+    },
+    {
+      "id": "brief_m8_1",
+      "role": "briefing",
+      "text": "Gentlemen, the target is Schweinfurt. Half the ball bearings in Germany come out of five factories in one small town. Flatten them, and every tank, U-boat and fighter in the Reich will feel it. The Eighth is putting up nearly three hundred Fortresses, and the Luftwaffe knows we are coming.",
+      "say": "Gentlemen, the target is Shvine-foort. Half the ball bearings in Germany come out of five factories in one small town. Flatten them, and every tank, U-boat and fighter in the Reich will feel it. The Eighth is putting up nearly three hundred Fortresses, and the Luftwaffe knows we are coming."
+    },
+    {
+      "id": "brief_m8_2",
+      "role": "briefing",
+      "text": "The escort turns back at Aachen. After that we are on our own for two hundred miles, and intelligence expects every fighter group in western Germany to be waiting: single-engine fighters head-on, twin-engine destroyers firing rockets from astern. They will hit us in relays, land, refuel and come up again.",
+      "say": "The escort turns back at Ahken. After that we are on our own for two hundred miles, and intelligence expects every fighter group in western Germany to be waiting: single-engine fighters head-on, twin-engine destroyers firing rockets from astern. They will hit us in relays, land, refuel and come up again."
+    },
+    {
+      "id": "brief_m8_3",
+      "role": "briefing",
+      "text": "You are in the ball turret today. Keep it turning, keep calling them out, and watch the bellies of the low squadron. Nobody else can see what is coming up from below."
+    },
+    {
+      "id": "brief_m8_4",
+      "role": "briefing",
+      "text": "This is the Sky Queen's third mission. Lieutenant Doyle wants it on the record that he volunteered for a milk run and nobody offered him one. Fly tight. Today a tight formation is the only escort you will have."
+    },
+    {
+      "id": "brief_m9_1",
+      "role": "briefing",
+      "text": "Until now the bombers have gone into Germany alone the moment the escort ran short of fuel. As of today that changes. The Mustang can reach Kiel and come home again, and you are going all the way with them.",
+      "say": "Until now the bombers have gone into Germany alone the moment the escort ran short of fuel. As of today that changes. The Mustang can reach Keel and come home again, and you are going all the way with them."
+    },
+    {
+      "id": "brief_m9_2",
+      "role": "briefing",
+      "text": "The weather is the worst we have flown in. A front lies across the North Sea from the Frisian Islands to Denmark: towering cloud, icing above eight thousand feet and lightning in the tops. Stay on your leader's wing in the murk. The German fighters will come at the bombers through the gaps."
+    },
+    {
+      "id": "brief_m9_3",
+      "role": "briefing",
+      "text": "The bomber crews are watching you today. The Sky Queen's tail gunner, Sergeant Dawson, has seen too many friends go down after the escort turned for home. He says that if a Mustang sticks with them all the way to Kiel, he will buy its pilot dinner for a month.",
+      "say": "The bomber crews are watching you today. The Sky Queen's tail gunner, Sergeant Dawson, has seen too many friends go down after the escort turned for home. He says that if a Mustang sticks with them all the way to Keel, he will buy its pilot dinner for a month."
+    },
+    {
+      "id": "brief_m9_4",
+      "role": "briefing",
+      "text": "Mouse aim flies the aeroplane where you look. Keep your speed up, do not chase them into the cloud, and stay with the big friends."
+    },
+    {
+      "id": "brief_m3_1",
+      "role": "briefing",
+      "text": "The I.G. Farben works at Ludwigshafen is ringed by more than two hundred heavy flak guns. There is nothing you can do about flak but pray — and keep the fighters off us.",
+      "say": "The I G Farben works at Lood-vigs-hahfen is ringed by more than two hundred heavy flak guns. There is nothing you can do about flak but pray — and keep the fighters off us."
+    },
+    {
+      "id": "brief_m3_2",
+      "role": "briefing",
+      "text": "You are right waist gunner. Fighters will hit us on the way in, then pull off when we reach the flak belt. Once bombs are away, they will be back for the cripples."
+    },
+    {
+      "id": "brief_m3_3",
+      "role": "briefing",
+      "text": "Stay at your gun through the bomb run. Do not get out of position."
+    },
+    {
+      "id": "brief_m3_4",
+      "role": "briefing",
+      "text": "Since Schweinfurt the bunks across the aisle have changed names twice. The Lucky Lady never came back from that one, and her crew had been with the Sky Queen since training. Sergeant Mendez has blessed every gun aboard with a Saint Christopher medal. Lieutenant Kessler wants only one thing for Christmas: the aiming point.",
+      "say": "Since Shvine-foort the bunks across the aisle have changed names twice. The Lucky Lady never came back from that one, and her crew had been with the Sky Queen since training. Sergeant Mendez has blessed every gun aboard with a Saint Christopher medal. Lieutenant Kessler wants only one thing for Christmas: the aiming point."
+    },
+    {
+      "id": "brief_m10_1",
+      "role": "briefing",
+      "text": "Frankfurt is burning behind us, and so is the Sky Queen. Flak over the target knocked out two engines and put Lieutenant Doyle on the floor of the cockpit with a piece of steel in his leg. The group could not wait for us. We are alone, low on fuel, and the sun is going down."
+    },
+    {
+      "id": "brief_m10_2",
+      "role": "briefing",
+      "text": "Lieutenant Stern has plotted the shortest line home: across Belgium and out over the Channel past Dunkirk. Every fighter field in Flanders sits under that line. Sergeant Gallo is calling Air-Sea Rescue every five minutes, and the crew has thrown out everything that is not bolted down, except the guns."
+    },
+    {
+      "id": "brief_m10_3",
+      "role": "briefing",
+      "text": "The Germans love a straggler at dusk. They will come out of the dark side of the sky, low over the water where you cannot see them against the sea. Watch the east, and use every gun position, one through five."
+    },
+    {
+      "id": "brief_m10_4",
+      "role": "briefing",
+      "text": "Fighter Command has promised an escort off the coast. Hold out until it gets here. Captain Brenner says this is the Sky Queen's thirteenth mission, and he is not putting an old lady in the Channel on her thirteenth."
+    },
+    {
+      "id": "brief_m4_1",
+      "role": "briefing",
+      "text": "Big Week. The whole Eighth Air Force is going after the German aircraft industry, and this time the bombers will not go alone."
+    },
+    {
+      "id": "brief_m4_2",
+      "role": "briefing",
+      "text": "You are flying a P-51D Mustang on close escort for a box of twelve Fortresses. Your job is to break up the fighter attacks before they reach the bombers. Do not chase the enemy all over Germany — stay with the big friends.",
+      "say": "You are flying a P fifty-one D Mustang on close escort for a box of twelve Fortresses. Your job is to break up the fighter attacks before they reach the bombers. Do not chase the enemy all over Germany — stay with the big friends."
+    },
+    {
+      "id": "brief_m4_3",
+      "role": "briefing",
+      "text": "Mouse aim flies the aircraft toward where you look. W and S for throttle. Your six fifties are harmonised at three hundred yards."
+    },
+    {
+      "id": "brief_m4_4",
+      "role": "briefing",
+      "text": "Some of you met the Sky Queen's crew in the pub at Oundle after Kiel. Their tail gunner, Sergeant Dawson, is still paying for dinners for the Mustang pilots who went all the way with them. He says there is a steak in it for anyone who sees them home from Leipzig.",
+      "say": "Some of you met the Sky Queen's crew in the pub at Oundle after Keel. Their tail gunner, Sergeant Dawson, is still paying for dinners for the Mustang pilots who went all the way with them. He says there is a steak in it for anyone who sees them home from Leipzig."
+    },
+    {
+      "id": "brief_m5_1",
+      "role": "briefing",
+      "text": "Intelligence reports a new kind of German unit: the Sturmgruppe. Heavily armoured Fw 190 A-8s that close to point-blank range from astern, in line abreast, and do not break off.",
+      "say": "Intelligence reports a new kind of German unit: the Shtoorm-groopa. Heavily armoured Focke-Wulf one-ninety A eights that close to point-blank range from astern, in line abreast, and do not break off."
+    },
+    {
+      "id": "brief_m5_2",
+      "role": "briefing",
+      "text": "You are the tail gunner. They will be coming straight at you. Open fire early and keep firing — armour glass in their windscreens will stop a lot of what you throw at them."
+    },
+    {
+      "id": "brief_m5_3",
+      "role": "briefing",
+      "text": "The Sky Queen is one of the senior ships in the group now, with eighteen missions behind her. Lieutenant Doyle is back from hospital with a piece of Frankfurt flak on his key ring, and nobody aboard will say the word Schweinfurt out loud. The last time we went there, sixty Fortresses stayed behind. Not today.",
+      "say": "The Sky Queen is one of the senior ships in the group now, with eighteen missions behind her. Lieutenant Doyle is back from hospital with a piece of Frankfurt flak on his key ring, and nobody aboard will say the word Shvine-foort out loud. The last time we went there, sixty Fortresses stayed behind. Not today."
+    },
+    {
+      "id": "brief_m11_1",
+      "role": "briefing",
+      "text": "This is the last day of Big Week, and the target is the one the group paid for so dearly in August: the Messerschmitt works at Regensburg. Every Bf 109 that has come at you this week was built under that roof. Today we take the roof off.",
+      "say": "This is the last day of Big Week, and the target is the one the group paid for so dearly in August: the Messerschmitt works at Ray-gens-boorg. Every Messerschmitt one-oh-nine that has come at you this week was built under that roof. Today we take the roof off."
+    },
+    {
+      "id": "brief_m11_2",
+      "role": "briefing",
+      "text": "The plant is ringed by heavy guns, and they will fire a box barrage straight up the bomb run. From the initial point to bombs away is four minutes of straight and level flying. No evasive action. The Sky Queen holds her place in the formation and takes it."
+    },
+    {
+      "id": "brief_m11_3",
+      "role": "briefing",
+      "text": "Lieutenant Kessler has waited nineteen missions for a target like this. He spent the night with the target photographs and says he could find the assembly hall in his sleep. Your job is to keep the fighters off him until he does. You have the top turret, and they will come for the lead ships from above."
+    },
+    {
+      "id": "brief_m11_4",
+      "role": "briefing",
+      "text": "Sergeant Mendez has asked me to remind everyone that he does not like flak, and that he has been saying so since September. Noted, Sergeant. Bombs away is what this whole war is about. Make it count."
+    },
+    {
+      "id": "brief_m6_1",
+      "role": "briefing",
+      "text": "Flak over Berlin knocked out two of our engines. We cannot hold formation and the group is pulling away from us. A lone Fortress is exactly what the Jagdflieger are looking for.",
+      "say": "Flak over Berlin knocked out two of our engines. We cannot hold formation and the group is pulling away from us. A lone Fortress is exactly what the Yahkt-fleeger are looking for."
+    },
+    {
+      "id": "brief_m6_2",
+      "role": "briefing",
+      "text": "Every gun aboard is manned. Switch positions as they come in — one through five. P-51s are on the way to pick us up, but we have to hold out until they get here.",
+      "say": "Every gun aboard is manned. Switch positions as they come in — one through five. P fifty-ones are on the way to pick us up, but we have to hold out until they get here."
+    },
+    {
+      "id": "brief_m6_3",
+      "role": "briefing",
+      "text": "Sergeant Gallo is calling every station that will listen. Lieutenant Stern has us on a heading for the coast, and Captain Brenner has told the crew that the Sky Queen did not carry them through twenty-one missions to let them down now. Hold on."
+    },
+    {
+      "id": "brief_m7_1",
+      "role": "briefing",
+      "text": "This is the big one. The Luftwaffe is throwing everything it has left at the bomber stream over Berlin."
+    },
+    {
+      "id": "brief_m7_2",
+      "role": "briefing",
+      "text": "You lead the escort for our box. There will be more fighters than you can count — pick your targets, protect the bombers, and keep your speed up. Ammunition is limited: six hundred seconds of combat will not last six hundred seconds."
+    },
+    {
+      "id": "brief_m7_3",
+      "role": "briefing",
+      "text": "The Sky Queen made it home on two engines two days ago. The ground crew worked on her all night, and she is flying today with the men who would not leave her. When you see a Fortress with a crown painted under the cockpit, give her a little extra cover. She has three missions to go."
+    },
+    {
+      "id": "brief_m12_1",
+      "role": "briefing",
+      "text": "Gentlemen, this is a maximum effort. Big Week broke the back of the German fighter arm; today we finish the job. More than nine hundred heavy bombers are going after the aircraft plants at Oschersleben, Bernburg and Stettin, and the Luftwaffe will throw everything it has left at us.",
+      "say": "Gentlemen, this is a maximum effort. Big Week broke the back of the German fighter arm; today we finish the job. More than nine hundred heavy bombers are going after the aircraft plants at Oshers-layben, Bernburg and Stettin, and the Luftwaffe will throw everything it has left at us."
+    },
+    {
+      "id": "brief_m12_2",
+      "role": "briefing",
+      "text": "There are Mustangs all the way to the target now, so the Germans hit the bomber stream before the escort can join. Expect a heavy attack on the way in, flak over the target, and a last fight before the little friends arrive. Hold on until they get there."
+    },
+    {
+      "id": "brief_m12_3",
+      "role": "briefing",
+      "text": "For the Sky Queen this is mission twenty-five. When she lands, her crew goes home. Lieutenant Doyle is back in the right-hand seat with a new limp and the same old jokes, and Sergeant Gallo has already painted the twenty-fifth bomb under the cockpit window. In pencil, he says, so it does not count as bad luck."
+    },
+    {
+      "id": "brief_m12_4",
+      "role": "briefing",
+      "text": "You are back on the left waist gun, where you started at Emden. Think of the crews who are not here today: the Lucky Lady over Schweinfurt, and the new boys who never finished their first week. Fly this one for them. Then come home, all of you.",
+      "say": "You are back on the left waist gun, where you started at Emden. Think of the crews who are not here today: the Lucky Lady over Shvine-foort, and the new boys who never finished their first week. Fly this one for them. Then come home, all of you."
+    },
+    {
+      "id": "crewwound_x_{i}",
+      "role": "pilot",
+      "text": "{who}! Somebody get him some help!",
+      "vars": {
+        "who": [
+          "Sgt. Mendez is hit at the radio",
+          "Sgt. Mendez is hit in the ball turret",
+          "Sgt. Mendez is hit at the left waist gun",
+          "Sgt. Mendez is hit at the right waist gun",
+          "Sgt. Mendez is hit in the tail",
+          "Sgt. Tom Gallo is hit at the top turret",
+          "Sgt. Tom Gallo is hit in the ball turret",
+          "Sgt. Tom Gallo is hit at the left waist gun",
+          "Sgt. Tom Gallo is hit at the right waist gun",
+          "Sgt. Tom Gallo is hit in the tail",
+          "Sgt. Reilly is hit at the top turret",
+          "Sgt. Reilly is hit at the radio",
+          "Sgt. Reilly is hit at the left waist gun",
+          "Sgt. Reilly is hit at the right waist gun",
+          "Sgt. Reilly is hit in the tail",
+          "Sgt. Price is hit at the top turret",
+          "Sgt. Price is hit at the radio",
+          "Sgt. Price is hit in the ball turret",
+          "Sgt. Price is hit at the right waist gun",
+          "Sgt. Price is hit in the tail",
+          "Sgt. Walsh is hit at the top turret",
+          "Sgt. Walsh is hit at the radio",
+          "Sgt. Walsh is hit in the ball turret",
+          "Sgt. Walsh is hit at the left waist gun",
+          "Sgt. Walsh is hit in the tail",
+          "Sgt. Dawson is hit at the top turret",
+          "Sgt. Dawson is hit at the radio",
+          "Sgt. Dawson is hit in the ball turret",
+          "Sgt. Dawson is hit at the left waist gun",
+          "Sgt. Dawson is hit at the right waist gun",
+          "Sgt. Kowalski is hit at the top turret",
+          "Sgt. Hughes is hit at the radio",
+          "Sgt. Baker is hit in the ball turret",
+          "Sgt. Russo is hit at the left waist gun",
+          "Sgt. Novak is hit at the right waist gun",
+          "Sgt. Fisher is hit in the tail",
+          "Capt. Bill Morrow is hit up front in the cockpit",
+          "Lt. Jim Carver is hit up front in the cockpit",
+          "Lt. Ed Pruitt is hit at the nav table",
+          "Lt. Sam Ortega is hit in the nose"
+        ]
+      },
+      "urgent": true
+    },
+    {
+      "id": "crew_levelup_1",
+      "roles": [
+        "top",
+        "radio",
+        "ball",
+        "waist",
+        "tail"
+      ],
+      "text": "Getting the feel of this gun now. Keep 'em coming!"
+    },
+    {
+      "id": "crew_levelup_2",
+      "roles": [
+        "top",
+        "radio",
+        "ball",
+        "waist",
+        "tail"
+      ],
+      "text": "I'm getting the hang of this. Send me another one!"
+    },
+    {
+      "id": "crew_levelup_3",
+      "roles": [
+        "top",
+        "radio",
+        "ball",
+        "waist",
+        "tail"
+      ],
+      "text": "Starting to see 'em before they see me."
+    }
   ]
 }
