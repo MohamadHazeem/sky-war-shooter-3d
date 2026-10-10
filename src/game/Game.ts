@@ -67,7 +67,7 @@ export class Game {
     this.world = new World(engine);
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
-    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, radio: false, music: true, quality: 'high', markers: true, flightMode: 'mouseAim', difficulty: 'veteran' });
+    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, radio: false, music: true, quality: 'high', markers: true, leadPip: 'recruit', flightMode: 'mouseAim', difficulty: 'veteran' });
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
@@ -825,8 +825,9 @@ export class Game {
       ctx.font = '600 20px Oswald, sans-serif'; ctx.textAlign = 'center';
       ctx.fillText(pop.text, (p.x * 0.5 + 0.5) * W, (-p.y * 0.5 + 0.5) * H - (1.6 - pop.life) * 40);
     }
-    // Recruit aim aid: lead pip for the enemy nearest the line of fire
-    if (this.settings.difficulty === 'recruit' && pl?.alive) this.drawLeadPip(ctx, W, H);
+    // Lead indicator aim aid: pip for the enemy nearest the line of fire ('recruit' = only on Recruit difficulty)
+    const leadMode = this.settings.leadPip ?? 'recruit';
+    if (pl?.alive && (leadMode === 'always' || (leadMode === 'recruit' && this.settings.difficulty === 'recruit'))) this.drawLeadPip(ctx, W, H);
     // Pilot gunsight
     if (this.mission?.role === 'pilot' && w.playerFighter?.alive) {
       const g = this.pilot.gunsight;
