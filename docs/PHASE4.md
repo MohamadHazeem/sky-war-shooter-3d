@@ -16,14 +16,14 @@ Player notes given at the start:
 |---|---|---|
 | 1 | Public release: <10 s load, compressed assets, installable (PWA) | |
 | 2 | First-time player experience: tutorial round, controls overlay, hints | |
-| 3 | Automated quality gate: unit tests + CI (tsc, build, tests) + playtest script || Done — 79 unit tests (Vitest), `npm run check`, GitHub Actions CI on every push |
+| 3 | Automated quality gate: unit tests + CI (tsc, build, tests) + playtest script | Done — 79 unit tests (Vitest), `npm run check`, GitHub Actions CI on every push |
 | 4 | Performance & stability: 60 fps mid laptop, 30-min soak no growth, presets verified | |
 
 ## Tier G — gameplay fun
 | # | Goal | Status |
 |---|---|---|
-| 31 | Game feel (freeze-frame, flashes, popups, pulses) || Done — hit-stop, flashes, camera punch, zoom pulse, escalating popups, hit ring |
-| 32 | Combo meter + "On Fire" mode || Done — streak meter, ON FIRE (+50% score, hot tracers, fiery frame, swell) |
+| 31 | Game feel (freeze-frame, flashes, popups, pulses) | Done — hit-stop, flashes, camera punch, zoom pulse, escalating popups, hit ring |
+| 32 | Combo meter + "On Fire" mode | Done — streak meter, ON FIRE (+50% score, hot tracers, fiery frame, swell) |
 | 33 | Active abilities: Call the Mustangs, Overdrive, Focus | |
 | 34 | Boss fights: battle group of giant flying warships, very hard | |
 | 35 | Bonus objectives mid-round | |
@@ -33,12 +33,12 @@ Player notes given at the start:
 | 39 | Crew with personalities | |
 | 40 | Pacing + final-wave climax | |
 | 41 | Modes: Ace Hunt, Time Attack, Daily Run | |
-| 42 | Combat feedback: damage direction, lock-on warning, weapon kill feed || Done — damage-direction arcs, "ON YOU" lock warning + beep, weapon in kill feed |
+| 42 | Combat feedback: damage direction, lock-on warning, weapon kill feed | Done — damage-direction arcs, "ON YOU" lock warning + beep, weapon in kill feed |
 
 ## Tier B — should
 | # | Goal | Status |
 |---|---|---|
-| 5 | Progression depth (crew levels, medals, dailies, stats, online leaderboard) || Partly — online leaderboard live (Firebase); crew/medals/dailies pending |
+| 5 | Progression depth (crew levels, medals, dailies, stats, online leaderboard) | Partly — online leaderboard live (Firebase); crew/medals/dailies pending |
 | 6 | Campaign 7 → 12 missions with story | |
 | 7 | Special events (ace squadrons, Zerstörer waves, rocket barrages) | |
 | 8 | Visual match to Yarnhub reference | |
@@ -48,13 +48,13 @@ Player notes given at the start:
 | 12 | Controls & accessibility (gamepad, colour-blind, subtitles, remap) | |
 | 13 | Phone/tablet touch support | |
 | 14 | Arabic (RTL) | |
-| 15 | Cloud save (Firebase) || Done — Firestore profile under a private transfer code; auto-push after missions |
-| 16 | Secure leaderboard || Done — append-only, validated, plausibility-checked, 1 entry / 20 s; live rules test passes |
+| 15 | Cloud save (Firebase) | Done — Firestore profile under a private transfer code; auto-push after missions |
+| 16 | Secure leaderboard | Done — append-only, validated, plausibility-checked, 1 entry / 20 s; live rules test passes |
 | 17 | Smarter enemy tactics | |
 | 18 | Own bomber visible damage + bail-out | |
-| 19 | Weather & time of day || Done — overcast, storm (lightning/thunder), dusk; survival cycles weather per round |
+| 19 | Weather & time of day | Done — overcast, storm (lightning/thunder), dusk; survival cycles weather per round |
 | 20 | Bombing-run payoff | |
-| 21 | Adaptive difficulty || Done — fighter count and skill ease/push with player performance |
+| 21 | Adaptive difficulty | Done — fighter count and skill ease/push with player performance |
 
 ## Tier C — could
 | # | Goal | Status |
@@ -71,7 +71,7 @@ Player notes given at the start:
 
 ## Log
 - 21:40 slow-motion fix committed.
-- 22:10 memory/GPU leak fixed (shared geometries, owned resources disposed); 30-min soak stable.
-- 22:15 leaderboard backend + rules deployed; rules test 6/6 (read pending index build).
-- 22:25 cloud save, adaptive difficulty, weather moods; tests+CI merged; game feel merged.
-- 22:35 deploy #1 to Cloudflare.
+- 21:45 memory/GPU leak fixed (shared geometries, owned resources disposed); 30-min soak stable.
+- 21:48 leaderboard backend + rules deployed; rules test 6/6 (read pending index build).
+- 21:52 cloud save, adaptive difficulty, weather moods; tests+CI merged; game feel merged.
+- 21:54 deploy #1 to Cloudflare.
