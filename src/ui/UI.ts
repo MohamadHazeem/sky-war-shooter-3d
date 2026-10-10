@@ -144,8 +144,8 @@ export class UI {
 
   briefing(m: Mission, onStart: () => void, onBack: () => void) {
     const b = $('#briefing');
-    const gunnerControls = `<div><kbd>Mouse</kbd> traverse gun</div><div><kbd>LMB</kbd> fire (short bursts)</div><div><kbd>RMB</kbd> look down the sight</div><div><kbd>1</kbd>–<kbd>5</kbd> change gun position</div><div><kbd>R</kbd> reload</div><div><kbd>Esc</kbd> pause</div>`;
-    const pilotControls = `<div><kbd>Mouse</kbd> aim / fly (mouse aim)</div><div><kbd>LMB</kbd>/<kbd>Space</kbd> fire</div><div><kbd>W</kbd>/<kbd>S</kbd> throttle</div><div><kbd>Q</kbd>/<kbd>E</kbd> roll · <kbd>A</kbd>/<kbd>D</kbd> rudder</div><div><kbd>V</kbd> cockpit / chase view</div><div><kbd>C</kbd> free look · <kbd>M</kbd> flight mode</div><div><kbd>RMB</kbd> zoom · <kbd>Esc</kbd> pause</div>`;
+    const gunnerControls = `<div><kbd>Mouse</kbd> or <kbd>Arrows</kbd>/<kbd>IJKL</kbd> traverse gun</div><div><kbd>LMB</kbd>/<kbd>Space</kbd> fire (short bursts)</div><div><kbd>RMB</kbd> look down the sight</div><div><kbd>1</kbd>–<kbd>5</kbd> change gun position</div><div><kbd>R</kbd> reload</div><div><kbd>Esc</kbd> pause</div>`;
+    const pilotControls = `<div><kbd>Mouse</kbd> or <kbd>Arrows</kbd>/<kbd>IJKL</kbd> aim / fly (mouse aim)</div><div><kbd>LMB</kbd>/<kbd>Space</kbd> fire</div><div><kbd>W</kbd>/<kbd>S</kbd> throttle</div><div><kbd>Q</kbd>/<kbd>E</kbd> roll · <kbd>A</kbd>/<kbd>D</kbd> rudder</div><div><kbd>V</kbd> cockpit / chase view</div><div><kbd>C</kbd> free look · <kbd>M</kbd> flight mode</div><div><kbd>RMB</kbd> zoom · <kbd>Esc</kbd> pause</div>`;
     b.innerHTML = `<div class="screen-center"><div class="sheet">
       <div class="stamp">SECRET</div>
       <div class="hdr"><span>HQ 401ST BOMB SQUADRON (H) · FIELD ORDER</span><span>${esc(m.date)}</span></div>
