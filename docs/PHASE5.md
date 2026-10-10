@@ -19,7 +19,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 ## Gameplay
 | # | Goal | Status |
 |---|---|---|
-| 9 | Online co-op prototype: two players in one bomber (different seats) via Firebase signalling + WebRTC | In progress |
+| 9 | Online co-op prototype: two players in one bomber (different seats) via Firebase signalling + WebRTC | Done (beta) — 6-character room codes over Firestore (validated, expiring rules), WebRTC data channels, host-authoritative world, guest mans another gun (its shots are real on the host), 20 Hz snapshots + 100 ms interpolation, PARTNER seat tags, latency bars, disconnect handling. Limits: no TURN relay, guest score local only |
 | 10 | Custom battle: pick role, enemies, numbers, weather, time of day, boss on/off | Done — Custom Battle screen (role/seat, enemy types, counts, skill, rounds/endless, weather, sun, boss round, events/flak/escorts), saved setup, no leaderboard |
 | 11 | Role reversal: P-51 interceptor mission against a Ju 88 / He 111 raid, and a night-fighter defence | In progress |
 | 12 | Wingman commands in pilot mode (attack my target, cover me, protect bombers) | In progress |
@@ -42,3 +42,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 23:20 started volumetric explosions + combat light (3, 5). Goals 1, 2, 4, 6, 8 wait for the Phase 4 graphics pass (same files).
 - 23:22 campaign map, skill tree, custom battle + weekly merged (226 tests); debrief "Next mission" now opens the campaign map.
 - 23:30 replay theatre merged (247 tests); started cloud quality + heat haze (1, 4), aircraft surface detail (2), new FlightGear aircraft (17).
+- 23:32 co-op prototype merged (255 tests); started Arabic for the new screens (19).

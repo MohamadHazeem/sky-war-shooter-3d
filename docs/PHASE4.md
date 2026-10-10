@@ -59,7 +59,7 @@ Player notes given at the start:
 ## Tier C — could
 | # | Goal | Status |
 |---|---|---|
-| 22 | Online co-op prototype | |
+| 22 | Online co-op prototype | Done (beta) — see Phase 5 goal 9 |
 | 23 | 40 achievements + trophy screen || Done — 42 achievements with rarity, trophy screen |
 | 24 | Living sky | Done — distant bomber boxes with contrails, far-off dogfights with gun flashes and burning fallers, distant flak barrages (scaled by quality) |
 | 25 | Story briefings (voiced) || Done — 45 voiced briefing clips (intelligence officer), Play/Stop, paragraph highlight |
