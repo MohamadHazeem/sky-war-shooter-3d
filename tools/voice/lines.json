@@ -1423,6 +1423,50 @@
       "id": "p4_bossbattle_26",
       "role": "ball",
       "text": "Look at her go — she's breaking in two!"
+    },
+    {
+      "id": "dressing",
+      "role": "radio",
+      "text": "Hold still — I've patched you up. Back on that gun."
+    },
+    {
+      "group": "Phase 4 special events / modes / pacing"
+    },
+    {
+      "id": "mode_ace",
+      "role": "nav",
+      "text": "That one's an ace — kill markings all down the tail. Watch him!"
+    },
+    {
+      "id": "sp_zdone",
+      "role": "pilot",
+      "text": "That's the last of the destroyers! Nice work, boys."
+    },
+    {
+      "id": "sp_barrage",
+      "role": "nav",
+      "text": "Rocket barrage! Heavies standing off at a kilometre — they'll keep lobbing rockets into the box until we knock them down!",
+      "urgent": true
+    },
+    {
+      "id": "sp_bdone",
+      "role": "pilot",
+      "text": "Launchers are down! That's the end of the rockets."
+    },
+    {
+      "id": "sp_bout",
+      "role": "tail",
+      "text": "They're out of rockets — the heavies are heading home."
+    },
+    {
+      "id": "sp_acewings",
+      "role": "nav",
+      "text": "The yellow noses are breaking off — they've lost their leader!"
+    },
+    {
+      "id": "pace_lot",
+      "role": "pilot",
+      "text": "That's the lot of them! They're breaking off!"
     }
   ]
 }

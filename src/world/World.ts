@@ -624,6 +624,12 @@ export class World implements WorldView {
     if (dt <= 0) return;
     this.time += dt;
     this.radioCooldown -= dt;
+    // field dressing: a crewmate patches the gunner up after a quiet spell (one wound per 100 s)
+    if (this.crewWounded > 0 && this.playerStation && this.time - this.lastWound > 100) {
+      this.crewWounded--;
+      this.lastWound = this.time - 18;
+      this.callout('dressing', 'Radio', 'Hold still — I\'ve patched you up. Back on that gun.', 0, 2);
+    }
     this.formationCenter.addScaledVector(this.formationForward, CRUISE * dt);
     this.maneuver(dt);
 
