@@ -899,7 +899,18 @@ export class World implements WorldView {
   fighterSoundInfo() {
     return this.fighters('axis').concat(this.fighters('allied').filter((f) => !f.isPlayer))
       .filter((f) => !f.remove)
-      .map((f) => ({ id: f.id, pos: f.pos, vel: f.vel, radial: f.kind === 'fw190', throttle: f.fm.throttle }));
+      .map((f) => ({ id: f.id, pos: f.pos, vel: f.vel, radial: f.kind === 'fw190', throttle: f.fm.throttle, stage: damageStage(f) }));
+  }
+
+  // 0..1 how hard the player's aircraft is manoeuvring, for the audio (wind, creaks): the B-17's
+  // evasive jink profile (plus a hit's lurch), or the P-51's g-load
+  get maneuverLevel(): number {
+    if (this.player && this.player === this.playerBomber) {
+      const j = this.jinkT < this.jinkDur ? Math.sin(Math.PI * this.jinkT / this.jinkDur) ** 2 : 0;
+      return Math.min(1, j + Math.abs(this.lurch) * 4);
+    }
+    const f = this.playerFighter;
+    return f && f === this.player ? Math.min(1, Math.max(0, (f.fm.gLoad - 1.8) / 4.5)) : 0;
   }
 }
 

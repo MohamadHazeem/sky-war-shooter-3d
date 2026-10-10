@@ -1,0 +1,44 @@
+{
+ "tension": {
+  "file": "music_tension.mp3",
+  "bpm": 83,
+  "bars": 44,
+  "loopStart": 0,
+  "loopEnd": 127.22891,
+  "beat0": 1.8901,
+  "frames": 5610795,
+  "sampleRate": 44100,
+  "key": "B minor",
+  "root": 11,
+  "pitched": false,
+  "roots": [11,11,11,9,9,9,9,9,9,9,0,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9]
+ },
+ "combat": {
+  "file": "music_combat.m4a",
+  "bpm": 166,
+  "bars": 56,
+  "loopStart": 0.5,
+  "loopEnd": 81.46385,
+  "beat0": 0,
+  "frames": 3934265,
+  "sampleRate": 48000,
+  "key": "E major",
+  "root": 4,
+  "pitched": false,
+  "roots": [8,9,9,9,9,6,6,6,8,8,8,8,8,9,9,9,9,9,9,9,4,4,4,4,8,8,8,8,8,8,8,4,8,8,8,9,9,9,4,4,4,4,4,4,4,4,4,8,8,8,8,8,8,8,4,8]
+ },
+ "climax": {
+  "file": "music_climax.m4a",
+  "bpm": 130,
+  "bars": 16,
+  "loopStart": 0.5,
+  "loopEnd": 30.03846,
+  "beat0": 0,
+  "frames": 1346746,
+  "sampleRate": 44100,
+  "key": "A minor",
+  "root": 9,
+  "pitched": true,
+  "roots": [5,5,9,9,5,9,9,9,5,5,5,5,5,5,5,5]
+ }
+}

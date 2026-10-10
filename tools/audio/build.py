@@ -238,9 +238,8 @@ def music():
     if want("music"):
         # menu: For the Fallen (solemn symphonic, marching drums) - whole piece, natural restart
         music_file("For the Fallen.mp3", "music_menu.mp3", fout=3.0)
-        # combat: Clenched Teeth (164 bpm) - baked loop of 56 bars from 2.0 s with a 1-bar crossfade
-        bar = 4 * 60 / 164.0
-        music_file("Clenched Teeth.mp3", "music_combat.mp3", ss=2.0, dur=55 * bar + bar, loop_xf=bar)
+        # combat (Clenched Teeth, really 166 bpm) and climax (Heroic Age) are bar-exact loops
+        # built by music_build.mjs (node), which also writes their beat-grid metadata
         # tension: Constance (83 bpm) - baked loop of 44 bars from 0.3 s with 1-bar crossfade
         bar = 4 * 60 / 83.0
         music_file("Constance.mp3", "music_tension.mp3", ss=0.3, dur=44 * bar + bar, loop_xf=bar)

@@ -434,7 +434,7 @@ export class UI {
       <div class="kicker">CREDITS</div><h2 class="h2">Sky War Shooter 3D</h2>
       <p>Game design, code, volumetric sky, effects and procedural audio: built with Three.js.</p>
       <p>Aircraft models from the FlightGear open-source hangar (GPL-2.0): Boeing B-17G, Focke-Wulf Fw 190 A-8 and North American P-51D. See public/models/CREDITS.md for authors.</p>
-      <p>Sound effects from Freesound.org contributors (CC0 / CC BY — Fight2FlyPhoto, mattew, zimbot, poissonmort, juskiddink, Halleck and others) and music by Kevin MacLeod (incompetech.com, CC BY 4.0: "For the Fallen", "Clenched Teeth", "Constance", "Long Road Ahead", "Taps"). Full list: public/audio/CREDITS.md.</p>
+      <p>Sound effects from Freesound.org contributors (CC0 / CC BY — Fight2FlyPhoto, mattew, zimbot, poissonmort, juskiddink, Halleck and others) and music by Kevin MacLeod (incompetech.com, CC BY 4.0: "For the Fallen", "Clenched Teeth", "Constance", "Heroic Age", "Long Road Ahead", "Taps"). Full list: public/audio/CREDITS.md.</p>
       <p>Visual reference: the B-17 waist gunner shot in Yarnhub's animated short "When a B-17 Pilot Attacked the Copilot". All characters and bomber names in this game are fictional.</p>
       ${achievementsHtml()}
       <div class="row" style="margin-top:18px"><button class="btn ghost" data-back>Back</button></div>

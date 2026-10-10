@@ -110,6 +110,9 @@ const rattle: Voice = (sr) => {
 };
 
 const gap = () => 8000 + rnd() * 12000; // ms between random creaks
+// Output level: the clips are normalised hot; this sits a groan ~-22 LUFS-M, just over the
+// cabin drone (loudness report)
+const LEVEL = 0.45;
 
 export class AirframeCreaks {
   private clips: { buf: AudioBuffer; gain: number }[];
@@ -140,7 +143,7 @@ export class AirframeCreaks {
     this.active = on;
     const t = this.ctx.currentTime;
     this.out.gain.cancelScheduledValues(t);
-    this.out.gain.setTargetAtTime(on ? 1 : 0, t, on ? 0.3 : 0.2);
+    this.out.gain.setTargetAtTime(on ? LEVEL : 0, t, on ? 0.3 : 0.2);
     if (on) this.schedule(gap()); else this.cancel();
   }
 
@@ -157,6 +160,27 @@ export class AirframeCreaks {
       this.play(1, 0.8, 0.4 + rnd() * 0.3);
     }
     this.schedule(3000 + rnd() * 4000);
+  }
+
+  // The airframe under load during an evasive jink (x 0..1, every frame from Sound.setManeuver):
+  // a groan as the load comes on, then ticks and hinge creaks while it is held, and the
+  // random creaks come sooner for a while after.
+  private stress = 0;
+  private stressAt = -Infinity; // ctx time of the last stress creak
+  setStress(x: number) {
+    if (!this.active || !Number.isFinite(x)) { this.stress = 0; return; }
+    const t = this.ctx.currentTime;
+    const rising = x > 0.45 && this.stress <= 0.45;
+    this.stress = x;
+    if (rising && t - this.stressAt > 2.5) {
+      this.stressAt = t;
+      this.play(2, 0.8 + 0.6 * x, 0.02);
+      if (rnd() < 0.6) this.play(0, 0.7 + 0.4 * x, 0.35 + rnd() * 0.3);
+      this.boostUntil = Math.max(this.boostUntil, t + 6);
+    } else if (x > 0.6 && t - this.stressAt > 1.1 + rnd() * 1.6) {
+      this.stressAt = t;
+      this.play(rnd() < 0.5 ? 1 : rnd() < 0.5 ? 0 : 3, 0.55 + 0.5 * x, 0);
+    }
   }
 
   private fire() {

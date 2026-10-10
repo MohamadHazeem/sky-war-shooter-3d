@@ -2,17 +2,17 @@
   "loops": {
     "b17_interior": {
       "file": "loop_b17_interior.wav",
-      "gain": 0.55,
+      "gain": 0.73,
       "baseRpmHint": "4-engine radial bomber cabin drone (Wright Cyclone-class), ~2100-2300 rpm cruise; 0.7 Hz engine beat. Pitch +/-10% only."
     },
     "radial_exterior": {
       "file": "loop_radial_exterior.wav",
-      "gain": 0.6,
+      "gain": 0.8,
       "baseRpmHint": "Fw 190 A-5 BMW 801 14-cyl radial at taxi, ~1000 rpm (firing ~117 Hz). playbackRate ~2.0-2.4 = cruise/combat power."
     },
     "merlin": {
       "file": "loop_merlin.wav",
-      "gain": 0.55,
+      "gain": 0.8,
       "baseRpmHint": "Spitfire Rolls-Royce Merlin V-12 in flight at high power, ~2850-3000 rpm. playbackRate 0.85-1.1."
     },
     "wind": {
@@ -34,7 +34,8 @@
         "mg50_shot_3.mp3",
         "mg50_shot_4.mp3"
       ],
-      "gain": 0.6
+      "gain": 0.6,
+      "trim": [1.2, -0.8, 0, 1.3]
     },
     "mg50_burst_far": {
       "files": [
@@ -43,7 +44,8 @@
         "mg50_burst_far_3.mp3",
         "mg50_burst_far_4.mp3"
       ],
-      "gain": 0.45
+      "gain": 0.45,
+      "trim": [0.8, 0, -2.5, 2.5]
     },
     "cannon_shot": {
       "files": [
@@ -51,7 +53,8 @@
         "cannon_shot_2.mp3",
         "cannon_shot_3.mp3"
       ],
-      "gain": 0.7
+      "gain": 0.7,
+      "trim": [0, 0, 0]
     },
     "impact_metal": {
       "files": [
@@ -62,7 +65,8 @@
         "impact_metal_5.mp3",
         "impact_metal_6.mp3"
       ],
-      "gain": 0.6
+      "gain": 0.9,
+      "trim": [3.9, 4.2, -1.4, -0.8, 0, 6]
     },
     "impact_heavy": {
       "files": [
@@ -71,7 +75,8 @@
         "impact_heavy_3.mp3",
         "impact_heavy_4.mp3"
       ],
-      "gain": 0.8
+      "gain": 0.8,
+      "trim": [0, 1.3, 0.3, -1.4]
     },
     "explosion_air": {
       "files": [
@@ -80,14 +85,16 @@
         "explosion_air_3.mp3",
         "explosion_air_4.mp3"
       ],
-      "gain": 1.0
+      "gain": 1.25,
+      "trim": [0.8, 6, -1.1, 0]
     },
     "explosion_far": {
       "files": [
         "explosion_far_1.mp3",
         "explosion_far_2.mp3"
       ],
-      "gain": 0.6
+      "gain": 0.6,
+      "trim": [2.8, 0]
     },
     "flak_burst": {
       "files": [
@@ -96,7 +103,8 @@
         "flak_burst_3.mp3",
         "flak_burst_4.mp3"
       ],
-      "gain": 0.8
+      "gain": 1.0,
+      "trim": [3.7, -2.3, 2.1, 0]
     },
     "shrapnel_rattle": {
       "files": [
@@ -105,7 +113,8 @@
         "shrapnel_rattle_3.mp3",
         "shrapnel_rattle_4.mp3"
       ],
-      "gain": 0.45
+      "gain": 0.45,
+      "trim": [-2.8, 6, 0.4, 0]
     },
     "flyby": {
       "files": [
@@ -115,6 +124,7 @@
         "flyby_4.mp3"
       ],
       "gain": 0.8,
+      "trim": [-0.9, 0, 0.7, 0.2],
       "peakAt": 2.5
     },
     "casing": {
@@ -124,7 +134,8 @@
         "casing_3.mp3",
         "casing_4.mp3"
       ],
-      "gain": 0.35
+      "gain": 0.35,
+      "trim": [0, 0, 1.1, 0]
     },
     "glass_crack": {
       "files": [
@@ -133,7 +144,8 @@
         "glass_crack_3.mp3",
         "glass_crack_4.mp3"
       ],
-      "gain": 0.7
+      "gain": 0.7,
+      "trim": [3.5, 0, 2, -0.7]
     },
     "rocket_launch": {
       "files": [
@@ -141,7 +153,8 @@
         "rocket_launch_2.mp3",
         "rocket_launch_3.mp3"
       ],
-      "gain": 0.7
+      "gain": 0.7,
+      "trim": [0, 1.4, 0]
     },
     "ui_click": {
       "files": [
@@ -181,14 +194,34 @@
       "loop": true
     },
     "combat": {
-      "file": "music_combat.mp3",
-      "gain": 0.4,
-      "loop": true
+      "file": "music_combat.m4a",
+      "gain": 0.33,
+      "loop": true,
+      "bpm": 166,
+      "bars": 56,
+      "loopStart": 0.5,
+      "loopEnd": 81.46385,
+      "beat0": 0,
+      "frames": 3934265,
+      "sampleRate": 48000,
+      "root": 4,
+      "pitched": false,
+      "roots": [8, 9, 9, 9, 9, 6, 6, 6, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 4, 4, 4, 4, 8, 8, 8, 8, 8, 8, 8, 4, 8, 8, 8, 9, 9, 9, 4, 4, 4, 4, 4, 4, 4, 4, 4, 8, 8, 8, 8, 8, 8, 8, 4, 8]
     },
     "tension": {
       "file": "music_tension.mp3",
-      "gain": 0.45,
-      "loop": true
+      "gain": 0.48,
+      "loop": true,
+      "bpm": 83,
+      "bars": 44,
+      "loopStart": 0,
+      "loopEnd": 127.22891,
+      "beat0": 1.8901,
+      "frames": 5610795,
+      "sampleRate": 44100,
+      "root": 11,
+      "pitched": false,
+      "roots": [11, 11, 11, 9, 9, 9, 9, 9, 9, 9, 0, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]
     },
     "victory": {
       "file": "music_victory.mp3",
@@ -199,6 +232,21 @@
       "file": "music_defeat.mp3",
       "gain": 0.6,
       "loop": false
+    },
+    "climax": {
+      "file": "music_climax.m4a",
+      "gain": 0.33,
+      "loop": true,
+      "bpm": 130,
+      "bars": 16,
+      "loopStart": 0.5,
+      "loopEnd": 30.03846,
+      "beat0": 0,
+      "frames": 1346746,
+      "sampleRate": 44100,
+      "root": 9,
+      "pitched": true,
+      "roots": [5, 5, 9, 9, 5, 9, 9, 9, 5, 5, 5, 5, 5, 5, 5, 5]
     }
   }
 }

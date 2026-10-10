@@ -12,6 +12,7 @@ import { CAMPAIGN, Mission, Round, roundDef, survivalMission, SpawnFrom, Wave } 
 import { STATIONS, STATION_ORDER, StationId } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
 import { DistantBattle } from '../audio/DistantBattle';
+import { computeThreat, finalStretch } from '../audio/Threat';
 import { INTERPHONE_LEAD_S } from '../audio/Interphone';
 import { voice as crewVoice } from '../audio/Voice';
 import type { AttackType } from '../world/AI';
@@ -1082,6 +1083,9 @@ export class Game {
     sound.updateWind(dt);
     w.listener = this.engine.camera.position;
     sound.updateFighterVoices(w.fighterSoundInfo());
+    // adaptive score (src/audio/Threat.ts -> Music.setThreat) and airframe strain (wind, creaks)
+    sound.music.setThreat(computeThreat({ active: this.state === 'playing' && !this.menuMode, enemies: w.activeEnemies(), listener: w.player?.pos ?? this.engine.camera.position, integrity: w.player?.integrity ?? 1, onFire: this.combo.onFire, finalWave: finalStretch(this.mission, this.roundIdx, w.time - this.roundT0, this.waveIdx) }));
+    sound.setManeuver(this.menuMode ? 0 : w.maneuverLevel);
     // damaged B-17 engines change the interior drone (Sound.setEngineHealth caches repeats)
     if (this.mission?.role === 'gunner' && w.playerBomber) sound.setEngineHealth(4 - w.playerBomber.enginesOut);
     // screen effects

@@ -3,7 +3,7 @@
 // with a manifest (id -> file, role, text, duration). This plays them through a radio chain:
 // interphone call-click and static burst, telephone band-pass (~300-3400 Hz), light
 // saturation, a little static under the voice, click-off at the end. Music and ambience
-// duck slightly while someone talks.
+// duck slightly while someone talks, the effects a little (the voice bypasses that duck).
 // - Lazy: the manifest loads after the first user gesture, each clip on first use (decoded
 //   at 16 kHz, least recently used dropped past CACHE_S seconds of audio).
 // - One line at a time: a small priority queue, stale lines expire, low-priority chatter is
@@ -39,9 +39,10 @@ const MAX_QUEUE = 4;
 const RATE_WINDOW_S = 10;      // at most RATE_MAX lines below priority 2 per window
 const RATE_MAX = 4;
 const CACHE_S = 240;           // decoded audio kept in memory, seconds
-const VOICE_GAIN = 1.15;       // radio chain output level on the sfx bus
+const VOICE_GAIN = 1.35;       // radio chain output level on the voice bus (sfx slider, never ducked)
 const STATIC_GAIN = 0.05;      // static bed under the voice (before the band-pass)
 const DUCK_DEPTH = 0.72;       // music + ambience level while someone talks
+const FX_DUCK = 0.5;           // effects (guns, explosions) level while someone talks: the voice stays on top
 const HOURS = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
 const CLOCK_RX = new RegExp(`^(.*?,)\\s*(${HOURS.slice(1).join('|')}) o'clock (high|level|low)!?\\s*(.*)$`, 'i');
 const CLOCK_WORDS_RX = new RegExp(`(${HOURS.slice(1).join('|')}) o'clock (high|level|low)`, 'i');
@@ -362,7 +363,7 @@ export class Voice {
     n.onended = () => this.finish(p);
     this.playing = p;
     this.interphone!.call(end + TAIL_S - ctx.currentTime);
-    sound.duckFor(end - ctx.currentTime, DUCK_DEPTH);
+    sound.duckFor(end - ctx.currentTime, DUCK_DEPTH, FX_DUCK);
     if (item.prio < 2) this.recent.push(now());
     for (const id of item.ids) { const b = this.bufs.get(id)!; this.bufs.delete(id); this.bufs.set(id, b); }
     this.watch(p, end + TAIL_S);
@@ -394,11 +395,11 @@ export class Voice {
   }
 
   // Radio chain on the live context: band-pass, presence lift, soft clip, band-pass again
-  // (so the saturation harmonics stay in the telephone band), out to the sfx bus.
+  // (so the saturation harmonics stay in the telephone band), out to the voice bus.
   private chain(ctx: AudioContext): boolean {
     if (this.ctx === ctx && this.input) return true;
     if (this.playing) this.finish(this.playing);
-    const out = sound.sfxBus();
+    const out = sound.voiceBus();
     if (!out) return false;
     const bq = (type: BiquadFilterType, f: number, q: number, gain = 0) => {
       const b = ctx.createBiquadFilter();

@@ -161,7 +161,8 @@ export class PilotController {
     if (g > 6.2) this.gBlack = Math.min(1, this.gBlack + (g - 6.2) * dt * 0.35);
     else this.gBlack = Math.max(0, this.gBlack - dt * 0.4);
 
-    sound.setPlayerEngine(fm.throttle, fm.speed);
+    const eng = p.zone('engine');
+    sound.setPlayerEngine(fm.throttle, fm.speed, eng ? 1 - Math.max(0, eng.hp) / eng.maxHp : 0);
     this.updateCamera(dt);
     this.updateGunsight(dt);
   }
