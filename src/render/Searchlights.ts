@@ -54,8 +54,10 @@ function beamMaterial() {
       varying vec3 vV;
       void main() {
         float edge = abs(dot(normalize(vN), normalize(vV)));
-        float along = pow(1.0 - vT, 1.6) * smoothstep(0.0, 0.02, vT);
-        float a = uIntensity * along * pow(edge, 1.4);
+        // no glow right at the lamp: seen from the bomber stream far above, the narrow lamp end
+        // faced the camera and bloomed into white blobs ringed by the cone's last segments
+        float along = pow(1.0 - vT, 1.6) * smoothstep(0.04, 0.3, vT);
+        float a = min(uIntensity * along * pow(edge, 1.4), 0.14);
         gl_FragColor = vec4(uColor * a, a);
       }`,
     transparent: true,
