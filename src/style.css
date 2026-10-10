@@ -411,3 +411,12 @@ body.ab-overdrive #hHeatM div { width: 100% !important; background: linear-gradi
 @media (prefers-reduced-motion: reduce) {
   #evPrompt.danger, #hypoxia.on { animation: none; }
 }
+
+/* Grouped title menu (UI.organizeMenu): play modes large, the rest a compact 2-column grid */
+#title .menu.grouped { display: grid; grid-template-columns: 1fr 1fr; column-gap: 28px; row-gap: 2px; }
+#title .menu.grouped > button:not(.sec) { grid-column: 1 / -1; }
+#title .menu.grouped > button.sec { font-size: 16px; letter-spacing: 2px; padding: 5px 0; gap: 8px; flex-wrap: wrap; row-gap: 0; }
+#title .menu.grouped > button.sec small { font-size: 11px; flex-basis: 100%; margin-top: -1px; opacity: 0.85; }
+#title .menu.grouped > button.sec::before { display: none; }
+#title .menu.grouped > button.sec:hover, #title .menu.grouped > button.sec:focus-visible { padding-left: 4px; }
+#title .menu.grouped::after { content: ''; order: 9; grid-column: 1 / -1; height: 1px; margin: 12px 0 8px; background: linear-gradient(90deg, rgba(200,185,140,0.45), rgba(200,185,140,0)); }

@@ -82,6 +82,27 @@ function el(html: string): HTMLElement {
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
+// Title menu layout: other modules add entries (Training, Daily Orders, Career, Skills, ...)
+// after title() builds it, so the grouping is applied by CSS order + a class, re-run whenever
+// entries change. Play modes stay large at the top; everything else is a compact 2-column grid.
+const MENU_PRIMARY = ['campaign', 'survival', 'coop'];
+const MENU_SECONDARY = ['training', 'daily', 'skills', 'career', 'trophies', 'armory', 'theatre', 'settings', 'credits'];
+function organizeMenu(menu: HTMLElement) {
+  const apply = () => {
+    menu.classList.add('grouped');
+    for (const b of Array.from(menu.children) as HTMLElement[]) {
+      const a = b.dataset.a ?? '';
+      const p = MENU_PRIMARY.indexOf(a);
+      const s = MENU_SECONDARY.indexOf(a);
+      const order = p >= 0 ? p : 10 + (s >= 0 ? s : MENU_SECONDARY.length);
+      if (b.style.order !== String(order)) b.style.order = String(order);
+      b.classList.toggle('sec', p < 0);
+    }
+  };
+  apply();
+  new MutationObserver(apply).observe(menu, { childList: true });
+}
+
 export class UI {
   readonly canvas: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
@@ -160,9 +181,10 @@ export class UI {
     // Arrow keys move between menu items (Tab still works natively); the listener lives on
     // the freshly built .menu, so repeated title() calls never stack handlers.
     const menu = tl.querySelector<HTMLElement>('.menu');
+    if (menu) organizeMenu(menu);
     menu?.addEventListener('keydown', (e) => {
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-      const items = Array.from(menu.querySelectorAll<HTMLButtonElement>('button'));
+      const items = Array.from(menu.querySelectorAll<HTMLButtonElement>('button')).sort((a, b) => (+a.style.order || 0) - (+b.style.order || 0));
       const i = items.indexOf(e.target as HTMLButtonElement);
       const next = (i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length;
       e.preventDefault();
