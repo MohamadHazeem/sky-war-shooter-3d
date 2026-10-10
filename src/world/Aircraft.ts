@@ -111,6 +111,9 @@ export abstract class Aircraft {
 const _q = new THREE.Quaternion();
 const _qz = new THREE.Quaternion();
 const _zAxis = new THREE.Vector3(0, 0, 1);
+const _yAxis = new THREE.Vector3(0, 1, 0);
+const _xAxis = new THREE.Vector3(1, 0, 0);
+const _qa = new THREE.Quaternion();
 
 export class Fighter extends Aircraft {
   readonly fm: FlightModel;
@@ -170,9 +173,26 @@ export class Bomber extends Aircraft {
   crewBailed = 0;
   bombsAway = false;
   name = '';
+  // Animated gun positions (driven by the AI crews): desired + current aim, model frame
+  guns = new Map<string, { yaw?: THREE.Object3D; pitch?: THREE.Object3D; single?: THREE.Object3D; rest: THREE.Vector3; qy: THREE.Quaternion; qp: THREE.Quaternion; cur: THREE.Vector3; want: THREE.Vector3 | null }>();
 
   constructor() {
     super('b17', 'allied', 1.77);
+    const find = (n: string) => this.model.getObjectByName(n) ?? undefined;
+    const turret = (key: string, y: string, p: string, rest: THREE.Vector3) => {
+      const yaw = find(y), pitch = find(p);
+      if (yaw) this.guns.set(key, { yaw, pitch, rest, qy: yaw.quaternion.clone(), qp: pitch?.quaternion.clone() ?? new THREE.Quaternion(), cur: rest.clone(), want: null });
+    };
+    const single = (key: string, n: string, rest: THREE.Vector3) => {
+      const o = find(n);
+      if (o) this.guns.set(key, { single: o, rest, qy: o.quaternion.clone(), qp: new THREE.Quaternion(), cur: rest.clone(), want: null });
+    };
+    turret('top', 'turret_top', 'turret_top_guns', new THREE.Vector3(0, 0, 1));
+    turret('ball', 'turret_ball', 'turret_ball_guns', new THREE.Vector3(0, 0, 1));
+    turret('chin', 'turret_chin', 'turret_chin_guns', new THREE.Vector3(0, 0, 1));
+    single('waistL', 'gun_waist_left', new THREE.Vector3(1, 0, 0));
+    single('waistR', 'gun_waist_right', new THREE.Vector3(-1, 0, 0));
+    single('tail', 'gun_tail', new THREE.Vector3(0, 0, -1));
     this.radius = 18;
     const H = (name: string, x: number, y: number, z: number, r: number, hp: number, extra: Partial<HitZone> = {}) =>
       this.zones.push({ name, offset: new THREE.Vector3(x, y, z), radius: r, hp, maxHp: hp, ...extra });
@@ -205,10 +225,29 @@ export class Bomber extends Aircraft {
       if (this.root.position.y < 3500 || this.fallTime > 75) this.remove = true;
       rpm = 0.4;
     }
+    this.animateGuns(dt);
     this.updateProps(dt, rpm);
   }
 
   get enginesOut() { return this.engineDead.filter(Boolean).length; }
+
+  // Swing turrets and flexible guns toward their crews' targets
+  animateGuns(dt: number) {
+    const k = 1 - Math.exp(-dt * 3);
+    for (const g of this.guns.values()) {
+      const want = g.want ?? g.rest;
+      g.cur.lerp(want, k).normalize();
+      if (g.single) {
+        g.single.quaternion.copy(_qa.setFromUnitVectors(g.rest, g.cur)).multiply(g.qy);
+      } else if (g.yaw) {
+        const yaw = Math.atan2(g.cur.x, g.cur.z);
+        const pitch = Math.asin(THREE.MathUtils.clamp(g.cur.y, -1, 1));
+        g.yaw.quaternion.copy(g.qy).multiply(_qa.setFromAxisAngle(_yAxis, yaw));
+        if (g.pitch) g.pitch.quaternion.copy(g.qp).multiply(_qa.setFromAxisAngle(_xAxis, -pitch));
+      }
+      g.want = null;
+    }
+  }
 }
 
 export { _m, _v };

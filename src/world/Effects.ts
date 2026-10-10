@@ -170,6 +170,14 @@ export class Effects {
     this.chutes.push({ obj, vel: vel.clone(), life: 60, open: -1.5 - Math.random() * 1.5 });
   }
 
+  // Objects using every material this layer can spawn, for shader pre-compilation
+  warmupObjects(): THREE.Object3D[] {
+    const objs: THREE.Object3D[] = this.debrisGeo.map((g, i) => new THREE.Mesh(g, this.debrisMat[i % this.debrisMat.length]));
+    objs.push(new THREE.Mesh(this.chuteGeo, this.chuteMat), new THREE.Mesh(this.chuteGeo, this.figureMat));
+    objs.push(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 1, 0)]), this.lineMat));
+    return objs;
+  }
+
   rebase(off: THREE.Vector3) {
     this.smoke.rebase(off);
     this.glow.rebase(off);

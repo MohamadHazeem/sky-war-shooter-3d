@@ -76,6 +76,21 @@ export class Game {
     engine.onFrame = (dt) => this.frame(dt);
   }
 
+  // Compile shaders for objects that only appear mid-mission (debris, chutes, bombs,
+  // gunner viewmodels) so the first explosion doesn't hitch.
+  warmupShaders() {
+    const g = new THREE.Group();
+    for (const o of this.world.effects.warmupObjects()) g.add(o);
+    g.add(new THREE.Mesh(this.bombGeo, this.bombMat));
+    g.position.copy(this.engine.camera.position).add(new THREE.Vector3(0, 0, -20).applyQuaternion(this.engine.camera.quaternion));
+    this.engine.scene.add(g);
+    const pb = this.world.playerBomber;
+    if (pb) this.gunner.attach(pb, 'waistL');
+    this.engine.renderer.compile(this.engine.scene, this.engine.camera);
+    if (pb) this.gunner.detach();
+    this.engine.scene.remove(g);
+  }
+
   applySettings() {
     const s = this.settings;
     this.input.sensitivity = s.sensitivity;

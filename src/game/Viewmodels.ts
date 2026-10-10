@@ -5,7 +5,7 @@ import { envRef } from '../render/EnvRef';
 // Browning AN/M2 .50 cal with ring-and-post sight, ammunition belt, turret frames.
 // Gun frame convention: origin at the mount pivot, +Z along the bore, +Y up, +X left.
 
-const interiorMat = (side: THREE.Side = THREE.FrontSide) => new THREE.MeshStandardMaterial({ color: new THREE.Color(0.06, 0.062, 0.045), roughness: 0.88, metalness: 0.1, envMap: envRef.tex, envMapIntensity: 0.06, side });
+const interiorMat = (side: THREE.Side = THREE.FrontSide) => new THREE.MeshStandardMaterial({ color: new THREE.Color(0.085, 0.082, 0.06), roughness: 0.88, metalness: 0.1, envMap: envRef.tex, envMapIntensity: 0.06, side });
 const frameMat = () => new THREE.MeshStandardMaterial({ color: new THREE.Color(0.025, 0.026, 0.022), roughness: 0.75, metalness: 0.3, envMap: envRef.tex, envMapIntensity: 0.04 });
 const gunMetal = () => new THREE.MeshStandardMaterial({ color: new THREE.Color(0.05, 0.052, 0.05), roughness: 0.5, metalness: 0.6, envMap: envRef.tex, envMapIntensity: 0.18 });
 const gunParkerized = () => new THREE.MeshStandardMaterial({ color: new THREE.Color(0.06, 0.062, 0.056), roughness: 0.72, metalness: 0.4, envMap: envRef.tex, envMapIntensity: 0.12 });
@@ -314,16 +314,17 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
       const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), fmat);
       m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; g.add(m);
     };
-    const depth = 0.16;
-    mk(depth, 0.06, winW + 0.12, xIn - side * 0.02, yLo - 0.03, zc);
-    mk(depth, 0.06, winW + 0.12, xIn * Math.cos(0.25) - side * 0.04, yHi + 0.03, zc);
-    mk(depth, yHi - yLo + 0.1, 0.07, xIn - side * 0.02, (yLo + yHi) / 2, zc - winW / 2 - 0.035);
-    mk(depth * 1.4, yHi - yLo + 0.1, 0.09, xIn - side * 0.04, (yLo + yHi) / 2, zc + winW / 2 + 0.045);
-    // wind deflector panel ahead of the window
-    mk(0.03, yHi - yLo, 0.18, xIn + side * 0.06, (yLo + yHi) / 2, zc + winW / 2 + 0.12);
+    // Thin pressed-metal window surround (sits just inside the skin)
+    const depth = 0.05;
+    const xf = xIn - side * 0.015;
+    mk(depth, 0.035, winW + 0.07, xf, yLo - 0.017, zc);
+    mk(depth, 0.035, winW + 0.07, xf - side * 0.02, yHi + 0.017, zc);
+    mk(depth, yHi - yLo + 0.07, 0.035, xf, (yLo + yHi) / 2, zc - winW / 2 - 0.017);
+    mk(depth, yHi - yLo + 0.07, 0.035, xf, (yLo + yHi) / 2, zc + winW / 2 + 0.017);
   };
   frame(1, leftZ);
   frame(-1, rightZ);
+
   // Floor walkway
   const floor = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.03, z1 - z0), new THREE.MeshStandardMaterial({ color: 0x2a2418, roughness: 0.9, envMap: envRef.tex, envMapIntensity: 0.1 }));
   floor.position.set(0, yC - b * 0.78, zCenter);
@@ -373,7 +374,7 @@ export function buildTurret(kind: 'top' | 'ball'): { group: THREE.Group; guns: G
   const guns: GunModel[] = [];
   for (const s of [1, -1]) {
     const m = buildM2({ ringSight: false, belt: false, beltSide: 1 });
-    m.group.position.set(s * 0.26, -0.06, kind === 'ball' ? 0.1 : -0.05);
+    m.group.position.set(s * 0.26, kind === 'ball' ? -0.13 : -0.06, kind === 'ball' ? 0.1 : -0.05);
     g.add(m.group);
     guns.push(m);
   }
@@ -394,8 +395,8 @@ export function buildTurret(kind: 'top' | 'ball'): { group: THREE.Group; guns: G
   sight.rotation.y = Math.PI;
   sight.renderOrder = 40;
   g.add(sight);
-  const sightBody = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.08, 0.16), new THREE.MeshStandardMaterial({ color: 0x1c1d1a, roughness: 0.6, metalness: 0.5 }));
-  sightBody.position.set(0, -0.06, 0.27);
+  const sightBody = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.045, 0.12), new THREE.MeshStandardMaterial({ color: 0x1c1d1a, roughness: 0.6, metalness: 0.5 }));
+  sightBody.position.set(0, -0.085, 0.27);
   g.add(sightBody);
   // Dome struts
   const R = kind === 'ball' ? 0.62 : 0.68;
@@ -415,8 +416,8 @@ export function buildTurret(kind: 'top' | 'ball'): { group: THREE.Group; guns: G
   g.add(ring);
   if (kind === 'ball') {
     // armoured glass port frame
-    const port = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.03, 8, 32), fmat);
-    port.position.set(0, 0.0, 0.5);
+    const port = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.014, 8, 48), fmat);
+    port.position.set(0, 0.0, 0.55);
     g.add(port);
   }
   g.traverse((o) => { if ((o as THREE.Mesh).isMesh && o !== sight) { o.castShadow = true; o.receiveShadow = true; } });
@@ -438,10 +439,9 @@ export function buildTailInterior(): THREE.Group {
   mk(1.0, 0.08, 1.4, 0, 0.5, -0.2);
   mk(1.0, 0.08, 1.4, 0, -0.4, -0.2);
   // window frame (forward)
-  mk(0.06, 0.6, 0.06, 0.3, 0.12, 0.5, fmat);
-  mk(0.06, 0.6, 0.06, -0.3, 0.12, 0.5, fmat);
-  mk(0.66, 0.06, 0.06, 0, 0.44, 0.5, fmat);
-  mk(0.66, 0.1, 0.08, 0, -0.18, 0.5, fmat);
-  mk(0.03, 0.6, 0.03, 0, 0.12, 0.52, fmat);
+  mk(0.035, 0.62, 0.04, 0.34, 0.14, 0.5, fmat);
+  mk(0.035, 0.62, 0.04, -0.34, 0.14, 0.5, fmat);
+  mk(0.72, 0.035, 0.04, 0, 0.46, 0.5, fmat);
+  mk(0.72, 0.05, 0.05, 0, -0.17, 0.5, fmat);
   return g;
 }

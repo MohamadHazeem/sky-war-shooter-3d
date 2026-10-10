@@ -31,6 +31,7 @@ export class GunnerController {
   private guns: Partial<Record<StationId, GunModel[]>> = {};
   private waistInterior: THREE.Group | null = null;
   private muzzleLight = new THREE.PointLight(0xffb060, 0, 6, 2);
+  private bounce: THREE.PointLight[] = [];
   private cooldown = 0;
   private shotCount = 0;
   private recoilT = 0;
@@ -53,7 +54,16 @@ export class GunnerController {
       this.states.set(id, { def, yaw: 0, pitch: 0, tYaw: 0, tPitch: 0, vYaw: 0, vPitch: 0, ammo: max, maxAmmo: max, heat: 0, overheated: false, reload: 0 });
     }
     this.rig.add(this.gunPivot);
+    // Lights live permanently in the scene (intensity 0 when unused) so attaching or
+    // detaching the gunner never changes the light count and forces shader recompiles.
     this.muzzleLight.userData.noRebase = true;
+    engine.scene.add(this.muzzleLight);
+    for (let i = 0; i < 2; i++) {
+      const l = new THREE.PointLight(0xcfdcf0, 0, 3.2, 1.6);
+      l.userData.noRebase = true;
+      engine.scene.add(l);
+      this.bounce.push(l);
+    }
   }
 
   attach(bomber: Bomber, station: StationId) {
@@ -88,7 +98,6 @@ export class GunnerController {
     sightGun.group.position.set(0, 0.12, 0.25);
     this.interiors.tail.add(sightGun.group);
     this.guns.tail = tg;
-    this.rig.add(this.muzzleLight);
     this.setStation(station, true);
   }
 
@@ -99,7 +108,9 @@ export class GunnerController {
       if (this.waistInterior) this.bomber.root.remove(this.waistInterior);
     }
     this.gunPivot.clear();
-    this.rig.children.filter((c) => c !== this.gunPivot && c !== this.muzzleLight).forEach((c) => this.rig.remove(c));
+    this.rig.children.filter((c) => c !== this.gunPivot).forEach((c) => this.rig.remove(c));
+    this.muzzleLight.intensity = 0;
+    for (const l of this.bounce) l.intensity = 0;
     for (const c of this.casings) c.m.removeFromParent();
     this.casings = [];
     this.bomber = null;
@@ -228,7 +239,7 @@ export class GunnerController {
     this.recoilT = Math.max(0, this.recoilT - dt * 14);
     this.shake = Math.max(0, this.shake - dt * 6);
     for (const g of guns) for (const r of g.recoil) r.position.z = -this.recoilT * 0.022;
-    this.muzzleLight.intensity = Math.max(0, this.muzzleLight.intensity - dt * 400);
+    this.muzzleLight.intensity = Math.max(0, this.muzzleLight.intensity - dt * 120);
 
     // Apply gun orientation
     const yaw = def.rest.yaw + s.yaw, pitch = def.rest.pitch + s.pitch;
@@ -250,10 +261,10 @@ export class GunnerController {
     const tracer = this.shotCount % 3 === 0;
     this.world.ballistics.fire(muzzle, vel, 'allied', 12, tracer, [10, 2.6, 0.9], b, false, true);
     this.world.stats.shots++;
-    this.world.effects.muzzleFlash(muzzle, dir, 0.9, b.vel);
+    this.world.effects.muzzleFlash(muzzle, dir, 0.45, b.vel);
     if (this.shotCount % 2 === 0) this.world.effects.gunSmoke(muzzle, b.vel.clone().multiplyScalar(0.9));
-    this.muzzleLight.position.copy(this.rig.worldToLocal(muzzle.clone()));
-    this.muzzleLight.intensity = 25 + Math.random() * 20;
+    this.muzzleLight.position.copy(muzzle).addScaledVector(dir, -0.4);
+    this.muzzleLight.intensity = 5 + Math.random() * 4;
     this.recoilT = 1;
     this.shake = Math.min(1, this.shake + 0.35);
     // Recoil kick disturbs aim (gunner fights it)
@@ -292,6 +303,13 @@ export class GunnerController {
 
   private updateCamera(dt: number) {
     const cam = this.engine.camera;
+    // daylight bouncing in through the waist windows
+    const waist = this.def.type === 'waist';
+    this.bounce.forEach((l, i) => {
+      const p = i === 0 ? STATIONS.waistL.pivot : STATIONS.waistR.pivot;
+      l.position.copy(this.bomber!.localToWorld(_v.set(p.x * 0.75, p.y + 0.25, p.z)));
+      l.intensity = waist ? 2.2 : 0;
+    });
     const def = this.def;
     const guns = this.guns[this.station]!;
     // eye: behind the sight (waist/tail) or centred in the turret between the guns
@@ -312,7 +330,7 @@ export class GunnerController {
     if (this.shake > 0) cam.rotateZ(R() * this.shake * 0.003);
     cam.fov = this.fov;
     cam.updateProjectionMatrix();
-    this.engine.post.nearFocus = def.type === 'waist' ? 1.25 : def.type === 'tail' ? 0.9 : 0.6;
+    this.engine.post.nearFocus = def.type === 'waist' ? 0.62 : def.type === 'tail' ? 0.7 : 0.5;
     this.engine.post.dofStrength = 1;
     this.engine.post.noBlurDist = 1.4;
   }

@@ -24,7 +24,7 @@ export interface WorldEvents {
   hitMarker(kill: boolean): void;
 }
 
-interface AIGunner { def: { pivot: THREE.Vector3; rest: { yaw: number; pitch: number }; yaw: [number, number]; pitch: [number, number] }; station?: StationDef; cooldown: number; burst: number; target: Fighter | null; retarget: number }
+interface AIGunner { key: string; def: { pivot: THREE.Vector3; rest: { yaw: number; pitch: number }; yaw: [number, number]; pitch: [number, number] }; station?: StationDef; cooldown: number; burst: number; target: Fighter | null; retarget: number }
 
 const BOMBER_NAMES = ['Sky Queen', 'Miss Fortune', 'Ole Rattler', 'Hell\'s Angel II', 'Dinah Might', 'Lucky Lady', 'Iron Maiden', 'Sweet Sue', 'Big Stoop', 'Night Owl', 'Wabash Cannonball', 'Patches', 'Belle of Ohio', 'Tondelayo II', 'Blue Streak', 'Short Snorter'];
 
@@ -120,8 +120,8 @@ export class World implements WorldView {
       this.placeBomber(b, 0);
       this.add(b);
       const gs: AIGunner[] = [];
-      for (const id of STATION_ORDER) gs.push({ def: STATIONS[id], station: STATIONS[id], cooldown: Math.random(), burst: 0, target: null, retarget: Math.random() });
-      for (const x of AI_EXTRA) gs.push({ def: x, cooldown: Math.random(), burst: 0, target: null, retarget: Math.random() });
+      for (const id of STATION_ORDER) gs.push({ key: id, def: STATIONS[id], station: STATIONS[id], cooldown: Math.random(), burst: 0, target: null, retarget: Math.random() });
+      for (const x of AI_EXTRA) gs.push({ key: 'chin', def: x, cooldown: Math.random(), burst: 0, target: null, retarget: Math.random() });
       this.gunners.set(b, gs);
     }
   }
@@ -433,6 +433,9 @@ export class World implements WorldView {
           if (g.target && g.burst <= 0 && Math.random() < 0.35) g.burst = 0.5 + Math.random() * 1.2;
         }
         if (!g.target || !g.target.alive) { g.burst = 0; continue; }
+        // swing the visible turret/gun toward the target
+        const tg = b.guns.get(g.key);
+        if (tg) tg.want = b.worldToLocal(g.target.pos, new THREE.Vector3()).sub(g.def.pivot).normalize();
         if (g.burst > 0) {
           g.burst -= dt;
           while (g.cooldown <= 0) {

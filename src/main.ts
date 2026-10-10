@@ -24,6 +24,7 @@ async function boot() {
   const input = new Input(engine.renderer.domElement);
   const game = new Game(engine, input, ui);
   game.startMenu();
+  game.warmupShaders();
   // Warm up shaders before revealing the menu
   engine.render(1 / 60);
   engine.start();
