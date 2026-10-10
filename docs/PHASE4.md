@@ -17,7 +17,7 @@ Player notes given at the start:
 | 1 | Public release: <10 s load, compressed assets, installable (PWA) || Done — models 15→4.6 MB (meshopt+WebP), menu after 2.6 MB (was 16 MB; ~6.5 s at 10 Mbit/s vs 20 s), PWA + offline service worker, cache headers |
 | 2 | First-time player experience: tutorial round, controls overlay, hints || Done — Gunnery School (8 steps), H controls card, 6 first-time hints, title prompt |
 | 3 | Automated quality gate: unit tests + CI (tsc, build, tests) + playtest script | Done — 79 unit tests (Vitest), `npm run check`, GitHub Actions CI on every push |
-| 4 | Performance & stability: 60 fps mid laptop, 30-min soak no growth, presets verified | |
+| 4 | Performance & stability: 60 fps mid laptop, 30-min soak no growth, presets verified | Done — with all features: heavy combat (31 aircraft) low/med/high 5.6/7.4/9.7 ms avg (p95 7.7/10.2/11.3); 4-warship boss 8.3 ms (p95 11.5); 30-min soak flat after the leak fix; dynamic resolution + pixel budget for weaker GPUs; first-kill hitch 550→30 ms (shader prewarm). Known: one ~40 ms frame when a warship breaks in two (during its slow-mo) |
 
 ## Tier G — gameplay fun
 | # | Goal | Status |
