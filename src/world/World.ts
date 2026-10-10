@@ -60,6 +60,7 @@ export class World implements WorldView {
   readonly wrecks: Wrecks;
   playerFocus = 0.7;
   playerAimDir = new THREE.Vector3(1, 0, 0);
+  playerIncendiary = false;   // perk: player hits can set enemy engines alight
   formationCenter = new THREE.Vector3(0, ALTITUDE, 0);
   formationForward = new THREE.Vector3(0, 0, 1);
   player: Aircraft | null = null;
@@ -365,6 +366,10 @@ export class World implements WorldView {
       t.playerDamage += e.damage;
       t.lastPlayerHit = this.time;
       this.effects.hitFlash(e.point, t.vel);
+      if (this.playerIncendiary && t instanceof Fighter && t.team === 'axis' && Math.random() < 0.06) {
+        const eng = t.zone('engine');
+        if (eng && !eng.burning) { eng.burning = true; this.effects.sparks(e.point, t.vel, true); }
+      }
     }
     const heavy = e.cannon;
     this.effects.sparks(e.point, t.vel, heavy);
@@ -603,6 +608,12 @@ export class World implements WorldView {
 
   // Fires: burning engines eat into the wing; on the player's ship the pilot fights them
   private fires(dt: number) {
+    // set alight by incendiary rounds: the fire eats the fighter, credited to the player
+    for (const f of this.fighters('axis')) {
+      if (!f.alive || !f.zone('engine')?.burning) continue;
+      f.structure -= dt * 22; f.playerDamage += dt * 22;
+      if (f.structure <= 0) this.killAircraft(f, true, 'fire');
+    }
     for (const b of this.bombers()) {
       if (!b.alive) continue;
       for (const z of b.zones) {

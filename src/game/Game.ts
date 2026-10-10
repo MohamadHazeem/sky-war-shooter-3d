@@ -16,6 +16,7 @@ import { INTERPHONE_LEAD_S } from '../audio/Interphone';
 import type { AttackType } from '../world/AI';
 import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
 import * as Radar from '../ui/Radar';
+import { Progression, PerkDef } from './Upgrades';
 import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
 import { CombatTally } from './CombatTally';
@@ -53,6 +54,9 @@ export class Game {
   private survivalWave = 0;
   private survivalBreak = 0;
   // radar: Tab toggles the big map; the next wave's arrival point is decided early so it can be shown
+  readonly prog = new Progression();
+  private perkWave = 0;        // last wave a perk was offered after
+  private loadout = this.prog.loadout();
   private mapOpen = false;
   private mapT = 0;
   private incomingOff: THREE.Vector3 | null = null;  // relative to the formation centre
@@ -184,6 +188,10 @@ export class Game {
           const pts = Math.round(100 * (1 + this.survivalWave * 0.1) * this.combo.mult);
           this.score += pts;
           this.combo.onKill();
+          if (this.loadout.killRefill) {
+            if (this.mission?.role === 'gunner') this.gunner.onKillRefill(this.loadout.killRefill);
+            else w.playerFighter?.guns.forEach((g) => (g.ammo = Math.min(Math.round(((g as any).baseAmmo ?? 500) * this.loadout.ammo), g.ammo + 150)));
+          }
           this.popups.push({ pos: victim.pos.clone(), text: `+${pts}  KILL`, life: 1.6 });
           achievements.onConfirmedKill(w.stats.kills, cause ?? '');
           sound.confirm('kill_confirm');
@@ -258,6 +266,7 @@ export class Game {
     this.ui.title({
       campaign: () => this.showCampaign(),
       survival: () => this.ui.survivalMenu(this.progress, (r) => this.showBriefing(survivalMission(r)), () => this.startMenu()),
+      armory: () => this.ui.armory(this.prog, () => this.startMenu()),
       settings: () => this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => this.startMenu()),
       credits: () => this.ui.credits(() => this.startMenu()),
     });
@@ -357,6 +366,7 @@ export class Game {
     if (diff === 'recruit') this.world.aiGunnerFactor *= 1.2;
     this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false; this.trauma = 0;
     this.incoming = null; this.incomingOff = null; this.mapOpen = false; this.mapT = 0;
+    this.prog.perks = []; this.perkWave = 0;
     this.combo.reset();
     this.tally.reset();
     achievements.beginMission(m);
@@ -389,6 +399,8 @@ export class Game {
         this.world.spawnEscort(start.clone().add(new THREE.Vector3((i + 1) * 40 * (i % 2 ? 1 : -1), 10, -30 * (i + 1))), new THREE.Vector3((i - 1.5) * 250, 380, 150));
       }
     }
+    this.applyLoadout(true);
+    this.world.playerDamageScale *= this.loadout.armor;
     this.state = 'playing';
     this.distantBattle.reset();
     this.ui.hud(m.role);
@@ -405,6 +417,40 @@ export class Game {
       if (m.role === 'gunner') this.world.callout('start', 'Pilot', `Pilot to crew: we're at altitude. Test fire your guns, and keep your eyes open.`, 0, 3);
       else this.world.callout('start', 'Lead', 'Blue flight, form up on the bombers. Keep your eyes peeled for bandits.', 0, 3);
     }, 2500);
+  }
+
+  // Armory levels + this mission's perks -> guns, ammo, fire, aim aid
+  private applyLoadout(refill = false) {
+    const l = this.loadout = this.prog.loadout();
+    this.gunner.applyLoadout(l, refill);
+    this.world.playerIncendiary = l.incendiary;
+    const f = this.world.playerFighter;
+    if (f && this.mission?.role === 'pilot') for (const g of f.guns) {
+      const b = g as any;
+      b.baseDamage ??= g.damage; b.baseRate ??= g.rate; b.baseAmmo ??= g.ammo;
+      g.damage = b.baseDamage * l.damage; g.rate = b.baseRate * l.rate;
+      if (refill) g.ammo = Math.round(b.baseAmmo * l.ammo);
+    }
+  }
+
+  // Wave cleared: freeze the action and offer three perks
+  private offerPerk(label: string) {
+    this.state = 'paused';
+    this.engine.paused = true;
+    this.input.unlock();
+    sound.play('click', null, { gain: 0.6 });
+    this.ui.perkChoice(this.prog.offer(), label, (p: PerkDef) => {
+      this.prog.perks.push(p.id);
+      if (p.id === 'repair') {
+        const pl = this.world.player;
+        if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * 0.35);
+      }
+      this.applyLoadout(p.id === 'belt');
+      this.ui.feed(`${p.name}: ${p.desc}`, 'mine');
+      this.state = 'playing';
+      this.engine.paused = false;
+      this.input.lock();
+    });
   }
 
   private spawnPos(from: SpawnFrom): THREE.Vector3 {
@@ -460,6 +506,12 @@ export class Game {
     if (m.waves.length) {
       this.waveTimer += dt;
       const next = m.waves[this.waveIdx];
+      // a wave wiped out with more to come: pick a perk (the next wave waits)
+      if (next && enemies === 0 && this.waveIdx > 0 && this.perkWave < this.waveIdx && this.waveTimer > 2.5 && this.state === 'playing' && w.player?.alive) {
+        this.perkWave = this.waveIdx;
+        this.offerPerk(`WAVE ${this.waveIdx} CLEARED`);
+        return;
+      }
       if (next) {
         const ready = next.afterClear ? (enemies === 0 && this.waveTimer > 6) || this.waveTimer > 75 : t >= next.at;
         this.updateIncoming(next.afterClear ? (enemies === 0 ? Math.max(0, 6 - this.waveTimer) : 75 - this.waveTimer) : next.at - t, next);
@@ -468,7 +520,7 @@ export class Game {
           // between waves the gunners restock and the Mustang's guns are topped up
           if (this.waveIdx > 1) {
             this.gunner.resetAmmo();
-            if (w.playerFighter) { w.playerFighter.guns.forEach((g) => (g.ammo = 500)); this.ui.tip('Guns topped up', 1800); }
+            if (w.playerFighter) { this.applyLoadout(true); this.ui.tip('Guns topped up', 1800); }
           }
         }
       }
@@ -476,6 +528,11 @@ export class Game {
       // Survival: endless escalating waves
       this.waveTimer += dt;
       if (enemies === 0 || this.waveTimer > 90) {
+        if (enemies === 0 && this.survivalWave > 0 && this.perkWave < this.survivalWave && this.state === 'playing' && w.player?.alive) {
+          this.perkWave = this.survivalWave;
+          this.offerPerk(`WAVE ${this.survivalWave} SURVIVED`);
+          return;
+        }
         this.survivalBreak -= dt;
         const nextN = Math.min(14, 2 + Math.floor((this.survivalWave + 1) * 1.4));
         const nextFrom: SpawnFrom = (this.survivalWave + 1) % 3 === 0 ? 'mixed' : (['front', 'rear', 'left', 'right', 'high'] as SpawnFrom[])[(this.survivalWave + 1) % 5];
@@ -682,6 +739,9 @@ export class Game {
       this.progress.best[m.id] = Math.max(this.progress.best[m.id] ?? 0, this.score);
     }
     save(PROGRESS_KEY, this.progress);
+    // merit for the Armory: the mission score (half if it failed)
+    const merit = Math.round(this.score * (r.success ? 1 : 0.5));
+    this.prog.earn(merit);
     const idx = CAMPAIGN.findIndex((c) => c.id === m.id);
     const d: DebriefData = {
       success: r.success, title: m.title, reason: r.reason, kills: w.stats.kills, accuracy: acc,
@@ -690,12 +750,15 @@ export class Game {
       rounds: w.stats.shots, hits: w.stats.hits, bestStreak: this.tally.bestStreak,
       closestKill: this.tally.closestKill === Infinity ? null : this.tally.closestKill,
       killsByGun: m.role === 'gunner' ? this.tally.killsByGun() : undefined,
+      merit, points: this.prog.points,
     };
-    this.ui.debrief(d, {
+    const h = {
       next: () => this.showBriefing(CAMPAIGN[idx + 1]),
       retry: () => this.showBriefing(m),
       menu: () => this.startMenu(),
-    });
+      armory: () => this.ui.armory(this.prog, () => this.ui.debrief({ ...d, merit: undefined, points: this.prog.points }, h)),
+    };
+    this.ui.debrief(d, h);
   }
 
   pause() {
@@ -1001,7 +1064,7 @@ export class Game {
     if (this.mission) Radar.draw(ctx, W, H, w, this.mapT, this.incoming, w.time);
     // Lead indicator aim aid: pip for the enemy nearest the line of fire ('recruit' = only on Recruit difficulty)
     const leadMode = this.settings.leadPip ?? 'recruit';
-    if (pl?.alive && (leadMode === 'always' || (leadMode === 'recruit' && this.settings.difficulty === 'recruit'))) this.drawLeadPip(ctx, W, H);
+    if (pl?.alive && (this.loadout.leadPip || leadMode === 'always' || (leadMode === 'recruit' && this.settings.difficulty === 'recruit'))) this.drawLeadPip(ctx, W, H);
     // Gunner hip reticle: waist guns without the ring sight up (fades as RMB brings the eye down)
     if (this.mission?.role === 'gunner' && this.gunner.def.type === 'waist' && this.gunner.ads < 0.6) {
       const a = 0.85 * (1 - this.gunner.ads / 0.6);

@@ -14,7 +14,11 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
   const ids: StationId[] = ['waistL', 'waistR', 'top', 'ball', 'tail'];
   game.startMission(mission);
   const log: string[] = [];
+  let perks = 0;
   for (let k = 0; k < maxSteps; k++) {
+    // between-wave perk cards: take the first one
+    const card = document.querySelector<HTMLElement>('#perks.show .pcard');
+    if (card) { card.click(); perks++; }
     inp.locked = true;
     inp.buttons = 0;
     if (mission.role === 'gunner') {
@@ -77,6 +81,6 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
     if (game.state === 'debrief') break;
   }
   const res = document.querySelector('#debrief .result')?.textContent ?? game.state;
-  log.push(`RESULT: ${res} — kills ${w.stats.kills}, accuracy ${(w.stats.hits / Math.max(1, w.stats.shots) * 100).toFixed(0)}%, bombers lost ${w.stats.bombersLost}, t=${w.time.toFixed(0)}s`);
+  log.push(`RESULT: ${res} — perks ${perks}, kills ${w.stats.kills}, accuracy ${(w.stats.hits / Math.max(1, w.stats.shots) * 100).toFixed(0)}%, bombers lost ${w.stats.bombersLost}, t=${w.time.toFixed(0)}s`);
   return log.join('\n');
 }

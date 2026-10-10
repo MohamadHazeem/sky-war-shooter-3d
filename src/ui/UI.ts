@@ -1,6 +1,7 @@
 import type { Mission } from '../game/Missions';
 import { achievementsHtml } from '../game/Achievements';
 import { STATION_ORDER, STATIONS, StationId } from '../world/B17Layout';
+import { MAX_LEVEL, PerkDef, Progression, UPGRADES, upgradeCost } from '../game/Upgrades';
 import { sound } from '../audio/Sound';
 import { playMedalFanfare } from '../audio/Fanfare';
 
@@ -48,6 +49,8 @@ export interface DebriefData {
   bestStreak?: number;             // longest run of confirmed kills in quick succession
   closestKill?: number | null;     // metres from the player's aircraft; null when no kills
   killsByGun?: { label: string; kills: number }[]; // gunner missions: kills per gun position
+  merit?: number;    // points earned for the Armory
+  points?: number;   // Armory balance after this mission
 }
 
 // Live mission snapshot shown on the pause screen
@@ -90,6 +93,8 @@ export class UI {
       <div id="settings" class="layer"></div>
       <div id="debrief" class="layer"></div>
       <div id="credits" class="layer"></div>
+      <div id="armory" class="layer"></div>
+      <div id="perks"></div>
     `);
     this.canvas = $('#hudCanvas') as HTMLCanvasElement;
     this.ctx = this.canvas.getContext('2d')!;
@@ -115,7 +120,7 @@ export class UI {
   fade(on: boolean) { $('#fade').style.opacity = on ? '1' : '0'; }
   fadeTo(a: number) { $('#fade').style.transition = 'none'; $('#fade').style.opacity = String(a); requestAnimationFrame(() => ($('#fade').style.transition = '')); }
 
-  title(h: { campaign(): void; survival(): void; settings(): void; credits(): void }) {
+  title(h: { campaign(): void; survival(): void; armory(): void; settings(): void; credits(): void }) {
     const t = $('#title');
     // Cinematic dressing (letterbox, film grain, scratches, stencil tag) is decorative and
     // pointer-events:none, so the buttons below keep their handlers untouched.
@@ -129,6 +134,7 @@ export class UI {
         <div class="menu">
           <button data-a="campaign">Campaign <small>7 missions</small></button>
           <button data-a="survival">Survival <small>endless waves</small></button>
+          <button data-a="armory">Armory <small>upgrade your guns</small></button>
           <button data-a="settings">Settings</button>
           <button data-a="credits">Credits</button>
         </div>
@@ -424,7 +430,54 @@ export class UI {
     this.show('credits');
   }
 
-  debrief(d: DebriefData, h: { next(): void; retry(): void; menu(): void }) {
+  // Armory: spend merit points on permanent gun upgrades
+  armory(prog: Progression, onBack: () => void) {
+    const a = $('#armory');
+    const render = () => {
+      a.innerHTML = `<div class="screen-center"><div class="box panel armory">
+        <div class="kicker">ORDNANCE SHOP · 401ST BOMB SQUADRON</div>
+        <h2>Armory</h2>
+        <div class="pts">Merit points: <b>${prog.points}</b> <span>— earned from score in every mission</span></div>
+        <div class="ugrid">${UPGRADES.map((u) => {
+          const lv = prog.levels[u.id], cost = upgradeCost(lv), maxed = lv >= MAX_LEVEL;
+          return `<div class="ucard">
+            <div class="t">${esc(u.name)}</div><div class="d">${esc(u.desc)} · ${esc(u.per)} per level</div>
+            <div class="pips">${Array.from({ length: MAX_LEVEL }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</div>
+            <button class="btn ${maxed || prog.points < cost ? 'ghost' : ''}" data-u="${u.id}" ${maxed || prog.points < cost ? 'disabled' : ''}>${maxed ? 'Maxed' : `Upgrade · ${cost}`}</button>
+          </div>`;
+        }).join('')}</div>
+        <div class="row" style="margin-top:20px"><button class="btn ghost" data-back>Back</button></div>
+      </div></div>`;
+      a.querySelectorAll<HTMLButtonElement>('[data-u]').forEach((b) => b.addEventListener('click', () => {
+        if (prog.buy(b.dataset.u as any)) { sound.play('click', null, { gain: 0.6 }); render(); }
+      }));
+      a.querySelector('[data-back]')!.addEventListener('click', onBack);
+    };
+    render();
+    this.show('armory');
+  }
+
+  // Between waves: pick one of three perks (click or keys 1-3); the HUD stays visible behind
+  perkChoice(cards: PerkDef[], title: string, onPick: (p: PerkDef) => void) {
+    const el = $('#perks');
+    el.innerHTML = `<div class="perkwrap"><div class="kicker">${esc(title)}</div><h2>Choose a field upgrade</h2>
+      <div class="pgrid">${cards.map((c, i) => `<button class="pcard" data-i="${i}"><span class="k">${i + 1}</span><div class="t">${esc(c.name)}</div><div class="d">${esc(c.desc)}</div></button>`).join('')}</div>
+      <div class="hint">Click a card or press 1 – 3</div></div>`;
+    el.classList.add('show');
+    let done = false;
+    const pick = (i: number) => {
+      if (done || !cards[i]) return;
+      done = true;
+      removeEventListener('keydown', key, true);
+      el.classList.remove('show');
+      onPick(cards[i]);
+    };
+    const key = (e: KeyboardEvent) => { const n = ['Digit1', 'Digit2', 'Digit3'].indexOf(e.code); if (n >= 0) { e.stopPropagation(); e.preventDefault(); pick(n); } };
+    addEventListener('keydown', key, true);
+    el.querySelectorAll<HTMLButtonElement>('.pcard').forEach((b) => b.addEventListener('click', () => pick(+b.dataset.i!)));
+  }
+
+  debrief(d: DebriefData, h: { next(): void; retry(): void; menu(): void; armory(): void }) {
     const e = $('#debrief');
     const mm = Math.floor(d.time / 60), ss = Math.floor(d.time % 60);
     const tile = (label: string, value: string | number) => `<div class="stat"><div class="hud-label">${esc(label)}</div><div class="v">${value}</div></div>`;
@@ -449,12 +502,14 @@ export class UI {
         <div class="stat"><div class="hud-label">Bombers lost</div><div class="v">${d.bombersLost}/${d.bombersTotal}</div></div>
         <div class="stat"><div class="hud-label">Time</div><div class="v">${mm}:${String(ss).padStart(2, '0')}</div></div>
         <div class="stat"><div class="hud-label">Score</div><div class="v">${d.score}</div></div>
+        ${d.merit !== undefined ? `<div class="stat"><div class="hud-label">Merit earned</div><div class="v" style="color:var(--khaki)">+${d.merit}</div></div>` : ''}
         ${extra.join('')}
       </div>
       <div>${d.medals.map((m, i) => `<span class="medal pop" style="animation-delay:${medalDelay(i)}s">✦ ${esc(m)}</span>`).join('')}</div>
       <div class="row" style="margin-top:22px">
         ${d.nextAvailable ? '<button class="btn" data-a="next">Next mission</button>' : ''}
         <button class="btn ${d.nextAvailable ? 'ghost' : ''}" data-a="retry">${d.survival ? 'Fly again' : 'Retry'}</button>
+        <button class="btn ghost" data-a="armory">Armory${d.points !== undefined ? ` · ${d.points} pts` : ''}</button>
         <button class="btn ghost" data-a="menu">Main menu</button>
       </div>
     </div></div>`;

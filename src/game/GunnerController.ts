@@ -5,6 +5,7 @@ import { World } from '../world/World';
 import { Bomber } from '../world/Aircraft';
 import { dirFromYawPitch, STATIONS, StationDef, StationId, wrapAngle } from '../world/B17Layout';
 import { buildM2, buildTailInterior, buildTurret, buildWaistInterior, GunModel } from './Viewmodels';
+import { Loadout, Progression } from './Upgrades';
 import { sound } from '../audio/Sound';
 import { bulletHoleTexture } from '../render/Textures';
 import { Atmos } from '../render/Atmosphere';
@@ -16,7 +17,7 @@ interface StationState {
   yaw: number; pitch: number;       // current (relative to rest)
   tYaw: number; tPitch: number;     // target
   vYaw: number; vPitch: number;
-  ammo: number; maxAmmo: number;
+  ammo: number; maxAmmo: number; baseAmmo: number;
   heat: number; overheated: boolean;
   reload: number;
 }
@@ -60,6 +61,7 @@ export class GunnerController {
   private beamMat: THREE.ShaderMaterial | null = null;
   onSwitch?: (st: StationDef) => void;
   onNotice?: (text: string) => void;
+  loadout: Loadout = new Progression().loadout(); // upgrades + perks (set by Game)
   transition = 0; // >0 while crawling to another station (screen fades)
   private pendingStation: StationId | null = null;
   private keyAim = new KeyAim();
@@ -68,7 +70,7 @@ export class GunnerController {
     for (const id of Object.keys(STATIONS) as StationId[]) {
       const def = STATIONS[id];
       const max = def.type === 'waist' ? 600 : def.id === 'top' ? 750 : 1000;
-      this.states.set(id, { def, yaw: 0, pitch: 0, tYaw: 0, tPitch: 0, vYaw: 0, vPitch: 0, ammo: max, maxAmmo: max, heat: 0, overheated: false, reload: 0 });
+      this.states.set(id, { def, yaw: 0, pitch: 0, tYaw: 0, tPitch: 0, vYaw: 0, vPitch: 0, ammo: max, maxAmmo: max, baseAmmo: max, heat: 0, overheated: false, reload: 0 });
     }
     this.rig.add(this.gunPivot);
     // Lights live permanently in the scene (intensity 0 when unused) so attaching or
@@ -257,6 +259,22 @@ export class GunnerController {
   get state() { return this.states.get(this.station)!; }
   get def() { return STATIONS[this.station]; }
 
+  // Upgrades/perks changed: resize the ammo boxes (refill = top them all up)
+  applyLoadout(l: Loadout, refill = false) {
+    this.loadout = l;
+    for (const s of this.states.values()) {
+      s.maxAmmo = Math.round(s.baseAmmo * l.ammo);
+      s.ammo = refill ? s.maxAmmo : Math.min(s.ammo, s.maxAmmo);
+    }
+  }
+
+  // Scavenger perk: a kill refills part of the current box and cools the barrel
+  onKillRefill(frac: number) {
+    const s = this.state;
+    s.ammo = Math.min(s.maxAmmo, s.ammo + Math.round(s.maxAmmo * frac));
+    s.heat = Math.max(0, s.heat - 0.4); s.overheated = false;
+  }
+
   resetAmmo() {
     for (const s of this.states.values()) { s.ammo = s.maxAmmo; s.heat = 0; s.overheated = false; s.reload = 0; }
   }
@@ -309,7 +327,7 @@ export class GunnerController {
       if (s.reload <= 0) { s.ammo = s.maxAmmo; this.guns[this.station]?.forEach((g) => { if (g.belt) { g.belt.visibleRounds = 999; g.belt.update(); } }); }
     } else if ((inp.hit('KeyR') && s.ammo < s.maxAmmo) || s.ammo <= 0) {
       if (s.ammo <= 0) this.onNotice?.('RELOADING — new ammunition box');
-      s.reload = def.type === 'waist' ? 4.5 : 6;
+      s.reload = (def.type === 'waist' ? 4.5 : 6) * this.loadout.reload;
       sound.play('click', null, { gain: 0.5, rate: 0.7 });
     }
 
@@ -326,7 +344,7 @@ export class GunnerController {
       if (this.beltTickT <= 0) { this.beltTickT = 0.6; sound.play('beltTick', null, { gain: 0.55, reverb: 0.4 }); }
     } else this.beltTickT = 0;
     const guns = this.guns[this.station]!;
-    const rate = def.twin ? 13 * 2 : 13;
+    const rate = (def.twin ? 13 * 2 : 13) * this.loadout.rate;
     if (wantFire) {
       while (this.cooldown <= 0) {
         this.cooldown += 1 / rate;
@@ -334,7 +352,7 @@ export class GunnerController {
         this.fireRound(g, def);
         this.shotCount++;
         s.ammo--;
-        s.heat += def.twin ? 0.0075 : 0.011;
+        s.heat += (def.twin ? 0.0075 : 0.011) * this.loadout.heat;
         if (s.heat >= 1) { s.overheated = true; this.onNotice?.('BARREL OVERHEATED — let it cool'); this.world.callout('hot', 'Pilot', 'Short bursts! You\'ll burn out that barrel!', 15); }
         if (s.ammo <= 0) break;
       }
@@ -366,12 +384,12 @@ export class GunnerController {
     const b = this.bomber!;
     const muzzle = g.muzzles[0].getWorldPosition(new THREE.Vector3());
     const dir = new THREE.Vector3(0, 0, 1).applyQuaternion(g.muzzles[0].getWorldQuaternion(_q));
-    const spread = 0.0022;
+    const spread = 0.0022 * this.loadout.spread;
     dir.x += R() * spread; dir.y += R() * spread; dir.z += R() * spread;
     dir.normalize();
     const vel = dir.clone().multiplyScalar(870).add(b.vel);
     const tracer = this.shotCount % 3 === 0;
-    this.world.ballistics.fire(muzzle, vel, 'allied', 12, tracer, [10, 2.6, 0.9], b, false, true);
+    this.world.ballistics.fire(muzzle, vel, 'allied', 12 * this.loadout.damage, tracer, [10, 2.6, 0.9], b, false, true);
     this.world.stats.shots++;
     if (this.shotCount % 2 === 0) this.world.effects.playerMuzzle(muzzle, dir, b.vel);
     if (this.shotCount % 2 === 0) this.world.effects.gunSmoke(muzzle, b.vel.clone().multiplyScalar(0.9));
@@ -381,8 +399,8 @@ export class GunnerController {
     this.shake = Math.min(1, this.shake + 0.35);
     // Recoil kick disturbs aim (gunner fights it)
     const s = this.state;
-    s.vYaw += R() * 0.09;
-    s.vPitch += 0.05 + Math.random() * 0.07;
+    s.vYaw += R() * 0.09 * this.loadout.recoil;
+    s.vPitch += (0.05 + Math.random() * 0.07) * this.loadout.recoil;
     sound.playerGun(def.twin);
     g.belt?.advance(1);
     if (g.belt && s.ammo < 60) { g.belt.visibleRounds = Math.max(0, Math.floor(s.ammo * 0.8)); }
