@@ -8,7 +8,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | # | Goal | Status |
 |---|---|---|
 | 1 | Cloud quality: temporal reprojection (more detail at the same cost), sharper silver linings, cloud shadows on the cloud sea | |
-| 2 | Aircraft surfaces: procedural panel lines, rivets, weathering, oil streaks, chipped paint, roughness variation (B-17 + fighters) | |
+| 2 | Aircraft surfaces: procedural panel lines, rivets, weathering, oil streaks, chipped paint, roughness variation (B-17 + fighters) | Done — procedural panel lines + rivets (object-space projection), panel tone patchwork, chipped leading edges and walkways, exhaust/oil streaks per engine, grime, roughness wear; per model, composes with tints/paint/nose art/damage; distance fade (no shimmer); Low off, Medium lines, High/Ultra all |
 | 3 | Volumetric-looking explosions: raymarched or flipbook fireballs, shockwave distortion | Done — raymarched noise fireballs (white core → orange → red → sunlit black smoke), shock shells, burning debris with smoke trails, cook-off pops, multi-stage heavy and warship blasts, lumpy flak puffs; pooled + LOD, no new shader compiles |
 | 4 | Heat haze and distortion: engine exhausts, explosions, muzzle blast (screen-space refraction) | |
 | 5 | Explosion and muzzle light on clouds and aircraft; glowing tracers lighting the scene | Done — 4 pooled combat lights (explosions, heavy-gun muzzle flashes, hits) tint nearby aircraft and the player\'s gun; fixed light count, no recompiles. Tracer glow sprites not done |
@@ -46,3 +46,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 23:48 wingman + role reversal merged (Arabic added; wingman is Blue Four in escort missions to avoid the clash with the player's own Blue Two callsign); started P-51 ground attack (18).
 - 23:53 volumetric explosions + combat light merged. Known: the first Bf 109 / Fw 190 wing-off or blow-up kill still compiles 1–3 shader variants (clip-plane count); warm-up fixes tried and reverted.
 - 00:01 living interior merged; full regression running; started canopy/turret glass effects (8).
+- 00:04 aircraft surface detail merged; checking B-17 bullet-hole placement (possible quantized-space bug).
