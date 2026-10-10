@@ -226,7 +226,7 @@ export class World implements WorldView {
     for (const side of [1, -1]) for (const [x, y, z] of muzzles) {
       const off = new THREE.Vector3(x * side, y, z);
       const dirv = new THREE.Vector3(-off.x, -off.y + 0.45, conv).normalize();
-      f.guns.push(makeGun({ offset: off, dir: dirv, rate: 13, muzzleVel: 880, damage: 11, spread: 0.0035, tracerEvery: 4, tracerColor: [9, 3, 1], ammo: 350 }));
+      f.guns.push(makeGun({ offset: off, dir: dirv, rate: 13, muzzleVel: 880, damage: 14, spread: 0.0035, tracerEvery: 4, tracerColor: [9, 3, 1], ammo: 350 }));
     }
     f.label = 'P-51D';
     this.add(f);

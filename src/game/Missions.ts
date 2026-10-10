@@ -33,6 +33,7 @@ export interface Mission {
   maxBombersLost?: number;
   playerDamaged?: boolean;    // start with two engines out (straggler)
   success?: string;           // debrief line on success
+  playerArmor?: number;       // incoming damage scale on the player's aircraft
   sun?: { el: number; az: number };
   coverage?: number;
 }
@@ -106,7 +107,7 @@ export const CAMPAIGN: Mission[] = [
       'Intelligence reports a new kind of German unit: the Sturmgruppe. Heavily armoured Fw 190 A-8s that close to point-blank range from astern, in line abreast, and do not break off.',
       'You are the tail gunner. They will be coming straight at you. Open fire early and keep firing — armour glass in their windscreens will stop a lot of what you throw at them.',
     ],
-    objectives: ['Stop the Sturmgruppe attack from astern', 'Survive the mission', 'Lose no more than 4 bombers'],
+    objectives: ['Stop the Sturmgruppe attack from astern', 'Survive the mission', 'Lose no more than 4 bombers'], playerArmor: 0.45,
     bombers: 12, waves: [
       { at: 15, count: 3, from: 'rear', attack: 'stern', skill: 1.0, radio: ['Navigator', 'Fighters assembling behind us, six o\'clock level. Lots of them.'] },
       { at: 0, afterClear: true, count: 8, from: 'rear', attack: 'stern', skill: 1.15, radio: ['Pilot', 'Here comes the whole gaggle! Tail, they\'re all yours!'] },

@@ -133,12 +133,13 @@ export class Fighter extends Aircraft {
     const H = (name: string, x: number, y: number, z: number, r: number, hp: number, extra: Partial<HitZone> = {}) =>
       this.zones.push({ name, offset: new THREE.Vector3(x, y, z), radius: r, hp, maxHp: hp, ...extra });
     // Zones fitted to the converted models (Fw 190 A-8 / P-51D share the layout closely)
-    H('engine', 0, 0.0, 1.15, 0.9, 70, { engine: 0 });
-    H('cockpit', 0, 0.62, -1.35, 0.6, 50, { critical: true });
-    H('fuselage', 0, 0.1, -3.4, 0.75, 90);
-    H('tail', 0, 0.55, -5.75, 1.05, 60, { critical: true });
-    H('wingL', 2.6, -0.3, -0.25, 1.45, 75);
-    H('wingR', -2.6, -0.3, -0.25, 1.45, 75);
+    H('engine', 0, 0.0, 1.15, 0.9, 85, { engine: 0 });
+    H('cockpit', 0, 0.62, -1.35, 0.6, 60, { critical: true });
+    H('fuselage', 0, 0.1, -3.4, 0.75, 120, { critical: true });
+    H('tail', 0, 0.55, -5.75, 1.05, 80, { critical: true });
+    // a fighter that loses a wing panel is finished
+    H('wingL', 2.6, -0.3, -0.25, 1.45, 105, { critical: true });
+    H('wingR', -2.6, -0.3, -0.25, 1.45, 105, { critical: true });
   }
 
   update(dt: number) {

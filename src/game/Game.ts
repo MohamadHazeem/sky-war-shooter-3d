@@ -244,8 +244,8 @@ export class Game {
     this.score = 0;
     this.damageT = 0;
     this.engine.post.resetHistory();
-    this.world.playerDamageScale = m.role === 'gunner' ? 0.6 : 0.75;
-    this.world.aiGunnerFactor = m.role === 'pilot' ? 1.8 : 1;
+    this.world.playerDamageScale = m.playerArmor ?? (m.role === 'gunner' ? 0.6 : 0.75);
+    this.world.aiGunnerFactor = m.role === 'pilot' ? 1.6 : 0.8;
     this.world.spawnFormation(m.bombers, 1);
     const pb = this.world.playerBomber!;
     if (m.role === 'gunner') {

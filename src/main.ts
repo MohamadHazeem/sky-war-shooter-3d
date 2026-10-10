@@ -39,6 +39,10 @@ async function boot() {
     step: (n: number, dt = 1 / 60, render = false) => { for (let i = 0; i < n; i++) engine.frame(dt, render || i === n - 1); },
     shot: (q = 0.85) => { engine.render(1 / 60); return engine.renderer.domElement.toDataURL('image/jpeg', q); },
   };
+  if (import.meta.env.DEV) {
+    const { autoplay } = await import('./dev/autoplay');
+    (window as any).sws.autoplay = (m: any, steps?: number) => autoplay(engine, game, m, steps);
+  }
 }
 
 boot();
