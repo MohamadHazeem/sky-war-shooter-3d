@@ -26,6 +26,7 @@ interface StationState {
 const _v = new THREE.Vector3();
 const _q = new THREE.Quaternion();
 const R = () => Math.random() * 2 - 1;
+const OVERDRIVE_TRACER: [number, number, number] = [14, 5.5, 1.6]; // white-hot tracer during Overdrive
 
 // First-person B-17 gunner: heavy, sprung gun traverse, recoil, barrel heat, belts.
 
@@ -50,7 +51,17 @@ export class GunnerController {
   zoom = false;
   fov = 62;
   assist = 1;    // aim assist strength 0..1 (Settings)
-  rateBoost = 1; // Berserker perk
+  rateBoost = 1; // Berserker perk (x1.35 more while the Overdrive ability runs)
+  // Abilities (src/game/Abilities.ts): Overdrive = no barrel heat + hot tracers and a glowing
+  // barrel (overdrive 0..1 is the visual intensity); Focus = bullet-time, where aimTimeScale
+  // (1 / engine.timeScale) keeps the gun traverse and sight responsive in real time.
+  heatFree = false;
+  overdrive = 0;
+  aimTimeScale = 1;
+  private odGlow = new Map<GunModel, THREE.Mesh>();
+  private odGeo: THREE.CylinderGeometry | null = null;
+  private odMat: THREE.MeshBasicMaterial | null = null;
+  private odShown = false;
   assistTarget: Fighter | null = null;
   private assistYaw = 0;
   private assistPitch = 0;
@@ -143,6 +154,9 @@ export class GunnerController {
     this.clatterClock = 0;
     for (const h of this.holes) h.removeFromParent();
     this.holes = [];
+    for (const m of this.odGlow.values()) m.removeFromParent();
+    this.odGlow.clear();
+    this.odShown = false;
     this.bomber = null;
   }
 
@@ -289,6 +303,7 @@ export class GunnerController {
     const inp = this.input;
     const s = this.state;
     const def = s.def;
+    const adt = dt * this.aimTimeScale; // aim/sight time: real time during bullet-time
 
     // Station switching
     if (this.transition > 0) {
@@ -304,17 +319,17 @@ export class GunnerController {
     // aim friction: the mouse slows down while the sight is on a fighter's lead point
     const sens = 0.0018 * inp.sensitivity * (this.zoom ? 0.55 : 1) * (1 - 0.4 * lock * this.assist);
     const push = inp.edgePush();
-    const mdx = inp.mouseDX + push.x * 900 * dt, mdy = inp.mouseDY + push.y * 700 * dt;
+    const mdx = inp.mouseDX + push.x * 900 * adt, mdy = inp.mouseDY + push.y * 700 * adt;
     s.tYaw -= mdx * sens;
     s.tPitch -= mdy * sens * (inp.invertY ? -1 : 1);
     // keyboard traverse (arrows / I-J-K-L) moves the same target, slower when sighting
-    this.keyAim.update(inp, dt);
-    const kr = KEY_AIM_RATE * (this.zoom ? 0.55 : 1) * dt;
+    this.keyAim.update(inp, adt);
+    const kr = KEY_AIM_RATE * (this.zoom ? 0.55 : 1) * adt;
     s.tYaw -= this.keyAim.x * kr;
     s.tPitch += this.keyAim.y * kr * (inp.invertY ? -1 : 1);
     // aim magnetism: draw the sight onto the lead point of the fighter nearest the crosshair
     if (lock > 0 && this.assist > 0) {
-      const pull = Math.min(1, dt * (2.5 + 5 * lock) * this.assist);
+      const pull = Math.min(1, adt * (2.5 + 5 * lock) * this.assist);
       let ey = this.assistYaw - s.tYaw;
       if (def.yaw[1] - def.yaw[0] >= Math.PI * 1.99) ey = wrapAngle(ey);
       s.tYaw += ey * pull;
@@ -327,15 +342,15 @@ export class GunnerController {
     const k = (def.type === 'waist' ? 190 : 260) * tv * tv, damp = (def.type === 'waist' ? 22 : 28) * tv;
     let dy = s.tYaw - s.yaw;
     if (def.yaw[1] - def.yaw[0] >= Math.PI * 1.99) dy = wrapAngle(dy);
-    s.vYaw += (dy * k - s.vYaw * damp) * dt;
-    s.vPitch += ((s.tPitch - s.pitch) * k - s.vPitch * damp) * dt;
-    s.yaw += s.vYaw * dt;
-    s.pitch += s.vPitch * dt;
+    s.vYaw += (dy * k - s.vYaw * damp) * adt;
+    s.vPitch += ((s.tPitch - s.pitch) * k - s.vPitch * damp) * adt;
+    s.yaw += s.vYaw * adt;
+    s.pitch += s.vPitch * adt;
 
     // Zoom (squint down the sight)
     this.zoom = inp.mouse(2);
     const targetFov = this.zoom ? this.baseFov * (34 / 62) : this.baseFov;
-    this.fov += (targetFov - this.fov) * Math.min(1, dt * 10);
+    this.fov += (targetFov - this.fov) * Math.min(1, adt * 10);
 
     // Reload
     if (s.reload > 0) {
@@ -369,7 +384,7 @@ export class GunnerController {
         this.fireRound(g, def);
         this.shotCount++;
         // unlimited belts: the counter never runs down
-        s.heat += W.heat * this.loadout.heat;
+        if (!this.heatFree) s.heat += W.heat * this.loadout.heat;
         if (s.heat >= 1) { s.overheated = true; this.onNotice?.('BARREL OVERHEATED — let it cool'); this.world.callout('hot', 'Pilot', 'Short bursts! You\'ll burn out that barrel!', 15); }
         if (s.ammo <= 0) break;
       }
@@ -388,14 +403,40 @@ export class GunnerController {
     this.gunPivot.quaternion.setFromEuler(new THREE.Euler(-pitch, yaw, 0, 'YXZ'));
 
     for (const g of guns) g.belt?.tick(dt);
+    this.updateOverdriveFx(guns);
     this.updateCasings(dt);
     // dust motes only matter while the waist interior is on screen
     if (this.dust && this.waistInterior?.visible) {
       this.sunLocal.copy(Atmos.sunDir).applyQuaternion(this.bomber.root.getWorldQuaternion(_q).invert());
       this.dust.update(dt, this.sunLocal, this.engine.renderer.domElement.height);
     }
-    this.updateCamera(dt);
+    this.updateCamera(adt);
     this.world.playerAimDir.copy(this.aimDirection());
+  }
+
+  // Overdrive: a red-hot glow along the exposed barrel (and through the cooling-jacket holes),
+  // flickering with the rate of fire. Meshes are made once per gun and only toggled after.
+  private updateOverdriveFx(guns: GunModel[]) {
+    const k = this.overdrive;
+    if (k <= 0 && !this.odShown) return;
+    this.odShown = k > 0;
+    if (k > 0 && !this.odMat) {
+      this.odGeo = new THREE.CylinderGeometry(0.0175, 0.0175, 0.62, 12, 1, true).rotateX(Math.PI / 2);
+      this.odMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, 0.7, 0.18), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+    }
+    if (this.odMat) this.odMat.opacity = k * (this.firing ? 0.55 + 0.15 * Math.sin(this.world.time * 47) : 0.4);
+    this.muzzleLight.color.setHex(k > 0 ? 0xff7a2c : 0xffb060);
+    for (const g of guns) {
+      let m = this.odGlow.get(g);
+      if (!m && k > 0 && this.odGeo && this.odMat) {
+        const muzzle = g.muzzles[0];
+        m = new THREE.Mesh(this.odGeo, this.odMat);
+        m.position.copy(muzzle.position).z -= 0.43;
+        muzzle.parent?.add(m);
+        this.odGlow.set(g, m);
+      }
+      if (m) m.visible = k > 0;
+    }
   }
 
   // Aim assist: the enemy whose lead point is closest to where the gun is laid, inside a
@@ -448,8 +489,9 @@ export class GunnerController {
     dir.x += R() * spread; dir.y += R() * spread; dir.z += R() * spread;
     dir.normalize();
     const vel = dir.clone().multiplyScalar(W.velocity * this.loadout.velocity).add(b.vel);
-    const tracer = this.shotCount % W.tracerEvery === 0;
-    this.world.ballistics.fire(muzzle, vel, 'allied', W.damage * this.loadout.damage, tracer, W.tracer, b, !!W.cannon, true);
+    const od = this.overdrive > 0;
+    const tracer = this.shotCount % (od ? 2 : W.tracerEvery) === 0;
+    this.world.ballistics.fire(muzzle, vel, 'allied', W.damage * this.loadout.damage, tracer, od ? OVERDRIVE_TRACER : W.tracer, b, !!W.cannon, true);
     this.world.stats.shots++;
     if (this.shotCount % 2 === 0) this.world.effects.playerMuzzle(muzzle, dir, b.vel);
     if (this.shotCount % 2 === 0) this.world.effects.gunSmoke(muzzle, b.vel.clone().multiplyScalar(0.9));

@@ -163,6 +163,9 @@ export class World implements WorldView {
     if (p instanceof EnemyPilot) p.station = id;
   }
 
+  // Swap a fighter's AI (Abilities: the called-in Mustang sweep flies its own EscortPilot)
+  setPilot(f: Fighter, p: EnemyPilot | EscortPilot) { this.pilots.set(f, p); }
+
   playerStationId(): string | null { return this.player === this.playerBomber && this.playerStation ? this.playerStation.id : null; }
 
   playerGunPos(): THREE.Vector3 | null {

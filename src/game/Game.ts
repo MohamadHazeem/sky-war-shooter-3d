@@ -30,6 +30,7 @@ import { achievements } from './Achievements';
 import { GameFeel } from './GameFeel';
 import { CombatFeedback, killFeedText } from '../ui/CombatFeedback';
 import { Onboarding } from './Onboarding';
+import { Abilities } from './Abilities';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -56,6 +57,7 @@ export class Game {
   readonly pilot: PilotController;
   readonly photo: PhotoMode;
   readonly onboarding: Onboarding;
+  readonly abilities: Abilities;
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -131,6 +133,7 @@ export class Game {
     this.pilot = new PilotController(engine, this.world, input);
     this.photo = new PhotoMode(engine, input, this.world);
     this.feel = new GameFeel(engine, this.world, ui, this.combo); this.combat = new CombatFeedback(engine, this.world);
+    this.abilities = new Abilities(engine, input, ui, this);
     this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: true, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 65 });
     // settings saved before aim assist existed: switch the lead indicator on with it
     let raw = ''; try { raw = localStorage.getItem(SETTINGS_KEY) ?? ''; } catch { /* */ }
@@ -486,6 +489,7 @@ export class Game {
     }
     this.prog.role = m.role;
     Chatter.attachRadioChatter(this.world, m.role);
+    this.abilities.reset(m.role);
     this.baseDamageScale = this.world.playerDamageScale;
     this.berserkT = 0; this.killCount = 0;
     this.applyLoadout(true);
@@ -1043,6 +1047,7 @@ export class Game {
       this.slowmo -= dt / Math.max(0.05, this.engine.timeScale);
       this.engine.timeScale = this.slowmo > 0 ? 0.35 : 1;
     }
+    this.abilities.update(dt);
     // Photo mode: the mission is frozen (engine.paused) and only the free camera moves
     if (this.photo.active) {
       this.photo.update();

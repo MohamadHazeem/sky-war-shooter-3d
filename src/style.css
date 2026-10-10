@@ -240,7 +240,7 @@ kbd { font-family: 'IBM Plex Mono', monospace; font-size: 12px; border: 1px soli
   .instr { grid-template-columns: repeat(3, auto); }
 }
 
-#tip { position: absolute; left: 50%; bottom: 9vh; transform: translateX(-50%); background: rgba(10,10,6,0.72); border: 1px solid rgba(185,167,111,0.5); padding: 7px 14px; font-size: 14px; letter-spacing: 1px; opacity: 0; transition: opacity 0.4s; text-align: center; max-width: 80vw; }
+#tip { position: absolute; left: 50%; bottom: calc(3.2vh + 128px); transform: translateX(-50%); background: rgba(10,10,6,0.72); border: 1px solid rgba(185,167,111,0.5); padding: 7px 14px; font-size: 14px; letter-spacing: 1px; opacity: 0; transition: opacity 0.4s; text-align: center; max-width: 80vw; }
 #tip.show { opacity: 1; }
 #tip kbd { color: var(--khaki); }
 
@@ -313,3 +313,44 @@ table.lb tr.me td { color: var(--khaki); }
 .cloud .cs-code { font-family: 'IBM Plex Mono', monospace; color: var(--khaki); letter-spacing: 1px; }
 .cloud input { background: rgba(0,0,0,0.4); border: 1px solid var(--line); color: var(--ink); padding: 7px 9px; font-family: 'IBM Plex Mono', monospace; width: 260px; }
 .cloud .btn { padding: 6px 12px; font-size: 13px; }
+/* ---------- Active abilities (src/ui/AbilityBar.ts) ---------- */
+#abilityBar { position: fixed; left: 50%; bottom: calc(3.2vh + 44px); transform: translateX(-50%); display: none; gap: 14px; z-index: 6; pointer-events: none; }
+#abilityBar.show { display: flex; }
+.ab-slot { --cd: 0; --act: 0; position: relative; width: 52px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.ab-face { position: relative; width: 48px; height: 48px; border-radius: 50%; background: rgba(10,11,8,0.62); border: 1px solid rgba(233,226,207,0.28); box-shadow: 0 2px 8px rgba(0,0,0,0.5); overflow: hidden; transition: border-color 0.2s, box-shadow 0.3s; }
+.ab-icon { position: absolute; inset: 9px; color: var(--ink-dim); transition: color 0.2s; }
+.ab-icon svg { width: 100%; height: 100%; display: block; }
+/* cooldown: a dark wedge that shrinks as the ability recharges */
+.ab-sweep { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(rgba(0,0,0,0.68) calc(var(--cd) * 360deg), transparent 0); }
+/* running: a bright ring that drains */
+.ab-ring { position: absolute; inset: 0; border-radius: 50%; opacity: 0; -webkit-mask: radial-gradient(circle, transparent 20px, #000 21px); mask: radial-gradient(circle, transparent 20px, #000 21px); background: conic-gradient(var(--ab-col, var(--khaki)) calc(var(--act) * 360deg), rgba(255,255,255,0.08) 0); }
+.ab-time { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600; color: var(--ink); text-shadow: 0 1px 3px #000; }
+.ab-key { font-size: 11px; padding: 0 5px; line-height: 16px; background: rgba(0,0,0,0.5); color: var(--ink-dim); border-color: rgba(233,226,207,0.35); }
+.ab-name { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-dim); text-shadow: 0 1px 3px #000; white-space: nowrap; }
+.ab-slot[data-a="mustangs"] { --ab-col: #8fc0ff; }
+.ab-slot[data-a="overdrive"] { --ab-col: #ff8a3a; }
+.ab-slot[data-a="focus"] { --ab-col: #a9c4dc; }
+.ab-slot.ready .ab-face { border-color: var(--ab-col); animation: abReady 1.8s ease-in-out infinite; }
+.ab-slot.ready .ab-icon, .ab-slot.active .ab-icon { color: var(--ab-col); }
+.ab-slot.ready .ab-key { color: #1b1a12; background: var(--ab-col); border-color: var(--ab-col); opacity: 1; }
+.ab-slot.ready .ab-name { color: var(--ink); }
+.ab-slot.active .ab-ring { opacity: 1; }
+.ab-slot.active .ab-face { border-color: var(--ab-col); box-shadow: 0 0 16px var(--ab-col); }
+.ab-slot.flash .ab-face { animation: abFlash 0.6s ease-out, abReady 1.8s ease-in-out 0.6s infinite; }
+.ab-slot.deny { animation: abDeny 0.28s; }
+@keyframes abReady { 0%, 100% { box-shadow: 0 0 4px var(--ab-col); } 50% { box-shadow: 0 0 14px var(--ab-col), 0 0 2px var(--ab-col) inset; } }
+@keyframes abFlash { from { box-shadow: 0 0 28px 6px var(--ab-col); transform: scale(1.12); } to { box-shadow: 0 0 4px var(--ab-col); transform: none; } }
+@keyframes abDeny { 0%, 100% { transform: none; } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+/* Focus: subtle blue-grey wash, heavier at the edges */
+#abilityTint { position: fixed; inset: 0; pointer-events: none; z-index: 4; opacity: 0; display: none; background: radial-gradient(ellipse at center, rgba(150,172,200,0.10) 35%, rgba(52,70,96,0.46) 100%); }
+#abilityTint.on { display: block; }
+/* Overdrive: the barrel-heat meter runs white-hot instead of filling */
+body.ab-overdrive #hHeatM { border-color: #ff8a3a; box-shadow: 0 0 8px rgba(255,138,58,0.8); }
+body.ab-overdrive #hHeatM div { width: 100% !important; background: linear-gradient(90deg, #ffd27a, #ff5a1e); }
+@media (max-width: 700px) {
+  #abilityBar { gap: 8px; bottom: calc(3.2vh + 38px); }
+  .ab-slot { width: 44px; }
+  .ab-face { width: 40px; height: 40px; }
+  .ab-icon { inset: 7px; }
+  .ab-ring { -webkit-mask: radial-gradient(circle, transparent 16px, #000 17px); mask: radial-gradient(circle, transparent 16px, #000 17px); }
+}
