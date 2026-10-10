@@ -2,7 +2,9 @@
 // Each mode is a ModeDef in MODES: it builds its Mission, names its online leaderboard
 // (modes allowed by firestore.rules), and may customise the round pacing (Pacing.ts), the
 // enemy mix, the spawned fighters and the score. More modes (a Daily Run) are added with
-// registerMode(); the Survival screen shows one tab per entry.
+// registerMode(); the Survival screen shows one tab per entry. Custom Battle (CustomBattle.ts)
+// and the Weekly Challenge (Weekly.ts) register themselves; their tabs draw their own body
+// (ModeDef.panel, CustomBattleScreen.ts). A board of '' means the mode never posts scores.
 //
 //   Ace Hunt     only elite enemies — aces (high-skill, tougher single-engine fighters), heavies
 //                and jets. Few in the air at once, three rounds, scored by aces downed.
@@ -20,7 +22,7 @@ import type { PaceProfile } from './Pacing';
 import type { World } from '../world/World';
 import type { UI } from '../ui/UI';
 import { Aircraft, Fighter } from '../world/Aircraft';
-import type { EnemyType } from '../world/EnemyTypes';
+import { type EnemyType, pickEnemyType } from '../world/EnemyTypes';
 import { mountLeaderboard } from '../ui/LeaderboardPanel';
 import { sound } from '../audio/Sound';
 import { tx } from '../i18n';
@@ -33,8 +35,11 @@ export interface ModeDef {
   blurb: string;
   mission(role: Role): Mission;
   matches(m: Mission): boolean;
-  board(role: Role): string;          // online leaderboard mode string
+  board(role: Role): string;          // online leaderboard mode string ('' = never posted)
+  boardFor?(m: Mission): string;      // the board for one mission (e.g. the week it was flown in)
+  panel?(body: HTMLElement, onPick: (m: Mission) => void): void;   // own tab body on the Survival screen
   pace?: PaceProfile;                 // round pacing (default: build -> breather -> final wave)
+  paceFor?(m: Mission): PaceProfile;  // pacing for one mission (custom battles: final wave sized to its numbers)
   elite?: boolean;                    // final-wave banner text
   enemyType?(tier: number): EnemyType;
   onSpawn?(f: Fighter, run: ModeRunner): void;
@@ -138,7 +143,15 @@ export function modeFor(m: Mission | null | undefined): ModeDef | null {
 
 // Online leaderboard mode string for a mission, or null when no mode claims it (campaign)
 export function leaderboardMode(m: Mission): string | null {
-  return modeFor(m)?.board(m.role) ?? null;
+  const d = modeFor(m);
+  return d ? (d.boardFor ? d.boardFor(m) : d.board(m.role)) : null;
+}
+
+// Flak window inside a round with Mission.roundFlak: from 35% to 65% of the round
+export const ROUND_FLAK = { from: 0.35, to: 0.65 };
+export function roundFlakOn(r: Round, t: number): boolean {
+  const d = Number.isFinite(r.duration) ? r.duration : 100;
+  return t >= d * ROUND_FLAK.from && t <= d * ROUND_FLAK.to;
 }
 
 // Enemy-mix providers for missions no mode claims (the campaign's side raids register one in
@@ -175,6 +188,11 @@ export class ModeRunner {
   // Pacing.director, every frame of a normal round
   tick(_dt: number, m: Mission, r: Round, t: number, enemies: number) {
     this.check(m);
+    if (m.roundFlak) {
+      const on = roundFlakOn(r, t);
+      if (on && this.world.flakIntensity <= 0) this.world.callout('rflak', 'Navigator', 'Flak coming up — heavy guns below us. Hold steady.', 20, 2);
+      this.world.flakIntensity = on ? m.roundFlak : 0;
+    }
     const d = this.def;
     if (!d) return;
     d.tick?.(this, m, r, t, enemies);
@@ -184,7 +202,7 @@ export class ModeRunner {
   // Game.spawnWave: the enemy type for the next fighter (null = the normal mix)
   enemyType(m: Mission | null, tier: number): EnemyType | null {
     this.check(m);
-    return this.def?.enemyType?.(tier) ?? (m ? enemyMixFor(m, tier) : null);
+    return this.def?.enemyType?.(tier) ?? (m?.enemyTypes?.length ? pickEnemyType(m.enemyTypes, tier) : m ? enemyMixFor(m, tier) : null);
   }
 
   onSpawn(f: Fighter) {
@@ -267,9 +285,13 @@ html[dir="rtl"] .mode-tab { letter-spacing: 0; }
   document.head.appendChild(st);
 }
 
+// Extra blocks drawn above the tabs (the weekly challenge card strip); open(id) switches tab
+export type PanelHeader = (el: HTMLElement, open: (tabId: string) => void, tab: string) => void;
+export const PANEL_HEADERS: PanelHeader[] = [];
+
 // Tabs, one per mode: description, a start button per role and the mode's online top 10 for
-// each role. Mounted into the Survival screen's box; the screen's own role buttons are hidden
-// (the Survival tab has the same two) when they are found.
+// each role (or the mode's own panel). Mounted into the Survival screen's box; the screen's own
+// role buttons are hidden (the Survival tab has the same two) when they are found.
 export function mountModePanel(host: HTMLElement, onPick: (m: Mission) => void, startTab = 'survival') {
   injectCss();
   const panel = document.createElement('div');
@@ -279,11 +301,19 @@ export function mountModePanel(host: HTMLElement, onPick: (m: Mission) => void, 
   else host.appendChild(panel);
   const show = (id: string) => {
     const d = MODES.find((x) => x.id === id) ?? MODES[0];
-    panel.innerHTML = `<div class="mode-tabs">${MODES.map((x) => `<button class="mode-tab${x === d ? ' on' : ''}" data-tab="${esc(x.id)}">${esc(tx(x.title))}</button>`).join('')}</div>
+    panel.innerHTML = `<div data-headers></div><div class="mode-tabs">${MODES.map((x) => `<button class="mode-tab${x === d ? ' on' : ''}" data-tab="${esc(x.id)}">${esc(tx(x.title))}</button>`).join('')}</div>
       <div class="mode-body"><p>${esc(tx(d.blurb))}</p>
       <div class="row"><button class="btn" data-mode-role="gunner">${tx('B-17 Gunner')}</button><button class="btn" data-mode-role="pilot">${tx('P-51 Escort')}</button></div>
       <div data-boards></div></div>`;
     panel.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => b.addEventListener('click', () => show(b.dataset.tab!)));
+    const heads = panel.querySelector<HTMLElement>('[data-headers]')!;
+    for (const h of PANEL_HEADERS) h(heads, show, d.id);
+    if (d.panel) {
+      const body = panel.querySelector<HTMLElement>('.mode-body')!;
+      body.innerHTML = '';
+      d.panel(body, onPick);
+      return;
+    }
     panel.querySelectorAll<HTMLButtonElement>('[data-mode-role]').forEach((b) => b.addEventListener('click', () => onPick(d.mission(b.dataset.modeRole as Role))));
     const boards = panel.querySelector<HTMLElement>('[data-boards]')!;
     mountLeaderboard(boards, d.board('gunner'), tx('ONLINE TOP 10 — {mode} · B-17 GUNNER', { mode: tx(d.title).toUpperCase() }));

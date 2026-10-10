@@ -388,7 +388,7 @@ export class SpecialEvents {
   // round 2 onwards, or any round from mission 3; never a boss round
   private eligible(idx: number) {
     const m = this.game.mission;
-    if (!m || !m.round || m.tutorial) return false;
+    if (!m || !m.round || m.tutorial || m.specials === false) return false;
     if (idx < 1 && m.number < 3) return false;
     return !isBossRound(m, idx);
   }

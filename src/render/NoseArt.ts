@@ -8,7 +8,7 @@ import type { Rarity } from '../game/WeaponMods';
 // polygonOffset so it never z-fights the skin, and alpha-tested (not blended) so it stays in
 // the opaque pass and gets the same haze as the rest of the aircraft.
 
-export interface NoseArtDef { id: string; name: string; rarity: Rarity; free?: boolean }
+export interface NoseArtDef { id: string; name: string; rarity: Rarity; free?: boolean; exclusive?: string }   // exclusive: how it is earned (never in crates or for merit)
 
 export const NOSE_ARTS: NoseArtDef[] = [
   { id: 'none', name: 'Bare nose', rarity: 'common', free: true },
@@ -21,6 +21,7 @@ export const NOSE_ARTS: NoseArtDef[] = [
   { id: 'shark', name: 'Shark Mouth', rarity: 'epic' },
   { id: 'ace', name: 'Ace of Spades', rarity: 'epic' },
   { id: 'wings', name: 'Gilded Wings', rarity: 'legendary' },
+  { id: 'weeklyace', name: 'Lightning Shield', rarity: 'legendary', exclusive: 'Weekly Challenge reward' },   // Weekly.ts
 ];
 
 const CW = 512, CH = 256;
@@ -217,6 +218,28 @@ const DRAW: Record<string, (g: G, name: string) => void> = {
     g.lineWidth = 3; g.strokeStyle = INK; g.stroke();
     star(g, 256, 90, 36, CREAM);
     nameScript(g, name, CW / 2, CH * 0.84, CW * 0.9, 60, GOLD);
+  },
+  // Weekly Challenge reward: a navy shield split by a gold lightning bolt, seven campaign stars
+  weeklyace: (g, name) => {
+    const cx = 120, top = 18, w = 96, h = 168;
+    const shield = () => {
+      g.beginPath();
+      g.moveTo(cx - w, top); g.lineTo(cx + w, top); g.lineTo(cx + w, top + h * 0.5);
+      g.quadraticCurveTo(cx + w * 0.9, top + h * 0.9, cx, top + h);
+      g.quadraticCurveTo(cx - w * 0.9, top + h * 0.9, cx - w, top + h * 0.5); g.closePath();
+    };
+    shield(); g.fillStyle = NAVY; g.fill(); g.lineWidth = 9; g.strokeStyle = GOLD; g.stroke(); g.lineWidth = 3; g.strokeStyle = INK; g.stroke();
+    g.save(); shield(); g.clip();
+    g.fillStyle = RED; g.fillRect(cx - w, top, w * 2, 26);
+    g.restore();
+    g.beginPath();
+    g.moveTo(cx + 30, top + 30); g.lineTo(cx - 34, top + 104); g.lineTo(cx + 2, top + 104); g.lineTo(cx - 30, top + h - 14);
+    g.lineTo(cx + 44, top + 80); g.lineTo(cx + 8, top + 80); g.lineTo(cx + 52, top + 30); g.closePath();
+    g.fillStyle = GOLD; g.fill(); g.lineWidth = 4; g.strokeStyle = INK; g.stroke();
+    for (let i = 0; i < 7; i++) star(g, 262 + i * 34, 44, 13, i % 2 ? CREAM : GOLD);
+    nameScript(g, name, 372, 122, 260, 64);
+    g.font = "bold 22px 'IBM Plex Mono', monospace"; g.textAlign = 'center'; g.fillStyle = CREAM;
+    g.strokeStyle = INK; g.lineWidth = 5; g.strokeText('WEEKLY ACE', 372, 196); g.fillText('WEEKLY ACE', 372, 196);
   },
 };
 

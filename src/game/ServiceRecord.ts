@@ -13,7 +13,9 @@
 //     streaks and gun positions, and to advance the daily orders live;
 //   - abilities.trigger is chained to count Overdrive uses;
 //   - Game's private director() and awardPerk() run on the Daily Run's seeded random stream
-//     while a Daily Run is in progress (Math.random is swapped only for those calls).
+//     while a Daily Run is in progress (Math.random is swapped only for those calls); the
+//     Weekly Challenge (Weekly.ts) runs on its week's seed the same way;
+//   - a completed Weekly Challenge pays its once-a-week reward with the medals at the debrief.
 import type { Game } from './Game';
 import type { UI, DebriefData } from '../ui/UI';
 import type { Aircraft } from '../world/Aircraft';
@@ -25,6 +27,7 @@ import {
 import { type DailyDef, DailyTracker, dailySeed, dayKey, hashString, mulberry32, withRandom } from './Dailies';
 import { dailyMode } from '../net/Leaderboard';
 import { skillPointsFor } from './Skills';
+import { claimWeekly, weeklyKeyOf, weeklySeed, WEEKLY_NOSE_NAME } from './Weekly';
 import { pushSave } from '../net/CloudSave';
 import { mountLeaderboard } from '../ui/LeaderboardPanel';
 import { showCareerScreen } from '../ui/CareerScreen';
@@ -151,7 +154,8 @@ export class ServiceRecord {
   onMissionStart(m: Mission) {
     const daily = m.id.startsWith('daily-') ? this.pendingDailyKey ?? dayKey() : null;
     this.pendingDailyKey = null;
-    this.runSeed = daily ? dailySeed(daily, m.role) : null;
+    const week = weeklyKeyOf(m);
+    this.runSeed = daily ? dailySeed(daily, m.role) : week ? weeklySeed(week, m.role) : null;
     this.buf = {
       m, tracked: !m.tutorial, dailyKey: daily, xpStart: this.career.xp, kills: {}, bosses: 0, streak: 0, bestStreak: 0,
       lastKillAt: -99, stations: {}, overdrives: 0, dailies: [],
@@ -224,6 +228,15 @@ export class ServiceRecord {
       if (!def) continue;
       const res = grantReward(n === 0 ? def.first : { kind: 'merit', amount: def.repeat }, prog, c.cosmetics);
       lines.push({ label: name, text: res.text, ribbon: def.ribbon, first: n === 0 });
+    }
+    // ---- weekly challenge: first completion of the week ----
+    const wk = claimWeekly(m, d.success, prog);
+    if (wk) {
+      lines.push({
+        label: `Weekly Challenge — week ${+wk.key.slice(4)}`, first: true,
+        ribbon: 'repeating-linear-gradient(90deg, #1f2f57 0 8px, #e2b33c 8px 12px, #b3261b 12px 16px, #e2b33c 16px 20px)',
+        text: `+${wk.merit} merit · weekly ribbon${wk.nose ? ` · ${WEEKLY_NOSE_NAME} nose art unlocked (hangar)` : ''}`,
+      });
     }
     // ---- XP and promotions ----
     const gained = xpForMission({ score: d.score, kills: d.kills, success: d.success, medals: medals.length });

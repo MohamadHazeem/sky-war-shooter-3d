@@ -140,7 +140,10 @@ export class Pacing {
 
   constructor(private world: World, private ui: UI, private engine: Engine, private modes: ModeRunner, private hooks: PacingHooks) {}
 
-  get profile(): PaceProfile { return (this.mission && modeFor(this.mission)?.pace) || DEFAULT_PROFILE; }
+  get profile(): PaceProfile {
+    const d = this.mission ? modeFor(this.mission) : null;
+    return (d && (d.paceFor?.(this.mission!) ?? d.pace)) || DEFAULT_PROFILE;
+  }
 
   // Game.director, after the boss check: t is the round time, enemies the active fighters
   director(dt: number, m: Mission, r: Round, t: number, enemies: number, roundIdx: number): Pace {

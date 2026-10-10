@@ -13,7 +13,7 @@ const CONFIG = {
 
 export interface ScoreEntry {
   name: string;
-  mode: string;      // 'survival-gunner' | 'survival-pilot' | 'campaign-m1' … | 'daily-20261011'
+  mode: string;      // 'survival-gunner' | 'survival-pilot' | 'campaign-m1' … | 'daily-gunner-20261011' | 'weekly-gunner-202641'
   score: number;
   kills: number;
   rounds: number;
@@ -59,6 +59,7 @@ function fb(): Promise<Fb> {
 // One entry per call. The rules require the per-player 'limits' document to be stamped in the
 // same batch, which enforces at most one submission every 20 s per player.
 export async function submitScore(e: ScoreEntry): Promise<boolean> {
+  if (!e.mode) return false;   // a mode that never posts (custom battles)
   try {
     const { db, uid, fs } = await fb();
     const batch = fs.writeBatch(db);

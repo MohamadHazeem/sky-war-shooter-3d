@@ -94,7 +94,7 @@ export function rollCrate(prog: Progression, grade: Rarity): LootItem {
   const families = kind === 'mod' ? [['mod'], ['nose', 'paint', 'name']] : [['nose', 'paint', 'name'], ['mod']];
   for (let ri = RARITIES.indexOf(rarity); ri >= 0; ri--) {
     for (const fam of families) {
-      const pool = COLLECTABLES.filter((c) => fam.includes(c.kind) && c.rarity === RARITIES[ri] && !owns(prog, c.key));
+      const pool = COLLECTABLES.filter((c) => fam.includes(c.kind) && c.rarity === RARITIES[ri] && !c.exclusive && !owns(prog, c.key));
       if (pool.length) return unlock(prog, pool[Math.floor(Math.random() * pool.length)]);
     }
   }

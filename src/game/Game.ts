@@ -50,6 +50,7 @@ import { SpecialEvents } from './SpecialEvents';
 import { mountShare, shareStamp } from './Share';
 import { analytics, mountStatsToggle } from '../net/Analytics';
 import { showCampaignMap, mountCampaignReport, prepareCampaignMission, campaignMeritMult, isSideRaid } from '../ui/CampaignMap';
+import '../ui/CustomBattleScreen'; // registers the Custom Battle and Weekly Challenge modes + their Survival-screen tabs
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 

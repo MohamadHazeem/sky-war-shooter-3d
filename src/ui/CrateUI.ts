@@ -54,10 +54,10 @@ function modSection(prog: Progression, role: 'gunner' | 'pilot') {
 }
 
 function tile(c: Collectable, prog: Progression, selected: boolean, inner: string) {
-  const own = owns(prog, c.key), cost = COSMETIC_COST[c.rarity], off = !own && prog.points < cost;
+  const own = owns(prog, c.key), cost = COSMETIC_COST[c.rarity], off = !own && (!!c.exclusive || prog.points < cost);
   return `<button class="ctile r-${c.rarity} ${selected ? 'sel' : ''} ${own ? '' : 'locked'}" data-cos="${esc(c.key)}" ${off ? 'disabled' : ''} title="${esc(tx(c.name))} · ${tx(RARITY_LABEL[c.rarity])}">
     ${inner}<div class="cn">${esc(tx(c.name))}</div>
-    <div class="cs">${selected ? tx('SELECTED') : own ? tx('SELECT') : tx('UNLOCK · {cost}', { cost })}</div></button>`;
+    <div class="cs">${selected ? tx('SELECTED') : own ? tx('SELECT') : c.exclusive ? esc(tx(c.exclusive).toUpperCase()) : tx('UNLOCK · {cost}', { cost })}</div></button>`;
 }
 
 function bomberSection(prog: Progression) {
@@ -103,7 +103,7 @@ function wire(box: HTMLElement, prog: Progression, role: 'gunner' | 'pilot', rer
   box.querySelectorAll<HTMLButtonElement>('[data-cos]').forEach((b) => b.addEventListener('click', () => {
     const key = b.dataset.cos!, c = COLLECTABLES.find((x) => x.key === key);
     const [kind, id] = [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)];
-    if (c && !owns(prog, key) && !prog.unlock(key, COSMETIC_COST[c.rarity])) return;
+    if (c && !owns(prog, key) && (c.exclusive || !prog.unlock(key, COSMETIC_COST[c.rarity]))) return;
     if (kind === 'nose') prog.bomber.nose = id;
     else if (kind === 'paint') prog.bomber.paint = id;
     else if (kind === 'name') prog.bomber.name = id;

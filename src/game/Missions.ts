@@ -1,6 +1,7 @@
 import type { AttackType } from '../world/AI';
 import type { StationId } from '../world/B17Layout';
 import type { Weather } from '../render/Weather';
+import type { EnemyType } from '../world/EnemyTypes';
 
 export type SpawnFrom = 'front' | 'rear' | 'left' | 'right' | 'high' | 'mixed';
 
@@ -43,6 +44,12 @@ export interface Mission {
   round?: Round;              // continuous engagement (replaces the wave list when set)
   rounds?: number;            // the round is split into this many rounds, a hangar break between them (Infinity = survival)
   tutorial?: boolean;         // Gunnery School: Game's director skips it, Tutorial.ts drives the spawns
+  // ---- scenario switches (custom battles and the weekly challenge; unset = the normal rules) ----
+  enemyTypes?: EnemyType[];   // only these enemy types are sent (ModeRunner.enemyType)
+  flatRounds?: boolean;       // every round uses round's own numbers (round.duration is per round), see roundDef
+  boss?: { first: number; every?: number } | false;  // battle-group rounds, 0-based (every: repeat interval); false = none (BossBattle.isBossRound)
+  specials?: boolean;         // false: no special events (SpecialEvents)
+  roundFlak?: number;         // a flak barrage through the middle of every normal round at this intensity (ModeRunner.tick)
 }
 
 // A round of continuous combat: fighters keep coming in groups, the number in the air
@@ -352,6 +359,15 @@ export function survivalMission(role: 'gunner' | 'pilot'): Mission {
 export function roundDef(m: Mission, i: number): Round {
   const base = m.round!;
   const n = m.rounds ?? 1;
+  if (m.flatRounds) {
+    // custom battles: each round flies the configured numbers; later rounds get slightly sharper
+    const k = Number.isFinite(n) ? (n > 1 ? i / (n - 1) : 0) : Math.min(1, i / 8);
+    const grow = 0.12 * k;
+    return {
+      duration: base.duration, start: i === 0 ? base.start : 4, min: base.min, max: base.max,
+      skill: [base.skill[0] + grow, base.skill[1] + grow], rockets: base.rockets ?? 0,
+    };
+  }
   if (!Number.isFinite(n)) {
     return {
       duration: 100, start: 5, min: Math.min(14, 3 + i), max: Math.min(20, 5 + 2 * i),
@@ -366,4 +382,19 @@ export function roundDef(m: Mission, i: number): Round {
     skill: [lerp(base.skill[0], base.skill[1], f0), lerp(base.skill[0], base.skill[1], f1)],
     rockets: base.rockets && i > 0 ? base.rockets : 0,
   };
+}
+
+// Battle-group (boss) rounds, BossBattle.ts.
+// Survival: every 3rd round (index 2, 5, 8 ...). Campaign: the final round of missions 5 and 7.
+// A mission can name its own battle-group rounds with `boss` (custom battles, weekly challenge).
+export function isBossRound(m: Mission, roundIdx: number): boolean {
+  if (!m.round) return false;
+  if (m.boss === false) return false;
+  if (m.boss) {
+    const { first, every } = m.boss;
+    return roundIdx === first || (!!every && every > 0 && roundIdx > first && (roundIdx - first) % every === 0);
+  }
+  const n = m.rounds ?? 1;
+  if (!Number.isFinite(n)) return roundIdx % 3 === 2;
+  return ['m5', 'm7', 'm12'].includes(m.id) && roundIdx === n - 1; // Sturmgruppe, Big Week and the campaign finale
 }
