@@ -244,6 +244,8 @@ vec3 sceneTap(vec2 uv) {
   vec2 q = uv - 0.5;
   vec2 off = q * dot(q, q) * uChroma * 0.012;
   return vec3(texture2D(tColor, uv + off).r, texture2D(tColor, uv).g, texture2D(tColor, uv - off).b);
+}
+
 // Screen-space light shafts: march from the pixel toward the sun and accumulate sky
 // visibility (far depth x cloud transmittance), so sunlight reads through gaps between
 // clouds. Tinted by the sun colour but normalised to unit brightness, so uShafts is the

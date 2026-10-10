@@ -42,6 +42,7 @@ async function boot() {
   if (import.meta.env.DEV) {
     const { autoplay } = await import('./dev/autoplay');
     (window as any).sws.autoplay = (m: any, steps?: number) => autoplay(engine, game, m, steps);
+    Object.assign((window as any).sws, { game, engine });
   }
 }
 

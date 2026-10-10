@@ -180,8 +180,6 @@ export class Game {
           this.combo.onKill();
           this.popups.push({ pos: victim.pos.clone(), text: `+${pts}  KILL`, life: 1.6 });
           achievements.onConfirmedKill(w.stats.kills, cause ?? '');
-          this.score += Math.round(100 * (1 + this.survivalWave * 0.1));
-          this.popups.push({ pos: victim.pos.clone(), text: '+100  KILL', life: 1.6 });
           sound.confirm('kill_confirm');
           this.ui.feed(`${victim.label} destroyed — confirmed`, 'mine');
           // streaks: kills in quick succession

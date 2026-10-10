@@ -277,8 +277,6 @@ export class World implements WorldView {
     f.setScale(ENEMY_SCALE);
     f.structure = f.maxStructure = ENEMY_STRUCTURE * (0.85 + 0.15 * this.difficulty) * variant.structure;
     f.label = variant.label;
-    f.structure = f.maxStructure = ENEMY_STRUCTURE * (0.85 + 0.15 * this.difficulty);
-    f.label = 'Fw 190';
     setupDamageLook(f); // after tank/rockets so their materials are per-instance too
     this.add(f);
     this.pilots.set(f, new EnemyPilot(f, attack, skill * this.difficulty));
