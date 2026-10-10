@@ -11,6 +11,8 @@ import { CREW, CrewId } from '../world/Crew';
 import { briefingMapSvg } from './BriefingMap';
 import { campaignSize, decorateBriefing } from './BriefingExtras';
 import { mountAccessibilityPanel } from './AccessibilityPanel';
+import { mountHangarExtras } from './CrateUI';
+import { bomberName, withName } from '../game/Customize';
 
 export interface Settings {
   sensitivity: number;
@@ -207,10 +209,10 @@ export class UI {
       <div class="hdr"><span>HQ 401ST BOMB SQUADRON (H) · FIELD ORDER</span><span>${esc(m.date)}</span></div>
       <div class="kicker" style="color:#6b5a2a">${m.number ? `MISSION No. ${m.number}` : 'SURVIVAL'}</div>
       <h2>${esc(m.title)}</h2>
-      <div class="target">TARGET: ${esc(m.target)} &nbsp;·&nbsp; ASSIGNMENT: ${m.role === 'gunner' ? 'B-17G "Sky Queen" — ' + STATIONS[m.station ?? 'waistL'].label : 'P-51D Mustang — close escort'}</div>
+      <div class="target">TARGET: ${esc(m.target)} &nbsp;·&nbsp; ASSIGNMENT: ${m.role === 'gunner' ? `B-17G "${esc(bomberName())}" — ` + STATIONS[m.station ?? 'waistL'].label : 'P-51D Mustang — close escort'}</div>
       <div class="brief-grid">
         <div class="brief-text">
-          ${m.briefing.map((p) => `<p>${esc(p)}</p>`).join('')}
+          ${m.briefing.map((p) => `<p>${esc(withName(p))}</p>`).join('')}
           <div class="obj"><b>OBJECTIVES</b>${m.objectives.map((o) => `<div>☐ ${esc(o)}</div>`).join('')}</div>
         </div>
         ${briefingMapSvg(m)}
@@ -255,7 +257,7 @@ export class UI {
         <div class="hud-label" style="margin-top:4px">Barrel</div>
         <div class="meter" id="hHeatM"><div id="hHeat" style="width:0%"></div></div>
         <div class="stations" id="hStations">${STATION_ORDER.map((s) => `<span data-s="${s}">${STATIONS[s].key} ${STATIONS[s].label.toUpperCase()}<b></b></span>`).join('')}</div>`;
-      $('#hBR').innerHTML = `<div class="hud-label">Sky Queen</div><div id="dmg">${b17Svg()}</div>
+      $('#hBR').innerHTML = `<div class="hud-label">${esc(bomberName())}</div><div id="dmg">${b17Svg()}</div>
         <div class="crewlist" id="hCrewList">${CREW.map((m) => `<span data-c="${m.id}"><i>${m.label}</i><b>OK</b></span>`).join('')}</div>
         <div class="hud-label" id="hCrew"></div>`;
     } else {
@@ -338,7 +340,7 @@ export class UI {
   subtitle(who: string, text: string) {
     const s = document.getElementById('subs');
     if (!s) return;
-    s.innerHTML = `<div class="line"><span class="who">${esc(who)}</span>${esc(text)}</div>`;
+    s.innerHTML = `<div class="line"><span class="who">${esc(who)}</span>${esc(withName(text))}</div>`;
     if (this.subsTimer) clearTimeout(this.subsTimer);
     this.subsTimer = window.setTimeout(() => { s.innerHTML = ''; }, 2600 + text.length * 45);
   }
@@ -515,6 +517,7 @@ export class UI {
         if (prog.buy(b.dataset.u as any)) { sound.play('click', null, { gain: 0.6 }); render(); }
       }));
       el.querySelector('[data-go]')!.addEventListener('click', launch);
+      mountHangarExtras(el, prog, role, render);
     };
     const key = (e: KeyboardEvent) => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); launch(); } };
     const launch = () => { removeEventListener('keydown', key, true); el.classList.remove('show'); onLaunch(); };
@@ -578,7 +581,7 @@ export class UI {
     e.innerHTML = `<div class="screen-center"><div class="box panel">
       <div class="kicker">${d.survival ? 'SURVIVAL REPORT' : 'MISSION DEBRIEFING'} · ${esc(d.title)}</div>
       <div class="result ${d.success ? 'ok' : 'fail'}">${d.survival ? `${d.waves ?? 0} rounds` : d.success ? 'Mission complete' : 'Mission failed'}</div>
-      <div style="color:var(--ink-dim);font-family:'Special Elite',monospace">${esc(d.reason)}</div>
+      <div style="color:var(--ink-dim);font-family:'Special Elite',monospace">${esc(withName(d.reason))}</div>
       <div class="stats">
         <div class="stat"><div class="hud-label">Confirmed kills</div><div class="v">${d.kills}</div></div>
         <div class="stat"><div class="hud-label">Accuracy</div><div class="v">${Math.round(d.accuracy * 100)}%</div></div>

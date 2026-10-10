@@ -1,6 +1,7 @@
 // Progression: permanent Armory upgrades, weapons and aircraft bought with merit points,
 // plus one-mission perks handed out at random during play. Everything folds into a
 // Loadout of multipliers that the gun controllers and the world read.
+import { applyWeaponMod } from './WeaponMods';
 
 export type UpgradeId = 'firepower' | 'rate' | 'cooling' | 'velocity' | 'armor' | 'gyro';
 
@@ -103,8 +104,14 @@ export class Progression {
   aircraft: Record<'gunner' | 'pilot', AircraftId> = { gunner: 'b17g', pilot: 'p51d' };
   perks: PerkId[] = [];   // this mission only
   role: 'gunner' | 'pilot' = 'gunner';
+  // loot crates & customisation (Loot.ts / Customize.ts). Crate items and cosmetic unlocks
+  // live in `unlocked` as 'mod:<id>', 'nose:<id>', 'paint:<id>', 'name:<name>'.
+  mods: Partial<Record<WeaponId, string>> = {};   // weapon mod fitted per weapon
+  bomber = { name: 'Sky Queen', nose: 'script', paint: 'olive' };
+  static current: Progression | null = null;      // the first instance = the game's (read by Customize)
 
   constructor() {
+    Progression.current ??= this;
     try {
       const s = JSON.parse(localStorage.getItem(KEY) ?? 'null');
       if (s) {
@@ -117,13 +124,15 @@ export class Progression {
         for (const u of s.unlocked ?? []) this.unlocked.add(u);
         if (s.weapon) Object.assign(this.weapon, s.weapon);
         if (s.aircraft) Object.assign(this.aircraft, s.aircraft);
+        if (s.mods) Object.assign(this.mods, s.mods);
+        if (s.bomber) Object.assign(this.bomber, s.bomber);
       }
     } catch { /* storage unavailable */ }
   }
 
   save() {
     try {
-      localStorage.setItem(KEY, JSON.stringify({ points: this.points, levels: this.levels, unlocked: [...this.unlocked], weapon: this.weapon, aircraft: this.aircraft }));
+      localStorage.setItem(KEY, JSON.stringify({ points: this.points, levels: this.levels, unlocked: [...this.unlocked], weapon: this.weapon, aircraft: this.aircraft, mods: this.mods, bomber: this.bomber }));
     } catch { /* */ }
   }
 
@@ -158,7 +167,7 @@ export class Progression {
     const L = this.levels, n = (p: PerkId) => this.perks.filter((x) => x === p).length;
     const weapon = WEAPONS.find((w) => w.id === this.weapon[this.role]) ?? WEAPONS[this.role === 'gunner' ? 0 : 4];
     const aircraft = AIRCRAFT.find((a) => a.id === this.aircraft[this.role]) ?? AIRCRAFT[this.role === 'gunner' ? 0 : 3];
-    return {
+    return applyWeaponMod({
       damage: (1 + 0.12 * L.firepower) * (1 + 0.25 * n('ap')),
       rate: (1 + 0.07 * L.rate) * (1 + 0.15 * n('rapid')) * aircraft.rate,
       heat: (1 - 0.12 * L.cooling) * Math.pow(0.6, n('cool')),
@@ -184,6 +193,6 @@ export class Progression {
       traverse: aircraft.traverse,
       power: aircraft.power,
       weapon, aircraft,
-    };
+    }, this.mods[weapon.id]);
   }
 }

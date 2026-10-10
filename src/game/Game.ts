@@ -35,6 +35,7 @@ import { MidRound } from './MidRound';
 import { isMissionReady, whenMissionReady } from '../core/Preload';
 import { BossBattle } from './BossBattle';
 import { access } from '../core/Accessibility';
+import { queueCrate } from './Loot';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -639,6 +640,7 @@ export class Game {
     this.state = 'paused';
     this.engine.paused = true;
     this.input.unlock();
+    queueCrate(this.prog, { kills, merit: earned, round: this.roundIdx + 1 });
     this.ui.hangar(this.prog, m.role, {
       title: `ROUND ${this.roundIdx + 1} CLEARED`,
       sub: `${kills} kills this round · +${earned} merit`,
