@@ -1,0 +1,137 @@
+/* Skill tree (SkillTreeScreen.ts): a cyanotype blueprint from a gunnery technical manual.
+   White drafting lines on Prussian blue, typewriter labels, stamped qualifications. */
+
+.sk-bp {
+  --bp: #123d6e;
+  --bp-deep: #0b2a50;
+  --bp-ink: #e8f1fb;
+  --bp-dim: rgba(232, 241, 251, 0.55);
+  --bp-faint: rgba(232, 241, 251, 0.22);
+  --bp-grid: rgba(190, 220, 255, 0.09);
+  --bp-stamp: #d9573f;
+  --bp-go: #ffe6a6;
+  color: var(--bp-ink);
+  background-color: var(--bp);
+  background-image:
+    radial-gradient(ellipse at 18% 10%, rgba(255,255,255,0.08), transparent 55%),
+    radial-gradient(ellipse at 90% 100%, rgba(0,0,0,0.3), transparent 60%),
+    linear-gradient(var(--bp-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bp-grid) 1px, transparent 1px),
+    linear-gradient(rgba(190,220,255,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(190,220,255,0.045) 1px, transparent 1px);
+  background-size: auto, auto, 60px 60px, 60px 60px, 12px 12px, 12px 12px;
+  font-family: 'Special Elite', 'Courier New', monospace;
+}
+
+/* ---------- full-screen sheet ---------- */
+#sk-screen { z-index: 12; background: rgba(4, 10, 20, 0.55); }
+.sk-sheet { position: relative; width: min(1120px, 100%); max-height: 94vh; overflow: auto; padding: 26px 34px 22px; box-shadow: 0 30px 80px rgba(0,0,0,0.65), inset 0 0 0 1px rgba(232,241,251,0.35), inset 0 0 0 7px var(--bp), inset 0 0 0 8px rgba(232,241,251,0.2); }
+.sk-hdr { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 11px; letter-spacing: 2px; color: var(--bp-dim); border-bottom: 1px solid var(--bp-dim); padding-bottom: 6px; }
+.sk-titlerow { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; margin: 10px 0 6px; }
+.sk-titlerow h2 { font-family: 'Oswald', sans-serif; font-weight: 700; letter-spacing: 6px; text-transform: uppercase; font-size: 40px; margin: 0; color: var(--bp-ink); }
+.sk-sub { font-size: 13px; color: var(--bp-dim); }
+.sk-foot { display: flex; justify-content: flex-start; margin-top: 12px; }
+.sk-foot .btn.ghost { color: var(--bp-ink); border-color: var(--bp-dim); }
+.sk-foot .btn.ghost:hover { color: var(--bp-go); border-color: var(--bp-go); }
+.sk-plate { position: absolute; right: 30px; bottom: 22px; font-size: 10px; letter-spacing: 2px; color: var(--bp-dim); border: 1px solid var(--bp-faint); padding: 4px 8px; }
+
+/* ---------- hangar section ---------- */
+.sk-inline { padding: 12px 14px 10px; border: 1px solid var(--bp-faint); }
+
+/* ---------- point counter ---------- */
+.sk-counter { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 8px 0 10px; border-bottom: 1px dashed var(--bp-faint); }
+.sk-pts { display: flex; align-items: center; gap: 8px; }
+.sk-pts b { font-family: 'Oswald', sans-serif; font-size: 40px; line-height: 1; min-width: 46px; height: 52px; display: inline-flex; align-items: center; justify-content: center; border: 2px solid var(--bp-ink); border-radius: 50%; padding: 0 8px; }
+.sk-pts span { font-family: 'Oswald', sans-serif; font-size: 11px; letter-spacing: 2px; line-height: 1.25; color: var(--bp-dim); }
+.sk-ledger { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--bp-dim); line-height: 1.6; flex: 1; min-width: 200px; }
+.sk-ledger b { color: var(--bp-ink); font-weight: 600; }
+.sk-respec { font-family: 'Oswald', sans-serif; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; background: transparent; color: var(--bp-ink); border: 1px dashed var(--bp-dim); padding: 8px 14px; cursor: pointer; }
+.sk-respec:hover:not(:disabled) { border-style: solid; color: var(--bp-go); border-color: var(--bp-go); }
+.sk-respec.armed { background: var(--bp-stamp); border: 1px solid var(--bp-stamp); color: #fff; }
+.sk-respec:disabled { opacity: 0.4; cursor: default; }
+
+/* ---------- branches ---------- */
+.sk-branches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 8px; }
+.sk-branch { position: relative; padding: 8px 6px 0; }
+.sk-branch + .sk-branch { border-left: 1px dashed var(--bp-faint); }
+.sk-branch header { display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; gap: 4px 8px; padding: 0 4px; }
+.sk-branch h3 { margin: 0; font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 19px; letter-spacing: 3px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.sk-branches.compact .sk-branch h3 { font-size: 16px; letter-spacing: 2px; }
+.sk-bcode { font-size: 10px; letter-spacing: 1px; color: var(--bp-dim); border: 1px solid var(--bp-faint); padding: 1px 5px; }
+.sk-bown { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--bp-dim); }
+.sk-motto { grid-column: 1 / -1; font-size: 12px; color: var(--bp-dim); font-style: italic; }
+.sk-field { position: relative; }
+.sk-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sk-lines path { fill: none; stroke: var(--bp-faint); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.sk-lines path.open { stroke: var(--bp-dim); stroke-dasharray: none; }
+.sk-lines path.own { stroke: var(--bp-ink); stroke-width: 2.5; stroke-dasharray: none; }
+
+/* ---------- node cards ---------- */
+.sk-node { position: absolute; transform: translate(-50%, -50%); width: 46%; min-height: 66px; padding: 15px 6px 7px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-align: center;
+  font-family: 'Special Elite', monospace; color: var(--bp-ink); background: var(--bp-deep); border: 1.5px solid var(--bp-ink); cursor: pointer; transition: transform 0.12s, box-shadow 0.2s, background 0.2s; }
+.sk-node::before, .sk-node::after { content: ''; position: absolute; width: 7px; height: 7px; border: 1.5px solid currentColor; opacity: 0.7; }
+.sk-node::before { left: -5px; top: -5px; border-right: none; border-bottom: none; }
+.sk-node::after { right: -5px; bottom: -5px; border-left: none; border-top: none; }
+.sk-node:focus-visible { outline: 2px solid var(--bp-go); outline-offset: 4px; }
+.sk-code { position: absolute; left: 5px; top: 3px; font-size: 9px; letter-spacing: 1px; color: var(--bp-dim); }
+.sk-cost { position: absolute; right: 4px; top: 3px; font-family: 'Oswald', sans-serif; font-size: 11px; width: 17px; height: 17px; line-height: 15px; border: 1px solid currentColor; border-radius: 50%; }
+.sk-name { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; line-height: 1.1; }
+.sk-state { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1.5px; color: var(--bp-dim); }
+.sk-node.cap { border-width: 3px; border-style: double; min-height: 74px; width: 54%; }
+.sk-node.cap .sk-name { font-size: 16px; letter-spacing: 2px; }
+
+.sk-node.available { box-shadow: 0 0 0 1px rgba(255,230,166,0.35), 0 0 16px rgba(255,230,166,0.25); animation: skPulse 2.2s ease-in-out infinite; }
+.sk-node.available .sk-state { color: var(--bp-go); }
+.sk-node.available:hover { transform: translate(-50%, -50%) scale(1.04); }
+.sk-node.armed { background: var(--bp-go); color: var(--bp-deep); animation: none; }
+.sk-node.armed .sk-state, .sk-node.armed .sk-code { color: var(--bp-deep); }
+.sk-node.short { border-style: dashed; }
+.sk-node.locked { border-style: dotted; color: var(--bp-dim); background: rgba(11,42,80,0.55); cursor: not-allowed; }
+.sk-node.locked .sk-state { color: var(--bp-faint); }
+.sk-node.owned { background: var(--bp-ink); color: var(--bp-deep); border-color: var(--bp-ink); cursor: default; }
+.sk-node.owned .sk-state, .sk-node.owned .sk-code { color: rgba(11,42,80,0.7); }
+.sk-node.owned .sk-state { visibility: hidden; }
+.sk-stamp { position: absolute; right: -6px; bottom: 2px; transform: rotate(-9deg); font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 10px; letter-spacing: 2px; color: var(--bp-stamp); border: 2px solid var(--bp-stamp); padding: 0 4px; opacity: 0.88; background: rgba(232,241,251,0.6); pointer-events: none; }
+.sk-node.just .sk-stamp { animation: skStamp 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.sk-node.shake { animation: skShake 0.3s; }
+@keyframes skPulse { 50% { box-shadow: 0 0 0 1px rgba(255,230,166,0.6), 0 0 24px rgba(255,230,166,0.45); } }
+@keyframes skStamp { from { transform: rotate(-9deg) scale(2.6); opacity: 0; } to { transform: rotate(-9deg) scale(1); opacity: 0.88; } }
+@keyframes skShake { 25% { margin-left: -4px; } 75% { margin-left: 4px; } }
+@media (prefers-reduced-motion: reduce) { .sk-node.available, .sk-node.just .sk-stamp, .sk-node.shake { animation: none; } }
+
+/* ---------- legend ---------- */
+.sk-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--bp-dim); padding-top: 6px; border-top: 1px dashed var(--bp-faint); }
+.sk-legend .lg::before { content: ''; display: inline-block; width: 14px; height: 9px; margin-right: 6px; vertical-align: -1px; border: 1.5px solid var(--bp-ink); }
+.sk-legend .owned::before { background: var(--bp-ink); }
+.sk-legend .available::before { box-shadow: 0 0 6px rgba(255,230,166,0.7); border-color: var(--bp-go); }
+.sk-legend .short::before { border-style: dashed; }
+.sk-legend .locked::before { border-style: dotted; border-color: var(--bp-dim); }
+.sk-hint { margin-left: auto; }
+
+/* ---------- tooltip ---------- */
+.sk-tip { position: fixed; z-index: 60; max-width: 280px; padding: 10px 12px 9px; pointer-events: none; opacity: 0; transition: opacity 0.12s; background: #f0ead6; color: #1b2a3c; font-family: 'Special Elite', monospace; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-left: 4px solid #123d6e; }
+.sk-tip.show { opacity: 1; }
+.sk-tip .k { font-family: 'Oswald', sans-serif; font-size: 10px; letter-spacing: 2px; color: #123d6e; }
+.sk-tip .t { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 17px; letter-spacing: 1px; text-transform: uppercase; margin: 2px 0 4px; }
+.sk-tip .d { font-size: 13px; line-height: 1.35; }
+.sk-tip .r { font-size: 12px; margin-top: 6px; color: #5a4a30; }
+.sk-tip .r span.ok { text-decoration: line-through; opacity: 0.6; }
+.sk-tip .r i { font-style: normal; opacity: 0.7; }
+.sk-tip .s { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px; margin-top: 7px; }
+.sk-tip .s-owned { color: #2f6b2a; }
+.sk-tip .s-available { color: #8a5a00; }
+.sk-tip .s-short, .sk-tip .s-locked { color: #8a2a1a; }
+
+/* ---------- narrow screens: branches stack ---------- */
+@media (max-width: 760px) {
+  .sk-sheet { padding: 18px 16px 16px; }
+  .sk-titlerow h2 { font-size: 30px; }
+  .sk-branches { grid-template-columns: 1fr; }
+  .sk-branch + .sk-branch { border-left: none; border-top: 1px dashed var(--bp-faint); margin-top: 6px; }
+  .sk-node { width: 44%; }
+  .sk-plate, .sk-hint { display: none; }
+}
+@media (min-width: 761px) and (max-width: 1040px) {
+  .sk-name { font-size: 12px; }
+  .sk-node.cap .sk-name { font-size: 13px; }
+}

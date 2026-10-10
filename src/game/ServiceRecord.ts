@@ -24,6 +24,7 @@ import {
 } from './Career';
 import { type DailyDef, DailyTracker, dailySeed, dayKey, hashString, mulberry32, withRandom } from './Dailies';
 import { dailyMode } from '../net/Leaderboard';
+import { skillPointsFor } from './Skills';
 import { pushSave } from '../net/CloudSave';
 import { mountLeaderboard } from '../ui/LeaderboardPanel';
 import { showCareerScreen } from '../ui/CareerScreen';
@@ -233,6 +234,9 @@ export class ServiceRecord {
       const res = r ? grantReward(r, prog, c.cosmetics) : null;
       promotions.push({ label: `Promoted to ${RANKS[i].name}`, text: res?.text ?? '' });
     }
+    // skill tree (Skills.ts): points from promotions and from every 3,000 XP past Major
+    const sp = skillPointsFor(c.xp) - skillPointsFor(b.xpStart);
+    if (sp > 0) promotions.push({ label: `+${sp} skill point${sp > 1 ? 's' : ''}`, text: 'Spend in Skills (title menu or hangar)' });
     this.buf = null;   // kept until here so orders completed above are listed as this mission's
     saveCareer(c);
     achievements.checkStats(c);

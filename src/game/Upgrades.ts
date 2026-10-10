@@ -2,6 +2,7 @@
 // plus one-mission perks handed out at random during play. Everything folds into a
 // Loadout of multipliers that the gun controllers and the world read.
 import { applyWeaponMod } from './WeaponMods';
+import { SkillBook, applySkills, skillDefaults, type SkillLoadout } from './Skills';
 
 export type UpgradeId = 'firepower' | 'rate' | 'cooling' | 'velocity' | 'armor' | 'gyro';
 
@@ -86,7 +87,8 @@ export const PERKS: PerkDef[] = [
   { id: 'vampire', name: 'Scrap Collector', desc: 'Every 3rd kill repairs 10%', stack: false },
 ];
 
-export interface Loadout {
+// Skill-tree fields (SkillLoadout, Skills.ts) ride along with neutral defaults
+export interface Loadout extends SkillLoadout {
   damage: number; rate: number; heat: number; velocity: number; armor: number; hitScale: number;
   spread: number; recoil: number; leadPip: boolean; incendiary: number; execute: number; killRepair: number;
   assist: number; explosive: number; berserk: boolean; lucky: number; scoreMult: number; wingDmg: number;
@@ -109,6 +111,8 @@ export class Progression {
   mods: Partial<Record<WeaponId, string>> = {};   // weapon mod fitted per weapon
   bomber = { name: 'Sky Queen', nose: 'script', paint: 'olive' };
   static current: Progression | null = null;      // the first instance = the game's (read by Customize)
+  // skill tree (Skills.ts): saved under its own key (sws3d.skills.v1), so the armory save is unchanged
+  readonly skills = new SkillBook();
 
   constructor() {
     Progression.current ??= this;
@@ -167,7 +171,7 @@ export class Progression {
     const L = this.levels, n = (p: PerkId) => this.perks.filter((x) => x === p).length;
     const weapon = WEAPONS.find((w) => w.id === this.weapon[this.role]) ?? WEAPONS[this.role === 'gunner' ? 0 : 4];
     const aircraft = AIRCRAFT.find((a) => a.id === this.aircraft[this.role]) ?? AIRCRAFT[this.role === 'gunner' ? 0 : 3];
-    return applyWeaponMod({
+    return applySkills(applyWeaponMod({
       damage: (1 + 0.12 * L.firepower) * (1 + 0.25 * n('ap')),
       rate: (1 + 0.07 * L.rate) * (1 + 0.15 * n('rapid')) * aircraft.rate,
       heat: (1 - 0.12 * L.cooling) * Math.pow(0.6, n('cool')),
@@ -193,6 +197,7 @@ export class Progression {
       traverse: aircraft.traverse,
       power: aircraft.power,
       weapon, aircraft,
-    }, this.mods[weapon.id]);
+      ...skillDefaults(),
+    }, this.mods[weapon.id]), this.skills.owned);
   }
 }

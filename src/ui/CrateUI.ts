@@ -8,9 +8,10 @@ import { NOSE_ARTS, noseArtThumb } from '../render/NoseArt';
 import { PAINTS } from '../render/Paint';
 import { sound } from '../audio/Sound';
 import { crateBurst, crateReveal, crateShake } from '../audio/CrateSound';
+import { mountSkillSection } from './SkillTreeScreen';
 import './crate.css';
 
-// Hangar extras (weapon mod slot, bomber customisation, collection) and the loot crate
+// Hangar extras (weapon mod slot, bomber customisation, collection, skill tree) and the loot crate
 // that opens over the hangar at the end of a round. UI.hangar() calls mountHangarExtras()
 // after each render; the crate rolled by Game.endRound (Loot.queueCrate) is shown then.
 
@@ -32,6 +33,7 @@ export function mountHangarExtras(root: HTMLElement, prog: Progression, role: 'g
   keepScroll = false;
   wrap.addEventListener('scroll', () => { scrollY = wrap.scrollTop; }, { passive: true });
   wire(box, prog, role, () => { keepScroll = true; rerender(); });
+  mountSkillSection(wrap, prog, rerender);   // skill tree (SkillTreeScreen.ts), under the extras
   const crate = takePendingCrate();
   if (crate) showCrate(crate);
 }
