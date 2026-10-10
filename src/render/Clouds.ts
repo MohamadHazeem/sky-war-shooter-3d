@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { Atmos, atmosUniforms, skyGLSL } from './Atmosphere';
 import { createDetailNoise, createShapeNoise, createWeatherMap } from './noise';
+import { CLOUD_LIGHTS, cloudLights } from './CloudLights';
 
 // Raymarched volumetric clouds: a dense cumulus "sea" below the formation and a
 // scattered cumulus layer above, rendered at reduced resolution then composited
@@ -81,6 +82,11 @@ uniform float uWeatherScale;
 uniform vec2 uRes;
 uniform vec4 uGap;   // break in the low deck over the bombing target: x, z (local), radius, strength
 uniform vec4 uGlow;  // fire / flash light from the target on the deck: x, z (local), radius, intensity
+uniform float uHaze; // distance-haze scale (Atmos.haze)
+// point lights inside the cloud (CloudLights.ts): flak and explosions at night, flares, lightning
+uniform int uPLn;
+uniform vec4 uPL[${CLOUD_LIGHTS}];   // xyz scene position, w radius (m): full strength inside, 1/d^2 beyond
+uniform vec3 uPLc[${CLOUD_LIGHTS}];  // colour * intensity
 varying vec2 vUv;
 
 float remap(float v, float a, float b, float c, float d) { return c + (v - a) / (b - a) * (d - c); }
@@ -204,6 +210,13 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
         vec2 gq = p.xz - uGlow.xy;
         amb += vec3(1.0, 0.45, 0.15) * uGlow.w * exp(-dot(gq, gq) / (uGlow.z * uGlow.z)) * (1.0 - h);
       }
+      for (int li = 0; li < ${CLOUD_LIGHTS}; li++) {
+        if (li >= uPLn) break;
+        vec3 dl = p - uPL[li].xyz;
+        float q = dot(dl, dl) / (uPL[li].w * uPL[li].w);
+        // inverse-square beyond the radius, faded out by 8 radii
+        if (q < 64.0) amb += uPLc[li] * (1.0 - q * 0.015625) / (1.0 + q);
+      }
       vec3 S = (sun + amb) * dens * sigma;
       float sE = max(dens * sigma, 1e-6);
       float Tr = exp(-sE * dt);
@@ -305,7 +318,7 @@ void main() {
   float hit = hitLow > 0.0 ? hitLow : hitHigh;
   if (hitLow > 0.0 && hitHigh > 0.0) hit = min(hitLow, hitHigh);
   if (hit > 0.0) {
-    float f = 1.0 - exp(-hit / Atmos_hazeDist);
+    float f = 1.0 - exp(-hit / (Atmos_hazeDist * uHaze));
     col = mix(col, skyRadiance(rd) * (1.0 - T), f * 0.9);
   }
 #ifdef TEMPORAL
@@ -331,6 +344,7 @@ uniform sampler2D tClouds;
 uniform vec3 uCamPos;
 uniform vec4 uLow;
 uniform vec4 uHigh;
+uniform float uHaze;
 varying vec2 vUv;
 void main() {
   vec3 rd;
@@ -338,7 +352,7 @@ void main() {
   vec3 scene = texture2D(tScene, vUv).rgb;
   // Aerial perspective on geometry
   if (d < 1e8) {
-    float f = 1.0 - exp(-d / 26000.0);
+    float f = 1.0 - exp(-d / (26000.0 * uHaze));
     scene = mix(scene, skyRadiance(rd), f);
   }
   vec2 tl = slabT(uCamPos.y, rd.y, uLow.x, uLow.y);
@@ -536,6 +550,9 @@ export class CloudRenderer {
       uWeatherScale: { value: 17000 },
       uRes: { value: new THREE.Vector2() },
       uFullTexel: { value: new THREE.Vector2() },
+      uPLn: { value: 0 },
+      uPL: { value: Array.from({ length: CLOUD_LIGHTS }, () => new THREE.Vector4(0, -1e5, 0, 1)) },
+      uPLc: { value: Array.from({ length: CLOUD_LIGHTS }, () => new THREE.Vector3()) },
       tShadow: { value: this.shadowRT.texture },
       uShadowBox: { value: new THREE.Vector3(0, 0, this.shadowSize) },
       ...cloudTargetUniforms,
@@ -607,7 +624,7 @@ export class CloudRenderer {
     this.setSize(w, h);
   }
 
-  private syncUniforms(camera: THREE.PerspectiveCamera, depth: THREE.Texture, time: number) {
+  private syncUniforms(camera: THREE.PerspectiveCamera, depth: THREE.Texture, time: number, dt = 0) {
     const u = this.uniforms;
     u.tDepth.value = depth;
     u.uInvProj.value.copy(camera.projectionMatrixInverse);
@@ -626,6 +643,7 @@ export class CloudRenderer {
     u.uDetailDrift.value.set(Math.cos(time * 0.031) * 0.06, 0, Math.sin(time * 0.037 + 0.7) * 0.06);
     u.uSteps.value = this.steps;
     u.uAmb.value = Atmos.cloudAmbient;
+    u.uPLn.value = cloudLights.sync(dt, u.uCamPos.value, u.uPL.value, u.uPLc.value);
     atmosUniforms.uCamAlt.value = camera.position.y;
   }
 
@@ -686,7 +704,7 @@ export class CloudRenderer {
 
   render(renderer: THREE.WebGLRenderer, camera: THREE.PerspectiveCamera, sceneRT: THREE.WebGLRenderTarget,
     out: THREE.WebGLRenderTarget, time: number, dt = 1 / 60) {
-    this.syncUniforms(camera, sceneRT.depthTexture!, time);
+    this.syncUniforms(camera, sceneRT.depthTexture!, time, dt);
     let cloudTex: THREE.Texture;
     if (this.useTemporal) {
       this.frameN++;

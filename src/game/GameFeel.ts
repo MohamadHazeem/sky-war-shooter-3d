@@ -9,6 +9,7 @@ import { sound } from '../audio/Sound';
 import { playCue } from '../audio/FeedbackCues';
 import { access } from '../core/Accessibility';
 import { tx, CANVAS_MONO } from '../i18n';
+import { weatherNow, stormStrike } from '../render/Weather';
 
 // Game feel ("juice") for kills and hits, plus the streak meter / ON FIRE presentation.
 //
@@ -55,6 +56,7 @@ const _p = new THREE.Vector3();
 
 export class GameFeel {
   ambientFlash = 0;   // set by the weather (lightning)
+  private lastAmbient = 0;
   private clock = 0;                 // real seconds while active
   private appliedScale = 1;          // engine.timeScale the next frame's dt was scaled by
   private hitstop = 0;               // real seconds of freeze left
@@ -211,7 +213,12 @@ export class GameFeel {
 
   private applyOutputs() {
     const post = this.engine.post;
-    const f = Math.max(this.flash, this.ambientFlash); // lightning (Game.storm) shares the flash
+    // lightning (Game.storm, or a weather front's storm: Weather.ts) shares the flash; a front that
+    // cleared the mission's storm away gates Game.storm's off. Each stroke also lights the cloud.
+    const amb = this.ambientFlash * weatherNow.stormGate;
+    if (amb > 0.3 && this.lastAmbient <= 0.3) stormStrike(this.engine);
+    this.lastAmbient = amb;
+    const f = Math.max(this.flash, amb, weatherNow.flash);
     post.flash = f < 0.004 ? 0 : f;
     post.zoomPulse = this.pulse < 0.0005 ? 0 : this.pulse;
     this.world.ballistics.playerTracerHeat = this.tracerHeat < 0.01 ? 0 : this.tracerHeat;

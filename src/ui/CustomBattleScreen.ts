@@ -125,7 +125,7 @@ export function showCustomBattleScreen(o: CustomScreenOpts) {
         <div class="cb-toggles">${toggle('boss', tx('Boss round'), tx('giant flying warships'))}</div>
         <input type="range" data-k="bossRound" min="1" max="10" step="1" aria-label="${tx('Boss round')}"/></div>
       <div class="cb-f"><div class="cb-l">${tx('Extras')}</div>
-        <div class="cb-toggles">${toggle('specials', tx('Special events'), tx('aces, Zerstörer, rockets'))}${toggle('flak', tx('Flak'), tx('mid-round barrage'))}${toggle('escorts', tx('Escorts'), tx('Mustangs on your side'))}</div></div>
+        <div class="cb-toggles">${toggle('specials', tx('Special events'), tx('aces, Zerstörer, rockets'))}${toggle('flak', tx('Flak'), tx('mid-round barrage'))}${toggle('escorts', tx('Escorts'), tx('Mustangs on your side'))}${toggle('front', tx('Weather front'), tx('the sky turns mid-battle'))}</div></div>
     </div>
     <div class="cb-sum" data-sum></div>
     <p class="cb-note">${tx('Custom battles are not posted to the online leaderboards. Your last set-up is kept.')}</p>
@@ -158,7 +158,7 @@ export function showCustomBattleScreen(o: CustomScreenOpts) {
     const bossMax = c.rounds === 0 ? LIMITS.rounds[1] : c.rounds;
     range('bossRound').max = String(bossMax); range('bossRound').value = String(c.bossRound);
     range('bossRound').disabled = !c.boss || bossMax <= 1;
-    tog('specials').checked = c.specials; tog('flak').checked = c.flak; tog('escorts').checked = c.escorts;
+    tog('specials').checked = c.specials; tog('flak').checked = c.flak; tog('escorts').checked = c.escorts; tog('front').checked = c.front;
     el.querySelectorAll<HTMLElement>('[data-tog]').forEach((t) => t.classList.toggle('on', tog(t.dataset.tog!).checked));
     const out = (k: string, s: string) => (q<HTMLElement>(`[data-out="${k}"]`).textContent = s);
     out('enemies', tx('{n} of {total}', { n: c.enemies.length, total: ALL_ENEMIES.length }));
@@ -192,7 +192,7 @@ export function showCustomBattleScreen(o: CustomScreenOpts) {
   range('sunEl').addEventListener('input', () => { c.sunEl = +range('sunEl').value; sync(); });
   tog('boss').addEventListener('change', () => { c.boss = tog('boss').checked; sync(); });
   range('bossRound').addEventListener('input', () => { c.bossRound = +range('bossRound').value; sync(); });
-  for (const k of ['specials', 'flak', 'escorts'] as const) tog(k).addEventListener('change', () => { c[k] = tog(k).checked; sync(); });
+  for (const k of ['specials', 'flak', 'escorts', 'front'] as const) tog(k).addEventListener('change', () => { c[k] = tog(k).checked; sync(); });
   q('[data-reset]').addEventListener('click', () => { c = sanitizeConfig(null); sync(); });
   q('[data-back]').addEventListener('click', o.back);
   q('[data-start]').addEventListener('click', () => { saveConfig(c); o.start(buildCustomMission(c)); });

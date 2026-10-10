@@ -67,7 +67,7 @@ Player notes given at the start:
 | 27 | Ultra preset, FPS counter, 120 Hz | Done — Ultra (3.7 MP, 88 cloud steps, 4096 shadows, denser living sky), FPS counter setting, display refresh detection with 120/144 Hz targeting and 60 fps fallback |
 | 28 | Menu/front-end polish | Done — grouped title menu (play modes large, 2-column secondary grid), Career, Trophies, Daily Orders, Skills, Training screens, campaign map |
 | 29 | Share + trailer + social card | Done — share screenshot (stamped) / result from pause, debrief, photo mode; OG/Twitter card image; 57 s scripted trailer recorder (`sws.trailer`, docs/TRAILER.md) |
-| 30 | Code health: split Game.ts, unit tests, README | |
+| 30 | Code health: split Game.ts, unit tests, README | Done — Game.ts split into focused modules (see Phase 5 goal 20), 345 unit tests, README + docs/ARCHITECTURE.md |
 
 ## Log
 - 21:40 slow-motion fix committed.
@@ -92,3 +92,4 @@ Player notes given at the start:
 - 23:39 full 12-mission regression 12/12, no errors; deploy #7 (graphics pass, campaign map, skills, custom/weekly, theatre, co-op beta, grouped menu).
 - 00:17 regression (m1, m3, m4, m9, m11, m12) all complete; deploy #8 (explosions, interior, surface detail, clouds/haze, new aircraft, wingman + raids, Arabic catch-up, hole fix).
 - 01:11 regression 8/8 + smoke; deploy #9 (nemesis aces, Train Busting ground attack, audio pass 3, glass effects, Arabic everywhere).
+- 02:13 regression (m1, m3, m4, m6, m9, m12) all complete; deploy #10 (QA sweep, take-off/landing + sounds, theatre/gamepad, night fixes).

@@ -18,7 +18,10 @@ import { tx, isAr, CANVAS_MONO } from '../i18n';
 //    with Bf 109s flying high cover; the escorts drop on the Mustangs when they close.
 //  * "Night Fighter": the same at night. The raiders show mainly by their exhaust flames and
 //    by the ground searchlights that cone them; the K-14 sight is lit; Bf 110 night fighters
-//    hunt the intruder from round 2.
+//    hunt the intruder from round 2. As each wave closes on the field its pathfinders drop
+//    parachute flares over it (Flares.ts: they light the cloud tops and every aircraft below)
+//    and green target markers burn on the ground; the AA guns fire up the searchlight cones,
+//    their bursts glowing orange in the cloud.
 // A bomber that reaches its release point bombs the field; if more than `allowThrough` get
 // through over the three rounds the mission fails. Bombers that lose most of their structure
 // jettison their load and turn for home. The heavies' rear gunners fire back (RearGunners, run
@@ -62,6 +65,7 @@ export const RAID_RADIO = {
   jettison: ['Blue Two', 'He\'s dumped his bombs — he\'s turning for home!'],
   escorts: ['Blue Two', 'Messerschmitts coming down on us — they\'re covering the bombers!'],
   coned: ['Blue Two', 'Searchlights have one coned! Get him while he\'s lit!'],
+  flares: ['Control', 'Control: pathfinder flares going down over the field! The bombers will aim on them — get under the flares and you\'ll see them.'],
 } as const satisfies Record<string, readonly [string, string]>;
 
 const R = RAID_RADIO;
@@ -131,6 +135,12 @@ const SCORE_SHORT = 150;      // a bomber downed before it bombed
 const SCORE_CLEAN = 250;      // a round with nothing through
 const BEARING: Record<RaidFrom, number> = { front: 0, left: 0.65, right: -0.65 };
 const UP = new THREE.Vector3(0, 1, 0);
+const PF_RANGE = 4800;        // m to go: the pathfinders mark the field when a wave is this close
+const PF_FLARES = 6;
+const PF_AGAIN = 75;          // s before a later wave's pathfinders mark it again
+const AA_CONED = 1.1;         // AA bursts per second around each coned raider
+const AA_LOOSE = 0.3;         // ... and unaimed bursts per second around the stream
+const MARKER: [number, number, number][] = [[1.2, 7.5, 1.6], [1.2, 7.5, 1.6], [8.5, 1.4, 0.8]];   // green, green, red
 const _d = new THREE.Vector3();
 const _t = new THREE.Vector3();
 const _p = new THREE.Vector3();
@@ -312,6 +322,10 @@ export class RaidDefence {
   private blasts: { abs: THREE.Vector3; at: number }[] = [];
   private roundThrough = 0;
   private escortsCalled = false;
+  private pfAt = -999;            // world time of the last pathfinder drop
+  private pfRound = -1;
+  private markers: { abs: THREE.Vector3; col: [number, number, number] }[] = [];
+  private aaAcc = 0;
   through = 0;
   shotDown = 0;                  // raid bombers down before they bombed (anyone's kill)
   jettisoned = 0;
@@ -332,6 +346,7 @@ export class RaidDefence {
     this.raiders = [];
     this.escorts.clear();
     this.fires = []; this.blasts = [];
+    this.markers = []; this.pfAt = -999; this.pfRound = -1; this.aaAcc = 0;
     this.through = this.shotDown = this.jettisoned = 0;
     this.roundIdx = -1;
     this.log = [];
@@ -609,6 +624,67 @@ export class RaidDefence {
     }
     const flames = w.fighters('axis').concat(w.fighters('allied').filter((a) => !a.isPlayer));
     updateNightExhaust(flames, w.effects.glow, 1);
+    this.pathfinders(inbound);
+    this.antiAircraft(dt, inbound);
+  }
+
+  // A wave closing on the field: its pathfinders mark it with parachute flares and ground markers
+  private pathfinders(inbound: Fighter[]) {
+    const w = this.world, def = this.def!;
+    if (w.time - this.pfAt < PF_AGAIN || w.effects.flares.burning > 2) return;
+    let lead: RaidBomberPilot | null = null;
+    for (const r of this.raiders) if (r.f.alive && r.p.inbound && r.p.toGo() < PF_RANGE && (!lead || r.p.toGo() < lead.toGo())) lead = r.p;
+    if (!lead || !inbound.length) return;
+    this.pfAt = w.time;
+    const field = local(this.anchorAbs, _p);
+    const course = lead.course;
+    const right = _r.crossVectors(course, UP).normalize();
+    // a loose cluster over the field, a little upwind of the aiming point
+    for (let i = 0; i < PF_FLARES; i++) {
+      const a = (i / PF_FLARES) * Math.PI * 2 + Math.random() * 0.6;
+      const rr = 180 + Math.random() * 520;
+      _t.copy(field).addScaledVector(course, -250 + Math.cos(a) * rr).addScaledVector(right, Math.sin(a) * rr);
+      _t.y = def.alt - 250 + Math.random() * 220;   // just under the stream, over the cloud tops
+      w.effects.flares.drop(_t, _d.copy(course).multiplyScalar(def.speed));
+    }
+    if (!this.markers.length) {
+      // target markers burning on the field: two green, one red, for the main force to bomb on
+      for (let i = 0; i < MARKER.length; i++) {
+        const abs = new THREE.Vector3(this.anchorAbs.x + (Math.random() - 0.5) * 380, 10, this.anchorAbs.z + (Math.random() - 0.5) * 380);
+        this.markers.push({ abs, col: MARKER[i] });
+      }
+    }
+    if (this.pfRound !== this.roundIdx) {
+      this.pfRound = this.roundIdx;
+      const [who, text] = RAID_RADIO.flares;
+      w.callout('raid_flares', who, text, 20, 3);
+    }
+    this.note(`pathfinder flares over the field (${PF_FLARES})`);
+  }
+
+  // The guns round the field fire up the searchlight cones (and, less aimed, into the stream):
+  // heavy bursts with no fragments (gameplay is the fighters' job), glowing orange in the cloud
+  private antiAircraft(dt: number, inbound: Fighter[]) {
+    const w = this.world, pf = w.playerFighter;
+    const coned = Math.min(3, this.lights.coned.size);
+    this.aaAcc += dt * (coned * AA_CONED + (inbound.length ? AA_LOOSE : 0));
+    let guard = 4;
+    while (this.aaAcc >= 1 && guard-- > 0) {
+      this.aaAcc -= 1;
+      let target: Fighter | null = null, k = 0;
+      const pickConed = coned > 0 && Math.random() < (coned * AA_CONED) / (coned * AA_CONED + AA_LOOSE);
+      if (pickConed) {
+        const n = Math.floor(Math.random() * this.lights.coned.size);
+        for (const f of this.lights.coned) { if (k++ === n) { target = f; break; } }
+      } else if (inbound.length) target = inbound[Math.floor(Math.random() * inbound.length)];
+      if (!target) continue;
+      const spread = pickConed ? 90 + Math.random() * 200 : 250 + Math.random() * 450;
+      _t.set(Math.random() - 0.5, (Math.random() - 0.45) * 0.6, Math.random() - 0.5).normalize().multiplyScalar(spread).add(target.pos);
+      _t.addScaledVector(target.vel, 0.4 + Math.random() * 0.8);   // the gunners lead him, not always enough
+      if (pf && _t.distanceTo(pf.pos) < 180) continue;               // never in the player's face
+      w.flakBurst(_t);
+    }
+    if (this.aaAcc > 2) this.aaAcc = 2;
   }
 
   // Bomb bursts on the field and the fires they leave
@@ -625,6 +701,11 @@ export class RaidDefence {
     }
     this.blasts = this.blasts.filter((b) => b.at !== Infinity);
     if (this.fxTick % 3) return;
+    for (const m of this.markers) {
+      const p = local(m.abs, _p);
+      p.x += (Math.random() - 0.5) * 12; p.z += (Math.random() - 0.5) * 12; p.y = 8 + Math.random() * 10;
+      w.effects.glow.spawn({ pos: p, vel: _t.set(0, 3, 0), life: 0.4 + Math.random() * 0.2, size0: 34, size1: 46, color0: m.col, alpha0: 0.95, alpha1: 0, frame: 1 });
+    }
     for (const f of this.fires) {
       f.t += 3 / 60;
       const p = local(f.abs, _p);
@@ -711,11 +792,11 @@ export function nightMission(): Mission {
     id: 'night-pilot', number: 0, title: 'Night Fighter', target: 'Airfields in southern England', date: 'Operation Steinbock, February 1944', role: 'pilot',
     briefing: [
       'The Baby Blitz. Every few nights the Junkers come back across the Channel in the dark, and tonight they are after the airfields.',
-      'You will not see them until you are close. Look for the exhaust flames — they show for miles — and watch the searchlights: when the beams cone a bomber, go for him while he is lit. Your gunsight lamp is turned up for the night.',
+      'You will not see them until you are close. Look for the exhaust flames — they show for miles — and watch the searchlights: when the beams cone a bomber, go for him while he is lit. Their pathfinders will mark the field with parachute flares, and anything flying under them is lit up, the bombers included. Your gunsight lamp is turned up for the night.',
       'From the second wave they are sending Messerschmitt 110 night fighters ahead of the bombers. If more than four bombers get through to the field, we have lost the night.',
     ],
     objectives: RAID_OBJECTIVES(def),
-    bombers: 0, escorts: 0, waves: [], weather: { sunEl: 26, sunAz: 140, low: 0.22, high: 0.2, contrails: false, mood: 'night' },
+    bombers: 0, escorts: 0, waves: [], weather: { sunEl: 26, sunAz: 140, low: 0.55, high: 0.22, contrails: false, mood: 'night' },   // scattered cloud for the flares and flak to light
     round: { duration: 540, start: 4, min: 2, max: 6, skill: [0.85, 1.05] }, rounds: 3, duration: 540,
     success: 'Dawn over the field, and every runway still in use. The Junkers will think twice about coming back. Good hunting, Blue Leader.',
   };

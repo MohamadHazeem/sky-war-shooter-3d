@@ -6,6 +6,7 @@
 //
 //   node tools/audio/audio3_report.mjs            # table
 //   node tools/audio/audio3_report.mjs --json f   # also write the numbers
+//   node tools/audio/audio3_report.mjs --field    # the bookends' airfield sounds (SynthField.ts) instead; --all for both
 import { build } from 'esbuild';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -15,8 +16,14 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const dir = mkdtempSync(join(tmpdir(), 'sws-a3-'));
 const out = join(dir, 'a3.mjs');
-await build({ entryPoints: [join(HERE, '../../src/audio/Synth3.ts')], bundle: true, platform: 'node', format: 'esm', outfile: out, logLevel: 'error' });
-const S = await import(pathToFileURL(out).href);
+// both catalogues: pass 3 (Synth3.ts) and the airfield sounds of the bookends (SynthField.ts)
+await build({
+  stdin: { contents: "export { SYNTH3 } from './Synth3'; export { FIELD } from './SynthField';", resolveDir: join(HERE, '../../src/audio'), loader: 'ts' },
+  bundle: true, platform: 'node', format: 'esm', outfile: out, logLevel: 'error',
+});
+const M = await import(pathToFileURL(out).href);
+const field = process.argv.includes('--field'), all = process.argv.includes('--all');
+const S = { SYNTH3: all ? { ...M.SYNTH3, ...M.FIELD } : field ? M.FIELD : M.SYNTH3 };
 rmSync(dir, { recursive: true, force: true });
 
 // radix-2 FFT magnitude spectrum of the first 2^k samples (Hann window), averaged over frames
@@ -83,17 +90,17 @@ for (const [name, def] of Object.entries(S.SYNTH3)) {
   for (const c of p.ch) for (const v of c) { if (!Number.isFinite(v)) nan++; pk = Math.max(pk, Math.abs(v)); ss += v * v; }
   const rms = Math.sqrt(ss / (x.length * p.ch.length));
   const row = { name, ms: +ms.toFixed(1), sec: +(x.length / p.sr).toFixed(2), sr: p.sr, peakDb: +db(pk), rmsDb: +db(rms), nan, ...bands(x, p.sr) };
-  if (name.startsWith('eng_') || name === 'windowRoar' || name === 'rattleBed') {
+  if (name.startsWith('eng_') || name === 'windowRoar' || name === 'rattleBed' || name.startsWith('scrape') || name.endsWith('Bell')) {
     row.beat = beat(x, p.sr);
     let adj = 0; for (let i = 1; i < x.length; i++) adj += Math.abs(x[i] - x[i - 1]);
     row.seam = +(Math.abs(x[x.length - 1] - x[0]) / (adj / (x.length - 1))).toFixed(2);   // jump across the loop point / mean sample step
   }
   rows.push(row);
 }
-console.log('name             ms    sec   sr     peak   rms    sub low mid high air  centroid  beat(Hz,depth)  seam');
+console.log('name              ms    sec   sr     peak   rms    sub low mid high air  centroid  beat(Hz,depth)  seam');
 for (const r of rows) {
   const b = r.bands;
-  console.log(`${r.name.padEnd(15)} ${String(r.ms).padStart(5)} ${String(r.sec).padStart(5)} ${String(r.sr).padStart(6)} ${String(r.peakDb).padStart(6)} ${String(r.rmsDb).padStart(6)}   ${[b.sub, b.low, b.mid, b.high, b.air].map((v) => String(v).padStart(3)).join(' ')}  ${String(r.centroid).padStart(7)}   ${r.beat ? `${r.beat.hz} / ${r.beat.depth}` : ''}${r.seam !== undefined ? `   ${r.seam}` : ''}${r.nan ? `  NaN:${r.nan}` : ''}`);
+  console.log(`${r.name.padEnd(16)} ${String(r.ms).padStart(5)} ${String(r.sec).padStart(5)} ${String(r.sr).padStart(6)} ${String(r.peakDb).padStart(6)} ${String(r.rmsDb).padStart(6)}   ${[b.sub, b.low, b.mid, b.high, b.air].map((v) => String(v).padStart(3)).join(' ')}  ${String(r.centroid).padStart(7)}   ${r.beat ? `${r.beat.hz} / ${r.beat.depth}` : ''}${r.seam !== undefined ? `   ${r.seam}` : ''}${r.nan ? `  NaN:${r.nan}` : ''}`);
 }
 const total = rows.reduce((a, r) => a + r.ms * (S.SYNTH3[r.name].variants), 0);
 const bytes = rows.reduce((a, r) => a + r.sec * r.sr * 4 * 2 * S.SYNTH3[r.name].variants, 0);

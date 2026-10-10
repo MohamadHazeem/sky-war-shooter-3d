@@ -1847,6 +1847,142 @@
       "text": "Home in one piece. Nice work, everybody."
     },
     {
+      "group": "Phase 5 night + weather fronts (RaidDefence.ts pathfinders / World.weatherFront)"
+    },
+    {
+      "id": "raid_flares",
+      "role": "control",
+      "text": "Control: pathfinder flares going down over the field! The bombers will aim on them — get under the flares and you'll see them.",
+      "urgent": true
+    },
+    {
+      "id": "wx_front_g",
+      "role": "pilot",
+      "text": "Storm front dead ahead. Tighten it up — we're going right through it."
+    },
+    {
+      "id": "wx_front_p",
+      "role": "lead",
+      "text": "Blue flight, storm front dead ahead. Close it up and stay on my wing in the murk."
+    },
+    {
+      "id": "wx_clear_g",
+      "role": "pilot",
+      "text": "We're breaking out of the cloud — clear sky ahead. They'll see us coming now."
+    },
+    {
+      "id": "wx_clear_p",
+      "role": "lead",
+      "text": "Blue flight, the cloud's breaking up. Clear sky ahead — keep your eyes open."
+    },
+    {
+      "id": "bk5_spotted",
+      "roles": [
+        "nav",
+        "bigfriend"
+      ],
+      "text": "Me 410 hanging back out of range — he's carrying a fifty-millimetre cannon!",
+      "say": "M E four-ten hanging back out of range — he's carrying a fifty-millimetre cannon!"
+    },
+    {
+      "id": "bk5_lineup",
+      "roles": [
+        "nav",
+        "bigfriend"
+      ],
+      "text": "Me 410 lining up with the big gun!",
+      "say": "M E four-ten lining up with the big gun!",
+      "urgent": true
+    },
+    {
+      "id": "bk5_fire",
+      "roles": [
+        "pilot",
+        "bigfriend"
+      ],
+      "text": "He's firing the big gun! Kill him before he reloads!",
+      "urgent": true
+    },
+    {
+      "id": "bk5_down",
+      "roles": [
+        "top",
+        "bigfriend"
+      ],
+      "text": "Got the Me 410 before he could fire!",
+      "say": "Got the M E four-ten before he could fire!"
+    },
+    {
+      "id": "pfeil",
+      "role": "tail",
+      "text": "Do 335 diving on us from high astern — he's as fast as a jet!",
+      "say": "Dornier three-thirty-five diving on us from high astern — he's as fast as a jet!",
+      "urgent": true
+    },
+    {
+      "id": "raid_he111_lead",
+      "role": "lead",
+      "text": "Heinkels! A whole formation of bombers — get into them before they reach the target!"
+    },
+    {
+      "id": "raid_he111_nav",
+      "role": "nav",
+      "text": "German bombers crossing ahead — a whole formation of Heinkels!"
+    },
+    {
+      "id": "strafe_r1",
+      "role": "control",
+      "text": "Control to Blue flight: a supply train is heading east for the tunnel. Stop that locomotive before it gets there!"
+    },
+    {
+      "id": "strafe_r2",
+      "role": "control",
+      "text": "Control: a truck convoy is on the road to the village. Shoot it up before it gets under cover!"
+    },
+    {
+      "id": "strafe_r3",
+      "role": "control",
+      "text": "Control: the Luftwaffe field to the north-east. Strafe the aircraft on the ground — and watch the flak!"
+    },
+    {
+      "id": "strafe_loco",
+      "role": "blue2",
+      "text": "Got the loco! She's blown her boiler!",
+      "urgent": true
+    },
+    {
+      "id": "strafe_escaped",
+      "role": "control",
+      "text": "The train made it into the tunnel. Too late, Blue flight."
+    },
+    {
+      "id": "strafe_flak",
+      "role": "blue2",
+      "text": "Light flak coming up! Stay low and keep jinking!",
+      "urgent": true
+    },
+    {
+      "id": "strafe_bandits",
+      "role": "blue2",
+      "text": "Focke-Wulfs coming down on us! Watch your tail, Leader!",
+      "urgent": true
+    },
+    {
+      "id": "strafe_wing_go",
+      "role": "blue2",
+      "text": "Blue Two, going down on your target!"
+    },
+    {
+      "id": "strafe_wing_kill",
+      "role": "blue2",
+      "text": "Blue Two — got one on the ground!"
+    },
+    {
+      "id": "strafe_area",
+      "role": "control",
+      "text": "Blue Leader, you are leaving the target area. Come back round."
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {
@@ -1920,7 +2056,7 @@
     {
       "id": "brief_m9_2",
       "role": "briefing",
-      "text": "The weather is the worst we have flown in. A front lies across the North Sea from the Frisian Islands to Denmark: towering cloud, icing above eight thousand feet and lightning in the tops. Stay on your leader's wing in the murk. The German fighters will come at the bombers through the gaps."
+      "text": "The weather is the worst we have flown in. A front lies across the North Sea from the Frisian Islands to Denmark: towering cloud, icing above eight thousand feet and lightning in the tops. We take off in clear air, and you will see it ahead long before we reach it. Once we are in, stay on your leader's wing in the murk. The German fighters will come at the bombers through the gaps."
     },
     {
       "id": "brief_m9_3",
@@ -1936,8 +2072,8 @@
     {
       "id": "brief_m3_1",
       "role": "briefing",
-      "text": "The I.G. Farben works at Ludwigshafen is ringed by more than two hundred heavy flak guns. There is nothing you can do about flak but pray — and keep the fighters off us.",
-      "say": "The I G Farben works at Lood-vigs-hahfen is ringed by more than two hundred heavy flak guns. There is nothing you can do about flak but pray — and keep the fighters off us."
+      "text": "The I.G. Farben works at Ludwigshafen is ringed by more than two hundred heavy flak guns. There is nothing you can do about flak but pray — and keep the fighters off us. The forecast has the overcast breaking up short of the target, so the gunners down there will have a clear view of us.",
+      "say": "The I G Farben works at Lood-vigs-hahfen is ringed by more than two hundred heavy flak guns. There is nothing you can do about flak but pray — and keep the fighters off us. The forecast has the overcast breaking up short of the target, so the gunners down there will have a clear view of us."
     },
     {
       "id": "brief_m3_2",
@@ -2093,113 +2229,6 @@
       "role": "briefing",
       "text": "You are back on the left waist gun, where you started at Emden. Think of the crews who are not here today: the Lucky Lady over Schweinfurt, and the new boys who never finished their first week. Fly this one for them. Then come home, all of you.",
       "say": "You are back on the left waist gun, where you started at Emden. Think of the crews who are not here today: the Lucky Lady over Shvine-foort, and the new boys who never finished their first week. Fly this one for them. Then come home, all of you."
-    },
-    {
-      "id": "bk5_spotted",
-      "roles": [
-        "nav",
-        "bigfriend"
-      ],
-      "text": "Me 410 hanging back out of range — he's carrying a fifty-millimetre cannon!",
-      "say": "M E four-ten hanging back out of range — he's carrying a fifty-millimetre cannon!"
-    },
-    {
-      "id": "bk5_lineup",
-      "roles": [
-        "nav",
-        "bigfriend"
-      ],
-      "text": "Me 410 lining up with the big gun!",
-      "say": "M E four-ten lining up with the big gun!",
-      "urgent": true
-    },
-    {
-      "id": "bk5_fire",
-      "roles": [
-        "pilot",
-        "bigfriend"
-      ],
-      "text": "He's firing the big gun! Kill him before he reloads!",
-      "urgent": true
-    },
-    {
-      "id": "bk5_down",
-      "roles": [
-        "top",
-        "bigfriend"
-      ],
-      "text": "Got the Me 410 before he could fire!",
-      "say": "Got the M E four-ten before he could fire!"
-    },
-    {
-      "id": "pfeil",
-      "role": "tail",
-      "text": "Do 335 diving on us from high astern — he's as fast as a jet!",
-      "say": "Dornier three-thirty-five diving on us from high astern — he's as fast as a jet!",
-      "urgent": true
-    },
-    {
-      "id": "raid_he111_lead",
-      "role": "lead",
-      "text": "Heinkels! A whole formation of bombers — get into them before they reach the target!"
-    },
-    {
-      "id": "raid_he111_nav",
-      "role": "nav",
-      "text": "German bombers crossing ahead — a whole formation of Heinkels!"
-    },
-    {
-      "id": "strafe_r1",
-      "role": "control",
-      "text": "Control to Blue flight: a supply train is heading east for the tunnel. Stop that locomotive before it gets there!"
-    },
-    {
-      "id": "strafe_r2",
-      "role": "control",
-      "text": "Control: a truck convoy is on the road to the village. Shoot it up before it gets under cover!"
-    },
-    {
-      "id": "strafe_r3",
-      "role": "control",
-      "text": "Control: the Luftwaffe field to the north-east. Strafe the aircraft on the ground — and watch the flak!"
-    },
-    {
-      "id": "strafe_loco",
-      "role": "blue2",
-      "text": "Got the loco! She's blown her boiler!",
-      "urgent": true
-    },
-    {
-      "id": "strafe_escaped",
-      "role": "control",
-      "text": "The train made it into the tunnel. Too late, Blue flight."
-    },
-    {
-      "id": "strafe_flak",
-      "role": "blue2",
-      "text": "Light flak coming up! Stay low and keep jinking!",
-      "urgent": true
-    },
-    {
-      "id": "strafe_bandits",
-      "role": "blue2",
-      "text": "Focke-Wulfs coming down on us! Watch your tail, Leader!",
-      "urgent": true
-    },
-    {
-      "id": "strafe_wing_go",
-      "role": "blue2",
-      "text": "Blue Two, going down on your target!"
-    },
-    {
-      "id": "strafe_wing_kill",
-      "role": "blue2",
-      "text": "Blue Two — got one on the ground!"
-    },
-    {
-      "id": "strafe_area",
-      "role": "control",
-      "text": "Blue Leader, you are leaving the target area. Come back round."
     }
   ]
 }

@@ -39,8 +39,14 @@ describe('story campaign', () => {
     const pilots = fresh.filter((m) => m.role === 'pilot').length;
     expect(pilots).toBeGreaterThanOrEqual(1);
     expect(pilots).toBeLessThanOrEqual(2);
-    const moods = new Set(fresh.map((m) => m.weather!.mood));
+    // a weather front's mood counts: m9 flies into its storm (Weather.ts fronts)
+    const moods = new Set(fresh.flatMap((m) => [m.weather!.mood, m.weather!.front?.to]));
     for (const mood of ['clear', 'overcast', 'storm', 'dusk'] as const) expect(moods.has(mood), mood).toBe(true);
+    expect(byId('m9').weather!.front).toMatchObject({ to: 'storm' });           // clear air, into the front...
+    expect(byId('m9').weather!.mood).toBe('clear');
+    expect(byId('m9').weather!.front!.at).toBeLessThan(byId('m9').duration);
+    expect(byId('m3').weather!.front).toMatchObject({ to: 'clear' });           // ...and the overcast breaking up over Ludwigshafen
+    expect(byId('m3').weather!.front!.at + (byId('m3').weather!.front!.duration ?? 45)).toBeLessThanOrEqual(byId('m3').bombsAway!);
     expect(byId('m10').playerDamaged).toBe(true);                         // crippled over the Channel
     expect(byId('m10').escortArrive).toBeLessThan(byId('m10').duration);
     expect(byId('m11').flak!.intensity).toBeGreaterThanOrEqual(1.6);       // the heavy flak run...

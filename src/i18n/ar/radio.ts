@@ -152,6 +152,11 @@ const patterns: Pattern[] = [
 
 const table: PhraseTable = {
   phrases: {
+    // weather fronts (World.weatherFront)
+    "Storm front dead ahead. Tighten it up — we're going right through it.": 'جبهة عاصفة أمامنا مباشرة. شدّوا التشكيل — سنعبرها من وسطها.',
+    'Blue flight, storm front dead ahead. Close it up and stay on my wing in the murk.': 'السرب الأزرق، جبهة عاصفة أمامنا مباشرة. اقتربوا والزموا جناحي وسط العتمة.',
+    "We're breaking out of the cloud — clear sky ahead. They'll see us coming now.": 'نخرج من الغيوم — سماء صافية أمامنا. سيروننا قادمين الآن.',
+    "Blue flight, the cloud's breaking up. Clear sky ahead — keep your eyes open.": 'السرب الأزرق، الغيوم تنقشع. سماء صافية أمامنا — أبقوا أعينكم مفتوحة.',
     // ---------- speakers ----------
     'Pilot': 'الطيار',
     'Co-Pilot': 'مساعد الطيار',
