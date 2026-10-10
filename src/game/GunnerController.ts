@@ -39,6 +39,7 @@ export class GunnerController {
   private shake = 0;
   zoom = false;
   fov = 62;
+  baseFov = 62;   // set from Settings; zoom-in keeps the original 34/62 magnification ratio
   bomber: Bomber | null = null;
   private casings: { m: THREE.Mesh; v: THREE.Vector3; life: number }[] = [];
   private casingGeo = new THREE.CylinderGeometry(0.0105, 0.0105, 0.099, 8);
@@ -277,7 +278,7 @@ export class GunnerController {
 
     // Zoom (squint down the sight)
     this.zoom = inp.mouse(2);
-    const targetFov = this.zoom ? 34 : 62;
+    const targetFov = this.zoom ? this.baseFov * (34 / 62) : this.baseFov;
     this.fov += (targetFov - this.fov) * Math.min(1, dt * 10);
 
     // Reload

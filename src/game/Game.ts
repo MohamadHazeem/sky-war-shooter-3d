@@ -67,7 +67,7 @@ export class Game {
     this.world = new World(engine);
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
-    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, radio: false, music: true, quality: 'high', markers: true, flightMode: 'mouseAim', difficulty: 'veteran' });
+    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, radio: false, music: true, quality: 'high', markers: true, flightMode: 'mouseAim', difficulty: 'veteran', fov: 62 });
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
@@ -124,6 +124,10 @@ export class Game {
     sound.radioEnabled = s.radio;
     sound.setMusic(s.music);
     this.pilot.mode = s.flightMode;
+    // Base FOV from Settings (clamped; the views derive their zoom from it each frame)
+    const fov = THREE.MathUtils.clamp(Number.isFinite(s.fov) ? s.fov : 62, 50, 80);
+    this.gunner.baseFov = fov;
+    this.pilot.baseFov = fov;
     if (this.engine.quality !== s.quality) this.engine.setQuality(s.quality);
     save(SETTINGS_KEY, s);
   }

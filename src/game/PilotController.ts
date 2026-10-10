@@ -19,6 +19,7 @@ export class PilotController {
   aimPitch = 0;
   view: 'cockpit' | 'chase' = 'chase';
   mode: 'mouseAim' | 'direct' = 'mouseAim';
+  baseFov = 62;   // set from Settings; cockpit (+8) and chase (+2) keep their original offsets
   private camPos = new THREE.Vector3();
   private camQuat = new THREE.Quaternion();
   private cockpit: THREE.Object3D | null = null;
@@ -152,7 +153,8 @@ export class PilotController {
       this.engine.post.nearFocus = 0.35;
       this.engine.post.dofStrength = 0.5;
       this.engine.post.noBlurDist = 2.5;
-      cam.fov += ((this.input.mouse(2) ? 45 : 70) - cam.fov) * Math.min(1, dt * 8);
+      // RMB zoom keeps the original 45/70 ratio so magnification is the same at any base FOV
+      cam.fov += ((this.baseFov + 8) * (this.input.mouse(2) ? 45 / 70 : 1) - cam.fov) * Math.min(1, dt * 8);
     } else {
       // chase camera behind the aim direction
       const dir = this.freeLook ? _v2.set(0, 0, 1).applyEuler(new THREE.Euler(-this.lookPitch, this.aimYaw + this.lookYaw, 0, 'YXZ')) : this.aimDir(_v2);
@@ -164,7 +166,7 @@ export class PilotController {
       this.engine.post.nearFocus = 0.1;
       this.engine.post.dofStrength = 0;
       this.engine.post.noBlurDist = 25;
-      cam.fov += ((this.input.mouse(2) ? 40 : 64) - cam.fov) * Math.min(1, dt * 8);
+      cam.fov += ((this.baseFov + 2) * (this.input.mouse(2) ? 40 / 64 : 1) - cam.fov) * Math.min(1, dt * 8);
     }
     cam.updateProjectionMatrix();
     // G blackout via vignette
