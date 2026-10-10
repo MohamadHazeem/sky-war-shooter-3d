@@ -7,6 +7,7 @@ import { access } from '../core/Accessibility';
 import { TouchHud } from '../ui/TouchHud';
 import { STATION_ORDER } from '../world/B17Layout';
 import { tx } from '../i18n';
+import { keyMap } from '../core/KeyMap';
 import '../ui/devices.css';
 
 // Touch controls, gamepad and accessibility preferences, wired up from main.ts so Game.ts
@@ -26,6 +27,7 @@ export class DeviceControls {
   private lastTouch = false;
   private touchMode = false;
   private lastT = 0;
+  private wingRow: HTMLElement;
 
   constructor(private engine: Engine, private input: Input, private game: Game) {
     this.touch = new TouchHud(input);
@@ -46,6 +48,12 @@ export class DeviceControls {
       togglePause: () => this.togglePause(),
       onConnect: (name, on) => this.toast(on ? tx('Gamepad connected — {name}', { name: shortName(name) }) : tx('Gamepad disconnected')),
     });
+    // P-51 wingman orders (Wingman.ts listens for the number keys): a row of small buttons
+    this.wingRow = document.createElement('div');
+    this.wingRow.className = 'th-wing';
+    this.wingRow.innerHTML = [['Digit1', 'ATK'], ['Digit2', 'COVER'], ['Digit3', 'BOMB'], ['Digit4', 'FORM']]
+      .map(([code, label]) => `<button data-code="${code}" aria-label="Wingman: ${label}">${label}</button>`).join('');
+    this.touch.el.appendChild(this.wingRow);
     this.toastEl = document.createElement('div');
     this.toastEl.id = 'devToast';
     this.toastEl.setAttribute('role', 'status');
@@ -105,8 +113,10 @@ export class DeviceControls {
     this.lastT = now;
     const real = !this.engine.paused && dt > 0 ? Math.min(0.1, dt / Math.max(0.05, this.engine.timeScale)) : wall;
     this.refreshMode();
-    this.pad.update(real);
     const g = this.game;
+    // scoped key bindings: the number keys are gun positions in the B-17, wingman orders in the P-51
+    keyMap.scope = g.mission && g.state !== 'menu' ? g.mission.role : null;
+    this.pad.update(real);
     const role = this.touchMode && this.flying() ? g.mission!.role : null;
     // ability buttons follow the role's keys (gunner Q/E/G, pilot Z/X/G)
     if (role && role !== this.abilityRole) {

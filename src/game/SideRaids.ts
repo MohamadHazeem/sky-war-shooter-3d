@@ -142,6 +142,7 @@ const WEATHER: Record<NonNullable<Weather['mood']>, (r: () => number) => Weather
   overcast: (r) => ({ sunEl: 30 + r() * 15, sunAz: 175 + r() * 20, low: 0.86 + r() * 0.06, high: 0.9, contrails: false, mood: 'overcast' }),
   storm: (r) => ({ sunEl: 16 + r() * 8, sunAz: 190 + r() * 15, low: 0.95, high: 0.97, contrails: false, mood: 'storm' }),
   dusk: (r) => ({ sunEl: 3 + r() * 4, sunAz: 240 + r() * 20, low: 0.55 + r() * 0.1, high: 0.4, contrails: true, mood: 'dusk' }),
+  night: (r) => ({ sunEl: 22 + r() * 8, sunAz: 130 + r() * 20, low: 0.22, high: 0.2, contrails: false, mood: 'night' }), // moonlit (raid templates don't pick it)
 };
 
 const STATIONS: StationId[] = ['waistL', 'waistR', 'top', 'ball', 'tail'];

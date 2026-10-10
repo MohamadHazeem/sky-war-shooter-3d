@@ -39,6 +39,8 @@ const PILOT = (): [string, string][] => [
   [k('V'), tx('Cockpit / chase view')],
   [k('C'), tx('Free look (hold)')],
   [k('M'), tx('Mouse aim / direct flight controls')],
+  [k('T'), tx('Padlock the nearest bandit')],
+  [k(b('wing1'), b('wing2'), b('wing3'), b('wing4')), tx('Wingman Blue Two: {a} attack my target · {b} cover me · {c} protect the bombers · {d} form up', { a: b('wing1'), b: b('wing2'), c: b('wing3'), d: b('wing4') })],
   [k(b('map')), tx('Big radar map')],
   [k('F'), tx('Photo mode')],
   [k('Esc') + ' / ' + k(b('pause')), tx('Pause')],

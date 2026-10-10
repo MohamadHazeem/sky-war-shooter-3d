@@ -11,6 +11,8 @@ import type { Input } from './Input';
 //   D-pad up      big map (Tab)                Start                 pause / resume
 //   X             reload                       Y                     P-51 view (cockpit / chase)
 //   Back / View   controls card (H)
+//   P-51 wingman  D-pad left = attack my target (1), right = cover me (2), down = protect the
+//                 bombers (3), LB + D-pad up = form up (4) (D-pad up alone is still the map)
 
 export interface GamepadHost {
   /** a mission is in play and the player has control */
@@ -67,7 +69,8 @@ export class GamepadInput {
 
     const inp = this.input;
     const role = this.host.role();
-    if (edge(B.UP)) inp.tap('Tab');
+    const wingUp = role === 'pilot' && now.has(B.LB);
+    if (edge(B.UP)) inp.tap(wingUp ? 'Digit4' : 'Tab');
     if (edge(B.BACK)) inp.tap('KeyH');
     if (role === 'gunner') {
       if (edge(B.LB)) this.host.cycleSeat(-1);
@@ -75,6 +78,10 @@ export class GamepadInput {
       if (edge(B.X)) inp.tap('KeyR');
     } else if (role === 'pilot') {
       if (edge(B.Y)) inp.tap('KeyV');
+      // wingman commands (Wingman.ts listens for the number keys in the P-51)
+      if (edge(B.LEFT)) inp.tap('Digit1');
+      if (edge(B.RIGHT)) inp.tap('Digit2');
+      if (edge(B.DOWN)) inp.tap('Digit3');
     }
 
     // Aim: right stick; the gunner can also use the left one when the right is at rest
