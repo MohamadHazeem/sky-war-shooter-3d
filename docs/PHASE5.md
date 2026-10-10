@@ -32,7 +32,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | # | Goal | Status |
 |---|---|---|
 | 17 | New German aircraft from FlightGear (He 111 bomber, Me 410 with BK 5 cannon, optionally He 219 / Ta 152 / Do 335) as new enemy types | Done — He 111 (raid bomber formations, dorsal gunner) and Do 335 (diving slashing interceptor) converted from FlightGear (GPL v2); Me 410 with telegraphed BK 5 50 mm cannon runs and rear barbettes on the Bf 110 airframe (no GPL Me 410 model exists); He 219 / Ta 152 not available |
-| 18 | P-51 ground attack: strafing trains, flak towers and airfields at low level | In progress |
+| 18 | P-51 ground attack: strafing trains, flak towers and airfields at low level | Done — "Train Busting" special operation: procedural countryside (fields, rivers, railway, village, 9,800 trees), 3 rounds (train with boiler burst, convoy, airfield with parked aircraft), 20 mm flak and a quad flak tower firing back, low-level Fw 190s, PULL UP warning, crash rules, wingman ground attacks, own leaderboard |
 | 19 | Arabic for every screen added overnight (campaign map, skills, custom battle, weekly, co-op, theatre, wingman) | Done — campaign map, skills, custom battle, weekly, theatre, FPS counter, raid missions + wingman, co-op, canvas HUDs, special events and tactics; RTL mirroring, Arabic number agreement, coverage tests |
 | 21 | Nemesis system: persistent named Luftwaffe aces with traits, grudges, scars, promotions and a dossier screen | Done — 8 Experten (name, rank, unit, aircraft, colours/emblem, trait-driven AI), appearances with radio memory + dossier card, outcomes persist (victories, promotions, escapes with patches and grudges, deaths, hospital), replacements, bounties + medal + achievements, "Luftwaffe Experten" screen |
 | 22 | Audio pass 3: engine voices for the new aircraft and warships, BK 5 / flak sounds, distance-aware explosions, waist ambience (wind, creaks, brass), ducking and mix check | In progress |
@@ -52,3 +52,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 00:04 Arabic catch-up merged (272 tests).
 - 00:11 new aircraft + clouds/haze merged (274 tests).
 - 00:48 nemesis system merged (302 tests).
+- 01:00 ground attack merged (311 tests).
