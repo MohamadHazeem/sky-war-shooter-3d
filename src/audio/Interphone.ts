@@ -57,14 +57,14 @@ export class Interphone {
     }, 0.35);
   }
 
-  // Call-click, static burst, then the click-off HOLD_S later. A new call supersedes any
-  // static or click-off still pending from the previous one.
-  call() {
+  // Call-click, static burst, then the click-off `hold` seconds later (recorded voice lines
+  // pass their own length). A new call supersedes any static or click-off still pending.
+  call(hold = HOLD_S) {
     this.cancel();
     const t = this.ctx.currentTime + 0.01;
     this.one(this.pick(this.clickOn), t, 0.4);
     this.schedule(this.staticBurst, t + 0.02, 0.7);
-    this.schedule(this.pick(this.clickOff), t + HOLD_S, 0.35);
+    this.schedule(this.pick(this.clickOff), t + (Number.isFinite(hold) ? Math.min(30, Math.max(0.3, hold)) : HOLD_S), 0.35);
   }
 
   // Drop the scheduled static and click-off (e.g. speech cancelled or mission reset)
