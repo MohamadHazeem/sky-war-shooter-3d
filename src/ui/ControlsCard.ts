@@ -1,6 +1,7 @@
 import { STATION_ORDER, STATIONS } from '../world/B17Layout';
 import { keyMap, ActionId } from '../core/KeyMap';
 import { tx } from '../i18n';
+import { padConnected } from '../core/Gamepad';
 
 // key bound to an action (Settings > Key bindings)
 const b = (id: ActionId) => keyMap.label(id);
@@ -54,6 +55,35 @@ const TOUCH_PILOT = (): [string, string][] => [
   [k('II'), tx('Pause')],
   [k('?'), tx('This card')],
 ];
+// The same cards with a gamepad connected (core/Gamepad.ts; Xbox names, ✚ = the D-pad)
+const PAD_GUNNER = (): [string, string][] => [
+  [k(tx('Right stick')) + ' / ' + k(tx('Left stick')), tx('Swing the gun')],
+  [k('RT'), tx('Fire — short bursts keep the barrel cool')],
+  [k('LT'), tx('Look down the ring sight (zoom)')],
+  [k('R3'), tx('Free look (hold): look around the fuselage')],
+  [k('LB', 'RB'), tx('Previous / next gun position')],
+  [k('X'), tx('Reload, or answer an emergency prompt')],
+  [k('A', 'B', 'L3'), abilities('A', 'B', 'L3')],
+  [k('✚↑'), tx('Big radar map')],
+  [k('View') + ' + ' + k('Y'), tx('Photo mode')],
+  [k('Start'), tx('Pause')],
+  [k('View'), tx('This card')],
+];
+const PAD_PILOT = (): [string, string][] => [
+  [k(tx('Right stick')), tx('Fly where you look (mouse aim)')],
+  [k(tx('Left stick')), tx('Roll (left / right) and throttle (up / down)')],
+  [k('RT'), tx('Fire')],
+  [k('LT'), tx('Zoom')],
+  [k('Y'), tx('Cockpit / chase view')],
+  [k('R3'), tx('Tap: padlock the nearest bandit · hold: free look')],
+  [k('View') + ' + ' + k('X'), tx('Mouse aim / direct flight controls')],
+  [k('✚←', '✚→', '✚↓', 'LB + ✚↑'), tx('Wingman Blue Two: {a} attack my target · {b} cover me · {c} protect the bombers · {d} form up', { a: '✚←', b: '✚→', c: '✚↓', d: 'LB + ✚↑' })],
+  [k('A', 'B', 'L3'), abilities('A', 'B', 'L3')],
+  [k('✚↑'), tx('Big radar map')],
+  [k('View') + ' + ' + k('Y'), tx('Photo mode')],
+  [k('Start'), tx('Pause')],
+  [k('View'), tx('This card')],
+];
 const GUNNER_TIPS = [
   'Aim at the yellow ◇ lead indicator, not the plane.',
   'A lit seat badge (bottom-left) means fighters in another gun\'s arc.',
@@ -97,14 +127,18 @@ export class ControlsCard {
   }
 
   show(role: Role) {
+    // a connected gamepad wins (it is what the player picked up), then touch, then the keyboard
+    const pad = padConnected();
     const touch = document.body.classList.contains('touch');
-    const rows = role === 'gunner' ? (touch ? TOUCH_GUNNER() : GUNNER()) : touch ? TOUCH_PILOT() : PILOT();
+    const rows = pad ? (role === 'gunner' ? PAD_GUNNER() : PAD_PILOT())
+      : role === 'gunner' ? (touch ? TOUCH_GUNNER() : GUNNER()) : touch ? TOUCH_PILOT() : PILOT();
     const tips = role === 'gunner' ? GUNNER_TIPS : PILOT_TIPS;
+    const key = pad ? 'View' : b('help');
     this.el.innerHTML = `<div class="cc-box">
-      <div class="cc-k">${tx('CONTROLS')} · ${tx(role === 'gunner' ? 'B-17 GUNNER' : 'P-51 PILOT')}</div>
+      <div class="cc-k">${tx('CONTROLS')} · ${tx(role === 'gunner' ? 'B-17 GUNNER' : 'P-51 PILOT')}${pad ? ` · ${tx('GAMEPAD')}` : ''}</div>
       <div class="cc-grid">${rows.map(([key, what]) => `<div class="cc-key">${key}</div><div class="cc-what">${what}</div>`).join('')}</div>
       <div class="cc-tips">${tips.map((t) => `<div>${tx(t)}</div>`).join('')}</div>
-      <div class="cc-foot">${tx('Game paused · press {key} or tap to continue', { key: `<kbd>${b('help')}</kbd>` })}</div>
+      <div class="cc-foot">${tx('Game paused · press {key} or tap to continue', { key: `<kbd>${key}</kbd>` })}</div>
     </div>`;
     this.el.classList.add('show');
     this.open = true;
