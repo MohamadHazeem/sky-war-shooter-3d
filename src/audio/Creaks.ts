@@ -176,6 +176,7 @@ export class AirframeCreaks {
     const p = ctx.createStereoPanner();
     p.pan.value = rand() * 0.4;
     src.connect(g).connect(p).connect(this.out);
+    src.onended = () => { src.disconnect(); g.disconnect(); p.disconnect(); };
     src.start(ctx.currentTime + delay);
   }
 

@@ -42,7 +42,7 @@ export class Breathing {
   }
 
   // Combat intensity 0..1 from the fighter sound model; eased in tick() so it never snaps.
-  setIntensity(x: number) { this.target = Math.min(1, Math.max(0, x)); }
+  setIntensity(x: number) { if (Number.isFinite(x)) this.target = Math.min(1, Math.max(0, x)); }
 
   start() {
     if (this.running) return;

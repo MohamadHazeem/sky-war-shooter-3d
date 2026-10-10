@@ -5,6 +5,7 @@
 // - Each zip is a positional, HRTF-panned one-shot placed at the round's position, so
 //   the left/right and height of the pass come through the headphones.
 // - Rate-limited: a volley of rounds past the gunner can't turn into a buzz.
+import { GAIN, freeOnEnd, ok, place, setP } from './Safe';
 
 const VARIANTS = 3;
 const MAX_PER_SEC = 8;
@@ -53,32 +54,40 @@ export class Whizby {
   private zips: AudioBuffer[] = [];
   private last = -Infinity; // audio-clock time of the last zip started
 
-  constructor(private ctx: AudioContext, private out: AudioNode) {
+  // room/hrtf: the engine's voice budget (Sound.ts) for one-shots and for HRTF panners
+  constructor(private ctx: AudioContext, private out: AudioNode,
+    private room: (when: number, dur: number) => boolean = () => true,
+    private hrtf: (when: number, dur: number) => boolean = () => true) {
     for (let i = 0; i < VARIANTS; i++) this.zips.push(makeZip(ctx, i));
   }
 
   // pos is copied into the panner immediately (callers reuse their vector)
   play(pos: { x: number; y: number; z: number }, gain: number) {
+    if (!ok(pos.x) || !ok(pos.y) || !ok(pos.z) || !ok(gain)) return;
     const ctx = this.ctx;
     const now = ctx.currentTime;
     if (now - this.last < MIN_GAP) return;
+    const buf = this.zips[Math.floor(Math.random() * this.zips.length)];
+    const rate = 0.94 + Math.random() * 0.12;
+    const dur = buf.duration / rate;
+    if (!this.room(now, dur)) return;
     this.last = now;
 
     const src = ctx.createBufferSource();
-    src.buffer = this.zips[Math.floor(Math.random() * this.zips.length)];
-    src.playbackRate.value = 0.94 + Math.random() * 0.12;
+    src.buffer = buf;
+    src.playbackRate.value = rate;
 
     const g = ctx.createGain();
-    g.gain.value = gain;
+    setP(g.gain, gain, GAIN);
     const p = ctx.createPanner();
-    p.panningModel = 'HRTF';
+    p.panningModel = this.hrtf(now, dur) ? 'HRTF' : 'equalpower';
     p.distanceModel = 'inverse';
     // the round passes within a few metres, so keep it at full level across that range
     p.refDistance = 10; p.rolloffFactor = 1; p.maxDistance = 200;
-    p.positionX.value = pos.x; p.positionY.value = pos.y; p.positionZ.value = pos.z;
+    place(p, pos.x, pos.y, pos.z);
 
     src.connect(g).connect(p).connect(this.out);
-    src.onended = () => { src.disconnect(); g.disconnect(); p.disconnect(); };
+    freeOnEnd(src, [g, p]);
     src.start(now);
   }
 }

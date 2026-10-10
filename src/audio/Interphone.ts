@@ -81,6 +81,7 @@ export class Interphone {
     const g = this.ctx.createGain();
     g.gain.value = gain;
     src.connect(g).connect(this.dest);
+    src.onended = () => { src.disconnect(); g.disconnect(); };
     src.start(when);
     return src;
   }
@@ -88,7 +89,8 @@ export class Interphone {
   private schedule(buf: AudioBuffer, when: number, gain: number) {
     const src = this.one(buf, when, gain);
     this.pending.push(src);
-    src.onended = () => { this.pending = this.pending.filter((s) => s !== src); };
+    const free = src.onended;
+    src.onended = (e) => { free?.call(src, e); this.pending = this.pending.filter((s) => s !== src); };
   }
 
   // Fills a mono buffer from fn(t) (called once per sample, in order, so filters can keep

@@ -55,9 +55,12 @@ function brassNote(ctx: AudioContext, out: AudioNode, midi: number, when: number
     const g = ctx.createGain();
     g.gain.value = level;
     o.connect(g).connect(lp);
+    o.onended = () => { o.disconnect(); g.disconnect(); };
     o.start(when);
     o.stop(end + 0.5);
   }
+  // all voices stop together with the LFO: release the shared nodes then
+  lfo.onended = () => { lfo.disconnect(); lfoG.disconnect(); lp.disconnect(); env.disconnect(); };
   lfo.start(when);
   lfo.stop(end + 0.5);
 }
@@ -70,7 +73,7 @@ function brassNote(ctx: AudioContext, out: AudioNode, midi: number, when: number
 export function playMedalFanfare(sound: Sound, delay: number, step: number) {
   const ctx = sound.ctx;
   const out = sound.sfxBus();
-  if (!ctx || !out || ctx.state === 'closed') return;
+  if (!ctx || !out || ctx.state === 'closed' || !Number.isFinite(delay) || !Number.isFinite(step)) return;
   const t0 = ctx.currentTime + Math.max(0, delay);
   const shift = Math.min(Math.max(0, step), 4) * 2;
   PHRASE.forEach((n, i) => brassNote(ctx, out, n.m + shift, t0 + n.t, n.d, i === PHRASE.length - 1 ? 0.13 : 0.11));

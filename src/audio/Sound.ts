@@ -4,6 +4,7 @@ import { AirframeCreaks } from './Creaks';
 import { Breathing } from './Breathing';
 import { Whizby } from './Whizby';
 import { Interphone } from './Interphone';
+import { Budget, FREQ, GAIN, RATE, fin, freeOnEnd, ok, place, setP, towards } from './Safe';
 
 // Procedural audio engine (no sample files).
 // - Engines are synthesised as looping firing-pulse trains: Wright R-1820 Cyclones
@@ -13,12 +14,26 @@ import { Interphone } from './Interphone';
 //   pre-rendered variations, positioned in 3D (HRTF up close), low-passed and
 //   delayed by the speed of sound with distance, and sent to convolution reverbs:
 //   a short metallic one for the inside of the bomber, a long open-air one outside.
-type BufName =
+// Robustness (the "sound suddenly disappears" reports): a watchdog resumes the context
+// whenever sound is wanted, every param write is finite-safe (Safe.ts), a scope after the
+// compressor rebuilds the engine if the output goes non-finite or dead, and a voice budget
+// keeps gunfire from overloading the audio thread.
+export type BufName =
   | 'm2' | 'm2far' | 'cannon' | 'mg131' | 'hit' | 'hitHeavy' | 'explosion' | 'explosionFar' | 'flak' | 'flakClose'
   | 'crack' | 'casing' | 'click' | 'glass' | 'whoosh' | 'static' | 'squelch' | 'rattle' | 'rocket' | 'debris' | 'beltTick'
   | 'm2thump' | 'm2mech';
 
+type ShotOpts = { gain?: number; rate?: number; delay?: boolean; ref?: number; reverb?: number };
+
 const rand = () => Math.random() * 2 - 1;
+// Voice budget: concurrent one-shots. Low priority (far) drops at MAX_VOICES, close/big
+// ones get some headroom, the player's guns and UI never drop.
+const MAX_VOICES = 48;
+const MAX_HRTF = 6;          // concurrent HRTF one-shots, the rest pan equal-power
+// Far (> FAR m) spammy sounds: at most one per name per gap (seconds)
+const FAR = 300;
+const FAR_GAP: Partial<Record<BufName, number>> = { m2far: 0.06, mg131: 0.05, cannon: 0.07, hit: 0.03, crack: 0.06, flak: 0.1, debris: 0.3 };
+const BIG = new Set<BufName>(['explosion', 'flakClose', 'hitHeavy', 'rocket', 'whoosh']);
 const clamp01 = (v: number) => (Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 1);
 
 // One-pole filter helpers for offline synthesis
@@ -28,7 +43,7 @@ class HP { y = 0; x1 = 0; constructor(public a: number) {} run(x: number) { cons
 interface Voice {
   src: AudioBufferSourceNode; gain: GainNode; filter: BiquadFilterNode; pan: PannerNode;
   whoosh: AudioBufferSourceNode; whooshGain: GainNode; whooshFilter: BiquadFilterNode;
-  owner: number; radial: boolean;
+  owner: number; radial: boolean; freeAt: number;
 }
 
 export class Sound {
@@ -75,17 +90,49 @@ export class Sound {
   private lastShot = 0;
   private interior = 1;
   private mode: 'bomber' | 'fighter' | 'menu' = 'menu';
+  // Watchdog state. wanted: the game wants sound (false only while it is deliberately
+  // suspended, e.g. the pause menu); the context's own suspend/resume are wrapped to track it.
+  private wanted = true;
+  private rawResume: (() => Promise<void>) | null = null;
+  private armed = false;
+  private scope: AnalyserNode | null = null;
+  private scopeBuf = new Float32Array(1024);
+  private silentSince = -1;    // audio time the scope first read all zeros (-1: not silent)
+  private lastAudible = -1;    // audio time the latest audible one-shot was due
+  private lastCt = -1;         // clock watch: last seen currentTime and how long it has stalled
+  private stalled = 0;
+  private lastTick = 0;
+  private rebuildAt = -Infinity;
+  private backoff = 0;
+  private oneShots = new Budget(MAX_VOICES);
+  private hrtfShots = new Budget(MAX_HRTF);
+  private lastFar = new Map<BufName, number>();
 
   init() {
-    if (this.ctx) { this.ctx.resume(); return; }
+    if (this.ctx) {
+      if (this.ctx.state === 'closed') this.rebuild('context closed', true);
+      else this.ctx.resume().catch(() => {});
+      return;
+    }
+    this.build();
+    this.arm();
+  }
+
+  // Graph construction. Decoded buffers (synthesized or recorded) are kept across a
+  // rebuild: AudioBuffers are not tied to a context.
+  private build() {
     const ctx = new AudioContext({ latencyHint: 'interactive' });
     this.ctx = ctx;
+    this.track(ctx);
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -12; comp.knee.value = 10; comp.ratio.value = 5;
     comp.attack.value = 0.002; comp.release.value = 0.22;
     this.master = ctx.createGain();
-    this.master.gain.value = this.volume;
+    setP(this.master.gain, this.volume, GAIN);
     this.master.connect(comp).connect(ctx.destination);
+    // scope on the final output: the watchdog checks it for NaN / dead output
+    this.scope = ctx.createAnalyser(); this.scope.fftSize = this.scopeBuf.length;
+    comp.connect(this.scope);
     // ducking bus for radio/explosions (music + ambience go through it)
     this.duck = ctx.createGain();
     this.duck.connect(this.master);
@@ -103,18 +150,133 @@ export class Sound {
     this.revOutSend.connect(this.revOut).connect(this.master);
     this.creaks = new AirframeCreaks(ctx, this.amb, this.revInSend);
     this.musicWet.connect(this.revOutSend);
-    this.buildBuffers();
+    const first = !this.bufs.size;
+    if (first) this.buildBuffers();
     this.startAmbience();
     this.breathing = new Breathing(ctx, this.amb);
     for (let i = 0; i < 6; i++) this.voices.push(this.makeVoice());
-    this.whizbyFx = new Whizby(ctx, this.sfx);
+    this.whizbyFx = new Whizby(ctx, this.sfx, (when, dur) => this.room(when, dur, 1), (when, dur) => this.hrtfShots.take(ctx.currentTime, when, dur));
     this.music.init(ctx, this.musicBus, this.musicWet);
     this.music.enabled = this.musicEnabled;
-    void this.loadSamples();
+    if (first) void this.loadSamples(); else this.swapLoops();
     this.setMode(this.mode);
   }
 
-  setVolume(v: number) { this.volume = v; if (this.master) this.master.gain.value = v; }
+  // Wrap the context's suspend/resume (the game pauses through sound.ctx directly) so the
+  // watchdog knows when silence is intended and never fights the pause menu.
+  private track(ctx: AudioContext) {
+    const suspend = ctx.suspend.bind(ctx), resume = ctx.resume.bind(ctx);
+    ctx.suspend = () => { this.wanted = false; return suspend(); };
+    ctx.resume = () => { this.wanted = true; return resume(); };
+    this.rawResume = resume;
+    this.wanted = true;
+    this.lastCt = -1; this.stalled = 0; this.silentSince = -1; this.lastAudible = -1;
+    ctx.onstatechange = () => {
+      if (ctx !== this.ctx) return;
+      if (ctx.state === 'closed') this.rebuild('context closed');
+      else if (ctx.state !== 'running' && this.wanted) this.kick();
+    };
+  }
+
+  // Explicit form of the same switch: false suspends (pause menu), true resumes
+  setWanted(on: boolean) {
+    this.wanted = on;
+    if (!this.ctx) return;
+    if (on) this.kick(); else this.ctx.suspend().catch(() => {});
+  }
+
+  // Resume if sound is wanted but the context is suspended/interrupted (output device
+  // change, tab switch, OS audio session). A rejection is retried by the next tick or gesture.
+  private kick() {
+    const c = this.ctx;
+    if (!c || !this.wanted || c.state === 'running' || c.state === 'closed') return;
+    this.rawResume?.().catch(() => {});
+  }
+
+  // Once: gesture/visibility fallbacks and the twice-a-second watchdog
+  private arm() {
+    if (this.armed) return;
+    this.armed = true;
+    const kick = () => this.kick();
+    for (const e of ['pointerdown', 'keydown', 'touchend']) window.addEventListener(e, kick, { capture: true, passive: true });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) this.kick(); });
+    setInterval(() => this.watch(), 500);
+  }
+
+  private watch() {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    if (ctx.state === 'closed') { this.rebuild('context closed'); return; }
+    if (ctx.state !== 'running') { this.lastCt = -1; this.stalled = 0; this.silentSince = -1; this.kick(); return; }
+    // Clock watch: "running" but currentTime frozen means the output device died under us
+    const wall = performance.now() / 1000;
+    const dw = Math.min(1, wall - this.lastTick); // a tick after sleep or tab throttling counts as one
+    this.lastTick = wall;
+    const now = ctx.currentTime;
+    if (this.lastCt >= 0 && now === this.lastCt) {
+      this.stalled += dw;
+      if (this.stalled > 3) this.rebuild('audio clock stalled');
+      return;
+    }
+    this.lastCt = now; this.stalled = 0;
+    // Scope: any non-finite sample means a poisoned node (it never recovers by itself);
+    // all-zero output for > 3 s while audible one-shots were due means the graph is dead.
+    const sc = this.scope;
+    if (!sc) return;
+    const d = this.scopeBuf;
+    sc.getFloatTimeDomainData(d);
+    let live = false;
+    for (let i = 0; i < d.length; i++) {
+      const v = d[i];
+      if (!ok(v)) { this.rebuild('non-finite samples in the output'); return; }
+      if (v !== 0) live = true;
+    }
+    if (live) { this.silentSince = -1; return; }
+    if (this.silentSince < 0) { this.silentSince = now; return; }
+    const audible = this.volume > 0.01 && this.sfxVolume > 0.01;
+    if (audible && now - this.silentSince > 3 && this.lastAudible > this.silentSince + 0.2 && this.lastAudible < now - 0.2) {
+      this.rebuild('output stuck at zero');
+    }
+  }
+
+  // Full re-init on a fresh AudioContext: the poisoned or dead graph is dropped whole,
+  // decoded buffers and settings carry over. Backs off if it keeps happening.
+  private rebuild(why: string, force = false) {
+    const t = performance.now();
+    if (!force && t < this.rebuildAt + this.backoff) return;
+    this.backoff = t - this.rebuildAt > 120000 ? 5000 : Math.min(60000, this.backoff * 2 || 5000);
+    this.rebuildAt = t;
+    console.warn(`Audio: ${why}; rebuilding the audio engine`);
+    const old = this.ctx;
+    const wanted = this.wanted;
+    this.teardown();
+    if (old) { old.onstatechange = null; old.close().catch(() => {}); }
+    this.ctx = null;
+    try { this.build(); } catch (e) { console.warn('Audio: rebuild failed', e); return; }
+    if (!wanted) this.ctx!.suspend().catch(() => {});
+  }
+
+  // Stop timers and drop every reference into the old graph
+  private teardown() {
+    this.breathing?.stop(); this.breathing = null;
+    this.creaks?.setActive(false); this.creaks = null;
+    this.interphone?.cancel(); this.interphone = null;
+    this.whizbyFx = null;
+    this.voices = [];
+    this.b17 = null; this.wind = null; this.gust = null; this.windSrc = null;
+    this.playerEngine = null; this.radioBed = null;
+    this.b17Sputter = null; this.b17Depth = null; this.b17Sampled = false;
+    this.scope = null;
+    this.oneShots.clear(); this.hrtfShots.clear(); this.lastFar.clear();
+    this.lastShot = 0; // audio clocks restart at 0 on the new context
+  }
+
+  // Voice budget gate for a one-shot starting at `when` (prio 2 always passes)
+  private room(when: number, dur: number, prio: number) {
+    return this.oneShots.take(this.ctx!.currentTime, when, dur, prio > 1 ? Infinity : prio ? 16 : 0);
+  }
+
+  setVolume(v: number) { if (!ok(v)) return; this.volume = v; if (this.master) setP(this.master.gain, v, GAIN); }
   // Sound-effects bus, for one-off synthesized cues that should follow the volume setting
   sfxBus(): GainNode | null { return this.ctx ? this.sfx : null; }
   setMusic(on: boolean) { this.musicEnabled = on; this.music.enabled = on; if (!on) this.music.stop(); }
@@ -364,11 +526,11 @@ export class Sound {
   // Real recordings (public/audio, see CREDITS.md) replace the synthesized sounds as
   // soon as they are decoded; anything missing keeps its synthesized fallback.
   private async loadSamples() {
-    const ctx = this.ctx!;
     const base = import.meta.env.BASE_URL + 'audio/';
     let man: any;
     try { const r = await fetch(base + 'manifest.json'); if (!r.ok) return; man = await r.json(); } catch { return; }
-    const decode = async (f: string) => { try { const r = await fetch(base + f); return await ctx.decodeAudioData(await r.arrayBuffer()); } catch { return null; } };
+    // decode on whichever context is live (a rebuild closes the old one)
+    const decode = async (f: string) => { try { const r = await fetch(base + f); const ab = await r.arrayBuffer(); return this.ctx ? await this.ctx.decodeAudioData(ab) : null; } catch { return null; } };
     const SFX: [BufName, string, number][] = [
       ['m2', 'mg50_shot', 1], ['m2far', 'mg50_burst_far', 1], ['cannon', 'cannon_shot', 1], ['mg131', 'mg50_shot', 0.7],
       ['hit', 'impact_metal', 1], ['hitHeavy', 'impact_heavy', 1], ['explosion', 'explosion_air', 1], ['explosionFar', 'explosion_far', 1],
@@ -389,22 +551,12 @@ export class Sound {
     }
     const loop = async (k: string) => { const e = man.loops?.[k]; return e ? { buf: await decode(e.file), gain: e.gain ?? 1 } : null; };
     const [b17, radial, merlin, wind, radio] = await Promise.all(['b17_interior', 'radial_exterior', 'merlin', 'wind', 'radio_static'].map(loop));
-    const t = ctx.currentTime;
-    if (b17?.buf && this.b17) {
-      for (const s of this.b17.srcs) { try { s.stop(); } catch { /* */ } s.disconnect(); }
-      // two slightly detuned copies of the cabin recording: a living, beating drone
-      this.b17.srcs = [1, 1.006].map((r, i) => {
-        const s = this.loopSrc(b17.buf!, r);
-        const g = ctx.createGain(); g.gain.value = b17.gain * (i ? 0.45 : 0.8);
-        s.connect(g).connect(this.b17!.filter);
-        return s;
-      });
-      this.b17.filter.frequency.setValueAtTime(this.mode === 'bomber' ? 2400 : 900, t);
-      this.b17Sampled = true;
-    }
+    // (the graph may have been rebuilt while decoding: everything below uses the live one)
+    if (b17?.buf) this.b17Loop = { buf: b17.buf, gain: b17.gain };
+    if (wind?.buf) this.windBuf = wind.buf;
+    this.swapLoops();
     if (radial?.buf) { this.engineBufs.bmw = radial.buf; this.voiceGain = radial.gain; this.radialRate = 2.2; for (const v of this.voices) this.reseat(v, radial.buf); }
     if (merlin?.buf) { this.engineBufs.merlin = merlin.buf; this.merlinGain = merlin.gain; if (this.playerEngine) { this.playerEngine.src.stop(); this.playerEngine.src.disconnect(); this.playerEngine.src = this.loopSrc(merlin.buf); this.playerEngine.src.connect(this.playerEngine.filter); } }
-    if (wind?.buf && this.windSrc && this.wind) { this.windSrc.stop(); this.windSrc.disconnect(); this.windSrc = this.loopSrc(wind.buf); this.windSrc.connect(this.wind.filter); this.wind.filter.frequency.value = 6000; }
     if (radio?.buf) this.radioStaticBuf = radio.buf;
     if (man.music) {
       const tracks: Record<string, AudioBuffer> = {};
@@ -415,8 +567,32 @@ export class Sound {
     console.info('Audio: recorded samples loaded');
   }
 
+  // Recorded cabin and wind loops swap in for the synthesized ones in the live graph
+  // (on load, and again after a rebuild)
+  private swapLoops() {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const b17 = this.b17Loop;
+    if (b17 && this.b17 && !this.b17Sampled) {
+      for (const s of this.b17.srcs) { try { s.stop(); } catch { /* */ } s.disconnect(); }
+      // two slightly detuned copies of the cabin recording: a living, beating drone
+      this.b17.srcs = [1, 1.006].map((r, i) => {
+        const s = this.loopSrc(b17.buf, r);
+        const g = ctx.createGain(); g.gain.value = b17.gain * (i ? 0.45 : 0.8);
+        s.connect(g).connect(this.b17!.filter);
+        return s;
+      });
+      this.b17.filter.frequency.setValueAtTime(this.mode === 'bomber' ? 2400 : 900, t);
+      this.b17Sampled = true;
+    }
+    if (this.windBuf && this.windSrc && this.wind && this.windSrc.buffer !== this.windBuf) { this.windSrc.stop(); this.windSrc.disconnect(); this.windSrc = this.loopSrc(this.windBuf); this.windSrc.connect(this.wind.filter); this.wind.filter.frequency.value = 6000; }
+  }
+
   private extra = new Map<string, AudioBuffer[]>();
   private extraGain = new Map<string, number>();
+  private b17Loop: { buf: AudioBuffer; gain: number } | null = null;
+  private windBuf: AudioBuffer | null = null;
   private b17Sampled = false;
   private b17Sputter: GainNode | null = null;   // drone level, lowered per dead engine
   private b17Depth: GainNode | null = null;     // depth of the uneven sputter wobble
@@ -440,8 +616,12 @@ export class Sound {
     if (!this.ctx || !arr) { this.play(kind === 'kill_confirm' ? 'hitHeavy' : 'hit', null, { gain: kind === 'kill_confirm' ? 0.5 : 0.18 }); return; }
     const src = this.ctx.createBufferSource();
     src.buffer = arr[Math.floor(Math.random() * arr.length)];
-    const g = this.ctx.createGain(); g.gain.value = (kind === 'kill_confirm' ? 0.7 : 0.35) * (this.extraGain.get(kind) ?? 1);
+    const g = this.ctx.createGain(); setP(g.gain, (kind === 'kill_confirm' ? 0.7 : 0.35) * (this.extraGain.get(kind) ?? 1), GAIN);
     src.connect(g).connect(this.sfx);
+    const now = this.ctx.currentTime;
+    this.room(now, src.buffer.duration, 2);
+    this.lastAudible = Math.max(this.lastAudible, now);
+    freeOnEnd(src, [g]);
     src.start();
   }
 
@@ -505,7 +685,8 @@ export class Sound {
     const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 1200; filter.Q.value = 1.2;
     const gain = ctx.createGain(); gain.gain.value = 0;
     const pan = ctx.createPanner();
-    pan.panningModel = 'HRTF'; pan.distanceModel = 'inverse'; pan.refDistance = 70; pan.rolloffFactor = 1.1; pan.maxDistance = 10000;
+    // equal-power until the fighter is close (updateFighterVoices): idle HRTF panners still cost
+    pan.panningModel = 'equalpower'; pan.distanceModel = 'inverse'; pan.refDistance = 70; pan.rolloffFactor = 1.1; pan.maxDistance = 10000;
     const whoosh = this.loopSrc(this.noiseLoop(3, 'pink'));
     const whooshFilter = ctx.createBiquadFilter(); whooshFilter.type = 'bandpass'; whooshFilter.frequency.value = 800; whooshFilter.Q.value = 0.7;
     const whooshGain = ctx.createGain(); whooshGain.gain.value = 0;
@@ -513,7 +694,7 @@ export class Sound {
     whoosh.connect(whooshFilter).connect(whooshGain).connect(pan);
     pan.connect(this.sfx);
     const send = ctx.createGain(); send.gain.value = 0.25; pan.connect(send).connect(this.revOutSend);
-    return { src, gain, filter, pan, whoosh, whooshGain, whooshFilter, owner: -1, radial: true };
+    return { src, gain, filter, pan, whoosh, whooshGain, whooshFilter, owner: -1, radial: true, freeAt: 0 };
   }
 
   setMode(mode: 'bomber' | 'fighter' | 'menu') {
@@ -547,15 +728,16 @@ export class Sound {
   }
 
   setPlayerEngine(throttle: number, speed: number) {
-    if (!this.ctx || !this.playerEngine) return;
+    if (!this.ctx || !this.playerEngine || !ok(throttle) || !ok(speed)) return;
+    speed = Math.min(1000, Math.max(0, speed));
     const t = this.ctx.currentTime;
-    this.playerEngine.src.playbackRate.setTargetAtTime(0.78 + throttle * 0.3 + speed * 0.0004, t, 0.15);
-    this.playerEngine.filter.frequency.setTargetAtTime(380 + throttle * 1100, t, 0.1);
-    this.playerEngine.gain.gain.setTargetAtTime((0.26 + throttle * 0.2) * this.merlinGain, t, 0.1);
-    this.wind?.gain.gain.setTargetAtTime(0.05 + speed / 800, t, 0.2);
+    towards(this.playerEngine.src.playbackRate, 0.78 + throttle * 0.3 + speed * 0.0004, RATE, t, 0.15);
+    towards(this.playerEngine.filter.frequency, 380 + throttle * 1100, FREQ, t, 0.1);
+    towards(this.playerEngine.gain.gain, (0.26 + throttle * 0.2) * this.merlinGain, GAIN, t, 0.1);
+    if (this.wind) towards(this.wind.gain.gain, 0.05 + speed / 800, GAIN, t, 0.2);
     this.windSpeed = speed;
     this.windCut = 350 + speed * 7;
-    this.wind?.filter.frequency.setTargetAtTime(this.windCut, t, 0.2);
+    if (this.wind) towards(this.wind.filter.frequency, this.windCut, FREQ, t, 0.2);
   }
 
   // Wind gusts: two slow mean-reverting random walks. One swells the wind level and
@@ -565,21 +747,23 @@ export class Sound {
   updateWind(dt: number) {
     if (!this.ctx || !this.gust) return;
     const h = Math.min(dt, 0.1); // clamp so a stalled tab cannot jump the walks
+    if (!(h >= 0)) return;     // a NaN dt would poison the walks for good
     const fighter = this.mode === 'fighter';
     const speedN = fighter ? THREE.MathUtils.clamp((this.windSpeed - 60) / 90, 0, 1) : 0;
     const s = fighter ? 0.35 + 0.65 * speedN : 0.3;
     const g = this.gust;
     const sig = (0.45 + 0.35 * s) * Math.sqrt(3 * h); // uniform rand() has variance 1/3
-    g.walkG = THREE.MathUtils.clamp(g.walkG - 0.35 * g.walkG * h + rand() * sig, -1, 1);
-    g.walkF = THREE.MathUtils.clamp(g.walkF - 0.35 * g.walkF * h + rand() * sig, -1, 1);
+    g.walkG = fin(THREE.MathUtils.clamp(g.walkG - 0.35 * g.walkG * h + rand() * sig, -1, 1), 0);
+    g.walkF = fin(THREE.MathUtils.clamp(g.walkF - 0.35 * g.walkF * h + rand() * sig, -1, 1), 0);
     const t = this.ctx.currentTime;
-    g.gain.gain.setTargetAtTime(1 + (0.15 + 0.45 * s) * g.walkG, t, 0.3);
-    g.filter.frequency.setTargetAtTime(this.windCut * Math.pow(2, 0.7 + g.walkF * (0.25 + 0.75 * s)), t, 0.3);
+    towards(g.gain.gain, 1 + (0.15 + 0.45 * s) * g.walkG, GAIN, t, 0.3);
+    towards(g.filter.frequency, this.windCut * Math.pow(2, 0.7 + g.walkF * (0.25 + 0.75 * s)), FREQ, t, 0.3);
   }
 
   // Engine damage in the B-17 interior: each dead engine lowers the drone by a fifth and
   // deepens an uneven sputter. alive is 0..4; cached so per-frame calls are cheap.
   setEngineHealth(alive: number) {
+    if (!ok(alive)) return;
     const a = Math.max(0, Math.min(4, Math.round(alive)));
     if (a === this.engineAlive) return;
     this.engineAlive = a;
@@ -589,13 +773,22 @@ export class Sound {
     this.b17Depth.gain.setTargetAtTime(0.04 * (4 - a), t, 0.4);
   }
 
+  private tmpPos = new THREE.Vector3();
+  private tmpQ = new THREE.Quaternion();
+  private tmpF = new THREE.Vector3();
+  private tmpU = new THREE.Vector3();
+  private tmpTo = new THREE.Vector3();
+
   setListener(cam: THREE.Camera) {
     if (!this.ctx) return;
     const l = this.ctx.listener;
-    const p = cam.getWorldPosition(this.listenerPos);
-    const q = cam.getWorldQuaternion(new THREE.Quaternion());
-    const f = new THREE.Vector3(0, 0, -1).applyQuaternion(q);
-    const u = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
+    const p = cam.getWorldPosition(this.tmpPos);
+    const q = cam.getWorldQuaternion(this.tmpQ);
+    const f = this.tmpF.set(0, 0, -1).applyQuaternion(q);
+    const u = this.tmpU.set(0, 1, 0).applyQuaternion(q);
+    // a NaN listener would poison every panner at once: keep the last good one
+    if (!ok(p.x + p.y + p.z + f.x + f.y + f.z + u.x + u.y + u.z) || p.lengthSq() > 1e12) return;
+    this.listenerPos.copy(p);
     if (l.positionX) {
       const t = this.ctx.currentTime;
       l.positionX.setValueAtTime(p.x, t); l.positionY.setValueAtTime(p.y, t); l.positionZ.setValueAtTime(p.z, t);
@@ -613,6 +806,7 @@ export class Sound {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
     const L = this.listenerPos;
+    // (d < 4000 also drops NaN positions)
     const sorted = fighters.map((f) => ({ f, d: f.pos.distanceTo(L) })).filter((x) => x.d < 4000).sort((a, b) => a.d - b.d).slice(0, this.voices.length);
     let intensity = 0;
     const used = new Set<Voice>();
@@ -631,93 +825,101 @@ export class Sound {
         }
         v.owner = f.id;
       }
-      const toL = L.clone().sub(f.pos);
+      const toL = this.tmpTo.copy(L).sub(f.pos);
       const dist = Math.max(1, toL.length());
       toL.divideScalar(dist);
-      const vr = f.vel.dot(toL); // approaching = positive
+      const vr = fin(f.vel.dot(toL), 0, [-2000, 2000]); // approaching = positive
       const dop = 343 / Math.max(110, 343 - vr);
-      v.src.playbackRate.setTargetAtTime((0.82 + f.throttle * 0.22) * dop * (v.radial ? this.radialRate : 1), t, 0.04);
-      v.filter.frequency.setTargetAtTime((this.interior ? 650 : 1600) * Math.max(0.3, Math.exp(-d / 2200)) + 160, t, 0.05);
-      v.pan.positionX.setValueAtTime(f.pos.x, t); v.pan.positionY.setValueAtTime(f.pos.y, t); v.pan.positionZ.setValueAtTime(f.pos.z, t);
-      v.gain.gain.setTargetAtTime((this.interior ? 0.5 : 0.65) * this.voiceGain, t, 0.08);
+      towards(v.src.playbackRate, (0.82 + fin(f.throttle, 1, [0, 2]) * 0.22) * dop * (v.radial ? this.radialRate : 1), RATE, t, 0.04);
+      towards(v.filter.frequency, (this.interior ? 650 : 1600) * Math.max(0.3, Math.exp(-d / 2200)) + 160, FREQ, t, 0.05);
+      place(v.pan, f.pos.x, f.pos.y, f.pos.z, t);
+      // HRTF only while the fighter is close (hysteresis so it does not flip at the edge)
+      const pm = d < (v.pan.panningModel === 'HRTF' ? 1000 : 800) ? 'HRTF' : 'equalpower';
+      if (v.pan.panningModel !== pm) v.pan.panningModel = pm;
+      towards(v.gain.gain, (this.interior ? 0.5 : 0.65) * this.voiceGain, GAIN, t, 0.08);
       const close = Math.max(0, 1 - d / 450);
-      v.whooshGain.gain.setTargetAtTime(close * close * 0.9, t, 0.05);
-      v.whooshFilter.frequency.setTargetAtTime(500 + Math.max(0, vr) * 6, t, 0.05);
+      towards(v.whooshGain.gain, close * close * 0.9, GAIN, t, 0.05);
+      towards(v.whooshFilter.frequency, 500 + Math.max(0, vr) * 6, FREQ, t, 0.05);
       intensity = Math.max(intensity, Math.max(0, 1 - d / 2500));
     }
-    for (const v of this.voices) if (!used.has(v)) { v.gain.gain.setTargetAtTime(0, t, 0.25); v.whooshGain.gain.setTargetAtTime(0, t, 0.1); v.owner = -1; }
+    for (const v of this.voices) if (!used.has(v)) {
+      if (v.owner !== -1) v.freeAt = t;
+      v.gain.gain.setTargetAtTime(0, t, 0.25); v.whooshGain.gain.setTargetAtTime(0, t, 0.1); v.owner = -1;
+      // back to equal-power once the fade-out is over
+      if (v.pan.panningModel !== 'equalpower' && t - v.freeAt > 1.5) v.pan.panningModel = 'equalpower';
+    }
     this.music.setIntensity(fighters.length ? Math.max(intensity, 0.35) : 0);
     this.breathing?.setIntensity(fighters.length ? intensity : 0);
   }
 
   play(name: BufName, pos: THREE.Vector3 | null, opts: { gain?: number; rate?: number; delay?: boolean; ref?: number; reverb?: number } = {}) {
     if (!this.ctx) return;
-    const ctx = this.ctx;
     const arr = this.bufs.get(name);
     if (!arr) return;
-    const src = ctx.createBufferSource();
     let buffer = arr[Math.floor(Math.random() * arr.length)];
     // distant explosions lose their crack: use the rolling far variant
     if (name === 'explosion' && pos && pos.distanceTo(this.listenerPos) > 2500) buffer = (this.bufs.get('explosionFar') ?? arr)[0];
-    src.buffer = buffer;
-    src.playbackRate.value = (opts.rate ?? 1) * (0.95 + Math.random() * 0.1);
-    const g = ctx.createGain();
-    g.gain.value = (opts.gain ?? 1) * (this.gainMap.get(name) ?? 1);
-    let when = ctx.currentTime;
-    let out: AudioNode = g;
-    if (pos) {
-      const d = pos.distanceTo(this.listenerPos);
-      if (d > 12000) return;
-      const f = ctx.createBiquadFilter();
-      f.type = 'lowpass';
-      f.frequency.value = Math.max(150, 18000 * Math.exp(-d / 1000)) * (this.interior ? 0.55 : 1);
-      const p = ctx.createPanner();
-      p.panningModel = d < 60 ? 'HRTF' : 'equalpower'; p.distanceModel = 'inverse'; p.refDistance = opts.ref ?? 40; p.rolloffFactor = 1;
-      p.positionX.value = pos.x; p.positionY.value = pos.y; p.positionZ.value = pos.z;
-      src.connect(f).connect(g).connect(p).connect(this.sfx);
-      out = p;
-      if (opts.delay !== false) when += d / 343;
-      const send = ctx.createGain();
-      send.gain.value = (opts.reverb ?? 0.35) * Math.min(1, 0.3 + d / 1500);
-      p.connect(send).connect(this.revOutSend);
-    } else {
-      src.connect(g).connect(this.sfx);
-    }
-    if (this.interior && (opts.reverb ?? 0) > 0) { const s = ctx.createGain(); s.gain.value = opts.reverb!; out.connect(s).connect(this.revInSend); }
-    src.start(when, name === 'whoosh' ? Math.max(0, this.flybyPeak - 0.7) : 0);
+    this.shot(buffer, pos, opts, (opts.gain ?? 1) * (this.gainMap.get(name) ?? 1), name);
   }
 
   // One-off synthesized buffers (see Ricochet.ts): same positional chain as play(), caller supplies the buffer
   playBuffer(buffer: AudioBuffer, pos: THREE.Vector3 | null, opts: { gain?: number; rate?: number; delay?: boolean; ref?: number; reverb?: number } = {}) {
-    if (!this.ctx) return;
-    const ctx = this.ctx;
+    if (this.ctx) this.shot(buffer, pos, opts, opts.gain ?? 1);
+  }
+
+  // Shared one-shot chain: src -> [lowpass] -> gain -> [panner] -> sfx, plus reverb sends.
+  // Non-positional sounds (player's guns, cockpit, UI) always play; positional ones go
+  // through the far-spam gaps and the voice budget. Nodes are released on 'ended'.
+  private shot(buffer: AudioBuffer, pos: THREE.Vector3 | null, opts: ShotOpts, gain: number, name?: BufName) {
+    const ctx = this.ctx!;
+    const now = ctx.currentTime;
+    const rate = (opts.rate ?? 1) * (0.95 + Math.random() * 0.1);
+    if (!ok(gain) || !ok(rate) || gain <= 0) return;
+    let d = 0, when = now;
+    if (pos) {
+      d = pos.distanceTo(this.listenerPos);
+      if (!(d <= 12000)) return; // also drops NaN positions
+      if (opts.delay !== false) when += d / 343;
+    }
+    const offset = name === 'whoosh' ? Math.max(0, this.flybyPeak - 0.7) : 0;
+    const dur = (buffer.duration - offset) / rate;
+    const prio = !pos ? 2 : d < 150 || (name && BIG.has(name) && d < 3000) ? 1 : 0;
+    const gap = name && pos && d > FAR ? FAR_GAP[name] : undefined;
+    if (gap) {
+      const last = this.lastFar.get(name!) ?? -Infinity;
+      if (now >= last && now - last < gap) return;
+      this.lastFar.set(name!, now);
+    }
+    if (!this.room(when, dur, prio)) return;
     const src = ctx.createBufferSource();
     src.buffer = buffer;
-    src.playbackRate.value = (opts.rate ?? 1) * (0.95 + Math.random() * 0.1);
+    setP(src.playbackRate, rate, RATE);
     const g = ctx.createGain();
-    g.gain.value = opts.gain ?? 1;
-    let when = ctx.currentTime;
+    setP(g.gain, gain, GAIN);
+    const nodes: AudioNode[] = [g];
     let out: AudioNode = g;
     if (pos) {
-      const d = pos.distanceTo(this.listenerPos);
-      if (d > 12000) return;
       const f = ctx.createBiquadFilter();
       f.type = 'lowpass';
-      f.frequency.value = Math.max(150, 18000 * Math.exp(-d / 1000)) * (this.interior ? 0.55 : 1);
+      setP(f.frequency, Math.max(150, 18000 * Math.exp(-d / 1000)) * (this.interior ? 0.55 : 1), FREQ);
       const p = ctx.createPanner();
-      p.panningModel = d < 60 ? 'HRTF' : 'equalpower'; p.distanceModel = 'inverse'; p.refDistance = opts.ref ?? 40; p.rolloffFactor = 1;
-      p.positionX.value = pos.x; p.positionY.value = pos.y; p.positionZ.value = pos.z;
+      // HRTF only for a few very close sounds at a time
+      p.panningModel = d < 60 && this.hrtfShots.take(now, when, dur) ? 'HRTF' : 'equalpower';
+      p.distanceModel = 'inverse'; p.refDistance = fin(opts.ref ?? 40, 40, [0.1, 1e4]); p.rolloffFactor = 1;
+      place(p, pos.x, pos.y, pos.z);
       src.connect(f).connect(g).connect(p).connect(this.sfx);
       out = p;
-      if (opts.delay !== false) when += d / 343;
       const send = ctx.createGain();
-      send.gain.value = (opts.reverb ?? 0.35) * Math.min(1, 0.3 + d / 1500);
+      setP(send.gain, (opts.reverb ?? 0.35) * Math.min(1, 0.3 + d / 1500), GAIN);
       p.connect(send).connect(this.revOutSend);
+      nodes.push(f, p, send);
     } else {
       src.connect(g).connect(this.sfx);
     }
-    if (this.interior && (opts.reverb ?? 0) > 0) { const s = ctx.createGain(); s.gain.value = opts.reverb!; out.connect(s).connect(this.revInSend); }
-    src.start(when);
+    if (this.interior && (opts.reverb ?? 0) > 0) { const s = ctx.createGain(); setP(s.gain, opts.reverb!, GAIN); out.connect(s).connect(this.revInSend); nodes.push(s); }
+    freeOnEnd(src, nodes);
+    src.start(when, offset);
+    if (gain > 0.02) this.lastAudible = Math.max(this.lastAudible, when);
   }
 
   // Enemy round passing close to the listener: a zip panned to where the round is (rate-limited in Whizby.ts)
@@ -750,8 +952,9 @@ export class Sound {
   airframeHit(heavy: boolean) { this.creaks?.hit(heavy); }
 
   duckFor(seconds: number, depth = 0.45) {
-    if (!this.ctx) return;
+    if (!this.ctx || !ok(seconds) || !ok(depth)) return;
     const t = this.ctx.currentTime;
+    seconds = Math.max(0, seconds); depth = Math.min(1, Math.max(0, depth));
     this.duck.gain.cancelScheduledValues(t);
     this.duck.gain.setTargetAtTime(depth, t, 0.05);
     this.duck.gain.setTargetAtTime(1, t + seconds, 0.4);
@@ -763,7 +966,7 @@ export class Sound {
   // Alarm bell inside the bomber: a struck-bell partial stack plus a clapper click, rung
   // `strikes` times. Synthesised on the fly (no sample), through the sfx bus and interior reverb.
   alarmBell(strikes = 4, gap = 0.7, gain = 0.35) {
-    if (!this.ctx) return;
+    if (!this.ctx || !ok(strikes) || !ok(gap) || !ok(gain)) return;
     const ctx = this.ctx;
     const t0 = ctx.currentTime + 0.02;
     const partials: [number, number, number][] = [ // [frequency ratio, amplitude, decay seconds]
@@ -773,10 +976,11 @@ export class Sound {
     const cd = click.getChannelData(0);
     for (let i = 0; i < cd.length; i++) cd[i] = rand() * Math.exp(-i / 30);
     const bus = ctx.createGain();
-    bus.gain.value = gain;
+    setP(bus.gain, gain, GAIN);
     bus.connect(this.sfx);
     const send = ctx.createGain(); send.gain.value = 0.5;
     bus.connect(send).connect(this.revInSend);
+    let last = null as OscillatorNode | null;
     for (let s = 0; s < strikes; s++) {
       const t = t0 + s * gap;
       for (const [ratio, amp, decay] of partials) {
@@ -790,13 +994,18 @@ export class Sound {
         o.connect(g).connect(bus);
         o.start(t);
         o.stop(t + decay + 0.05);
+        freeOnEnd(o, [g]);
+        if (s === strikes - 1 && decay === partials[0][2]) last = o; // longest partial of the last strike
       }
       const c = ctx.createBufferSource();
       c.buffer = click;
       const cg = ctx.createGain(); cg.gain.value = 0.35;
       c.connect(cg).connect(bus);
+      freeOnEnd(c, [cg]);
       c.start(t);
     }
+    // the bus and its send go once the last strike has rung out
+    if (last) { const o = last, free = o.onended; o.onended = (e) => { free?.call(o, e); bus.disconnect(); send.disconnect(); }; }
   }
 
   speak(text: string, voiceIdx = 0) {
