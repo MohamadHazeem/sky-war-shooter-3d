@@ -44,6 +44,7 @@ import { Cinematics } from './Cinematics';
 import { ServiceRecord } from './ServiceRecord';
 import { Pacing } from './Pacing';
 import { ModeRunner, mountModePanel, leaderboardMode } from './Modes';
+import { SpecialEvents } from './SpecialEvents';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -74,6 +75,7 @@ export class Game {
   readonly service: ServiceRecord; // career, medal rewards, daily orders, trophies (ServiceRecord.ts)
   readonly modes: ModeRunner;   // Ace Hunt / Time Attack rules and scores (Modes.ts)
   readonly pacing: Pacing;      // build -> breather -> final wave inside each round (Pacing.ts)
+  readonly specials: SpecialEvents; // special events (ace squadron, Zerstörer wave, rocket barrage) + enemy group tactics
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -165,6 +167,7 @@ export class Game {
     this.modes = new ModeRunner(this.world, ui, { comboMult: () => this.combo.scoreMult, setScore: (n) => { this.score = n; } });
     this.pacing = new Pacing(this.world, ui, engine, this.modes, { spawn: (wv) => { this.incomingOff = null; this.spawnWave(wv); }, score: (n) => { this.score += n; }, adaptive: this.adaptive, station: () => (this.mission?.role === 'gunner' ? this.gunner.station : null) });
     this.midRound = new MidRound(this, engine, input, ui);
+    this.specials = new SpecialEvents(this, engine, ui);
     this.gunner.onNotice = (t) => this.ui.tip(t, 2200);
     // Esc releases pointer lock -> pause. If the browser never granted the lock the game
     // simply runs in free-cursor mode (no pause loop).
@@ -633,6 +636,7 @@ export class Game {
     this.updateIncoming(Math.max(0, this.spawnCd), next);
     if (this.spawnCd > 0) return;
     this.spawnWave(next);
+    this.specials.onGroup(next); // tactics layer: group tactic / per-type behaviour for the new group
     if (this.groups === 0 && m.waves[0]?.radio) w.callout('round', m.waves[0].radio[0], m.waves[0].radio[1], 0, 3);
     else if (next.station) {
       Chatter.onThreatAt(next.station as StationId);
@@ -1103,6 +1107,7 @@ export class Game {
     this.woundT += (woundTarget - this.woundT) * (1 - Math.exp(-dt * 0.6));
     this.engine.post.desat = this.woundT < 0.002 ? 0 : this.woundT;
     this.midRound.update(dt, this.roundIdx, this.roundT0);
+    this.specials.update(dt, this.roundIdx, this.roundT0);
     this.cracks.update(dt);
     this.ui.redVignette(Math.min(0.35, this.damageT * 0.45 + (this.mission?.role === 'gunner' && !this.menuMode ? w.crewWounded * 0.05 : 0)));
     if (this.mission?.role === 'pilot' && !this.menuMode) { /* pilot sets exposure/vignette */ }

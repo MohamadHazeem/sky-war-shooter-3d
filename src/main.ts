@@ -62,6 +62,11 @@ async function boot() {
       if (game.state !== 'playing' || !game.mission) game.startMission(survivalMission(role));
       game.boss.force();
     };
+    // Special event / enemy tactic now (starts a survival mission first when not flying): sws.special('ace'), sws.special() lists them
+    (window as any).sws.special = (name?: string, role: 'gunner' | 'pilot' = 'gunner') => {
+      if (game.state !== 'playing' || !game.mission) game.startMission(survivalMission(role));
+      return game.specials.dev(name);
+    };
     // Frame-time benchmark: n rendered frames, GPU synced with a 1-pixel readback each frame
     (window as any).sws.bench = (n = 120, render = true) => {
       const gl = engine.renderer.getContext(), px = new Uint8Array(4), t: number[] = [];

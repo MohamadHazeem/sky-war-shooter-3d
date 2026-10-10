@@ -79,6 +79,12 @@ export interface WorldView {
   enemyAimMult: number;              // perk: >1 spoils the attackers' aim
 }
 
+// Tactics layer hook (Tactics.ts): while a pilot has an override, the tactic flies it with
+// shared waypoints and timing (group attacks, per-type behaviour). fly() returns true when it
+// has flown the aircraft this frame, false to let the normal state machine fly it. Dropped
+// when the pilot withdraws; skipped while it is dogfighting / evading escorts.
+export interface PilotOverride { fly(p: EnemyPilot, dt: number, w: WorldView): boolean }
+
 const _y = new THREE.Vector3(0, 1, 0);
 const _u = new THREE.Vector3();
 const _c = new THREE.Vector3();
@@ -114,6 +120,7 @@ export class EnemyPilot {
   // gunner missions: a fixed gun position on the player's ship to attack (null = whichever
   // one the player is manning), so attacks come from every quarter and switching seats pays
   station: string | null = null;
+  override: PilotOverride | null = null;
   private arcOf(w: WorldView) { return this.station ? w.stationArc(this.station) : w.playerArc(); }
   private gunOf(w: WorldView) { return this.station ? w.stationGunPos(this.station) : w.playerGunPos(); }
 
@@ -154,6 +161,13 @@ export class EnemyPilot {
       case 'beam': p.addScaledVector(right, side * 1600).addScaledVector(fwd, 500).y += 400; break;
       case 'high': p.addScaledVector(fwd, -300).addScaledVector(right, side * 600).y += 1500; break;
     }
+  }
+
+  // Send the pilot at a target now (tactics hand-back): a fresh set-up for the run
+  engage(w: WorldView, t: Aircraft, attack?: AttackType, near = true) {
+    this.target = t; if (attack) this.attack = attack;
+    this.state = 'approach'; this.timer = 0;
+    this.computeSetup(w, near);
   }
 
   private beginAttack(w: WorldView) {
@@ -199,6 +213,7 @@ export class EnemyPilot {
     this.timer += dt;
     if (!me.alive) return;
     if (me.structureFrac < 0.3 && this.state !== 'withdraw') { this.state = 'withdraw'; this.timer = 0; this.breakDir.copy(me.forward(_t)).setY(-0.15).normalize(); }
+    if (this.state === 'withdraw') this.override = null;
 
     // Jumped by an escort (allied fighter close behind)?
     if (this.state !== 'withdraw' && this.state !== 'evade' && this.state !== 'dogfight') {
@@ -215,7 +230,8 @@ export class EnemyPilot {
       }
     }
 
-    switch (this.state) {
+    const flown = this.override && this.state !== 'dogfight' && this.state !== 'evade' ? this.override.fly(this, dt, w) : false;
+    if (!flown) switch (this.state) {
       case 'approach': {
         // escort missions: a share of the Fw 190s come for the player's Mustang
         if (!this.target && w.playerFighter?.alive && Math.random() < 0.4) {
