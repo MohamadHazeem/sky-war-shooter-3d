@@ -91,3 +91,4 @@ Player notes given at the start:
 - 23:25 graphics pass merged (goals 8, 24, 27); grouped title menu (28).
 - 23:39 full 12-mission regression 12/12, no errors; deploy #7 (graphics pass, campaign map, skills, custom/weekly, theatre, co-op beta, grouped menu).
 - 00:17 regression (m1, m3, m4, m9, m11, m12) all complete; deploy #8 (explosions, interior, surface detail, clouds/haze, new aircraft, wingman + raids, Arabic catch-up, hole fix).
+- 01:11 regression 8/8 + smoke; deploy #9 (nemesis aces, Train Busting ground attack, audio pass 3, glass effects, Arabic everywhere).
