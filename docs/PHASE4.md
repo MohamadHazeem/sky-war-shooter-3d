@@ -86,4 +86,4 @@ Player notes given at the start:
 - 23:02 field dressing (heals a gunner wound after 100 quiet s) after m5 regression failed on wounds; 7 missing callout clips.
 - 23:05 pilot-mode overhaul merged (+26 radio clips, briefings regenerated).
 - 23:10 Arabic (RTL) merged; Arabic for the pilot overhaul lines. Boss regression: m12 (4 warships) completes at 853 s; m7 completes.
-- 23:20 share/social card/trailer/analytics merged (squashed); m5 boss regression 3/3 OK.
+- 23:13 share/social card/trailer/analytics merged (squashed); m5 boss regression 3/3 OK.
