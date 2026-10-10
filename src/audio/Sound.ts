@@ -15,7 +15,7 @@ import { Interphone } from './Interphone';
 //   a short metallic one for the inside of the bomber, a long open-air one outside.
 type BufName =
   | 'm2' | 'm2far' | 'cannon' | 'mg131' | 'hit' | 'hitHeavy' | 'explosion' | 'explosionFar' | 'flak' | 'flakClose'
-  | 'crack' | 'casing' | 'click' | 'glass' | 'whoosh' | 'static' | 'squelch' | 'rattle' | 'rocket' | 'debris';
+  | 'crack' | 'casing' | 'click' | 'glass' | 'whoosh' | 'static' | 'squelch' | 'rattle' | 'rocket' | 'debris' | 'beltTick';
 
 const rand = () => Math.random() * 2 - 1;
 
@@ -281,6 +281,8 @@ export class Sound {
     this.variants('crack', 3, () => this.stereo(0.1, (t) => rand() * Math.exp(-t * 160) + Math.sin(2 * Math.PI * 2900 * t) * Math.exp(-t * 110) * 0.3));
     this.variants('casing', 3, () => { const f = 3800 + Math.random() * 900; return this.stereo(0.3, (t) => Math.sin(2 * Math.PI * f * t) * Math.exp(-t * 28) * 0.6 + Math.sin(2 * Math.PI * f * 1.53 * t) * Math.exp(-t * 40) * 0.4); });
     this.variants('click', 1, () => this.stereo(0.06, (t) => rand() * Math.exp(-t * 300) + Math.sin(2 * Math.PI * 1700 * t) * Math.exp(-t * 200) * 0.5));
+    // Ammo belt running low: a tiny inharmonic metal clink (link hitting the feed tray)
+    this.variants('beltTick', 3, () => { const f = 1900 + Math.random() * 800; return this.stereo(0.12, (t) => rand() * Math.exp(-t * 900) * 0.7 + Math.sin(2 * Math.PI * f * t) * Math.exp(-t * 70) * 0.5 + Math.sin(2 * Math.PI * f * 2.76 * t) * Math.exp(-t * 95) * 0.35 + Math.sin(2 * Math.PI * f * 4.17 * t) * Math.exp(-t * 120) * 0.2); });
     this.variants('glass', 2, () => this.stereo(1.0, (t) => { let s = rand() * Math.exp(-t * 25) * 0.7; for (let k = 0; k < 7; k++) s += Math.sin(2 * Math.PI * (2500 + k * 913) * t + k) * Math.exp(-t * (10 + k * 3)) * 0.15 * (Math.sin(t * 80 + k) > 0.3 ? 1 : 0.2); return s; }));
     // Close fly-by: rising then falling broadband rush
     this.variants('whoosh', 2, () => {

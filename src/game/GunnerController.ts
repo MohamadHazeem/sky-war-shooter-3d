@@ -40,6 +40,7 @@ export class GunnerController {
   private shotCount = 0;
   private recoilT = 0;
   private shake = 0;
+  private beltTickT = 0; // time until the next low-ammo belt tick
   zoom = false;
   fov = 62;
   bomber: Bomber | null = null;
@@ -308,6 +309,11 @@ export class GunnerController {
     const wantFire = inp.mouse(0) && this.transition <= 0 && s.reload <= 0 && !s.overheated && s.ammo > 0 && this.bomber.alive;
     this.firing = wantFire;
     this.brassClatter(dt, wantFire);
+    // Low belt warning: a metallic tick every 0.6 s while firing with under 60 rounds left
+    if (wantFire && s.ammo < 60) {
+      this.beltTickT -= dt;
+      if (this.beltTickT <= 0) { this.beltTickT = 0.6; sound.play('beltTick', null, { gain: 0.55, reverb: 0.4 }); }
+    } else this.beltTickT = 0;
     const guns = this.guns[this.station]!;
     const rate = def.twin ? 13 * 2 : 13;
     if (wantFire) {

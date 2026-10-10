@@ -138,6 +138,7 @@ kbd { font-family: 'IBM Plex Mono', monospace; font-size: 12px; border: 1px soli
 .hud-br { position: absolute; right: 22px; bottom: 22px; text-align: right; }
 .hud-label { font-size: 11px; letter-spacing: 2px; color: var(--ink-dim); text-transform: uppercase; }
 .hud-big { font-size: 28px; font-weight: 500; letter-spacing: 1px; text-shadow: 0 1px 6px rgba(0,0,0,0.7); }
+#hAmmo.low { color: #ff4a3a; }
 .hud-text { text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
 .objective { font-family: 'Special Elite', monospace; font-size: 14px; max-width: 360px; line-height: 1.4; }
 .stations { display: flex; gap: 4px; margin-top: 8px; }
