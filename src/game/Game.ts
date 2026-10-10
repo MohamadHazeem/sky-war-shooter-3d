@@ -11,6 +11,7 @@ import { STATIONS } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
 import type { AttackType } from '../world/AI';
 import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
+import { GlassCracks } from '../ui/Cracks';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -46,6 +47,7 @@ export class Game {
   private hitMarkerT = 0;
   private killMarkerT = 0;
   private damageT = 0;
+  private cracks = new GlassCracks();
   private slowmo = 0;
   private streak = 0;
   private lastKillAt = -99;
@@ -175,6 +177,7 @@ export class Game {
     };
     w.events.playerHit = (zone, heavy) => {
       this.damageT = Math.min(1, this.damageT + (heavy ? 0.6 : 0.25));
+      if (heavy && this.mission?.role === 'gunner') this.cracks.hit();
       if (zone === 'gunner') {
         this.ui.feed('You are wounded', 'loss');
         w.callout('wound', 'Navigator', 'Gunner\'s hit! Stay on that gun if you can!', 10, 2);
@@ -287,6 +290,7 @@ export class Game {
     this.endResult = null;
     this.score = 0;
     this.damageT = 0;
+    this.cracks.clear();
     this.engine.post.resetHistory();
     // survival picks a random time of day
     const presets: Weather[] = CAMPAIGN.map((c) => c.weather!).filter(Boolean);
@@ -644,6 +648,7 @@ export class Game {
     // screen effects
     this.damageT = Math.max(0, this.damageT - dt * 1.8);
     this.engine.post.damageFlash = this.damageT * 0.35;
+    this.cracks.update(dt);
     this.ui.redVignette(this.damageT * 0.8 + (this.mission?.role === 'gunner' && !this.menuMode ? w.crewWounded * 0.12 : 0));
     if (this.mission?.role === 'pilot' && !this.menuMode) { /* pilot sets exposure/vignette */ }
     else { this.engine.post.vignette = 0.9; this.engine.post.exposure = 1; }
@@ -864,6 +869,8 @@ export class Game {
       for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { ctx.moveTo(hx + sx * b, hy + sy * b); ctx.lineTo(hx + sx * a, hy + sy * a); }
       ctx.stroke();
     }
+    // Cracked glass sits in front of everything else on the gunner's view
+    this.cracks.draw(ctx, W, H);
   }
 }
 
