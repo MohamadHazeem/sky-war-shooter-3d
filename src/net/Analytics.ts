@@ -34,7 +34,13 @@ export function setStatsOptIn(on: boolean) {
   try { localStorage.setItem(OPT_KEY, on ? '1' : '0'); } catch { /* storage unavailable */ }
 }
 /** Stats are only collected and sent when both the toggle and the browser allow it. */
-export function statsAllowed(): boolean { return statsOptIn() && !dntEnabled(); }
+// Dev builds (dev server, the frozen regression build) only send when explicitly asked to, so
+// autoplay regressions don't fill the production collection: localStorage sws3d.analytics.dev = '1'.
+function devSendAllowed(): boolean {
+  if (!import.meta.env?.DEV) return true;
+  try { return localStorage.getItem('sws3d.analytics.dev') === '1'; } catch { return false; }
+}
+export function statsAllowed(): boolean { return statsOptIn() && !dntEnabled() && devSendAllowed(); }
 
 // ---- bucketing (pure, unit-tested) ----
 export function screenBucket(w: number, h: number): string {

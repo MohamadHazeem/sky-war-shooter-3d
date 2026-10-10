@@ -37,6 +37,8 @@ describe('anonymous stats', () => {
     stubStorage();
     vi.stubGlobal('navigator', { doNotTrack: null });
     expect(statsOptIn()).toBe(true);
+    expect(statsAllowed()).toBe(false);                 // dev build (vitest): opt-in only
+    localStorage.setItem('sws3d.analytics.dev', '1');
     expect(statsAllowed()).toBe(true);
     setStatsOptIn(false);
     expect(statsAllowed()).toBe(false);
