@@ -279,7 +279,11 @@ export class Sound {
   setVolume(v: number) { if (!ok(v)) return; this.volume = v; if (this.master) setP(this.master.gain, v, GAIN); }
   // Sound-effects bus, for one-off synthesized cues that should follow the volume setting
   sfxBus(): GainNode | null { return this.ctx ? this.sfx : null; }
-  setMusic(on: boolean) { this.musicEnabled = on; this.music.enabled = on; if (!on) this.music.stop(); }
+  setMusic(on: boolean) {
+    const was = this.music.enabled;
+    this.musicEnabled = on; this.music.enabled = on;
+    if (!on) this.music.stop(); else if (!was) this.music.resume();
+  }
 
   // Bus levels from the Settings sliders. Before init() they are only remembered and
   // applied when the graph is built.

@@ -111,6 +111,14 @@ export class Music {
     }
   }
 
+  // Music switched back on in Settings: bring the current scene's music back up
+  resume() {
+    const s = this.scene;
+    if (!this.ctx || s === 'none') return;
+    this.scene = 'none';
+    this.setScene(s);
+  }
+
   stop() {
     if (!this.ctx) return;
     if (this.current) { this.current.gain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.4); this.current = null; }
