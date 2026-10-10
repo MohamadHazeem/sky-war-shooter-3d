@@ -18,6 +18,7 @@ import type { AttackType } from '../world/AI';
 import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
 import * as Radar from '../ui/Radar';
 import { Progression } from './Upgrades';
+import * as Chatter from './RadioChatter';
 import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
 import { CombatTally } from './CombatTally';
@@ -249,8 +250,10 @@ export class Game {
           this.slowmo = this.loadout.bulletTime ? 1.1 : 0.4;
           const lines = ['Got him! He\'s going down!', 'You got him! Nice shooting!', 'He\'s smoking — he\'s finished!', victim.label === 'Bf 109' ? 'Scratch one Messerschmitt!' : 'Scratch one Focke-Wulf!'];
           w.callout('kill', ['Tail', 'Pilot', 'Top Turret', 'Navigator'][Math.floor(Math.random() * 4)], lines[Math.floor(Math.random() * lines.length)], 3, 2);
+          Chatter.onFighterKilled(this.streak);
         } else {
           this.ui.feed(`${victim.label} destroyed`);
+          Chatter.onWingmanKill();
         }
       } else if (victim instanceof Fighter && !victim.isPlayer) {
         this.ui.feed('P-51 lost', 'loss');
@@ -262,6 +265,7 @@ export class Game {
       else w.callout('playerdown', 'Pilot', 'We\'ve had it! Bail out! Bail out!', 0, 3);
     };
     w.events.playerHit = (zone, heavy) => {
+      Chatter.onPlayerHit(heavy);
       sound.airframeHit(heavy);
       achievements.onPlayerHit();
       this.damageT = Math.min(0.5, this.damageT + (heavy ? 0.22 : 0.08));
@@ -433,6 +437,7 @@ export class Game {
       }
     }
     this.prog.role = m.role;
+    Chatter.attachRadioChatter(this.world, m.role);
     this.baseDamageScale = this.world.playerDamageScale;
     this.berserkT = 0; this.killCount = 0;
     this.applyLoadout(true);
@@ -539,15 +544,8 @@ export class Game {
     this.spawnWave(next);
     if (this.groups === 0 && m.waves[0]?.radio) w.callout('round', m.waves[0].radio[0], m.waves[0].radio[1], 0, 3);
     else if (next.station) {
-      const calls: Record<string, [string, string]> = {
-        tail: ['Tail', 'Fighters coming in at six o\'clock — get on the tail gun!'],
-        ball: ['Ball', 'Bandits coming up underneath — ball turret, they\'re yours!'],
-        top: ['Top Turret', 'Bandits high, twelve o\'clock — top turret!'],
-        waistL: ['Navigator', 'Left waist! Fighters at nine o\'clock!'],
-        waistR: ['Navigator', 'Right waist! Fighters at three o\'clock!'],
-      };
-      const c = calls[next.station];
-      if (c) w.callout('st' + next.station, c[0], `${c[1]} Press ${STATIONS[next.station as StationId].key}.`, 7, 2);
+      Chatter.onThreatAt(next.station as StationId);
+      this.ui.tip(`Fighters attacking the ${STATIONS[next.station as StationId].label.toUpperCase()} — press <kbd>${STATIONS[next.station as StationId].key}</kbd>`, 2800);
     } else if (w.player) {
       const p = this.world.fighters('axis').filter((f) => f.alive).pop();
       if (p) w.callout('grp' + (this.groups % 4), Math.random() < 0.5 ? 'Tail' : 'Navigator', `${n > 2 ? 'More bandits' : 'Bandits'}, ${w.clockPosition(w.player, p.pos)}!`, 6, 2);
@@ -561,6 +559,7 @@ export class Game {
   private endRound(m: Mission) {
     const w = this.world;
     const last = Number.isFinite(m.rounds ?? 1) && this.roundIdx >= (m.rounds ?? 1) - 1;
+    Chatter.onRoundEnd(last);
     if (last) { this.roundsComplete = true; return; }
     const earned = Math.round((this.score - this.scoreBanked) * this.loadout.scoreMult);
     this.prog.earn(earned);
@@ -569,7 +568,6 @@ export class Game {
     this.state = 'paused';
     this.engine.paused = true;
     this.input.unlock();
-    w.callout('roundend', 'Pilot', 'That\'s the last of them for now. Catch your breath, they\'ll be back.', 0, 3);
     this.ui.hangar(this.prog, m.role, {
       title: `ROUND ${this.roundIdx + 1} CLEARED`,
       sub: `${kills} kills this round · +${earned} merit`,
@@ -592,7 +590,7 @@ export class Game {
     this.engine.paused = false;
     this.input.lock();
     this.ui.banner(`ROUND ${this.roundIdx + 1}`, this.roundIdx >= 3 ? 'They\'re sending everything they have' : 'More fighters inbound', 2800);
-    w.callout('roundstart', 'Pilot', 'Here they come again! Look sharp, gunners!', 0, 3);
+    Chatter.onRoundStart();
   }
 
   private spawnPos(from: SpawnFrom): THREE.Vector3 {
@@ -1108,6 +1106,9 @@ export class Game {
       const zones: Record<string, number> = {};
       for (const z of w.playerBomber!.zones) zones[z.name] = Math.max(0, z.hp) / z.maxHp;
       const crew = w.crewWounded ? `Gunner wounded (${w.crewWounded}/4)` : '';
+      // crew shouts when a fighter bores in to point-blank range
+      const gp = w.playerGunPos();
+      if (gp && w.fighters('axis').some((f) => f.alive && f.pos.distanceTo(gp) < 170)) Chatter.onEnemyClose();
       // seat finder: which gun positions have fighters in their field of fire
       this.gunner.threatsByStation(this.threats);
       let best: StationId | null = null, bn = 0;
@@ -1121,6 +1122,15 @@ export class Game {
       this.ui.updateGunnerHud({ station: this.gunner.station, threats: this.threats, best, ammo: s.ammo, heat: s.heat, overheated: s.overheated, reloading: s.reload, zones, crew, wounded: w.crew.wounded });
     } else if (w.playerFighter) {
       const f = w.playerFighter;
+      // flight lead warns of a bandit sitting behind the Mustang
+      if (f.alive) {
+        const fwd = f.forward(_v);
+        for (const e of w.fighters('axis')) {
+          if (!e.alive) continue;
+          const d = e.pos.distanceTo(f.pos);
+          if (d < 550 && fwd.dot(e.pos.clone().sub(f.pos).divideScalar(d)) < -0.75) { Chatter.onBanditOnSix(d < 250); break; }
+        }
+      }
       const zones: Record<string, number> = {};
       for (const z of f.zones) zones[z.name] = Math.max(0, z.hp) / z.maxHp;
       this.ui.updatePilotHud({
