@@ -63,3 +63,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 01:44 take-off/landing bookends merged.
 - 01:58 theatre phone + gamepad gaps merged (332 tests); night fixes (searchlight blobs, glass NaN).
 - 02:10 bookend sounds merged (343 tests).
+- 02:19 weather fronts + night effects merged (345 tests).
