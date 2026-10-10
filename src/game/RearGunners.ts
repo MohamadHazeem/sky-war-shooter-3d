@@ -112,7 +112,7 @@ export class RearGunners {
         const muzzle = _v.copy(_p).addScaledVector(dir, 0.8);
         w.ballistics.fire(muzzle, dir.clone().multiplyScalar(MUZZLE).add(f.vel), 'axis', DAMAGE, Math.random() < 0.34, TRACER, f);
         if (Math.random() < 0.5) w.effects.muzzleFlash(muzzle, dir, 1.4, f.vel);
-        if (Math.random() < 0.25) sound.play('mg131', muzzle, { gain: 0.45, rate: 1.25, ref: 60 });
+        if (Math.random() < 0.25) sound.play('mg81', muzzle, { gain: 0.8 });   // a short MG 81Z rattle per call
       }
     }
   }

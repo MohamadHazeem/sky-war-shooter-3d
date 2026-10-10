@@ -36,6 +36,8 @@ export interface Settings {
   difficulty: 'recruit' | 'veteran' | 'ace';
   fov: number;   // base field of view in degrees (gunner and P-51 views); zoom scales from it
   killCam?: boolean;   // cinematic kill cam on special kills (Cinematics.ts); undefined = on
+  audioDetail?: 'normal' | 'reduced';   // Sound.setDetail: Reduced for weak devices; undefined = normal
+  breathing?: boolean;  // oxygen-mask breathing (Sound.setBreathing); undefined = on
 }
 
 export interface Progress { unlocked: number; medals: Record<string, string[]>; best: Record<string, number>; survival: { name: string; score: number; waves: number; role: string; date: string }[] }
@@ -445,6 +447,8 @@ export class UI {
       <label class="setting">${t('settings.sfxVolume')} <input type="range" min="0" max="1" step="0.05" data-k="sfxVolume" value="${s.sfxVolume}"></label>
       <label class="setting">${t('settings.ambVolume')} <input type="range" min="0" max="1" step="0.05" data-k="ambVolume" value="${s.ambVolume}"></label>
       <label class="setting">${t('settings.music')} <select data-k="music"><option value="true">${t('common.on')}</option><option value="false" ${!s.music ? 'selected' : ''}>${t('common.off')}</option></select></label>
+      <label class="setting">${t('settings.audioDetail')} <select data-k="audioDetail"><option value="normal">${t('settings.audioNormal')}</option><option value="reduced" ${s.audioDetail === 'reduced' ? 'selected' : ''}>${t('settings.audioReduced')}</option></select></label>
+      <label class="setting">${t('settings.breathing')} <select data-k="breathing"><option value="true">${t('common.on')}</option><option value="false" ${s.breathing === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
       <label class="setting">${t('settings.radio')} <select data-k="radio"><option value="true">${t('common.on')}</option><option value="false" ${!s.radio ? 'selected' : ''}>${t('settings.subsOnly')}</option></select></label>
       <label class="setting">${t('settings.quality')} <select data-k="quality">${(['low', 'medium', 'high', 'ultra'] as const).map((q) => `<option value="${q}" ${s.quality === q ? 'selected' : ''}>${t(`settings.q.${q}`)}</option>`).join('')}</select></label>
       <label class="setting">${t('settings.fpsCounter')} <select data-k="fpsCounter"><option value="false">${t('common.off')}</option><option value="true" ${s.fpsCounter ? 'selected' : ''}>${t('common.on')}</option></select></label>
@@ -459,7 +463,7 @@ export class UI {
       const k = i.dataset.k as keyof Settings;
       let v: any = i.value;
       if (k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume' || k === 'fov') v = parseFloat(v);
-      if (k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'killCam' || k === 'fpsCounter') v = v === 'true';
+      if (k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'killCam' || k === 'fpsCounter' || k === 'breathing') v = v === 'true';
       (s as any)[k] = v;
       if (k === 'fov') { const b = i.closest('label')?.querySelector('.fov-val'); if (b) b.textContent = `${v}°`; }
       onChange(s);

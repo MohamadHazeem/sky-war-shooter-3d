@@ -265,6 +265,8 @@ export class Game {
     sound.setAmbVolume(s.ambVolume);
     sound.radioEnabled = s.radio;
     sound.setMusic(s.music);
+    sound.setDetail(s.audioDetail ?? 'normal');
+    sound.setBreathing(s.breathing !== false);
     this.pilot.mode = s.flightMode;
     if (this.loadout) this.applyAssist();
     // Base FOV from Settings (clamped; the views derive their zoom from it each frame)
@@ -1143,6 +1145,8 @@ export class Game {
     this.pacing.frame(dt);
     // damaged B-17 engines change the interior drone (Sound.setEngineHealth caches repeats)
     if (this.mission?.role === 'gunner' && w.playerBomber) sound.setEngineHealth(4 - w.playerBomber.enginesOut);
+    // waist-window wind roar follows the gunner's cabin (Sound.setCabin; no-op outside the bomber)
+    sound.setCabin(this.mission?.role === 'gunner' && !this.menuMode ? w.playerBomber?.root ?? null : null);
     // screen effects
     this.damageT = Math.max(0, this.damageT - dt * 1.8);
     this.engine.post.damageFlash = this.damageT * 0.18;

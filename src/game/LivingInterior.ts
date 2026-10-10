@@ -10,6 +10,7 @@ import { CrewFigure, FigureLook, lookOf, newPose, lerpPose, Pose, figureMaterial
 import { crewRoster, manDef } from './CrewRoster';
 import { Brass, brassGeometry, brassMaterial } from './Brass';
 import { SunShafts, WindowFrost, BreathFog, shaftMaterial, frostMaterial, breathMaterial } from './InteriorFx';
+import { sound } from '../audio/Sound';
 
 // The living B-17 interior around the waist guns (GunnerController owns one):
 //  - the other waist gunner, manning his M2 at the opposite window: tracks the target the
@@ -505,6 +506,7 @@ export class LivingInterior {
     const dir = _d.set(0, 0, 1).applyQuaternion(m.getWorldQuaternion(_q));
     s.shots++;
     if (s.shots % 2 === 0) this.world.effects.playerMuzzle(p, dir, b.vel);
+    sound.crewGun(p);   // his M2 two metres away: positional, inside the fuselage reverb
     // flash just inside the window lights up the compartment
     this.flash.position.copy(p).addScaledVector(dir, -0.85);
     this.flash.intensity = 2.5 + Math.random() * 2;

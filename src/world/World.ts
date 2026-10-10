@@ -887,9 +887,8 @@ export class World implements WorldView {
       const p = target.pos.clone().add(new THREE.Vector3(R() * 180, R() * 90 + 20, R() * 220 + 60));
       this.effects.flak(p);
       const dl = this.player ? p.distanceTo(this.player.pos) : 9999;
-      if (dl < 160) { sound.play('flakClose', p, { gain: 1.5, ref: 60, reverb: 0.5 }); if (dl < 75) setTimeout(() => sound.rattle(), 120); }
+      sound.flakBurst(p);   // burst + close whump + shrapnel patter (was silent between 160 and 400 m)
       if (dl < 400) this.events.shake?.(Math.max(0, 1 - dl / 400) * 0.9);
-      else sound.play('flak', p, { gain: 1.3, ref: 80, reverb: 0.6 });
       // shrapnel
       for (const a of this.aircraft) {
         if (!a.alive) continue;
@@ -936,7 +935,7 @@ export class World implements WorldView {
   fighterSoundInfo() {
     return this.fighters('axis').concat(this.fighters('allied').filter((f) => !f.isPlayer))
       .filter((f) => !f.remove)
-      .map((f) => ({ id: f.id, pos: f.pos, vel: f.vel, radial: f.kind === 'fw190', throttle: f.fm.throttle, stage: damageStage(f) }));
+      .map((f) => ({ id: f.id, pos: f.pos, vel: f.vel, radial: f.kind === 'fw190', throttle: f.fm.throttle, stage: damageStage(f), type: f.enemyType || f.kind }));
   }
 
   // 0..1 how hard the player's aircraft is manoeuvring, for the audio (wind, creaks): the B-17's

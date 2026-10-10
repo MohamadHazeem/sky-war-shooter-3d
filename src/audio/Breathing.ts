@@ -89,7 +89,7 @@ export class Breathing {
     const inhale = period * 0.42;
     const exhale = period - inhale;
     const t1 = t0 + inhale;
-    const peak = 0.2 + 0.14 * k; // stays well under the wind bed; a little deeper when working hard
+    const peak = 0.14 + 0.1 * k; // very subtle, well under the wind bed (pass 3: -3 dB); a little deeper when working hard
     const e = this.env.gain;
     const f = this.bp.frequency;
 
@@ -110,8 +110,8 @@ export class Breathing {
     e.linearRampToValueAtTime(0, t1 + exhale * 0.92);
 
     // Soft valve tick as the inhale opens, a fainter one on the exhale
-    this.click(t0 + 0.02, 0.07 + 0.03 * k);
-    this.click(t1 + 0.05, 0.03 + 0.015 * k);
+    this.click(t0 + 0.02, 0.05 + 0.025 * k);
+    this.click(t1 + 0.05, 0.02 + 0.012 * k);
   }
 
   private click(when: number, gain: number) {

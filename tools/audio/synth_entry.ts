@@ -6,6 +6,7 @@ import { playCue } from '../../src/audio/FeedbackCues';
 import { AirframeCreaks } from '../../src/audio/Creaks';
 import { taikoBar, brassBar, stringsBar, LAYER_SR } from '../../src/audio/MusicLayers';
 import { LAYER_MIX } from '../../src/audio/Music';
+import { SYNTH3 } from '../../src/audio/Synth3';
 
 export interface Buf { name: string; sampleRate: number; channels: Float32Array[] }
 
@@ -36,6 +37,8 @@ export function render(sr = 44100): { bufs: Buf[]; layerMix: typeof LAYER_MIX } 
   s.buildBuffers();
   for (const [name, arr] of s.bufs as Map<string, any[]>) arr.forEach((b, i) => add(`synth:${name}#${i}`, b));
   for (const [k, b] of Object.entries(s.engineBufs as Record<string, any>)) add(`synth:engine_${k}`, b);
+  // audio pass 3 voices (Synth3.ts, built lazily in the game)
+  for (const [name, def] of Object.entries(SYNTH3)) for (let i = 0; i < def.variants; i++) { const p = def.make(def.seed + i); out.push({ name: `synth3:${name}#${i}`, sampleRate: p.sr, channels: p.ch }); }
   hitSounds.init();
   const h = hitSounds as any;
   h.body.forEach((b: any, i: number) => add(`hit:body#${i}`, b));

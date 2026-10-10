@@ -275,6 +275,9 @@ export class Music {
 
   setIntensity(x: number) { if (Number.isFinite(x)) { this.intensity = Math.min(1, Math.max(0, x)); this.intensityAt = performance.now() / 1000; } }
 
+  // The latest threat while it is fresh (Sound: oxygen breathing rate), 0 in the menus / when stale
+  get threatLevel(): number { return this.scene === 'mission' && performance.now() / 1000 - this.threatAt < 2 ? this.threat : 0; }
+
   // The game's threat value (0..1, Threat.ts), set every frame during a mission
   setThreat(x: number) {
     if (!Number.isFinite(x)) return;
