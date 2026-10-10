@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildTranslation, defaultBindings, KeyMap, keyLabel } from '../src/core/KeyMap';
 import { dragToMouse, stickValue } from '../src/core/Touch';
-import { padCurve } from '../src/core/Gamepad';
+import { padCurve, GamepadInput, B, PAD_TAP, type GamepadHost, type TheatreAxes, type TheatrePad } from '../src/core/Gamepad';
+import type { Input } from '../src/core/Input';
 
 function memStore() {
   const m = new Map<string, string>();
@@ -74,5 +75,105 @@ describe('touch and gamepad maths', () => {
     expect(padCurve(1)).toBeCloseTo(1, 5);
     expect(padCurve(-1)).toBeCloseTo(-1, 5);
     expect(padCurve(0.5)).toBeLessThan(0.5);
+  });
+});
+
+// ---------------- gamepad bindings (a fake navigator.getGamepads, as in the browser QA) ----------------
+
+function fakePad() {
+  const pad = { id: 'Fake pad', connected: true, mapping: 'standard', axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+  vi.stubGlobal('navigator', { getGamepads: () => [pad] });
+  const press = (i: number, on: boolean, value = on ? 1 : 0) => { pad.buttons[i] = { pressed: on, value }; };
+  return { pad, press };
+}
+
+function fakeInput() {
+  const log: string[] = [];
+  const inp = {
+    mouseDX: 0, mouseDY: 0, analog: { roll: 0, yaw: 0, throttle: 0, throttleSet: null },
+    tap: (c: string) => log.push(c),
+    hold: (c: string, down: boolean) => log.push((down ? '+' : '-') + c),
+    setVirtualButtons: () => {},
+  };
+  return { inp: inp as unknown as Input, log };
+}
+
+function rig(host: Partial<GamepadHost>) {
+  const { pad, press } = fakePad();
+  const { inp, log } = fakeInput();
+  const gp = new GamepadInput(inp, { flying: () => true, role: () => 'pilot', cycleSeat: () => {}, togglePause: () => {}, ...host });
+  const step = (n = 1, dt = 1 / 60) => { for (let i = 0; i < n; i++) gp.update(dt); };
+  const tap = (i: number) => { press(i, true); step(); press(i, false); step(); };
+  return { pad, press, log, step, tap, inp };
+}
+
+describe('gamepad bindings', () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it('View: a tap opens the controls card, View + Y photo mode, View + X the P-51 flight mode', () => {
+    const r = rig({});
+    r.tap(B.BACK);
+    expect(r.log).toEqual(['KeyH']);
+    r.log.length = 0;
+    r.press(B.BACK, true); r.step(); r.tap(B.Y); r.tap(B.X); r.press(B.BACK, false); r.step();
+    expect(r.log).toEqual(['KeyF', 'KeyM']);   // no H, no cockpit view (Y), no reload / prompt (X)
+  });
+
+  it('P-51 right stick click: a tap padlocks, a hold is free look', () => {
+    const r = rig({});
+    r.tap(B.RS);
+    expect(r.log).toEqual(['KeyT']);
+    r.log.length = 0;
+    r.press(B.RS, true); r.step(Math.ceil(PAD_TAP * 60) + 4);
+    expect(r.log).toEqual(['+KeyC']);
+    r.press(B.RS, false); r.step();
+    expect(r.log).toEqual(['+KeyC', '-KeyC']);
+  });
+
+  it('gunner right stick click is still free look straight away', () => {
+    const r = rig({ role: () => 'gunner' });
+    r.press(B.RS, true); r.step();
+    expect(r.log).toEqual(['+KeyC']);
+    r.press(B.RS, false); r.step();
+    expect(r.log).toEqual(['+KeyC', '-KeyC']);
+  });
+
+  it('photo mode: sticks hold the movement keys, B leaves', () => {
+    const r = rig({ flying: () => false, photo: () => true });
+    r.pad.axes = [0, -1, 1, 0];
+    r.step();
+    expect(r.log).toEqual(['+KeyW']);
+    expect(r.inp.mouseDX).toBeGreaterThan(0);
+    r.pad.axes = [0, 0, 0, 0];
+    r.tap(B.B);
+    expect(r.log).toEqual(['+KeyW', '-KeyW', 'KeyF']);
+  });
+
+  it('replay theatre: buttons, scrub and sticks', () => {
+    const calls: string[] = [];
+    let axes: TheatreAxes | null = null;
+    let free = false;
+    const th: TheatrePad = {
+      get freeMode() { return free; },
+      togglePlay: () => calls.push('play'), cycleMode: () => calls.push('mode'), jumpMark: (d) => calls.push(`mark${d}`),
+      step: (d) => calls.push(`step${d}`), cycleOrbit: () => calls.push('orbit'), speedStep: (d) => calls.push(`speed${d}`),
+      toggleUi: () => calls.push('ui'), back: () => calls.push('back'), padAxes: (a) => { axes = a; },
+    };
+    const r = rig({ flying: () => false, theatre: () => th });
+    for (const b of [B.A, B.Y, B.LB, B.RB, B.LEFT, B.RIGHT, B.X, B.UP, B.DOWN, B.BACK, B.B]) r.tap(b);
+    expect(calls).toEqual(['play', 'mode', 'mark-1', 'mark1', 'step-1', 'step1', 'orbit', 'speed1', 'speed-1', 'ui', 'back']);
+    expect(r.log).toEqual([]);   // nothing reaches the keyboard path
+    r.press(B.RT, true, 1); r.pad.axes = [0, -1, 0.5, 0]; r.step();
+    expect(axes!.scrub).toBeCloseTo(1, 5);
+    expect(axes!.ly).toBeCloseTo(-1, 5);
+    expect(axes!.rx).toBeGreaterThan(0);
+    r.press(B.RT, false); r.press(B.LT, true, 0.4); r.step();
+    expect(axes!.scrub).toBeLessThan(0);
+    expect(axes!.scrub).toBeGreaterThan(-0.5);   // analog: a half-pulled trigger scrubs slower
+    // free camera: the D-pad's up / down rise and sink instead of changing the speed
+    free = true; calls.length = 0;
+    r.press(B.LT, false); r.press(B.UP, true); r.step();
+    expect(axes!.rise).toBe(1);
+    expect(calls).toEqual([]);
   });
 });

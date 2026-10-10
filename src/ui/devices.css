@@ -191,4 +191,23 @@ html[dir=rtl] body.touch #nemCard { right: auto; left: 12px; }
    the left edge (in RTL they would end under the ability bar on a phone) */
 @media (max-height: 520px) {
   html[dir=rtl] body.touch #hBL { direction: ltr; text-align: left; }
+  /* the Arabic font's taller line made the STREAK meter's head 23 px high, so the touch subtitles
+     under it overlapped its bar: a line as tall as the label */
+  html[lang=ar] #streakMeter .sm-head { line-height: 11px; }
 }
+@media (max-height: 520px) and (orientation: landscape) {
+  /* Arabic P-51 score block: its labels are taller than the English ones, so it ended just above
+     FIRE; a little smaller leaves a margin */
+  html[lang=ar] body.touch.touch-pilot .hud-tr { transform: scale(0.75); }
+}
+
+/* ---------- Hangar on a phone: collapsible sections (ui/HangarFold.ts sets .hfolding on touch / small screens) ---------- */
+#hangar.hfolding .hfold > .hsec:first-child { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; margin: 8px 0 4px; padding: 0 12px;
+  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.035); color: var(--ink); cursor: pointer; user-select: none; -webkit-user-select: none; }
+#hangar.hfolding .hfold > .hsec:first-child::after { content: '▾'; color: var(--khaki); font-size: 15px; letter-spacing: 0; transition: transform 0.2s; }
+#hangar.hfolding .hfold.closed > .hsec:first-child::after { transform: rotate(-90deg); }
+html[dir=rtl] #hangar.hfolding .hfold.closed > .hsec:first-child::after { transform: rotate(90deg); }
+#hangar.hfolding .hfold > .hsec:first-child:focus-visible { outline: 2px solid var(--khaki); outline-offset: 1px; }
+#hangar.hfolding .hfold.closed > :not(:first-child) { display: none !important; }
+#hangar.hfolding .hfold:not(.closed) { padding-bottom: 6px; }
+#hangar.hfolding details.hcoll > summary { min-height: 40px; display: flex; align-items: center; cursor: pointer; }

@@ -46,6 +46,11 @@ export class DeviceControls {
         g.requestStation(STATION_ORDER[(i + dir + STATION_ORDER.length) % STATION_ORDER.length]);
       },
       togglePause: () => this.togglePause(),
+      photo: () => this.game.state === 'playing' && !!this.game.mission && this.game.photo.active,
+      theatre: () => {
+        const th = this.game.cine?.theatre;
+        return th?.active ? th : null;
+      },
       promptKey: () => {
         const p = document.querySelector<HTMLElement>('#evPrompt.show');
         return p?.dataset.code || null;
@@ -81,7 +86,7 @@ export class DeviceControls {
   }
 
   private flying() {
-    return this.input.active && this.game.state === 'playing' && !!this.game.mission && !this.game.photo.active;
+    return this.input.active && this.game.state === 'playing' && !!this.game.mission && !this.game.photo.active && !this.game.cine?.theatre?.active;
   }
 
   private refreshMode() {

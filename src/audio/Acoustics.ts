@@ -70,7 +70,7 @@ export function blastDuck(d: number, size: BlastSize = 'fighter'): { depth: numb
 }
 
 // ---------------------------------------------------------------- engine voices
-export type EngineKind = 'bmw' | 'merlin' | 'jumoTwin' | 'db603twin' | 'pushpull' | 'jet' | 'rocket';
+export type EngineKind = 'bmw' | 'merlin' | 'jumoTwin' | 'db603twin' | 'pushpull' | 'jet' | 'rocket' | 'cyclone4';
 
 export interface EngineSpec {
   aux: number;         // level of the second loop (Do 335 rear pusher, Me 262 turbine whine); 0: none
@@ -89,6 +89,10 @@ export const ENGINE_SPECS: Record<EngineKind, EngineSpec> = {
   pushpull: { aux: 0.9, cutoff: 1800, gain: 0.7, rate: [0.86, 1.06] },
   jet: { aux: 0.3, cutoff: 5200, gain: 0.5, rate: [0.8, 1.08] },
   rocket: { aux: 0, cutoff: 4200, gain: 0.9, rate: [0.97, 1.03] },
+  // a B-17 heard from outside (the bookends; SynthField.ts): main = four Cyclones at take-off power
+  // (-13.5 dBFS RMS), aux = the same ticking over (-17.4); cycloneMix() cross-fades them by throttle.
+  // Full power sits ~6 dB over a single fighter, taxiing ~4 dB under it.
+  cyclone4: { aux: 0.5, cutoff: 6500, gain: 0.8, rate: [0.72, 1.0] },
 };
 
 // Which engine voice an aircraft gets. kind: its model (ModelKind), type: EnemyType ('' for allies)
@@ -100,6 +104,7 @@ export function engineKindOf(kind: string, type = ''): EngineKind {
     case 'do335': return 'pushpull';                   // DB 603 fore and aft
     case 'me262': return 'jet';                        // twin Jumo 004
     case 'me163': return 'rocket';                     // Walter HWK 509
+    case 'b17': return 'cyclone4';                     // four Wright R-1820 Cyclones (bookends: outside, on the runway)
     default: return 'merlin';                          // P-51, Spitfire, Bf 109 (V-12 recording)
   }
 }
@@ -141,8 +146,48 @@ export class RateGate {
 
 // ---------------------------------------------------------------- audio detail
 export type AudioDetail = 'normal' | 'reduced';
-export interface DetailCaps { voices: number; hrtf: number; engines: number; aux: boolean; shipEmitters: number; stages: boolean; cabinBed: boolean }
+// fieldLayers: the bookends' extra layers (gear thump at touchdown, sparks and rumble under the belly
+// scrape, the crash truck's and second ambulance's bells)
+export interface DetailCaps { voices: number; hrtf: number; engines: number; aux: boolean; shipEmitters: number; stages: boolean; cabinBed: boolean; fieldLayers: boolean }
 export const DETAIL: Record<AudioDetail, DetailCaps> = {
-  normal: { voices: 48, hrtf: 6, engines: 6, aux: true, shipEmitters: 3, stages: true, cabinBed: true },
-  reduced: { voices: 28, hrtf: 2, engines: 4, aux: false, shipEmitters: 1, stages: false, cabinBed: false },
+  normal: { voices: 48, hrtf: 6, engines: 6, aux: true, shipEmitters: 3, stages: true, cabinBed: true, fieldLayers: true },
+  reduced: { voices: 28, hrtf: 2, engines: 4, aux: false, shipEmitters: 1, stages: false, cabinBed: false, fieldLayers: false },
 };
+
+// ---------------------------------------------------------------- airfield (bookends)
+// B-17 engines from outside by throttle (0.3 ticking over .. 0.4 taxiing .. ~0.65 run-up .. 1 take-off):
+// levels of the take-off-power loop (roar) and the idle loop, their playback rates (roar loop
+// recorded at 2500 rpm, idle loop at ~1000 rpm) and a cutoff factor (full power is brighter).
+export interface CycloneMix { roar: number; idle: number; roarRate: number; idleRate: number; bright: number }
+export function cycloneMix(thr: number): CycloneMix {
+  const x = clamp(thr, 0, 1.2);
+  const idle = 1 - smooth(0.42, 0.8, x);
+  return {
+    roar: (1 - idle) * (0.6 + 0.4 * smooth(0.5, 1, x)),
+    idle,
+    roarRate: 0.72 + 0.28 * smooth(0.35, 1, x),
+    idleRate: 0.9 + 0.55 * clamp((x - 0.25) / 0.4, 0, 1),
+    bright: 0.55 + 0.45 * smooth(0.4, 1, x),
+  };
+}
+
+// Belly-landing slide layers by ground speed (m/s; touchdown ~46): the grind carries it down to a
+// standstill, the sparks die out first, the rumble last; the grind drops in pitch and darkens.
+export interface ScrapeMix { grind: number; sparks: number; rumble: number; rate: number; lp: number }
+export function scrapeMix(speed: number, vTouch = 46): ScrapeMix {
+  const v = Math.max(0, finite(speed)), k = clamp(v / vTouch, 0, 1);
+  return {
+    grind: smooth(0.3, 3, v) * (0.45 + 0.55 * k),
+    sparks: smooth(4, 14, v) * Math.sqrt(k),
+    rumble: smooth(0.4, 4, v) * (0.5 + 0.5 * k),
+    rate: 0.78 + 0.32 * k,
+    lp: 2400 + 9600 * k,
+  };
+}
+
+// Crash-crew bell: rung while the vehicle races out, kept up a moment after it pulls up, then let go.
+// still: seconds the vehicle has been (nearly) stopped. Returns the bell level 0..1.
+export function bellLevel(speed: number, still: number): number {
+  if (!(finite(speed) > 1.5)) return 1 - smooth(1.2, 3, finite(still, 99));
+  return 1;
+}

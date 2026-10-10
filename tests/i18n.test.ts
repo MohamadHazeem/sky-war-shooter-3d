@@ -294,6 +294,21 @@ describe('co-op and canvas HUD resolve to Arabic', () => {
     arabicFor('<kbd>T</kbd> padlocks the nearest bandit — the view tracks him while you fly · <kbd>V</kbd> cockpit / chase');
   });
 
+  it('controls card (keyboard, touch and gamepad) and the theatre phone layout', () => {
+    // every literal the card passes to tx() (key caps like 'RT' / 'View' are printed on the pad: kept)
+    const card = shownLiterals('ui/ControlsCard.ts', /tx\(/).filter((s) => !s.includes('{') && /[a-z]{3}/.test(s) && /\s/.test(s));
+    expect(card.length).toBeGreaterThan(24);
+    for (const s of card) arabicFor(s);
+    for (const s of ['Mouse', 'Drag', 'Reload', 'Fire', 'Roll', 'Rudder', 'Zoom', 'Pause', 'CONTROLS', 'GAMEPAD', 'Right stick', 'Left stick', 'Previous / next gun position', 'Reload, or answer an emergency prompt',
+      'Roll (left / right) and throttle (up / down)', 'Tap: padlock the nearest bandit · hold: free look']) arabicFor(s);
+    const theatre = shownLiterals('ui/TheatreScreen.ts', /tx\(/, true).filter((s) => !s.includes('{') && s.length > 1);
+    for (const s of ['TAP HERE TO SHOW THE INTERFACE', 'Move the free camera', 'Camera up', 'Camera down',
+      'Drag to orbit or look around · pinch with two fingers to zoom · Free camera: the move pad bottom left, ▲ ▼ up / down']) {
+      expect(theatre, s).toContain(s);
+      arabicFor(s);
+    }
+  });
+
   it('special events: every ace, banner, panel, tag, feed and radio line', () => {
     const src = source('game/SpecialEvents.ts');
     const aces = [...src.matchAll(/\{ rank: '(\w+)', short: '([\w.]+)', name: '([\w ]+)', last: '(\w+)', victories: (\d+) \}/g)]

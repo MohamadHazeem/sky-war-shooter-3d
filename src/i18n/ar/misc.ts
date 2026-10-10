@@ -109,7 +109,15 @@ const table: PhraseTable = {
     'Put the K-14 gunsight pipper ahead of the bandit, then fire.': 'ضع نقطة مهداف K-14 أمام الطائرة المعادية، ثم أطلق النار.',
     'Keep your speed up and stay near the bombers.': 'حافظ على سرعتك وابقَ قرب القاذفات.',
     'A bandit on your six: turn hard — don\'t fly straight.': 'عدوّ على ذيلك: انعطف بحدّة — لا تطِر في خط مستقيم.',
-    'Game paused · press {key} or tap to continue': 'اللعبة متوقفة مؤقتًا · اضغط {key} أو المس الشاشة للمتابعة',
+    // the card with a gamepad connected
+    'GAMEPAD': 'يد التحكم',
+    'Right stick': 'العصا اليمنى',
+    'Left stick': 'العصا اليسرى',
+    'Previous / next gun position': 'موقع الرماية السابق / التالي',
+    'Reload, or answer an emergency prompt': 'إعادة التلقيم، أو الاستجابة لتنبيه طارئ',
+    'Roll (left / right) and throttle (up / down)': 'التدحرج (يمين / يسار) والخانق (أعلى / أسفل)',
+    'Tap: padlock the nearest bandit · hold: free look': 'نقرة: تثبيت النظر على أقرب طائرة معادية · ضغط مطوّل: النظر الحر',
+    'Game paused · press {key} or tap to continue':'اللعبة متوقفة مؤقتًا · اضغط {key} أو المس الشاشة للمتابعة',
     '<kbd>H</kbd> — controls': '<kbd>H</kbd> — أدوات التحكم',
 
     // ---------------- key bindings (KeyMap.ts) ----------------

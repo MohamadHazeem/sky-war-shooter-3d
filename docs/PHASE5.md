@@ -39,6 +39,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 23 | Mission bookends: dawn takeoff from the English base and landing afterwards (belly landing with fire trucks when badly damaged), skippable | Done — 24 s dawn take-off at Deenethorpe (runways, tower, hangars, taxiing B-17s, climb through the clouds into the slot) and 21 s landing on the player\'s real damaged bomber (clean / rough with red flares / belly landing with sparks, fire tender and ambulances); skippable, setting, autoplay skips |
 | 24 | QA sweep: phone/touch, gamepad, first-time player flow, console errors across all new features | Done — phone/tablet layouts (scrolling title menu, campaign map order, co-op lobby), ≥40 px touch targets, 7 HUD overlaps fixed, Arabic + touch HUD, LOOK button + touchable event prompts, gamepad menu navigation + abilities + free look, Training no longer buried in tips, controls card complete, console warnings fixed. Open: theatre cramped on phones, some gamepad gaps |
 | 25 | Weather fronts mid-mission (storm wall approaching, smooth transitions) + night flares, flak glow in cloud, night tracers | Done — `weather.front: { at, to, duration }` (Weather.ts) blends cover, sun, sky, haze and rain on the glass per frame without history resets; a cumulonimbus wall (StormWall.ts) closes in over the last 95 s and lightning starts once the storm is overhead; m9 flies from clear air into the front, m3's overcast breaks up before the bomb run; Survival rounds roll for an occasional front; Custom Battle has a "Weather front" option |
+| 26 | Balance pass: autoplay statistics at near-perfect and human-like bot skill across all modes; tune boss length, raid fairness, round lengths; docs/BALANCE.md | In progress |
 | 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | In progress |
 
 ## Log
@@ -60,3 +61,5 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 01:08 glass effects merged.
 - 01:34 QA sweep merged.
 - 01:44 take-off/landing bookends merged.
+- 01:58 theatre phone + gamepad gaps merged (332 tests); night fixes (searchlight blobs, glass NaN).
+- 02:10 bookend sounds merged (343 tests).
