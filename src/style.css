@@ -125,6 +125,15 @@ button { font-family: inherit; }
 #briefing p { font-size: 15.5px; line-height: 1.6; margin: 0 0 12px; }
 #briefing .obj { margin: 18px 0; padding: 14px 18px; border: 1px dashed rgba(43,37,24,0.5); }
 #briefing .obj div { margin: 4px 0; }
+/* Route chart sits beside the orders on wide screens and stacks below them otherwise. */
+#briefing .brief-grid { display: grid; gap: 18px; }
+#briefing .brief-text { min-width: 0; }
+#briefing .brief-map { margin: 0; }
+#briefing .brief-map svg { display: block; width: 100%; height: auto; border: 1px solid rgba(43,37,24,0.5); box-shadow: 2px 3px 0 rgba(43,37,24,0.12); }
+#briefing .brief-map figcaption { font-size: 11px; letter-spacing: 1px; opacity: 0.75; margin-top: 6px; }
+@media (min-width: 900px) {
+  #briefing .brief-grid { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; gap: 26px; }
+}
 #briefing .controls { font-size: 13px; line-height: 1.7; opacity: 0.85; columns: 2; column-gap: 28px; margin-bottom: 20px; }
 #briefing .btn { background: var(--paper-ink); color: var(--paper); }
 #briefing .btn.ghost { background: transparent; color: var(--paper-ink); border-color: rgba(43,37,24,0.4); }
