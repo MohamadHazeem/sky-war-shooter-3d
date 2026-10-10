@@ -5,8 +5,9 @@ import { Breathing } from './Breathing';
 import { Whizby } from './Whizby';
 import { Interphone } from './Interphone';
 import { Budget, FREQ, GAIN, RATE, fin, freeOnEnd, ok, place, setP, towards } from './Safe';
-import { DETAIL, ENGINE_SPECS, RateGate, airLowpass, aspect, blastDuck, blastMix, blastStages, doppler, engineKindOf, engineRateTrim, soundDelay, thunderLowpass, type AudioDetail, type BlastSize, type DetailCaps, type EngineKind } from './Acoustics';
+import { DETAIL, ENGINE_SPECS, RateGate, airLowpass, aspect, blastDuck, blastMix, blastStages, cycloneMix, doppler, engineKindOf, engineRateTrim, soundDelay, thunderLowpass, type AudioDetail, type BlastSize, type DetailCaps, type EngineKind } from './Acoustics';
 import { SYNTH3, type PCM, type Synth3Name } from './Synth3';
+import { FIELD, FIELD_SHOTS, type FieldLoop, type FieldName } from './SynthField';
 import { Cabin } from './Cabin';
 import { json, take } from '../core/Assets';
 import { AUDIO_MANIFEST, P_LOOPS, P_MENU_MUSIC, P_MISSION_MUSIC, P_REST, P_SFX } from '../core/Preload';
@@ -44,12 +45,19 @@ import { AUDIO_MANIFEST, P_LOOPS, P_MENU_MUSIC, P_MISSION_MUSIC, P_REST, P_SFX }
 //                  and shrapnel patter on the skin
 //   'bk5'          the Me 410's 50 mm BK 5, 'mg81' a rear gunner's MG 81Z burst
 // Each has sensible defaults (reference distance, reverb), so sound.play('flak20', pos) is enough.
+//
+// Airfield sounds of the take-off / landing scenes (SynthField.ts, built lazily from
+// sound.prepareField(), which Bookends calls when a B-17 briefing opens): one-shots 'tyreChirp',
+// 'gearThump', 'flarePop', 'bellyImpact'; loops on moving emitters (sound.emitter(), Field.ts):
+// the flare's hiss, the belly scrape, the crash crews' bells; and the B-17's own outside engine
+// voice (FighterSound type 'b17': four Cyclones, take-off roar and taxi idle cross-faded by throttle).
 export type BufName =
   | 'm2' | 'm2far' | 'cannon' | 'mg131' | 'hit' | 'hitHeavy' | 'explosion' | 'explosionFar' | 'flak' | 'flakClose'
   | 'crack' | 'casing' | 'click' | 'glass' | 'whoosh' | 'static' | 'squelch' | 'rattle' | 'rocket' | 'debris' | 'beltTick'
   | 'm2thump' | 'm2mech'
   | 'bk5' | 'mg81' | 'flak20' | 'flak20burst' | 'flakTower'
-  | 'blastCrack' | 'blastBoom' | 'thunder' | 'rumbleLong' | 'whump' | 'patter' | 'brassPile';
+  | 'blastCrack' | 'blastBoom' | 'thunder' | 'rumbleLong' | 'whump' | 'patter' | 'brassPile'
+  | 'tyreChirp' | 'gearThump' | 'flarePop' | 'bellyImpact';
 
 // at: extra start delay (s); lp: low-pass cutoff override (Hz); size: explosion size (explosions only)
 type ShotOpts = { gain?: number; rate?: number; delay?: boolean; ref?: number; reverb?: number; at?: number; lp?: number; size?: BlastSize };
@@ -60,14 +68,17 @@ export type PlayOpts = ShotOpts;
 const SYNTH_GAIN: Partial<Record<BufName, number>> = {
   bk5: 1.0, mg81: 0.55, flak20: 0.75, flak20burst: 0.8, flakTower: 1.0, blastCrack: 0.9, blastBoom: 0.85, thunder: 1.0,
   rumbleLong: 1.0, whump: 0.9, patter: 0.5, brassPile: 1,
+  tyreChirp: 0.8, gearThump: 0.9, flarePop: 0.8, bellyImpact: 1.0,
 };
 const NAME_DEFAULTS: Partial<Record<BufName, ShotOpts>> = {
   flak20: { ref: 90, reverb: 0.5 }, flak20burst: { ref: 60, reverb: 0.45 }, flakTower: { ref: 300, reverb: 0.9 },
   bk5: { ref: 260, reverb: 0.6 }, mg81: { ref: 60, reverb: 0.3 },
+  tyreChirp: { ref: 25, reverb: 0.3 }, gearThump: { ref: 30, reverb: 0.3 }, flarePop: { ref: 20, reverb: 0.5 }, bellyImpact: { ref: 90, reverb: 0.6 },
 };
 // Until the lazy synthesis is done a new name borrows an old sound: [name, rate, gain]
 const STAND_IN: Partial<Record<BufName, [BufName, number, number]>> = {
   bk5: ['cannon', 0.55, 2.2], mg81: ['mg131', 1.25, 0.8], flak20: ['cannon', 1.35, 0.6], flak20burst: ['flak', 1.7, 0.35], flakTower: ['flak', 0.6, 1.1],
+  gearThump: ['hitHeavy', 0.7, 0.5], flarePop: ['crack', 1.5, 0.9], bellyImpact: ['hitHeavy', 0.55, 1.2],
 };
 
 const rand = () => Math.random() * 2 - 1;
@@ -81,7 +92,7 @@ const FAR_GAP: Partial<Record<BufName, number>> = {
   m2far: 0.06, mg131: 0.05, cannon: 0.07, hit: 0.03, crack: 0.06, flak: 0.1, debris: 0.3,
   mg81: 0.06, flak20: 0.07, flak20burst: 0.08, flakTower: 0.2, bk5: 0.2, whump: 0.15, thunder: 0.25,
 };
-const BIG = new Set<BufName>(['explosion', 'flakClose', 'hitHeavy', 'rocket', 'whoosh', 'bk5', 'flakTower', 'blastBoom', 'blastCrack', 'thunder', 'rumbleLong', 'whump']);
+const BIG = new Set<BufName>(['explosion', 'flakClose', 'hitHeavy', 'rocket', 'whoosh', 'bk5', 'flakTower', 'blastBoom', 'blastCrack', 'thunder', 'rumbleLong', 'whump', 'bellyImpact']);
 const clamp01 = (v: number) => (Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 1);
 // Sounds with a single recording rotate through these pitch offsets (cents) instead of
 // repeating identically; multi-variant sounds rotate through a shuffle bag (no immediate repeat).
@@ -127,11 +138,68 @@ interface Voice {
   dmg: GainNode; stage: number; nextPop: number; // damaged engine: misfire dips (DamageStages stage)
   kind: EngineKind; buf: AudioBuffer | null;     // engine voice and the loop it plays
   aux: AudioBufferSourceNode | null; auxGain: GainNode; auxBuf: AudioBuffer | null; // second loop (push-pull rear, jet whine)
+  mainGain: GainNode;                            // level of the main loop alone (the B-17 voice cross-fades its two loops)
 }
 
 // Engine voice info per fighter (World.fighterSoundInfo); stage: DamageStages 0..4;
 // type: EnemyType for axis aircraft, else the model kind (picks the engine voice, Acoustics.engineKindOf)
 export interface FighterSound { id: number; pos: THREE.Vector3; vel: THREE.Vector3; radial: boolean; throttle: number; stage?: number; type?: string }
+
+// A looping sound on a moving point (sound.emitter()): update it every frame (position, velocity for
+// the Doppler shift, level, playback rate, optional low-pass); stop() fades it out and frees it. An
+// emitter not updated for 1.5 s stops by itself, and one from a replaced AudioContext reports !alive.
+export interface LoopEmitter {
+  readonly alive: boolean;
+  update(pos: THREE.Vector3, vel: THREE.Vector3 | null, gain: number, rate?: number, lp?: number): void;
+  stop(fade?: number): void;
+}
+export interface EmitterOpts { ref?: number; reverb?: number; variant?: number }
+
+class Emitter implements LoopEmitter {
+  alive = true;
+  last: number;
+  private src: AudioBufferSourceNode; private f: BiquadFilterNode; private g: GainNode; private p: PannerNode; private send: GainNode;
+  private to = new THREE.Vector3();
+  constructor(private ctx: AudioContext, buf: AudioBuffer, out: AudioNode, revBus: AudioNode, private host: { listener: THREE.Vector3; interior: () => boolean }, private rev: number, ref: number) {
+    const t = ctx.currentTime;
+    this.last = t;
+    this.src = ctx.createBufferSource(); this.src.buffer = buf; this.src.loop = true;
+    this.f = ctx.createBiquadFilter(); this.f.type = 'lowpass'; this.f.frequency.value = 12000;
+    this.g = ctx.createGain(); this.g.gain.value = 0;
+    this.p = ctx.createPanner();
+    this.p.panningModel = 'equalpower'; this.p.distanceModel = 'inverse'; this.p.refDistance = fin(ref, 30, [0.1, 1e4]); this.p.rolloffFactor = 1; this.p.maxDistance = 10000;
+    this.send = ctx.createGain(); this.send.gain.value = 0;
+    this.src.connect(this.f).connect(this.g).connect(this.p).connect(out);
+    this.p.connect(this.send).connect(revBus);
+    this.src.start(t, Math.random() * buf.duration);
+  }
+  update(pos: THREE.Vector3, vel: THREE.Vector3 | null, gain: number, rate = 1, lp = 18000) {
+    if (!this.alive) return;
+    if (this.ctx.state === 'closed') { this.alive = false; return; }
+    const t = this.ctx.currentTime;
+    this.last = t;
+    const to = this.to.copy(this.host.listener).sub(pos), d = Math.max(0.5, to.length());
+    if (!ok(d)) return;
+    const vr = vel ? fin(vel.dot(to) / d, 0, [-2000, 2000]) : 0;   // approaching = positive
+    towards(this.src.playbackRate, rate * doppler(vr), RATE, t, 0.04);
+    towards(this.g.gain, gain, GAIN, t, 0.06);
+    towards(this.f.frequency, Math.min(lp, airLowpass(d, this.host.interior())), FREQ, t, 0.05);
+    place(this.p, pos.x, pos.y, pos.z, t);
+    towards(this.send.gain, this.rev * Math.min(1, 0.3 + d / 1500), GAIN, t, 0.1);
+  }
+  stop(fade = 0.4) {
+    if (!this.alive) return;
+    this.alive = false;
+    if (this.ctx.state === 'closed') return;
+    const t = this.ctx.currentTime;
+    freeOnEnd(this.src, [this.f, this.g, this.p, this.send]);
+    try {
+      this.g.gain.cancelScheduledValues(t);
+      this.g.gain.setTargetAtTime(0, t, Math.max(0.01, fade / 4));
+      this.src.stop(t + Math.max(0.02, fade) + 0.05);
+    } catch { /* already stopped */ }
+  }
+}
 
 export class Sound {
   ctx: AudioContext | null = null;
@@ -205,6 +273,9 @@ export class Sound {
   private cabin: Cabin | null = null;
   private synth3 = new Map<Synth3Name, AudioBuffer[]>();  // lazily synthesised (Synth3.ts), kept across rebuilds
   private synthSteps: (() => void)[] | null = null;        // pending lazy build steps (null: not started)
+  private fieldBufs = new Map<FieldName, AudioBuffer[]>();  // airfield sounds (SynthField.ts), lazily, kept across rebuilds
+  private fieldSteps: (() => void)[] | null = null;
+  private emitters: Emitter[] = [];
   private patterGate = new RateGate(0.25);
   private crewGate = new RateGate(1 / 13);
   private brassGate = new RateGate(0.045);
@@ -382,6 +453,8 @@ export class Sound {
     this.b17Sputter = null; this.b17Depth = null; this.b17Sampled = false;
     this.scope = null;
     this.oneShots.clear(); this.hrtfShots.clear(); this.lastFar.clear();
+    for (const e of this.emitters) e.alive = false;   // their nodes go with the old context
+    this.emitters = [];
     this.lastShot = 0; // audio clocks restart at 0 on the new context
     this.patterGate = new RateGate(0.25); this.crewGate = new RateGate(1 / 13); this.brassGate = new RateGate(0.045);
   }
@@ -652,24 +725,66 @@ export class Sound {
   // sound is built its callers get a stand-in (STAND_IN, the old engine loops, or nothing).
   private startSynth3() {
     if (this.synthSteps) return;
-    const steps: (() => void)[] = this.synthSteps = [];
-    for (const name of Object.keys(SYNTH3) as Synth3Name[]) {
-      const def = SYNTH3[name];
+    this.synthSteps = this.lazyBuild(SYNTH3, (name, arr) => this.synthDone(name, arr));
+  }
+
+  // Airfield sounds of the take-off / landing scenes (SynthField.ts): Bookends calls this when a
+  // B-17 briefing opens (and again when a scene starts); engines first. Needs a live context.
+  prepareField() {
+    if (this.fieldSteps || !this.ctx) return;
+    this.fieldSteps = this.lazyBuild(FIELD, (name, arr) => {
+      this.fieldBufs.set(name, arr);
+      if ((FIELD_SHOTS as readonly string[]).includes(name)) { const bn = name as BufName; this.bufs.set(bn, arr); this.gainMap.set(bn, SYNTH_GAIN[bn] ?? 1); }
+    });
+  }
+
+  // Queue one build step per variant of a catalogue and run them one per idle slice
+  private lazyBuild<N extends string>(cat: Readonly<Record<N, { readonly variants: number; readonly seed: number; readonly make: (seed: number) => PCM }>>, done: (name: N, arr: AudioBuffer[]) => void): (() => void)[] {
+    const steps: (() => void)[] = [];
+    for (const name of Object.keys(cat) as N[]) {
+      const def = cat[name];
       const arr: AudioBuffer[] = [];
       for (let i = 0; i < def.variants; i++) steps.push(() => {
         const b = this.toBuffer(def.make(def.seed + i));
         if (b) arr.push(b);
-        if (i === def.variants - 1 && arr.length) this.synthDone(name, arr);
+        if (i === def.variants - 1 && arr.length) done(name, arr);
       });
     }
     const idle = (fn: () => void) => (typeof window !== 'undefined' && window.requestIdleCallback ? window.requestIdleCallback(fn, { timeout: 600 }) : setTimeout(fn, 30));
     const next = () => {
       const f = steps.shift();
       if (!f) return;
-      try { f(); } catch (e) { console.warn('Audio: pass-3 synthesis step failed', e); }
+      try { f(); } catch (e) { console.warn('Audio: lazy synthesis step failed', e); }
       idle(next);
     };
     idle(next);
+    return steps;
+  }
+
+  /** A built airfield buffer (variant n, or a random one), or null while it is not synthesised yet. */
+  fieldBuffer(name: FieldName, variant = -1): AudioBuffer | null {
+    const arr = this.fieldBufs.get(name);
+    if (!arr?.length) return null;
+    return arr[variant >= 0 ? variant % arr.length : Math.floor(Math.random() * arr.length)];
+  }
+
+  // A looping buffer on a moving point (see LoopEmitter). Null without a live context or buffer, so
+  // callers simply retry on a later frame (the lazy synthesis may finish meanwhile).
+  emitter(name: FieldLoop, opts: EmitterOpts = {}): LoopEmitter | null {
+    const ctx = this.ctx, buf = this.fieldBuffer(name, opts.variant ?? -1);
+    if (!ctx || !buf || ctx.state === 'closed') return null;
+    try {
+      const e = new Emitter(ctx, buf, this.fx, this.revOutSend, { listener: this.listenerPos, interior: () => !!this.interior }, opts.reverb ?? 0.35, opts.ref ?? 30);
+      this.emitters.push(e);
+      return e;
+    } catch { return null; }
+  }
+
+  // Stop emitters nobody updates any more (a caller that forgot, or went away mid-scene)
+  private reapEmitters(t: number) {
+    if (!this.emitters.length) return;
+    for (const e of this.emitters) if (e.alive && t - e.last > 1.5) e.stop(0.3);
+    this.emitters = this.emitters.filter((e) => e.alive);
   }
 
   private toBuffer(p: PCM): AudioBuffer | null {
@@ -691,7 +806,10 @@ export class Sound {
   }
 
   // Run the whole lazy synthesis now (tests, measurements)
-  synthAll() { this.startSynth3(); const st = this.synthSteps!; while (st.length) st.shift()!(); }
+  synthAll() {
+    this.startSynth3(); this.prepareField();
+    for (const st of [this.synthSteps, this.fieldSteps]) if (st) while (st.length) st.shift()!();
+  }
 
   // Real recordings (public/audio, see CREDITS.md) replace the synthesized sounds as
   // soon as they are decoded; anything missing keeps its synthesized fallback.
@@ -815,7 +933,7 @@ export class Sound {
     try { v.src.stop(); } catch { /* */ }
     v.src.disconnect();
     v.src = this.loopSrc(buf);
-    v.src.connect(v.filter);
+    v.src.connect(v.mainGain);
   }
 
   // Satisfying feedback when the player's rounds connect / score a kill
@@ -909,20 +1027,27 @@ export class Sound {
     const whooshFilter = ctx.createBiquadFilter(); whooshFilter.type = 'bandpass'; whooshFilter.frequency.value = 800; whooshFilter.Q.value = 0.7;
     const whooshGain = ctx.createGain(); whooshGain.gain.value = 0;
     const dmg = ctx.createGain(); dmg.gain.value = 1;
-    src.connect(filter).connect(dmg).connect(gain).connect(pan);
+    const mainGain = ctx.createGain(); mainGain.gain.value = 1;
+    src.connect(mainGain).connect(filter).connect(dmg).connect(gain).connect(pan);
     whoosh.connect(whooshFilter).connect(whooshGain).connect(pan);
     // second loop (push-pull rear engine / jet whine) joins before the distance filter
     const auxGain = ctx.createGain(); auxGain.gain.value = 0; auxGain.connect(filter);
     pan.connect(this.fx);
     const send = ctx.createGain(); send.gain.value = 0.25; pan.connect(send).connect(this.revOutSend);
-    return { src, gain, filter, pan, whoosh, whooshGain, whooshFilter, owner: -1, radial: true, freeAt: 0, dmg, stage: 0, nextPop: 0, kind: 'bmw', buf: this.engineBufs.bmw, aux: null, auxGain, auxBuf: null };
+    return { src, gain, filter, pan, whoosh, whooshGain, whooshFilter, owner: -1, radial: true, freeAt: 0, dmg, stage: 0, nextPop: 0, kind: 'bmw', buf: this.engineBufs.bmw, aux: null, auxGain, auxBuf: null, mainGain };
   }
 
   // The loops an engine voice plays: [main, aux], the synthesised pass-3 loop once built, else a stand-in
-  private engineLoops(kind: EngineKind): [AudioBuffer, AudioBuffer | null] {
+  // (thr: throttle, only the B-17 voice uses it: at Reduced detail it plays one loop, idle or roar)
+  private engineLoops(kind: EngineKind, thr = 1): [AudioBuffer, AudioBuffer | null] {
     const e3 = (n: Synth3Name) => this.synth3.get(n)?.[0] ?? null;
     const aux = ENGINE_SPECS[kind].aux > 0 && this.caps.aux;
     switch (kind) {
+      case 'cyclone4': {
+        const roar = this.fieldBufs.get('eng_cycloneRoar')?.[0], idle = this.fieldBufs.get('eng_cycloneIdle')?.[0];
+        if (!roar || !idle) return [this.engineBufs.bmw, null];   // until built: the old radial voice
+        return aux ? [roar, idle] : [thr < 0.6 ? idle : roar, null];
+      }
       case 'bmw': return [this.engineBufs.bmw, null];
       case 'merlin': return [this.engineBufs.merlin, null];
       case 'jumoTwin': return [e3('eng_jumoTwin') ?? this.engineBufs.cyclone, null];
@@ -934,8 +1059,8 @@ export class Sound {
   }
 
   // Put voice v on the loops for its kind (no-op when it already plays them)
-  private seat(v: Voice) {
-    const [main, aux] = this.engineLoops(v.kind);
+  private seat(v: Voice, thr = 1) {
+    const [main, aux] = this.engineLoops(v.kind, thr);
     if (v.buf !== main) { this.reseat(v, main); v.buf = main; }
     if (v.auxBuf !== aux) {
       if (v.aux) { try { v.aux.stop(); } catch { /* */ } v.aux.disconnect(); v.aux = null; }
@@ -1141,6 +1266,7 @@ export class Sound {
   updateFighterVoices(fighters: FighterSound[]) {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
+    this.reapEmitters(t);
     const L = this.listenerPos;
     const nv = Math.min(this.voices.length, this.caps.engines);
     // (d < 4000 also drops NaN positions)
@@ -1157,8 +1283,9 @@ export class Sound {
         v.kind = kind; v.radial = kind === 'bmw';
         v.owner = f.id;
         v.dmg.gain.cancelScheduledValues(t); v.dmg.gain.setValueAtTime(1, t); v.stage = 0; v.nextPop = t;
+        v.mainGain.gain.cancelScheduledValues(t); v.mainGain.gain.setValueAtTime(1, t);
       }
-      this.seat(v);   // also swaps in a pass-3 loop the moment it is built
+      this.seat(v, fin(f.throttle, 1, [0, 2]));   // also swaps in a pass-3 loop the moment it is built
       const stage = Math.max(0, Math.min(4, Math.round(fin(f.stage ?? 0, 0, [0, 4]))));
       v.stage = stage;
       if (stage >= 2 && t >= v.nextPop) this.misfire(v, t);
@@ -1174,9 +1301,13 @@ export class Sound {
       const thr = fin(f.throttle, 1, [0, 2]);
       const base = synth ? spec.rate[0] + (spec.rate[1] - spec.rate[0]) * Math.min(1, thr) : 0.82 + thr * 0.22;
       const trim = engineRateTrim(f.type ?? '', f.type ?? '');
-      const rate = base * dop * sag * trim * (v.buf === this.engineBufs.bmw ? this.radialRate : 1);
+      let rate = base * dop * sag * trim * (v.buf === this.engineBufs.bmw ? this.radialRate : 1);
+      // the B-17 from outside: take-off roar and taxi idle cross-faded by throttle (Acoustics.cycloneMix)
+      const cy = kind === 'cyclone4' && synth ? cycloneMix(thr) : null;
+      const cyIdleMain = !!cy && v.buf === this.fieldBufs.get('eng_cycloneIdle')?.[0];
+      if (cy) rate = (cyIdleMain ? cy.idleRate : cy.roarRate) * dop * sag;
       towards(v.src.playbackRate, rate, RATE, t, 0.04);
-      const cut = synth ? spec.cutoff : 1600;
+      const cut = cy ? spec.cutoff * cy.bright : synth ? spec.cutoff : 1600;
       towards(v.filter.frequency, cut * (this.interior ? 0.4 : 1) * Math.max(0.3, Math.exp(-d / 2200)) + 160, FREQ, t, 0.05);
       place(v.pan, f.pos.x, f.pos.y, f.pos.z, t);
       // HRTF only while the fighter is close (hysteresis so it does not flip at the edge)
@@ -1184,7 +1315,13 @@ export class Sound {
       if (v.pan.panningModel !== pm) v.pan.panningModel = pm;
       // aspect: which end of the aircraft faces us
       let main = 1;
-      if (spec.aux > 0) {
+      if (cy) {
+        // Normal: roar on the main loop, idle on the second; Reduced: one loop, the one for the throttle
+        main = v.aux ? 1 : cyIdleMain ? spec.aux * Math.max(cy.idle, 0.5) : Math.max(cy.roar, 0.3);
+        towards(v.mainGain.gain, v.aux ? cy.roar : 1, GAIN, t, 0.08);
+        towards(v.auxGain.gain, v.aux ? spec.aux * cy.idle : 0, GAIN, t, 0.08);
+        if (v.aux) towards(v.aux.playbackRate, cy.idleRate * dop * sag, RATE, t, 0.04);
+      } else if (spec.aux > 0) {
         const sp = f.vel.length();
         const fw = sp > 1 ? this.tmpFwd.copy(f.vel).divideScalar(sp) : this.tmpFwd.set(0, 0, 1);
         const a = aspect(fw.x, fw.y, fw.z, toL.x, toL.y, toL.z);
@@ -1193,7 +1330,8 @@ export class Sound {
         if (v.aux) towards(v.aux.playbackRate, (kind === 'jet' ? 0.86 + 0.18 * Math.min(1, thr) : base * 1.01) * dop * sag, RATE, t, 0.04);
       }
       towards(v.gain.gain, (this.interior ? 0.5 : 0.65) * (synth ? spec.gain : this.voiceGain) * main, GAIN, t, 0.08);
-      const close = Math.max(0, 1 - d / 450);
+      // (a taxiing bomber makes no rush of air: scale it by speed)
+      const close = Math.max(0, 1 - d / 450) * (kind === 'cyclone4' ? Math.min(1, f.vel.length() / 70) : 1);
       towards(v.whooshGain.gain, close * close * 0.9, GAIN, t, 0.05);
       towards(v.whooshFilter.frequency, 500 + Math.max(0, vr) * 6, FREQ, t, 0.05);
       intensity = Math.max(intensity, Math.max(0, 1 - d / 2500));
@@ -1625,6 +1763,19 @@ export class Sound {
   // voices (with their second loops), 4 warships x drone points, a full voice budget of
   // positional one-shots (HRTF for the close ones), both convolution reverbs and the master chain.
   // Returns the render time per audio second for both detail levels (1.0 = a whole core).
+  // Airfield sounds of the bookends measured offline (swsSound.fieldCheck(), FieldCheck.ts): peak,
+  // RMS, centroid, Doppler and non-finite samples per scenario, the old and new B-17 engine voices
+  // side by side, and the belly-landing mix through the master chain.
+  async fieldCheck() {
+    if (!this.ctx) return null;
+    this.synthAll();
+    const { fieldCheck } = await import('./FieldCheck');
+    return fieldCheck({
+      radial: this.engineBufs.bmw, radialRate: this.radialRate, voiceGain: this.voiceGain, recorded: this.samplesLoaded,
+      field: (n) => this.fieldBufs.get(n) ?? [], gain: (n) => this.gainMap.get(n) ?? 1, volume: this.volume,
+    });
+  }
+
   async cpuCheck(seconds = 6) {
     if (!this.ctx) return null;
     this.synthAll();

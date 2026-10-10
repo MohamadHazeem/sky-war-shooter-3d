@@ -39,12 +39,12 @@ export function rng(seed: number): Rng {
   };
 }
 
-const TAU = Math.PI * 2;
-const lpA = (fc: number, sr: number) => 1 - Math.exp(-TAU * fc / sr);
-class LP { y = 0; constructor(public a: number) {} run(x: number) { this.y += (x - this.y) * this.a; return this.y; } }
-class HP { y = 0; x1 = 0; constructor(public a: number) {} run(x: number) { const y = this.a * (this.y + x - this.x1); this.x1 = x; this.y = y; return y; } }
+export const TAU = Math.PI * 2;
+export const lpA = (fc: number, sr: number) => 1 - Math.exp(-TAU * fc / sr);
+export class LP { y = 0; constructor(public a: number) {} run(x: number) { this.y += (x - this.y) * this.a; return this.y; } }
+export class HP { y = 0; x1 = 0; constructor(public a: number) {} run(x: number) { const y = this.a * (this.y + x - this.x1); this.x1 = x; this.y = y; return y; } }
 // RBJ band-pass, 0 dB peak
-class BP {
+export class BP {
   private x1 = 0; private x2 = 0; private y1 = 0; private y2 = 0; private b0 = 0; private a1 = 0; private a2 = 0;
   constructor(fc: number, q: number, sr: number) {
     const w = TAU * Math.min(fc, sr * 0.45) / sr, al = Math.sin(w) / (2 * q), a0 = 1 + al;
@@ -55,7 +55,7 @@ class BP {
 
 // Render `sec` seconds (stereo) and peak-normalise. loop > 0: render `loop` s extra and
 // cross-fade it into the head, so the buffer loops without a seam.
-function render(sr: number, sec: number, fn: (t: number, ch: number) => number, opts: { peak?: number; loop?: number; drive?: number; mono?: boolean } = {}): PCM {
+export function render(sr: number, sec: number, fn: (t: number, ch: number) => number, opts: { peak?: number; loop?: number; drive?: number; mono?: boolean } = {}): PCM {
   const n = Math.max(1, Math.floor(sec * sr));
   const xf = opts.loop ? Math.floor(opts.loop * sr) : 0;
   const chs = opts.mono ? 1 : 2;
@@ -82,7 +82,7 @@ function render(sr: number, sec: number, fn: (t: number, ch: number) => number, 
 }
 
 // ---------------------------------------------------------------- piston engines
-interface Piston {
+export interface Piston {
   firing: number;     // Hz (firing * loop seconds must be whole)
   blade: number;      // prop blade-pass Hz (blade * loop seconds whole)
   bladeTone: number;  // level of the prop thrum tone (carries the twin-engine beat)
@@ -91,18 +91,22 @@ interface Piston {
   bright: number;     // firing-noise low-pass (Hz)
   banks?: boolean;    // V-12: the two banks alternate in strength (half-order drone)
   pan: number;        // -1 left .. 1 right
+  decay?: number;     // firing-burst decay as a share of the pulse period (default 0.22; lower = separate chuffs)
+  pop?: number;       // share of uneven pulses: a lumpy idle (strong pops and near-misfires)
 }
 
 // One engine's sample generator for a loop of `sec` seconds
-function piston(e: Piston, sr: number, sec: number, r: Rng): (t: number, ch: number) => number {
+export function piston(e: Piston, sr: number, sec: number, r: Rng): (t: number, ch: number) => number {
   const pulses = Math.round(e.firing * sec), period = sec / pulses;
   const amps = Array.from({ length: pulses }, (_, i) => 0.75 + r() * 0.5 * e.rough + (e.banks && i % 2 ? -0.22 : 0));
+  if (e.pop) for (let i = 0; i < pulses; i++) { const u = r(); if (u < e.pop * 0.6) amps[i] *= 1.9; else if (u < e.pop) amps[i] *= 0.15; }
+  const dec = e.decay ?? 0.22;
   const st = [0, 1].map(() => ({ lp: new LP(lpA(e.bright, sr)), lp2: new LP(lpA(55, sr)), hp: new HP(0.995), sl: new HP(0.9) }));
   const bperiod = 1 / e.blade, ph = r() * TAU;
   return (t, ch) => {
     const s = st[ch];
     const k = Math.floor(t / period), tp = t - k * period;
-    const burst = Math.exp(-tp / (period * 0.22)) * amps[k % pulses];
+    const burst = Math.exp(-tp / (period * dec)) * amps[k % pulses];
     const n = r() * 2 - 1;
     const noise = s.lp.run(n) * burst * 1.4;
     const tone = (Math.sin(TAU * e.firing * t) * 0.35 + Math.sin(TAU * 2 * e.firing * t + 0.6) * 0.12) * burst * 0.8;
@@ -123,7 +127,7 @@ function engines(sr: number, sec: number, list: Piston[], seed: number): PCM {
   return render(sr, sec, (t, ch) => { let s = 0; for (const g of gens) s += g(t, ch); return s; }, { loop: 0.08 });
 }
 
-const ENGINE_SR = 24000; // engines and rumbles: nothing above ~10 kHz worth the memory
+export const ENGINE_SR = 24000; // engines and rumbles: nothing above ~10 kHz worth the memory
 
 // 2 s loops: every frequency below is a multiple of 0.5 Hz
 export const jumoTwin = (seed = 11) => engines(ENGINE_SR, 2, [
@@ -180,7 +184,7 @@ export function rocket(seed = 17): PCM {
 }
 
 // ---------------------------------------------------------------- weapons
-const FULL_SR = 48000;
+export const FULL_SR = 48000;
 
 export function bk5(seed = 21): PCM {
   const sr = ENGINE_SR, r = rng(seed);
