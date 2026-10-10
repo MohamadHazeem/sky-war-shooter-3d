@@ -14,6 +14,7 @@ import type { ParticleOpts } from '../render/Particles';
 import { sound, type FighterSound } from '../audio/Sound';
 import { voice } from '../audio/Voice';
 import { INTERPHONE_LEAD_S } from '../audio/Interphone';
+import { FieldSounds, type CrewVehicle } from '../audio/Field';
 import { dressPlayerBomber, withName } from './Customize';
 import { tx } from '../i18n';
 
@@ -108,6 +109,8 @@ const _m = new THREE.Matrix4();
 const _qt = new THREE.Quaternion();
 const _2 = new THREE.Vector2();
 const _2d = new THREE.Vector2();
+const _vp = new THREE.Vector3();
+const _vv = new THREE.Vector3();
 const R = () => Math.random() * 2 - 1;
 const smooth = (a: number, b: number, x: number) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
@@ -171,6 +174,8 @@ export class Bookends {
   private weatherSaved: Weather | null = null;
   private said = new Set<string>();
   private voices: FighterSound[] = [];
+  // airfield sounds: tyres, belly scrape, Very pistol, crash-crew bells (audio/Field.ts; silent without sound)
+  private field = new FieldSounds();
   private flares: Flare[] = [];
   private look = new THREE.Vector3();
   private lookInit = false;
@@ -210,6 +215,7 @@ export class Bookends {
   prepare(m: Mission) {
     this.auto = false;
     this.armed = this.applies(m) ? m : null;
+    if (this.armed) this.field.prepare();   // synthesise the airfield sounds behind the briefing
     if (!this.armed || this.compiled || this.building) return;
     this.building = true;
     setTimeout(() => {
@@ -314,6 +320,7 @@ export class Bookends {
 
   private startTakeoff() {
     this.ensure(!this.compiled);
+    this.field.prepare();
     const e = this.engine, w = this.game.world, base = this.base!;
     this.begin('takeoff');
     this.ui.hideAll();
@@ -383,6 +390,8 @@ export class Bookends {
       a.s = Math.min(a.s + a.v * dt, Math.max(a.s, target));
       if (a.s >= target - 0.01 && vdes < 0.05) a.v = 0;
       a.rpm = a.v > 0.3 ? 0.4 : 0.32;
+      // lined up: brakes on, the engines run up in the last seconds before she is released
+      if (a.s >= LINEUP_S - 2 && a.v < 0.3) a.rpm = 0.32 + 0.5 * smooth(a.release - 3.5, a.release - 0.3, this.st);
       a.pitch = THREE_POINT;
       if (this.st >= a.release && a.s >= LINEUP_S - 2) { a.phase = 'roll'; this.note(`${a.b.name} rolls at ${this.st.toFixed(1)}`); }
     } else if (a.phase === 'roll') {
@@ -551,6 +560,7 @@ export class Bookends {
 
   private startLanding(pb: Bomber) {
     this.ensure(!this.compiled);
+    this.field.prepare();
     const e = this.engine, w = this.game.world, base = this.base!;
     this.begin('landing');
     e.timeScale = 1;
@@ -672,7 +682,8 @@ export class Bookends {
     // engines
     this.voices.length = 0;
     const stage = pb.enginesOut >= 2 ? 3 : pb.enginesOut >= 1 ? 2 : 0;
-    if (sq.rpm > 0.05) this.voices.push({ id: 980, pos: pb.root.position, vel: pb.vel, radial: true, throttle: sq.rpm * 0.8, stage });
+    if (sq.rpm > 0.05) this.voices.push({ id: 980, pos: pb.root.position, vel: pb.vel, radial: true, throttle: sq.rpm, stage, type: 'b17' });
+    if (this.sev === 2 && sq.down) this.field.scrape(pb.root.position, pb.vel, sq.v);
     for (let i = 1; i <= 3; i++) if (this.cast[i].b.root.visible) this.engineVoice(this.cast[i], 980 + i);
   }
 
@@ -779,11 +790,7 @@ export class Bookends {
 
   private touchdown() {
     const fx = this.game.world.effects, pb = this.pb!, O = this.O;
-    if (this.sev === 2) {
-      sound.play('hitHeavy', pb.root.position, { gain: 1.2, rate: 0.55 });
-      sound.play('debris', pb.root.position, { gain: 1, rate: 0.7 });
-      return;
-    }
+    if (this.sev === 2) { this.field.touchdown(pb.root.position, true); return; }
     // a puff of tyre smoke from each main wheel
     for (const x of [3.02, -3.02]) {
       pb.root.localToWorld(_p.set(x, MAIN_CONTACT.y + 0.3, MAIN_CONTACT.z));
@@ -794,7 +801,7 @@ export class Bookends {
         fx.smoke.spawn(O);
       }
     }
-    sound.play('hitHeavy', pb.root.position, { gain: 0.5, rate: 0.7 });
+    this.field.touchdown(pb.root.position, false, this.sev === 1);
   }
 
   // Belly landing: sparks off the fuselage and nacelles, a spray of earth and dust
@@ -809,8 +816,6 @@ export class Bookends {
         _v.copy(pb.vel).multiplyScalar(0.6);
         fx.sparks(_p, _v, Math.random() < 0.15);
       }
-      if (Math.random() < 0.35) sound.play('debris', pb.root.position, { gain: 0.5 + Math.random() * 0.4, rate: 0.6 + Math.random() * 0.4 });
-      if (Math.random() < 0.15) sound.play('rattle', pb.root.position, { gain: 0.6, rate: 0.7 });
     }
     if (sq.dustT <= 0 && fx.smoke.count < 7600) {
       sq.dustT = 0.03;
@@ -859,6 +864,9 @@ export class Bookends {
         const yaw = Math.atan2(_w.x, _w.z);
         v.obj.rotation.y += wrap(yaw - v.obj.rotation.y) * Math.min(1, dt * 3);
       }
+      v.obj.getWorldPosition(_vp);
+      _vv.set(Math.sin(v.obj.rotation.y), 0, Math.cos(v.obj.rotation.y)).multiplyScalar(nv);
+      this.field.vehicle(v, v.kind as CrewVehicle, _vp, _vv, nv, dt);
       const on = Math.floor((t + i * 0.13) * 6) % 2 === 0;
       v.beacons.forEach((bm, j) => { bm.visible = j === 0 ? on : !on; });
       // dust off the grass behind them
@@ -880,11 +888,11 @@ export class Bookends {
     b.root.localToWorld(_w.set(side, 0, 0)).sub(_c.setFromMatrixPosition(b.root.matrixWorld)).normalize();
     v.addScaledVector(_w, 9);
     this.flares.push({ p: _p.clone(), v, life: 4.2, lightT: 0 });
-    sound.play('crack', _p, { gain: 0.9, rate: 1.5 });
+    this.field.flarePop(_p);
   }
 
   private updateFlares(dt: number) {
-    if (!this.flares.length) return;
+    if (!this.flares.length) { this.field.flares(this.flares); return; }
     const fx = this.game.world.effects, O = this.O;
     for (const f of this.flares) {
       f.life -= dt;
@@ -904,6 +912,7 @@ export class Bookends {
       if (f.lightT <= 0 && k > 0.2) { f.lightT = 0.12; fx.flashLight(f.p, 260 * k, 0.16, 0xff3020, 160); }
     }
     this.flares = this.flares.filter((f) => f.life > 0);
+    this.field.flares(this.flares);   // each flare's hiss rides up with it
   }
 
   // ---------------- shared ----------------
@@ -960,6 +969,7 @@ export class Bookends {
     this.flares = [];
     this.voices.length = 0;
     sound.updateFighterVoices([]);
+    this.field.stopAll(seq === 'landing' ? 0.6 : 0.3);
     if (this.weatherSaved) { applyWeather(e, this.weatherSaved); this.weatherSaved = null; }
     if (this.tgtSaved) {
       targetUniforms.uTgt.value.w = this.tgtSaved.w;
@@ -1022,7 +1032,7 @@ export class Bookends {
     if (!a.b.root.visible || a.rpm < 0.05) return;
     a.wpos.setFromMatrixPosition(a.b.root.matrixWorld);
     a.b.root.getWorldDirection(a.wvel).multiplyScalar(a.v);
-    this.voices.push({ id, pos: a.wpos, vel: a.wvel, radial: true, throttle: a.rpm, stage: 0 });
+    this.voices.push({ id, pos: a.wpos, vel: a.wvel, radial: true, throttle: a.rpm, stage: 0, type: 'b17' });
   }
 
   private say(key: RadioKey, when: boolean) {
