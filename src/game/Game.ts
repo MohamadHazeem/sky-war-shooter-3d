@@ -15,7 +15,7 @@ import { DistantBattle } from '../audio/DistantBattle';
 import { INTERPHONE_LEAD_S } from '../audio/Interphone';
 import { voice as crewVoice } from '../audio/Voice';
 import type { AttackType } from '../world/AI';
-import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
+import { applyWeather, DEFAULT_WEATHER, ROUND_WEATHER, Weather } from '../render/Weather';
 import * as Radar from '../ui/Radar';
 import { Progression } from './Upgrades';
 import * as Chatter from './RadioChatter';
@@ -177,7 +177,29 @@ export class Game {
     this.world.contrails.enabled = w.contrails !== false;
     if (key === this.weatherKey) return;
     this.weatherKey = key;
+    this.mood = w.mood ?? 'clear';
     applyWeather(this.engine, w);
+  }
+
+  // Storm rounds: lightning flashes through the cloud, thunder rolls in a moment later
+  private mood: string = 'clear';
+  private lightningT = 8;
+  private flashT = 0;
+  private storm(dt: number) {
+    if (this.mood !== 'storm' || this.menuMode) { if (this.flashT > 0) { this.flashT = 0; this.engine.post.flash = 0; } return; }
+    this.lightningT -= dt;
+    if (this.lightningT <= 0) {
+      this.lightningT = 5 + Math.random() * 9;
+      this.flashT = 0.22;
+      const dist = 800 + Math.random() * 4000;
+      setTimeout(() => sound.play('explosionFar', null, { gain: 0.9, rate: 0.45 + Math.random() * 0.15, reverb: 0.8 }), (dist / 343) * 1000);
+    }
+    if (this.flashT > 0) {
+      this.flashT -= dt;
+      // double-stroke flicker
+      const k = Math.max(0, this.flashT) / 0.22;
+      this.engine.post.flash = (k > 0.6 || (k > 0.2 && k < 0.4) ? 0.55 : 0.08) * k;
+    }
   }
 
   applySettings() {
@@ -599,6 +621,8 @@ export class Game {
 
   private startNextRound() {
     const w = this.world;
+    // survival: every round brings different weather and light
+    if (this.mission && this.mission.duration === Infinity) this.setWeather(ROUND_WEATHER[(this.roundIdx + 1) % ROUND_WEATHER.length]);
     this.roundIdx++;
     this.roundT0 = w.time;
     this.roundClear = false;
@@ -997,6 +1021,7 @@ export class Game {
     const canvas = this.engine.renderer.domElement;
     const cur = playing ? 'crosshair' : 'default';
     if (canvas.style.cursor !== cur) canvas.style.cursor = cur;
+    this.storm(dt);
     this.berserkT = Math.max(0, this.berserkT - dt);
     this.gunner.rateBoost = this.berserkT > 0 ? 1.4 : 1;
     // Brief slow-motion beat on a confirmed kill
