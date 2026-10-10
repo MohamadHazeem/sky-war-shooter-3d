@@ -19,7 +19,7 @@ import { setup as setupDamageLook, update as updateDamageLook } from './DamageLo
 import { update as updateDamageStages } from './DamageStages';
 import { Crew, STATION_CREW } from './Crew';
 
-export const ENEMY_SCALE = 3.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
+export const ENEMY_SCALE = 4.2;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 460; // ~40 hits from a .50 to wear one down
 export const ENEMY_ZONE_HP = 2.2;   // vital zones (cockpit, engine, wings) toughened to match
 const FORMATION_SPREAD = 1.8;       // spacing between B-17s, so friends never crowd the sight picture

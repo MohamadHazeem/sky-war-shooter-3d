@@ -104,10 +104,10 @@ export class Game {
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
     this.photo = new PhotoMode(engine, input, this.world);
-    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: false, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 62 });
+    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: false, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 55 });
     // settings saved before aim assist existed: switch the lead indicator on with it
     let raw = ''; try { raw = localStorage.getItem(SETTINGS_KEY) ?? ''; } catch { /* */ }
-    if (raw && !raw.includes('aimAssist')) { this.settings.aimAssist = 'high'; this.settings.leadPip = 'always'; }
+    if (raw && !raw.includes('aimAssist')) { this.settings.aimAssist = 'high'; this.settings.leadPip = 'always'; if (this.settings.fov === 62) this.settings.fov = 55; }
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
@@ -526,7 +526,7 @@ export class Game {
   // out where the player's gun is pointing, so the fighters are seen forming up and coming in.
   private predictWave(w: Wave): THREE.Vector3 {
     const arc = this.mission?.role === 'gunner' ? this.world.playerArc() : null;
-    const base = arc ? this.world.playerBomber!.pos.clone().addScaledVector(arc, 2600).add(new THREE.Vector3(R() * 300, 250 + Math.random() * 300, R() * 300)) : this.spawnPos(w.from === 'mixed' ? 'front' : w.from);
+    const base = arc ? this.world.playerBomber!.pos.clone().addScaledVector(arc, 1700).add(new THREE.Vector3(R() * 300, 250 + Math.random() * 300, R() * 300)) : this.spawnPos(w.from === 'mixed' ? 'front' : w.from);
     return base.sub(this.world.formationCenter);
   }
 

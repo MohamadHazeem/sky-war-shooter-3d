@@ -135,7 +135,7 @@ export class EnemyPilot {
       const d = _d.copy(arc).applyAxisAngle(_y, (Math.random() - 0.5) * 0.9);
       d.y += -0.12 + Math.random() * 0.4;
       d.normalize();
-      p.addScaledVector(d, (near ? 800 : 1250) + Math.random() * (near ? 200 : 350));
+      p.addScaledVector(d, (near ? 520 : 900) + Math.random() * (near ? 150 : 250));
       return;
     }
     const right = _r.set(0, 1, 0).cross(fwd).normalize().negate();
@@ -167,10 +167,10 @@ export class EnemyPilot {
     this.duelU.crossVectors(this.duelS, this.duelA).normalize();
     // start the weave where the fighter already is, turning the way it is already going
     const rel = _u.copy(this.me.pos).sub(gp);
-    this.duelPhase = Math.atan2(rel.dot(this.duelS) / 240, (rel.dot(this.duelA) - 400) / 170);
+    this.duelPhase = Math.atan2(rel.dot(this.duelS) / 200, (rel.dot(this.duelA) - 300) / 140);
     const side = _t.copy(this.me.vel).sub(this.target!.vel).dot(this.duelS);
     this.duelRate = (side >= 0 ? 1 : -1) * (0.34 + Math.random() * 0.1);
-    this.duelLen = 10 + Math.random() * 6 * this.skill;
+    this.duelLen = 14 + Math.random() * 8 * this.skill;
     // weaving spoils their aim: the duel is a fight, not an execution
     this.aimOffset.multiplyScalar(2.2);
   }
@@ -220,14 +220,14 @@ export class EnemyPilot {
         this.setupPoint.addScaledVector(w.formationForward, 75 * dt);
         steerTo(fm, _d.copy(this.setupPoint).sub(me.pos), 1.1, 0.9);
         fm.throttle = 1;
-        let ready = me.pos.distanceTo(this.setupPoint) < 450 || this.timer > 16;
+        let ready = me.pos.distanceTo(this.setupPoint) < 300 || this.timer > 12;
         // arc attacks: start the run as soon as the fighter is out in the gunner's arc
         if (this.fromArc && !ready && this.timer > 1.5) {
           const arc = w.playerArc(), gp = w.playerGunPos();
           if (arc && gp) {
             const rel = _u.copy(me.pos).sub(gp);
             const dist = rel.length();
-            if (dist > 650 && dist < 1900 && rel.normalize().angleTo(arc) < 0.6) ready = true;
+            if (dist > 480 && dist < 1600 && rel.normalize().angleTo(arc) < 0.7) ready = true;
           }
         }
         if (ready) this.beginAttack();
@@ -272,7 +272,7 @@ export class EnemyPilot {
         if (me.rockets > 0 && dist < 1250 && dist > 800 && err < 0.06) me.fireRockets = true;
         const closing = _t.copy(me.vel).sub(t.vel).dot(_r.copy(t.pos).sub(me.pos)) > 0;
         const realDist = gunPos0 ? me.pos.distanceTo(gunPos0) : dist;
-        if (gunPos0 && realDist < 560) { this.beginDuel(w, gunPos0); break; }
+        if (gunPos0 && realDist < 750) { this.beginDuel(w, gunPos0); break; }
         if (realDist < (this.fromArc ? 150 : 160) || (!closing && dist < 400) || this.timer > 22) {
           this.state = 'break'; this.timer = 0; this.attackCount++;
           me.gunAim = null;
@@ -290,7 +290,7 @@ export class EnemyPilot {
         if (!t || !t.alive || !gp || !arc || w.playerStationId() !== this.duelStation || this.timer > this.duelLen) { this.endDuel(t); break; }
         this.duelPhase += this.duelRate * dt;
         const ph = this.duelPhase;
-        const A = 240, B = 170, R0 = 400, C = 70;
+        const A = 200, B = 140, R0 = 300, C = 60;
         // target point on the weave and its velocity relative to the bomber
         const P = _p.copy(gp).addScaledVector(this.duelA, R0 + B * Math.cos(ph)).addScaledVector(this.duelS, A * Math.sin(ph)).addScaledVector(this.duelU, C * Math.sin(2 * ph));
         const dv = _c.copy(this.duelA).multiplyScalar(-B * Math.sin(ph)).addScaledVector(this.duelS, A * Math.cos(ph)).addScaledVector(this.duelU, 2 * C * Math.cos(2 * ph)).multiplyScalar(this.duelRate);
@@ -313,7 +313,7 @@ export class EnemyPilot {
       case 'break': {
         steerTo(fm, this.breakDir, 1.3, 1);
         fm.throttle = 1;
-        if (this.timer > 2.0) {
+        if (this.timer > (this.fromArc ? 1.3 : 2.0)) {
           // loop back for another pass, mostly on the same bomber
           if (!this.target || !this.target.alive || Math.random() < 0.3) this.target = this.pickTarget(w);
           if (this.target) {
