@@ -19,10 +19,40 @@ const GUNNER = (): [string, string][] => [
   [k('C'), tx('Free look (hold): look around the fuselage')],
   [k(...STATION_ORDER.map((s) => b(('seat' + STATIONS[s].key) as ActionId))), tx('Change gun position: ') + STATION_ORDER.map((s) => `${b(('seat' + STATIONS[s].key) as ActionId)} ${tx(STATIONS[s].label)}`).join(' · ')],
   [k(b('reload')), tx('Reload')],
+  [k('Q', 'E', 'G'), abilities('Q', 'E', 'G')],
   [k(b('map')), tx('Big radar map')],
   [k('F'), tx('Photo mode')],
   [k('Esc') + ' / ' + k(b('pause')), tx('Pause')],
   [k(b('help')) + ' / ' + k('F1'), tx('This card')],
+];
+// Abilities (Abilities.ts keys; the touch buttons carry the same names)
+function abilities(a: string, m: string, f: string) {
+  return tx('Abilities: {a} call the Mustangs · {b} Overdrive · {c} Focus', { a, b: m, c: f });
+}
+// The same cards with the on-screen touch controls (DeviceControls / TouchHud)
+const TOUCH_GUNNER = (): [string, string][] => [
+  [k(tx('Drag')), tx('Swing the gun')],
+  [k(tx('FIRE')), tx('Fire — short bursts keep the barrel cool')],
+  [k(tx('ZOOM')), tx('Look down the ring sight (zoom)')],
+  [k(tx('LOOK')), tx('Free look on / off: dragging looks around the fuselage')],
+  [k('1–5'), tx('Change gun position: tap a seat in the bar at the bottom')],
+  [k(tx('P-51s'), tx('OVR'), tx('FOCUS')), abilities(tx('P-51s'), tx('OVR'), tx('FOCUS'))],
+  [k(tx('MAP')), tx('Big radar map')],
+  [k('II'), tx('Pause')],
+  [k('?'), tx('This card')],
+];
+const TOUCH_PILOT = (): [string, string][] => [
+  [k(tx('Drag')), tx('Fly: a stick appears under your thumb on the left')],
+  [k(tx('FIRE')), tx('Fire')],
+  [k(tx('THR')), tx('Throttle up / down')],
+  [k(tx('ZOOM')), tx('Zoom')],
+  [k(tx('VIEW')), tx('Cockpit / chase view')],
+  [k(tx('LOOK')), tx('Free look on / off')],
+  [k(tx('ATK'), tx('COVER'), tx('BOMB'), tx('FORM')), tx('Wingman Blue Two: {a} attack my target · {b} cover me · {c} protect the bombers · {d} form up', { a: tx('ATK'), b: tx('COVER'), c: tx('BOMB'), d: tx('FORM') })],
+  [k(tx('P-51s'), tx('OVR'), tx('FOCUS')), abilities(tx('P-51s'), tx('OVR'), tx('FOCUS'))],
+  [k(tx('MAP')), tx('Big radar map')],
+  [k('II'), tx('Pause')],
+  [k('?'), tx('This card')],
 ];
 const GUNNER_TIPS = [
   'Aim at the yellow ◇ lead indicator, not the plane.',
@@ -42,6 +72,7 @@ const PILOT = (): [string, string][] => [
   [k('M'), tx('Mouse aim / direct flight controls')],
   [k('T'), tx('Padlock the nearest bandit')],
   [k(b('wing1'), b('wing2'), b('wing3'), b('wing4')), tx('Wingman Blue Two: {a} attack my target · {b} cover me · {c} protect the bombers · {d} form up', { a: b('wing1'), b: b('wing2'), c: b('wing3'), d: b('wing4') })],
+  [k('Z', 'X', 'G'), abilities('Z', 'X', 'G')],
   [k(b('map')), tx('Big radar map')],
   [k('F'), tx('Photo mode')],
   [k('Esc') + ' / ' + k(b('pause')), tx('Pause')],
@@ -66,7 +97,8 @@ export class ControlsCard {
   }
 
   show(role: Role) {
-    const rows = role === 'gunner' ? GUNNER() : PILOT();
+    const touch = document.body.classList.contains('touch');
+    const rows = role === 'gunner' ? (touch ? TOUCH_GUNNER() : GUNNER()) : touch ? TOUCH_PILOT() : PILOT();
     const tips = role === 'gunner' ? GUNNER_TIPS : PILOT_TIPS;
     this.el.innerHTML = `<div class="cc-box">
       <div class="cc-k">${tx('CONTROLS')} · ${tx(role === 'gunner' ? 'B-17 GUNNER' : 'P-51 PILOT')}</div>

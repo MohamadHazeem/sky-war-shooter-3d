@@ -64,6 +64,8 @@ const _up = new THREE.Vector3(0, 1, 0);
 const ZERO = new THREE.Vector3();
 
 const kbd = (k: string) => `<kbd>${k}</kbd>`;
+// touch controls (DeviceControls): the instructions name the on-screen buttons instead of the mouse and keys
+const onTouch = () => typeof document !== 'undefined' && document.body.classList.contains('touch');
 
 export class Tutorial {
   active = false;
@@ -198,7 +200,7 @@ export class Tutorial {
     return [
       {
         id: 'aim', title: 'Aim', timeout: 45,
-        text: () => tx('Move the {mouse} to swing the gun onto the target drone — the <b class="red">red brackets</b>.', { mouse: kbd(tx('mouse')) }),
+        text: () => tx('Move the {mouse} to swing the gun onto the target drone — the <b class="red">red brackets</b>.', { mouse: kbd(tx(onTouch() ? 'thumb' : 'mouse')) }),
         radio: ['Pilot', 'This is a training flight, gunner. Nobody shoots back today. See that target drone? Put your sight on it.'],
         enter: () => this.spawnDrone(g.gunner.station, { dist: 620, y0: 0.42, p0: 0.12, ay: 0.05, ap: 0.03, w: 0.25 }),
         check: (dt) => {
@@ -212,7 +214,7 @@ export class Tutorial {
       },
       {
         id: 'fire', title: 'Fire short bursts', timeout: 60,
-        text: () => tx('{lmb} fires. Use <b>short bursts</b> — half a second, then let go — and walk the tracers onto the drone.', { lmb: kbd(tx('Left button')) })
+        text: () => tx('{lmb} fires. Use <b>short bursts</b> — half a second, then let go — and walk the tracers onto the drone.', { lmb: kbd(tx(onTouch() ? 'FIRE' : 'Left button')) })
           + (g.gunner.state.overheated ? `<div class="warn">${tx('Barrel too hot! Wait for the heat bar to cool.')}</div>` : '')
           + `<div class="st">${tx('Hits: {n}', { n: g.world.stats.hits - this.hits0 })}</div>`,
         radio: ['Top Turret', 'Short bursts! Watch your tracers and walk them in.'],
@@ -231,7 +233,7 @@ export class Tutorial {
       },
       {
         id: 'zoom', title: 'Look down the sight', timeout: 40,
-        text: () => tx('Hold the {rmb} to bring your eye down to the ring sight: a closer, steadier view for long shots.', { rmb: kbd(tx('right button')) })
+        text: () => tx('Hold the {rmb} to bring your eye down to the ring sight: a closer, steadier view for long shots.', { rmb: kbd(tx(onTouch() ? 'ZOOM' : 'right button')) })
           + `<div class="bar"><div style="width:${Math.round(Math.min(1, this.acc / 1.2) * 100)}%"></div></div>`,
         radio: ['Pilot', 'Use the ring sight for the long ones. Hold the right button.'],
         enter: () => this.spawnDrone(g.gunner.station, { dist: 1000, y0: -0.15, p0: 0.1, ay: 0.08, ap: 0.03, w: 0.2 }),
@@ -259,8 +261,8 @@ export class Tutorial {
       {
         id: 'radar', title: 'Radar and map', timeout: 25,
         text: () => this.tabs === 0
-          ? tx('The <b>radar</b> bottom-left plots everything around the ship — <b class="red">red</b> are bandits. Press {tab} to open the big map.', { tab: kbd('Tab') })
-          : tx('The big map shows where the next group will come from, with a countdown. Press {tab} again to close it.', { tab: kbd('Tab') }),
+          ? tx('The <b>radar</b> bottom-left plots everything around the ship — <b class="red">red</b> are bandits. Press {tab} to open the big map.', { tab: kbd(onTouch() ? tx('MAP') : 'Tab') })
+          : tx('The big map shows where the next group will come from, with a countdown. Press {tab} again to close it.', { tab: kbd(onTouch() ? tx('MAP') : 'Tab') }),
         radio: ['Navigator', 'Navigator here. Watch the radar plot — and Tab gives you the big picture.'],
         enter: () => { this.tabs = 0; },
         check: () => this.tabs >= 2 || (this.tabs >= 1 && this.t > 8),

@@ -25,6 +25,7 @@ export interface PromptView {
   fill: number;          // 0..1 progress of the fix
   timeFrac: number;      // 0..1 time left before it gets worse / times out
   danger?: boolean;      // pulse red (fire spreading)
+  code?: string;         // the key it asks for ('KeyX'): touch players tap the prompt, gamepads press X
 }
 
 export interface TagView { x: number; y: number; label: string; dist: number; edge: boolean; kind: 'target' | 'friend' }
@@ -127,6 +128,7 @@ export class ObjectiveHud {
     }
     p.classList.add('show');
     p.classList.toggle('danger', !!v.danger);
+    if ((p.dataset.code ?? '') !== (v.code ?? '')) p.dataset.code = v.code ?? '';
     this.q(p, '.ev-bar i').style.width = `${Math.round(Math.min(1, Math.max(0, v.fill)) * 100)}%`;
     this.q(p, '.ev-timer i').style.width = `${(Math.min(1, Math.max(0, v.timeFrac)) * 100).toFixed(1)}%`;
   }
@@ -134,6 +136,7 @@ export class ObjectiveHud {
   hidePrompt() {
     if (!this.prompt.classList.contains('show')) return;
     this.prompt.classList.remove('show', 'danger');
+    this.prompt.dataset.code = '';
     this.promptKey = '';
   }
 

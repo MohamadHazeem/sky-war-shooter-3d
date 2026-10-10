@@ -27,7 +27,7 @@ export interface LobbyView {
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
 const CSS = `
-#coop .box { width: min(560px, 100%); padding: 28px 30px; }
+#coop .box { width: min(560px, 100%); padding: 28px 30px; max-height: 92vh; overflow: auto; }
 #coop p.note { color: var(--ink-dim); font-size: 13px; line-height: 1.5; margin: 16px 0 0; }
 #coop .err { color: #f08a6c; min-height: 20px; font-size: 14px; margin-top: 10px; }
 #coop .code { font-family: 'IBM Plex Mono', monospace; font-size: 44px; letter-spacing: 10px; color: var(--khaki); margin: 6px 0 2px; user-select: all; }

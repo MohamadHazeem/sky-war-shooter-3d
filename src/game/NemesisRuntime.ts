@@ -489,7 +489,7 @@ function ensureCss() {
   const st = document.createElement('style');
   st.id = 'nemesis-css';
   st.textContent = `
-#nemCard { position: fixed; left: 18px; top: 210px; z-index: 30; width: min(330px, calc(100vw - 36px)); display: flex; gap: 12px; padding: 10px 12px; background: rgba(12,13,9,0.86); border: 1px solid rgba(185,167,111,0.55); border-left: 4px solid var(--nc, #e8b923); color: #ece6d2; font-family: 'IBM Plex Mono', monospace; box-shadow: 0 6px 24px rgba(0,0,0,0.5); pointer-events: none; opacity: 0; transform: translateX(-24px); transition: opacity .4s, transform .4s; }
+#nemCard { position: fixed; left: 18px; top: 248px; z-index: 30; width: min(330px, calc(100vw - 36px)); display: flex; gap: 12px; padding: 10px 12px; background: rgba(12,13,9,0.86); border: 1px solid rgba(185,167,111,0.55); border-left: 4px solid var(--nc, #e8b923); color: #ece6d2; font-family: 'IBM Plex Mono', monospace; box-shadow: 0 6px 24px rgba(0,0,0,0.5); pointer-events: none; opacity: 0; transform: translateX(-24px); transition: opacity .4s, transform .4s; }
 #nemCard.show { opacity: 1; transform: none; }
 #nemCard .nc-pic { flex: none; width: 64px; height: 64px; }
 #nemCard .nc-k { font-size: 10px; letter-spacing: 2px; color: #e8b923; }
