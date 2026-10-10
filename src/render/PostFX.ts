@@ -161,6 +161,8 @@ uniform float uTime;
 uniform float uDamageFlash;
 uniform float uVignette;
 uniform float uGrain;
+uniform float uGrainDark;
+uniform float uChroma;
 uniform vec2 uRes;
 uniform float uFlash;
 uniform vec2 uSunUV;
@@ -233,6 +235,15 @@ float hash12(vec2 p) {
   return fract((p3.x + p3.y) * p3.z);
 }
 
+// Scene tap with a faint lateral chromatic split that grows toward the screen edges
+// (lens fringing). R is pushed outward and B pulled inward; the centre stays exact.
+vec3 sceneTap(vec2 uv) {
+  if (uChroma <= 0.0) return texture2D(tColor, uv).rgb;
+  vec2 q = uv - 0.5;
+  vec2 off = q * dot(q, q) * uChroma * 0.012;
+  return vec3(texture2D(tColor, uv + off).r, texture2D(tColor, uv).g, texture2D(tColor, uv - off).b);
+}
+
 void main() {
   vec3 wp; bool sky;
   float dist = viewDist(vUv, wp, sky);
@@ -250,7 +261,7 @@ void main() {
   const int MB = 10;
   for (int i = 0; i < MB; i++) {
     float t = (float(i) + noise) / float(MB) - 0.5;
-    col += texture2D(tColor, vUv - vel * t).rgb;
+    col += sceneTap(vUv - vel * t);
   }
   col /= float(MB);
 
@@ -305,7 +316,14 @@ void main() {
   // linear -> sRGB
   col = pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2));
   col += (noise - 0.5) * uGrain;
-  gl_FragColor = vec4(col, 1.0);
+  // Film grain: re-rolled at 24 fps so it reads as a moving emulsion, and weighted
+  // toward shadows the way silver halide grain shows up in dark negatives
+  float gFrame = mod(floor(uTime * 24.0), 1024.0);
+  float gNoise = hash12(gl_FragCoord.xy + vec2(gFrame * 37.0, gFrame * 17.0));
+  float gLum = dot(col, vec3(0.2126, 0.7152, 0.0722));
+  float darkW = 1.0 - smoothstep(0.05, 0.6, gLum);
+  col += (gNoise - 0.5) * uGrainDark * darkW;
+  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }
 `;
 
@@ -322,6 +340,10 @@ export class PostFX {
   dofStrength = 1.0;
   vignette = 0.9;
   grain = 0.025;
+  // Lateral chromatic aberration amount at the screen edges (0 = off)
+  chroma = 0.6;
+  // Extra film-grain amplitude in shadows (added on top of the uniform grain)
+  grainDark = 0.03;
   damageFlash = 0;
   flash = 0;
   noBlurDist = 1.5;
@@ -338,6 +360,7 @@ export class PostFX {
         uExposure: { value: 1 }, uBloomStrength: { value: 0.1 }, uMotionBlur: { value: 0.5 },
         uNearFocus: { value: 1 }, uDofStrength: { value: 1 }, uTime: { value: 0 },
         uDamageFlash: { value: 0 }, uVignette: { value: 0.9 }, uGrain: { value: 0.03 },
+        uGrainDark: { value: 0.03 }, uChroma: { value: 0.6 },
         uRes: { value: new THREE.Vector2() }, uFlash: { value: 0 }, uNoBlurDist: { value: 1.5 },
         uSunUV: { value: new THREE.Vector2() }, uSunOn: { value: 0 }, uSunCol: { value: new THREE.Vector3() },
         tCloud: { value: null }, tDirt: { value: makeDirt() }, uDirt: { value: 0.6 }, uAspect: { value: 1 },
@@ -380,6 +403,8 @@ export class PostFX {
     u.uDamageFlash.value = this.damageFlash;
     u.uVignette.value = this.vignette;
     u.uGrain.value = this.grain;
+    u.uGrainDark.value = this.grainDark;
+    u.uChroma.value = this.chroma;
     u.uFlash.value = this.flash;
     u.uNoBlurDist.value = this.noBlurDist;
     // sun position on screen for the lens flare
