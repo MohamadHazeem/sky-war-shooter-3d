@@ -134,6 +134,8 @@ export function spawnSweep(world: World, anchor: () => Aircraft | null, count: n
     f.fm.vel.copy(dir).multiplyScalar(190);
     f.vel.copy(f.fm.vel);
     f.label = 'P-51D';
+    // the called-in sweep hits harder than the regular escort (still 70% of a full P-51)
+    for (const g of f.guns) g.damage *= 2.3;
     const p = new SweepPilot(f, world, anchor, sweepTime);
     world.setPilot(f, p);
     out.push(p);
