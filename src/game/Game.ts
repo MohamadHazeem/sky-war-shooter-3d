@@ -91,7 +91,7 @@ export class Game {
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
     this.photo = new PhotoMode(engine, input, this.world);
-    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, radio: false, music: true, quality: 'high', markers: true, flightMode: 'mouseAim', difficulty: 'veteran' });
+    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: false, music: true, quality: 'high', markers: true, flightMode: 'mouseAim', difficulty: 'veteran' });
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
@@ -146,6 +146,9 @@ export class Game {
     this.input.sensitivity = s.sensitivity;
     this.input.invertY = s.invertY;
     sound.setVolume(s.volume);
+    sound.setMusicVolume(s.musicVolume);
+    sound.setSfxVolume(s.sfxVolume);
+    sound.setAmbVolume(s.ambVolume);
     sound.radioEnabled = s.radio;
     sound.setMusic(s.music);
     this.pilot.mode = s.flightMode;
