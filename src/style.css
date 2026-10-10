@@ -353,6 +353,7 @@ body.ab-overdrive #hHeatM div { width: 100% !important; background: linear-gradi
   .ab-face { width: 40px; height: 40px; }
   .ab-icon { inset: 7px; }
   .ab-ring { -webkit-mask: radial-gradient(circle, transparent 16px, #000 17px); mask: radial-gradient(circle, transparent 16px, #000 17px); }
+}
 /* ---------- Mid-round bonus objectives & random events (ui/ObjectiveCard.ts) ---------- */
 #objCard { position: absolute; left: 22px; top: 104px; width: 290px; padding: 10px 14px 12px; background: rgba(12,14,9,0.74); border: 1px solid rgba(185,167,111,0.55); border-left: 3px solid var(--khaki); opacity: 0; transform: translateX(-16px); transition: opacity .35s, transform .35s, border-color .3s; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
 #objCard.show { opacity: 1; transform: none; }
