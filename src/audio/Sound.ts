@@ -89,6 +89,8 @@ export class Sound {
   }
 
   setVolume(v: number) { this.volume = v; if (this.master) this.master.gain.value = v; }
+  // Sound-effects bus, for one-off synthesized cues that should follow the volume setting
+  sfxBus(): GainNode | null { return this.ctx ? this.sfx : null; }
   setMusic(on: boolean) { this.musicEnabled = on; this.music.enabled = on; if (!on) this.music.stop(); }
 
   // ---------------- synthesis ----------------

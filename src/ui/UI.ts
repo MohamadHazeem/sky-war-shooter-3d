@@ -1,5 +1,10 @@
 import type { Mission } from '../game/Missions';
 import { STATION_ORDER, STATIONS, StationId } from '../world/B17Layout';
+import { sound } from '../audio/Sound';
+import { playMedalFanfare } from '../audio/Fanfare';
+
+// Debrief medal timing (seconds): first badge after the result line, then one every half second
+const medalDelay = (i: number) => 0.8 + i * 0.5;
 
 export interface Settings {
   sensitivity: number;
@@ -365,7 +370,7 @@ export class UI {
         <div class="stat"><div class="hud-label">Time</div><div class="v">${mm}:${String(ss).padStart(2, '0')}</div></div>
         <div class="stat"><div class="hud-label">Score</div><div class="v">${d.score}</div></div>
       </div>
-      <div>${d.medals.map((m) => `<span class="medal">✦ ${esc(m)}</span>`).join('')}</div>
+      <div>${d.medals.map((m, i) => `<span class="medal pop" style="animation-delay:${medalDelay(i)}s">✦ ${esc(m)}</span>`).join('')}</div>
       <div class="row" style="margin-top:22px">
         ${d.nextAvailable ? '<button class="btn" data-a="next">Next mission</button>' : ''}
         <button class="btn ${d.nextAvailable ? 'ghost' : ''}" data-a="retry">${d.survival ? 'Fly again' : 'Retry'}</button>
@@ -374,6 +379,9 @@ export class UI {
     </div></div>`;
     e.querySelectorAll<HTMLButtonElement>('[data-a]').forEach((b) => b.addEventListener('click', () => (h as any)[b.dataset.a!]()));
     this.show('debrief');
+    // Each badge pops in on its staggered delay; the fanfare is scheduled on the audio clock
+    // with the same delay so sound and badge land together
+    d.medals.forEach((_, i) => playMedalFanfare(sound, medalDelay(i), i));
   }
 }
 
