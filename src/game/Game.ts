@@ -22,6 +22,7 @@ import * as Chatter from './RadioChatter';
 import { mountLeaderboard } from '../ui/LeaderboardPanel';
 import { mountCloudSave } from '../ui/CloudSavePanel';
 import { pushSave } from '../net/CloudSave';
+import { Adaptive } from './Adaptive';
 import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
 import { CombatTally } from './CombatTally';
@@ -70,6 +71,7 @@ export class Game {
   private scoreBanked = 0;     // score already paid out as merit at round ends
   private roundKills0 = 0;
   private seenTypes = new Set<string>();
+  private adaptive = new Adaptive();
   private groups = 0;
   private loadout = this.prog.loadout();
   private baseDamageScale = 1;
@@ -221,6 +223,7 @@ export class Game {
           this.combo.onKill();
           this.killsSincePerk++;
           this.killCount++;
+          this.adaptive.onKill(w.time);
           if (this.loadout.berserk) this.berserkT = 6;
           const repair = this.loadout.killRepair + (this.loadout.vampire && this.killCount % 3 === 0 ? 0.1 : 0);
           if (repair) {
@@ -415,7 +418,7 @@ export class Game {
     this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false; this.trauma = 0;
     this.incoming = null; this.incomingOff = null; this.mapOpen = false; this.mapT = 0;
     this.prog.perks = []; this.perkWave = 0; this.killsSincePerk = 0; this.spawnCd = 0; this.groups = 0;
-    this.seenTypes.clear(); this.roundIdx = 0; this.roundT0 = 0; this.roundClear = false; this.roundsComplete = false; this.scoreBanked = 0; this.roundKills0 = 0;
+    this.seenTypes.clear(); this.adaptive.reset(); this.roundIdx = 0; this.roundT0 = 0; this.roundClear = false; this.roundsComplete = false; this.scoreBanked = 0; this.roundKills0 = 0;
     this.combo.reset();
     this.tally.reset();
     achievements.beginMission(m);
@@ -530,7 +533,9 @@ export class Game {
   private director(dt: number, m: Mission, r: Round, enemies: number) {
     const w = this.world, t = w.time - this.roundT0;
     const ramp = THREE.MathUtils.clamp((t - r.start) / (r.duration * 0.6), 0, 1);
-    const target = Math.round(r.min + (r.max - r.min) * ramp);
+    // adaptive difficulty: ease off when the player is struggling, push when dominating
+    this.adaptive.update(w.time, dt, w.player ? w.player.integrity : 1);
+    const target = Math.max(1, Math.round((r.min + (r.max - r.min) * ramp) * this.adaptive.mult));
     // round over: stop sending fighters; once the sky is clear (or 30 s on) the round ends
     if (t >= r.duration) {
       this.updateIncoming(null, null);
@@ -552,7 +557,7 @@ export class Game {
     const next: Wave = {
       at: 0, count: Math.max(1, n), station,
       from: this.groups % 3 === 2 ? sides[Math.floor(Math.random() * sides.length)] : (this.mission?.role === 'gunner' ? 'mixed' : sides[this.groups % sides.length]),
-      skill: THREE.MathUtils.lerp(r.skill[0], r.skill[1], ramp), rockets: r.rockets ?? 0,
+      skill: THREE.MathUtils.lerp(r.skill[0], r.skill[1], ramp) * this.adaptive.skill, rockets: r.rockets ?? 0,
     };
     // the first group comes straight away, later ones after a short gap (shown on the radar)
     if (this.groups === 0) this.spawnCd = Math.min(this.spawnCd, r.start - t + 0.01);
