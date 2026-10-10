@@ -115,7 +115,7 @@ reduced shake/flashes, kill cam and anonymous stats.
 * **AI**:
   * Luftwaffe pilots run head-on, stern, beam and high-side attacks, each pass with its own aiming error. They drop their belly tanks, break away under the box, extend and come back. They turn to fight escorts that jump them.
   * Turrets on every bomber visibly track their crews' targets.
-* **Audio**: fully procedural Web Audio.
+* **Audio**: Web Audio with recorded samples plus synthesised engine voices per aircraft type (radials, Jumo/DB 603 twins, jet turbines, the Me 163 rocket, the warships), distance-delayed explosions and a recorded crew voice cast (800+ lines, also in Arabic subtitles).
   * Engines are synthesised from firing pulses and propeller blade-pass: four beating Wright Cyclones inside the bomber, BMW 801s on the Fw 190s, and the Merlin in the P-51.
   * HRTF positioning, Doppler fly-bys with an air rush, and convolution reverb: a metallic fuselage inside, open air outside.
   * Layered weapons and impacts, flak shrapnel rattling on the skin, and speed-of-sound delays.
@@ -187,6 +187,7 @@ Headless browser tabs don't fire `requestAnimationFrame`, so the dev build expos
   * B-17G: Emmanuel Baranger et al.
   * Fw 190 A-8: Detlef Faber.
   * P-51D: Jim Wilson, Hal V. Engel et al.
+  * Bf 109, Bf 110, Ju 88, Me 262, Me 163, He 111 and Do 335: see CREDITS.md (Emmanuel Baranger and others).
 * **Licence:** the models are GPL v2, so the whole game is distributed under the
   **GNU General Public License v2 or later** (see `LICENSE`).
 * **Visual reference:** Yarnhub. No footage or assets from the video are used.
