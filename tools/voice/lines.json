@@ -1226,6 +1226,139 @@
       "text": "That's the lot of them! They're breaking off!"
     },
     {
+      "group": "Phase 4 pilot overhaul (PilotOps / PilotRounds)"
+    },
+    {
+      "id": "pilot_1",
+      "role": "lead",
+      "text": "He's reversing — scissors! Throttle back, make him fly out in front!"
+    },
+    {
+      "id": "pilot_2",
+      "role": "lead",
+      "text": "Head-on! Hold your fire till he's close, then break high!"
+    },
+    {
+      "id": "pilot_3",
+      "role": "lead",
+      "text": "Watch it, Blue two — his wingman is sliding in behind you!"
+    },
+    {
+      "id": "pilot_4",
+      "role": "lead",
+      "text": "He's spiralling down — don't follow him into the deck!"
+    },
+    {
+      "id": "pilot_5",
+      "role": "lead",
+      "text": "Focke-Wulf's zooming up for another pass. Keep your speed!"
+    },
+    {
+      "id": "pilot_6",
+      "role": "bigfriend",
+      "text": "Thanks, little friend — he was all over us!"
+    },
+    {
+      "id": "pilot_7",
+      "role": "bigfriend",
+      "text": "We owe you one, little friend. We're going to make it!"
+    },
+    {
+      "id": "pilot_8",
+      "role": "lead",
+      "text": "Bandits twelve o'clock low, climbing for the bombers. Get between them and the big friends!"
+    },
+    {
+      "id": "pilot_9",
+      "role": "bigfriend",
+      "text": "Little friends, twin-engine bandits closing at our six — they've got rockets!"
+    },
+    {
+      "id": "pilot_10",
+      "role": "lead",
+      "text": "Another gaggle, nine o'clock level. Some of them are coming for us!"
+    },
+    {
+      "id": "pilot_11",
+      "role": "lead",
+      "text": "Heads up — 109s high at six, coming down on us! Break and engage!"
+    },
+    {
+      "id": "pilot_12",
+      "role": "bigfriend",
+      "text": "Bandits on the bombers, twelve o'clock! Little friends, where are you?"
+    },
+    {
+      "id": "pilot_13",
+      "role": "lead",
+      "text": "Focke-Wulfs diving out of the sun — don't try to out-climb them!"
+    },
+    {
+      "id": "pilot_14",
+      "role": "lead",
+      "text": "Bandits going for the cripple! Blue two, get back there and cover her!"
+    },
+    {
+      "id": "pilot_15",
+      "role": "bigfriend",
+      "text": "More of them coming in on our tail — we can't take another pass!"
+    },
+    {
+      "id": "pilot_16",
+      "role": "lead",
+      "text": "One last pass at the box, twelve o'clock. Let's finish this!"
+    },
+    {
+      "id": "pilot_17",
+      "role": "lead",
+      "text": "Big gaggle at twelve o'clock — drop tanks and go! Hit them before they reach the box!"
+    },
+    {
+      "id": "pilot_18",
+      "role": "bigfriend",
+      "text": "Zerstörers at six o'clock, with rockets! Get them off us!"
+    },
+    {
+      "id": "pilot_19",
+      "role": "lead",
+      "text": "Jets! Twelve o'clock high, fast movers — go for them when they slow down!"
+    },
+    {
+      "id": "pilot_20",
+      "role": "lead",
+      "text": "Messerschmitts, high at five o'clock! Here they come — break!"
+    },
+    {
+      "id": "pilot_21",
+      "role": "lead",
+      "text": "Jets coming through! You won't out-run them — turn inside them!"
+    },
+    {
+      "id": "pilot_22",
+      "role": "bigfriend",
+      "text": "Fighters on the bombers, twelve o'clock level!"
+    },
+    {
+      "id": "pilot_23",
+      "role": "lead",
+      "text": "They're sending another Gruppe down on us. Stay together!"
+    },
+    {
+      "id": "pilot_24",
+      "role": "lead",
+      "text": "They're on the straggler! Blue two, cover her, I'll take the box!"
+    },
+    {
+      "id": "pilot_25",
+      "role": "bigfriend",
+      "text": "Jet coming up our tail! Somebody get him off us!"
+    },
+    {
+      "id": "pilot_26",
+      "role": "lead",
+      "text": "Last push — they're throwing everything at the box!"
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {
