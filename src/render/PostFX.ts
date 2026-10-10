@@ -170,6 +170,7 @@ uniform sampler2D tCloud;
 uniform sampler2D tDirt;
 uniform float uDirt;
 uniform float uAspect;
+uniform float uShafts;
 
 float sunVisibility() {
   if (uSunOn <= 0.0) return 0.0;
@@ -233,6 +234,31 @@ float hash12(vec2 p) {
   return fract((p3.x + p3.y) * p3.z);
 }
 
+// Screen-space light shafts: march from the pixel toward the sun and accumulate sky
+// visibility (far depth x cloud transmittance), so sunlight reads through gaps between
+// clouds. Tinted by the sun colour but normalised to unit brightness, so uShafts is the
+// real strength. Static per-pixel jitter avoids temporal shimmer.
+vec3 godRays(vec2 uv) {
+  if (uSunOn <= 0.0 || uShafts <= 0.0) return vec3(0.0);
+  const int N = 24;
+  vec2 dstep = (uSunUV - uv) * (0.9 / float(N));
+  vec2 p = uv + dstep * hash12(gl_FragCoord.xy);
+  float acc = 0.0, wsum = 0.0, w = 1.0;
+  for (int i = 0; i < N; i++) {
+    vec2 s = p + dstep * float(i);
+    if (all(greaterThanEqual(s, vec2(0.0))) && all(lessThanEqual(s, vec2(1.0)))) {
+      float d = texture2D(tDepth, s).r;
+      bool isSky = uReversed > 0.5 ? d <= 0.0 : d >= 1.0;
+      if (isSky) acc += texture2D(tCloud, s).a * w;
+    }
+    wsum += w;
+    w *= 0.93;
+  }
+  vec3 tint = uSunCol / max(max(uSunCol.r, uSunCol.g), max(uSunCol.b, 1e-4));
+  float falloff = exp(-length((uv - uSunUV) * vec2(uAspect, 1.0)) * 1.5);
+  return tint * (acc / wsum) * falloff * uShafts * uSunOn;
+}
+
 void main() {
   vec3 wp; bool sky;
   float dist = viewDist(vUv, wp, sky);
@@ -280,6 +306,7 @@ void main() {
   float sv = sunVisibility();
   col += lensFlare(vUv, sv);
   col += texture2D(tDirt, vUv).rgb * uSunCol * sv * 0.05 * exp(-length((vUv - uSunUV) * vec2(uAspect, 1.0)) * 2.5);
+  col += godRays(vUv);
   col += vec3(1.0, 0.85, 0.6) * uFlash;
   col *= uExposure;
 
@@ -326,6 +353,7 @@ export class PostFX {
   flash = 0;
   noBlurDist = 1.5;
   flareStrength = 1;
+  shafts = 0.35;   // sun god-ray strength (0 disables)
   cloudTex: THREE.Texture | null = null;
   private rotOnly = new THREE.Matrix4();
 
@@ -341,6 +369,7 @@ export class PostFX {
         uRes: { value: new THREE.Vector2() }, uFlash: { value: 0 }, uNoBlurDist: { value: 1.5 },
         uSunUV: { value: new THREE.Vector2() }, uSunOn: { value: 0 }, uSunCol: { value: new THREE.Vector3() },
         tCloud: { value: null }, tDirt: { value: makeDirt() }, uDirt: { value: 0.6 }, uAspect: { value: 1 },
+        uShafts: { value: 0.35 },
       },
       vertexShader: vert,
       fragmentShader: finalFrag,
@@ -393,6 +422,7 @@ export class PostFX {
     u.uSunCol.value.set(Atmos.sunColor.r, Atmos.sunColor.g, Atmos.sunColor.b).multiplyScalar(Atmos.sunIntensity);
     u.tCloud.value = this.cloudTex;
     u.uAspect.value = camera.aspect;
+    u.uShafts.value = this.shafts;
     renderer.setRenderTarget(null);
     this.quad.render(renderer);
     this.prevViewProj.copy(curVP);
