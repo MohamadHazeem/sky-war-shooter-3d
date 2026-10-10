@@ -18,6 +18,7 @@ import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
 import * as ThreatRing from '../ui/ThreatRing';
 import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
+import { CombatTally } from './CombatTally';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -69,6 +70,7 @@ export class Game {
   private combo = new Combo();
   private lastKillAt = -99;
   private aceAwarded = false;
+  private tally = new CombatTally();
   private chatterT = 0;
   private trauma = 0;
   private popups: { pos: THREE.Vector3; text: string; life: number }[] = [];
@@ -179,6 +181,9 @@ export class Game {
             this.score += 50 * this.streak;
             this.ui.feed(`${label} — +${50 * this.streak}`, 'mine');
           }
+          // debrief record: gun position that fired (gunner) and range at the kill
+          const range = w.player ? victim.pos.distanceTo(w.player.pos) : Infinity;
+          this.tally.recordKill(this.streak, range, this.mission?.role === 'gunner' ? w.playerStation : null);
           if (w.stats.kills >= 5 && !this.aceAwarded) {
             this.aceAwarded = true;
             this.score += 500;
@@ -335,6 +340,7 @@ export class Game {
     if (diff === 'recruit') this.world.aiGunnerFactor *= 1.2;
     this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false; this.trauma = 0;
     this.combo.reset();
+    this.tally.reset();
     this.world.spawnFormation(m.bombers, 1);
     const pb = this.world.playerBomber!;
     if (m.role === 'pilot') for (const b of this.world.bombers()) for (const z of b.zones) { z.hp *= 2.2; z.maxHp *= 2.2; }
@@ -640,6 +646,9 @@ export class Game {
       success: r.success, title: m.title, reason: r.reason, kills: w.stats.kills, accuracy: acc,
       bombersLost: w.stats.bombersLost, bombersTotal: m.bombers, time: w.time, score: this.score, medals,
       survival, waves: Math.max(0, this.survivalWave - 1), nextAvailable: r.success && idx >= 0 && idx < CAMPAIGN.length - 1,
+      rounds: w.stats.shots, hits: w.stats.hits, bestStreak: this.tally.bestStreak,
+      closestKill: this.tally.closestKill === Infinity ? null : this.tally.closestKill,
+      killsByGun: m.role === 'gunner' ? this.tally.killsByGun() : undefined,
     };
     this.ui.debrief(d, {
       next: () => this.showBriefing(CAMPAIGN[idx + 1]),
