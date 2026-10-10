@@ -9,9 +9,9 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 |---|---|---|
 | 1 | Cloud quality: temporal reprojection (more detail at the same cost), sharper silver linings, cloud shadows on the cloud sea | |
 | 2 | Aircraft surfaces: procedural panel lines, rivets, weathering, oil streaks, chipped paint, roughness variation (B-17 + fighters) | |
-| 3 | Volumetric-looking explosions: raymarched or flipbook fireballs, shockwave distortion | In progress |
+| 3 | Volumetric-looking explosions: raymarched or flipbook fireballs, shockwave distortion | Done — raymarched noise fireballs (white core → orange → red → sunlit black smoke), shock shells, burning debris with smoke trails, cook-off pops, multi-stage heavy and warship blasts, lumpy flak puffs; pooled + LOD, no new shader compiles |
 | 4 | Heat haze and distortion: engine exhausts, explosions, muzzle blast (screen-space refraction) | |
-| 5 | Explosion and muzzle light on clouds and aircraft; glowing tracers lighting the scene | In progress |
+| 5 | Explosion and muzzle light on clouds and aircraft; glowing tracers lighting the scene | Done — 4 pooled combat lights (explosions, heavy-gun muzzle flashes, hits) tint nearby aircraft and the player\'s gun; fixed light count, no recompiles. Tracer glow sprites not done |
 | 6 | Night mission: moonlight, searchlights, flares, flak flashes in cloud, exhaust flames, night-fighter attacks | Partly — night mood with moonlight, searchlights, exhaust flames and night fighters (Night Fighter operation); flares and flak flashes in cloud not done |
 | 7 | Living interior: the other waist gunner and crew visible and animated, spent brass piles, breath fog at altitude | In progress |
 | 8 | Canopy/turret glass effects: frost, rain streaks in storms, scratches catching the sun, oil smears | |
@@ -44,3 +44,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 23:30 replay theatre merged (247 tests); started cloud quality + heat haze (1, 4), aircraft surface detail (2), new FlightGear aircraft (17).
 - 23:32 co-op prototype merged (255 tests); started Arabic for the new screens (19).
 - 23:48 wingman + role reversal merged (Arabic added; wingman is Blue Four in escort missions to avoid the clash with the player's own Blue Two callsign); started P-51 ground attack (18).
+- 23:53 volumetric explosions + combat light merged. Known: the first Bf 109 / Fw 190 wing-off or blow-up kill still compiles 1–3 shader variants (clip-plane count); warm-up fixes tried and reverted.
