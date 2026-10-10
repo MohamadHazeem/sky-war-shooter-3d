@@ -12,6 +12,7 @@ import { briefingMapSvg } from './BriefingMap';
 import { campaignSize, decorateBriefing } from './BriefingExtras';
 import { mountAccessibilityPanel } from './AccessibilityPanel';
 import { mountHangarExtras } from './CrateUI';
+import { foldHangar } from './HangarFold';
 import { bomberName, withName } from '../game/Customize';
 import { mountCrewRoster } from './CrewPanel';
 import { mountCloudSave } from './CloudSavePanel';
@@ -566,6 +567,7 @@ export class UI {
       }));
       el.querySelector('[data-go]')!.addEventListener('click', launch);
       mountHangarExtras(el, prog, role, render);
+      foldHangar(el);   // phones: collapsible sections (HangarFold.ts)
     };
     const key = (e: KeyboardEvent) => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); launch(); } };
     const launch = () => { removeEventListener('keydown', key, true); el.classList.remove('show'); onLaunch(); };

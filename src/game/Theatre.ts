@@ -14,7 +14,8 @@ import {
   MAX_ENT, GUN_SLOTS, F_ALIVE, F_FIRE, stageOf, EV_KILL, EV_EXPLOSION, EV_FLAK, MK_KILL,
 } from './Recorder';
 import { tx } from '../i18n';
-import { TheatreScreen, SPEEDS, type CamMode, type PhotoSettings, type TheatreControl, type TimelineMark, type AircraftItem, type MomentItem } from '../ui/TheatreScreen';
+import { TheatreScreen, SPEEDS, MODE_ORDER, type CamMode, type PhotoSettings, type TheatreControl, type TimelineMark, type AircraftItem, type MomentItem } from '../ui/TheatreScreen';
+import type { TheatreAxes, TheatrePad } from '../core/Gamepad';
 
 // Replay theatre (Phase 5 goal 16).
 //
@@ -109,7 +110,7 @@ export class MomentStore {
 
 // ---------------- theatre ----------------
 
-export class Theatre implements TheatreControl {
+export class Theatre implements TheatreControl, TheatrePad {
   readonly rec = new Recorder();
   readonly store = new MomentStore();
   private screen = new TheatreScreen();
@@ -158,6 +159,15 @@ export class Theatre implements TheatreControl {
   private dir = { kind: Shot.Chase, subject: -1, start: -1, end: -1, side: 1, seq: 0, anchor: new THREE.Vector3(), cam: new THREE.Vector3(), look: new THREE.Vector3(), cut: true };
   private keys = new Set<string>();
   private drag: { id: number; x: number; y: number } | null = null;
+  // touch: every finger down on the canvas; two of them pinch (orbit distance, else the FOV)
+  private fingers = new Map<number, { x: number; y: number }>();
+  private pinchD = 0;
+  private touchAction = '';
+  // free camera movement from the gamepad (this frame) and the on-screen move pad (held):
+  // x strafe right, y up, z forward, each -1..1
+  private padMove = new THREE.Vector3();
+  private padFast = false;
+  private touchMove = new THREE.Vector3();
   private titleT = 0;
   private busy = false;
 
@@ -339,6 +349,10 @@ export class Theatre implements TheatreControl {
     this.pov = null;
     this.gAcc.fill(0);
     this.keys.clear();
+    this.fingers.clear();
+    this.drag = null;
+    this.padMove.set(0, 0, 0);
+    this.touchMove.set(0, 0, 0);
     this.active = true;
     addEventListener('keydown', this.onKey, true);
     addEventListener('keyup', this.onKeyUp, true);
@@ -347,7 +361,10 @@ export class Theatre implements TheatreControl {
     cv.addEventListener('pointerdown', this.onDown);
     addEventListener('pointermove', this.onMove);
     addEventListener('pointerup', this.onUp);
+    addEventListener('pointercancel', this.onUp);
     cv.addEventListener('wheel', this.onWheel, { passive: false });
+    this.touchAction = cv.style.touchAction;
+    cv.style.touchAction = 'none';   // one finger orbits / looks, two pinch: no page gestures
     this.input.endFrame();
     this.apply(0);
     this.screen.show(this);
@@ -365,8 +382,12 @@ export class Theatre implements TheatreControl {
     cv.removeEventListener('pointerdown', this.onDown);
     removeEventListener('pointermove', this.onMove);
     removeEventListener('pointerup', this.onUp);
+    removeEventListener('pointercancel', this.onUp);
     cv.removeEventListener('wheel', this.onWheel);
     cv.style.cursor = '';
+    cv.style.touchAction = this.touchAction;
+    this.fingers.clear();
+    this.drag = null;
     this.setPov(false);
     this.reveal.restore();
     for (const px of this.proxies) {
@@ -478,6 +499,48 @@ export class Theatre implements TheatreControl {
     const i = list.findIndex((a) => a.id === this.orbitId);
     this.setOrbit(list[(i + dir + list.length) % list.length].id);
   }
+  /** Next camera mode (gamepad Y, the phone layout's mode button). */
+  cycleMode() { this.setMode(MODE_ORDER[(MODE_ORDER.indexOf(this.mode) + 1) % MODE_ORDER.length]); }
+  speedStep(dir: number) { this.speed = SPEEDS[THREE.MathUtils.clamp(SPEEDS.indexOf(this.speed) + dir, 0, SPEEDS.length - 1)]; }
+  /** The on-screen move pad of the free camera (touch): strafe, up, forward, each -1..1. */
+  setMove(x: number, y: number, z: number) { this.touchMove.set(x, y, z); }
+
+  // ---------------- gamepad (core/Gamepad.ts, through DeviceControls) ----------------
+
+  get freeMode() { return this.mode === 'free'; }
+  toggleUi() { this.screen.toggleHidden(); }
+  back() { if (this.screen.hidden) this.screen.toggleHidden(); else this.close(); }
+  /** Sticks and triggers, every frame while the pad is connected (before onFrame). */
+  padAxes(a: TheatreAxes, real: number) {
+    if (!this.active) return;
+    if (a.scrub) this.seek(this.t + a.scrub * 8 * real);   // up to 8 s of replay per second
+    const moving = a.lx || a.ly || a.rx || a.ry || a.rise;
+    // like a mouse drag, a stick takes over from the player / director camera as an orbit
+    if (moving && this.mode !== 'free' && this.mode !== 'orbit') this.setMode('orbit');
+    const inv = this.input.invertY ? -1 : 1;
+    if (this.mode === 'free') {
+      this.free.yaw -= a.rx * 2.4 * real;
+      this.free.pitch = THREE.MathUtils.clamp(this.free.pitch - a.ry * inv * 1.8 * real, -1.55, 1.55);
+      this.padMove.set(a.lx, a.rise, -a.ly);
+      this.padFast = a.fast;
+    } else if (this.mode === 'orbit') {
+      // left stick (and the right stick's X) orbit; the right stick's Y moves in and out
+      this.orbit.yaw -= (a.lx + a.rx) * 2.2 * real;
+      this.orbit.pitch = THREE.MathUtils.clamp(this.orbit.pitch - a.ly * inv * 1.6 * real, -1.4, 1.4);
+      if (a.ry && this.orbit.dist > 0) this.orbit.dist = THREE.MathUtils.clamp(this.orbit.dist * Math.exp(a.ry * 1.6 * real), 4, 3000);
+    }
+  }
+
+  /** Pinch / zoom: k > 1 widens (orbit: further out; other cameras: a wider lens). */
+  private zoomBy(k: number) {
+    if (this.mode === 'orbit') {
+      if (this.orbit.dist > 0) this.orbit.dist = THREE.MathUtils.clamp(this.orbit.dist * k, 4, 3000);
+      return;
+    }
+    const fov = THREE.MathUtils.clamp((this.photo.fov || this.camFov) * k, 12, 100);
+    this.setPhoto({ fov });
+    this.screen.syncPhoto();
+  }
   setPhoto(p: Partial<PhotoSettings>) { Object.assign(this.photo, p); }
 
   async screenshot(): Promise<string> {
@@ -578,6 +641,8 @@ export class Theatre implements TheatreControl {
     this.ui.ctx.clearRect(0, 0, innerWidth, innerHeight);
     this.screen.update(real);
     this.input.endFrame();
+    this.padMove.set(0, 0, 0);   // the gamepad sets it again before the next frame
+    this.padFast = false;
   };
 
   /** Poses the proxies for this.t and replays what happened since the previous frame. */
@@ -752,12 +817,14 @@ export class Theatre implements TheatreControl {
     cam.quaternion.setFromEuler(_e.set(f.pitch, f.yaw, 0, 'YXZ'));
     _a.set(0, 0, -1).applyQuaternion(cam.quaternion);
     _b.set(1, 0, 0).applyQuaternion(cam.quaternion);
-    const ax = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0);
-    const az = (k.has('KeyW') ? 1 : 0) - (k.has('KeyS') ? 1 : 0);
-    const ay = (k.has('KeyE') ? 1 : 0) - (k.has('KeyQ') ? 1 : 0);
+    // keyboard + gamepad + the touch move pad
+    const pm = this.padMove, tm = this.touchMove;
+    const ax = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0) + pm.x + tm.x;
+    const az = (k.has('KeyW') ? 1 : 0) - (k.has('KeyS') ? 1 : 0) + pm.z + tm.z;
+    const ay = (k.has('KeyE') ? 1 : 0) - (k.has('KeyQ') ? 1 : 0) + pm.y + tm.y;
     _v.set(0, 0, 0).addScaledVector(_a, az).addScaledVector(_b, ax).addScaledVector(UP, ay);
     if (_v.lengthSq() > 1) _v.normalize();
-    const fast = k.has('ShiftLeft') || k.has('ShiftRight');
+    const fast = k.has('ShiftLeft') || k.has('ShiftRight') || this.padFast;
     _v.multiplyScalar(FREE_SPEED * f.mul * (fast ? 5 : 1));
     f.vel.lerp(_v, 1 - Math.exp(-real * 8));
     f.pos.addScaledVector(f.vel, real);
@@ -919,10 +986,24 @@ export class Theatre implements TheatreControl {
     if (this.keys.delete(e.code)) { e.preventDefault(); e.stopPropagation(); }
   };
 
-  private onBlur = () => { this.keys.clear(); this.drag = null; };
+  private onBlur = () => { this.keys.clear(); this.drag = null; this.fingers.clear(); };
+
+  private fingerSpan() {
+    const [p, q] = [...this.fingers.values()];
+    return p && q ? Math.hypot(p.x - q.x, p.y - q.y) : 0;
+  }
 
   private onDown = (e: PointerEvent) => {
     if (!this.active || (e.button !== 0 && e.button !== 2)) return;
+    if (e.pointerType === 'touch') {
+      this.fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (this.fingers.size >= 2) {
+        // a second finger: pinch instead of drag
+        this.drag = null;
+        this.pinchD = this.fingerSpan();
+        return;
+      }
+    }
     if (this.mode !== 'free' && this.mode !== 'orbit') {
       // dragging the view takes over from the player/director camera as an orbit
       this.setMode('orbit');
@@ -932,11 +1013,22 @@ export class Theatre implements TheatreControl {
   };
 
   private onMove = (e: PointerEvent) => {
+    if (!this.active) return;
+    const f = this.fingers.get(e.pointerId);
+    if (f) {
+      f.x = e.clientX; f.y = e.clientY;
+      if (this.fingers.size >= 2) {
+        const span = this.fingerSpan();
+        if (this.pinchD > 8 && span > 8) this.zoomBy(this.pinchD / span);   // fingers apart = closer
+        this.pinchD = span;
+        return;
+      }
+    }
     const d = this.drag;
-    if (!this.active || !d || e.pointerId !== d.id) return;
+    if (!d || e.pointerId !== d.id) return;
     const dx = e.clientX - d.x, dy = e.clientY - d.y;
     d.x = e.clientX; d.y = e.clientY;
-    const k = 0.005;
+    const k = e.pointerType === 'touch' ? 0.007 : 0.005;
     if (this.mode === 'free') {
       this.free.yaw -= dx * k * 0.8;
       this.free.pitch = THREE.MathUtils.clamp(this.free.pitch - dy * k * 0.8, -1.55, 1.55);
@@ -947,6 +1039,12 @@ export class Theatre implements TheatreControl {
   };
 
   private onUp = (e: PointerEvent) => {
+    if (this.fingers.delete(e.pointerId) && this.fingers.size === 1 && this.active) {
+      // the pinch ends with one finger still down: it drags on from where it is
+      const [[id, p]] = [...this.fingers];
+      this.drag = { id, x: p.x, y: p.y };
+      return;
+    }
     if (this.drag && e.pointerId === this.drag.id) { this.drag = null; this.engine.renderer.domElement.style.cursor = ''; }
   };
 

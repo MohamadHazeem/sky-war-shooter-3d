@@ -72,6 +72,13 @@ const table: PhraseTable = {
     'Step forward one frame (→)': 'إطار واحد إلى الأمام (→)',
     'Next moment (.)': 'اللقطة التالية (.)',
     'H — SHOW INTERFACE': 'H — إظهار الواجهة',
+    // phone / touch layout
+    'TAP HERE TO SHOW THE INTERFACE': 'المس هنا لإظهار الواجهة',
+    'Drag to orbit or look around · pinch with two fingers to zoom · Free camera: the move pad bottom left, ▲ ▼ up / down':
+      'اسحب للدوران حول الطائرة أو للنظر حولك · قرّب بإصبعين أو باعد بينهما للتكبير · الكاميرا الحرّة: لوحة الحركة أسفل اليسار، ▲ ▼ صعود / هبوط',
+    'Move the free camera': 'تحريك الكاميرا الحرّة',
+    'Camera up': 'رفع الكاميرا',
+    'Camera down': 'خفض الكاميرا',
     'auto': 'تلقائي',
     'off': 'معطّلة',
     '{n} m': '{n} م',
