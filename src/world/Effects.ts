@@ -288,7 +288,7 @@ export class Effects {
     this.emit(this.glow, pos, vel, 0.16, r * 1.8, r * 3.2, C_HALO, undefined, 0.7, 0, 1, 0, 0, false, 0);
     if (glowSprite) this.emit(this.glow, pos, vel, 0.75, r * 6, r * 9, C_CLOUDGLOW, undefined, 0.8, 0, 1, 0, 0, false, 0);
     this.flashLight(pos, light, 0.5, 0xff8a3a, range);
-    cloudLights.flash(pos, 1.0, 0.48, 0.18, 3, 260 + r * 22, 0.7);   // the cloud around it glows (night)
+    cloudLights.flash(pos, 1.0, 0.48, 0.18, 3, 120 + r * 10, 0.7);   // the cloud around it glows (night)
     this.fireball(pos, vel, r);
     for (let i = 0; i < lobes; i++) {
       _d.set(R(), R() * 0.7, R()).normalize();
@@ -354,7 +354,7 @@ export class Effects {
 
   // Far away: a flash, a fireball sprite and a smoke puff are all that read at this range
   private farBlast(pos: THREE.Vector3, vel: THREE.Vector3, k: number) {
-    cloudLights.flash(pos, 1.0, 0.48, 0.18, 2.6, 260 + k * 90, 0.6);
+    cloudLights.flash(pos, 1.0, 0.48, 0.18, 2.6, 120 + k * 40, 0.6);
     this.emit(this.glow, pos, vel, 0.12, 8 * k, 16 * k, C_FLASH, undefined, 1, 0, 1, 0, 0, false, 0);
     this.emit(this.glow, pos, vel, 0.8, 9 * k, 15 * k, C_FLAME0, C_FLAME1, 0.95, 0, 2, 0, 0, false, 0.6);
     for (let i = 0; i < 3; i++) {
@@ -410,7 +410,7 @@ export class Effects {
 
   private flakBurst(pos: THREE.Vector3, scale: number, core: boolean) {
     // a brief orange glow inside the cloud it bursts in or near (CloudLights; dark skies only)
-    cloudLights.flash(pos, 1.0, 0.55, 0.22, 2.5 * scale, 340 * scale, 0.35);
+    cloudLights.flash(pos, 1.0, 0.55, 0.22, 3 * scale, 150 * scale, 0.35);
     if (!this.volumetric || this.vol.camDist(pos) > VOL_FAR) { this.legacyFlakBurst(pos, scale, core); return; }
     this.flashLight(pos, 2600 * scale, 0.16, 0xffaa66, 110);
     if (core) this.glow.spawn({ pos, life: 0.1, size0: 5, size1: 11, color0: [40, 22, 8], alpha0: 1, alpha1: 0, frame: 1 });
@@ -536,7 +536,7 @@ export class Effects {
     }
     this.vol.update(dt);
     this.flares.update(dt, this.vol.hasCam ? this.vol.camPos : null);
-    weatherNow.muzzle *= Math.exp(-dt * 22);
+    weatherNow.muzzle = weatherNow.muzzle > 1e-3 ? weatherNow.muzzle * Math.exp(-dt * 22) : 0;
     if (this.steadyFrames > 0 && --this.steadyFrames === 0) this.lights[LIGHTS - 1].light.intensity = 0;
     for (const s of this.lights) {
       if (s.life <= 0) continue;

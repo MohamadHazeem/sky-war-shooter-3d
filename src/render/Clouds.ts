@@ -85,7 +85,7 @@ uniform vec4 uGlow;  // fire / flash light from the target on the deck: x, z (lo
 uniform float uHaze; // distance-haze scale (Atmos.haze)
 // point lights inside the cloud (CloudLights.ts): flak and explosions at night, flares, lightning
 uniform int uPLn;
-uniform vec4 uPL[${CLOUD_LIGHTS}];   // xyz scene position, w radius (m)
+uniform vec4 uPL[${CLOUD_LIGHTS}];   // xyz scene position, w radius (m): full strength inside, 1/d^2 beyond
 uniform vec3 uPLc[${CLOUD_LIGHTS}];  // colour * intensity
 varying vec2 vUv;
 
@@ -214,7 +214,8 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
         if (li >= uPLn) break;
         vec3 dl = p - uPL[li].xyz;
         float q = dot(dl, dl) / (uPL[li].w * uPL[li].w);
-        if (q < 9.0) amb += uPLc[li] * (1.0 - q * 0.1111) / (1.0 + q * 2.0);
+        // inverse-square beyond the radius, faded out by 8 radii
+        if (q < 64.0) amb += uPLc[li] * (1.0 - q * 0.015625) / (1.0 + q);
       }
       vec3 S = (sun + amb) * dens * sigma;
       float sE = max(dens * sigma, 1e-6);

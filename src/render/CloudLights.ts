@@ -66,7 +66,7 @@ export const cloudLights = {
       const kk = k * k * (s.dark ? dk : 1);
       if (kk > 0.002) {
         const d = s.pos.distanceTo(cam);
-        const w = s.i * kk / (1 + (d * d) / ((s.radius + 1500) * (s.radius + 1500)));
+        const w = s.i * kk / (1 + (d * d) / ((s.radius * 8 + 800) * (s.radius * 8 + 800)));
         // insertion into the top CLOUD_LIGHTS by weight
         let at = nPick;
         while (at > 0 && pickW[at - 1] < w) at--;

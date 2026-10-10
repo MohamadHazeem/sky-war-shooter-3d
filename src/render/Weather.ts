@@ -47,11 +47,15 @@ export const FRONT_SKY: Record<WeatherFront['to'], { low: number; high: number; 
 const FRONT_DURATION = 45;
 const WALL_LEAD = 95;              // s the storm wall is in sight before the front arrives
 const WALL_FAR = 46000, WALL_NEAR = 4500, WALL_GONE = 1500;   // m
-const ENV_EVERY = 3;               // s between environment-map rebuilds while the sky turns
+// The reflection map (PMREM, ~10 ms) is not rebuilt while the sky turns: the cloud-sea floor
+// dominates it and changes little between moods, and environmentIntensity / the hemisphere light
+// follow per frame. It is rebuilt at the next pause (hangar break, pause menu), where a hitch is unseen.
 
 // ---------------- the sky for a weather: one flat state that can be blended ----------------
-const SUN = 0, SUN_I = 3, ZEN = 4, HOR = 7, GND = 10, AMB = 13, ENV_FLOOR = 14, ENV_I = 15, LOW = 16, HIGH = 17, HAZE = 18, NIGHT = 19, DARK = 20;
-const N = 21;
+const SUN = 0, SUN_I = 3, ZEN = 4, HOR = 7, GND = 10, AMB = 13, ENV_FLOOR = 14, ENV_I = 15, LOW = 16, HIGH = 17, HAZE = 18, NIGHT = 19, DARK = 20, EXPO = 21, LIFT = 22;
+const N = 23;
+const BASE_EXPOSURE = 1.06;                                      // PostFX.baseExposure by day
+const BASE_LIFT = new THREE.Vector3(0.016, 0.014, 0.011);        // PostFX.grade.lift by day
 type Sky = Float64Array;
 
 function skyFor(w: Weather, o: Sky): Sky {
@@ -67,17 +71,20 @@ function skyFor(w: Weather, o: Sky): Sky {
   o[AMB] = L(0.5, 0.6, k);
   o[ENV_FLOOR] = 1; o[ENV_I] = 0.75;
   o[LOW] = w.low; o[HIGH] = w.high;
-  o[HAZE] = 1; o[NIGHT] = 0; o[DARK] = 0;
+  o[HAZE] = 1; o[NIGHT] = 0; o[DARK] = 0; o[EXPO] = 1; o[LIFT] = 1;
   if (w.mood === 'night') {
     // moonlight (the "sun" is the moon): a faint cold key light, a near-black sky with a deep
     // blue glow on the horizon, dark ground and barely any fill. Exhaust flames, searchlights
     // and flares carry the scene (Searchlights.ts, NightExhaust.ts, Flares.ts).
     set3(SUN, 0.62, 0.72, 1.0);
-    o[SUN_I] = 0.3;
-    set3(ZEN, 0.0035, 0.005, 0.014);
-    set3(HOR, 0.022, 0.03, 0.055);
-    set3(GND, 0.008, 0.01, 0.014);
-    o[AMB] = 0.06;
+    o[SUN_I] = 0.26;
+    set3(ZEN, 0.0018, 0.0026, 0.0075);
+    set3(HOR, 0.012, 0.016, 0.03);
+    set3(GND, 0.005, 0.006, 0.009);
+    o[AMB] = 0.045;
+    // a night should read as night: the grade's print-film black lift and a little exposure come
+    // off, so the flames, flares, beams and tracers carry the frame against a near-black sky
+    o[EXPO] = 0.82; o[LIFT] = 0.25;
     o[ENV_FLOOR] = 0.02;   // no sunlit cloud sea to light the aircraft from below
     o[ENV_I] = 0.25;
     o[NIGHT] = 1; o[DARK] = 1;
@@ -124,6 +131,8 @@ function pushSky(engine: Engine, s: Sky) {
   weatherNow.night = s[NIGHT];
   weatherNow.dark = s[DARK];
   engine.scene.environmentIntensity = s[ENV_I];
+  engine.post.baseExposure = BASE_EXPOSURE * s[EXPO];
+  engine.post.grade.lift.copy(BASE_LIFT).multiplyScalar(s[LIFT]);
   engine.sun.color.copy(Atmos.sunColor);
   syncAtmosUniforms();
   syncAircraftLook(engine.hemi);
@@ -136,7 +145,7 @@ const front = {
   base: null as Weather | null,   // the weather it started from (re-armed on a mission restart)
   t: 0,
   k: -1,                          // last blend applied (-1: not started)
-  envT: 0,
+  envDirty: false,
   rearm: false,
   told: 0,                        // events reported (bit 1: wall sighted, 2: arriving, 4: done)
   wallDir: new THREE.Vector2(),
@@ -148,7 +157,12 @@ const front = {
 let wall: StormWall | null = null;
 
 export function applyWeather(engine: Engine, w: Weather) {
-  if (!wall) { wall = new StormWall(); engine.scene.add(wall.mesh); }
+  if (!wall) {
+    wall = new StormWall();
+    engine.scene.add(wall.mesh);
+    // the reflection map catches up with a front at the next pause (keeps the temporal history)
+    engine.add({ update: () => { if (front.envDirty && engine.paused) { front.envDirty = false; engine.refreshLighting(false); } } });
+  }
   const mood = w.mood ?? 'clear';
   weatherNow.mood = weatherNow.from = weatherNow.to = mood;
   weatherNow.k = 0;
@@ -163,7 +177,7 @@ export function applyWeather(engine: Engine, w: Weather) {
   const f = w.front ?? (ROUND_WEATHER.includes(w) ? survivalFront(w, Math.random) : null);
   front.def = f;
   front.base = w;
-  front.t = 0; front.k = -1; front.envT = 0; front.rearm = false; front.told = 0;
+  front.t = 0; front.k = -1; front.envDirty = false; front.rearm = false; front.told = 0;
   front.wallSet = false; front.flashT = 0; front.lightningT = 4; front.lightK = 1;
   wall.uniforms.uFade.value = 0;
   if (f) skyFor(frontTarget(w, f), skyB);
@@ -243,9 +257,7 @@ export function updateWeather(engine: Engine, dt: number, forward: THREE.Vector3
     weatherNow.to = f.to;
     weatherNow.k = k;
     weatherNow.mood = k < 0.5 ? weatherNow.from : f.to;
-    // the reflections follow every few seconds, keeping the temporal history (no pop)
-    front.envT -= dt;
-    if (front.envT <= 0 || k >= 1) { front.envT = ENV_EVERY; engine.refreshLighting(false); }
+    front.envDirty = true;
     if (front.k < 0) ev = storm ? FRONT_EVENT.arriving : f.to === 'clear' ? FRONT_EVENT.clearing : ev || FRONT_EVENT.arriving;
     front.k = k;
     if (k >= 1) {
@@ -293,7 +305,7 @@ export function stormStrike(engine: Engine) {
   const a = Math.random() * Math.PI * 2, r = 1500 + Math.random() * 4500;
   _p.x += Math.cos(a) * r; _p.z += Math.sin(a) * r;
   _p.y = Math.random() < 0.6 ? THREE.MathUtils.lerp(Atmos.lowBase, Atmos.lowTop, 0.3 + Math.random() * 0.5) : THREE.MathUtils.lerp(Atmos.highBase, Atmos.highTop, 0.4);
-  cloudLights.flash(_p, 0.75, 0.82, 1.0, 3, 2600, 0.3, false);
+  cloudLights.flash(_p, 0.75, 0.82, 1.0, 3, 1300, 0.3, false);
 }
 
 // The front in force right now (dev / tests): progress 0..1 of the change, or -1 before it, null if none

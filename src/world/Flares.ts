@@ -107,7 +107,7 @@ export class Flares {
         emit(this.glow, _p, _v, 5, 3, 16, _s, _s1, 0.45, 0, 0, 0.2, 0.2);
       }
       // the cloud below and around glows with it
-      cloudLights.hold(f.key, f.pos, f.color[0], f.color[1], f.color[2], 1.8 * b, 1700);
+      cloudLights.hold(f.key, f.pos, f.color[0], f.color[1], f.color[2], 2.0 * b, 420);
     }
     this.nearest = best;
     // aircraft under the flares: the nearest one takes the pool's steady light
