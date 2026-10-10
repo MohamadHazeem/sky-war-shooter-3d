@@ -23,6 +23,7 @@ import { setup as setupDamageLook, update as updateDamageLook } from './DamageLo
 import { update as updateDamageStages, stageOf, damageStage } from './DamageStages';
 import { Crew, STATION_CREW } from './Crew';
 import { prewarmBoss } from './BossShip';
+import { warmGlassFx } from '../game/GlassFx';
 import { bomberName, dressPlayerBomber } from '../game/Customize';
 import { aiGunnerSkill } from '../game/CrewRoster';
 import { warmLivingInterior } from '../game/LivingInterior';
@@ -260,9 +261,11 @@ export class World implements WorldView {
     const unwarmBoss = prewarmBoss(this.scene, camera.position, fwd);
     const unwarm = this.bomberDamage.warmup(this.scene, at);
     const unwarmCrew = warmLivingInterior(this.scene, at); // gunner interior: crew, brass, shafts, frost, breath
+    const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     render();
     unwarm();
     unwarmCrew();
+    unwarmGlass();
     unwarmBoss();
     for (const f of dummies) this.scene.remove(f.root);
     this.wrecks.clear();

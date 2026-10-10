@@ -13,9 +13,13 @@ export interface Weather {
   mood?: 'clear' | 'overcast' | 'storm' | 'dusk' | 'night';   // grey overcast, dark storm with lightning, red dusk, moonlit night
 }
 
+// The mood currently applied (glass rain / glints read it: game/GlassFx.ts)
+export const weatherNow: { mood: NonNullable<Weather['mood']> } = { mood: 'clear' };
+
 export const DEFAULT_WEATHER: Weather = { sunEl: 52, sunAz: 205, low: 0.7, high: 0.55, contrails: true };
 
 export function applyWeather(engine: Engine, w: Weather) {
+  weatherNow.mood = w.mood ?? 'clear';
   Atmos.sunElevationDeg = w.sunEl;
   Atmos.sunAzimuthDeg = w.sunAz;
   Atmos.lowCoverage = w.low;

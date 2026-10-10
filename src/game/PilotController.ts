@@ -10,6 +10,7 @@ import { markOwned } from '../render/Dispose';
 import { sound } from '../audio/Sound';
 import { KeyAim, KEY_AIM_RATE } from './KeyAim';
 import { PilotFX } from './PilotFX';
+import { PilotGlass } from './GlassFx';
 
 const G = 9.81;
 const UP = new THREE.Vector3(0, 1, 0);
@@ -63,6 +64,7 @@ export class PilotController {
   private sightTarget: Fighter | null = null;
   private keyAim = new KeyAim();
   readonly fx: PilotFX;
+  readonly glassFx: PilotGlass;   // rain, sun glints, oil and cracks on the canopy (GlassFx.ts)
   // padlock (T): the camera tracks a bandit while the mouse keeps flying the aircraft
   padlock: Fighter | null = null;
   private padW = 0;
@@ -81,6 +83,7 @@ export class PilotController {
 
   constructor(private engine: Engine, private world: World, private input: Input) {
     this.fx = new PilotFX(world);
+    this.glassFx = new PilotGlass(engine, world);
   }
 
   attach(plane: Fighter) {
@@ -102,6 +105,7 @@ export class PilotController {
     this.glass = this.makeGlass();
     plane.model.add(this.glass);
     this.fx.attach(plane);
+    this.glassFx.attach(plane);
     this.applyViewVisibility();
   }
 
@@ -110,6 +114,7 @@ export class PilotController {
     if (this.glass) this.glass.removeFromParent();
     this.cockpit = this.glass = null;
     this.fx.detach();
+    this.glassFx.detach();
     this.plane = null;
     this.padlock = null;
   }
@@ -297,6 +302,7 @@ export class PilotController {
     this.updateCamera(dt);
     this.updateGunsight(dt);
     this.fx.update(dt, this.view, this.engine.camera.position);
+    this.glassFx.update(dt, this.view === 'cockpit', this.gunsight.x, this.gunsight.y, this.input.mouse(2));
     this.glassMat?.emissive.setRGB(this.sightLit ? 0.06 : 0, this.sightLit ? 0.028 : 0, this.sightLit ? 0.006 : 0);
     this.tracerStream(p);
   }

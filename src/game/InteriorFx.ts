@@ -109,7 +109,7 @@ const _n = new THREE.Vector3();
 
 // ---------------- window frost ----------------
 let frostTex: THREE.CanvasTexture | null = null;
-function frostTexture(): THREE.CanvasTexture {
+export function frostTexture(): THREE.CanvasTexture {
   if (frostTex) return frostTex;
   const S = 256;
   const c = document.createElement('canvas');

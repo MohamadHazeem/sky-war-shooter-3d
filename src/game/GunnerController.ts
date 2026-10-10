@@ -15,6 +15,7 @@ import { KeyAim, KEY_AIM_RATE } from './KeyAim';
 import { access } from '../core/Accessibility';
 import { crewSeatLoadout } from './CrewRoster';
 import { LivingInterior } from './LivingInterior';
+import { GunnerGlass } from './GlassFx';
 
 interface StationState {
   def: StationDef;
@@ -58,6 +59,7 @@ export class GunnerController {
   private crewLight = new THREE.PointLight(0xffb060, 0, 5, 2);   // the other waist gunner's muzzle flash
   // living interior: the other waist gunner, crew glimpses, brass pile, shafts, frost, breath
   private living: LivingInterior;
+  readonly glassFx: GunnerGlass;   // rain, glints, oil, frost and cracks on the turret / tail glass (GlassFx.ts)
   cold = 0.5;      // 0..1 how cold the mission is (frost on the windows; set by Game per mission)
   // free look (hold C): the head turns away from the gun to look around the compartment
   look = 0;
@@ -124,6 +126,7 @@ export class GunnerController {
     this.crewLight.userData.noRebase = true;
     engine.scene.add(this.crewLight);
     this.living = new LivingInterior(world, this.crewLight);
+    this.glassFx = new GunnerGlass(engine, world);
 
   }
 
@@ -164,6 +167,7 @@ export class GunnerController {
     sightGun.group.position.set(0, 0.12, 0.25);
     this.interiors.tail.add(sightGun.group);
     this.guns.tail = tg;
+    this.glassFx.attach(bomber, { top: top.group, ball: ball.group, tail });
     this.living.build(bomber, this.waistInterior, (wl.z + wr.z) / 2, wl.z, wr.z, this.guns.waistL[0], this.guns.waistR[0]);
     this.lookYaw = this.lookPitch = this.look = 0;
     this.setStation(station, true);
@@ -179,6 +183,7 @@ export class GunnerController {
     this.rig.children.filter((c) => c !== this.gunPivot).forEach((c) => this.rig.remove(c));
     this.muzzleLight.intensity = 0;
     this.living.detach();
+    this.glassFx.detach();
     this.burstT = 0;
     this.clatterClock = 0;
     for (const h of this.holes) h.removeFromParent();
@@ -484,6 +489,7 @@ export class GunnerController {
     this.updateCamera(adt);
     this.world.playerAimDir.copy(this.aimDirection());
     this.updateLiving(dt);
+    this.glassFx.update(dt, this.station, this.adsK, this.cold);
   }
 
   // Living interior: crew, brass, sun shafts, frost and the gunner's own breath
