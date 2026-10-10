@@ -6,7 +6,7 @@ import { EscortPilot, leadPoint, steerTo, type WorldView } from '../world/AI';
 import type { FlightParams } from '../world/FlightModel';
 import type { UI } from '../ui/UI';
 import type { PilotController } from './PilotController';
-import { tx } from '../i18n';
+import { tx, isAr, CANVAS_MONO } from '../i18n';
 
 // "Blue Two": the player's wingman in every P-51 mission, a friendly Mustang flown by AI that
 // takes orders from his leader (the player):
@@ -389,29 +389,39 @@ export class Wingman {
     if (!this.active) return;
     const f = this.plane;
     ctx.save();
-    ctx.font = '600 11px "IBM Plex Mono", monospace';
+    // Arabic: the Arabic canvas font a size up, the panel widened to fit and its contents
+    // right-aligned (the bar on the right, read first); English is drawn exactly as before
+    const rtl = isAr();
+    ctx.font = rtl ? `600 12px ${CANVAS_MONO}` : '600 11px "IBM Plex Mono", monospace';
     const x = 16, y = H * 0.5 + 40;
     const alive = !!f?.alive;
     const hp = alive ? Math.round(f!.integrity * 100) : 0;
+    const head = `${tx(this.callsign).toUpperCase()} · ${tx(alive ? WING_LABEL[this.cmd] : 'DOWN')}`;
+    const keys = tx('1 ATK  2 COVER  3 BOMBERS  4 FORM');
+    const sub = alive ? tx(`${hp}%  ·  ${this.kills} kill${this.kills === 1 ? '' : 's'}`) : tx(`replacement next round · ${this.kills} kills`);
+    const pw = rtl ? Math.max(210, 12 + Math.max(ctx.measureText(head).width, ctx.measureText(keys).width, ctx.measureText(sub).width + (alive ? 98 : 0))) : 210;
+    const xr = x - 6 + pw - 6;   // right edge of the text (Arabic)
     ctx.fillStyle = 'rgba(10,12,8,0.45)';
-    ctx.fillRect(x - 6, y - 14, 210, 46);
-    ctx.textAlign = 'left';
+    ctx.fillRect(x - 6, y - 14, pw, rtl ? 50 : 46);
+    ctx.textAlign = rtl ? 'right' : 'left';
+    const tx0 = rtl ? xr : x;
     ctx.fillStyle = this.flash > 0 ? `rgba(255,230,140,${0.6 + 0.4 * Math.sin(this.flash * 12)})` : 'rgba(233,226,207,0.92)';
-    ctx.fillText(`${tx(this.callsign).toUpperCase()} · ${alive ? WING_LABEL[this.cmd] : 'DOWN'}`, x, y);
+    ctx.fillText(head, tx0, y);
     if (alive) {
       // health bar
+      const bx = rtl ? xr - 90 : x;
       ctx.fillStyle = 'rgba(233,226,207,0.25)';
-      ctx.fillRect(x, y + 8, 90, 5);
+      ctx.fillRect(bx, y + 8, 90, 5);
       ctx.fillStyle = hp > 60 ? 'rgba(140,220,120,0.9)' : hp > 30 ? 'rgba(240,200,90,0.9)' : 'rgba(240,90,70,0.95)';
-      ctx.fillRect(x, y + 8, 90 * hp / 100, 5);
+      ctx.fillRect(rtl ? xr - 90 * hp / 100 : x, y + 8, 90 * hp / 100, 5);
       ctx.fillStyle = 'rgba(233,226,207,0.85)';
-      ctx.fillText(`${hp}%  ·  ${this.kills} kill${this.kills === 1 ? '' : 's'}`, x + 98, y + 14);
+      ctx.fillText(sub, rtl ? xr - 98 : x + 98, y + 14);
     } else {
       ctx.fillStyle = 'rgba(240,120,90,0.9)';
-      ctx.fillText(`replacement next round · ${this.kills} kills`, x, y + 14);
+      ctx.fillText(sub, tx0, y + 14);
     }
     ctx.fillStyle = 'rgba(233,226,207,0.5)';
-    ctx.fillText('1 ATK  2 COVER  3 BOMBERS  4 FORM', x, y + 27);
+    ctx.fillText(keys, tx0, y + (rtl ? 29 : 27));
     // tag on the aircraft
     if (alive) {
       const s = _p.copy(f!.pos).project(cam);

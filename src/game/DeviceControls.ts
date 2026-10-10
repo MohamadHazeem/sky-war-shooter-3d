@@ -52,7 +52,7 @@ export class DeviceControls {
     this.wingRow = document.createElement('div');
     this.wingRow.className = 'th-wing';
     this.wingRow.innerHTML = [['Digit1', 'ATK'], ['Digit2', 'COVER'], ['Digit3', 'BOMB'], ['Digit4', 'FORM']]
-      .map(([code, label]) => `<button data-code="${code}" aria-label="Wingman: ${label}">${label}</button>`).join('');
+      .map(([code, label]) => `<button data-code="${code}" aria-label="${tx('Wingman: {order}', { order: tx(label) })}">${tx(label)}</button>`).join('');
     this.touch.el.appendChild(this.wingRow);
     this.toastEl = document.createElement('div');
     this.toastEl.id = 'devToast';

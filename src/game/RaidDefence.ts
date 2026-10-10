@@ -11,6 +11,7 @@ import type { UI } from '../ui/UI';
 import type { Incoming } from '../ui/Radar';
 import type { Mission } from './Missions';
 import { registerMode, type ModeDef } from './Modes';
+import { tx, isAr, CANVAS_MONO } from '../i18n';
 
 // Role reversal: the P-51 defends an Allied airfield against a German raid (Phase 5 goal 11).
 //  * "Defend the Field" (day): Ju 88s (and a Bf 110 or two) fly a straight course for the field
@@ -651,7 +652,7 @@ export class RaidDefence {
     if (!def) return;
     const pf = w.playerFighter;
     ctx.save();
-    ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
+    ctx.font = isAr() ? `600 12px ${CANVAS_MONO}` : '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
     // the field
     const fp = local(this.anchorAbs, _p).project(cam);
     if (fp.z < 1) {
@@ -659,7 +660,7 @@ export class RaidDefence {
       ctx.strokeStyle = 'rgba(140,210,255,0.85)'; ctx.fillStyle = 'rgba(140,210,255,0.9)'; ctx.lineWidth = 1.6;
       ctx.beginPath(); ctx.moveTo(x, y - 9); ctx.lineTo(x + 9, y); ctx.lineTo(x, y + 9); ctx.lineTo(x - 9, y); ctx.closePath(); ctx.stroke();
       const dist = pf ? Math.hypot(pf.pos.x - (this.anchorAbs.x - Atmos.originOffset.x), pf.pos.z - (this.anchorAbs.z - Atmos.originOffset.z)) : 0;
-      ctx.fillText(`AIRFIELD ${(dist / 1000).toFixed(1)} km`, x, y + 22);
+      ctx.fillText(tx(`AIRFIELD ${(dist / 1000).toFixed(1)} km`), x, y + 22);
     }
     // the raiders: day, always; night, only when coned or close
     const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 170);
@@ -674,7 +675,7 @@ export class RaidDefence {
       const near = r.p.toGo() < 2000;
       ctx.fillStyle = near ? `rgba(255,80,60,${pulse})` : coned ? 'rgba(220,235,255,0.95)' : 'rgba(255,170,90,0.9)';
       ctx.beginPath(); ctx.moveTo(x, y - 26); ctx.lineTo(x + 6, y - 36); ctx.lineTo(x - 6, y - 36); ctx.closePath(); ctx.fill();
-      ctx.fillText(`${coned ? 'CONED · ' : ''}${(Math.max(0, r.p.toGo()) / 1000).toFixed(1)} km TO FIELD`, x, y - 42);
+      ctx.fillText(tx(`${coned ? 'CONED · ' : ''}${(Math.max(0, r.p.toGo()) / 1000).toFixed(1)} km TO FIELD`), x, y - 42);
     }
     ctx.restore();
   }

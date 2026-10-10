@@ -343,7 +343,7 @@ export class UI {
     this.setText('iAlt', String(Math.round(d.alt * 3.281 / 10) * 10));
     this.setText('iThr', `${Math.round(d.thr * 100)}%`);
     this.setText('iG', d.g.toFixed(1));
-    this.setText('iAmmo', String(d.ammo));
+    this.setText('iAmmo', Number.isFinite(d.ammo) ? String(d.ammo) : '∞');   // unlimited ammunition, as on the gunner HUD
     this.setText('iMode', tx(d.mode));
     for (const [k, v] of Object.entries(d.zones)) {
       const z = document.querySelector(`#dmg [data-z="${k}"]`) as SVGElement | null;

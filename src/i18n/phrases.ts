@@ -14,8 +14,11 @@ import campaign from './ar/campaign';
 import skills from './ar/skills';
 import battle from './ar/battle';
 import theatre from './ar/theatre';
+import coop from './ar/coop';
+import hud from './ar/hud';
+import specials from './ar/specials';
 
-const TABLES: PhraseTable[] = [missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre];
+const TABLES: PhraseTable[] = [missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, coop, hud, specials];
 
 export const PHRASES: Record<string, string> = Object.assign({}, ...TABLES.map((t) => t.phrases));
 export const PATTERNS: Pattern[] = TABLES.flatMap((t) => t.patterns ?? []);

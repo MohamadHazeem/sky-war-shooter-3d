@@ -10,6 +10,7 @@ import { markOwned } from '../render/Dispose';
 import { sound } from '../audio/Sound';
 import { KeyAim, KEY_AIM_RATE } from './KeyAim';
 import { PilotFX } from './PilotFX';
+import { tx } from '../i18n';
 
 const G = 9.81;
 const UP = new THREE.Vector3(0, 1, 0);
@@ -537,7 +538,7 @@ export class PilotController {
       ctx.save();
       ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
       ctx.fillStyle = inRange ? 'rgba(255,200,110,0.95)' : 'rgba(255,170,90,0.7)';
-      ctx.fillText(inRange ? `IN RANGE ${Math.round(range)}m` : `${Math.round(range)}m`, sx, sy + ringR + 16);
+      ctx.fillText(tx(inRange ? `IN RANGE ${Math.round(range)}m` : `${Math.round(range)}m`), sx, sy + ringR + 16);
       ctx.restore();
     }
     this.drawPadlock(ctx, W, H, toScr);
@@ -549,7 +550,7 @@ export class PilotController {
     ctx.save();
     ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
     if (!t) {
-      if (this.padNote) { ctx.fillStyle = 'rgba(255,220,150,0.8)'; ctx.fillText(this.padNote, W / 2, H * 0.62); }
+      if (this.padNote) { ctx.fillStyle = 'rgba(255,220,150,0.8)'; ctx.fillText(tx(this.padNote), W / 2, H * 0.62); }
       ctx.restore();
       return;
     }
@@ -565,8 +566,8 @@ export class PilotController {
       ctx.moveTo(s.x, s.y - r); ctx.lineTo(s.x + r, s.y); ctx.lineTo(s.x, s.y + r); ctx.lineTo(s.x - r, s.y); ctx.closePath();
       ctx.stroke();
       const closure = -_v2.copy(t.vel).sub(p.vel).dot(_v3.copy(t.pos).sub(p.pos).normalize());
-      ctx.fillText(`LOCK ${Math.round(d)}m ${closure >= 0 ? '+' : ''}${Math.round(closure * 2.237)}mph`, s.x, s.y - r - 8);
-      if (note) ctx.fillText(note, s.x, s.y + r + 26);
+      ctx.fillText(tx(`LOCK ${Math.round(d)}m ${closure >= 0 ? '+' : ''}${Math.round(closure * 2.237)}mph`), s.x, s.y - r - 8);
+      if (note) ctx.fillText(tx(note), s.x, s.y + r + 26);
     } else {
       // off screen: arrow on the edge pointing at him
       let ex = s.x - W / 2, ey = s.y - H / 2;
@@ -577,7 +578,7 @@ export class PilotController {
       ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
       ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-6, -10); ctx.lineTo(-6, 10); ctx.closePath(); ctx.fill();
       ctx.restore();
-      ctx.fillText(`LOCK ${Math.round(d)}m`, x, y + 24);
+      ctx.fillText(tx(`LOCK ${Math.round(d)}m`), x, y + 24);
     }
     ctx.restore();
   }
