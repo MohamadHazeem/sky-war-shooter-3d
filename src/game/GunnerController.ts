@@ -44,6 +44,8 @@ export class GunnerController {
   fov = 62;
   bomber: Bomber | null = null;
   private casings: { m: THREE.Mesh; v: THREE.Vector3; life: number }[] = [];
+  private burstT = 0;        // seconds the trigger has been held continuously
+  private clatterClock = 0;  // time until the next spent-brass tinkle on the floor
   private casingGeo = new THREE.CylinderGeometry(0.0105, 0.0105, 0.099, 8);
   private casingMat = new THREE.MeshStandardMaterial({ color: 0xc48a3c, roughness: 0.3, metalness: 1 });
   firing = false;
@@ -119,6 +121,8 @@ export class GunnerController {
     this.muzzleLight.intensity = 0;
     for (const c of this.casings) c.m.removeFromParent();
     this.casings = [];
+    this.burstT = 0;
+    this.clatterClock = 0;
     for (const h of this.holes) h.removeFromParent();
     this.holes = [];
     this.bomber = null;
@@ -303,6 +307,7 @@ export class GunnerController {
     if (s.overheated && s.heat < 0.45) s.overheated = false;
     const wantFire = inp.mouse(0) && this.transition <= 0 && s.reload <= 0 && !s.overheated && s.ammo > 0 && this.bomber.alive;
     this.firing = wantFire;
+    this.brassClatter(dt, wantFire);
     const guns = this.guns[this.station]!;
     const rate = def.twin ? 13 * 2 : 13;
     if (wantFire) {
@@ -377,6 +382,24 @@ export class GunnerController {
     this.bomber!.root.add(m);
     const v = new THREE.Vector3(R() * 0.4, -1.2 - Math.random(), R() * 0.4);
     this.casings.push({ m, v, life: 1.2 });
+  }
+
+  // Long bursts: spent brass rattles across the bomber floor. Tinkles come faster and
+  // louder the longer the trigger is held; random pitch and timing keep it from looping.
+  private brassClatter(dt: number, firing: boolean) {
+    if (!firing) { this.burstT = 0; this.clatterClock = 0; return; }
+    if (this.burstT === 0) this.clatterClock = 0.25; // brief lag so the first shots lead in
+    this.burstT += dt;
+    this.clatterClock -= dt;
+    if (this.clatterClock > 0) return;
+    const k = Math.min(1, this.burstT / 3); // full clatter after ~3 s of continuous fire
+    const rate = 2 + 9 * k; // tinkles per second
+    this.clatterClock = (1 / rate) * (0.6 + Math.random() * 0.8);
+    sound.play('casing', null, {
+      gain: (0.015 + 0.05 * k) * (0.7 + Math.random() * 0.6),
+      rate: 0.9 + Math.random() * 0.35,
+      reverb: 0.25,
+    });
   }
 
   private updateCasings(dt: number) {
