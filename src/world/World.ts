@@ -23,7 +23,7 @@ const R = () => Math.random() * 2 - 1;
 
 export interface WorldEvents {
   radio(speaker: string, text: string, priority?: number): void;
-  kill(victim: Aircraft, byPlayer: boolean): void;
+  kill(victim: Aircraft, byPlayer: boolean, cause?: string): void;
   bomberLost(b: Bomber): void;
   playerHit(zone: string, heavy: boolean): void;
   hitMarker(kill: boolean): void;
@@ -430,9 +430,9 @@ export class World implements WorldView {
       }
       if (a.team === 'axis') {
         if (credited) this.stats.kills++;
-        this.events.kill?.(a, credited);
+        this.events.kill?.(a, credited, cause);
       } else {
-        this.events.kill?.(a, false);
+        this.events.kill?.(a, false, cause);
       }
     } else if (a instanceof Bomber) {
       a.spin.set(R() * 0.05, R() * 0.05, (Math.random() < 0.5 ? -1 : 1) * (0.15 + Math.random() * 0.25));

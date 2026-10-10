@@ -1,4 +1,5 @@
 import type { Mission } from '../game/Missions';
+import { achievementsHtml } from '../game/Achievements';
 import { STATION_ORDER, STATIONS, StationId } from '../world/B17Layout';
 
 export interface Settings {
@@ -327,6 +328,7 @@ export class UI {
       <p>Game design, code, volumetric sky, effects and procedural audio: built with Three.js.</p>
       <p>Aircraft models from the FlightGear open-source hangar (GPL-2.0): Boeing B-17G, Focke-Wulf Fw 190 A-8 and North American P-51D. See public/models/CREDITS.md for authors.</p>
       <p>Visual reference: the B-17 waist gunner shot in Yarnhub's animated short "When a B-17 Pilot Attacked the Copilot". All characters and bomber names in this game are fictional.</p>
+      ${achievementsHtml()}
       <div class="row" style="margin-top:18px"><button class="btn ghost" data-back>Back</button></div>
     </div></div>`;
     c.querySelector('[data-back]')!.addEventListener('click', onBack);
