@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { markOwned } from '../render/Dispose';
 import { FlightParams, FW190_PARAMS } from './FlightModel';
 
 // Enemy aircraft types. Each has its own model when one is available (see Models.ts);
@@ -75,7 +76,7 @@ export function tintModel(model: THREE.Object3D, tint: THREE.Color) {
     if (!m.isMesh) return;
     const src = Array.isArray(m.material) ? m.material : [m.material];
     const copies = src.map((mat) => {
-      const c = mat.clone();
+      const c = markOwned(mat.clone());
       const std = c as THREE.MeshStandardMaterial;
       if (std.color) std.color.multiply(tint);
       return c;

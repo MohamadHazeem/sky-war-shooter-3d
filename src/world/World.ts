@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Engine } from '../core/Engine';
 import { Aircraft, Bomber, Fighter, makeGun } from './Aircraft';
 import { hasModel, ModelKind } from './Models';
+import { disposeOwned } from '../render/Dispose';
 import { Ballistics, HitEvent } from './Ballistics';
 import { Effects } from './Effects';
 import { EnemyPilot, EscortPilot, AttackType, WorldView } from './AI';
@@ -94,6 +95,7 @@ export class World implements WorldView {
   private gunners = new Map<Bomber, AIGunner[]>();
   private rockets: Rocket[] = [];
   private rocketGeo = new THREE.CylinderGeometry(0.105, 0.105, 1.0, 10).rotateX(Math.PI / 2);
+  private tubeGeo = new THREE.CylinderGeometry(0.11, 0.11, 1.3, 10).rotateX(Math.PI / 2);
   private rocketMat = new THREE.MeshStandardMaterial({ color: 0x3a3c33, roughness: 0.6, metalness: 0.4 });
   private extinguishers = new Map<string, number>(); // player engine -> bottles left
   private fireTimers = new Map<string, number>();
@@ -189,7 +191,7 @@ export class World implements WorldView {
 
   // ---------- setup ----------
   reset() {
-    for (const a of this.aircraft) this.scene.remove(a.root);
+    for (const a of this.aircraft) { this.scene.remove(a.root); disposeOwned(a.root); }
     this.aircraft = [];
     this.gunners.clear();
     this.pilots.clear();
@@ -371,7 +373,7 @@ export class World implements WorldView {
       // two underwing Wgr. 21 mortar tubes
       f.rockets = 2;
       for (const x of [1.9, -1.9]) {
-        const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1.3, 10).rotateX(Math.PI / 2), this.rocketMat);
+        const tube = new THREE.Mesh(this.tubeGeo, this.rocketMat);
         tube.position.set(x, -0.62, -0.1);
         tube.castShadow = true;
         f.model.add(tube);
@@ -644,7 +646,7 @@ export class World implements WorldView {
     this.radioChatter(dt);
 
     // cleanup
-    for (const a of this.aircraft) if (a.remove) { this.scene.remove(a.root); this.pilots.delete(a as Fighter); this.gunners.delete(a as Bomber); }
+    for (const a of this.aircraft) if (a.remove) { this.scene.remove(a.root); disposeOwned(a.root); this.pilots.delete(a as Fighter); this.gunners.delete(a as Bomber); }
     this.aircraft = this.aircraft.filter((a) => !a.remove);
   }
 

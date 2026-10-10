@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { markOwned } from '../render/Dispose';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 export type ModelKind =
@@ -145,15 +146,19 @@ function propDiscTexture() {
 
 export interface PropInfo { node: THREE.Object3D; blades: THREE.Object3D[]; disc: THREE.Mesh; base: THREE.Quaternion; }
 
+const discGeos = new Map<number, THREE.CircleGeometry>(); // one disc geometry per size, shared
+
 export function setupProps(root: THREE.Object3D, radius: number): PropInfo[] {
   const props: PropInfo[] = [];
   const nodes: THREE.Object3D[] = [];
   root.traverse((o) => { if (/^prop_\d+$/.test(o.name)) nodes.push(o); });
   nodes.sort((a, b) => a.name.localeCompare(b.name));
   for (const node of nodes) {
+    let geo = discGeos.get(radius);
+    if (!geo) discGeos.set(radius, geo = new THREE.CircleGeometry(radius, 48));
     const disc = new THREE.Mesh(
-      new THREE.CircleGeometry(radius, 48),
-      new THREE.MeshBasicMaterial({ map: propDiscTexture(), transparent: true, depthWrite: false, side: THREE.DoubleSide }),
+      geo,
+      markOwned(new THREE.MeshBasicMaterial({ map: propDiscTexture(), transparent: true, depthWrite: false, side: THREE.DoubleSide })),
     );
     disc.position.z = 0.05;
     disc.renderOrder = 5;

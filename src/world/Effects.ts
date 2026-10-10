@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { disposeOwned, markOwned } from '../render/Dispose';
 import { ParticleSystem } from '../render/Particles';
 import { chuteTexture } from '../render/ChuteTexture';
 
@@ -19,6 +20,7 @@ export class Effects {
   private chutes: Chute[] = [];
   private lights: Light[] = [];
   private lightPool: THREE.PointLight[] = [];
+  private figureGeo = new THREE.CapsuleGeometry(0.25, 1.0, 4, 8);
   private pendingFlak: PendingFlak[] = [];
   private debrisGeo = [
     new THREE.BoxGeometry(0.9, 0.05, 0.5),
@@ -249,13 +251,13 @@ export class Effects {
     const canopy = new THREE.Mesh(this.chuteGeo, this.chuteMat);
     canopy.position.y = 5.5;
     canopy.scale.setScalar(0.01);
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.25, 1.0, 4, 8), this.figureMat);
+    const body = new THREE.Mesh(this.figureGeo, this.figureMat);
     const pts: THREE.Vector3[] = [];
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
       pts.push(new THREE.Vector3(0, 0.6, 0), new THREE.Vector3(Math.cos(a) * 3.2, 5.5 + 0.9, Math.sin(a) * 3.2));
     }
-    const lines = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), this.lineMat);
+    const lines = new THREE.LineSegments(markOwned(new THREE.BufferGeometry().setFromPoints(pts)), this.lineMat);
     lines.visible = false;
     obj.add(canopy, body, lines);
     obj.position.copy(pos);
@@ -326,7 +328,7 @@ export class Effects {
         c.vel.multiplyScalar(Math.exp(-0.4 * dt));
       }
       c.obj.position.addScaledVector(c.vel, dt);
-      if (c.life <= 0) this.scene.remove(c.obj);
+      if (c.life <= 0) { this.scene.remove(c.obj); disposeOwned(c.obj); }
     }
     this.chutes = this.chutes.filter((c) => c.life > 0);
   }
@@ -334,7 +336,7 @@ export class Effects {
   clear() {
     this.smoke.clear(); this.glow.clear();
     for (const d of this.debris) this.scene.remove(d.mesh);
-    for (const c of this.chutes) this.scene.remove(c.obj);
+    for (const c of this.chutes) { this.scene.remove(c.obj); disposeOwned(c.obj); }
     this.debris = []; this.chutes = []; this.pendingPops = [];
     for (const l of this.lights) { l.light.intensity = 0; l.light.userData.free = true; }
     this.lights = [];

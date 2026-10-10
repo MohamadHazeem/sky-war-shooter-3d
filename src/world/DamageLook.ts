@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { markOwned } from '../render/Dispose';
 import type { Fighter } from './Aircraft';
 import { setup as setupStages } from './DamageStages';
 
@@ -35,7 +36,7 @@ export function setup(f: Fighter) {
     const next = src.map((mm) => {
       let c = copies.get(mm);
       if (!c) {
-        c = mm.clone();
+        c = markOwned(mm.clone());
         copies.set(mm, c);
         const col = (c as THREE.MeshStandardMaterial).color;
         const em = (c as THREE.MeshStandardMaterial).emissive;
