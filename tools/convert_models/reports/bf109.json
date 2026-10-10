@@ -1,0 +1,207 @@
+{
+ "name": "bf109",
+ "origin_fg": [
+  -1.849654523730278,
+  0.0,
+  0.06205657124519348
+ ],
+ "nodes": {
+  "prop_1": {
+   "triangles": 1440,
+   "primitives": 2,
+   "materials": [
+    "bf109g",
+    "VDM"
+   ],
+   "bbox_min": [
+    -1.3314,
+    -0.8049,
+    2.2134
+   ],
+   "bbox_max": [
+    1.3267,
+    1.5107,
+    2.7507
+   ],
+   "pivot": [
+    0.0,
+    -0.0202,
+    2.4324
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  }
+ },
+ "markers": {
+  "eye_pilot": {
+   "position": [
+    0.0,
+    0.5879,
+    -0.9997
+   ],
+   "parent": null
+  },
+  "muzzle_cowl_left": {
+   "position": [
+    0.2,
+    0.5379,
+    0.7503
+   ],
+   "parent": null
+  },
+  "muzzle_cowl_right": {
+   "position": [
+    -0.2,
+    0.5379,
+    0.7503
+   ],
+   "parent": null
+  },
+  "muzzle_hub": {
+   "position": [
+    0.0,
+    0.0079,
+    2.7503
+   ],
+   "parent": null
+  }
+ },
+ "groups": {
+  "airframe": {
+   "triangles": 10984,
+   "primitives": 3,
+   "materials": [
+    "bf109g",
+    "bf109g_2s",
+    "bf109g_2s.001"
+   ],
+   "bbox_min": [
+    -4.8992,
+    -0.6639,
+    -6.1585
+   ],
+   "bbox_max": [
+    4.8992,
+    1.567,
+    2.2134
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "glass": {
+   "triangles": 45,
+   "primitives": 1,
+   "materials": [
+    "glass_glass"
+   ],
+   "bbox_min": [
+    -0.3013,
+    0.4227,
+    -1.7736
+   ],
+   "bbox_max": [
+    0.2985,
+    0.8074,
+    -0.4058
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "interior": {
+   "triangles": 1301,
+   "primitives": 3,
+   "materials": [
+    "cockpit",
+    "interiour",
+    "cockpit_2s"
+   ],
+   "bbox_min": [
+    -0.3898,
+    -0.2661,
+    -1.4651
+   ],
+   "bbox_max": [
+    0.3898,
+    0.6211,
+    0.0357
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "pilot": {
+   "triangles": 5316,
+   "primitives": 2,
+   "materials": [
+    "pilotsuit-ger",
+    "headgear-ger"
+   ],
+   "bbox_min": [
+    -0.3353,
+    -0.4836,
+    -1.1945
+   ],
+   "bbox_max": [
+    0.3357,
+    0.6909,
+    -0.0924
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  }
+ },
+ "bbox_min": [
+  -4.8992,
+  -0.8049,
+  -6.1585
+ ],
+ "bbox_max": [
+  4.8992,
+  1.567,
+  2.7507
+ ],
+ "triangles": 19086,
+ "primitives": 11,
+ "materials": [
+  "VDM",
+  "bf109g",
+  "bf109g_2s",
+  "bf109g_2s.001",
+  "cockpit",
+  "cockpit_2s",
+  "glass_glass",
+  "headgear-ger",
+  "interiour",
+  "pilotsuit-ger"
+ ],
+ "excluded_objects": [
+  "main/tropfilter2",
+  "pdisk/fpdisk",
+  "pdisk/Prop1bend",
+  "pdisk/Prop2bend",
+  "pdisk/Prop3bend",
+  "pdisk/spdisk",
+  "cockpit/grips",
+  "cockpit/intcockpitframe_G"
+ ],
+ "file_bytes": 871484
+}

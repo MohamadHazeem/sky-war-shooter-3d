@@ -1,0 +1,29 @@
+{
+ "name": "ju88",
+ "_comment": "FlightGear model coords (x aft, y right, z up, metres) of Ju-88/Models/ju88a4.ac, which is the input (not Ju-88-A4.xml): the XML animations use the .ac frame, while its top-level <offsets> (x -7.1) would move only the main .ac. Its only sub-models are prop discs from the beaufighter package (not used). The .ac has the gear modelled down and the gear doors closed (door animations are 0 deg at position-norm 0), so the struts and wheels are dropped; the tail wheel is turned up by its retraction rotation.",
+ "submodels": {"include": ["^$"], "exclude": []},
+ "exclude_objects": ["main/(gearstrut[12]?|wheel)\\.[LR]"],
+ "texture_files": {},
+ "glass_objects": ["main/(cabin|nose)\\.001"],
+ "max_texture": 1024,
+ "rotations": [
+  {"_comment": "tail wheel retracted (gear[2] position-norm 0 -> 45 deg)",
+   "objects": ["main/tailwheel", "main/Cube"], "center": [10.76, 0.0, 0.0], "axis": [0, -1, 0], "angle": 45}
+ ],
+ "nodes": [
+  {"name": "prop_1", "objects": ["main/Prop\\.L", "main/prophub"], "axis": [[1.7, -2.79, -0.21], [0.7, -2.79, -0.21]]},
+  {"name": "prop_2", "objects": ["main/Prop\\.R", "main/prophub\\.001"], "axis": [[1.7, 2.76, -0.21], [0.7, 2.76, -0.21]]}
+ ],
+ "groups": [
+  {"name": "glass", "objects": ["main/(cabin|nose)\\.001"]}
+ ],
+ "markers": {
+  "eye_pilot": [1.9, -0.2, 0.95]
+ },
+ "origin": {"auto": {"wing": ["main/wing\\.L\\.00[12]"], "fuselage": ["main/fuselage"], "station": 0.9, "chord_frac": 0.27}},
+ "materials": {"roughness": 0.7, "metallic": 0.1},
+ "preview_shots": [
+  {"name": "tail", "eye": [18.0, -4.0, 3.0], "target": [11.0, 0, 0.0], "lens": 35},
+  {"name": "cockpit", "eye": [-2.5, -2.5, 2.2], "target": [1.5, 0, 0.6], "lens": 35}
+ ]
+}

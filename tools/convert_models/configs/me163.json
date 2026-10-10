@@ -1,0 +1,25 @@
+{
+ "name": "me163",
+ "_comment": "FlightGear model coords (x aft, y right, z up, metres) of me163/Models/me163.ac, the input (Me-163.xml only adds a Spitfire IX cockpit from another package and has no gear animations). The landing skid (Circle.009) is dropped (retracted in flight); the fixed tail wheel stays. No pilot figure in the package.",
+ "submodels": {"include": ["^$"], "exclude": []},
+ "exclude_objects": ["main/Circle\\.009"],
+ "texture_files": {},
+ "max_texture": 1024,
+ "nodes": [
+  {"_comment": "nose windmill of the electric generator; not a propulsion prop",
+   "name": "fan_1", "objects": ["main/Circle\\.006"], "axis": [[-1.9, 0.0, -0.009], [-2.9, 0.0, -0.009]]}
+ ],
+ "groups": [
+  {"name": "glass", "objects": ["main/Circle\\.004"]},
+  {"name": "interior", "objects": ["main/Circle\\.003"]}
+ ],
+ "markers": {
+  "eye_pilot": [-1.3, 0.0, 0.62],
+  "exhaust": [2.95, 0.0, -0.06]
+ },
+ "origin": {"auto": {"wing": ["main/Circle\\.00[17]"], "fuselage": ["main/Circle\\.002"], "station": 1.0, "chord_frac": 0.27}},
+ "materials": {"roughness": 0.68, "metallic": 0.1},
+ "preview_shots": [
+  {"name": "cockpit", "eye": [-3.5, -1.5, 1.5], "target": [-1.3, 0, 0.5], "lens": 35}
+ ]
+}

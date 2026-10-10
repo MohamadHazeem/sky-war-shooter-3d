@@ -1,0 +1,252 @@
+{
+ "name": "me262",
+ "origin_fg": [
+  -2.151,
+  0.0,
+  0.16
+ ],
+ "nodes": {
+  "fan_2": {
+   "triangles": 224,
+   "primitives": 1,
+   "materials": [
+    "texture"
+   ],
+   "bbox_min": [
+    -2.0417,
+    -1.0426,
+    1.6202
+   ],
+   "bbox_max": [
+    -1.6749,
+    -0.676,
+    1.6437
+   ],
+   "pivot": [
+    -1.858,
+    -0.86,
+    1.6292
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "fan_1": {
+   "triangles": 224,
+   "primitives": 1,
+   "materials": [
+    "texture_2s"
+   ],
+   "bbox_min": [
+    1.6743,
+    -1.0426,
+    1.6202
+   ],
+   "bbox_max": [
+    2.0411,
+    -0.676,
+    1.6437
+   ],
+   "pivot": [
+    1.858,
+    -0.86,
+    1.6292
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  }
+ },
+ "markers": {
+  "eye_pilot": {
+   "position": [
+    0.0,
+    0.74,
+    -0.851
+   ],
+   "parent": null
+  },
+  "muzzle_top_left": {
+   "position": [
+    0.125,
+    0.254,
+    3.223
+   ],
+   "parent": null
+  },
+  "muzzle_top_right": {
+   "position": [
+    -0.125,
+    0.254,
+    3.223
+   ],
+   "parent": null
+  },
+  "muzzle_low_left": {
+   "position": [
+    0.307,
+    0.077,
+    2.944
+   ],
+   "parent": null
+  },
+  "muzzle_low_right": {
+   "position": [
+    -0.307,
+    0.077,
+    2.944
+   ],
+   "parent": null
+  },
+  "exhaust_left": {
+   "position": [
+    1.86,
+    -0.853,
+    -2.629
+   ],
+   "parent": null
+  },
+  "exhaust_right": {
+   "position": [
+    -1.86,
+    -0.853,
+    -2.629
+   ],
+   "parent": null
+  }
+ },
+ "groups": {
+  "airframe": {
+   "triangles": 13517,
+   "primitives": 2,
+   "materials": [
+    "texture",
+    "texture_2s"
+   ],
+   "bbox_min": [
+    -5.2733,
+    -1.2337,
+    -8.1974
+   ],
+   "bbox_max": [
+    5.2733,
+    1.9425,
+    4.284
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "glass": {
+   "triangles": 258,
+   "primitives": 1,
+   "materials": [
+    "transparent_glass_2s"
+   ],
+   "bbox_min": [
+    -0.2895,
+    0.5152,
+    -2.2476
+   ],
+   "bbox_max": [
+    0.2896,
+    1.0021,
+    0.1247
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "interior": {
+   "triangles": 81,
+   "primitives": 1,
+   "materials": [
+    "colors"
+   ],
+   "bbox_min": [
+    -0.5522,
+    -0.1831,
+    -1.7634
+   ],
+   "bbox_max": [
+    0.5521,
+    0.6294,
+    0.1234
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "pilot": {
+   "triangles": 2460,
+   "primitives": 1,
+   "materials": [
+    "ww2_pilot_old"
+   ],
+   "bbox_min": [
+    -0.2579,
+    -0.0487,
+    -1.2073
+   ],
+   "bbox_max": [
+    0.2585,
+    0.883,
+    -0.1171
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  }
+ },
+ "bbox_min": [
+  -5.2733,
+  -1.2337,
+  -8.1974
+ ],
+ "bbox_max": [
+  5.2733,
+  1.9425,
+  4.284
+ ],
+ "triangles": 16764,
+ "primitives": 7,
+ "materials": [
+  "colors",
+  "texture",
+  "texture_2s",
+  "transparent_glass_2s",
+  "ww2_pilot_old"
+ ],
+ "excluded_objects": [
+  "main/axeA",
+  "main/axeB",
+  "main/axeD",
+  "main/axeDH",
+  "main/axeG",
+  "main/axeGH",
+  "main/roueA",
+  "main/roueD",
+  "main/roueG",
+  "interior/intverriere",
+  "interior/intverriere2"
+ ],
+ "file_bytes": 663304
+}

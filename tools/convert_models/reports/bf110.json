@@ -1,0 +1,317 @@
+{
+ "name": "bf110",
+ "origin_fg": [
+  -2.591,
+  0.0,
+  0.3
+ ],
+ "nodes": {
+  "prop_2": {
+   "triangles": 552,
+   "primitives": 1,
+   "materials": [
+    "test"
+   ],
+   "bbox_min": [
+    -3.2664,
+    -1.4815,
+    2.2238
+   ],
+   "bbox_max": [
+    -0.8174,
+    1.1924,
+    2.5658
+   ],
+   "pivot": [
+    -2.352,
+    -0.2142,
+    2.4023
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "prop_1": {
+   "triangles": 552,
+   "primitives": 1,
+   "materials": [
+    "test"
+   ],
+   "bbox_min": [
+    0.8174,
+    -1.4815,
+    2.2238
+   ],
+   "bbox_max": [
+    3.2664,
+    1.1924,
+    2.5658
+   ],
+   "pivot": [
+    2.352,
+    -0.2142,
+    2.4023
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "gun_rear": {
+   "triangles": 1867,
+   "primitives": 1,
+   "materials": [
+    "guns"
+   ],
+   "bbox_min": [
+    -0.0944,
+    0.5456,
+    -1.8629
+   ],
+   "bbox_max": [
+    0.094,
+    1.0113,
+    -1.2263
+   ],
+   "pivot": [
+    0.0,
+    0.6286,
+    -1.4633
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  }
+ },
+ "markers": {
+  "eye_pilot": {
+   "position": [
+    0.0,
+    0.65,
+    1.209
+   ],
+   "parent": null
+  },
+  "eye_gunner": {
+   "position": [
+    0.0,
+    0.62,
+    -0.521
+   ],
+   "parent": null
+  },
+  "muzzle_mg_top_left": {
+   "position": [
+    0.11,
+    0.231,
+    3.383
+   ],
+   "parent": null
+  },
+  "muzzle_mg_top_right": {
+   "position": [
+    -0.11,
+    0.231,
+    3.728
+   ],
+   "parent": null
+  },
+  "muzzle_mg_low_left": {
+   "position": [
+    0.216,
+    0.106,
+    3.168
+   ],
+   "parent": null
+  },
+  "muzzle_mg_low_right": {
+   "position": [
+    -0.216,
+    0.106,
+    3.248
+   ],
+   "parent": null
+  },
+  "muzzle_cannon_left": {
+   "position": [
+    0.128,
+    -0.457,
+    2.868
+   ],
+   "parent": null
+  },
+  "muzzle_cannon_right": {
+   "position": [
+    -0.128,
+    -0.457,
+    2.868
+   ],
+   "parent": null
+  },
+  "muzzle_rear": {
+   "position": [
+    0.0,
+    1.0016,
+    -1.8633
+   ],
+   "parent": "gun_rear"
+  }
+ },
+ "groups": {
+  "airframe": {
+   "triangles": 18596,
+   "primitives": 1,
+   "materials": [
+    "test"
+   ],
+   "bbox_min": [
+    -8.1706,
+    -1.2912,
+    -8.7349
+   ],
+   "bbox_max": [
+    8.1706,
+    1.7804,
+    3.7346
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "glass": {
+   "triangles": 206,
+   "primitives": 1,
+   "materials": [
+    "transparent_glass"
+   ],
+   "bbox_min": [
+    -0.3636,
+    0.4181,
+    -1.5538
+   ],
+   "bbox_max": [
+    0.3636,
+    0.9656,
+    1.9109
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "interior": {
+   "triangles": 2915,
+   "primitives": 1,
+   "materials": [
+    "interior"
+   ],
+   "bbox_min": [
+    -0.3758,
+    -0.173,
+    -1.5926
+   ],
+   "bbox_max": [
+    0.3758,
+    0.7262,
+    2.2231
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "crew": {
+   "triangles": 3854,
+   "primitives": 1,
+   "materials": [
+    "ww2_pilot_old"
+   ],
+   "bbox_min": [
+    -0.2585,
+    -0.152,
+    -1.3157
+   ],
+   "bbox_max": [
+    0.2585,
+    0.811,
+    2.0099
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  }
+ },
+ "bbox_min": [
+  -8.1706,
+  -1.4815,
+  -8.7349
+ ],
+ "bbox_max": [
+  8.1706,
+  1.7804,
+  3.7346
+ ],
+ "triangles": 28542,
+ "primitives": 7,
+ "materials": [
+  "guns",
+  "interior",
+  "test",
+  "transparent_glass",
+  "ww2_pilot_old"
+ ],
+ "excluded_objects": [
+  "main/antennesradar",
+  "main/articuleDB",
+  "main/articuleDH",
+  "main/articuleGB",
+  "main/articuleGH",
+  "main/axeD",
+  "main/axeDB",
+  "main/axeG",
+  "main/axeGB",
+  "main/propblurD",
+  "main/propblurG",
+  "main/propdiscD",
+  "main/propdiscG",
+  "main/roueD",
+  "main/roueG",
+  "interior/attaches",
+  "interior/boutons",
+  "interior/fils",
+  "interior/intporteDE",
+  "interior/intporteDI",
+  "interior/intporteGE",
+  "interior/intporteGI",
+  "interior/inttour",
+  "interior/inttourvitreC",
+  "interior/inttourvitreD",
+  "interior/inttourvitreG",
+  "interior/inttourvitres",
+  "interior/intvitreC",
+  "interior/intvitreD",
+  "interior/intvitreG",
+  "interior/intvitres",
+  "interior/plaques",
+  "interior/tuyau"
+ ],
+ "file_bytes": 964420
+}
