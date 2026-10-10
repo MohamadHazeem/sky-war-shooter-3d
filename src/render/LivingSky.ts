@@ -64,7 +64,7 @@ function bomberGeometry(): THREE.BufferGeometry {
   box(13, 0.6, 2.6, 0, 0.5, -11.5);        // tailplane
   box(0.7, 5.2, 4.2, 0, 2.8, -11);         // fin
   for (const [x] of ENGINES) cyl(0.65, 0.7, 3.4, 6, x, -0.3, 3.3);
-  const g = mergeGeometries(parts.map((p) => p.toNonIndexed()));
+  const g = mergeGeometries(parts.map((p) => (p.index ? p.toNonIndexed() : p)));
   g.computeVertexNormals();
   return g;
 }
@@ -78,7 +78,7 @@ function fighterGeometry(): THREE.BufferGeometry {
     new THREE.BoxGeometry(3.6, 0.12, 0.9).translate(0, 0.15, -5),
     new THREE.BoxGeometry(0.12, 1.4, 1.1).translate(0, 0.8, -5),
   ];
-  const g = mergeGeometries(parts.map((p) => p.toNonIndexed()));
+  const g = mergeGeometries(parts.map((p) => (p.index ? p.toNonIndexed() : p)));
   g.computeVertexNormals();
   return g;
 }

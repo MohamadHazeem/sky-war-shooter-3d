@@ -134,8 +134,11 @@ export class Abilities {
       this.lastScale = eng.timeScale;
       return;
     }
-    this.bar.show(true);
+    // Gunnery School teaches one control at a time: no ability bar or ability tip there
+    const school = !!g.mission?.tutorial;
+    this.bar.show(!school);
     this.missionT += dt;
+    if (school) this.tipShown = true;
 
     // kills recharge every ability a little
     const kills = g.world.stats.kills;
@@ -195,7 +198,9 @@ export class Abilities {
 
     if (!this.tipShown && this.missionT > 18 && g.state === 'playing') {
       this.tipShown = true;
-      const k = (i: number) => `<kbd>${this.slots[i].view.key}</kbd>`;
+      // touch controls: name the on-screen buttons (DeviceControls) rather than the keys
+      const touch = document.body.classList.contains('touch');
+      const k = (i: number) => `<kbd>${touch ? tx(['P-51s', 'OVR', 'FOCUS'][i]) : this.slots[i].view.key}</kbd>`;
       this.ui.tip(tx('Abilities: {a} call the Mustangs · {b} Overdrive · {c} Focus', { a: k(0), b: k(1), c: k(2) }), 5000);
     }
 

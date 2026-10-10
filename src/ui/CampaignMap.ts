@@ -21,6 +21,7 @@ import { isRaidId, raidEnemyType, sideRaidById, type SideRaid } from '../game/Si
 import { tx, isAr } from '../i18n';
 import { loadNemesis, mostWanted, reportLines, aceName, bounty, MOST_WANTED_MULT } from '../game/Nemesis';
 import { showNemesisScreen } from './NemesisScreen';
+import { onBackKey } from './serviceCommon';
 
 export { prepareCampaignMission, campaignMeritMult } from '../game/CampaignState';
 
@@ -126,6 +127,12 @@ html[lang=ar] .cm-nem-t { letter-spacing: 0; }
   #campaign .cm { padding: 14px 12px 22px; }
   .cm-head h2 { font-size: 26px; }
 }
+/* phone held sideways: the next operation and side raids first, the chart and gauges below */
+@media (max-height: 520px) {
+  #campaign .cm { display: flex; flex-direction: column; }
+  #campaign .cm-head { order: 0; } #campaign .cm-ops { order: 1; margin: 0 0 16px; } #campaign .cm-grid { order: 2; }
+  #campaign .cm-tl { order: 3; } #campaign .cm-foot { order: 4; }
+}
 @media (prefers-reduced-motion: reduce) { .cm-pulse, .cm-march { animation: none; } }
 /* Arabic: Arabic faces behind the typewriter / mono lettering, and the side panels, cards, bars and
    timeline read from the right (the chart itself is a map and keeps its geography) */
@@ -223,17 +230,19 @@ function chartSvg(d: CampaignData, ops: ChartOp[]): string {
     const tip = `<title>${esc(o.kind === 'story' ? tx('Mission {n}: {title}', { n: o.m.number, title: tx(o.m.title) }) : tx(o.m.title))} — ${esc(tx(o.m.target))} (${esc(tx(o.m.date))})</title>`;
     const clickable = o.state === 'done' || o.state === 'current' || o.state === 'offer';
     const attrs = clickable ? `class="cm-op" data-op="${o.key}" tabindex="0" role="button" aria-label="${esc(tx(o.m.title))}"` : '';
+    // invisible finger-sized hit area (the markers themselves are ~20 px on a phone)
+    const hit = clickable ? `<circle cx="${f1(x)}" cy="${f1(y)}" r="17" fill="transparent"/>` : '';
     if (o.kind === 'story') {
       const fill = o.state === 'done' ? INK : o.state === 'current' ? ROUTE : PAPER;
       const txt = o.state === 'locked' ? GRID : PAPER;
-      marks.push(`<g ${attrs} opacity="${o.state === 'locked' ? 0.6 : 1}">${tip}
+      marks.push(`<g ${attrs} opacity="${o.state === 'locked' ? 0.6 : 1}">${tip}${hit}
         ${o.state === 'current' ? `<circle cx="${f1(x)}" cy="${f1(y)}" r="11" fill="none" stroke="${ROUTE}" stroke-width="2" class="cm-pulse"/>` : ''}
         <circle class="cm-ring" cx="${f1(x)}" cy="${f1(y)}" r="10" fill="${fill}" stroke="${o.state === 'locked' ? GRID : INK}" stroke-width="1.4"/>
         <text x="${f1(x)}" y="${f1(y + 3.8)}" text-anchor="middle" font-size="10.5" font-weight="700" font-family="'IBM Plex Mono', monospace" fill="${txt}">${o.m.number}</text></g>`);
       if (o.state === 'current') marks.push(label(x + 14, y - 12, esc(tx('{place} · NEXT', { place: tx(p.key.toUpperCase()) })), 'start', 12, ROUTE));
     } else {
       const fill = o.state === 'flown' ? (o.success ? RAID : '#777') : PAPER;
-      marks.push(`<g ${attrs}>${tip}
+      marks.push(`<g ${attrs}>${tip}${hit}
         <rect class="cm-ring" x="${f1(x - 8)}" y="${f1(y - 8)}" width="16" height="16" transform="rotate(45 ${f1(x)} ${f1(y)})" fill="${fill}" stroke="${RAID}" stroke-width="1.6"/>
         <text x="${f1(x)}" y="${f1(y + 4)}" text-anchor="middle" font-size="10.5" font-weight="700" font-family="'IBM Plex Mono', monospace" fill="${o.state === 'flown' ? PAPER : RAID}">${o.letter ?? '•'}</text></g>`);
       if (o.state === 'offer') marks.push(label(x + 13, y + 16, esc(tx(p.key)), 'start', 10.5, RAID));
@@ -374,7 +383,10 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
   for (const o of ops) if (o.state === 'done' || o.state === 'current' || o.state === 'offer') pickable.set(o.key, o.m);
 
   const next = d.complete ? null : CAMPAIGN[cur];
-  if (!selected || !pickable.has(selected)) selected = next?.id ?? null;
+  // a replay picked last time (an operation already flown) gives way to the next operation,
+  // so after a debrief the "Next operation" card is the highlighted one
+  const flownStory = !!selected && selected !== next?.id && CAMPAIGN.some((m) => m.id === selected);
+  if (!selected || !pickable.has(selected) || flownStory) selected = next?.id ?? null;
 
   const nextCard = next ? `<div class="cm-op-card ${selected === next.id ? 'sel' : ''}" data-card="${next.id}">
       <span class="tag">${roleLabel(next)}</span>
@@ -461,6 +473,7 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
     root.querySelectorAll<SVGPathElement>('[data-route]').forEach((p) => p.setAttribute('opacity', p.dataset.route === c.dataset.card ? '1' : '0.45'));
   }));
   root.querySelector('[data-back]')!.addEventListener('click', onBack);
+  onBackKey(root, onBack);   // Esc / Backspace (and the gamepad's B) go back, like the other menu screens
   root.querySelector('[data-nem]')?.addEventListener('click', () => showNemesisScreen({ back: () => showCampaignMap(progress, onPick, onBack) }));
   root.querySelectorAll('[data-summary]').forEach((b) => b.addEventListener('click', () => showCampaignSummary(progress, onPick, onBack)));
   root.querySelector<HTMLButtonElement>('[data-newtour]')?.addEventListener('click', (e) => {

@@ -393,7 +393,10 @@ export class Wingman {
     // right-aligned (the bar on the right, read first); English is drawn exactly as before
     const rtl = isAr();
     ctx.font = rtl ? `600 12px ${CANVAS_MONO}` : '600 11px "IBM Plex Mono", monospace';
-    const x = 16, y = H * 0.5 + 40;
+    // touch: the order buttons are on screen (TouchHud), so no key line; phones: a little lower,
+    // clear of the bonus objective card
+    const touch = typeof document !== 'undefined' && document.body.classList.contains('touch');
+    const x = 16, y = H * 0.5 + (H < 520 ? 52 : 40);
     const alive = !!f?.alive;
     const hp = alive ? Math.round(f!.integrity * 100) : 0;
     const head = `${tx(this.callsign).toUpperCase()} · ${tx(alive ? WING_LABEL[this.cmd] : 'DOWN')}`;
@@ -421,7 +424,7 @@ export class Wingman {
       ctx.fillText(sub, tx0, y + 14);
     }
     ctx.fillStyle = 'rgba(233,226,207,0.5)';
-    ctx.fillText(keys, tx0, y + (rtl ? 29 : 27));
+    if (!touch) ctx.fillText(keys, tx0, y + (rtl ? 29 : 27));
     // tag on the aircraft
     if (alive) {
       const s = _p.copy(f!.pos).project(cam);

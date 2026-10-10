@@ -45,7 +45,7 @@ function bombGeometry(): THREE.BufferGeometry {
   const body = new THREE.CapsuleGeometry(0.2, 1.1, 3, 8).rotateX(Math.PI / 2);
   const fin1 = new THREE.BoxGeometry(0.5, 0.025, 0.32).translate(0, 0, -0.78);
   const fin2 = new THREE.BoxGeometry(0.025, 0.5, 0.32).translate(0, 0, -0.78);
-  const g = mergeGeometries([body.toNonIndexed(), fin1.toNonIndexed(), fin2.toNonIndexed()])!;
+  const g = mergeGeometries([body, fin1, fin2].map((p) => (p.index ? p.toNonIndexed() : p)))!;
   g.computeVertexNormals();
   return g;
 }
