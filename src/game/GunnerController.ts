@@ -31,7 +31,6 @@ export class GunnerController {
   private guns: Partial<Record<StationId, GunModel[]>> = {};
   private waistInterior: THREE.Group | null = null;
   private muzzleLight = new THREE.PointLight(0xffb060, 0, 6, 2);
-  private bounce: THREE.PointLight[] = [];
   private cooldown = 0;
   private shotCount = 0;
   private recoilT = 0;
@@ -58,12 +57,7 @@ export class GunnerController {
     // detaching the gunner never changes the light count and forces shader recompiles.
     this.muzzleLight.userData.noRebase = true;
     engine.scene.add(this.muzzleLight);
-    for (let i = 0; i < 2; i++) {
-      const l = new THREE.PointLight(0xcfdcf0, 0, 3.2, 1.6);
-      l.userData.noRebase = true;
-      engine.scene.add(l);
-      this.bounce.push(l);
-    }
+
   }
 
   attach(bomber: Bomber, station: StationId) {
@@ -110,7 +104,6 @@ export class GunnerController {
     this.gunPivot.clear();
     this.rig.children.filter((c) => c !== this.gunPivot).forEach((c) => this.rig.remove(c));
     this.muzzleLight.intensity = 0;
-    for (const l of this.bounce) l.intensity = 0;
     for (const c of this.casings) c.m.removeFromParent();
     this.casings = [];
     this.bomber = null;
@@ -303,13 +296,6 @@ export class GunnerController {
 
   private updateCamera(dt: number) {
     const cam = this.engine.camera;
-    // daylight bouncing in through the waist windows
-    const waist = this.def.type === 'waist';
-    this.bounce.forEach((l, i) => {
-      const p = i === 0 ? STATIONS.waistL.pivot : STATIONS.waistR.pivot;
-      l.position.copy(this.bomber!.localToWorld(_v.set(p.x * 0.75, p.y + 0.25, p.z)));
-      l.intensity = waist ? 2.2 : 0;
-    });
     const def = this.def;
     const guns = this.guns[this.station]!;
     // eye: behind the sight (waist/tail) or centred in the turret between the guns
