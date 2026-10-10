@@ -52,6 +52,7 @@ export class Game {
   private aceAwarded = false;
   private chatterT = 0;
   private trauma = 0;
+  private popups: { pos: THREE.Vector3; text: string; life: number }[] = [];
   private slowFrames = 0;
   private autoQualityDone = false;
   private menuShot = 0;
@@ -70,16 +71,17 @@ export class Game {
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
+    // Esc releases pointer lock -> pause. If the browser never granted the lock the game
+    // simply runs in free-cursor mode (no pause loop).
     input.onLockChange = (locked) => {
-      if (this.state === 'playing') {
-        if (!locked) this.pause();
-        this.ui.showLockHint(!locked);
-      }
+      if (this.state === 'playing' && !locked && this.input.everLocked) this.pause();
+      this.ui.showLockHint(false);
     };
     engine.renderer.domElement.addEventListener('click', () => {
       if (this.state === 'playing' && !this.input.locked) this.input.lock();
     });
     window.addEventListener('keydown', (e) => {
+      if (e.code === 'Escape' && this.state === 'playing' && !this.input.locked) this.pause();
       if (e.code === 'KeyP' && this.state === 'playing') this.pause();
     });
     engine.onFrame = (dt) => this.frame(dt);
@@ -137,6 +139,7 @@ export class Game {
       if (victim.team === 'axis') {
         if (byPlayer) {
           this.score += Math.round(100 * (1 + this.survivalWave * 0.1));
+          this.popups.push({ pos: victim.pos.clone(), text: '+100  KILL', life: 1.6 });
           this.ui.feed(`Fw 190 destroyed — confirmed`, 'mine');
           // streaks: kills in quick succession
           this.streak = w.time - this.lastKillAt < 9 ? this.streak + 1 : 1;
@@ -287,7 +290,8 @@ export class Game {
     const presets: Weather[] = CAMPAIGN.map((c) => c.weather!).filter(Boolean);
     this.setWeather(m.weather ?? (m.duration === Infinity ? presets[Math.floor(Math.random() * presets.length)] : DEFAULT_WEATHER));
     this.world.playerDamageScale = m.playerArmor ?? (m.role === 'gunner' ? 0.6 : 0.75);
-    this.world.aiGunnerFactor = m.role === 'pilot' ? 1.6 : 0.8;
+    this.world.aiGunnerFactor = 1;
+    this.world.playerFocus = m.role === 'gunner' ? 0.75 : 0.2;
     const diff = this.settings.difficulty;
     this.world.difficulty = diff === 'recruit' ? 0.8 : diff === 'ace' ? 1.2 : 1;
     this.world.playerDamageScale *= diff === 'recruit' ? 0.7 : diff === 'ace' ? 1.3 : 1;
@@ -352,9 +356,13 @@ export class Game {
   }
 
   private spawnWave(w: Wave) {
-    const base = this.spawnPos(w.from);
+    // Gunner missions: most of the wave appears out where the player's gun is pointing,
+    // so the fighters are seen forming up and coming in.
+    const arc = this.mission?.role === 'gunner' ? this.world.playerArc() : null;
+    const base = arc ? this.world.playerBomber!.pos.clone().addScaledVector(arc, 1900).add(new THREE.Vector3(R() * 300, 250 + Math.random() * 300, R() * 300)) : this.spawnPos(w.from);
     for (let i = 0; i < w.count; i++) {
-      const p = w.from === 'mixed' ? this.spawnPos('mixed') : base.clone().add(new THREE.Vector3(R() * 120 + i * 40, R() * 50, R() * 120));
+      const fromArc = arc && (i < Math.ceil(w.count * 0.75));
+      const p = fromArc ? base.clone().add(new THREE.Vector3(R() * 150 + i * 45, R() * 60, R() * 150)) : w.from === 'mixed' ? this.spawnPos('mixed') : this.spawnPos(w.from).add(new THREE.Vector3(R() * 120 + i * 40, R() * 50, R() * 120));
       let attack: AttackType | undefined = w.attack;
       if (!attack) attack = (['headon', 'stern', 'beam', 'high'] as AttackType[])[Math.floor(Math.random() * 4)];
       this.world.spawnEnemy(p, attack, w.skill, true, Math.random() < (w.rockets ?? 0));
@@ -581,6 +589,11 @@ export class Game {
   // ---------------- Frame ----------------
   private frame(dt: number) {
     const w = this.world;
+    const playing = !this.menuMode && (this.state === 'playing' || this.state === 'ending');
+    this.input.active = playing;
+    const canvas = this.engine.renderer.domElement;
+    const cur = playing ? 'crosshair' : 'default';
+    if (canvas.style.cursor !== cur) canvas.style.cursor = cur;
     // Brief slow-motion beat on a confirmed kill
     if (this.slowmo > 0) {
       this.slowmo -= dt / Math.max(0.05, this.engine.timeScale);
@@ -622,6 +635,8 @@ export class Game {
     else { this.engine.post.vignette = 0.9; this.engine.post.exposure = 1; }
     this.hitMarkerT -= dt;
     this.killMarkerT -= dt;
+    for (const p of this.popups) { p.life -= dt; p.pos.addScaledVector(this.world.formationForward, 75 * dt); }
+    this.popups = this.popups.filter((p) => p.life > 0);
     this.hudAcc += dt;
     if (!this.menuMode && this.hudAcc > 0.08 && (this.state === 'playing' || this.state === 'ending')) { this.hudAcc = 0; this.updateHud(); }
     this.drawOverlay();
@@ -653,7 +668,7 @@ export class Game {
       const off = new THREE.Vector3(cam.position.x, 0, cam.position.z);
       this.engine.rebase(off);
       this.world.rebase(off);
-      for (const b of this.bombs) { /* bombs are scene children: already shifted by engine.rebase */ void b; }
+      for (const p of this.popups) p.pos.sub(off);
       cam.position.sub(off);
       this.engine.post.resetHistory();
     }
@@ -772,6 +787,28 @@ export class Game {
           ctx.restore();
         }
       }
+    }
+    // Health bars on enemies the player has been hitting
+    for (const f of w.fighters('axis')) {
+      if (!f.alive || w.time - f.lastPlayerHit > 6) continue;
+      const p = f.pos.clone().project(cam);
+      if (p.z > 1 || Math.abs(p.x) > 1 || Math.abs(p.y) > 1) continue;
+      const d = f.pos.distanceTo(cam.position);
+      const x = (p.x * 0.5 + 0.5) * W, y = (-p.y * 0.5 + 0.5) * H;
+      const s = THREE.MathUtils.clamp(2400 / d, 9, 30);
+      const bw = 46, frac = f.structureFrac;
+      ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(x - bw / 2 - 1, y - s - 13, bw + 2, 6);
+      ctx.fillStyle = frac > 0.5 ? 'rgba(230,200,90,0.95)' : frac > 0.25 ? 'rgba(240,140,50,0.95)' : 'rgba(235,70,50,0.95)';
+      ctx.fillRect(x - bw / 2, y - s - 12, bw * frac, 4);
+    }
+    // Score pop-ups
+    for (const pop of this.popups) {
+      const p = pop.pos.clone().project(cam);
+      if (p.z > 1) continue;
+      const a = Math.min(1, pop.life / 0.6);
+      ctx.fillStyle = `rgba(255,214,120,${a})`;
+      ctx.font = '600 20px Oswald, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(pop.text, (p.x * 0.5 + 0.5) * W, (-p.y * 0.5 + 0.5) * H - (1.6 - pop.life) * 40);
     }
     // Recruit aim aid: lead pip for the enemy nearest the line of fire
     if (this.settings.difficulty === 'recruit' && pl?.alive) this.drawLeadPip(ctx, W, H);

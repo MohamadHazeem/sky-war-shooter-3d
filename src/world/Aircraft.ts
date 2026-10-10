@@ -62,6 +62,14 @@ export abstract class Aircraft {
   label = '';
   damageTaken = 0;
   hitFlash = 0;
+  isPlayer = false;
+  // overall structural strength: many hits wear an aircraft down even if no single
+  // part is shot away
+  structure = Infinity;
+  maxStructure = Infinity;
+  get structureFrac() { return this.maxStructure === Infinity ? 1 : Math.max(0, this.structure) / this.maxStructure; }
+  playerDamage = 0;
+  lastPlayerHit = -99;
 
   constructor(public readonly kind: ModelKind, public readonly team: Team, propRadius: number) {
     this.model = instantiate(kind);
@@ -120,7 +128,6 @@ export class Fighter extends Aircraft {
   guns: Gun[] = [];
   trigger = false;
   ai: any = null; // set by AI controller
-  isPlayer = false;
   pilotKilled = false;
   bailedOut = false;
   dropTankAttached = false;
@@ -128,6 +135,7 @@ export class Fighter extends Aircraft {
   rockets = 0;            // Wgr. 21 tubes still loaded
   fireRockets = false;    // set by the AI when it wants to launch
   rocketTubes: THREE.Object3D[] = [];
+  gunAim: THREE.Vector3 | null = null; // world direction guns are laid on (AI), overrides boresight
 
   constructor(kind: 'fw190' | 'p51d', team: Team, params: FlightParams) {
     super(kind, team, kind === 'fw190' ? 1.65 : 1.7);
@@ -136,13 +144,22 @@ export class Fighter extends Aircraft {
     const H = (name: string, x: number, y: number, z: number, r: number, hp: number, extra: Partial<HitZone> = {}) =>
       this.zones.push({ name, offset: new THREE.Vector3(x, y, z), radius: r, hp, maxHp: hp, ...extra });
     // Zones fitted to the converted models (Fw 190 A-8 / P-51D share the layout closely)
-    H('engine', 0, 0.0, 1.15, 0.9, 85, { engine: 0 });
-    H('cockpit', 0, 0.62, -1.35, 0.6, 60, { critical: true });
-    H('fuselage', 0, 0.1, -3.4, 0.75, 120, { critical: true });
-    H('tail', 0, 0.55, -5.75, 1.05, 80, { critical: true });
+    H('engine', 0, 0.0, 1.15, 0.9, 130, { engine: 0 });
+    H('cockpit', 0, 0.62, -1.35, 0.6, 95, { critical: true });
+    H('fuselage', 0, 0.1, -3.4, 0.75, 170, { critical: true });
+    H('tail', 0, 0.55, -5.75, 1.05, 120, { critical: true });
     // a fighter that loses a wing panel is finished
-    H('wingL', 2.6, -0.3, -0.25, 1.45, 105, { critical: true });
-    H('wingR', -2.6, -0.3, -0.25, 1.45, 105, { critical: true });
+    H('wingL', 2.6, -0.3, -0.25, 1.45, 150, { critical: true });
+    H('wingR', -2.6, -0.3, -0.25, 1.45, 150, { critical: true });
+  }
+
+  // Enlarge the aircraft (model, hit zones, guns) — used for the enemy fighters so they
+  // read clearly on screen at combat ranges.
+  setScale(k: number) {
+    this.model.scale.setScalar(k);
+    for (const z of this.zones) { z.offset.multiplyScalar(k); z.radius *= k; }
+    for (const g of this.guns) g.offset.multiplyScalar(k);
+    this.radius *= k;
   }
 
   update(dt: number) {
@@ -172,7 +189,6 @@ export class Bomber extends Aircraft {
   wobblePhase = Math.random() * 100;
   wobbleAmp = 1;
   straggling = false;
-  isPlayer = false;
   gunners: { station: string; offset: THREE.Vector3; cooldown: number; target: Aircraft | null; burst: number; arc: (d: THREE.Vector3) => boolean }[] = [];
   crewBailed = 0;
   bombsAway = false;

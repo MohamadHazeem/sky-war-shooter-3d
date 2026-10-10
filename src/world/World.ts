@@ -8,6 +8,10 @@ import { FW190_PARAMS, P51_PARAMS } from './FlightModel';
 import { AI_EXTRA, dirFromYawPitch, inArc, STATIONS, STATION_ORDER, StationDef } from './B17Layout';
 import { sound } from '../audio/Sound';
 import { Contrails } from '../render/Contrails';
+import { Wrecks, BreakKind } from './Wrecks';
+
+export const ENEMY_SCALE = 1.45;     // Fw 190s are drawn (and hit) 30% larger so they read on screen
+export const ENEMY_STRUCTURE = 260; // ~20 hits from a .50 to wear one down
 
 export const CRUISE = 75;          // m/s formation speed (~170 mph)
 export const ALTITUDE = 7600;      // m (25,000 ft)
@@ -40,6 +44,9 @@ export class World implements WorldView {
   readonly ballistics = new Ballistics(6000);
   readonly effects: Effects;
   readonly contrails = new Contrails(64);
+  readonly wrecks: Wrecks;
+  playerFocus = 0.7;
+  playerAimDir = new THREE.Vector3(1, 0, 0);
   formationCenter = new THREE.Vector3(0, ALTITUDE, 0);
   formationForward = new THREE.Vector3(0, 0, 1);
   player: Aircraft | null = null;
@@ -71,6 +78,7 @@ export class World implements WorldView {
   constructor(private engine: Engine) {
     this.scene = engine.scene;
     this.effects = new Effects(this.scene);
+    this.wrecks = new Wrecks(this.scene, this.effects);
     this.scene.add(this.ballistics.tracers.mesh);
     this.scene.add(this.contrails.mesh);
     this.ballistics.onHit = (e) => this.onHit(e);
@@ -88,6 +96,20 @@ export class World implements WorldView {
   // ---------- WorldView ----------
   bombers(): Bomber[] { return this.aircraft.filter((a): a is Bomber => a instanceof Bomber && !a.remove); }
   fighters(team: 'allied' | 'axis'): Fighter[] { return this.aircraft.filter((a): a is Fighter => a instanceof Fighter && a.team === team && !a.remove); }
+
+  // World direction covered by the player's current gun position (gunner missions)
+  playerArc(): THREE.Vector3 | null {
+    const b = this.playerBomber, st = this.playerStation;
+    if (!b || !b.alive || !st || this.player !== b) return null;
+    if (st.type === 'turret') return this.playerAimDir.clone().setY(Math.max(-0.4, Math.min(0.5, this.playerAimDir.y))).normalize();
+    return dirFromYawPitch(st.rest.yaw, st.rest.pitch).applyQuaternion(b.quat).normalize();
+  }
+
+  playerGunPos(): THREE.Vector3 | null {
+    const b = this.playerBomber, st = this.playerStation;
+    if (!b || !b.alive || !st || this.player !== b) return null;
+    return b.localToWorld(st.pivot.clone());
+  }
 
   // Enemies still pressing the attack (withdrawing/damaged stragglers don't hold up a wave)
   activeEnemies(): Fighter[] {
@@ -119,6 +141,7 @@ export class World implements WorldView {
     this.ballistics.clear();
     this.effects.clear();
     this.contrails.clear();
+    this.wrecks.clear();
     for (const r of this.rockets) r.obj.removeFromParent();
     this.rockets = [];
     this.extinguishers.clear();
@@ -223,6 +246,8 @@ export class World implements WorldView {
         f.rocketTubes.push(tube);
       }
     }
+    f.setScale(ENEMY_SCALE);
+    f.structure = f.maxStructure = ENEMY_STRUCTURE * (0.85 + 0.15 * this.difficulty);
     f.label = 'Fw 190';
     this.add(f);
     this.pilots.set(f, new EnemyPilot(f, attack, skill * this.difficulty));
@@ -240,6 +265,8 @@ export class World implements WorldView {
 
   spawnEscort(pos: THREE.Vector3, slot: THREE.Vector3): Fighter {
     const f = this.makeMustang(pos, this.formationForward);
+    // wingmen keep the enemy busy but leave the kills to the player
+    for (const g of f.guns) { g.damage *= 0.3; g.tracerEvery = 3; }
     this.pilots.set(f, new EscortPilot(f, slot));
     return f;
   }
@@ -296,10 +323,13 @@ export class World implements WorldView {
     t.damageTaken += e.damage;
     t.hitFlash = 0.15;
     if (e.shooter) t.lastAttacker = e.shooter;
+    t.structure -= e.damage;
     if (e.playerShot) {
       this.stats.hits++;
       this.stats.damage += e.damage;
-      (t as any).playerDamage = ((t as any).playerDamage ?? 0) + e.damage;
+      t.playerDamage += e.damage;
+      t.lastPlayerHit = this.time;
+      this.effects.hitFlash(e.point, t.vel);
     }
     const heavy = e.cannon;
     this.effects.sparks(e.point, t.vel, heavy);
@@ -354,6 +384,7 @@ export class World implements WorldView {
       }
       if (t instanceof Bomber && t.enginesOut >= 4) this.killAircraft(t, false, 'all engines');
     }
+    if (t.alive && t instanceof Fighter && t.structure <= 0) this.killAircraft(t, e.playerShot, z.name);
     if (wasAlive && !t.alive && e.playerShot) this.events.hitMarker?.(true);
   }
 
@@ -367,18 +398,28 @@ export class World implements WorldView {
     a.falling = true;
     a.fallTime = 0;
     // Credit the player if they dealt a meaningful share of the damage
-    const pd = (a as any).playerDamage ?? 0;
-    const credited = byPlayer || pd > a.damageTaken * 0.4;
+    const credited = byPlayer || a.playerDamage >= a.damageTaken * 0.2;
     if (a instanceof Fighter) {
       a.spin.set(R() * 0.6, R() * 0.4, (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 2.5));
-      if (Math.random() < 0.45) {
-        // blows up in mid-air
-        this.effects.explosion(a.pos, a.vel, 1);
-        sound.play('explosion', a.pos, { gain: 1.4, ref: 120, reverb: 0.7 });
-        if (this.player) this.events.shake?.(Math.max(0, 1 - a.pos.distanceTo(this.player.pos) / 300) * 0.8);
-        if (this.player && a.pos.distanceTo(this.player.pos) < 400) sound.play('debris', a.pos, { gain: 0.6, ref: 40 });
+      // how it comes apart depends on what was shot away
+      let kind: BreakKind | 'burn' = cause === 'wingL' || cause === 'wingR' || cause === 'tail' ? cause : Math.random() < 0.55 ? 'blowup' : 'burn';
+      if (a.team === 'allied' && kind !== 'burn') kind = 'burn';
+      if (kind !== 'burn') {
+        this.wrecks.break(a, kind);
         a.remove = true;
+        if (kind === 'blowup') {
+          this.effects.explosion(a.pos, a.vel, 1.2);
+          sound.play('explosion', a.pos, { gain: 1.5, ref: 140, reverb: 0.7 });
+        } else {
+          this.effects.explosion(a.localToWorld(new THREE.Vector3(kind === 'wingL' ? 1.5 : kind === 'wingR' ? -1.5 : 0, 0, kind === 'tail' ? -5.5 : 0)), a.vel, 0.45);
+          sound.play('explosion', a.pos, { gain: 1.0, ref: 100, reverb: 0.6 });
+        }
+        if (this.player) this.events.shake?.(Math.max(0, 1 - a.pos.distanceTo(this.player.pos) / 300) * 0.8);
+        if (this.player && a.pos.distanceTo(this.player.pos) < 500) sound.play('debris', a.pos, { gain: 0.7, ref: 40 });
+        if (Math.random() < 0.45) setTimeout(() => this.effects.parachute(a.pos.clone(), a.vel.clone().multiplyScalar(0.3)), 1200 + Math.random() * 2000);
       } else {
+        // engine or pilot hit: goes down burning in a spin
+        this.effects.explosion(a.localToWorld(new THREE.Vector3(0, 0, 1.2)), a.vel, 0.35);
         this.effects.spawnDebris(a.pos, a.vel, 5, true);
         a.zones.forEach((z) => { if (z.engine !== undefined) z.burning = true; });
         if (Math.random() < 0.5) setTimeout(() => this.effects.parachute(a.pos.clone(), a.vel.clone().multiplyScalar(0.3)), 1500 + Math.random() * 2500);
@@ -434,6 +475,7 @@ export class World implements WorldView {
     this.fires(dt);
     this.ballistics.update(dt, this.aircraft);
     this.effects.update(dt);
+    this.wrecks.update(dt);
     this.contrails.update(this.time);
     this.radioChatter(dt);
 
@@ -537,6 +579,7 @@ export class World implements WorldView {
         if (g.ammo !== Infinity) g.ammo--;
         const muzzle = a.localToWorld(g.offset, _v);
         const dir = _v2.copy(g.dir).applyQuaternion(a.quat);
+        if (a.gunAim) dir.copy(a.gunAim);
         dir.x += R() * g.spread; dir.y += R() * g.spread; dir.z += R() * g.spread;
         dir.normalize();
         const vel = dir.clone().multiplyScalar(g.muzzleVel).add(a.vel);
@@ -561,6 +604,14 @@ export class World implements WorldView {
       if (!smoking && !z.burning) continue;
       const p = a.localToWorld(_v.copy(z.offset).add(_v2.set(0, 0.2, -0.6)), new THREE.Vector3());
       this.effects.trail(p, a.vel, Math.min(1, dmg), !!z.burning, a instanceof Bomber ? 1.3 : 0.8);
+    }
+    // worn-down fighters: thin smoke -> black smoke -> fire, from the engine
+    if (a instanceof Fighter && a.alive && a.maxStructure !== Infinity) {
+      const f = a.structureFrac;
+      if (f < 0.75) {
+        const at = a.localToWorld(_v.set(0, 0.3, 0.6 * ENEMY_SCALE), new THREE.Vector3());
+        this.effects.trail(at, a.vel, f < 0.45 ? 0.9 : 0.35, f < 0.25, 0.9);
+      }
     }
     if (a.falling && a instanceof Fighter && Math.random() < 0.6) {
       this.effects.trail(a.localToWorld(_v.set(0, 0, 1.5), new THREE.Vector3()), a.vel, 1, true, 1);
@@ -610,7 +661,7 @@ export class World implements WorldView {
             dir.x += R() * spread; dir.y += R() * spread; dir.z += R() * spread;
             dir.normalize();
             const muzzle = pivotW.addScaledVector(dir, 1.6);
-            this.ballistics.fire(muzzle, dir.multiplyScalar(860).add(b.vel), 'allied', 3.5 * this.aiGunnerFactor, Math.random() < 0.3, [9, 2.4, 0.8], b);
+            this.ballistics.fire(muzzle, dir.multiplyScalar(860).add(b.vel), 'allied', 0.12 * this.aiGunnerFactor, Math.random() < 0.35, [9, 2.4, 0.8], b);
             if (Math.random() < 0.3) this.effects.muzzleFlash(muzzle, dir.normalize(), 0.8, b.vel);
             if (Math.random() < 0.12) sound.play('m2far', muzzle, { gain: b.isPlayer ? 0.5 : 0.35, ref: b.isPlayer ? 6 : 50 });
           }

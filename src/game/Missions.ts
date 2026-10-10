@@ -51,7 +51,7 @@ export const CAMPAIGN: Mission[] = [
     ],
     objectives: ['Defend the formation', 'Survive the mission', 'Lose no more than 3 bombers'],
     bombers: 9, waves: [
-      { at: 18, count: 3, from: 'left', attack: 'beam', skill: 0.75, radio: ['Navigator', 'Fighters coming up from the coast, nine o\'clock low. Stay sharp.'] },
+      { at: 7, count: 3, from: 'left', attack: 'beam', skill: 0.75, radio: ['Navigator', 'Fighters coming up from the coast, nine o\'clock low. Stay sharp.'] },
       { at: 0, afterClear: true, count: 4, from: 'front', attack: 'headon', skill: 0.8, radio: ['Pilot', 'More of them up ahead. Twelve o\'clock — here they come.'] },
       { at: 0, afterClear: true, count: 4, from: 'mixed', skill: 0.85 },
     ],
@@ -66,7 +66,7 @@ export const CAMPAIGN: Mission[] = [
     ],
     objectives: ['Break up the head-on attacks', 'Survive the mission', 'Lose no more than 4 bombers'],
     bombers: 12, waves: [
-      { at: 15, count: 4, from: 'front', attack: 'headon', skill: 0.9, radio: ['Bombardier', 'Bandits! Twelve o\'clock high, a whole Staffel of them!'] },
+      { at: 7, count: 4, from: 'front', attack: 'headon', skill: 0.9, radio: ['Bombardier', 'Bandits! Twelve o\'clock high, a whole Staffel of them!'] },
       { at: 0, afterClear: true, count: 5, from: 'front', attack: 'headon', skill: 0.95 },
       { at: 0, afterClear: true, count: 4, from: 'high', attack: 'high', skill: 1.0, radio: ['Tail', 'Fighters up high, coming out of the sun!'] },
       { at: 0, afterClear: true, count: 6, from: 'mixed', skill: 1.0 },
@@ -82,7 +82,7 @@ export const CAMPAIGN: Mission[] = [
     ],
     objectives: ['Fight through to the target', 'Survive the flak belt over the target', 'Defend the formation on the way home'],
     bombers: 12, waves: [
-      { at: 12, count: 4, from: 'right', attack: 'beam', skill: 0.95, radio: ['Ball Turret', 'Fighters, three o\'clock level! Coming in from the right!'] },
+      { at: 7, count: 4, from: 'right', attack: 'beam', skill: 0.95, radio: ['Ball Turret', 'Fighters, three o\'clock level! Coming in from the right!'] },
       { at: 0, afterClear: true, count: 4, from: 'rear', attack: 'stern', skill: 1.0, rockets: 0.5 },
       { at: 150, count: 6, from: 'mixed', skill: 1.05, radio: ['Pilot', 'We\'re through the flak. Here come the fighters again — watch the cripples.'] },
       { at: 0, afterClear: true, count: 5, from: 'mixed', skill: 1.1 },
@@ -98,7 +98,7 @@ export const CAMPAIGN: Mission[] = [
     ],
     objectives: ['Protect the bombers', 'Destroy the attacking fighters', 'Lose no more than 4 bombers'],
     bombers: 12, escorts: 3, waves: [
-      { at: 20, count: 4, from: 'front', attack: 'headon', skill: 1.0, radio: ['Lead', 'Bandits twelve o\'clock low, climbing for the bombers. Let\'s go get them.'] },
+      { at: 9, count: 4, from: 'front', attack: 'headon', skill: 1.0, radio: ['Lead', 'Bandits twelve o\'clock low, climbing for the bombers. Let\'s go get them.'] },
       { at: 0, afterClear: true, count: 6, from: 'mixed', skill: 1.0 },
       { at: 0, afterClear: true, count: 7, from: 'rear', attack: 'stern', skill: 1.05, radio: ['Big Friend', 'Little friends, little friends, we have bandits at our six o\'clock!'] },
     ],
@@ -112,7 +112,7 @@ export const CAMPAIGN: Mission[] = [
     ],
     objectives: ['Stop the Sturmgruppe attack from astern', 'Survive the mission', 'Lose no more than 5 bombers'], playerArmor: 0.45,
     bombers: 12, waves: [
-      { at: 15, count: 3, from: 'rear', attack: 'stern', skill: 1.0, radio: ['Navigator', 'Fighters assembling behind us, six o\'clock level. Lots of them.'] },
+      { at: 7, count: 3, from: 'rear', attack: 'stern', skill: 1.0, radio: ['Navigator', 'Fighters assembling behind us, six o\'clock level. Lots of them.'] },
       { at: 0, afterClear: true, count: 8, from: 'rear', attack: 'stern', skill: 1.15, rockets: 0.5, radio: ['Pilot', 'Here comes the whole gaggle! Tail, they\'re all yours!'] },
       { at: 0, afterClear: true, count: 6, from: 'mixed', skill: 1.1 },
     ],
@@ -126,7 +126,7 @@ export const CAMPAIGN: Mission[] = [
     ],
     objectives: ['Keep the Sky Queen in the air', 'Hold out until the escort arrives'],
     bombers: 6, playerDamaged: true, escortArrive: 150, waves: [
-      { at: 10, count: 2, from: 'rear', attack: 'stern', skill: 1.0, radio: ['Tail', 'Two fighters closing from six o\'clock. They\'ve spotted us.'] },
+      { at: 6, count: 2, from: 'rear', attack: 'stern', skill: 1.0, radio: ['Tail', 'Two fighters closing from six o\'clock. They\'ve spotted us.'] },
       { at: 45, count: 3, from: 'mixed', skill: 1.05 },
       { at: 90, count: 4, from: 'mixed', skill: 1.1, radio: ['Radio', 'Escort reports sixty seconds out. Hang on!'] },
       { at: 125, count: 4, from: 'mixed', skill: 1.15 },
@@ -141,7 +141,7 @@ export const CAMPAIGN: Mission[] = [
     ],
     objectives: ['Protect the bombers', 'Destroy as many attackers as possible', 'Lose no more than 6 bombers'],
     bombers: 12, escorts: 5, waves: [
-      { at: 15, count: 6, from: 'front', attack: 'headon', skill: 1.1, radio: ['Lead', 'Here they come. Big gaggle at twelve o\'clock — drop tanks and go!'] },
+      { at: 8, count: 6, from: 'front', attack: 'headon', skill: 1.1, radio: ['Lead', 'Here they come. Big gaggle at twelve o\'clock — drop tanks and go!'] },
       { at: 0, afterClear: true, count: 8, from: 'rear', attack: 'stern', skill: 1.15, rockets: 0.4 },
       { at: 0, afterClear: true, count: 8, from: 'high', attack: 'high', skill: 1.2 },
       { at: 0, afterClear: true, count: 10, from: 'mixed', skill: 1.25, radio: ['Big Friend', 'More bandits! They\'re everywhere!'] },

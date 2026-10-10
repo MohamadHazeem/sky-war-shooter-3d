@@ -38,7 +38,7 @@ export class Effects {
     const g = new THREE.SphereGeometry(3.4, 18, 8, 0, Math.PI * 2, 0, Math.PI * 0.42);
     this.chuteGeo = g;
     for (let i = 0; i < 6; i++) {
-      const l = new THREE.PointLight(0xffaa55, 0, 60, 2);
+      const l = new THREE.PointLight(0xffaa55, 0, 45, 2);
       l.userData.noRebase = true;
       l.userData.free = true;
       this.lightPool.push(l);
@@ -57,10 +57,26 @@ export class Effects {
     this.lights.push({ light: l, life, max: life, intensity });
   }
 
+  // The player's own muzzle: short, dim flame tongues ahead of the muzzle, so the
+  // ring sight is never washed out
+  playerMuzzle(pos: THREE.Vector3, dir: THREE.Vector3, vel: THREE.Vector3) {
+    _p.copy(pos).addScaledVector(dir, 0.25);
+    this.glow.spawn({ pos: _p, vel, life: 0.03, size0: 0.16, size1: 0.26, color0: [7, 4, 1.5], alpha0: 1, alpha1: 0, frame: 2, rotVel: 0 });
+  }
+
   muzzleFlash(pos: THREE.Vector3, dir: THREE.Vector3, scale = 1, vel?: THREE.Vector3) {
     this.glow.spawn({ pos, vel, life: 0.05, size0: 0.55 * scale, size1: 0.9 * scale, color0: [40, 26, 10], alpha0: 1, alpha1: 0, frame: 1 });
     _p.copy(pos).addScaledVector(dir, 0.35 * scale);
     this.glow.spawn({ pos: _p, vel, life: 0.04, size0: 0.4 * scale, size1: 0.7 * scale, color0: [30, 16, 4], alpha0: 1, alpha1: 0, frame: 1 });
+  }
+
+  // Bright strike flash so the player sees their rounds connect, even at range
+  hitFlash(pos: THREE.Vector3, vel: THREE.Vector3) {
+    this.glow.spawn({ pos, vel, life: 0.09, size0: 2.6, size1: 3.6, color0: [40, 26, 10], alpha0: 1, alpha1: 0, frame: 1 });
+    for (let i = 0; i < 4; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar(25 + Math.random() * 35).add(vel);
+      this.glow.spawn({ pos, vel: _v, life: 0.25 + Math.random() * 0.2, size0: 0.35, size1: 0.1, color0: [30, 18, 6], alpha0: 1, alpha1: 0, frame: 1, drag: 2, rise: -9 });
+    }
   }
 
   gunSmoke(pos: THREE.Vector3, vel: THREE.Vector3) {
@@ -76,7 +92,7 @@ export class Effects {
     this.glow.spawn({ pos, vel, life: 0.07, size0: heavy ? 2.5 : 1.0, size1: heavy ? 3.5 : 1.5, color0: [25, 16, 7], alpha0: 1, alpha1: 0, frame: 1 });
     if (heavy) {
       this.smoke.spawn({ pos, vel, life: 1.5, size0: 1, size1: 6, color0: [0.12, 0.11, 0.1], alpha0: 0.75, alpha1: 0, drag: 1.2, lit: true });
-      this.flashLight(pos, 400, 0.12);
+      this.flashLight(pos, 150, 0.1);
     } else {
       this.smoke.spawn({ pos, vel, life: 0.6, size0: 0.3, size1: 1.6, color0: [0.35, 0.33, 0.3], alpha0: 0.5, alpha1: 0, drag: 2, lit: true });
     }
@@ -100,7 +116,7 @@ export class Effects {
   }
 
   explosion(pos: THREE.Vector3, vel: THREE.Vector3, scale = 1) {
-    this.flashLight(pos, 4000 * scale, 0.45, 0xff9944);
+    this.flashLight(pos, 900 * scale, 0.4, 0xff9944);
     // white-hot flash and an expanding shockwave
     this.glow.spawn({ pos, vel, life: 0.14, size0: 10 * scale, size1: 22 * scale, color0: [40, 28, 14], alpha0: 1, alpha1: 0, frame: 1 });
     this.glow.spawn({ pos, vel, life: 0.4, size0: 4 * scale, size1: 70 * scale, color0: [2.2, 1.9, 1.6], alpha0: 0.8, alpha1: 0, frame: 3, rotVel: 0 });
@@ -126,7 +142,7 @@ export class Effects {
   }
 
   flak(pos: THREE.Vector3) {
-    this.flashLight(pos, 3000, 0.15, 0xffaa66);
+    this.flashLight(pos, 700, 0.15, 0xffaa66);
     this.glow.spawn({ pos, life: 0.12, size0: 6, size1: 14, color0: [40, 22, 8], alpha0: 1, alpha1: 0, frame: 1 });
     this.glow.spawn({ pos, life: 0.35, size0: 5, size1: 10, color0: [9, 3.5, 0.8], alpha0: 1, alpha1: 0, frame: 2, rotVel: 2 });
     this.glow.spawn({ pos, life: 0.3, size0: 3, size1: 40, color0: [3, 2.6, 2.2], alpha0: 0.7, alpha1: 0, frame: 3, rotVel: 0 });

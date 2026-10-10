@@ -87,20 +87,22 @@ export class PilotController {
     fm.limiter = this.mode === 'mouseAim';
 
     const sens = 0.0016 * inp.sensitivity;
+    const push = inp.edgePush();
+    const mdx = inp.mouseDX + push.x * 900 * dt, mdy = inp.mouseDY + push.y * 700 * dt;
     if (p.alive) {
       if (this.freeLook) {
-        this.lookYaw -= inp.mouseDX * sens * 1.4;
-        this.lookPitch = THREE.MathUtils.clamp(this.lookPitch - inp.mouseDY * sens * 1.4, -1.2, 1.4);
+        this.lookYaw -= mdx * sens * 1.4;
+        this.lookPitch = THREE.MathUtils.clamp(this.lookPitch - mdy * sens * 1.4, -1.2, 1.4);
       } else {
         this.lookYaw *= Math.exp(-dt * 6); this.lookPitch *= Math.exp(-dt * 6);
         if (this.mode === 'mouseAim') {
-          this.aimYaw -= inp.mouseDX * sens;
-          this.aimPitch = THREE.MathUtils.clamp(this.aimPitch - inp.mouseDY * sens * (inp.invertY ? -1 : 1), -1.5, 1.5);
+          this.aimYaw -= mdx * sens;
+          this.aimPitch = THREE.MathUtils.clamp(this.aimPitch - mdy * sens * (inp.invertY ? -1 : 1), -1.5, 1.5);
           const dir = this.aimDir(_v);
           steerTo(fm, dir, 1.1, 1);
         } else {
-          fm.pitch = THREE.MathUtils.clamp(fm.pitch - inp.mouseDY * sens * 3 * (inp.invertY ? -1 : 1), -1, 1) * Math.exp(-dt * 2.5);
-          fm.roll = THREE.MathUtils.clamp(fm.roll + inp.mouseDX * sens * 3, -1, 1) * Math.exp(-dt * 3);
+          fm.pitch = THREE.MathUtils.clamp(fm.pitch - mdy * sens * 3 * (inp.invertY ? -1 : 1), -1, 1) * Math.exp(-dt * 2.5);
+          fm.roll = THREE.MathUtils.clamp(fm.roll + mdx * sens * 3, -1, 1) * Math.exp(-dt * 3);
           fm.yaw = 0;
           const f = p.forward(_v);
           this.aimYaw = Math.atan2(f.x, f.z);

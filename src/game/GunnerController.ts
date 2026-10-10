@@ -259,8 +259,10 @@ export class GunnerController {
 
     // Aim: mouse moves the target; the gun follows on a damped spring (heavy mount)
     const sens = 0.0018 * inp.sensitivity * (this.zoom ? 0.55 : 1);
-    s.tYaw -= inp.mouseDX * sens;
-    s.tPitch -= inp.mouseDY * sens * (inp.invertY ? -1 : 1);
+    const push = inp.edgePush();
+    const mdx = inp.mouseDX + push.x * 900 * dt, mdy = inp.mouseDY + push.y * 700 * dt;
+    s.tYaw -= mdx * sens;
+    s.tPitch -= mdy * sens * (inp.invertY ? -1 : 1);
     if (def.yaw[1] - def.yaw[0] < Math.PI * 1.99) s.tYaw = THREE.MathUtils.clamp(s.tYaw, def.yaw[0], def.yaw[1]);
     else s.tYaw = wrapAngle(s.tYaw);
     s.tPitch = THREE.MathUtils.clamp(s.tPitch, def.pitch[0] - def.rest.pitch, def.pitch[1] - def.rest.pitch);
@@ -274,7 +276,7 @@ export class GunnerController {
 
     // Zoom (squint down the sight)
     this.zoom = inp.mouse(2);
-    const targetFov = this.zoom ? 40 : 62;
+    const targetFov = this.zoom ? 34 : 62;
     this.fov += (targetFov - this.fov) * Math.min(1, dt * 10);
 
     // Reload
@@ -321,6 +323,7 @@ export class GunnerController {
 
     this.updateCasings(dt);
     this.updateCamera(dt);
+    this.world.playerAimDir.copy(this.aimDirection());
   }
 
   private fireRound(g: GunModel, def: StationDef) {
@@ -334,10 +337,10 @@ export class GunnerController {
     const tracer = this.shotCount % 3 === 0;
     this.world.ballistics.fire(muzzle, vel, 'allied', 12, tracer, [10, 2.6, 0.9], b, false, true);
     this.world.stats.shots++;
-    this.world.effects.muzzleFlash(muzzle, dir, 0.45, b.vel);
+    if (this.shotCount % 2 === 0) this.world.effects.playerMuzzle(muzzle, dir, b.vel);
     if (this.shotCount % 2 === 0) this.world.effects.gunSmoke(muzzle, b.vel.clone().multiplyScalar(0.9));
     this.muzzleLight.position.copy(muzzle).addScaledVector(dir, -0.4);
-    this.muzzleLight.intensity = 5 + Math.random() * 4;
+    this.muzzleLight.intensity = 3 + Math.random() * 2;
     this.recoilT = 1;
     this.shake = Math.min(1, this.shake + 0.35);
     // Recoil kick disturbs aim (gunner fights it)
