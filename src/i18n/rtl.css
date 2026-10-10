@@ -1,0 +1,101 @@
+/* ---------- Arabic: fonts and right-to-left layout (html[lang=ar][dir=rtl], set by src/i18n) ----------
+   Fonts: every Latin stack keeps its own font first (Latin glyphs, digits, B-17, keys) and falls back
+   to an Arabic face for Arabic glyphs: Noto Kufi Arabic for headings, labels and buttons (the stencil
+   voice), Noto Naskh Arabic for typed documents (briefing, service record), IBM Plex Sans Arabic for
+   small body text and the monospaced readouts. Letter-spacing breaks Arabic joining, so it is off. */
+html[lang=ar] body, html[lang=ar] body * { letter-spacing: 0 !important; }
+html[lang=ar] body, html[lang=ar] button, html[lang=ar] select, html[lang=ar] input, html[lang=ar] h1, html[lang=ar] h2, html[lang=ar] h3,
+html[lang=ar] .layer, html[lang=ar] #hud *, html[lang=ar] .btn, html[lang=ar] .hud-label, html[lang=ar] .menu button {
+  font-family: 'Oswald', 'Noto Kufi Arabic', 'Arial Narrow', sans-serif !important;
+}
+/* typewriter / document text */
+html[lang=ar] .kicker, html[lang=ar] .type, html[lang=ar] #title .eyebrow, html[lang=ar] #loading .msg, html[lang=ar] #banner .b1,
+html[lang=ar] #briefing .sheet, html[lang=ar] #briefing .sheet *:not(h2):not(.stamp):not(kbd):not(.btn), html[lang=ar] .objective, html[lang=ar] #debrief .reason,
+html[lang=ar] .mcard .tg, html[lang=ar] #objCard .oc-d, html[lang=ar] #evPrompt .ev-h, html[lang=ar] .svc-sheet, html[lang=ar] .svc-sheet *:not(.svc-title):not(.svc-sec):not(.svc-stamp),
+html[lang=ar] .svc-toast, html[lang=ar] #title .ob-prompt .k {
+  font-family: 'Special Elite', 'Noto Naskh Arabic', 'Courier New', serif !important;
+}
+/* small body text and readouts */
+html[lang=ar] .mono, html[lang=ar] kbd, html[lang=ar] .credits p, html[lang=ar] .ucard .d, html[lang=ar] .hcard .d, html[lang=ar] .pcard .d, html[lang=ar] .hsec,
+html[lang=ar] .hwrap .pts, html[lang=ar] .armory .pts, html[lang=ar] .leader, html[lang=ar] .perkwrap .hint, html[lang=ar] #perkToast .k, html[lang=ar] #perkToast .d,
+html[lang=ar] #title .foot, html[lang=ar] .mcard .num, html[lang=ar] .instr .v, html[lang=ar] .combo-val, html[lang=ar] #streakMeter .sm-label, html[lang=ar] #tip,
+html[lang=ar] #subs .line, html[lang=ar] #feed div, html[lang=ar] .lb-status, html[lang=ar] .cloud, html[lang=ar] .cloud *, html[lang=ar] [class^="tro-"], html[lang=ar] [class*=" tro-"],
+html[lang=ar] .svc-xpline, html[lang=ar] .svc-orders, html[lang=ar] .svc-k, html[lang=ar] .hx .hnote, html[lang=ar] .hx .hsub, html[lang=ar] .bc-lab, html[lang=ar] .ctile .cs,
+html[lang=ar] .citem span, html[lang=ar] .cr-hint, html[lang=ar] .cr-rar, html[lang=ar] #objCard .oc-k, html[lang=ar] #objCard .oc-p, html[lang=ar] #evPrompt .ev-k, html[lang=ar] .mr-tag,
+html[lang=ar] #tutCard .k, html[lang=ar] #tutCard .b, html[lang=ar] .ab-time, html[lang=ar] .ab-name {
+  font-family: 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace !important;
+}
+/* Arabic glyphs read smaller than Oswald capitals at the same size: lift the tiniest labels */
+html[lang=ar] .hud-label { font-size: 12px; }
+html[lang=ar] .kicker { font-size: 14px; }
+html[lang=ar] #subs .line { font-size: clamp(15px, 1.35vw, 21px); line-height: 1.6; }
+html[lang=ar] #briefing p { font-size: 17px; line-height: 1.85; }
+html[lang=ar] .objective { font-size: 15px; line-height: 1.6; }
+html[lang=ar] #title h1 { line-height: 1.12; }
+html[lang=ar] #title .sub { margin-bottom: 24px; line-height: 1.6; }
+/* Kufi has tall ascenders and descenders: a tighter line keeps the long title menu on screen */
+html[lang=ar] .menu button { font-size: 23px; line-height: 1.3; padding: 3px 0; }
+html[lang=ar] .menu button small { font-size: 12.5px; }
+html[lang=ar] #banner .b2 { font-size: 40px; line-height: 1.3; }
+
+/* ---------- mirrored layout ---------- */
+/* title: menu on the right, the dark gradient behind it, stamp and first-launch prompt on the left */
+html[dir=rtl] #title { background: linear-gradient(270deg, rgba(8,9,6,0.82) 0%, rgba(8,9,6,0.45) 38%, rgba(8,9,6,0) 62%); }
+html[dir=rtl] #title .wrap { left: auto; right: 7vw; }
+html[dir=rtl] #title .foot { left: auto; right: 7vw; }
+html[dir=rtl] #title .tt-stencil { right: auto; left: 6vw; transform: translateY(-50%) rotate(4deg); animation-name: tt-stamp-rtl; }
+@keyframes tt-stamp-rtl { from { opacity: 0; transform: translateY(-50%) rotate(4deg) scale(1.3); } to { opacity: 0.92; transform: translateY(-50%) rotate(4deg) scale(1); } }
+html[dir=rtl] #title .ob-prompt { right: auto; left: 6vw; }
+html[dir=rtl] .menu button { text-align: right; }
+@media (max-width: 720px) {
+  html[dir=rtl] #title .wrap { left: 16px; right: 16px; }
+  html[dir=rtl] #title .tt-stencil { left: 16px; }
+  html[dir=rtl] #title .ob-prompt { left: 16px; }
+}
+
+/* cards and lists read from the right */
+html[dir=rtl] .mcard, html[dir=rtl] .pcard, html[dir=rtl] .hcard, html[dir=rtl] .lb-panel, html[dir=rtl] .crewlist, html[dir=rtl] .svc-debrief,
+html[dir=rtl] .crewroster .cr-seat, html[dir=rtl] .crewlist.cp i, html[dir=rtl] #controlsCard .cc-key { text-align: right; }
+html[dir=rtl] .crewlist.cp em, html[dir=rtl] .crewlist.cp b { text-align: left; }
+html[dir=rtl] .crewroster .cr-notes { border-left: none; border-right: 3px solid var(--khaki); }
+html[dir=rtl] .crewroster .cr-stats b { text-align: left; }
+html[dir=rtl] .crewroster .cr-new { margin-left: 0; margin-right: 6px; }
+/* the role tag sits on its own line: Arabic dates and the tag would collide in the corner */
+html[dir=rtl] .mcard .role { position: static; display: inline-block; margin-bottom: 6px; }
+html[dir=rtl] .pcard .k { right: auto; left: 10px; }
+html[dir=rtl] #briefing .stamp { right: auto; left: 36px; transform: rotate(-8deg); }
+html[dir=rtl] .medal { margin: 4px 0 4px 6px; }
+html[dir=rtl] .setting select, html[dir=rtl] .setting input { direction: rtl; }
+
+/* HUD: the text corners mirror (mission + objective top right, tally top left, feed on the left);
+   the bottom instrument blocks and the canvas radar stay where the gauges are */
+html[dir=rtl] .hud-tl { left: auto; right: 22px; text-align: right; }
+html[dir=rtl] .hud-tr { right: auto; left: 22px; text-align: left; }
+html[dir=rtl] .combo-bar { margin: 3px auto 0 0; }
+html[dir=rtl] #feed { right: auto; left: 22px; align-items: flex-start; }
+html[dir=rtl] #feed div.mine { border-left: none; border-right: 3px solid var(--khaki); }
+html[dir=rtl] #feed div.loss { border-left: none; border-right: 3px solid var(--bad); }
+html[dir=rtl] #subs .who { margin-right: 0; margin-left: 8px; }
+html[dir=rtl] .stations span b { right: auto; left: -6px; }
+html[dir=rtl] .crewlist span.wnd { border-left: none; border-right: 2px solid var(--bad); }
+html[dir=rtl] #objCard { left: auto; right: 22px; border-left: 1px solid rgba(185,167,111,0.55); border-right: 3px solid var(--khaki); transform: translateX(16px); }
+html[dir=rtl] #objCard.show { transform: none; }
+html[dir=rtl] #objCard .oc-p { text-align: left; }
+html[dir=rtl] #tutCard { left: auto; right: 24px; border-left: 1px solid rgba(185,167,111,0.55); border-right: 3px solid var(--khaki); transform: translateX(12px); }
+html[dir=rtl] #tutCard.show { transform: none; }
+html[dir=rtl] #tutCard.done { border-right-color: var(--good); }
+
+/* service record toasts slide in from the left */
+html[dir=rtl] #svc-toasts { right: auto; left: 14px; }
+html[dir=rtl] .svc-toast { border-left: none; border-right: 5px solid var(--red); transform: translateX(-28px) rotate(1deg); }
+html[dir=rtl] .svc-orew { text-align: left; }
+html[dir=rtl] .svc-stamp-tr { right: auto; left: 30px; transform: rotate(-7deg); }
+html[dir=rtl] .svc-lstamp { right: auto; left: 3px; transform: rotate(-12deg); }
+html[dir=rtl] .svc-dhead .svc-stamp { right: auto; left: 4px; }
+html[dir=rtl] .svc-stamp-done { right: auto; left: 90px; }
+
+/* readouts and keys: left-to-right unless they hold Arabic ("62 م", "الزر الأيسر"), so +320, 5:48, 1/9 keep their order */
+html[dir=rtl] kbd, html[dir=rtl] .hud-big, html[dir=rtl] .instr .v, html[dir=rtl] .combo-val, html[dir=rtl] .stat .v, html[dir=rtl] #hScore, html[dir=rtl] #hFormation { unicode-bidi: plaintext; direction: ltr; }
+html[dir=rtl] .stat .v { text-align: right; }
+/* service record and trophy progress bars fill from the right */
+html[dir=rtl] .tro-bar i, html[dir=rtl] .svc-bar i { inset: 0 0 0 auto; }

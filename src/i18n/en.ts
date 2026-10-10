@@ -1,0 +1,175 @@
+// Interface strings (English), grouped by screen. ar.ts must have every key (tests/i18n.test.ts).
+// Content written elsewhere in English (missions, upgrades, radio...) goes through tx() and
+// the phrase tables in ./ar/ instead.
+export const en = {
+  // shared
+  'common.back': 'Back',
+  'common.on': 'On',
+  'common.off': 'Off',
+  'common.objectives': 'OBJECTIVES',
+  'common.kills': 'Confirmed kills',
+  'common.accuracy': 'Accuracy',
+  'common.score': 'Score',
+  'common.armory': 'Armory',
+  'common.settings': 'Settings',
+  'common.meritPoints': 'Merit points:',
+  'common.perLevel': '{per} per level',
+  'common.maxed': 'Maxed',
+  'common.upgrade': 'Upgrade · {cost}',
+
+  // loading
+  'loading.msg': 'Preparing the aircraft…',
+
+  // title
+  'title.stencil': '8TH AIR FORCE',
+  'title.eyebrow': 'EIGHTH AIR FORCE · 1943–1944',
+  'title.logo': 'Sky War<br/><span>Shooter</span> 3D',
+  'title.sub': 'Man the guns of a B-17 Flying Fortress. Fly escort in a P-51 Mustang.',
+  'title.campaign': 'Campaign',
+  'title.campaignSub': '{n} missions',
+  'title.survival': 'Survival',
+  'title.survivalSub': 'endless waves',
+  'title.armorySub': 'upgrade your guns',
+  'title.credits': 'Credits',
+  'title.foot': 'Mouse + keyboard · Chrome / Edge / Firefox / Safari recommended',
+
+  // campaign
+  'campaign.kicker': '401ST BOMB SQUADRON · OPERATIONS',
+  'campaign.title': 'Campaign',
+  'campaign.mission': 'MISSION {n}',
+  'campaign.best': 'best {n}',
+
+  // survival menu
+  'survival.kicker': 'ENDLESS WAVES',
+  'survival.title': 'Survival',
+  'survival.desc': 'Waves of Fw 190s, each one larger and more aggressive than the last. Bombers lost between waves are not replaced.',
+  'survival.gunner': 'B-17 Gunner',
+  'survival.pilot': 'P-51 Escort',
+  'survival.best': 'Best scores',
+  'survival.rounds': '{n} rounds',
+  'survival.none': 'No scores yet',
+
+  // briefing
+  'brief.gunnerControls': '<div><kbd>Mouse</kbd> or <kbd>Arrows</kbd>/<kbd>IJKL</kbd> traverse gun</div><div><kbd>LMB</kbd>/<kbd>Space</kbd> fire (short bursts)</div><div><kbd>RMB</kbd> look down the sight</div><div><kbd>1</kbd>–<kbd>5</kbd> change gun position</div><div><kbd>R</kbd> reload</div><div><kbd>Esc</kbd> pause</div>',
+  'brief.pilotControls': '<div><kbd>Mouse</kbd> or <kbd>Arrows</kbd>/<kbd>IJKL</kbd> aim / fly (mouse aim)</div><div><kbd>LMB</kbd>/<kbd>Space</kbd> fire</div><div><kbd>W</kbd>/<kbd>S</kbd> throttle</div><div><kbd>Q</kbd>/<kbd>E</kbd> roll · <kbd>A</kbd>/<kbd>D</kbd> rudder</div><div><kbd>V</kbd> cockpit / chase view</div><div><kbd>C</kbd> free look · <kbd>M</kbd> flight mode</div><div><kbd>RMB</kbd> zoom · <kbd>Esc</kbd> pause</div>',
+  'brief.stamp': 'SECRET',
+  'brief.hdr': 'HQ 401ST BOMB SQUADRON (H) · FIELD ORDER',
+  'brief.missionNo': 'MISSION No. {n}',
+  'brief.survival': 'SURVIVAL',
+  'brief.target': 'TARGET:',
+  'brief.assignment': 'ASSIGNMENT:',
+  'brief.escort': 'P-51D Mustang — close escort',
+  'brief.go': 'Man your station',
+
+  // HUD
+  'hud.kills': 'Kills',
+  'hud.formation': 'Formation',
+  'hud.multiplier': 'Multiplier',
+  'hud.lockHint': 'CLICK TO TAKE CONTROL',
+  'hud.barrel': 'Barrel',
+  'hud.reloading': ' — RELOADING',
+  'hud.barrelHot': ' — BARREL HOT',
+  'hud.ok': 'OK',
+  'hud.wounded': 'WOUNDED',
+  'hud.ias': 'IAS mph',
+  'hud.alt': 'ALT ft',
+  'hud.thr': 'THR',
+  'hud.g': 'G',
+  'hud.ammo': 'AMMO',
+  'hud.mustang': 'Mustang',
+
+  // pause
+  'pause.keysGunner': 'Mouse aim · LMB fire · RMB sight · 1–5 gun positions · R reload',
+  'pause.keysPilot': 'Mouse aim/fly · LMB/Space fire · W/S throttle · Q/E roll · A/D rudder · V view · C free look · M control mode',
+  'pause.bombers': 'Bombers remaining',
+  'pause.kicker': 'INTERPHONE SILENT',
+  'pause.title': 'Paused',
+  'pause.resume': 'Resume',
+  'pause.restart': 'Restart mission',
+  'pause.quit': 'Abort to menu',
+
+  // settings
+  'settings.kicker': 'CONFIGURATION',
+  'settings.language': 'Language',
+  'settings.difficulty': 'Difficulty',
+  'settings.diff.recruit': 'Recruit (lead indicator)',
+  'settings.diff.veteran': 'Veteran',
+  'settings.diff.ace': 'Ace',
+  'settings.sensitivity': 'Mouse sensitivity',
+  'settings.fov': 'Field of view',
+  'settings.invertY': 'Invert mouse Y',
+  'settings.volume': 'Master volume',
+  'settings.musicVolume': 'Music volume',
+  'settings.sfxVolume': 'Effects volume',
+  'settings.ambVolume': 'Ambience volume',
+  'settings.music': 'Music',
+  'settings.radio': 'Radio voices',
+  'settings.subsOnly': 'Subtitles only',
+  'settings.quality': 'Graphics quality',
+  'settings.q.low': 'low',
+  'settings.q.medium': 'medium',
+  'settings.q.high': 'high',
+  'settings.markers': 'Target markers',
+  'settings.markersOff': 'Off (realistic)',
+  'settings.aimAssist': 'Aim assist',
+  'settings.low': 'Low',
+  'settings.high': 'High',
+  'settings.leadPip': 'Lead indicator',
+  'settings.recruitOnly': 'Recruit only',
+  'settings.always': 'Always',
+  'settings.killCam': 'Kill cam',
+  'settings.flightMode': 'P-51 flight controls',
+  'settings.mouseAim': 'Mouse aim',
+  'settings.direct': 'Direct (mouse = stick)',
+  'settings.done': 'Done',
+
+  // credits
+  'credits.kicker': 'CREDITS',
+  'credits.p1': 'Game design, code, volumetric sky, effects and procedural audio: built with Three.js.',
+  'credits.p2': 'Aircraft models from the FlightGear open-source hangar (GPL-2.0): Boeing B-17G, Focke-Wulf Fw 190 A-8 and North American P-51D. See public/models/CREDITS.md for authors.',
+  'credits.p3': 'Sound effects from Freesound.org contributors (CC0 / CC BY — Fight2FlyPhoto, mattew, zimbot, poissonmort, juskiddink, Halleck and others) and music by Kevin MacLeod (incompetech.com, CC BY 4.0: "For the Fallen", "Clenched Teeth", "Constance", "Heroic Age", "Long Road Ahead", "Taps"). Full list: public/audio/CREDITS.md.',
+  'credits.p4': 'Visual reference: the B-17 waist gunner shot in Yarnhub\'s animated short "When a B-17 Pilot Attacked the Copilot". All characters and bomber names in this game are fictional.',
+
+  // armory
+  'armory.kicker': 'ORDNANCE SHOP · 401ST BOMB SQUADRON',
+  'armory.earned': '— earned from score in every mission',
+
+  // hangar
+  'hangar.title': 'Hangar',
+  'hangar.equipped': 'EQUIPPED',
+  'hangar.equip': 'EQUIP',
+  'hangar.unlock': 'UNLOCK · {cost}',
+  'hangar.aircraft': 'AIRCRAFT',
+  'hangar.weapon': 'WEAPON',
+  'hangar.upgrades': 'UPGRADES',
+  'hangar.launch': 'Launch — {next}',
+
+  // field upgrades
+  'perks.title': 'Choose a field upgrade',
+  'perks.hint': 'Click a card or press 1 – 3',
+
+  // debrief
+  'debrief.rounds': 'Rounds fired',
+  'debrief.hits': 'Rounds on target',
+  'debrief.streak': 'Best streak',
+  'debrief.closest': 'Closest kill',
+  'debrief.gunKills': '{gun} kills',
+  'debrief.gunKillsNone': 'Gun kills',
+  'debrief.km': '{n} km',
+  'debrief.m': '{n} m',
+  'debrief.survivalReport': 'SURVIVAL REPORT',
+  'debrief.missionReport': 'MISSION DEBRIEFING',
+  'debrief.roundsN': '{n} rounds',
+  'debrief.complete': 'Mission complete',
+  'debrief.failed': 'Mission failed',
+  'debrief.bombersLost': 'Bombers lost',
+  'debrief.time': 'Time',
+  'debrief.merit': 'Merit earned',
+  'debrief.next': 'Next mission',
+  'debrief.flyAgain': 'Fly again',
+  'debrief.retry': 'Retry',
+  'debrief.pts': ' · {n} pts',
+  'debrief.menu': 'Main menu',
+} as const;
+
+export type UiKey = keyof typeof en;

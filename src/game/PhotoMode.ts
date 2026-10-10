@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Engine } from '../core/Engine';
 import type { Input } from '../core/Input';
 import type { World } from '../world/World';
+import { tx } from '../i18n';
 
 // Photo mode (F during a mission): the simulation freezes (Engine.paused, and Game skips
 // its world update while active) and a free-fly camera takes over. Everything the
@@ -175,11 +176,11 @@ export class PhotoMode {
   private showHint() {
     if (!this.hint) {
       const h = document.createElement('div');
-      h.style.cssText = 'position:fixed;left:22px;bottom:22px;z-index:7;pointer-events:none;font:12px/1.6 "IBM Plex Mono",monospace;letter-spacing:1px;color:rgba(255,255,255,0.92);text-shadow:0 1px 4px rgba(0,0,0,0.9);display:none';
+      h.style.cssText = 'position:fixed;left:22px;bottom:22px;z-index:7;pointer-events:none;font:12px/1.6 "IBM Plex Mono","IBM Plex Sans Arabic",monospace;letter-spacing:1px;color:rgba(255,255,255,0.92);text-shadow:0 1px 4px rgba(0,0,0,0.9);display:none';
       document.body.appendChild(h);
       this.hint = h;
     }
-    this.hint.textContent = 'PHOTO MODE · WASD move · mouse look · Q/E down/up · Shift faster · wheel speed · F exit';
+    this.hint.textContent = tx('PHOTO MODE · WASD move · mouse look · Q/E down/up · Shift faster · wheel speed · F exit');
     this.hint.style.display = 'block';
     this.hintT = 6;
   }

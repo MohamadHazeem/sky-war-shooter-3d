@@ -9,6 +9,7 @@ import { PAINTS } from '../render/Paint';
 import { sound } from '../audio/Sound';
 import { crateBurst, crateReveal, crateShake } from '../audio/CrateSound';
 import './crate.css';
+import { tx } from '../i18n';
 
 // Hangar extras (weapon mod slot, bomber customisation, collection) and the loot crate
 // that opens over the hangar at the end of a round. UI.hangar() calls mountHangarExtras()
@@ -43,18 +44,18 @@ function modSection(prog: Progression, role: 'gunner' | 'pilot') {
   const owned = WEAPON_MODS.filter((m) => prog.unlocked.has('mod:' + m.id));
   const card = (id: string, name: string, desc: string, rarity: Rarity | null) =>
     `<button class="hcard xcard ${rarity ? 'r-' + rarity : ''} ${(fitted ?? '') === id ? 'sel' : ''}" data-mod="${id}">
-      <div class="t">${esc(name)}</div><div class="d">${esc(desc)}</div>
-      <div class="s">${(fitted ?? '') === id ? 'FITTED' : 'FIT'}${rarity ? ` · <i>${RARITY_LABEL[rarity]}</i>` : ''}</div></button>`;
-  return `<div class="hsec">WEAPON MOD · ${esc(w.name.toUpperCase())}</div>
+      <div class="t">${esc(tx(name))}</div><div class="d">${esc(tx(desc))}</div>
+      <div class="s">${(fitted ?? '') === id ? tx('FITTED') : tx('FIT')}${rarity ? ` · <i>${tx(RARITY_LABEL[rarity])}</i>` : ''}</div></button>`;
+  return `<div class="hsec">${tx('WEAPON MOD')} · ${esc(tx(w.name).toUpperCase())}</div>
     ${owned.length ? `<div class="hgrid">${card('', 'No mod', 'Standard issue', null)}${owned.map((m) => card(m.id, m.name, m.desc, m.rarity)).join('')}</div>`
-      : '<div class="hnote">No weapon mods yet: they come out of the loot crate at the end of every round.</div>'}`;
+      : `<div class="hnote">${tx('No weapon mods yet: they come out of the loot crate at the end of every round.')}</div>`}`;
 }
 
 function tile(c: Collectable, prog: Progression, selected: boolean, inner: string) {
   const own = owns(prog, c.key), cost = COSMETIC_COST[c.rarity], off = !own && prog.points < cost;
-  return `<button class="ctile r-${c.rarity} ${selected ? 'sel' : ''} ${own ? '' : 'locked'}" data-cos="${esc(c.key)}" ${off ? 'disabled' : ''} title="${esc(c.name)} · ${RARITY_LABEL[c.rarity]}">
-    ${inner}<div class="cn">${esc(c.name)}</div>
-    <div class="cs">${selected ? 'SELECTED' : own ? 'SELECT' : `UNLOCK · ${cost}`}</div></button>`;
+  return `<button class="ctile r-${c.rarity} ${selected ? 'sel' : ''} ${own ? '' : 'locked'}" data-cos="${esc(c.key)}" ${off ? 'disabled' : ''} title="${esc(tx(c.name))} · ${tx(RARITY_LABEL[c.rarity])}">
+    ${inner}<div class="cn">${esc(tx(c.name))}</div>
+    <div class="cs">${selected ? tx('SELECTED') : own ? tx('SELECT') : tx('UNLOCK · {cost}', { cost })}</div></button>`;
 }
 
 function bomberSection(prog: Progression) {
@@ -62,32 +63,32 @@ function bomberSection(prog: Progression) {
   const paint = PAINTS.find((p) => p.id === b.paint && owns(prog, 'paint:' + p.id)) ?? PAINTS[0];
   const nose = owns(prog, 'nose:' + b.nose) ? b.nose : 'script';
   const col = (key: string) => COLLECTABLES.find((c) => c.key === key)!;
-  return `<div class="hsec">YOUR B-17</div>
+  return `<div class="hsec">${tx('YOUR B-17')}</div>
     <div class="bcust">
       <div class="bc-prev" style="background:${paint.swatch}"><img alt="" src="${nose === 'none' ? '' : noseArtThumb(nose, name)}" ${nose === 'none' ? 'hidden' : ''}/></div>
       <div class="bc-ctl">
-        <label class="bc-lab">NAME<input id="bcName" type="text" maxlength="${NAME_MAX}" spellcheck="false" autocomplete="off" value="${esc(name)}"/></label>
+        <label class="bc-lab">${tx('NAME')}<input id="bcName" type="text" maxlength="${NAME_MAX}" spellcheck="false" autocomplete="off" value="${esc(name)}"/></label>
         <div class="chips">${NAME_PRESETS.map((n) => {
           const c = col('name:' + n.name), own = owns(prog, c.key), cost = COSMETIC_COST[n.rarity];
           return `<button class="chip r-${n.rarity} ${name === n.name ? 'sel' : ''} ${own ? '' : 'locked'}" data-cos="${esc(c.key)}" ${!own && prog.points < cost ? 'disabled' : ''}>${esc(n.name)}${own ? '' : ` · ${cost}`}</button>`;
         }).join('')}</div>
-        <div class="hnote">The name is painted on the nose and used on the radio.</div>
+        <div class="hnote">${tx('The name is painted on the nose and used on the radio.')}</div>
       </div>
     </div>
-    <div class="hsub">NOSE ART</div>
+    <div class="hsub">${tx('NOSE ART')}</div>
     <div class="cgrid">${tile({ key: 'nose:none', kind: 'nose', id: 'none', name: 'Bare nose', desc: '', rarity: 'common', free: true }, prog, nose === 'none', '<div class="cimg bare"></div>')}
       ${NOSE_ARTS.filter((n) => n.id !== 'none').map((n) => tile(col('nose:' + n.id), prog, nose === n.id, `<img class="cimg" alt="" src="${noseArtThumb(n.id, name)}"/>`)).join('')}</div>
-    <div class="hsub">PAINT</div>
+    <div class="hsub">${tx('PAINT')}</div>
     <div class="cgrid">${PAINTS.map((p) => tile(col('paint:' + p.id), prog, paint.id === p.id, `<div class="cimg" style="background:${p.swatch}"></div>`)).join('')}</div>`;
 }
 
 function collectionSection(prog: Progression) {
   const total = COLLECTABLES.length, have = COLLECTABLES.filter((c) => owns(prog, c.key)).length;
   const groups: Collectable['kind'][] = ['mod', 'nose', 'paint', 'name'];
-  return `<details class="hcoll" ${collectionOpen ? 'open' : ''}><summary class="hsec">COLLECTION · ${have}/${total} FOUND</summary>
-    ${groups.map((k) => `<div class="hsub">${KIND_LABEL[k].toUpperCase()}S</div><div class="colgrid">${COLLECTABLES.filter((c) => c.kind === k)
+  return `<details class="hcoll" ${collectionOpen ? 'open' : ''}><summary class="hsec">${tx('COLLECTION · {have}/{total} FOUND', { have, total })}</summary>
+    ${groups.map((k) => `<div class="hsub">${tx(KIND_LABEL[k].toUpperCase() + 'S')}</div><div class="colgrid">${COLLECTABLES.filter((c) => c.kind === k)
       .sort((a, b) => RARITIES.indexOf(a.rarity) - RARITIES.indexOf(b.rarity))
-      .map((c) => { const own = owns(prog, c.key); return `<div class="citem r-${c.rarity} ${own ? '' : 'locked'}"><b>${esc(own ? c.name : '???')}</b><span>${RARITY_LABEL[c.rarity]}${own && c.kind === 'mod' ? ' · ' + esc(c.desc) : ''}</span></div>`; }).join('')}</div>`).join('')}
+      .map((c) => { const own = owns(prog, c.key); return `<div class="citem r-${c.rarity} ${own ? '' : 'locked'}"><b>${esc(own ? tx(c.name) : '???')}</b><span>${tx(RARITY_LABEL[c.rarity])}${own && c.kind === 'mod' ? ' · ' + esc(tx(c.desc)) : ''}</span></div>`; }).join('')}</div>`).join('')}
   </details>`;
 }
 
@@ -150,20 +151,20 @@ function showCrate(r: CrateResult) {
     return `<i style="--a:${a.toFixed(0)}deg;--d:${d.toFixed(0)}px;--s:${(0.6 + Math.random() * 0.8).toFixed(2)}"></i>`;
   }).join('');
   el.innerHTML = `
-    <div class="cr-head"><div class="kicker">ROUND ${r.round} CLEARED</div><div class="cr-grade g-${r.grade}">${esc(CRATE_NAME[r.grade])}</div></div>
+    <div class="cr-head"><div class="kicker">${tx('ROUND {n} CLEARED', { n: r.round })}</div><div class="cr-grade g-${r.grade}">${esc(tx(CRATE_NAME[r.grade]))}</div></div>
     <div class="cr-stage">
       <div class="cr-rays"></div>
       <div class="cr-box g-${r.grade}"><div class="cr-lid"></div><div class="cr-body"><span>U.S. ARMY</span><small>FIELD SUPPLY · 401ST BS</small></div><div class="cr-glow"></div></div>
       <div class="cr-flash"></div>
       <div class="cr-sparks">${sparks}</div>
       <div class="cr-card">
-        <div class="cr-rar">${RARITY_LABEL[r.item.rarity].toUpperCase()} · ${esc(r.item.label.toUpperCase())}</div>
+        <div class="cr-rar">${tx(RARITY_LABEL[r.item.rarity]).toUpperCase()} · ${esc(tx(r.item.label).toUpperCase())}</div>
         <div class="cr-icon">${itemIcon(r.item)}</div>
-        <div class="cr-t">${esc(r.item.title)}</div>
-        <div class="cr-d">${esc(r.item.desc)}</div>
+        <div class="cr-t">${esc(tx(r.item.title))}</div>
+        <div class="cr-d">${esc(tx(r.item.desc))}</div>
       </div>
     </div>
-    <div class="cr-hint">Click or press Space to continue</div>`;
+    <div class="cr-hint">${tx('Click or press Space to continue')}</div>`;
   document.body.appendChild(el);
   const st: CrateState = { el, timers: [], revealed: false, result: r, obs: new MutationObserver(() => { if (!document.querySelector('#hangar.show')) closeCrate(); }) };
   crate = st;

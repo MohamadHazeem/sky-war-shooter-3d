@@ -3,6 +3,7 @@
 // the ability runs and a pulsing glow when it is ready. Also owns the Focus screen tint.
 // The elements live outside #hud (UI.hud() rewrites that layer at every mission start).
 // update() only touches the DOM when a value visibly changes.
+import { tx } from '../i18n';
 
 export interface AbilitySlotView {
   id: string;
@@ -52,7 +53,7 @@ export class AbilityBar {
     this.slots.clear();
     this.root.innerHTML = slots.map((s) => `<div class="ab-slot" data-a="${s.id}">
         <div class="ab-face"><div class="ab-icon">${ICONS[s.id] ?? ''}</div><div class="ab-sweep"></div><div class="ab-ring"></div><div class="ab-time"></div></div>
-        <kbd class="ab-key">${s.key}</kbd><div class="ab-name">${s.name}</div>
+        <kbd class="ab-key">${s.key}</kbd><div class="ab-name">${tx(s.name)}</div>
       </div>`).join('');
     this.root.querySelectorAll<HTMLElement>('.ab-slot').forEach((el) => {
       this.slots.set(el.dataset.a!, { root: el, time: el.querySelector('.ab-time')!, cdQ: -1, actQ: -1, ready: false, active: false, secs: -1 });

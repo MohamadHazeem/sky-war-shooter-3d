@@ -23,6 +23,7 @@ import { Aircraft, Fighter } from '../world/Aircraft';
 import type { EnemyType } from '../world/EnemyTypes';
 import { mountLeaderboard } from '../ui/LeaderboardPanel';
 import { sound } from '../audio/Sound';
+import { tx } from '../i18n';
 
 export type Role = 'gunner' | 'pilot';
 
@@ -252,6 +253,8 @@ function injectCss() {
 .mode-tab.on { color: var(--khaki); border-color: var(--line); background: rgba(0,0,0,0.25); margin-bottom: -1px; }
 .mode-body p { color: var(--ink-dim); font-size: 15px; line-height: 1.5; margin: 12px 0; }
 .mode-body .btn { padding: 10px 20px; font-size: 15px; }
+html[dir="rtl"] .mode-panel { text-align: right; }
+html[dir="rtl"] .mode-tab { letter-spacing: 0; }
 `;
   document.head.appendChild(st);
 }
@@ -268,15 +271,15 @@ export function mountModePanel(host: HTMLElement, onPick: (m: Mission) => void, 
   else host.appendChild(panel);
   const show = (id: string) => {
     const d = MODES.find((x) => x.id === id) ?? MODES[0];
-    panel.innerHTML = `<div class="mode-tabs">${MODES.map((x) => `<button class="mode-tab${x === d ? ' on' : ''}" data-tab="${esc(x.id)}">${esc(x.title)}</button>`).join('')}</div>
-      <div class="mode-body"><p>${esc(d.blurb)}</p>
-      <div class="row"><button class="btn" data-mode-role="gunner">B-17 Gunner</button><button class="btn" data-mode-role="pilot">P-51 Escort</button></div>
+    panel.innerHTML = `<div class="mode-tabs">${MODES.map((x) => `<button class="mode-tab${x === d ? ' on' : ''}" data-tab="${esc(x.id)}">${esc(tx(x.title))}</button>`).join('')}</div>
+      <div class="mode-body"><p>${esc(tx(d.blurb))}</p>
+      <div class="row"><button class="btn" data-mode-role="gunner">${tx('B-17 Gunner')}</button><button class="btn" data-mode-role="pilot">${tx('P-51 Escort')}</button></div>
       <div data-boards></div></div>`;
     panel.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => b.addEventListener('click', () => show(b.dataset.tab!)));
     panel.querySelectorAll<HTMLButtonElement>('[data-mode-role]').forEach((b) => b.addEventListener('click', () => onPick(d.mission(b.dataset.modeRole as Role))));
     const boards = panel.querySelector<HTMLElement>('[data-boards]')!;
-    mountLeaderboard(boards, d.board('gunner'), `ONLINE TOP 10 — ${d.title.toUpperCase()} · B-17 GUNNER`);
-    mountLeaderboard(boards, d.board('pilot'), `ONLINE TOP 10 — ${d.title.toUpperCase()} · P-51 ESCORT`);
+    mountLeaderboard(boards, d.board('gunner'), tx('ONLINE TOP 10 — {mode} · B-17 GUNNER', { mode: tx(d.title).toUpperCase() }));
+    mountLeaderboard(boards, d.board('pilot'), tx('ONLINE TOP 10 — {mode} · P-51 ESCORT', { mode: tx(d.title).toUpperCase() }));
   };
   show(startTab);
 }

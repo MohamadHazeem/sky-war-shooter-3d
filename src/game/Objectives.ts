@@ -2,6 +2,7 @@ import type { MidRound } from './MidRound';
 import { Aircraft, Bomber, Fighter } from '../world/Aircraft';
 import { STATIONS } from '../world/B17Layout';
 import type { CardView } from '../ui/ObjectiveCard';
+import { tx } from '../i18n';
 
 // Bonus objectives that pop up mid-round (scheduled by MidRound): a HUD card with a title,
 // progress and timer, a radio line to announce it and merit on success.
@@ -25,7 +26,7 @@ export abstract class Objective {
   update(_dt: number, _c: MidRound) {}
   onKill(_v: Aircraft, _byPlayer: boolean, _c: MidRound) {}
   // time limit reached: most objectives fail, survival ones succeed
-  timeout(_c: MidRound) { this.state = 'lost'; this.failText = 'out of time'; }
+  timeout(_c: MidRound) { this.state = 'lost'; this.failText = tx('out of time'); }
   cancel(_c: MidRound) {}
   end(_c: MidRound) {}
   tags(): Mark[] { return []; }
@@ -54,8 +55,8 @@ class Protect extends Objective {
   private attackers: Fighter[] = [];
   constructor(private b: Bomber) {
     super();
-    this.title = `Protect the ${b.name}`;
-    this.desc = 'She\'s shot up and the fighters smell blood. Keep her flying.';
+    this.title = tx('Protect the {name}', { name: b.name });
+    this.desc = tx('She\'s shot up and the fighters smell blood. Keep her flying.');
     this.limit = 30; this.merit = 150;
   }
   start(c: MidRound) {
@@ -71,17 +72,17 @@ class Protect extends Objective {
     c.radio('protect', b.name, `${b.name} to group: we're hit bad and they're lining up on us. Cover us!`);
   }
   update(_dt: number, _c: MidRound) {
-    if (!this.b.alive) this.lose(`${this.b.name} went down`);
+    if (!this.b.alive) this.lose(tx('{name} went down', { name: this.b.name }));
   }
   timeout(c: MidRound) {
-    if (!this.b.alive) { this.lose(`${this.b.name} went down`); return; }
+    if (!this.b.alive) { this.lose(tx('{name} went down', { name: this.b.name })); return; }
     this.win();
     c.radio('protectok', this.b.name, `${this.b.name} here. Thanks for the cover — we owe you one.`);
   }
   end(c: MidRound) { c.unpin(this.attackers); }
   tags(): Mark[] { return [{ a: this.b, label: this.b.name.toUpperCase() }]; }
   protected frac() { return 1 - this.timeLeft / this.limit; }
-  protected progressText() { return `hold ${Math.max(0, Math.ceil(this.timeLeft))} s`; }
+  protected progressText() { return tx('hold {n} s', { n: Math.max(0, Math.ceil(this.timeLeft)) }); }
 }
 
 // ---------------------------------------------------------------- Down the pathfinder
@@ -90,13 +91,13 @@ class Pathfinder extends Objective {
   private f: Fighter | null = null;
   constructor() {
     super();
-    this.title = 'Down the pathfinder';
-    this.desc = 'A marked Ju 88 is shadowing the box and calling in the fighters. Shoot it down before it gets away.';
+    this.title = tx('Down the pathfinder');
+    this.desc = tx('A marked Ju 88 is shadowing the box and calling in the fighters. Shoot it down before it gets away.');
     this.limit = 45; this.merit = 175;
   }
   start(c: MidRound) {
     const target = c.role === 'gunner' ? c.world.playerBomber : c.nearbyBomber();
-    if (!target) { this.lose('no target'); return; }
+    if (!target) { this.lose(tx('no target')); return; }
     this.f = c.spawnAttackers(target, 1, { from: 'front', dist: 1900, type: 'ju88', attack: 'headon' })[0];
     // a lighter shadower than the armoured Ju 88 in the fighter waves: one good pass downs it
     this.f.structure = this.f.maxStructure = this.f.maxStructure * 0.5;
@@ -110,12 +111,12 @@ class Pathfinder extends Objective {
   timeout(c: MidRound) {
     if (this.f && !this.f.alive) { this.win(); return; }
     if (this.f) c.withdraw(this.f);
-    this.lose('he got away');
+    this.lose(tx('he got away'));
     c.radio('pathfinderaway', 'Tail', 'The Ju 88\'s turning for home — he got away!');
   }
-  tags(): Mark[] { return this.f && this.f.alive ? [{ a: this.f, label: 'PATHFINDER' }] : []; }
+  tags(): Mark[] { return this.f && this.f.alive ? [{ a: this.f, label: tx('PATHFINDER') }] : []; }
   protected frac() { return this.f ? 1 - Math.max(0, this.f.structureFrac) : 0; }
-  protected progressText() { return this.f && this.f.alive ? `${Math.round(Math.max(0, this.f.structureFrac) * 100)}% left` : 'down'; }
+  protected progressText() { return this.f && this.f.alive ? tx('{n}% left', { n: Math.round(Math.max(0, this.f.structureFrac) * 100) }) : tx('down'); }
 }
 
 // ---------------------------------------------------------------- 3 kills without overheating
@@ -125,8 +126,8 @@ class CoolHead extends Objective {
   private hot = false;
   constructor() {
     super();
-    this.title = 'Cool barrel';
-    this.desc = 'Down 3 fighters without overheating your gun. Short bursts.';
+    this.title = tx('Cool barrel');
+    this.desc = tx('Down 3 fighters without overheating your gun. Short bursts.');
     this.goal = 3; this.limit = 60; this.merit = 120;
   }
   start(c: MidRound) {
@@ -135,14 +136,14 @@ class CoolHead extends Objective {
   }
   update(_dt: number, c: MidRound) {
     const g = c.game.gunner, hot = g.state.overheated;
-    if (g.station === this.station && hot && !this.hot) this.lose('barrel overheated');
+    if (g.station === this.station && hot && !this.hot) this.lose(tx('barrel overheated'));
     this.station = g.station; this.hot = hot;
   }
   onKill(v: Aircraft, byPlayer: boolean) {
     if (!myKill(v, byPlayer)) return;
     if (++this.progress >= this.goal) this.win();
   }
-  protected progressText() { return `${this.progress} / ${this.goal} kills`; }
+  protected progressText() { return tx('{n} / {m} kills', { n: this.progress, m: this.goal }); }
 }
 
 // ---------------------------------------------------------------- Clear the tail
@@ -151,13 +152,13 @@ class ClearTail extends Objective {
   private marked: Fighter[] = [];
   constructor(private gunner: boolean) {
     super();
-    this.title = 'Clear the tail';
-    this.desc = gunner ? `Two fighters are boring in from six o'clock. Take the tail gun (${STATIONS.tail.key}) and get them both.` : 'Two bandits are working over the box from six o\'clock. Get them both.';
+    this.title = tx('Clear the tail');
+    this.desc = gunner ? tx('Two fighters are boring in from six o\'clock. Take the tail gun ({key}) and get them both.', { key: STATIONS.tail.key }) : tx('Two bandits are working over the box from six o\'clock. Get them both.');
     this.goal = 2; this.limit = 45; this.merit = 140;
   }
   start(c: MidRound) {
     const target = this.gunner ? c.world.playerBomber : c.nearbyBomber();
-    if (!target) { this.lose('no target'); return; }
+    if (!target) { this.lose(tx('no target')); return; }
     this.marked = c.spawnAttackers(target, 2, { from: 'rear', dist: 2000, attack: 'stern', station: this.gunner ? 'tail' : undefined, type: Math.random() < 0.5 ? 'fw190' : 'bf109' });
     c.radio('cleartail', 'Tail', 'Two of them sitting at six o\'clock — coming straight up our tail!');
     if (this.gunner && c.game.gunner.station !== 'tail') c.ui.tip(`Fighters at six o'clock — press <kbd>${STATIONS.tail.key}</kbd> for the TAIL gun`, 3200);
@@ -176,8 +177,8 @@ class ClearTail extends Objective {
     if (++this.progress >= this.goal) this.win();
   }
   end(c: MidRound) { c.unpin(this.marked); }
-  tags(): Mark[] { return this.marked.filter((f) => f.alive).map((f) => ({ a: f, label: 'SIX O\'CLOCK' })); }
-  protected progressText() { return `${this.progress} / ${this.goal} kills`; }
+  tags(): Mark[] { return this.marked.filter((f) => f.alive).map((f) => ({ a: f, label: tx('SIX O\'CLOCK') })); }
+  protected progressText() { return tx('{n} / {m} kills', { n: this.progress, m: this.goal }); }
 }
 
 // ---------------------------------------------------------------- Sharpshooter
@@ -185,8 +186,8 @@ class Sharpshooter extends Objective {
   readonly id = 'sharpshooter';
   constructor(private range: number) {
     super();
-    this.title = 'Sharpshooter';
-    this.desc = `Down 3 fighters at more than ${range} m. Lead them early.`;
+    this.title = tx('Sharpshooter');
+    this.desc = tx('Down 3 fighters at more than {range} m. Lead them early.', { range });
     this.goal = 3; this.limit = 75; this.merit = 160;
   }
   start(c: MidRound) {
@@ -202,7 +203,7 @@ class Sharpshooter extends Objective {
       if (this.progress >= this.goal) this.win();
     } else c.ui.tip(`Too close for Sharpshooter — ${Math.round(d)} m (need ${this.range} m)`, 1800);
   }
-  protected progressText() { return `${this.progress} / ${this.goal} long kills`; }
+  protected progressText() { return tx('{n} / {m} long kills', { n: this.progress, m: this.goal }); }
 }
 
 // ---------------------------------------------------------------- No bomber lost this round
@@ -211,8 +212,8 @@ class NoLoss extends Objective {
   private lost0 = 0;
   constructor(c: MidRound) {
     super();
-    this.title = 'Hold the box';
-    this.desc = 'No Fortress goes down for the rest of this round.';
+    this.title = tx('Hold the box');
+    this.desc = tx('No Fortress goes down for the rest of this round.');
     this.limit = Math.max(20, c.roundLeft - 1); this.merit = 200;
   }
   start(c: MidRound) {
@@ -220,13 +221,13 @@ class NoLoss extends Objective {
     c.radio('noloss', c.role === 'gunner' ? 'Pilot' : 'Big Friend', c.role === 'gunner' ? 'Group lead says hold it together — nobody drops out of this box!' : 'Little friends, stay close. We can\'t afford to lose another ship.');
   }
   update(_dt: number, c: MidRound) {
-    if (c.world.stats.bombersLost > this.lost0) this.lose('a B-17 went down');
+    if (c.world.stats.bombersLost > this.lost0) this.lose(tx('a B-17 went down'));
   }
   timeout(c: MidRound) {
-    if (c.world.stats.bombersLost > this.lost0) this.lose('a B-17 went down'); else this.win();
+    if (c.world.stats.bombersLost > this.lost0) this.lose(tx('a B-17 went down')); else this.win();
   }
   protected frac() { return 1 - this.timeLeft / this.limit; }
-  protected progressText() { return `${Math.max(0, Math.ceil(this.timeLeft))} s to go`; }
+  protected progressText() { return tx('{n} s to go', { n: Math.max(0, Math.ceil(this.timeLeft)) }); }
 }
 
 export interface ObjectiveDef { eligible(c: MidRound): boolean; create(c: MidRound): Objective }

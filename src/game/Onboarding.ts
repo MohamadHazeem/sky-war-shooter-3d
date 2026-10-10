@@ -7,6 +7,7 @@ import { sound } from '../audio/Sound';
 import { Tutorial, TUTORIAL } from './Tutorial';
 import { Hints } from './Hints';
 import { ControlsCard, ControlsHint } from '../ui/ControlsCard';
+import { tx } from '../i18n';
 import '../ui/onboarding.css';
 
 // First-time player experience, kept out of Game.ts: the Gunnery School tutorial (offered
@@ -87,7 +88,7 @@ export class Onboarding {
     if (!menu.querySelector('[data-a="training"]')) {
       const b = document.createElement('button');
       b.dataset.a = 'training';
-      b.innerHTML = `Training <small>${this.saved.tutorialDone ? 'gunnery course' : '2-minute gunnery course'}</small>`;
+      b.innerHTML = `${tx('Training')} <small>${tx(this.saved.tutorialDone ? 'gunnery course' : '2-minute gunnery course')}</small>`;
       b.addEventListener('click', () => this.startTutorial());
       menu.insertBefore(b, menu.firstChild);
     }
@@ -95,10 +96,10 @@ export class Onboarding {
     const p = document.createElement('div');
     p.className = 'ob-prompt';
     p.setAttribute('role', 'dialog');
-    p.innerHTML = `<div class="k">NEW RECRUIT?</div>
-      <div class="t">First time? Take the 2-minute gunnery course</div>
-      <div class="d">Aim, fire, lead, zoom and change seats — one step at a time. Nobody shoots back.</div>
-      <div class="row"><button class="btn" data-ob="go">Start training</button><button class="btn ghost" data-ob="skip">Skip</button></div>`;
+    p.innerHTML = `<div class="k">${tx('NEW RECRUIT?')}</div>
+      <div class="t">${tx('First time? Take the 2-minute gunnery course')}</div>
+      <div class="d">${tx('Aim, fire, lead, zoom and change seats — one step at a time. Nobody shoots back.')}</div>
+      <div class="row"><button class="btn" data-ob="go">${tx('Start training')}</button><button class="btn ghost" data-ob="skip">${tx('Skip')}</button></div>`;
     p.querySelector('[data-ob="go"]')!.addEventListener('click', () => this.startTutorial());
     p.querySelector('[data-ob="skip"]')!.addEventListener('click', () => this.dismissPrompt(true));
     title.appendChild(p);

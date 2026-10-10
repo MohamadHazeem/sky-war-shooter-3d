@@ -16,6 +16,7 @@
 // Voice clips stay lazy (audio/Voice.ts: manifest after the first gesture, clips on first use).
 import { NOW, json, progress, request } from './Assets';
 import { ALL_MODELS, ESSENTIAL_MODELS, loadModels, modelPath } from '../world/Models';
+import { tx } from '../i18n';
 
 interface AudioManifest {
   loops?: Record<string, { file: string }>;
@@ -103,14 +104,14 @@ export function whenMissionReady(ui: { loading(f: number, msg?: string): void },
   const el = document.getElementById('loading');
   const show = () => {
     const p = progress(missionFiles.length ? missionFiles : ALL_MODELS.map(modelPath));
-    ui.loading(p.f, `Loading aircraft and sounds… ${(p.loaded / 1048576).toFixed(1)} / ${(p.total / 1048576).toFixed(1)} MB`);
+    ui.loading(p.f, tx('Loading aircraft and sounds… {a} / {b} MB', { a: (p.loaded / 1048576).toFixed(1), b: (p.total / 1048576).toFixed(1) }));
   };
   el?.classList.add('show');
   show();
   const timer = setInterval(show, 150);
   void missionReady!.then(() => {
     clearInterval(timer);
-    ui.loading(1, 'Ready');
+    ui.loading(1, tx('Ready'));
     el?.classList.remove('show');
     const go = queued;
     queued = null;

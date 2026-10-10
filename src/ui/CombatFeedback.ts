@@ -4,6 +4,7 @@ import type { World } from '../world/World';
 import type { HitEvent } from '../world/Ballistics';
 import { Aircraft, Bomber, Fighter } from '../world/Aircraft';
 import { playCue } from '../audio/FeedbackCues';
+import { tx, CANVAS_MONO } from '../i18n';
 
 // Clear combat feedback on the HUD canvas:
 //   incoming-damage direction  red arcs around the crosshair pointing to where the fire that
@@ -170,7 +171,7 @@ export class CombatFeedback {
     // ---- "lining up on you" ----
     if (this.nWarn > 0) {
       const pulse = 0.5 + 0.5 * Math.sin(this.clock * 14);
-      ctx.font = '700 11px "IBM Plex Mono", monospace';
+      ctx.font = `700 11px ${CANVAS_MONO}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       for (let i = 0; i < this.nWarn; i++) {
@@ -188,7 +189,7 @@ export class CombatFeedback {
           ctx.moveTo(x - 9, y - g - 9); ctx.lineTo(x, y - g); ctx.lineTo(x + 9, y - g - 9);
           ctx.moveTo(x - 9, y + g + 9); ctx.lineTo(x, y + g); ctx.lineTo(x + 9, y + g + 9);
           ctx.stroke();
-          ctx.fillText('ON YOU', x, y - g - 18);
+          ctx.fillText(tx('ON YOU'), x, y - g - 18);
         } else {
           // edge chevron toward the attacker
           let ex = _s.x, ey = _s.y;
@@ -205,7 +206,7 @@ export class CombatFeedback {
           ctx.moveTo(-16 * s, -11 * s); ctx.lineTo(-4 * s, 0); ctx.lineTo(-16 * s, 11 * s);
           ctx.stroke();
           ctx.restore();
-          ctx.fillText('ON YOU', x - Math.cos(ang) * 28, y - Math.sin(ang) * 28);
+          ctx.fillText(tx('ON YOU'), x - Math.cos(ang) * 28, y - Math.sin(ang) * 28);
         }
       }
     }

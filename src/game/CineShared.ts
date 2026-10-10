@@ -111,14 +111,15 @@ const CSS = `
 #cine.on .cb { height: 10.5vh; }
 #cine .cap, #cine .hint, #cine .tag { position: absolute; opacity: 0; transition: opacity .3s; white-space: nowrap; }
 #cine.on .cap, #cine.on .hint, #cine.on .tag { opacity: 1; }
-#cine .cap { left: 4vw; bottom: 3.4vh; font: 600 17px/1 Oswald, "Arial Narrow", sans-serif; letter-spacing: 4px; color: #f1e6c8; }
-#cine .tag { left: 4vw; top: 3.6vh; font: 600 11px/1 "IBM Plex Mono", monospace; letter-spacing: 3px; color: #d9573f; }
-#cine .hint { right: 4vw; bottom: 3.6vh; font: 11px/1 "IBM Plex Mono", monospace; letter-spacing: 2px; color: rgba(255,255,255,.55); }
+#cine .cap { left: 4vw; bottom: 3.4vh; font: 600 17px/1 Oswald, "Arial Narrow", "Noto Kufi Arabic", sans-serif; letter-spacing: 4px; color: #f1e6c8; }
+#cine .tag { left: 4vw; top: 3.6vh; font: 600 11px/1 "IBM Plex Mono", "IBM Plex Sans Arabic", monospace; letter-spacing: 3px; color: #d9573f; }
+#cine .hint { right: 4vw; bottom: 3.6vh; font: 11px/1 "IBM Plex Mono", "IBM Plex Sans Arabic", monospace; letter-spacing: 2px; color: rgba(255,255,255,.55); }
 #cine .fd { position: absolute; inset: 0; background: #000; opacity: 0; }
 #cine .card { position: absolute; left: 0; right: 0; top: 19%; text-align: center; opacity: 0; transform: translateY(10px); transition: opacity .6s, transform .9s cubic-bezier(.2,.7,.2,1); }
 #cine .card.show { opacity: 1; transform: none; }
-#cine .card .a { font: 700 clamp(30px, 6vw, 68px)/1 Oswald, "Arial Narrow", sans-serif; letter-spacing: .32em; color: #f4ead0; text-shadow: 0 2px 18px rgba(0,0,0,.65); }
-#cine .card .b { margin-top: 14px; font: clamp(12px, 1.4vw, 16px)/1.4 "Special Elite", "Courier New", monospace; letter-spacing: 3px; color: rgba(244,234,208,.85); text-shadow: 0 1px 8px rgba(0,0,0,.8); }
+#cine .card .a { font: 700 clamp(30px, 6vw, 68px)/1 Oswald, "Arial Narrow", "Noto Kufi Arabic", sans-serif; letter-spacing: .32em; color: #f4ead0; text-shadow: 0 2px 18px rgba(0,0,0,.65); }
+#cine .card .b { margin-top: 14px; font: clamp(12px, 1.4vw, 16px)/1.4 "Special Elite", "Courier New", "Noto Naskh Arabic", monospace; letter-spacing: 3px; color: rgba(244,234,208,.85); text-shadow: 0 1px 8px rgba(0,0,0,.8); }
+html[dir=rtl] #cine .cap, html[dir=rtl] #cine .tag, html[dir=rtl] #cine .hint, html[dir=rtl] #cine .card .a, html[dir=rtl] #cine .card .b { letter-spacing: 0; }
 `;
 
 export class CineOverlay {

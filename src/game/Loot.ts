@@ -1,6 +1,7 @@
 import { PerkDef, PERKS, Progression } from './Upgrades';
 import { Rarity, RARITIES } from './WeaponMods';
 import { COLLECTABLES, Collectable, KIND_LABEL, owns } from './Customize';
+import { tx } from '../i18n';
 
 // Loot crates: one at the end of every round, before the hangar opens. A strong round
 // (kills, merit bonus) earns a better crate, which rolls rarer contents: merit points, a
@@ -70,15 +71,15 @@ function perks(prog: Progression, rarity: Rarity): LootItem {
   const kit = got.length > 1;
   return {
     kind: 'perk', rarity, label: kit ? 'Field kit' : 'Field perk',
-    title: kit ? got.map((p) => p.name).join(' + ') : got[0].name,
-    desc: (kit ? got.map((p) => p.desc).join(' · ') : got[0].desc) + ' — rest of this mission',
+    title: kit ? got.map((p) => tx(p.name)).join(' + ') : got[0].name,
+    desc: tx('{d} — rest of this mission', { d: kit ? got.map((p) => tx(p.desc)).join(' · ') : tx(got[0].desc) }),
   };
 }
 
 function unlock(prog: Progression, c: Collectable): LootItem {
   prog.unlocked.add(c.key);
   prog.save();
-  return { kind: c.kind, rarity: c.rarity, label: KIND_LABEL[c.kind], title: c.name, desc: c.kind === 'mod' ? `${c.desc} · fit it in the hangar` : c.desc, id: c.id };
+  return { kind: c.kind, rarity: c.rarity, label: KIND_LABEL[c.kind], title: c.name, desc: c.kind === 'mod' ? tx('{d} · fit it in the hangar', { d: tx(c.desc) }) : c.desc, id: c.id };
 }
 
 // Roll and grant one item from a crate of the given grade

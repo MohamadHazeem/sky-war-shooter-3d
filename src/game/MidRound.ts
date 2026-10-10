@@ -12,6 +12,7 @@ import { sound } from '../audio/Sound';
 import { ObjectiveHud, TagView } from '../ui/ObjectiveCard';
 import { Objective, OBJECTIVES, ObjectiveId } from './Objectives';
 import { RandomEvent, EVENTS, EventId } from './RandomEvents';
+import { tx } from '../i18n';
 
 // Mid-round extras: pop-up bonus objectives (1–2 per round) and random in-flight events
 // (every 60–120 s). This file is the scheduler and the shared toolbox; the objectives live in
@@ -173,8 +174,8 @@ export class MidRound {
     const won = o.state === 'won';
     this.log.push(`${this.world.time.toFixed(0)}s objective ${o.id} ${won ? 'WON' : 'lost'}`);
     if (silent) { this.hud.hideCard(); return; }
-    if (won) this.reward(o.merit, `Bonus: ${o.title}`);
-    this.hud.resolveCard(won, won ? `COMPLETE · +${o.merit} MERIT` : `FAILED${o.failText ? ' · ' + o.failText : ''}`);
+    if (won) this.reward(o.merit, tx('Bonus: {title}', { title: o.title }));
+    this.hud.resolveCard(won, won ? tx('COMPLETE · +{n} MERIT', { n: o.merit }) : `${tx('FAILED')}${o.failText ? ' · ' + o.failText : ''}`);
   }
 
   startEvent(id?: EventId): RandomEvent | null {

@@ -5,6 +5,7 @@ import { BossShip } from '../world/BossShip';
 import { drawBossBlip } from './BossHud';
 import { access } from '../core/Accessibility';
 import { keyMap } from '../core/KeyMap';
+import { tx, CANVAS_MONO } from '../i18n';
 
 /**
  * Plan-view radar plot, north-up = the formation's heading. Compact in the bottom-left
@@ -82,10 +83,10 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
     ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
   }
   if (e > 0.5) {
-    ctx.fillStyle = 'rgba(150,220,170,0.8)'; ctx.font = '11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
-    for (let rr = step; rr < range; rr += step) ctx.fillText(`${rr / 1000} km`, cx + 3, cy - rr * k + 12);
-    ctx.fillText('HEADING', cx, cy - R - 8);
-    ctx.fillText(`${mapKey()}close map`, cx, cy + R + 18);
+    ctx.fillStyle = 'rgba(150,220,170,0.8)'; ctx.font = `11px ${CANVAS_MONO}`; ctx.textAlign = 'center';
+    for (let rr = step; rr < range; rr += step) ctx.fillText(tx('{n} km', { n: rr / 1000 }), cx + 3, cy - rr * k + 12);
+    ctx.fillText(tx('HEADING'), cx, cy - R - 8);
+    ctx.fillText(`${mapKey()}${tx('close map')}`, cx, cy + R + 18);
   }
 
   // incoming wave: pulsing sector where the next wave will appear, with countdown
@@ -97,8 +98,8 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
     ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(255,80,50,0.45)'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(cx, cy); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = 'rgba(255,110,80,0.95)'; ctx.textAlign = 'center';
-    ctx.font = `600 ${e > 0.5 ? 13 : 10}px "IBM Plex Mono", monospace`;
-    ctx.fillText(e > 0.5 ? `${incoming.count} FIGHTERS  ${Math.ceil(incoming.eta)}s` : `${Math.ceil(incoming.eta)}s`, m.x, m.y - 12 - 6 * e);
+    ctx.font = `600 ${e > 0.5 ? 13 : 10}px ${CANVAS_MONO}`;
+    ctx.fillText(e > 0.5 ? tx('{n} FIGHTERS  {s}s', { n: incoming.count, s: Math.ceil(incoming.eta) }) : tx('{n}s', { n: Math.ceil(incoming.eta) }), m.x, m.y - 12 - 6 * e);
   }
 
   // aircraft (colours from the accessibility palette; colour-blind mode adds shapes)
@@ -130,16 +131,16 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
     }
     ctx.restore();
     if (enemy && e > 0.5 && !m.clipped) {
-      ctx.fillStyle = pal.enemyText; ctx.font = '10px "IBM Plex Mono", monospace'; ctx.textAlign = 'left';
-      ctx.fillText(`${a.label} ${(a.pos.distanceTo(origin) / 1000).toFixed(1)}`, m.x + 8, m.y + 3);
+      ctx.fillStyle = pal.enemyText; ctx.font = `10px ${CANVAS_MONO}`; ctx.textAlign = 'left';
+      ctx.fillText(`${tx(a.label)} ${(a.pos.distanceTo(origin) / 1000).toFixed(1)}`, m.x + 8, m.y + 3);
     }
   }
   // own aircraft
   ctx.fillStyle = 'rgba(240,230,190,1)';
   ctx.beginPath(); ctx.moveTo(cx, cy - 6); ctx.lineTo(cx + 4.5, cy + 4); ctx.lineTo(cx, cy + 2); ctx.lineTo(cx - 4.5, cy + 4); ctx.closePath(); ctx.fill();
   if (e < 0.5) {
-    ctx.fillStyle = 'rgba(150,220,170,0.7)'; ctx.font = '9px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
-    ctx.fillText(`${mapKey()}map`, cx, cy + R + 11);
+    ctx.fillStyle = 'rgba(150,220,170,0.7)'; ctx.font = `9px ${CANVAS_MONO}`; ctx.textAlign = 'center';
+    ctx.fillText(`${mapKey()}${tx('map')}`, cx, cy + R + 11);
   }
   ctx.restore();
 }

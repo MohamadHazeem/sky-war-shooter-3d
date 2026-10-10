@@ -2,6 +2,7 @@ import type { UI } from '../ui/UI';
 import type { Game } from './Game';
 import { STATION_ORDER, StationId } from '../world/B17Layout';
 import { ENEMY_VARIANTS, EnemyType } from '../world/EnemyTypes';
+import { tx } from '../i18n';
 
 // Context hints: a one-off tip the first time something happens (once per profile,
 // remembered in localStorage). Shown with UI.tip, at most one every GAP seconds; hints
@@ -71,7 +72,7 @@ export class Hints {
       const h = this.queue.shift()!;
       this.lastShow = this.clock;
       this.markSeen(h.id);
-      this.ui.tip(`<span class="hint-k">TIP</span> ${h.text}`, SHOW_MS);
+      this.ui.tip(`<span class="hint-k">${tx('TIP')}</span> ${tx(h.text)}`, SHOW_MS);
     }
   }
 
@@ -116,7 +117,7 @@ export class Hints {
     if (panel.querySelector('.hint-hangar')) return;
     const note = document.createElement('div');
     note.className = 'hint-hangar';
-    note.innerHTML = '<span class="hint-k">FIRST HANGAR VISIT</span> Spend the merit you just earned: a new aircraft or weapon, or permanent upgrades. Everything you buy is kept for every mission. When you\'re ready, press <kbd>Launch</kbd> (or <kbd>Enter</kbd>).';
+    note.innerHTML = `<span class="hint-k">${tx('FIRST HANGAR VISIT')}</span> ${tx('Spend the merit you just earned: a new aircraft or weapon, or permanent upgrades. Everything you buy is kept for every mission. When you\'re ready, press <kbd>Launch</kbd> (or <kbd>Enter</kbd>).')}`;
     panel.insertBefore(note, panel.children[2] ?? null);
   }
 }

@@ -5,6 +5,7 @@ import type { Game } from './Game';
 import type { Mission } from './Missions';
 import type { Fighter } from '../world/Aircraft';
 import { dirFromYawPitch, inArc, STATIONS, StationId } from '../world/B17Layout';
+import { tx } from '../i18n';
 
 // "Gunnery School": a calm, scripted first flight that teaches the gunner's controls one
 // at a time. Game's director skips missions flagged `tutorial`; this module spawns and
@@ -99,7 +100,7 @@ export class Tutorial {
     this.card = document.createElement('div');
     this.card.id = 'tutCard';
     document.body.appendChild(this.card);
-    this.render('', 'Gunnery School', 'A calm two-minute course. Nothing up here shoots back — take your time.');
+    this.render('', tx('Gunnery School'), tx('A calm two-minute course. Nothing up here shoots back — take your time.'));
     requestAnimationFrame(() => this.card?.classList.add('show'));
   }
 
@@ -132,7 +133,7 @@ export class Tutorial {
         if (s.check(dt) || this.t > s.timeout) {
           this.log.push(`${s.id} ${this.t.toFixed(1)}s${this.t > s.timeout ? ' (timeout)' : ''}`);
           this.phase = 'done'; this.t = 0;
-          this.render(`STEP ${this.stepIdx + 1} / ${this.steps.length}`, s.title, '<span class="ok">✓ Done</span>', true);
+          this.render(tx('STEP {n} / {m}', { n: this.stepIdx + 1, m: this.steps.length }), tx(s.title), `<span class="ok">✓ ${tx('Done')}</span>`, true);
           if (s.id === 'perks') this.host.markHint('perk');
           if (s.id === 'seat') this.host.markHint('seat');
         } else this.refresh();
@@ -169,21 +170,21 @@ export class Tutorial {
     this.phase = 'finale'; this.t = 0;
     this.log.push('complete');
     this.host.onDone();
-    this.render('GUNNERY SCHOOL', 'Course complete', 'You\'re ready, gunner! Off to the campaign…', true);
+    this.render(tx('GUNNERY SCHOOL'), tx('Course complete'), tx('You\'re ready, gunner! Off to the campaign…'), true);
     this.ui.banner('GUNNERY SCHOOL COMPLETE', 'You\'re ready, gunner!', 4200);
     this.game.world.callout('tutdone', 'Pilot', 'You\'re ready, gunner! Welcome to the crew of the Sky Queen.', 0, 3);
   }
 
   private refresh() {
     const s = this.steps[this.stepIdx];
-    if (s) this.render(`STEP ${this.stepIdx + 1} / ${this.steps.length}`, s.title, s.text());
+    if (s) this.render(tx('STEP {n} / {m}', { n: this.stepIdx + 1, m: this.steps.length }), tx(s.title), s.text());
   }
 
   private lastHtml = '';
   private render(kicker: string, title: string, body: string, done = false) {
     if (!this.card) return;
     const dots = this.steps.map((_, i) => `<i class="${i < this.stepIdx || (done && i === this.stepIdx) ? 'on' : i === this.stepIdx ? 'cur' : ''}"></i>`).join('');
-    const html = `<div class="k">GUNNERY SCHOOL${kicker ? ' · ' + kicker : ''}</div><div class="t">${title}</div><div class="b">${body}</div><div class="dots">${dots}</div>`;
+    const html = `<div class="k">${tx('GUNNERY SCHOOL')}${kicker ? ' · ' + kicker : ''}</div><div class="t">${title}</div><div class="b">${body}</div><div class="dots">${dots}</div>`;
     if (html === this.lastHtml) return;
     this.lastHtml = html;
     this.card.innerHTML = html;
@@ -197,7 +198,7 @@ export class Tutorial {
     return [
       {
         id: 'aim', title: 'Aim', timeout: 45,
-        text: () => `Move the ${kbd('mouse')} to swing the gun onto the target drone — the <b class="red">red brackets</b>.`,
+        text: () => tx('Move the {mouse} to swing the gun onto the target drone — the <b class="red">red brackets</b>.', { mouse: kbd(tx('mouse')) }),
         radio: ['Pilot', 'This is a training flight, gunner. Nobody shoots back today. See that target drone? Put your sight on it.'],
         enter: () => this.spawnDrone(g.gunner.station, { dist: 620, y0: 0.42, p0: 0.12, ay: 0.05, ap: 0.03, w: 0.25 }),
         check: (dt) => {
@@ -211,9 +212,9 @@ export class Tutorial {
       },
       {
         id: 'fire', title: 'Fire short bursts', timeout: 60,
-        text: () => `${kbd('Left button')} fires. Use <b>short bursts</b> — half a second, then let go — and walk the tracers onto the drone.`
-          + (g.gunner.state.overheated ? '<div class="warn">Barrel too hot! Wait for the heat bar to cool.</div>' : '')
-          + `<div class="st">Hits: ${g.world.stats.hits - this.hits0}</div>`,
+        text: () => tx('{lmb} fires. Use <b>short bursts</b> — half a second, then let go — and walk the tracers onto the drone.', { lmb: kbd(tx('Left button')) })
+          + (g.gunner.state.overheated ? `<div class="warn">${tx('Barrel too hot! Wait for the heat bar to cool.')}</div>` : '')
+          + `<div class="st">${tx('Hits: {n}', { n: g.world.stats.hits - this.hits0 })}</div>`,
         radio: ['Top Turret', 'Short bursts! Watch your tracers and walk them in.'],
         enter: () => {
           this.hits0 = g.world.stats.hits;
@@ -223,14 +224,14 @@ export class Tutorial {
       },
       {
         id: 'lead', title: 'Lead the target', timeout: 75,
-        text: () => `This one crosses fast. Aim at the yellow <b class="gold">◇ lead indicator</b> ahead of it, not at the plane itself. Aim assist pulls the sight onto it when you get close.`,
+        text: () => tx('This one crosses fast. Aim at the yellow <b class="gold">◇ lead indicator</b> ahead of it, not at the plane itself. Aim assist pulls the sight onto it when you get close.'),
         radio: ['Navigator', 'Lead him! Aim where he\'s going to be, not where he is.'],
         enter: () => this.spawnDrone(g.gunner.station, { dist: 600, y0: 0, p0: 0.06, ay: 0.62, ap: 0.03, w: 0.2 }),
         check: () => !alive(),
       },
       {
         id: 'zoom', title: 'Look down the sight', timeout: 40,
-        text: () => `Hold the ${kbd('right button')} to bring your eye down to the ring sight: a closer, steadier view for long shots.`
+        text: () => tx('Hold the {rmb} to bring your eye down to the ring sight: a closer, steadier view for long shots.', { rmb: kbd(tx('right button')) })
           + `<div class="bar"><div style="width:${Math.round(Math.min(1, this.acc / 1.2) * 100)}%"></div></div>`,
         radio: ['Pilot', 'Use the ring sight for the long ones. Hold the right button.'],
         enter: () => this.spawnDrone(g.gunner.station, { dist: 1000, y0: -0.15, p0: 0.1, ay: 0.08, ap: 0.03, w: 0.2 }),
@@ -245,8 +246,8 @@ export class Tutorial {
           const st = STATIONS[this.seatTarget];
           const there = this.drones[0] && this.inStationArc(g.gunner.station, this.drones[0].f.pos);
           return there
-            ? `You're on the ${st.label.toUpperCase()}. Now shoot it down!`
-            : `A fighter is in the <b>${st.label.toUpperCase()}</b> arc — its seat badge lit up bottom-left. Press ${kbd(st.key)} to move there.`;
+            ? tx('You\'re on the {st}. Now shoot it down!', { st: tx(st.label).toUpperCase() })
+            : tx('A fighter is in the <b>{st}</b> arc — its seat badge lit up bottom-left. Press {key} to move there.', { st: tx(st.label).toUpperCase(), key: kbd(st.key) });
         },
         radio: ['Tail', 'Fighter on the other side! Somebody get on that gun!'],
         enter: () => {
@@ -258,15 +259,15 @@ export class Tutorial {
       {
         id: 'radar', title: 'Radar and map', timeout: 25,
         text: () => this.tabs === 0
-          ? `The <b>radar</b> bottom-left plots everything around the ship — <b class="red">red</b> are bandits. Press ${kbd('Tab')} to open the big map.`
-          : `The big map shows where the next group will come from, with a countdown. Press ${kbd('Tab')} again to close it.`,
+          ? tx('The <b>radar</b> bottom-left plots everything around the ship — <b class="red">red</b> are bandits. Press {tab} to open the big map.', { tab: kbd('Tab') })
+          : tx('The big map shows where the next group will come from, with a countdown. Press {tab} again to close it.', { tab: kbd('Tab') }),
         radio: ['Navigator', 'Navigator here. Watch the radar plot — and Tab gives you the big picture.'],
         enter: () => { this.tabs = 0; },
         check: () => this.tabs >= 2 || (this.tabs >= 1 && this.t > 8),
       },
       {
         id: 'perks', title: 'Field upgrades', timeout: 10,
-        text: () => `Every few kills earns a <b>field upgrade</b>. It's applied straight away — read the card at the top of the screen. Nothing to press.`,
+        text: () => tx('Every few kills earns a <b>field upgrade</b>. It\'s applied straight away — read the card at the top of the screen. Nothing to press.'),
         radio: ['Pilot', 'Nice shooting. The ground crew fitted you something extra.'],
         enter: () => this.host.awardPerk('TRAINING · FIELD UPGRADE'),
         check: () => this.t > 5,
@@ -275,7 +276,7 @@ export class Tutorial {
         id: 'fight', title: 'Final exercise', timeout: 110,
         text: () => {
           const n = this.fighters.filter((f) => f.alive).length;
-          return `Three fighters are coming through your arc. Use everything: lead, short bursts, and change seats when a badge lights up.<div class="st">${n} left</div>`;
+          return tx('Three fighters are coming through your arc. Use everything: lead, short bursts, and change seats when a badge lights up.') + `<div class="st">${tx('{n} left', { n })}</div>`;
         },
         radio: ['Pilot', 'Here they come — three bandits. Show me what you\'ve learned!'],
         enter: () => this.spawnFight(3),
