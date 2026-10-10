@@ -9,6 +9,7 @@ import { AI_EXTRA, dirFromYawPitch, inArc, STATIONS, STATION_ORDER, StationDef }
 import { sound } from '../audio/Sound';
 import { Contrails } from '../render/Contrails';
 import { Wrecks, BreakKind } from './Wrecks';
+import { Crew, STATION_CREW } from './Crew';
 
 export const ENEMY_SCALE = 1.7;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 260; // ~20 hits from a .50 to wear one down
@@ -73,6 +74,8 @@ export class World implements WorldView {
   stats = { kills: 0, shots: 0, hits: 0, damage: 0, bombersLost: 0, assists: 0, enemiesSpawned: 0 };
   crewWounded = 0;
   private lastWound = -99;
+  readonly crew = new Crew();   // crew positions and who is wounded (gunner missions)
+  private lastCrewWound = -99;
   lastKillCause = '';
   private lastConfirm = 0;
   listener: THREE.Vector3 | null = null; // camera position (set by the game)
@@ -156,6 +159,8 @@ export class World implements WorldView {
     this.stats = { kills: 0, shots: 0, hits: 0, damage: 0, bombersLost: 0, assists: 0, enemiesSpawned: 0 };
     this.crewWounded = 0;
     this.lastWound = -99;
+    this.crew.reset();
+    this.lastCrewWound = -99;
     this.lastKillCause = '';
     this.lastCallout.clear();
   }
@@ -351,10 +356,13 @@ export class World implements WorldView {
         if (near && this.time - this.lastWound > 18 && Math.random() < (heavy ? 0.05 : 0.006)) {
           this.lastWound = this.time;
           this.crewWounded++;
+          this.crew.wound(STATION_CREW[this.playerStation.id]);
           this.events.playerHit?.('gunner', true);
         }
         if (near && Math.random() < 0.3) sound.play('glass', null, { gain: 0.4 });
       }
+      // Heavy cannon hits on the bomber can also wound a crewman elsewhere in the ship (rare, spaced out)
+      if (t === this.playerBomber && heavy && this.time - this.lastCrewWound > 25 && Math.random() < 0.008) this.woundCrewman();
     } else if (e.playerShot) {
       sound.play('hit', e.point, { gain: 0.35, delay: false, ref: 60 });
       if (this.time - this.lastConfirm > 0.07) { this.lastConfirm = this.time; sound.confirm('hit_confirm'); }
@@ -390,6 +398,14 @@ export class World implements WorldView {
     }
     if (t.alive && t instanceof Fighter && t.structure <= 0) this.killAircraft(t, e.playerShot, z.name);
     if (wasAlive && !t.alive && e.playerShot) this.events.hitMarker?.(true);
+  }
+
+  // The player's own gunner is tracked by the gunner wound above, so he is left out here
+  private woundCrewman() {
+    const m = this.crew.woundRandom(this.playerStation ? STATION_CREW[this.playerStation.id] : undefined);
+    if (!m) return;
+    this.lastCrewWound = this.time;
+    this.callout('crewwound', 'Pilot', `${m.name} is hit ${m.spot}! Somebody get him some help!`, 20, 2);
   }
 
   killAircraft(a: Aircraft, byPlayer: boolean, cause = '') {

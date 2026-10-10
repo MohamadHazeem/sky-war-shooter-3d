@@ -710,7 +710,7 @@ export class Game {
       const zones: Record<string, number> = {};
       for (const z of w.playerBomber!.zones) zones[z.name] = Math.max(0, z.hp) / z.maxHp;
       const crew = w.crewWounded ? `Gunner wounded (${w.crewWounded}/4)` : '';
-      this.ui.updateGunnerHud({ station: this.gunner.station, ammo: s.ammo, heat: s.heat, overheated: s.overheated, reloading: s.reload, zones, crew });
+      this.ui.updateGunnerHud({ station: this.gunner.station, ammo: s.ammo, heat: s.heat, overheated: s.overheated, reloading: s.reload, zones, crew, wounded: w.crew.wounded });
     } else if (w.playerFighter) {
       const f = w.playerFighter;
       const zones: Record<string, number> = {};
