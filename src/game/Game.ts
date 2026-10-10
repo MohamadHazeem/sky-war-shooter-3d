@@ -33,6 +33,7 @@ import { Onboarding } from './Onboarding';
 import { Abilities } from './Abilities';
 import { MidRound } from './MidRound';
 import { isMissionReady, whenMissionReady } from '../core/Preload';
+import { Cinematics } from './Cinematics';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -112,6 +113,7 @@ export class Game {
   private combo = new Combo();
   private feel: GameFeel;          // kill juice, streak meter / ON FIRE (GameFeel.ts)
   private combat: CombatFeedback;  // damage arcs, lining-up warning (CombatFeedback.ts)
+  readonly cine: Cinematics;       // kill cam, mission fly-by, best-moment replay (Cinematics.ts)
   private lastKillAt = -99;
   private aceAwarded = false;
   private tally = new CombatTally();
@@ -136,6 +138,7 @@ export class Game {
     this.pilot = new PilotController(engine, this.world, input);
     this.photo = new PhotoMode(engine, input, this.world);
     this.feel = new GameFeel(engine, this.world, ui, this.combo); this.combat = new CombatFeedback(engine, this.world);
+    this.cine = new Cinematics(engine, input, ui, this);
     this.abilities = new Abilities(engine, input, ui, this);
     this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: true, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 65 });
     // settings saved before aim assist existed: switch the lead indicator on with it
@@ -296,6 +299,7 @@ export class Game {
           if (special) this.slowmo = 1.4;
           else if (big || this.streak >= 3) this.slowmo = this.loadout.bulletTime ? 1.1 : 0.6;
           else if (this.loadout.bulletTime) this.slowmo = 0.35;
+          this.cine.onKill(victim, this.streak);
           const lines = ['Got him! He\'s going down!', 'You got him! Nice shooting!', 'He\'s smoking — he\'s finished!', victim.label === 'Bf 109' ? 'Scratch one Messerschmitt!' : 'Scratch one Focke-Wulf!'];
           w.callout('kill', ['Tail', 'Pilot', 'Top Turret', 'Navigator'][Math.floor(Math.random() * 4)], lines[Math.floor(Math.random() * lines.length)], 3, 2);
           Chatter.onFighterKilled(this.streak);
@@ -904,6 +908,7 @@ export class Game {
     this.state = 'ending';
     if (bailOut) this.startBailOut();
     else this.ui.banner(success ? 'ALL GUNS SECURE' : 'MISSION FAILED', success ? 'Mission complete' : 'Shot down', 3500);
+    if (success) this.endTimer = this.cine.queueFlyby(this.endTimer, () => { this.endTimer = 0; });
   }
 
   // Gunner's B-17 shot down: the crew bails out before the debrief. Driven from the ending
@@ -1053,6 +1058,7 @@ export class Game {
       this.slowmo -= dt / Math.max(0.05, this.engine.timeScale);
       this.engine.timeScale = this.slowmo > 0 ? 0.35 : 1;
     }
+    this.cine.preFrame(dt);
     this.abilities.update(dt);
     // Photo mode: the mission is frozen (engine.paused) and only the free camera moves
     if (this.photo.active) {
@@ -1091,6 +1097,7 @@ export class Game {
     }
     this.feel.update(dt, !this.menuMode && (this.state === 'playing' || this.state === 'ending'));
     this.combat.update(dt, !this.menuMode && this.state === 'playing');
+    this.cine.update(dt);
     this.autoQuality(dt);
     this.floatingOrigin();
     sound.setListener(this.engine.camera);

@@ -10,7 +10,7 @@ import type { World } from '../world/World';
 
 // Parts of the player's B-17 that the gunner view hides from the inside (GunnerController).
 // They are shown again while photographing so the aircraft reads correctly from outside.
-const GUNNER_HIDDEN = ['interior', 'glass', 'crew', 'gun_waist_left', 'gun_waist_right', 'turret_top', 'turret_ball', 'gun_tail'];
+export const GUNNER_HIDDEN = ['interior', 'glass', 'crew', 'gun_waist_left', 'gun_waist_right', 'turret_top', 'turret_ball', 'gun_tail'];
 
 const BASE_SPEED = 25;          // m/s; Shift multiplies by 4, the mouse wheel scales it
 const MAX_PITCH = 1.55;         // just under 90 degrees, keeps the Euler decomposition sane
