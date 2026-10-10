@@ -33,7 +33,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 |---|---|---|
 | 17 | New German aircraft from FlightGear (He 111 bomber, Me 410 with BK 5 cannon, optionally He 219 / Ta 152 / Do 335) as new enemy types | In progress |
 | 18 | P-51 ground attack: strafing trains, flak towers and airfields at low level | In progress |
-| 19 | Arabic for every screen added overnight (campaign map, skills, custom battle, weekly, co-op, theatre, wingman) | |
+| 19 | Arabic for every screen added overnight (campaign map, skills, custom battle, weekly, co-op, theatre, wingman) | Done — campaign map, skills, custom battle, weekly, theatre, FPS counter, raid missions + wingman, co-op lobby texts pending; RTL mirroring, Arabic number agreement, coverage tests |
 | 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | |
 
 ## Log
@@ -47,3 +47,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 23:53 volumetric explosions + combat light merged. Known: the first Bf 109 / Fw 190 wing-off or blow-up kill still compiles 1–3 shader variants (clip-plane count); warm-up fixes tried and reverted.
 - 00:01 living interior merged; full regression running; started canopy/turret glass effects (8).
 - 00:04 aircraft surface detail merged; checking B-17 bullet-hole placement (possible quantized-space bug).
+- 00:04 Arabic catch-up merged (272 tests).
