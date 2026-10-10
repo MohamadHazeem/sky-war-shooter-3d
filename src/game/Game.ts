@@ -51,6 +51,7 @@ import { mountShare, shareStamp } from './Share';
 import { analytics, mountStatsToggle } from '../net/Analytics';
 import { showCampaignMap, mountCampaignReport, prepareCampaignMission, campaignMeritMult, isSideRaid } from '../ui/CampaignMap';
 import '../ui/CustomBattleScreen'; // registers the Custom Battle and Weekly Challenge modes + their Survival-screen tabs
+import { CoopSession } from './CoopSession';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -84,6 +85,7 @@ export class Game {
   readonly modes: ModeRunner;   // Ace Hunt / Time Attack rules and scores (Modes.ts)
   readonly pacing: Pacing;      // build -> breather -> final wave inside each round (Pacing.ts)
   readonly specials: SpecialEvents; // special events (ace squadron, Zerstörer wave, rocket barrage) + enemy group tactics
+  readonly coop: CoopSession;   // online co-op (beta): host/guest session, see CoopSession.ts
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -201,6 +203,7 @@ export class Game {
     this.onboarding = new Onboarding(this, engine, input, ui, { awardPerk: (l) => this.awardPerk(l), showCampaign: () => this.showCampaign() });
     this.service = new ServiceRecord(this, ui, { showBriefing: (m) => this.showBriefing(m) });
     this.skills = new SkillRuntime(this, ui);
+    this.coop = new CoopSession(this, engine, ui);
   }
 
   // Compile shaders for objects that only appear mid-mission (debris, chutes, bombs,
@@ -393,6 +396,7 @@ export class Game {
       settings: () => { this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => this.startMenu()); this.mountCloud(); },
       credits: () => this.ui.credits(() => this.startMenu()),
     });
+    this.coop.onTitle();
     this.onboarding.onTitle();
     this.service.onTitle();
     this.skills.onTitle();
@@ -767,6 +771,7 @@ export class Game {
   }
 
   private direct(dt: number) {
+    if (this.coop.blocksDirector) return; // co-op guest: the host runs the battle
     const m = this.mission!;
     const w = this.world;
     const t = w.time;
@@ -1087,6 +1092,7 @@ export class Game {
     }
     if (this.state === 'paused') { this.drawOverlay(); this.input.endFrame(); return; }
     w.update(dt);
+    this.coop.update(dt);
     this.updateBombs(dt);
     if (this.menuMode) {
       this.menuCamera(dt);

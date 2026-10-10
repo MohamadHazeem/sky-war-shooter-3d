@@ -69,6 +69,62 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time && request.resource.data.v == 1;
     }
 
+    // Online co-op signalling (src/net/Signal.ts). A room is a 6-character join code holding the
+    // host's WebRTC offer and, once joined, the guest's answer; ICE candidates trickle through
+    // the hostIce / guestIce subcollections. Signed-in players only, fixed shapes and sizes,
+    // one guest per room, usable for 2 hours from creation (after that nothing can read or join
+    // it; expiresAt is ready for a Firestore TTL policy, which needs billing enabled), only the
+    // creator may delete (the host does once connected). Rooms cannot be listed.
+    match /coop_rooms/{code} {
+      function codeOk() { return code.matches('^[A-HJ-NP-Z2-9]{6}$'); }
+      function live(r) { return r.createdAt + duration.value(2, 'h') > request.time; }
+      function sdpOk(d, kind) {
+        return d is map && d.keys().hasOnly(['type', 'sdp']) && d.type == kind
+          && d.sdp is string && d.sdp.size() > 0 && d.sdp.size() < 16000;
+      }
+      function expiryOk(t) {
+        return t is timestamp && t > request.time + duration.value(90, 'm') && t < request.time + duration.value(150, 'm');
+      }
+
+      allow get: if request.auth != null && codeOk() && (resource == null || live(resource.data));
+      allow list: if false;
+      allow create: if request.auth != null && codeOk()
+        && request.resource.data.keys().hasOnly(['host', 'offer', 'createdAt', 'expiresAt', 'v'])
+        && request.resource.data.keys().hasAll(['host', 'offer', 'createdAt', 'expiresAt', 'v'])
+        && request.resource.data.host == request.auth.uid
+        && sdpOk(request.resource.data.offer, 'offer')
+        && request.resource.data.createdAt == request.time
+        && expiryOk(request.resource.data.expiresAt)
+        && request.resource.data.v == 1;
+      // the guest claims the single free seat by writing its answer, once
+      allow update: if request.auth != null && live(resource.data)
+        && !('guest' in resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['guest', 'answer'])
+        && request.resource.data.keys().hasAll(['guest', 'answer'])
+        && request.resource.data.guest == request.auth.uid
+        && sdpOk(request.resource.data.answer, 'answer');
+      allow delete: if request.auth != null && resource.data.host == request.auth.uid;
+
+      match /{side}/{cid} {
+        function room() { return get(/databases/$(database)/documents/coop_rooms/$(code)).data; }
+        function member(r) { return request.auth.uid == r.host || ('guest' in r && request.auth.uid == r.guest); }
+        allow read: if request.auth != null && side in ['hostIce', 'guestIce']
+          && exists(/databases/$(database)/documents/coop_rooms/$(code)) && live(room()) && member(room());
+        allow create: if request.auth != null && side in ['hostIce', 'guestIce']
+          && exists(/databases/$(database)/documents/coop_rooms/$(code)) && live(room())
+          && (side == 'hostIce' ? request.auth.uid == room().host : ('guest' in room() && request.auth.uid == room().guest))
+          && request.resource.data.keys().hasOnly(['c', 'mid', 'idx', 'expiresAt'])
+          && request.resource.data.keys().hasAll(['c', 'mid', 'idx', 'expiresAt'])
+          && request.resource.data.c is string && request.resource.data.c.size() > 0 && request.resource.data.c.size() <= 1000
+          && request.resource.data.mid is string && request.resource.data.mid.size() <= 32
+          && request.resource.data.idx is int && request.resource.data.idx >= 0 && request.resource.data.idx < 16
+          && expiryOk(request.resource.data.expiresAt);
+        allow update: if false;
+        allow delete: if request.auth != null && side in ['hostIce', 'guestIce']
+          && exists(/databases/$(database)/documents/coop_rooms/$(code)) && request.auth.uid == room().host;
+      }
+    }
+
     match /scores/{id} {
       allow read: if true;
       allow update, delete: if false;
