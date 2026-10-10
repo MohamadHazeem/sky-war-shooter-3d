@@ -1,13 +1,25 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-export type ModelKind = 'b17' | 'fw190' | 'p51d' | 'p51d_cockpit';
+export type ModelKind =
+  | 'b17' | 'fw190' | 'p51d' | 'p51d_cockpit'
+  // Extra enemy types (see public/models/CREDITS.md). Same frame as the others: metres, +Z nose, +X left wing.
+  | 'bf110'  // Bf 110 twin-engine heavy fighter: prop_1 (left), prop_2 (right), gun_rear (rear MG, yaw/pitch it)
+  | 'me262'  // Me 262 jet: no props; fan_1/fan_2 are the intake fans (spin about local Z), exhaust_left/right markers
+  | 'bf109'  // Bf 109 G-14: prop_1
+  | 'ju88'   // Ju 88 A-4 twin-engine bomber: prop_1 (left), prop_2 (right)
+  | 'me163'; // Me 163 Komet rocket fighter: no props; fan_1 is the small nose generator windmill, exhaust marker
 
 const FILES: Record<ModelKind, string> = {
   b17: 'models/b17.glb',
   fw190: 'models/fw190.glb',
   p51d: 'models/p51d.glb',
   p51d_cockpit: 'models/p51d_cockpit.glb',
+  bf110: 'models/bf110.glb',
+  me262: 'models/me262.glb',
+  bf109: 'models/bf109.glb',
+  ju88: 'models/ju88.glb',
+  me163: 'models/me163.glb',
 };
 
 const cache = new Map<ModelKind, THREE.Object3D | null>();
@@ -51,14 +63,25 @@ export function instantiate(k: ModelKind): THREE.Object3D {
   return placeholder(k);
 }
 
+// Placeholder sizes for the extra enemy types: span, length, colour, prop positions [x, z]
+// (roughly the converted models' bounding boxes and prop_N pivots).
+const EXTRA_PLACEHOLDERS: Partial<Record<ModelKind, { span: number; len: number; col: number; props: [number, number][] }>> = {
+  bf110: { span: 16.3, len: 12.5, col: 0x6b6a52, props: [[2.35, 2.4], [-2.35, 2.4]] },
+  me262: { span: 10.5, len: 12.5, col: 0x5a5840, props: [] },
+  bf109: { span: 9.8, len: 8.9, col: 0x5d6b4a, props: [[0, 2.4]] },
+  ju88: { span: 20.0, len: 14.3, col: 0x4f6040, props: [[2.79, 2.9], [-2.76, 2.9]] },
+  me163: { span: 8.8, len: 5.9, col: 0x5b5a45, props: [] },
+};
+
 // Simple stand-in geometry so the game still runs if a model fails to load.
 function placeholder(k: ModelKind): THREE.Object3D {
   const g = new THREE.Group();
   if (k === 'p51d_cockpit') return g;
   const big = k === 'b17';
-  const span = big ? 31.6 : k === 'fw190' ? 10.5 : 11.3;
-  const len = big ? 22.7 : 9.0;
-  const col = big ? 0x7d7a55 : k === 'fw190' ? 0x6d7268 : 0xb8bcc0;
+  const extra = EXTRA_PLACEHOLDERS[k];
+  const span = extra ? extra.span : big ? 31.6 : k === 'fw190' ? 10.5 : 11.3;
+  const len = extra ? extra.len : big ? 22.7 : 9.0;
+  const col = extra ? extra.col : big ? 0x7d7a55 : k === 'fw190' ? 0x6d7268 : 0xb8bcc0;
   const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.65, metalness: 0.1 });
   const fus = new THREE.Mesh(new THREE.CapsuleGeometry(big ? 1.2 : 0.6, len - (big ? 2.4 : 1.2), 6, 12), mat);
   fus.rotation.x = Math.PI / 2;
@@ -69,11 +92,12 @@ function placeholder(k: ModelKind): THREE.Object3D {
   const fin = new THREE.Mesh(new THREE.BoxGeometry(0.15, big ? 4 : 1.6, 2.2), mat);
   fin.position.set(0, big ? 2 : 0.8, -len * 0.42);
   g.add(fus, wing, tail, fin);
-  const engines = big ? [7.6, 3.4, -3.4, -7.6] : [0];
-  engines.forEach((x, i) => {
+  const engines: [number, number][] = extra ? extra.props
+    : (big ? [7.6, 3.4, -3.4, -7.6] : [0]).map((x): [number, number] => [x, big ? 3.2 : len / 2]);
+  engines.forEach(([x, z], i) => {
     const p = new THREE.Group();
     p.name = `prop_${i + 1}`;
-    p.position.set(x, 0, big ? 3.2 : len / 2);
+    p.position.set(x, 0, z);
     g.add(p);
   });
   g.traverse((o) => { if ((o as THREE.Mesh).isMesh) { o.castShadow = o.receiveShadow = true; } });

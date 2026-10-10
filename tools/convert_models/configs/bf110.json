@@ -1,0 +1,47 @@
+{
+ "name": "bf110",
+ "_comment": "FlightGear model coords (x aft, y right, z up, metres) of Messerschmitt-BF110/Models/bf110.xml. The .ac has the main gear modelled down and the gear doors closed (bf110.xml door animations are 0 deg at position-norm 0), so the struts and wheels are dropped. The tail wheel has no retraction animation and stays. The night-fighter radar antennas (shown only with /sim/model/antennesradar) are dropped.",
+ "submodels": {
+  "include": ["^Models/Interior/interior\\.xml$", "^Models/Pilot/pilot\\.xml$", "^Models/Interior/Guns/gun\\.xml$"],
+  "exclude": []
+ },
+ "exclude_objects": [
+  "main/prop(disc|blur).*",
+  "main/antennesradar",
+  "main/(axe[GD]B?|articule[GD][HB]|roue[GD])",
+  "interior/int(vitre|tourvitre|porte).*", "interior/inttour",
+  "interior/(tuyau|fils|boutons|attaches|plaques)"
+ ],
+ "texture_files": {"texture.png": "Models/Liveries/1024x1024/test.png"},
+ "nodes": [
+  {"name": "prop_1", "objects": ["main/heliceG", "main/bolG"], "axis": [[-4.0, -2.352, 0.0858], [-5.0, -2.352, 0.0858]]},
+  {"name": "prop_2", "objects": ["main/heliceD", "main/bolD"], "axis": [[-4.0, 2.352, 0.0858], [-5.0, 2.352, 0.0858]]},
+  {"_comment": "rear MG 15 of the radio operator; rest pose points aft. No FG animation, so the pivot is the gun.xml origin (mount)",
+   "name": "gun_rear", "objects": ["gun/gun"], "pivot": [-1.12773, 0.0, 0.92856]}
+ ],
+ "decimate": {"gun/gun": 0.12, "main/(echappes|guns)": 0.3, "main/antennes": 0.5, "pilot.*/(tete|manche|avantbrasG|coprs)": 0.4},
+ "groups": [
+  {"name": "glass", "objects": ["main/vitre.*"]},
+  {"name": "crew", "objects": ["pilot.*/.*"]},
+  {"name": "interior", "objects": ["interior/.*"]}
+ ],
+ "markers": {
+  "eye_pilot": [-3.8, 0.0, 0.95],
+  "eye_gunner": [-2.07, 0.0, 0.92],
+  "muzzle_mg_top_left": [-5.974, -0.11, 0.531],
+  "muzzle_mg_top_right": [-6.319, 0.11, 0.531],
+  "muzzle_mg_low_left": [-5.759, -0.216, 0.406],
+  "muzzle_mg_low_right": [-5.839, 0.216, 0.406],
+  "muzzle_cannon_left": [-5.459, -0.128, -0.157],
+  "muzzle_cannon_right": [-5.459, 0.128, -0.157],
+  "muzzle_rear": {"instance": "gun", "local": [0.4, 0.0, 0.373], "parent": "gun_rear"}
+ },
+ "_origin": "27 % of the wing-root chord at |y| = 1.2 m (auto: LE -3.467, TE -0.223). z = fuselage centre set by hand: the fuselage is open under the canopy, so the auto slice only finds the belly.",
+ "origin": [-2.591, 0.0, 0.3],
+ "materials": {"roughness": 0.7, "metallic": 0.1,
+               "by_texture": {"guns.png": {"roughness": 0.45, "metallic": 0.3}}},
+ "preview_shots": [
+  {"name": "tail", "eye": [11.5, -3.5, 2.5], "target": [5.0, 0, 0.6], "lens": 35},
+  {"name": "cockpit", "eye": [-6.5, -2.0, 2.0], "target": [-2.5, 0, 0.7], "lens": 35}
+ ]
+}

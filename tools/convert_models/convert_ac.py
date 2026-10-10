@@ -22,7 +22,11 @@ Options
                        exclude_objects            regexes (full match) on object keys "<instance>/<object>"
                        texture_files              {ac texture basename: replacement path}
                        texture_objects            [{objects:[re], texture:path}]  (FG livery/material anims)
+                       glass_objects              regexes on object keys whose materials become glass
+                                                  (for models whose glass is opaque in the .ac, set by FG effects)
                        opaque_textures            texture basenames whose alpha channel is ignored
+                       max_texture                max texture edge for this model (never above --max-texture)
+                       texture_max                {texture basename: max edge in px} per-texture limit
                        texture_edits              [{file, ref_size, fill_rects:[{rect:[x0,y0,x1,y1], color?}]}]
                        rotations                  static rotate "animations" [{objects, center, axis, angle,
                                                   instance?}] applied in list order (innermost joint first)
@@ -147,6 +151,7 @@ class Part:
         self.matrix_fg = matrix_fg  # AC object world (incl. AC hierarchy) -> FG
         self.ac_dir = ac_dir
         self.texture_override = None
+        self.force_glass = False
 
 
 class Loader:
@@ -308,6 +313,8 @@ class TextureCache:
             self.cache[path] = (None, "OPAQUE")
             return self.cache[path]
         mt = self.args.max_texture
+        mt = min(mt, self.cfg.get("max_texture", mt))
+        mt = min(mt, self.cfg.get("texture_max", {}).get(os.path.basename(path), mt))
         if max(w, h) > mt:
             s = mt / max(w, h)
             img.scale(max(1, int(w * s)), max(1, int(h * s)))
@@ -383,9 +390,9 @@ class MaterialFactory:
         self.glass = mc.get("glass", {"color": [0.75, 0.8, 0.85], "alpha": 0.18, "roughness": 0.05})
         self.min_trans = mc.get("glass_min_trans", 0.3)
 
-    def get(self, tex_path, acmat, twosided):
+    def get(self, tex_path, acmat, twosided, force_glass=False):
         rgb = tuple(round(c, 3) for c in acmat.rgb)
-        glass = acmat.trans >= self.min_trans
+        glass = acmat.trans >= self.min_trans or force_glass
         key = (tex_path, rgb if (not tex_path or glass) else
                tuple(round(c, 2) for c in rgb), glass, twosided)
         if key in self.cache:
@@ -501,7 +508,7 @@ def build_object(part, matrix_bl, matfac, textures, name):
         mkey = (s.mat, s.twosided)
         if mkey not in slots:
             slots[mkey] = len(mat_list)
-            mat_list.append(matfac.get(tex_path, acmat, s.twosided))
+            mat_list.append(matfac.get(tex_path, acmat, s.twosided, part.force_glass))
         f.material_index = slots[mkey]
         f.smooth = s.smooth
         for loop, (_, u, v) in zip(f.loops, refs):
@@ -835,6 +842,8 @@ def convert(args):
         for p in parts:
             if match_any(rule["objects"], p.key):
                 p.texture_override = rule["texture"]
+    for p in parts:
+        p.force_glass = match_any(cfg.get("glass_objects", []), p.key)
 
     # static "animations" applied in FG frame (e.g. landing gear retraction)
     anim = {id(p): Matrix.Identity(4) for p in parts}

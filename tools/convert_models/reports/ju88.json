@@ -1,0 +1,166 @@
+{
+ "name": "ju88",
+ "origin_fg": [
+  3.65437998175621,
+  0.0,
+  0.13434800505638123
+ ],
+ "nodes": {
+  "prop_1": {
+   "triangles": 756,
+   "primitives": 2,
+   "materials": [
+    "Material.003",
+    "DefaultWhite_2s"
+   ],
+   "bbox_min": [
+    1.2701,
+    -1.2522,
+    2.7087
+   ],
+   "bbox_max": [
+    4.3141,
+    1.4353,
+    3.2621
+   ],
+   "pivot": [
+    2.79,
+    -0.3443,
+    2.9257
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "prop_2": {
+   "triangles": 756,
+   "primitives": 2,
+   "materials": [
+    "Material.003",
+    "DefaultWhite_2s"
+   ],
+   "bbox_min": [
+    -4.2745,
+    -1.2522,
+    2.7087
+   ],
+   "bbox_max": [
+    -1.2305,
+    1.4353,
+    3.2621
+   ],
+   "pivot": [
+    -2.76,
+    -0.3443,
+    2.9257
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  }
+ },
+ "markers": {
+  "eye_pilot": {
+   "position": [
+    0.2,
+    0.8157,
+    1.7544
+   ],
+   "parent": null
+  }
+ },
+ "groups": {
+  "airframe": {
+   "triangles": 4525,
+   "primitives": 7,
+   "materials": [
+    "DefaultWhite",
+    "ju88-1",
+    "Material",
+    "green",
+    "ju88-1.001",
+    "tire",
+    "grey_2s"
+   ],
+   "bbox_min": [
+    -10.0274,
+    -1.1633,
+    -10.6751
+   ],
+   "bbox_max": [
+    10.0274,
+    2.5089,
+    3.6529
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "glass": {
+   "triangles": 695,
+   "primitives": 1,
+   "materials": [
+    "green_glass"
+   ],
+   "bbox_min": [
+    -0.6622,
+    -0.5807,
+    0.7141
+   ],
+   "bbox_max": [
+    0.6622,
+    1.1006,
+    3.6529
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  }
+ },
+ "bbox_min": [
+  -10.0274,
+  -1.2522,
+  -10.6751
+ ],
+ "bbox_max": [
+  10.0274,
+  2.5089,
+  3.6529
+ ],
+ "triangles": 6732,
+ "primitives": 12,
+ "materials": [
+  "DefaultWhite",
+  "DefaultWhite_2s",
+  "Material",
+  "Material.003",
+  "green",
+  "green_glass",
+  "grey_2s",
+  "ju88-1",
+  "ju88-1.001",
+  "tire"
+ ],
+ "excluded_objects": [
+  "main/gearstrut.L",
+  "main/gearstrut.R",
+  "main/gearstrut1.L",
+  "main/gearstrut1.R",
+  "main/gearstrut2.L",
+  "main/wheel.L",
+  "main/wheel.R"
+ ],
+ "file_bytes": 393092
+}

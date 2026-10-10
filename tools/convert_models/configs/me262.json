@@ -1,0 +1,37 @@
+{
+ "name": "me262",
+ "_comment": "FlightGear model coords (x aft, y right, z up, metres) of ME-262/Models/me262.xml. The .ac has the gear modelled down and every gear door closed (me262.xml door animations are 0 deg at position-norm 0), so the struts and wheels are dropped.",
+ "submodels": {"include": ["^Models/Interior/interior\\.xml$", "^Models/Pilot/pilot\\.xml$"], "exclude": []},
+ "exclude_objects": [
+  "main/(axe[ABGD]H?|roue[AGD])",
+  "interior/intverriere2?"
+ ],
+ "texture_files": {},
+ "nodes": [
+  {"_comment": "intake fans (FG spins them with the throttle); not props: there is no prop disc",
+   "name": "fan_1", "objects": ["main/heliceG1"], "axis": [[-2.783, -1.858, -0.700], [-3.783, -1.858, -0.700]]},
+  {"name": "fan_2", "objects": ["main/heliceD1"], "axis": [[-2.783, 1.858, -0.700], [-3.783, 1.858, -0.700]]}
+ ],
+ "groups": [
+  {"name": "glass", "objects": ["main/verriere2?", "main/cable"]},
+  {"name": "pilot", "objects": ["pilot/.*"]},
+  {"name": "interior", "objects": ["interior/.*"]}
+ ],
+ "markers": {
+  "eye_pilot": [-1.3, 0.0, 0.9],
+  "muzzle_top_left": [-5.374, -0.125, 0.414],
+  "muzzle_top_right": [-5.374, 0.125, 0.414],
+  "muzzle_low_left": [-5.095, -0.307, 0.237],
+  "muzzle_low_right": [-5.095, 0.307, 0.237],
+  "exhaust_left": [0.478, -1.86, -0.693],
+  "exhaust_right": [0.478, 1.86, -0.693]
+ },
+ "_origin": "27 % of the wing-root chord at |y| = 0.9 m (auto: LE -2.761, TE -0.500). z = fuselage centre (-0.49 .. 0.81) set by hand: the auto slice only finds the belly here.",
+ "origin": [-2.151, 0.0, 0.16],
+ "decimate": {"pilot/(tete|manche|avantbrasG|coprs)": 0.4},
+ "materials": {"roughness": 0.65, "metallic": 0.15},
+ "preview_shots": [
+  {"name": "tail", "eye": [9.5, -3.0, 2.0], "target": [4.5, 0, 0.8], "lens": 35},
+  {"name": "cockpit", "eye": [-4.0, -1.5, 1.8], "target": [-1.2, 0, 0.8], "lens": 35}
+ ]
+}
