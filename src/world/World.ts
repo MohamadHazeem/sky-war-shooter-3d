@@ -23,6 +23,7 @@ export interface WorldEvents {
   bomberLost(b: Bomber): void;
   playerHit(zone: string, heavy: boolean): void;
   hitMarker(kill: boolean): void;
+  fuselageHit(local: THREE.Vector3, dir: THREE.Vector3): void;
 }
 
 interface AIGunner { key: string; def: { pivot: THREE.Vector3; rest: { yaw: number; pitch: number }; yaw: [number, number]; pitch: [number, number] }; station?: StationDef; cooldown: number; burst: number; target: Fighter | null; retarget: number }
@@ -282,6 +283,11 @@ export class World implements WorldView {
     if (t === this.player || t === this.playerBomber) {
       sound.playerImpact(heavy);
       this.events.playerHit?.(z.name, heavy);
+      if (t === this.playerBomber && /fuselage|tail|nose/.test(z.name)) {
+        const local = t.worldToLocal(e.point.clone());
+        const dir = e.bulletVel.clone().sub(t.vel).applyQuaternion(t.quat.clone().invert());
+        this.events.fuselageHit?.(local, dir);
+      }
       if (t === this.playerBomber && this.playerStation) {
         // Rounds hitting the section of fuselage you are standing in can wound you
         const near = e.point.distanceTo(t.localToWorld(this.playerStation.pivot, _v)) < 2.2;

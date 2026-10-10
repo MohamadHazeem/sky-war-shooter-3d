@@ -6,6 +6,8 @@ import { Bomber } from '../world/Aircraft';
 import { dirFromYawPitch, STATIONS, StationDef, StationId, wrapAngle } from '../world/B17Layout';
 import { buildM2, buildTailInterior, buildTurret, buildWaistInterior, GunModel } from './Viewmodels';
 import { sound } from '../audio/Sound';
+import { bulletHoleTexture } from '../render/Textures';
+import { Atmos } from '../render/Atmosphere';
 
 interface StationState {
   def: StationDef;
@@ -42,6 +44,9 @@ export class GunnerController {
   private casingGeo = new THREE.CylinderGeometry(0.0105, 0.0105, 0.099, 8);
   private casingMat = new THREE.MeshStandardMaterial({ color: 0xc48a3c, roughness: 0.3, metalness: 1 });
   firing = false;
+  private holes: THREE.Object3D[] = [];
+  private holeMat: THREE.MeshBasicMaterial | null = null;
+  private beamMat: THREE.ShaderMaterial | null = null;
   onSwitch?: (st: StationDef) => void;
   transition = 0; // >0 while crawling to another station (screen fades)
   private pendingStation: StationId | null = null;
@@ -106,7 +111,82 @@ export class GunnerController {
     this.muzzleLight.intensity = 0;
     for (const c of this.casings) c.m.removeFromParent();
     this.casings = [];
+    for (const h of this.holes) h.removeFromParent();
+    this.holes = [];
     this.bomber = null;
+  }
+
+  // A round passed through the fuselage (bomber-local point and direction): punch
+  // entry/exit holes in the waist interior, with daylight and sunbeams through them.
+  fuselageHit(local: THREE.Vector3, dir: THREE.Vector3) {
+    const wi = this.waistInterior;
+    if (!wi || !this.bomber) return;
+    const a = 1.08, b = 1.12, yC = 0.15;
+    const wl = STATIONS.waistL.pivot;
+    const z0 = wl.z - 3.1, z1 = wl.z + 3.1;
+    const d = dir.clone().normalize();
+    const o = local.clone().addScaledVector(d, -4);
+    const A = (d.x / a) ** 2 + (d.y / b) ** 2;
+    const B = 2 * (o.x * d.x / (a * a) + (o.y - yC) * d.y / (b * b));
+    const C = (o.x / a) ** 2 + ((o.y - yC) / b) ** 2 - 1;
+    const disc = B * B - 4 * A * C;
+    if (A < 1e-6 || disc < 0) return;
+    const sq = Math.sqrt(disc);
+    const sunLocal = Atmos.sunDir.clone().applyQuaternion(this.bomber.root.quaternion.clone().invert());
+    for (const t of [(-B - sq) / (2 * A), (-B + sq) / (2 * A)]) {
+      const p = o.clone().addScaledVector(d, t);
+      if (p.z < z0 || p.z > z1) continue;
+      // no holes in the open windows
+      if (Math.abs(p.z - wl.z) < 0.42 && p.y > 0.05 && p.y < 0.72) continue;
+      const n = new THREE.Vector3(p.x / (a * a), (p.y - yC) / (b * b), 0).normalize();
+      this.addHole(p, n, sunLocal);
+    }
+  }
+
+  private addHole(p: THREE.Vector3, n: THREE.Vector3, sunLocal: THREE.Vector3) {
+    const wi = this.waistInterior!;
+    this.holeMat ??= new THREE.MeshBasicMaterial({ map: bulletHoleTexture(), transparent: true, depthWrite: false, color: new THREE.Color(3.2, 3.1, 2.9), polygonOffset: true, polygonOffsetFactor: -2 });
+    this.beamMat ??= new THREE.ShaderMaterial({
+      uniforms: { uCol: { value: new THREE.Color() } },
+      vertexShader: /* glsl */ `
+        varying float vF; varying float vL;
+        void main() {
+          vec4 wp = modelMatrix * vec4(position, 1.0);
+          vec3 n = normalize(mat3(modelMatrix) * normal);
+          vec3 v = normalize(cameraPosition - wp.xyz);
+          vF = abs(dot(n, v));
+          vL = uv.y;
+          gl_Position = projectionMatrix * viewMatrix * wp;
+        }`,
+      fragmentShader: /* glsl */ `
+        uniform vec3 uCol; varying float vF; varying float vL;
+        void main() {
+          float a = pow(vF, 4.0) * smoothstep(0.0, 0.05, 1.0 - vL) * smoothstep(0.0, 0.45, vL) * (0.3 + 0.7 * vL);
+          gl_FragColor = vec4(uCol * a, 1.0);
+        }`,
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    });
+    this.beamMat.uniforms.uCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.028);
+    const g = new THREE.Group();
+    const hole = new THREE.Mesh(new THREE.PlaneGeometry(0.045 + Math.random() * 0.03, 0.045 + Math.random() * 0.03), this.holeMat);
+    hole.position.copy(p).addScaledVector(n, -0.006);
+    hole.lookAt(hole.position.clone().sub(n));
+    hole.rotateZ(Math.random() * 6.28);
+    g.add(hole);
+    if (n.dot(sunLocal) > 0.06) {
+      const len = 2.8;
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.075, len, 10, 1, true), this.beamMat);
+      const into = sunLocal.clone().negate();
+      beam.position.copy(p).addScaledVector(into, len / 2);
+      beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), sunLocal);
+      g.add(beam);
+    }
+    wi.add(g);
+    this.holes.push(g);
+    if (this.holes.length > 36) { const old = this.holes.shift()!; old.removeFromParent(); old.traverse((o) => (o as THREE.Mesh).geometry?.dispose()); }
+    // splinters and dust inside the fuselage
+    const wpos = this.bomber!.localToWorld(p.clone().addScaledVector(n, -0.05));
+    this.world.effects.sparks(wpos, this.bomber!.vel, false);
   }
 
   requestStation(id: StationId) {

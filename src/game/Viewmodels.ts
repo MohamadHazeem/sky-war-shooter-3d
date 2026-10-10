@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { envRef } from '../render/EnvRef';
+import { gunTextures, interiorTextures } from '../render/Textures';
 
 // Procedural first-person geometry for the B-17 gun positions: fuselage interior,
 // Browning AN/M2 .50 cal with ring-and-post sight, ammunition belt, turret frames.
@@ -7,8 +8,8 @@ import { envRef } from '../render/EnvRef';
 
 const interiorMat = (side: THREE.Side = THREE.FrontSide) => new THREE.MeshStandardMaterial({ color: new THREE.Color(0.085, 0.082, 0.06), roughness: 0.88, metalness: 0.1, envMap: envRef.tex, envMapIntensity: 0.06, side });
 const frameMat = () => new THREE.MeshStandardMaterial({ color: new THREE.Color(0.025, 0.026, 0.022), roughness: 0.75, metalness: 0.3, envMap: envRef.tex, envMapIntensity: 0.04 });
-const gunMetal = () => new THREE.MeshStandardMaterial({ color: new THREE.Color(0.05, 0.052, 0.05), roughness: 0.5, metalness: 0.6, envMap: envRef.tex, envMapIntensity: 0.18 });
-const gunParkerized = () => new THREE.MeshStandardMaterial({ color: new THREE.Color(0.06, 0.062, 0.056), roughness: 0.72, metalness: 0.4, envMap: envRef.tex, envMapIntensity: 0.12 });
+const gunMetal = () => new THREE.MeshStandardMaterial({ map: gunTextures().map, roughnessMap: gunTextures().rough, normalMap: gunTextures().normal, normalScale: new THREE.Vector2(0.4, 0.4), color: new THREE.Color(1.1, 1.1, 1.1), roughness: 0.75, metalness: 0.6, envMap: envRef.tex, envMapIntensity: 0.18 });
+const gunParkerized = () => new THREE.MeshStandardMaterial({ map: gunTextures().map, roughnessMap: gunTextures().rough, normalMap: gunTextures().normal, normalScale: new THREE.Vector2(0.5, 0.5), color: new THREE.Color(1.3, 1.3, 1.25), roughness: 0.95, metalness: 0.4, envMap: envRef.tex, envMapIntensity: 0.12 });
 const brassMat = () => new THREE.MeshStandardMaterial({ color: new THREE.Color(0.5, 0.33, 0.13), roughness: 0.4, metalness: 0.9, envMap: envRef.tex, envMapIntensity: 0.45 });
 const bulletMat = () => new THREE.MeshStandardMaterial({ color: new THREE.Color(0.55, 0.22, 0.08), roughness: 0.38, metalness: 0.9, envMap: envRef.tex, envMapIntensity: 0.7 });
 const linkMat = () => new THREE.MeshStandardMaterial({ color: new THREE.Color(0.7, 0.68, 0.6), roughness: 0.55, metalness: 0.5, envMap: envRef.tex, envMapIntensity: 0.5 });
@@ -224,7 +225,11 @@ export function buildM2(opts: { ringSight: boolean; belt: boolean; beltSide: 1 |
 // openings (left forward, right aft as on the B-17G), ribs, stringers and floor.
 export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: number): THREE.Group {
   const g = new THREE.Group();
-  const mat = interiorMat();
+  const tex = interiorTextures();
+  const mat = new THREE.MeshStandardMaterial({
+    map: tex.map, normalMap: tex.normal, roughnessMap: tex.rough, normalScale: new THREE.Vector2(0.8, 0.8),
+    color: new THREE.Color(1.55, 1.5, 1.4), roughness: 0.9, metalness: 0.15, envMap: envRef.tex, envMapIntensity: 0.06,
+  });
   const fmat = frameMat();
   const a = 1.08, b = 1.12;       // half width / half height of the fuselage section
   const yC = 0.15;
@@ -246,7 +251,8 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
   for (let i = 0; i <= NZ; i++) zs.add(z0 + (i / NZ) * (z1 - z0));
   [leftZ - winW / 2, leftZ + winW / 2, rightZ - winW / 2, rightZ + winW / 2].forEach((z) => zs.add(z));
   const zList = [...zs].sort((p, q) => p - q);
-  const pos: number[] = [], idx: number[] = [];
+  const pos: number[] = [], idx: number[] = [], uvs: number[] = [];
+  const TILE = 1.7; // metres per texture repeat
   const P = (t: number, z: number) => [Math.cos(t) * a, yC + Math.sin(t) * b, z];
   const inWindow = (t: number, z: number) => {
     const isLeft = t > tA - 1e-6 && t < tB + 1e-6;
@@ -260,7 +266,10 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
   const V = (ti: number, zi: number) => {
     const k = ti + ',' + zi;
     let v = vid.get(k);
-    if (v === undefined) { v = pos.length / 3; pos.push(...P(tList[ti], zList[zi])); vid.set(k, v); }
+    if (v === undefined) {
+      v = pos.length / 3; pos.push(...P(tList[ti], zList[zi])); vid.set(k, v);
+      uvs.push(((tList[ti] + Math.PI) * (a + b) * 0.5) / TILE, (zList[zi] - z0) / TILE);
+    }
     return v;
   };
   for (let ti = 0; ti < tList.length - 1; ti++)
@@ -273,6 +282,7 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
     }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   geo.setIndex(idx);
   geo.computeVertexNormals();
   // normals should face inward for lighting
@@ -282,7 +292,9 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
     const l = Math.hypot(px / a, py / b) || 1;
     nrm.setXYZ(i, -px / a / l, -py / b / l, 0);
   }
+  geo.computeTangents?.();
   const shell = new THREE.Mesh(geo, mat);
+  shell.name = 'waistShell';
   shell.castShadow = true; shell.receiveShadow = true;
   g.add(shell);
   // Ribs (formers) every 0.5 m, broken at the windows

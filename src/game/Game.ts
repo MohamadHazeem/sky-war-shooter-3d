@@ -156,6 +156,7 @@ export class Game {
         w.callout('wound', 'Navigator', 'Gunner\'s hit! Stay on that gun if you can!', 10, 2);
       }
     };
+    w.events.fuselageHit = (local, dir) => { if (this.mission?.role === 'gunner') this.gunner.fuselageHit(local, dir); };
     w.events.hitMarker = (kill) => { if (kill) this.killMarkerT = 0.45; else this.hitMarkerT = 0.12; };
   }
 
