@@ -3,6 +3,7 @@ import type { Engine } from '../core/Engine';
 import type { Game } from '../game/Game';
 import { CAMPAIGN } from '../game/Missions';
 import { applyWeather, ROUND_WEATHER } from '../render/Weather';
+import { Atmos } from '../render/Atmosphere';
 import { STATIONS, type StationId } from '../world/B17Layout';
 
 // Development-only: fixed camera setups for the before/after screenshot gallery
@@ -10,10 +11,14 @@ import { STATIONS, type StationId } from '../world/B17Layout';
 // wobble, names and cloud drift come out the same on every run.
 //   await sws.gallery.capture('after')      -> every setup, saved through tools/gallery/save-server.mjs
 //   sws.gallery.setup('waist'); sws.shot()  -> one setup, then look at it
-export type ShotName = 'waist' | 'top' | 'fw190' | 'formation' | 'dusk' | 'distant';
+export type ShotName = 'waist' | 'top' | 'fw190' | 'formation' | 'dusk' | 'distant'
+  | 'sunedge' | 'sunlow' | 'cloudsea' | 'engine' | 'p51';
 export const SHOTS: ShotName[] = ['waist', 'top', 'fw190', 'formation', 'dusk'];
 // 'distant' (the living sky through a long lens) has nothing to show before it existed
 export const SHOTS_AFTER: ShotName[] = [...SHOTS, 'distant'];
+// Cloud and heat-haze pass (tools/gallery/clouds-haze): cloud edges against the sun, cloud
+// shadows on the cloud sea, the haze behind a B-17 engine and the P-51's exhaust stubs
+export const SHOTS_CLOUDS: ShotName[] = ['waist', 'sunedge', 'sunlow', 'cloudsea', 'engine', 'fw190', 'p51'];
 
 function mulberry(seed: number) {
   return () => {
@@ -45,23 +50,58 @@ export function gallery(engine: Engine, game: Game) {
     s.vYaw = s.vPitch = 0;
   }
 
+  // A point on the upper layer's base, near the camera, where the sun ray is half blocked
+  // next to open sky: the edge of a cloud (from the cloud shadow map)
+  function findSunEdge(): THREE.Vector2 | null {
+    const m = engine.clouds.readShadowMap(engine.renderer, engine.camera, engine.time);
+    const { data, res, cx, cz, size } = m;
+    let best: THREE.Vector2 | null = null, bestD = Infinity;
+    for (let y = 4; y < res - 4; y++) for (let x = 4; x < res - 4; x++) {
+      const v = data[y * res + x];
+      if (v < 0.3 || v > 0.6) continue;
+      let open = false;
+      for (let k = 2; k <= 4 && !open; k++) open = data[y * res + x + k] > 0.95 || data[y * res + x - k] > 0.95 || data[(y + k) * res + x] > 0.95 || data[(y - k) * res + x] > 0.95;
+      if (!open) continue;
+      const d = (x - res / 2) ** 2 + (y - res / 2) ** 2;
+      if (d < bestD) { bestD = d; best = new THREE.Vector2(cx + ((x + 0.5) / res - 0.5) * size, cz + ((y + 0.5) / res - 0.5) * size); }
+    }
+    return best;
+  }
+
   function setup(name: ShotName) {
     const rnd = Math.random;
     Math.random = mulberry(1943);
     try {
-      game.startMission(CAMPAIGN[0]);
+      const mission = name === 'p51' ? CAMPAIGN[3] : CAMPAIGN[0];
+      game.startMission(mission);
       (engine as any).livingSky?.reset();   // same distant boxes / dogfights on every run
       // applied directly every time (Game skips re-applying a mission's weather it thinks is current)
-      applyWeather(engine, name === 'dusk' ? ROUND_WEATHER[3] : CAMPAIGN[0].weather!);
+      applyWeather(engine, name === 'dusk' ? ROUND_WEATHER[3] : name === 'sunlow' ? ROUND_WEATHER[1] : mission.weather!);
       w.contrails.enabled = true;
       engine.post.resetHistory();
       // 6 s of flight so contrails stream out and the formation settles
       for (let i = 0; i < 360; i++) { clearEnemies(); engine.frame(1 / 60, false); }
+      if (name === 'p51') {
+        // the P-51 cockpit, head turned to the right along the nose: exhaust stubs and their haze
+        const pilot = game.pilot as any;
+        pilot.view = 'cockpit';
+        pilot.applyViewVisibility?.();
+        for (let i = 0; i < 30; i++) { clearEnemies(); engine.frame(1 / 60, false); }
+        const cam = engine.camera;
+        cam.rotateY(-0.22);
+        cam.rotateX(-0.14);
+        cam.updateMatrixWorld();
+        engine.post.resetHistory();
+        return;
+      }
       const pb = w.playerBomber!;
       const bombers = w.bombers().filter((b) => b !== pb);
-      const station: StationId = name === 'top' ? 'top' : 'waistR';
+      const station: StationId = name === 'top' || name === 'engine' ? 'top' : 'waistR';
       (gun as any).setStation(station, true);
-      if (name === 'top') {
+      if (name === 'engine') {
+        // top turret looking out over the right wing: the inboard and outboard engines
+        aimAt('top', pb.localToWorld(new THREE.Vector3(-7, -1.4, -2)));
+      } else if (name === 'top') {
         aimAt('top', pb.localToWorld(new THREE.Vector3(0, 60, 400)));
       } else {
         // the nearest neighbour on the right (level with us), a little off the sight, like the film
@@ -104,6 +144,33 @@ export function gallery(engine: Engine, game: Game) {
         cam.fov = 32;
         cam.updateProjectionMatrix();
       }
+      if (name === 'sunedge' || name === 'sunlow' || name === 'cloudsea') {
+        gun.detach();
+        const c = w.formationCenter;
+        const cam = engine.camera;
+        cam.position.copy(c).add(new THREE.Vector3(0, 40, 0));
+        const sun = (Atmos.sunDir as THREE.Vector3).clone();
+        if (name === 'cloudsea') {
+          // across the sun, looking down onto the cumulus sea: the high layer's shadows
+          const side = new THREE.Vector3(-sun.z, 0, sun.x).normalize();
+          cam.lookAt(cam.position.clone().add(side.multiplyScalar(1000)).add(new THREE.Vector3(0, -620, 0)));
+        } else {
+          // into the sun, with the edge of an upper-layer cloud in front of it: move the
+          // camera so that its sun ray crosses a half-shadowed texel of the cloud shadow map
+          // (temporal tiers; the Low path has no map and keeps the formation position)
+          const edge = findSunEdge();
+          if (edge) {
+            const k = (Atmos.highBase - cam.position.y) / sun.y;
+            cam.position.x = edge.x - sun.x * k;
+            cam.position.z = edge.y - sun.z * k;
+          }
+          const look = sun.clone();
+          look.y -= 0.06;
+          cam.lookAt(cam.position.clone().add(look.multiplyScalar(1000)));
+        }
+        cam.fov = 62;
+        cam.updateProjectionMatrix();
+      }
       engine.post.resetHistory();
     } finally {
       Math.random = rnd;
@@ -113,7 +180,8 @@ export function gallery(engine: Engine, game: Game) {
   // Downscaled PNG of the current frame (the gallery is committed: keep it a sane size)
   function png(width = 1200): string {
     engine.post.resetHistory();
-    engine.render(1 / 60);
+    // several frames on the same camera: temporal passes (cloud accumulation) settle
+    for (let i = 0; i < 24; i++) engine.render(1 / 60);
     const src = engine.renderer.domElement;
     const c = document.createElement('canvas');
     c.width = width; c.height = Math.round(width * src.height / src.width);
@@ -126,14 +194,14 @@ export function gallery(engine: Engine, game: Game) {
     return r.text();
   }
 
-  async function capture(set: string, names: ShotName[] = SHOTS) {
+  async function capture(set: string, names: ShotName[] = SHOTS, port = 5219) {
     const out: string[] = [];
     for (const n of names) {
       setup(n);
-      out.push(await save(`${set}/${n}.png`, png()));
+      out.push(await save(`${set}/${n}.png`, png(), port));
     }
     return out;
   }
 
-  return { setup, png, save, capture, SHOTS, SHOTS_AFTER };
+  return { setup, png, save, capture, SHOTS, SHOTS_AFTER, SHOTS_CLOUDS };
 }

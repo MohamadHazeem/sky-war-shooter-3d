@@ -60,3 +60,41 @@ repeatable, so a new `after` set can be compared with this one.
   of tiny fighters wheeling, with gun flashes and now and then one going down burning on a
   corkscrew smoke trail; flak barrages bursting around two of the boxes. Visible in `waist`,
   `top`, `fw190` and `dusk` (right of frame and at the horizon) and in `distant`.
+
+## Clouds and heat haze (`clouds-haze/`)
+
+Phase 5 graphics goals 1 and 4. Setups in `src/dev/gallery.ts` (`SHOTS_CLOUDS`); each pair
+was captured back to back in one session, `before` with the old cloud path forced
+(`sws.cloudBench.configs.legacy()`: the Low path at High's buffer size and 64 steps, haze
+off), `after` with the new High path:
+
+```js
+const g = sws.gallery, B = sws.cloudBench.configs;
+for (const n of g.SHOTS_CLOUDS) {
+  B.legacy();   g.setup(n); await g.save(`clouds-haze/before/${n}.png`, g.png());
+  B.temporal(); g.setup(n); await g.save(`clouds-haze/after/${n}.png`, g.png());
+}
+```
+
+`sunedge` / `sunlow` move the camera so that its sun ray crosses a half-shadowed texel of
+the cloud shadow map, which puts an upper-layer cloud edge in front of the sun.
+
+| Setup | Before | After |
+|---|---|---|
+| Waist view, cloud sea with the upper layer's shadows | ![](clouds-haze/before/waist.png) | ![](clouds-haze/after/waist.png) |
+| An upper-layer cloud edge in front of the sun (50 deg) | ![](clouds-haze/before/sunedge.png) | ![](clouds-haze/after/sunedge.png) |
+| Golden-hour sun (14 deg) behind a cloud | ![](clouds-haze/before/sunlow.png) | ![](clouds-haze/after/sunlow.png) |
+| Looking down across the sun onto the cumulus sea | ![](clouds-haze/before/cloudsea.png) | ![](clouds-haze/after/cloudsea.png) |
+| Top turret over the right wing (engine haze) | ![](clouds-haze/before/engine.png) | ![](clouds-haze/after/engine.png) |
+| Close Fw 190 (its exhaust haze) | ![](clouds-haze/before/fw190.png) | ![](clouds-haze/after/fw190.png) |
+| P-51 cockpit (the exhaust stubs' haze) | ![](clouds-haze/before/p51.png) | ![](clouds-haze/after/p51.png) |
+
+Heat haze is a moving shimmer and barely shows in a still, so `after/*-haze.png` are
+difference images (haze on vs off, x4; red/yellow = displaced pixels, over the frame at
+30 %): `engine-haze` (B-17 nacelle plumes over the wing), `fw190-haze` (the fighter's
+exhaust banks), `p51-haze` (the stubs along the nose, through the windscreen),
+`muzzle-haze` (waist gun muzzle blast), `ripple-haze` (an explosion ripple 60 m out,
+radius 30 m, 0.2 s into its life). Faint speckle on the clouds in those is the temporal
+cloud jitter between the two frames, not haze.
+
+A/B render times on the gallery cameras: `sws.cloudBench.ab()` (`src/dev/cloudBench.ts`).

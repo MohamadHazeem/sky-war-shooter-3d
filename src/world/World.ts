@@ -13,7 +13,8 @@ import { sound } from '../audio/Sound';
 import { playRicochet } from '../audio/Ricochet';
 import { Contrails } from '../render/Contrails';
 import { Wrecks, BreakKind } from './Wrecks';
-import { updateExhausts } from './Exhaust';
+import { attachEngineHaze, updateExhausts } from './Exhaust';
+import { heatHaze } from '../render/HeatHaze';
 import { WingVapor } from './WingVapor';
 import { makeDropTank } from './Props';
 import { startBomberDeath, updateBomberDeath, clearBomberDeath } from './BomberDeath';
@@ -356,6 +357,7 @@ export class World implements WorldView {
   add(a: Aircraft) {
     this.aircraft.push(a);
     this.scene.add(a.root);
+    attachEngineHaze(a);   // heat haze behind the engines (HeatHaze.ts)
   }
 
   spawnEnemy(pos: THREE.Vector3, attack?: AttackType, skill = 1, dropTank = true, rockets = false, type: EnemyType = 'fw190'): Fighter {
@@ -785,6 +787,7 @@ export class World implements WorldView {
         this.ballistics.fire(muzzle, vel, a.team, g.damage, g.count % g.tracerEvery === 0, g.tracerColor, a, !!g.cannon, a.isPlayer);
         if (a.isPlayer) this.stats.shots++;
         if (g.count % 2 === 0) this.effects.muzzleFlash(muzzle, dir, a.isPlayer ? 0.4 : g.cannon ? 2.6 : 1.8, a.vel);
+        if (a.isPlayer && g.count % 2 === 0) heatHaze.emit(muzzle, 0.45, 1, 0.14, 'shimmer', dir);   // muzzle blast shimmer
         if (g.count % 3 === 0) {
           if (a.isPlayer) sound.playerGun(true, !!g.cannon);
           else sound.play(g.cannon ? 'cannon' : 'mg131', muzzle, { gain: g.cannon ? 0.9 : 0.6, ref: 70 });

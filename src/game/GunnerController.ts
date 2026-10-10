@@ -13,6 +13,7 @@ import { Atmos } from '../render/Atmosphere';
 import { DustMotes } from './DustMotes';
 import { KeyAim, KEY_AIM_RATE } from './KeyAim';
 import { access } from '../core/Accessibility';
+import { heatHaze } from '../render/HeatHaze';
 import { crewSeatLoadout } from './CrewRoster';
 
 interface StationState {
@@ -530,6 +531,7 @@ export class GunnerController {
     this.world.ballistics.fire(muzzle, vel, 'allied', W.damage * this.loadout.damage, tracer, od ? OVERDRIVE_TRACER : W.tracer, b, !!W.cannon, true);
     this.world.stats.shots++;
     if (this.shotCount % 2 === 0) this.world.effects.playerMuzzle(muzzle, dir, b.vel);
+    if (this.shotCount % 2 === 0) heatHaze.emit(muzzle, 0.3, 1, 0.16, 'shimmer', dir);   // muzzle blast shimmer (HeatHaze.ts)
     if (this.shotCount % 2 === 0) this.world.effects.gunSmoke(muzzle, b.vel.clone().multiplyScalar(0.9));
     this.muzzleLight.position.copy(muzzle).addScaledVector(dir, -0.4);
     this.muzzleLight.intensity = 3 + Math.random() * 2;

@@ -185,6 +185,9 @@ uniform vec3 uLift;
 // Contact AO from the depth buffer (0 = off) and the projection's y scale (1 / tan(fov/2))
 uniform float uAO;
 uniform float uProjY;
+// Heat haze (HeatHaze.ts): screen-space offsets of the scene lookup, 0 = no emitter in view
+uniform sampler2D tHaze;
+uniform float uHazeOn;
 
 float sunVisibility() {
   if (uSunOn <= 0.0) return 0.0;
@@ -319,10 +322,21 @@ void main() {
   if (uZoomPulse > 0.0) vel += (vUv - 0.5) * uZoomPulse * smoothstep(uNoBlurDist, uNoBlurDist * 1.6, dist);
   vec3 col = vec3(0.0);
   float noise = hash12(gl_FragCoord.xy + uTime * 60.0);
+  // heat haze: bend the lookup, unless that pulls a nearer surface (a gun barrel, a wing
+  // edge) into the background
+  vec2 uv0 = vUv;
+  if (uHazeOn > 0.5) {
+    vec2 hz = texture2D(tHaze, vUv).xy;
+    if (dot(hz, hz) > 1e-10) {
+      vec3 wh; bool sh;
+      float dh = viewDist(vUv + hz, wh, sh);
+      if (dh > dist * 0.85) uv0 = vUv + hz;
+    }
+  }
   const int MB = 10;
   for (int i = 0; i < MB; i++) {
     float t = (float(i) + noise) / float(MB) - 0.5;
-    col += sceneTap(vUv - vel * t);
+    col += sceneTap(uv0 - vel * t);
   }
   col /= float(MB);
 
@@ -434,6 +448,7 @@ export class PostFX {
     lift: new THREE.Vector3(0.016, 0.014, 0.011),
   };
   cloudTex: THREE.Texture | null = null;
+  hazeTex: THREE.Texture | null = null;   // heat-haze offsets of this frame (Engine), null = none
   private rotOnly = new THREE.Matrix4();
 
   constructor(reversed: boolean) {
@@ -454,6 +469,7 @@ export class PostFX {
         uShadowTint: { value: this.grade.shadowTint }, uHighTint: { value: this.grade.highTint },
         uSat: { value: 1 }, uCurve: { value: 0.2 }, uLift: { value: this.grade.lift },
         uAO: { value: 0 }, uProjY: { value: 1 },
+        tHaze: { value: null }, uHazeOn: { value: 0 },
       },
       vertexShader: vert,
       fragmentShader: finalFrag,
@@ -515,6 +531,8 @@ export class PostFX {
     u.tCloud.value = this.cloudTex;
     u.uAspect.value = camera.aspect;
     u.uShafts.value = this.shafts;
+    u.tHaze.value = this.hazeTex;
+    u.uHazeOn.value = this.hazeTex ? 1 : 0;
     renderer.setRenderTarget(null);
     this.quad.render(renderer);
     this.prevViewProj.copy(curVP);

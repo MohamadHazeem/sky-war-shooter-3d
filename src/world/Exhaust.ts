@@ -1,7 +1,8 @@
 import * as THREE from 'three';
-import { Aircraft, Fighter } from './Aircraft';
+import { Aircraft, Bomber, Fighter } from './Aircraft';
 import { ParticleSystem } from '../render/Particles';
 import { ModelKind } from './Models';
+import { heatHaze } from '../render/HeatHaze';
 
 // Engine exhaust stacks: short, flickering blue-orange flame glows on both sides of the
 // cowling, just behind each propeller. Positions are in model units (x = lateral,
@@ -55,5 +56,28 @@ export function updateExhausts(aircraft: readonly Aircraft[], glow: ParticleSyst
         frame: 1, rotVel: (Math.random() - 0.5) * 8,
       });
     }
+  }
+}
+
+// Heat haze behind the engines (render/HeatHaze.ts): a shimmering plume streaming back from
+// each B-17 nacelle and from both exhaust banks of the fighters with modelled stacks (the
+// P-51's own stubs in the cockpit view, close Fw 190s). Called once per aircraft from
+// World.add; the emitters follow the airframe and go when it leaves the scene.
+const B17_NACELLES: [number, number, number][] = [[6.51, -0.07, 3.1], [3.02, -0.47, 3.68], [-3.02, -0.47, 3.68], [-6.51, -0.07, 3.1]];
+
+export function attachEngineHaze(a: Aircraft) {
+  if (a instanceof Bomber) {
+    B17_NACELLES.forEach(([x, y, z], k) => heatHaze.attach(a.root, new THREE.Vector3(x, y - 0.3, z - 1.6), 0.7, 1,
+      { trail: new THREE.Vector3(0, 0.1, -7), active: () => a.alive && !a.engineDead[k] }));
+    return;
+  }
+  const stack = a instanceof Fighter ? STACK[a.kind] : undefined;
+  if (!stack) return;
+  const s = a.model.scale.x;
+  for (const side of [1, -1]) {
+    heatHaze.attach(a.root, new THREE.Vector3(side * stack.x * s, stack.y * s, stack.z * s), 0.28 * s, 1, {
+      trail: new THREE.Vector3(side * 0.25 * s, 0.05 * s, -3.6 * s),
+      active: () => a.alive && (a.zone('engine')?.hp ?? 1) > 0,
+    });
   }
 }
