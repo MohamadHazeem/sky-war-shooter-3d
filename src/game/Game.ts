@@ -990,7 +990,7 @@ export class Game {
       merit, points: this.prog.points,
     };
     const h = {
-      next: () => this.showBriefing(CAMPAIGN[idx + 1]),
+      next: () => this.showCampaign(), // campaign map: next operation card + optional side raids
       retry: () => this.showBriefing(m),
       menu: () => this.startMenu(),
       armory: () => this.ui.armory(this.prog, () => this.ui.debrief({ ...d, merit: undefined, points: this.prog.points }, h)),
