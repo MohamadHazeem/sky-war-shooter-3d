@@ -114,6 +114,7 @@ export class World implements WorldView {
   constructor(private engine: Engine) {
     this.scene = engine.scene;
     this.effects = new Effects(this.scene);
+    this.effects.explosionScale = Math.max(1, ENEMY_SCALE / 3); // blasts sized to the enlarged aircraft
     this.wrecks = new Wrecks(this.scene, this.effects);
     this.wingVapor = new WingVapor(this.effects);
     this.scene.add(this.ballistics.tracers.mesh);

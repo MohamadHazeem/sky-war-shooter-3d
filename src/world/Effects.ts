@@ -131,30 +131,57 @@ export class Effects {
     });
   }
 
+  // Size of explosions relative to the aircraft (the enemies are drawn enlarged)
+  explosionScale = 1;
+  private pendingPops: { t: number; pos: THREE.Vector3; vel: THREE.Vector3; k: number }[] = [];
+
   explosion(pos: THREE.Vector3, vel: THREE.Vector3, scale = 1) {
-    this.flashLight(pos, 900 * scale, 0.4, 0xff9944);
-    // white-hot flash and an expanding shockwave
-    this.glow.spawn({ pos, vel, life: 0.14, size0: 10 * scale, size1: 22 * scale, color0: [40, 28, 14], alpha0: 1, alpha1: 0, frame: 1 });
-    this.glow.spawn({ pos, vel, life: 0.3, size0: 4 * scale, size1: 45 * scale, color0: [1.2, 1.05, 0.9], alpha0: 0.45, alpha1: 0, frame: 3, rotVel: 0 });
-    // rolling fireball
-    for (let i = 0; i < 22 * scale; i++) {
-      _v.set(R(), R(), R()).normalize().multiplyScalar((5 + Math.random() * 16) * scale).add(vel);
+    const k = scale * this.explosionScale;
+    this.flashLight(pos, 900 * k, 0.45, 0xff8a3a);
+    // short orange-white flash (not a white bulb) and a faint expanding shock ring
+    this.glow.spawn({ pos, vel, life: 0.11, size0: 7 * k, size1: 18 * k, color0: [16, 9, 3.2], alpha0: 1, alpha1: 0, frame: 1 });
+    this.glow.spawn({ pos, vel, life: 0.35, size0: 4 * k, size1: 40 * k, color0: [1.1, 0.9, 0.75], alpha0: 0.28, alpha1: 0, frame: 3, rotVel: 0 });
+    // the heart of the fireball: holds for a moment before it breaks up
+    this.glow.spawn({ pos, vel, life: 0.7, size0: 9 * k, size1: 14 * k, color0: [9, 3.6, 0.9], color1: [1.4, 0.3, 0.05], alpha0: 0.95, alpha1: 0, frame: 2, rotVel: 0.6 });
+    // rolling fireball: billows that burn from yellow through orange to dull red
+    for (let i = 0; i < 24 * scale; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar((4 + Math.random() * 13) * k).add(vel);
       _p.copy(pos).addScaledVector(_v, 0.02);
       const hot = Math.random();
-      this.glow.spawn({ pos: _p, vel: _v, life: 0.5 + Math.random() * 0.8, size0: (3 + Math.random() * 4) * scale, size1: (8 + Math.random() * 7) * scale,
-        color0: [9 + hot * 7, 3.6 + hot * 2.5, 0.8], color1: [1.6, 0.35, 0.06], alpha0: 1, alpha1: 0, frame: 2, drag: 2.5, rotVel: (Math.random() - 0.5) * 3 });
+      this.glow.spawn({ pos: _p, vel: _v, life: 0.8 + Math.random() * 1.0, size0: (3.5 + Math.random() * 4) * k, size1: (10 + Math.random() * 9) * k,
+        color0: [7 + hot * 5, 2.4 + hot * 1.8, 0.5], color1: [0.9, 0.18, 0.04], alpha0: 1, alpha1: 0, frame: 2, drag: 2.2, rise: -1.5, rotVel: (Math.random() - 0.5) * 3 });
     }
-    // black smoke, lit dirty orange underneath for a moment
-    for (let i = 0; i < 18 * scale; i++) {
-      _v.set(R(), R(), R()).normalize().multiplyScalar((4 + Math.random() * 12) * scale).add(_p.copy(vel).multiplyScalar(0.7));
-      this.smoke.spawn({ pos, vel: _v, life: 8 + Math.random() * 6, size0: 6.5 * scale, size1: (18 + Math.random() * 14) * scale, color0: [0.14, 0.08, 0.05], color1: [0.2, 0.19, 0.18], alpha0: 0.92, alpha1: 0, drag: 1.0, rise: 0.3, lit: true });
+    // smoke: fire-lit brown at first, settling into a dark grey cloud that lingers
+    for (let i = 0; i < 20 * scale; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar((3 + Math.random() * 10) * k).add(_p.copy(vel).multiplyScalar(0.7));
+      this.smoke.spawn({ pos, vel: _v, life: 9 + Math.random() * 6, size0: 6 * k, size1: (20 + Math.random() * 16) * k, color0: [0.11, 0.065, 0.04], color1: [0.085, 0.08, 0.075], alpha0: 0.92, alpha1: 0, drag: 1.0, rise: 0.4, lit: true });
     }
-    // burning fragments arcing away, each trailing sparks
+    // burning fragments arcing away
     for (let i = 0; i < 30 * scale; i++) {
-      _v.set(R(), R(), R()).normalize().multiplyScalar(30 + Math.random() * 70);
-      this.glow.spawn({ pos, vel: _v.add(vel), life: 0.6 + Math.random() * 1.0, size0: 0.5, size1: 0.12, color0: [28, 13, 3], alpha0: 1, alpha1: 0, frame: 1, drag: 1.4, rise: -9 });
+      _v.set(R(), R(), R()).normalize().multiplyScalar((30 + Math.random() * 70) * Math.sqrt(k));
+      this.glow.spawn({ pos, vel: _v.add(vel), life: 0.7 + Math.random() * 1.1, size0: 0.5 * Math.sqrt(k), size1: 0.12, color0: [24, 11, 2.5], alpha0: 1, alpha1: 0, frame: 1, drag: 1.4, rise: -9 });
     }
     this.spawnDebris(pos, vel, Math.floor(12 * scale), true);
+    // fuel and ammunition cooking off a moment later: two or three smaller pops
+    if (scale >= 0.8) {
+      const n = 2 + (Math.random() < 0.5 ? 1 : 0);
+      for (let i = 0; i < n; i++) {
+        _v.set(R(), R() * 0.6, R()).normalize().multiplyScalar((4 + Math.random() * 6) * k);
+        this.pendingPops.push({ t: 0.12 + Math.random() * 0.55, pos: pos.clone().add(_v), vel: vel.clone(), k: k * (0.35 + Math.random() * 0.2) });
+      }
+    }
+  }
+
+  private pop(pos: THREE.Vector3, vel: THREE.Vector3, k: number) {
+    this.flashLight(pos, 400 * k, 0.2, 0xff9944);
+    for (let i = 0; i < 8; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar((3 + Math.random() * 8) * k).add(vel);
+      this.glow.spawn({ pos, vel: _v, life: 0.5 + Math.random() * 0.5, size0: 3 * k, size1: 9 * k, color0: [9, 3.4, 0.7], color1: [1, 0.2, 0.04], alpha0: 1, alpha1: 0, frame: 2, drag: 2.5, rotVel: 1.5 });
+    }
+    for (let i = 0; i < 4; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar(4 * k).add(vel);
+      this.smoke.spawn({ pos, vel: _v, life: 6 + Math.random() * 4, size0: 4 * k, size1: 14 * k, color0: [0.1, 0.06, 0.04], color1: [0.085, 0.08, 0.075], alpha0: 0.8, alpha1: 0, drag: 1.2, rise: 0.3, lit: true });
+    }
   }
 
   // Flak burst: a bright core, a spray of fast glowing fragments, and 3-6 dark puffs of
@@ -249,11 +276,16 @@ export class Effects {
     this.glow.rebase(off);
     for (const l of this.lights) l.light.position.sub(off);
     for (const p of this.pendingFlak) p.pos.sub(off);
+    for (const p of this.pendingPops) p.pos.sub(off);
   }
 
   update(dt: number) {
     this.smoke.update(dt);
     this.glow.update(dt);
+    if (this.pendingPops.length) {
+      for (const p of this.pendingPops) { p.t -= dt; if (p.t <= 0) this.pop(p.pos, p.vel, p.k); }
+      this.pendingPops = this.pendingPops.filter((p) => p.t > 0);
+    }
     if (this.pendingFlak.length) {
       for (const p of this.pendingFlak) { p.t -= dt; if (p.t <= 0) this.flakBurst(p.pos, p.scale, false); }
       this.pendingFlak = this.pendingFlak.filter((p) => p.t > 0);
@@ -303,7 +335,7 @@ export class Effects {
     this.smoke.clear(); this.glow.clear();
     for (const d of this.debris) this.scene.remove(d.mesh);
     for (const c of this.chutes) this.scene.remove(c.obj);
-    this.debris = []; this.chutes = [];
+    this.debris = []; this.chutes = []; this.pendingPops = [];
     for (const l of this.lights) { l.light.intensity = 0; l.light.userData.free = true; }
     this.lights = [];
     this.pendingFlak = [];
