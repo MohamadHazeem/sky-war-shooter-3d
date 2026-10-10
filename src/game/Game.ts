@@ -641,6 +641,8 @@ export class Game {
     sound.setListener(this.engine.camera);
     w.listener = this.engine.camera.position;
     sound.updateFighterVoices(w.fighterSoundInfo());
+    // damaged B-17 engines change the interior drone (Sound.setEngineHealth caches repeats)
+    if (this.mission?.role === 'gunner' && w.playerBomber) sound.setEngineHealth(4 - w.playerBomber.enginesOut);
     // screen effects
     this.damageT = Math.max(0, this.damageT - dt * 1.8);
     this.engine.post.damageFlash = this.damageT * 0.35;
