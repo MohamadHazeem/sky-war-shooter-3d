@@ -30,6 +30,16 @@ export class SkyDome {
         }
         float fbm(vec2 p) { float a = 0.5, s = 0.0; for (int i = 0; i < 5; i++) { s += a * vnoise(p); p = p * 2.03 + 17.1; a *= 0.5; } return s; }
 
+        // High cirrus: thin ice streaks on a plane ~11 km up. Noise is stretched along the
+        // wind axis and domain-warped so the filaments curl; only the noise peaks show.
+        float cirrus(vec2 xz) {
+          vec2 q = vec2(0.921 * xz.x - 0.389 * xz.y, 0.389 * xz.x + 0.921 * xz.y) * vec2(0.00012, 0.0008);
+          q += (vec2(vnoise(q * 1.7 + 3.1), vnoise(q * 1.7 - 7.4)) - 0.5) * 0.9;
+          float n = 0.0, a = 0.5;
+          for (int i = 0; i < 3; i++) { n += a * vnoise(q); q = q * 2.1 + 9.2; a *= 0.5; }
+          return smoothstep(0.5, 0.8, n / 0.875);
+        }
+
         // Patchwork farmland, woods, towns, rivers and the sea, seen from 7 km
         vec3 terrain(vec2 xz, float dist) {
           vec2 p = xz / 1000.0;
@@ -61,6 +71,17 @@ export class SkyDome {
             // 7 km of air: strong blue haze, heavier toward the horizon
             float haze = 1.0 - exp(-t / 24000.0);
             col = mix(g + uHorizon * 0.22, col, haze);
+          }
+          // Faint cirrus above the horizon, fading toward the horizon and the zenith. Skipped
+          // when the camera is already above the layer (it would sit behind the viewer).
+          float cirAlt = 11000.0 - uCamAlt;
+          if (d.y > 0.03 && cirAlt > 0.0) {
+            float tc = cirAlt / d.y;
+            float band = smoothstep(0.03, 0.2, d.y) * (1.0 - smoothstep(0.5, 0.95, d.y));
+            float cir = cirrus(uGroundXZ + d.xz * tc) * band;
+            // Sun-tinted ice, brighter in the forward-scattering lobe toward the sun
+            float forward = pow(max(dot(d, uSunDir), 0.0), 6.0);
+            col = mix(col, uSunColor * (0.07 + 0.08 * forward), cir * 0.3);
           }
           // Sun disk (very bright so bloom catches it)
           float mu = dot(d, uSunDir);
