@@ -101,6 +101,12 @@ kbd { font-family: 'IBM Plex Mono', monospace; font-size: 12px; border: 1px soli
 .meter { width: 180px; height: 5px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); margin-top: 4px; }
 .meter div { height: 100%; background: var(--ink); transition: width 0.08s; }
 .meter.hot div { background: var(--bad); }
+/* score multiplier under the score; the bar is the remaining combo hold time */
+.combo { margin-top: 6px; }
+.combo-val { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
+.combo.hot .combo-val { color: var(--warn); }
+.combo-bar { width: 120px; height: 3px; margin: 3px 0 0 auto; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); }
+.combo-bar div { height: 100%; width: 0; background: var(--warn); }
 #subs { position: absolute; left: 50%; bottom: 13vh; transform: translateX(-50%); text-align: center; max-width: 80vw; }
 #subs .line { display: inline-block; background: rgba(0,0,0,0.78); color: #fff; font-family: 'Oswald', sans-serif; font-weight: 400; font-size: clamp(16px, 1.7vw, 24px); padding: 4px 14px; margin-top: 4px; letter-spacing: 0.3px; animation: subin 0.2s ease-out; }
 #subs .who { color: var(--khaki); margin-right: 8px; font-size: 0.75em; letter-spacing: 2px; text-transform: uppercase; }

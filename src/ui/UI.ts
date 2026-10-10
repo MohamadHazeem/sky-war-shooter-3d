@@ -174,6 +174,10 @@ export class UI {
         <div class="hud-label">Kills</div><div class="hud-big" id="hKills">0</div>
         <div class="hud-label" style="margin-top:6px">Score</div><div class="mono" id="hScore" style="font-size:18px">0</div>
         <div class="hud-label" style="margin-top:6px">Formation</div><div class="mono" id="hFormation" style="font-size:16px"></div>
+        <div class="combo" id="hCombo">
+          <div class="hud-label">Multiplier</div><div class="combo-val" id="hComboVal">x1.0</div>
+          <div class="combo-bar"><div id="hComboBar"></div></div>
+        </div>
       </div>
       <div id="feed"></div>
       <div class="hud-bl hud-text" id="hBL"></div>
@@ -237,6 +241,14 @@ export class UI {
     this.setText('hKills', String(d.kills));
     this.setText('hScore', String(d.score));
     this.setText('hFormation', d.formation);
+  }
+
+  // Score multiplier readout; the bar drains while the combo hold window runs out.
+  updateCombo(mult: number, frac: number) {
+    this.setText('hComboVal', `x${mult.toFixed(1)}`);
+    document.getElementById('hCombo')?.classList.toggle('hot', mult >= 2);
+    const b = document.getElementById('hComboBar');
+    if (b) b.style.width = `${Math.round(Math.max(0, Math.min(1, frac)) * 100)}%`;
   }
 
   subtitle(who: string, text: string) {

@@ -11,6 +11,7 @@ import { STATIONS } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
 import type { AttackType } from '../world/AI';
 import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
+import { Combo } from './Combo';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -48,6 +49,7 @@ export class Game {
   private damageT = 0;
   private slowmo = 0;
   private streak = 0;
+  private combo = new Combo();
   private lastKillAt = -99;
   private aceAwarded = false;
   private chatterT = 0;
@@ -139,8 +141,11 @@ export class Game {
     w.events.kill = (victim, byPlayer) => {
       if (victim.team === 'axis') {
         if (byPlayer) {
-          this.score += Math.round(100 * (1 + this.survivalWave * 0.1));
-          this.popups.push({ pos: victim.pos.clone(), text: '+100  KILL', life: 1.6 });
+          // paid at the multiplier held going in; the kill then builds the next step
+          const pts = Math.round(100 * (1 + this.survivalWave * 0.1) * this.combo.mult);
+          this.score += pts;
+          this.combo.onKill();
+          this.popups.push({ pos: victim.pos.clone(), text: `+${pts}  KILL`, life: 1.6 });
           sound.confirm('kill_confirm');
           this.ui.feed(`Fw 190 destroyed — confirmed`, 'mine');
           // streaks: kills in quick succession
@@ -182,7 +187,8 @@ export class Game {
     };
     w.events.fuselageHit = (local, dir) => { if (this.mission?.role === 'gunner') this.gunner.fuselageHit(local, dir); };
     w.events.shake = (a) => { this.trauma = Math.min(1, this.trauma + a); };
-    w.events.hitMarker = (kill) => { if (kill) this.killMarkerT = 0.45; else this.hitMarkerT = 0.12; };
+    // kills feed the combo in the kill handler; plain hits only keep it alive and nudge it up
+    w.events.hitMarker = (kill) => { if (kill) this.killMarkerT = 0.45; else { this.hitMarkerT = 0.12; this.combo.onHit(); } };
   }
 
   // ---------------- Menu ----------------
@@ -299,6 +305,7 @@ export class Game {
     this.world.playerDamageScale *= diff === 'recruit' ? 0.7 : diff === 'ace' ? 1.3 : 1;
     if (diff === 'recruit') this.world.aiGunnerFactor *= 1.2;
     this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false; this.trauma = 0;
+    this.combo.reset();
     this.world.spawnFormation(m.bombers, 1);
     const pb = this.world.playerBomber!;
     if (m.role === 'pilot') for (const b of this.world.bombers()) for (const z of b.zones) { z.hp *= 2.2; z.maxHp *= 2.2; }
@@ -649,6 +656,7 @@ export class Game {
     else { this.engine.post.vignette = 0.9; this.engine.post.exposure = 1; }
     this.hitMarkerT -= dt;
     this.killMarkerT -= dt;
+    if (!this.menuMode) this.combo.update(dt);
     for (const p of this.popups) { p.life -= dt; p.pos.addScaledVector(this.world.formationForward, 75 * dt); }
     this.popups = this.popups.filter((p) => p.life > 0);
     this.hudAcc += dt;
@@ -705,6 +713,7 @@ export class Game {
       mission: `${m.title.toUpperCase()} · ${mm}:${String(ss).padStart(2, '0')}`,
       objective, kills: w.stats.kills, score: this.score, formation: `${alive}/${m.bombers} B-17s`,
     });
+    this.ui.updateCombo(this.combo.mult, this.combo.fraction);
     if (m.role === 'gunner') {
       const s = this.gunner.state;
       const zones: Record<string, number> = {};
