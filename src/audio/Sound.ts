@@ -15,7 +15,8 @@ import { Interphone } from './Interphone';
 //   a short metallic one for the inside of the bomber, a long open-air one outside.
 type BufName =
   | 'm2' | 'm2far' | 'cannon' | 'mg131' | 'hit' | 'hitHeavy' | 'explosion' | 'explosionFar' | 'flak' | 'flakClose'
-  | 'crack' | 'casing' | 'click' | 'glass' | 'whoosh' | 'static' | 'squelch' | 'rattle' | 'rocket' | 'debris' | 'beltTick';
+  | 'crack' | 'casing' | 'click' | 'glass' | 'whoosh' | 'static' | 'squelch' | 'rattle' | 'rocket' | 'debris' | 'beltTick'
+  | 'm2thump' | 'm2mech';
 
 const rand = () => Math.random() * 2 - 1;
 const clamp01 = (v: number) => (Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 1);
@@ -250,6 +251,32 @@ export class Sound {
         const boom = lpb[ch].run(n) * Math.exp(-t * 11) * 2.8 + Math.sin(2 * Math.PI * 58 * t * (1 - t)) * Math.exp(-t * 16) * 1.1;
         const mech = t > dt ? (Math.sin(2 * Math.PI * f1 * t) * 0.6 + Math.sin(2 * Math.PI * f2 * t) * 0.35 + rand() * 0.4) * Math.exp(-(t - dt) * 95) * 0.45 : 0;
         return crack + blast + boom + mech;
+      });
+    });
+    // Player's .50 cal weight layers (always synthesized, stacked under the recorded report):
+    // a chest-punch blast whose pitch drops like a small explosion, and the bolt slamming home.
+    this.variants('m2thump', 4, () => {
+      const lpn = [new LP(0.035), new LP(0.035)], lpm = [new LP(0.18), new LP(0.18)];
+      const f0 = 34 + Math.random() * 8, sweep = 80 + Math.random() * 30;
+      let ph = 0;
+      return this.stereo(0.38, (t, ch, i) => {
+        if (ch === 0) ph += 2 * Math.PI * (f0 + sweep * Math.exp(-t * 32)) / this.ctx!.sampleRate;
+        const n = rand();
+        const atk = 1 - Math.exp(-t * 1400);
+        const sub = Math.sin(ph) * atk * Math.exp(-t * 13) * 1.6;
+        const rumble = lpn[ch].run(n) * Math.exp(-t * 18) * 5.5;
+        const blast = lpm[ch].run(n) * Math.exp(-t * 55) * 1.8;
+        return Math.tanh((sub + rumble + blast) * 1.6);
+      });
+    });
+    this.variants('m2mech', 3, () => {
+      const d0 = 0.03 + Math.random() * 0.012, f1 = 1500 + Math.random() * 400, f2 = 3200 + Math.random() * 500;
+      const hp = [new HP(0.7), new HP(0.7)];
+      return this.stereo(0.16, (t, ch) => {
+        const tt = t - d0;
+        if (tt < 0) return 0;
+        const ring = (Math.sin(2 * Math.PI * f1 * tt) * 0.6 + Math.sin(2 * Math.PI * f2 * tt) * 0.4) * Math.exp(-tt * 70);
+        return ring * 0.7 + hp[ch].run(rand()) * Math.exp(-tt * 160) * 0.8;
       });
     });
     this.variants('m2far', 3, () => {
@@ -702,7 +729,13 @@ export class Sound {
     const now = this.ctx.currentTime;
     if (now - this.lastShot < 0.028) return;
     this.lastShot = now;
-    this.play('m2', null, { gain: twin ? 0.85 : 0.75, reverb: this.mode === 'bomber' ? 0.7 : 0 });
+    const rev = this.mode === 'bomber' ? 0.7 : 0;
+    // recorded report + synthesized blast + bolt: reads as a heavy weapon, each round a small explosion
+    this.play('m2', null, { gain: twin ? 0.9 : 0.8, reverb: rev });
+    this.play('m2thump', null, { gain: twin ? 1.15 : 1.0, reverb: rev * 0.8 });
+    this.play('m2mech', null, { gain: 0.28, reverb: rev * 0.4 });
+    // the guns drown out everything else for an instant
+    this.duckFor(0.09, 0.5);
     if (Math.random() < 0.35) setTimeout(() => this.play('casing', null, { gain: 0.07, rate: 0.9 + Math.random() * 0.4, reverb: 0.3 }), 150 + Math.random() * 250);
   }
 

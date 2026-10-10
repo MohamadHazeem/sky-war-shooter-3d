@@ -15,7 +15,7 @@ import { DistantBattle } from '../audio/DistantBattle';
 import { INTERPHONE_LEAD_S } from '../audio/Interphone';
 import type { AttackType } from '../world/AI';
 import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
-import * as ThreatRing from '../ui/ThreatRing';
+import * as Radar from '../ui/Radar';
 import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
 import { CombatTally } from './CombatTally';
@@ -52,6 +52,11 @@ export class Game {
   private waveTimer = 0;
   private survivalWave = 0;
   private survivalBreak = 0;
+  // radar: Tab toggles the big map; the next wave's arrival point is decided early so it can be shown
+  private mapOpen = false;
+  private mapT = 0;
+  private incomingOff: THREE.Vector3 | null = null;  // relative to the formation centre
+  private incoming: Radar.Incoming | null = null;
   private escortsSpawned = false;
   private bombsDropped = false;
   private endTimer = 0;
@@ -109,6 +114,7 @@ export class Game {
       if (e.code === 'Escape' && this.state === 'playing' && !this.input.locked) this.pause();
       if (e.code === 'KeyP' && this.state === 'playing') this.pause();
       if (e.code === 'KeyF' && !e.repeat && this.state === 'playing') this.photo.toggle();
+      if (e.code === 'Tab' && !e.repeat && (this.state === 'playing' || this.state === 'ending')) { e.preventDefault(); this.mapOpen = !this.mapOpen; }
     });
     engine.onFrame = (dt) => this.frame(dt);
     // Browsers only allow audio after a user gesture: start it on the first one
@@ -350,6 +356,7 @@ export class Game {
     this.world.playerDamageScale *= diff === 'recruit' ? 0.7 : diff === 'ace' ? 1.3 : 1;
     if (diff === 'recruit') this.world.aiGunnerFactor *= 1.2;
     this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false; this.trauma = 0;
+    this.incoming = null; this.incomingOff = null; this.mapOpen = false; this.mapT = 0;
     this.combo.reset();
     this.tally.reset();
     achievements.beginMission(m);
@@ -416,14 +423,28 @@ export class Game {
     return p;
   }
 
-  private spawnWave(w: Wave) {
-    // Gunner missions: most of the wave appears out where the player's gun is pointing,
-    // so the fighters are seen forming up and coming in.
+  // Where the next wave will appear, relative to the formation centre. Gunner missions:
+  // out where the player's gun is pointing, so the fighters are seen forming up and coming in.
+  private predictWave(w: Wave): THREE.Vector3 {
     const arc = this.mission?.role === 'gunner' ? this.world.playerArc() : null;
-    const base = arc ? this.world.playerBomber!.pos.clone().addScaledVector(arc, 1900).add(new THREE.Vector3(R() * 300, 250 + Math.random() * 300, R() * 300)) : this.spawnPos(w.from);
+    const base = arc ? this.world.playerBomber!.pos.clone().addScaledVector(arc, 2600).add(new THREE.Vector3(R() * 300, 250 + Math.random() * 300, R() * 300)) : this.spawnPos(w.from === 'mixed' ? 'front' : w.from);
+    return base.sub(this.world.formationCenter);
+  }
+
+  // Track the next wave for the radar: fix its arrival point once it is < 25 s out
+  private updateIncoming(eta: number | null, w: Wave | null, count = w?.count ?? 0) {
+    if (eta === null || !w || eta > 25) { this.incoming = null; if (eta === null) this.incomingOff = null; return; }
+    if (!this.incomingOff) this.incomingOff = this.predictWave(w);
+    this.incoming = { pos: this.world.formationCenter.clone().add(this.incomingOff), eta, count };
+  }
+
+  private spawnWave(w: Wave) {
+    const arc = this.mission?.role === 'gunner' ? this.world.playerArc() : null;
+    const base = this.world.formationCenter.clone().add(this.incomingOff ?? this.predictWave(w));
+    this.incomingOff = null; this.incoming = null;
     for (let i = 0; i < w.count; i++) {
       const fromArc = arc && (i < Math.ceil(w.count * 0.75));
-      const p = fromArc ? base.clone().add(new THREE.Vector3(R() * 150 + i * 45, R() * 60, R() * 150)) : w.from === 'mixed' ? this.spawnPos('mixed') : this.spawnPos(w.from).add(new THREE.Vector3(R() * 120 + i * 40, R() * 50, R() * 120));
+      const p = fromArc || w.from !== 'mixed' ? base.clone().add(new THREE.Vector3(R() * 150 + i * 45, R() * 60, R() * 150)) : this.spawnPos('mixed');
       let attack: AttackType | undefined = w.attack;
       if (!attack) attack = (['headon', 'stern', 'beam', 'high'] as AttackType[])[Math.floor(Math.random() * 4)];
       this.world.spawnEnemy(p, attack, w.skill, true, Math.random() < (w.rockets ?? 0), randomEnemyType());
@@ -441,6 +462,7 @@ export class Game {
       const next = m.waves[this.waveIdx];
       if (next) {
         const ready = next.afterClear ? (enemies === 0 && this.waveTimer > 6) || this.waveTimer > 75 : t >= next.at;
+        this.updateIncoming(next.afterClear ? (enemies === 0 ? Math.max(0, 6 - this.waveTimer) : 75 - this.waveTimer) : next.at - t, next);
         if (ready) {
           this.spawnWave(next); this.waveIdx++; this.waveTimer = 0;
           // between waves the gunners restock and the Mustang's guns are topped up
@@ -455,6 +477,9 @@ export class Game {
       this.waveTimer += dt;
       if (enemies === 0 || this.waveTimer > 90) {
         this.survivalBreak -= dt;
+        const nextN = Math.min(14, 2 + Math.floor((this.survivalWave + 1) * 1.4));
+        const nextFrom: SpawnFrom = (this.survivalWave + 1) % 3 === 0 ? 'mixed' : (['front', 'rear', 'left', 'right', 'high'] as SpawnFrom[])[(this.survivalWave + 1) % 5];
+        this.updateIncoming(Math.max(0, this.survivalBreak), { at: 0, count: nextN, from: nextFrom, skill: 1 });
         if (this.survivalBreak <= 0) {
           this.survivalWave++;
           achievements.onSurvivalWave(this.survivalWave);
@@ -472,6 +497,8 @@ export class Game {
             if (w.playerFighter) w.playerFighter.guns.forEach((g) => (g.ammo = Math.min(350, g.ammo + 150)));
           }
         }
+      } else if (this.incoming) {
+        this.incoming = null; this.incomingOff = null;
       }
     }
     // Flak
@@ -969,9 +996,9 @@ export class Game {
       ctx.font = '600 20px Oswald, sans-serif'; ctx.textAlign = 'center';
       ctx.fillText(pop.text, (p.x * 0.5 + 0.5) * W, (-p.y * 0.5 + 0.5) * H - (1.6 - pop.life) * 40);
     }
-    // Threat ring (bottom-left): enemy fighters within 3 km around the nose. Target markers
-    // 'Off (realistic)' hides it too.
-    if (this.mission && this.settings.markers) ThreatRing.draw(ctx, W, H, w, cam);
+    // Radar plot (bottom-left; Tab expands it into the big map)
+    this.mapT += ((this.mapOpen ? 1 : 0) - this.mapT) * Math.min(1, (1 / 60) * 9);
+    if (this.mission) Radar.draw(ctx, W, H, w, this.mapT, this.incoming, w.time);
     // Lead indicator aim aid: pip for the enemy nearest the line of fire ('recruit' = only on Recruit difficulty)
     const leadMode = this.settings.leadPip ?? 'recruit';
     if (pl?.alive && (leadMode === 'always' || (leadMode === 'recruit' && this.settings.difficulty === 'recruit'))) this.drawLeadPip(ctx, W, H);

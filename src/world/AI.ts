@@ -73,6 +73,7 @@ export interface WorldView {
   playerFocus: number;               // chance an attacker picks the player's bomber
   playerArc(): THREE.Vector3 | null; // world direction the player's gun position covers (gunner mode)
   playerGunPos(): THREE.Vector3 | null; // world position of the player's gun (gunner mode)
+  playerStationId(): string | null;
 }
 
 const _y = new THREE.Vector3(0, 1, 0);
@@ -86,7 +87,7 @@ const _p = new THREE.Vector3();
 // to a new set-up point nearby and comes again. Damaged pilots limp away (still
 // catchable). Jumped by escorts, they turn to fight or evade.
 export class EnemyPilot {
-  state: 'approach' | 'attack' | 'break' | 'dogfight' | 'evade' | 'withdraw' = 'approach';
+  state: 'approach' | 'attack' | 'duel' | 'break' | 'dogfight' | 'evade' | 'withdraw' = 'approach';
   attack: AttackType = 'headon';
   target: Aircraft | null = null;
   timer = 0;
@@ -99,6 +100,14 @@ export class EnemyPilot {
   private aimOffset = new THREE.Vector3();
   private fromArc = false;
   private passOffset = new THREE.Vector3();
+  // duel: an elliptical weave held in the gunner's arc, in the bomber's moving frame
+  private duelA = new THREE.Vector3();   // outward from the gun
+  private duelS = new THREE.Vector3();   // sideways across the arc
+  private duelU = new THREE.Vector3();   // up, across the arc
+  private duelPhase = 0;
+  private duelRate = 0.4;
+  private duelLen = 12;
+  private duelStation: string | null = null;
 
   constructor(public me: Fighter, preferred?: AttackType, skill = 1) {
     this.skill = skill * (0.8 + Math.random() * 0.4);
@@ -126,7 +135,7 @@ export class EnemyPilot {
       const d = _d.copy(arc).applyAxisAngle(_y, (Math.random() - 0.5) * 0.9);
       d.y += -0.12 + Math.random() * 0.4;
       d.normalize();
-      p.addScaledVector(d, (near ? 950 : 1250) + Math.random() * 350);
+      p.addScaledVector(d, (near ? 800 : 1250) + Math.random() * (near ? 200 : 350));
       return;
     }
     const right = _r.set(0, 1, 0).cross(fwd).normalize().negate();
@@ -144,6 +153,31 @@ export class EnemyPilot {
     // every firing pass has its own aiming error; better pilots are tighter
     this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((this.fromArc ? 9 + Math.random() * 16 : 4 + Math.random() * 10) / this.skill);
     this.passOffset.set(Math.random() - 0.5, 0.4 + Math.random() * 0.4, Math.random() - 0.5).normalize().multiplyScalar(30 + Math.random() * 25);
+  }
+
+  private beginDuel(w: WorldView, gp: THREE.Vector3) {
+    const arc = w.playerArc();
+    if (!arc) return;
+    this.state = 'duel'; this.timer = 0; this.attackCount++;
+    this.duelStation = w.playerStationId();
+    this.duelA.copy(arc).normalize();
+    this.duelS.crossVectors(this.duelA, _y);
+    if (this.duelS.lengthSq() < 1e-4) this.duelS.crossVectors(this.duelA, w.formationForward);
+    this.duelS.normalize();
+    this.duelU.crossVectors(this.duelS, this.duelA).normalize();
+    // start the weave where the fighter already is, turning the way it is already going
+    const rel = _u.copy(this.me.pos).sub(gp);
+    this.duelPhase = Math.atan2(rel.dot(this.duelS) / 300, (rel.dot(this.duelA) - 560) / 230);
+    const side = _t.copy(this.me.vel).sub(this.target!.vel).dot(this.duelS);
+    this.duelRate = (side >= 0 ? 1 : -1) * (0.34 + Math.random() * 0.1);
+    this.duelLen = 10 + Math.random() * 6 * this.skill;
+  }
+
+  private endDuel(t: Aircraft | null) {
+    this.state = 'break'; this.timer = 0;
+    this.me.gunAim = null;
+    const away = t ? _r.copy(this.me.pos).sub(t.pos).normalize() : this.me.forward(_r);
+    this.breakDir.copy(away).add(_t.set(0, (Math.random() - 0.4) * 0.6, 0)).normalize();
   }
 
   update(dt: number, w: WorldView) {
@@ -236,6 +270,7 @@ export class EnemyPilot {
         if (me.rockets > 0 && dist < 1250 && dist > 800 && err < 0.06) me.fireRockets = true;
         const closing = _t.copy(me.vel).sub(t.vel).dot(_r.copy(t.pos).sub(me.pos)) > 0;
         const realDist = gunPos0 ? me.pos.distanceTo(gunPos0) : dist;
+        if (gunPos0 && realDist < 620) { this.beginDuel(w, gunPos0); break; }
         if (realDist < (this.fromArc ? 150 : 160) || (!closing && dist < 400) || this.timer > 22) {
           this.state = 'break'; this.timer = 0; this.attackCount++;
           me.gunAim = null;
@@ -243,6 +278,33 @@ export class EnemyPilot {
           const los = _r.copy(t.pos).sub(me.pos).normalize();
           this.breakDir.crossVectors(los, _y).normalize().multiplyScalar(Math.random() < 0.5 ? 1 : -1);
           this.breakDir.addScaledVector(los, 0.5).add(_t.set(0, (Math.random() - 0.6) * 0.8, 0)).normalize();
+        }
+        break;
+      }
+      case 'duel': {
+        const t = this.target;
+        const gp = w.playerGunPos(), arc = w.playerArc();
+        // the gunner changed position (or the target is gone): break off and set up again
+        if (!t || !t.alive || !gp || !arc || w.playerStationId() !== this.duelStation || this.timer > this.duelLen) { this.endDuel(t); break; }
+        this.duelPhase += this.duelRate * dt;
+        const ph = this.duelPhase;
+        const A = 300, B = 230, R0 = 560, C = 90;
+        // target point on the weave and its velocity relative to the bomber
+        const P = _p.copy(gp).addScaledVector(this.duelA, R0 + B * Math.cos(ph)).addScaledVector(this.duelS, A * Math.sin(ph)).addScaledVector(this.duelU, C * Math.sin(2 * ph));
+        const dv = _c.copy(this.duelA).multiplyScalar(-B * Math.sin(ph)).addScaledVector(this.duelS, A * Math.cos(ph)).addScaledVector(this.duelU, 2 * C * Math.cos(2 * ph)).multiplyScalar(this.duelRate);
+        const want = dv.add(t.vel).addScaledVector(_u.copy(P).sub(me.pos), 0.7);
+        if (want.length() > 210) want.setLength(210);
+        steerTo(fm, want, 1.3, 1);
+        fm.throttle = THREE.MathUtils.clamp(0.55 + (want.length() - fm.speed) * 0.04, 0.25, 1);
+        // bursts at the gun position whenever the nose comes round onto it
+        const toGun = _u.copy(gp).sub(me.pos);
+        const dg = toGun.length();
+        toGun.divideScalar(Math.max(dg, 1));
+        if (dg < 820 && me.forward(_t).dot(toGun) > 0.8 && (this.timer % 2.6) < 1.1) {
+          leadPoint(me.pos, me.vel, t, 760, this.aim).add(this.aimOffset).add(_r.copy(gp).sub(t.pos));
+          me.gunAim = keepAim ?? new THREE.Vector3();
+          me.gunAim.copy(this.aim).sub(me.pos).normalize();
+          me.trigger = true;
         }
         break;
       }

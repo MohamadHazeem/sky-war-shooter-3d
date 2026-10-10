@@ -120,6 +120,8 @@ export class World implements WorldView {
     return dirFromYawPitch(st.rest.yaw, st.rest.pitch).applyQuaternion(b.quat).normalize();
   }
 
+  playerStationId(): string | null { return this.player === this.playerBomber && this.playerStation ? this.playerStation.id : null; }
+
   playerGunPos(): THREE.Vector3 | null {
     const b = this.playerBomber, st = this.playerStation;
     if (!b || !b.alive || !st || this.player !== b) return null;
