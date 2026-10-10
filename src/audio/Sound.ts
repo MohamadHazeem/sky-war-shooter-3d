@@ -346,6 +346,9 @@ export class Sound {
   private extra = new Map<string, AudioBuffer[]>();
   private extraGain = new Map<string, number>();
   private b17Sampled = false;
+  private b17Sputter: GainNode | null = null;   // drone level, lowered per dead engine
+  private b17Depth: GainNode | null = null;     // depth of the uneven sputter wobble
+  private engineAlive = 4;
   private voiceGain = 1;
   private radialRate = 1; // recorded radial loop is at taxi rpm
   private flybyPeak = 0;
@@ -404,7 +407,18 @@ export class Sound {
     const rumble = this.loopSrc(this.noiseLoop(4, 'brown'));
     const rg = ctx.createGain(); rg.gain.value = 0.55;
     rumble.connect(rg).connect(filter);
-    filter.connect(gain).connect(this.amb);
+    // Damage path: the drone level follows setEngineHealth, and a two-rate wobble
+    // (depth set by dead engines) makes a damaged bomber sound uneven. Neutral at 4 engines.
+    const sputter = ctx.createGain(); sputter.gain.value = 0.2 + 0.2 * this.engineAlive;
+    const depth = ctx.createGain(); depth.gain.value = 0.04 * (4 - this.engineAlive);
+    [2.7, 5.3].forEach((f) => {
+      const o = ctx.createOscillator(); o.frequency.value = f;
+      const half = ctx.createGain(); half.gain.value = 0.5;
+      o.connect(half).connect(depth); o.start();
+    });
+    depth.connect(sputter.gain);
+    this.b17Sputter = sputter; this.b17Depth = depth;
+    filter.connect(sputter).connect(gain).connect(this.amb);
     srcs.push(rumble);
     this.b17 = { gain, filter, srcs };
   }
@@ -461,6 +475,18 @@ export class Sound {
     this.playerEngine.gain.gain.setTargetAtTime((0.26 + throttle * 0.2) * this.merlinGain, t, 0.1);
     this.wind?.gain.gain.setTargetAtTime(0.05 + speed / 800, t, 0.2);
     this.wind?.filter.frequency.setTargetAtTime(350 + speed * 7, t, 0.2);
+  }
+
+  // Engine damage in the B-17 interior: each dead engine lowers the drone by a fifth and
+  // deepens an uneven sputter. alive is 0..4; cached so per-frame calls are cheap.
+  setEngineHealth(alive: number) {
+    const a = Math.max(0, Math.min(4, Math.round(alive)));
+    if (a === this.engineAlive) return;
+    this.engineAlive = a;
+    if (!this.ctx || !this.b17Sputter || !this.b17Depth) return;
+    const t = this.ctx.currentTime;
+    this.b17Sputter.gain.setTargetAtTime(0.2 + 0.2 * a, t, 0.4);
+    this.b17Depth.gain.setTargetAtTime(0.04 * (4 - a), t, 0.4);
   }
 
   setListener(cam: THREE.Camera) {
