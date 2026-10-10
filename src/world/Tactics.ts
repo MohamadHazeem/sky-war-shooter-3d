@@ -1147,7 +1147,7 @@ export class Tactics {
       _b.copy(dir).multiplyScalar(6 + i * 7).add(f.vel).add(_a.set(Math.random() - 0.5, Math.random() - 0.3, Math.random() - 0.5).multiplyScalar(8));
       fx.smoke.spawn({ pos: muzzle, vel: _b, life: 2.4 + Math.random(), size0: 1.6 * k, size1: (8 + i * 1.5) * k, color0: [0.66, 0.64, 0.6], alpha0: 0.6, alpha1: 0, drag: 1.4, lit: true });
     }
-    sound.play('cannon', muzzle, { gain: 2.2, rate: 0.55, ref: 260, reverb: 0.6 });
+    sound.play('bk5', muzzle, { gain: 1.6 });   // 50 mm thump, arrives distance / 343 m/s later
     f.fm.vel.addScaledVector(f.forward(_b), -4);   // the recoil checks him
     if (m.shots === 0) this.call('bk5fire', this.gunner() ? 'Pilot' : 'Big Friend', 'He\'s firing the big gun! Kill him before he reloads!', 12);
     m.setAimError(w, 2.5);

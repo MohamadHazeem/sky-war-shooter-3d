@@ -102,13 +102,13 @@ export class Brass {
           if (V[k + 1] < -0.4) {
             V[k + 1] *= -0.28; V[k] *= 0.55; V[k + 2] *= 0.55;
             this.bounces[i]++;
-            if (this.clink <= 0 && Math.random() < 0.25) { this.clink = 0.05; sound.play('casing', null, { gain: 0.04 + Math.random() * 0.03, rate: 0.9 + Math.random() * 0.3 }); }
+            if (this.clink <= 0 && Math.random() < 0.25) { this.clink = 0.05; sound.brass(Math.abs(x) <= WALK); }   // on the walkway heap: a duller chink
           } else { V[k + 1] = 0; V[k] *= 1 - Math.min(1, 6 * dt); V[k + 2] *= 1 - Math.min(1, 6 * dt); }
           if (Math.abs(x) <= WALK && (this.bounces[i] >= 3 || Math.hypot(V[k], V[k + 1], V[k + 2]) < 0.15)) { this.settle(i); continue; }
         }
         if (this.life[i] <= 0) { this.settle(i); continue; }
       } else {
-        if (P[k + 1] < -0.85) { P[k + 1] = -0.85; V[k + 1] *= -0.3; V[k] *= 0.5; V[k + 2] *= 0.5; if (Math.random() < 0.2) sound.play('casing', null, { gain: 0.05 }); }
+        if (P[k + 1] < -0.85) { P[k + 1] = -0.85; V[k + 1] *= -0.3; V[k] *= 0.5; V[k + 2] *= 0.5; if (Math.random() < 0.2) sound.brass(false, 1.1); }
         if (this.life[i] <= 0) { this.kill(i); continue; }
       }
       _e.set(this.rot[k], this.rot[k + 1], this.rot[k + 2]);

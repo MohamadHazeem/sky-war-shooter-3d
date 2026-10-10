@@ -136,6 +136,8 @@ function shake(w: World, pos: THREE.Vector3, k: number) {
 }
 // Bf 110 / Ju 88 go up in a bigger, two-stage blast (Effects 'heavy')
 const blastKind = (f: Fighter) => (f.enemyType === 'bf110' || f.enemyType === 'ju88' ? 'heavy' : 'fighter');
+// the twins and the He 111 go up in a multi-stage boom (Sound.explode stages)
+const blastSound = (f: Fighter) => (f.enemyType === 'bf110' || f.enemyType === 'ju88' || f.enemyType === 'he111' || f.enemyType === 'me410' ? 'heavy' : undefined);
 function debrisSound(w: World, pos: THREE.Vector3) {
   if (w.player && pos.distanceTo(w.player.pos) < 500) sound.play('debris', pos, { gain: 0.7, ref: 40 });
 }
@@ -162,7 +164,7 @@ export function startFighterDeath(f: Fighter, cause: string, w: World) {
       _p.set(R(), R() * 0.6, R()).multiplyScalar(2.2 * sc).add(f.pos);
       later(w, t, false, _p, f.vel, 0.55 + Math.random() * 0.2);
     }
-    sound.play('explosion', f.pos, { gain: 1.6, ref: 160, reverb: 0.75 });
+    sound.play('explosion', f.pos, { gain: 1.6, ref: 160, reverb: 0.75, size: blastSound(f) });
     shake(w, f.pos, 1);
     debrisSound(w, f.pos);
     return;
@@ -271,7 +273,7 @@ function boom(s: Seq) {
   const { f, w } = s;
   w.wrecks.break(f, 'blowup');
   w.effects.explosion(f.pos, f.vel, 1.3, blastKind(f));
-  sound.play('explosion', f.pos, { gain: 1.5, ref: 150, reverb: 0.75 });
+  sound.play('explosion', f.pos, { gain: 1.5, ref: 150, reverb: 0.75, size: blastSound(f) });
   shake(w, f.pos, 0.9);
   debrisSound(w, f.pos);
   f.remove = true;

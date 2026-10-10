@@ -56,5 +56,8 @@ export class Budget {
     return true;
   }
 
+  // One-shots sounding at `now`
+  count(now: number): number { let n = 0; for (let i = 0; i < this.s.length; i++) if (this.s[i] <= now && this.e[i] > now) n++; return n; }
+
   clear() { this.s.length = 0; this.e.length = 0; }
 }
