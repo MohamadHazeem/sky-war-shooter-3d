@@ -46,6 +46,8 @@ export class Game {
   private killMarkerT = 0;
   private damageT = 0;
   private slowmo = 0;
+  private slowFrames = 0;
+  private autoQualityDone = false;
   private menuShot = 0;
   private menuShotT = 0;
   private menuMode = true;
@@ -492,7 +494,7 @@ export class Game {
       restart: () => { this.resume(); this.startMission(this.mission!); },
       settings: () => this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => {}),
       quit: () => { this.ui.hidePause(); this.engine.paused = false; sound.ctx?.resume(); sound.stopSpeech(); this.startMenu(); },
-    });
+    }, this.mission?.role ?? 'gunner');
   }
 
   resume() {
@@ -525,6 +527,7 @@ export class Game {
         if (this.endTimer <= 0) this.showDebrief();
       }
     }
+    this.autoQuality(dt);
     this.floatingOrigin();
     sound.setListener(this.engine.camera);
     sound.updateFighterVoices(w.fighterSoundInfo());
@@ -544,6 +547,19 @@ export class Game {
     if (!this.menuMode && this.mission?.role === 'gunner') {
       const tr = this.gunner.transition;
       if (tr > 0) this.ui.fadeTo(Math.min(1, Math.sin((1 - tr / 0.9) * Math.PI) * 1.4));
+    }
+  }
+
+  // Step graphics quality down once if the machine can't hold ~40 fps
+  private autoQuality(dt: number) {
+    if (this.autoQualityDone || dt <= 0 || this.state === 'paused') return;
+    if (this.engine.fps < 38) this.slowFrames += dt; else this.slowFrames = Math.max(0, this.slowFrames - dt * 0.5);
+    if (this.slowFrames > 5 && this.settings.quality !== 'low') {
+      this.settings.quality = this.settings.quality === 'high' ? 'medium' : 'low';
+      this.applySettings();
+      this.slowFrames = 0;
+      if (this.settings.quality === 'low') this.autoQualityDone = true;
+      console.info('Graphics quality lowered to', this.settings.quality);
     }
   }
 
