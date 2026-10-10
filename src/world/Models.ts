@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { markOwned } from '../render/Dispose';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { NOW, assetUrl, request, take } from '../core/Assets';
 
 export type ModelKind =
   | 'b17' | 'fw190' | 'p51d' | 'p51d_cockpit'
@@ -23,15 +25,41 @@ const FILES: Record<ModelKind, string> = {
   me163: 'models/me163.glb',
 };
 
-const cache = new Map<ModelKind, THREE.Object3D | null>();
+// The models the menu shows (formation + escorts) and the default enemy: loaded before the
+// menu appears. The rest load in the background (see core/Preload.ts).
+export const ESSENTIAL_MODELS: readonly ModelKind[] = ['b17', 'fw190', 'p51d'];
+export const ALL_MODELS = Object.keys(FILES) as ModelKind[];
+export const modelPath = (k: ModelKind) => FILES[k];
 
-export async function loadModels(onProgress?: (f: number) => void): Promise<void> {
-  const loader = new GLTFLoader();
-  const kinds = Object.keys(FILES) as ModelKind[];
-  let done = 0;
-  await Promise.all(kinds.map(async (k) => {
+const cache = new Map<ModelKind, THREE.Object3D | null>();
+const pending = new Map<ModelKind, Promise<void>>();
+let loader: GLTFLoader | null = null;
+
+// The .glb files are meshopt-compressed with WebP textures (tools/compress_models.mjs).
+function gltfLoader() {
+  if (!loader) {
+    loader = new GLTFLoader();
+    loader.setMeshoptDecoder(MeshoptDecoder);
+  }
+  return loader;
+}
+
+// Load (download + parse) some models; resolves when all of them are in the cache
+// (a model that fails keeps the placeholder). prio: download priority (core/Assets.ts).
+export function loadModels(kinds: readonly ModelKind[] = ALL_MODELS, prio = NOW): Promise<void> {
+  return Promise.all(kinds.map((k) => loadModel(k, prio))).then(() => {});
+}
+
+export function modelsLoaded(kinds: readonly ModelKind[] = ALL_MODELS) { return kinds.every((k) => cache.has(k)); }
+
+function loadModel(k: ModelKind, prio: number): Promise<void> {
+  if (cache.has(k)) return Promise.resolve();
+  const p0 = pending.get(k);
+  if (p0) { request(FILES[k], prio); return p0; } // moves it up the queue if it was waiting
+  const p = (async () => {
     try {
-      const gltf = await loader.loadAsync(import.meta.env.BASE_URL + FILES[k]);
+      const bytes = await take(FILES[k], prio);
+      const gltf = await gltfLoader().parseAsync(bytes, assetUrl('models/'));
       const root = gltf.scene;
       root.traverse((o) => {
         const m = o as THREE.Mesh;
@@ -51,9 +79,10 @@ export async function loadModels(onProgress?: (f: number) => void): Promise<void
       console.warn(`Model ${k} unavailable, using placeholder`, e);
       cache.set(k, null);
     }
-    done++;
-    onProgress?.(done / kinds.length);
-  }));
+    pending.delete(k);
+  })();
+  pending.set(k, p);
+  return p;
 }
 
 export function hasModel(k: ModelKind) { return !!cache.get(k); }
@@ -164,7 +193,11 @@ export function setupProps(root: THREE.Object3D, radius: number): PropInfo[] {
     disc.renderOrder = 5;
     disc.castShadow = false;
     node.add(disc);
-    props.push({ node, blades: node.children.filter((c) => c !== disc), disc, base: node.quaternion.clone() });
+    // The compressed models keep the prop's mesh on an unnamed child (extras.meshOf, see
+    // tools/compress_models.mjs). Blades are what used to be the node's children: the
+    // primitives of a multi-material prop; a single-mesh prop (formerly the node itself) has none.
+    const blades = node.children.flatMap((c) => c === disc ? [] : c.userData.meshOf ? ((c as THREE.Mesh).isMesh ? [] : c.children) : [c]);
+    props.push({ node, blades, disc, base: node.quaternion.clone() });
   }
   return props;
 }

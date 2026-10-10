@@ -1,0 +1,27 @@
+# Cloudflare static-asset cache headers (Workers static assets / Pages read this file; it is not served).
+# Rules must not overlap for the same header (Cloudflare joins duplicate values), so the
+# manifests below are listed by exact path and the folders by prefix.
+
+# Vite's content-hashed bundles: cache forever
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Models and audio keep their names across deploys: a day fresh, then revalidated (ETag) in the
+# background. The service worker re-checks them with the server and caches them by content hash.
+/models/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/audio/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/icons/*
+  Cache-Control: public, max-age=604800
+
+# Always revalidated: the page, the service worker and the web manifest
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache

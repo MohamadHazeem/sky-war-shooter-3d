@@ -1,7 +1,9 @@
 # FlightGear → glTF aircraft converter
 
 Converts the open-source FlightGear aircraft models (AC3D `.ac` + PNG/SGI `.rgb`
-textures + model XML) into the web-ready `.glb` files in `public/models/`.
+textures + model XML) into `.glb` files: uncompressed in `tools/convert_models/output/`
+(the reference copies, kept in git), then compressed for the web into `public/models/`
+by `tools/compress_models.mjs` (meshopt + quantization + WebP textures, see "Compression" below).
 The work is done by a headless Blender (5.x) script with its own AC3D parser,
 so nothing in the aircraft packages (Nasal, shaders, effects) is run.
 
@@ -10,7 +12,11 @@ so nothing in the aircraft packages (Nasal, shaders, effects) is run.
 | `convert_ac.py` | Blender script: AC3D/FG-XML → glb (+ preview renders + JSON report). See the docstring at the top for every option and config key. |
 | `ac3d.py` | Pure-Python AC3D (`AC3Db`) parser that tolerates the quirks found in FG models. |
 | `configs/*.json` | One config per output model: sub-models, exclusions, liveries, gear-up rotations, pivot nodes, markers, origin. |
-| `build_all.sh` | Rebuilds every model (glb + preview + report). |
+| `build_all.sh` | Rebuilds every model (glb + preview + report) into `output/`, then compresses them into `public/models/`. |
+| `output/*.glb` | Uncompressed converter output (the source of `public/models/`). |
+| `../compress_models.mjs` | `npm run models:compress [name...]`: `output/*.glb` → `public/models/*.glb`. |
+| `model_compare.html` (in `tools/`) | Visual QA: uncompressed vs compressed side by side, `npm run dev` → `/tools/model_compare.html?m=b17&pose=1`. |
+| `../model_nodes.mjs` | Prints the node tree (names, transforms, meshes) of any .glb, compressed or not. |
 | `reports/*.json` | Generated: node pivots, marker positions, bounding boxes, triangle and primitive counts (all in the glTF frame). |
 | `inspect_glb.mjs` | QA: loads .glb files with three's GLTFLoader in Node and prints node names, bounding box (wingspan/length), triangles and textures: `node tools/convert_models/inspect_glb.mjs public/models/*.glb` (needs `node_modules`). |
 
@@ -46,15 +52,17 @@ Single model, by hand:
 ```bash
 /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup \
   --python tools/convert_models/convert_ac.py -- \
-  ~/fg-src/B-17/Models/b17.xml public/models/b17.glb \
+  ~/fg-src/B-17/Models/b17.xml tools/convert_models/output/b17.glb \
   --config tools/convert_models/configs/b17.json --fg-root ~/fg-src \
   --report tools/convert_models/reports/b17.json \
   --preview reference/model-previews/b17.png --preview-views 34
 ```
 
+Then compress it for the game: `npm run models:compress b17`.
+
 Add `--list` to print every object key (`<instance>/<object>`) the model contains. That is how the regexes in a config are written.
 
-Output:
+Output (`public/models/X.glb` is the compressed version of `tools/convert_models/output/X.glb`):
 
 | Output | Input | Livery |
 |---|---|---|
@@ -73,6 +81,24 @@ that `convert_ac.py` applies to the main `.ac` only, which would misalign the su
 
 To use a different livery, change `texture_files` / `texture_objects` in the config and rebuild.
 
+## Compression
+
+`npm run models:compress` (or `node tools/compress_models.mjs b17 fw190`) reads `output/*.glb` and writes
+`public/models/*.glb` with glTF Transform (the library behind `@gltf-transform/cli`):
+
+1. Every **named** mesh node gets its mesh moved onto a new unnamed child node with `extras.meshOf = "<name>"`.
+   Quantization stores a dequantization scale/offset in the transform of the node holding the mesh; this keeps it
+   off the pivots and markers, so `prop_*`, `fan_*`, `cooling_fan`, `turret_*`, `gun_*`, `airframe`, `glass`… keep
+   exactly the transforms listed below. `setupProps` (Models.ts) reads `meshOf` to find the blades as before.
+2. Textures → WebP (quality 88, `EXT_texture_webp`; three's GLTFLoader decodes it natively).
+3. Meshopt `--level high`: reorder, quantization (positions 14 bit, UVs 14 bit) and `EXT_meshopt_compression`.
+   `Models.ts` registers `MeshoptDecoder` (`three/examples/jsm/libs/meshopt_decoder.module.js`).
+
+Nothing is flattened, joined, instanced or pruned, so every node name and empty marker survives (the script fails if
+the set of node names changes). Result: 15.0 MB → 4.6 MB for all nine models; the inspector output
+(`inspect_glb.mjs`: bounding boxes, pivots, prop axes, triangle counts) is identical within 1 mm, and the posed
+side-by-side renders in `tools/model_compare.html` differ by < 0.3/255 on average.
+
 ## Conventions of every .glb (the game relies on these)
 
 * Meters. **+Y up, nose toward +Z, aircraft LEFT wing on +X, right wing on −X.**
@@ -80,6 +106,7 @@ To use a different livery, change `texture_files` / `texture_objects` in the con
 * Landing gear is retracted (B-17: the FG retraction rotations are applied, so the main wheels show under the nacelles as on the real aircraft). Fighters: struts and wheels are removed and the doors are closed.
 * Dropped: blurred prop discs, LOD duplicates, shadow planes, light cones, hot-spots, effects, interior-only duplicate glass.
 * Static meshes are merged per group, so each group is one mesh with one primitive per material: `airframe`, `glass` (alpha-blend, double-sided), `interior` / `crew` / `pilot`. Their node transforms are identity.
+  (In the compressed files the mesh itself sits on an unnamed child of the named node, see Compression.)
 * Pivot nodes keep a transform, and their origin is the pivot:
   * `prop_N`: the origin is on the spin axis, and **local +Z is the spin axis (forward)** → spin with `prop.rotateZ(angle)`.
     B-17: `prop_1` = left outboard (+X) … `prop_4` = right outboard (−X).

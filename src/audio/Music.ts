@@ -52,10 +52,18 @@ export class Music {
   private current: { name: string; src: AudioBufferSourceNode; gain: GainNode } | null = null;
   private lastSwitch = 0;
 
+  // Tracks arrive one by one (progressive loading): the first replaces the procedural score,
+  // later ones join the set without restarting what is playing.
   useTracks(tracks: Record<string, AudioBuffer>, gains: Record<string, number>) {
     if (!Object.keys(tracks).length) return;
-    this.tracks = tracks;
-    this.trackGain = gains;
+    if (this.tracks) {
+      Object.assign(this.tracks, tracks);
+      Object.assign(this.trackGain, gains);
+      this.pickTrack(true);
+      return;
+    }
+    this.tracks = { ...tracks };
+    this.trackGain = { ...gains };
     this.current = null;
     this.pickTrack(true);
   }

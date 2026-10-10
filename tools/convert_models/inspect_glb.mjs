@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 
 function readGlb(buf) {
   const u8 = new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
@@ -44,6 +45,13 @@ function writeGlb(json, bin) {
 function imageSize(bytes, mime) {
   const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   if (mime === 'image/png') return [dv.getUint32(16), dv.getUint32(20)];
+  if (mime === 'image/webp') { // RIFF....WEBP, then a VP8 / VP8L / VP8X chunk
+    const tag = String.fromCharCode(...bytes.subarray(12, 16));
+    if (tag === 'VP8 ') return [dv.getUint16(26, true) & 0x3fff, dv.getUint16(28, true) & 0x3fff];
+    if (tag === 'VP8L') { const b = dv.getUint32(21, true); return [(b & 0x3fff) + 1, ((b >> 14) & 0x3fff) + 1]; }
+    if (tag === 'VP8X') return [1 + (bytes[24] | (bytes[25] << 8) | (bytes[26] << 16)), 1 + (bytes[27] | (bytes[28] << 8) | (bytes[29] << 16))];
+    return [0, 0];
+  }
   for (let i = 2; i < bytes.length - 9;) { // JPEG: find a SOFn marker
     if (bytes[i] !== 0xff) { i++; continue; }
     const m = bytes[i + 1];
@@ -70,8 +78,9 @@ for (const file of process.argv.slice(2)) {
     delete m.normalTexture; delete m.emissiveTexture; delete m.occlusionTexture;
   }
   delete json.textures; delete json.images; delete json.samplers;
+  for (const k of ['extensionsUsed', 'extensionsRequired']) if (json[k]) json[k] = json[k].filter((e) => e !== 'EXT_texture_webp');
 
-  const gltf = await new Promise((res, rej) => new GLTFLoader().parse(writeGlb(json, bin), '', res, rej));
+  const gltf = await new Promise((res, rej) => new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parse(writeGlb(json, bin), '', res, rej));
   const root = gltf.scene;
   root.updateMatrixWorld(true);
   let tris = 0, prims = 0;
@@ -90,7 +99,7 @@ for (const file of process.argv.slice(2)) {
   console.log(`  textures: ${images.join(' | ') || '-'}`);
   const names = [];
   root.traverse((o) => {
-    if (o === root || !o.name || (o.isMesh && o.parent && o.parent.name === o.name)) return;
+    if (o === root || !o.name || (o.isMesh && o.parent && o.parent.name === o.name) || o.userData.meshOf) return;
     if (/^(prop|fan)_\d+$|^gun_|^turret_|^cooling_fan$/.test(o.name)) {
       const p = o.getWorldPosition(new THREE.Vector3());
       const z = new THREE.Vector3(0, 0, 1).transformDirection(o.matrixWorld);
