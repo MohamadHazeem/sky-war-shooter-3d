@@ -39,7 +39,7 @@ Player notes given at the start:
 | # | Goal | Status |
 |---|---|---|
 | 5 | Progression depth (crew levels, medals, dailies, stats, online leaderboard) | Partly — online leaderboard live (Firebase); crew/medals/dailies pending |
-| 6 | Campaign 7 → 12 missions with story | |
+| 6 | Campaign 7 → 12 missions with story || Done — 12 missions (m8 Black Thursday, m9 storm escort, m10 dusk straggler, m11 flak bomb run, m12 finale), story through all briefings; boss finales m5/m7/m12 |
 | 7 | Special events (ace squadrons, Zerstörer waves, rocket barrages) | |
 | 8 | Visual match to Yarnhub reference | |
 | 9 | Cinematics (kill cam, replay, fly-by) | |
@@ -62,7 +62,7 @@ Player notes given at the start:
 | 22 | Online co-op prototype | |
 | 23 | 40 achievements + trophy screen | |
 | 24 | Living sky | |
-| 25 | Story briefings (voiced) | |
+| 25 | Story briefings (voiced) || Done — 45 voiced briefing clips (intelligence officer), Play/Stop, paragraph highlight |
 | 26 | Gameplay analytics | |
 | 27 | Ultra preset, FPS counter, 120 Hz | |
 | 28 | Menu/front-end polish | |
@@ -78,3 +78,4 @@ Player notes given at the start:
 - 21:58 tutorial, abilities, objectives/events merged; deploy #2 (22:04).
 - 22:10 fast loading + PWA merged; deploy #3; live manifest/sw/headers verified.
 - 22:13 boss battle group merged; deploy #4. Launched tactics/special events + pacing/modes agents.
+- 22:20 campaign 12 missions + voiced briefings merged.
