@@ -75,6 +75,7 @@ export class GunnerController {
   private casingGeo = new THREE.CylinderGeometry(0.0105, 0.0105, 0.099, 8);
   private casingMat = new THREE.MeshStandardMaterial({ color: 0xc48a3c, roughness: 0.3, metalness: 1 });
   firing = false;
+  jammed = false;   // MidRound/RandomEvents: this gun position is jammed (R clears it)
   private holes: THREE.Object3D[] = [];
   private holeMat: THREE.MeshBasicMaterial | null = null;
   private beamMat: THREE.ShaderMaterial | null = null;
@@ -366,7 +367,7 @@ export class GunnerController {
     this.cooldown -= dt;
     s.heat = Math.max(0, s.heat - dt * (s.overheated ? 0.22 : 0.16));
     if (s.overheated && s.heat < 0.45) s.overheated = false;
-    const wantFire = (inp.mouse(0) || inp.down('Space')) && this.transition <= 0 && s.reload <= 0 && !s.overheated && s.ammo > 0 && this.bomber.alive;
+    const wantFire = (inp.mouse(0) || inp.down('Space')) && !this.jammed && this.transition <= 0 && s.reload <= 0 && !s.overheated && s.ammo > 0 && this.bomber.alive;
     this.firing = wantFire;
     this.brassClatter(dt, wantFire);
     // Low belt warning: a metallic tick every 0.6 s while firing with under 60 rounds left
