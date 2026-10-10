@@ -23,6 +23,7 @@ export const Atmos = {
   highDensity: 1.8,
   cloudAmbient: 0.6,
   windOffset: new THREE.Vector3(), // accumulated wind drift + floating-origin shift
+  originOffset: new THREE.Vector3(), // accumulated floating-origin shift only (ground)
   wind: new THREE.Vector3(9, 0, 4),
 };
 

@@ -66,6 +66,8 @@ export class Contrails {
           vAlpha = aAge < 0.0 ? 0.0 : gap * fade;
           vSide = aSide; vT = t; vSeed = aSeed;
           vNear = smoothstep(18.0, 70.0, distance(cameraPosition, p));
+          // seen end-on a ribbon turns into a flat sheet: fade it out
+          vNear *= 1.0 - smoothstep(0.82, 0.97, abs(dot(d, toCam)));
         }`,
       fragmentShader: /* glsl */ `
         uniform vec3 uSunCol;

@@ -173,7 +173,7 @@ export class World implements WorldView {
       if (i === playerSlot) {
         b.isPlayer = true; this.playerBomber = b; this.player = b;
         // The player's ship is tougher than the rest: one bad pass shouldn't end the mission
-        for (const z of b.zones) { const k = z.critical ? 2.4 : 1.5; z.hp *= k; z.maxHp *= k; }
+        for (const z of b.zones) { const k = z.name.startsWith('wing') && z.critical ? 3.5 : z.critical ? 2.4 : 1.5; z.hp *= k; z.maxHp *= k; }
       } else {
         for (const z of b.zones) { z.hp *= 1.3; z.maxHp *= 1.3; }
       }
@@ -258,6 +258,7 @@ export class World implements WorldView {
   spawnPlayerFighter(pos: THREE.Vector3, dir: THREE.Vector3): Fighter {
     const f = this.makeMustang(pos, dir);
     f.isPlayer = true;
+    for (const z of f.zones) { z.hp *= 1.7; z.maxHp *= 1.7; }
     this.player = f;
     this.playerFighter = f;
     return f;
@@ -345,7 +346,7 @@ export class World implements WorldView {
       if (t === this.playerBomber && this.playerStation) {
         // Rounds hitting the section of fuselage you are standing in can wound you
         const near = e.point.distanceTo(t.localToWorld(this.playerStation.pivot, _v)) < 2.2;
-        if (near && this.time - this.lastWound > 12 && Math.random() < (heavy ? 0.09 : 0.012)) {
+        if (near && this.time - this.lastWound > 18 && Math.random() < (heavy ? 0.05 : 0.006)) {
           this.lastWound = this.time;
           this.crewWounded++;
           this.events.playerHit?.('gunner', true);
@@ -546,7 +547,7 @@ export class World implements WorldView {
         if (!z.burning || z.engine === undefined) continue;
         const wing = b.zone(z.engine < 2 ? 'wingL' : 'wingR');
         if (wing && wing.hp > 0) {
-          wing.hp -= dt * (b.isPlayer ? 2.2 : 3.5);
+          wing.hp -= dt * (b.isPlayer ? 1.2 : 3.5);
           if (wing.hp <= 0 && !(wing as any).destroyed) { (wing as any).destroyed = true; this.killAircraft(b, false, 'fire'); }
         }
         if (!b.isPlayer) continue;

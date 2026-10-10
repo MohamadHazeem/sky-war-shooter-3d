@@ -73,7 +73,7 @@ export class Engine {
     this.sceneRT = new THREE.WebGLRenderTarget(1, 1, {
       type: THREE.HalfFloatType,
       depthTexture: depthTex(),
-      samples: 0,
+      samples: 4, // MSAA: clean aircraft and interior edges
     });
     this.hdrRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
     this.hdrRT.texture.minFilter = this.hdrRT.texture.magFilter = THREE.LinearFilter;
@@ -122,6 +122,8 @@ export class Engine {
 
   setQuality(q: Quality) {
     this.quality = q;
+    this.sceneRT.samples = q === 'high' ? 4 : q === 'medium' ? 2 : 0;
+    this.sceneRT.dispose();
     this.resize();
     this.renderer.shadowMap.enabled = q !== 'low';
     this.sun.castShadow = q !== 'low';
@@ -174,6 +176,7 @@ export class Engine {
     this.sun.target.position.copy(cp);
     this.sun.target.updateMatrixWorld();
     atmosUniforms.uCamAlt.value = cp.y;
+    (this.sky.mesh.material as THREE.ShaderMaterial).uniforms.uGroundXZ.value.set(cp.x + Atmos.originOffset.x, cp.z + Atmos.originOffset.z);
 
     const r = this.renderer;
     r.setRenderTarget(this.sceneRT);
@@ -218,5 +221,6 @@ export class Engine {
       child.position.sub(offset);
     }
     Atmos.windOffset.add(offset);
+    Atmos.originOffset.add(offset);
   }
 }

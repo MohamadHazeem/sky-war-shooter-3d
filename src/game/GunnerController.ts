@@ -399,7 +399,7 @@ export class GunnerController {
     if (this.shake > 0) cam.rotateZ(R() * this.shake * 0.003);
     cam.fov = this.fov;
     cam.updateProjectionMatrix();
-    this.engine.post.nearFocus = def.type === 'waist' ? 0.62 : def.type === 'tail' ? 0.7 : 0.5;
+    this.engine.post.nearFocus = def.type === 'waist' ? 0.42 : def.type === 'tail' ? 0.5 : 0.4;
     this.engine.post.dofStrength = 1;
     this.engine.post.noBlurDist = 1.4;
   }

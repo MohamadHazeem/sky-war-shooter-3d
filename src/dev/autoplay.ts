@@ -65,7 +65,7 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
         tp.y += 0.5 * 9.81 * tof * tof;
         const dir = tp.sub(f.pos).normalize();
         pilot.aimYaw = Math.atan2(dir.x, dir.z); pilot.aimPitch = Math.asin(dir.y);
-        if (bd < 450 && f.forward().dot(dir) > 0.9995) inp.buttons = 1;
+        if (bd < 500 && f.forward().dot(dir) > 0.998) inp.buttons = 1;
       } else if (f.alive) {
         const c = w.formationCenter.clone().add(new THREE.Vector3(0, 300, 0)).sub(f.pos).normalize();
         pilot.aimYaw = Math.atan2(c.x, c.z); pilot.aimPitch = Math.asin(c.y);

@@ -66,6 +66,7 @@ export interface WorldView {
   formationForward: THREE.Vector3;
   formationCenter: THREE.Vector3;
   player: Aircraft | null;
+  playerFighter: Fighter | null;
   time: number;
   dropTank(f: Fighter): void;
   difficulty: number; // 0.5 .. 1.5
@@ -141,7 +142,7 @@ export class EnemyPilot {
   private beginAttack() {
     this.state = 'attack'; this.timer = 0; this.calloutDone = false;
     // every firing pass has its own aiming error; better pilots are tighter
-    this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((4 + Math.random() * 10) / this.skill);
+    this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((this.fromArc ? 9 + Math.random() * 16 : 4 + Math.random() * 10) / this.skill);
     this.passOffset.set(Math.random() - 0.5, 0.4 + Math.random() * 0.4, Math.random() - 0.5).normalize().multiplyScalar(30 + Math.random() * 25);
   }
 
@@ -172,6 +173,10 @@ export class EnemyPilot {
 
     switch (this.state) {
       case 'approach': {
+        // escort missions: a share of the Fw 190s come for the player's Mustang
+        if (!this.target && w.playerFighter?.alive && Math.random() < 0.4) {
+          this.target = w.playerFighter; this.state = 'dogfight'; this.timer = 0; break;
+        }
         if (!this.target || !this.target.alive || this.target.team !== 'allied' || !(this.target as any).zones) { this.target = this.pickTarget(w); if (!this.target) return; this.computeSetup(w); }
         const d = me.pos.distanceTo(w.formationCenter);
         if (me.dropTankAttached && d < 4000) w.dropTank(me);
@@ -226,7 +231,8 @@ export class EnemyPilot {
         // a slower, steadier run when coming at the player's gun: more time in the sight
         fm.throttle = this.fromArc ? 0.5 : this.attack === 'headon' ? 0.85 : 1;
         const range = 700 + 150 * this.skill;
-        if (dist < range && err < 0.05 + (1 - this.skill) * 0.03) me.trigger = true;
+        const window = gunPos0 ? me.pos.distanceTo(gunPos0) : dist;
+        if (dist < range && window > (gunPos0 ? 220 : 0) && err < 0.05 + (1 - this.skill) * 0.03) me.trigger = true;
         if (me.rockets > 0 && dist < 1250 && dist > 800 && err < 0.06) me.fireRockets = true;
         const closing = _t.copy(me.vel).sub(t.vel).dot(_r.copy(t.pos).sub(me.pos)) > 0;
         const realDist = gunPos0 ? me.pos.distanceTo(gunPos0) : dist;
@@ -265,13 +271,14 @@ export class EnemyPilot {
       }
       case 'dogfight': {
         const t = this.target;
-        if (!t || !t.alive || this.timer > 30) { this.state = 'approach'; this.target = null; this.timer = 0; break; }
-        leadPoint(me.pos, me.vel, t, 760, this.aim);
+        if (!t || !t.alive || this.timer > 40) { this.state = 'approach'; this.target = null; this.timer = 0; break; }
+        if (Math.floor(this.timer / 3) !== Math.floor((this.timer - dt) / 3)) this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((6 + Math.random() * 12) / this.skill);
+        leadPoint(me.pos, me.vel, t, 760, this.aim).add(this.aimOffset);
         const dir = _d.copy(this.aim).sub(me.pos);
         const dist = dir.length();
         const err = steerTo(fm, dir, 1.3, 1);
         fm.throttle = 1;
-        if (dist < 600 && err < 0.04 * this.skill + 0.02) me.trigger = true;
+        if (dist < 550 && err < 0.04 * this.skill + 0.02) me.trigger = true;
         break;
       }
       case 'withdraw': {

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { envRef } from '../render/EnvRef';
 import { gunTextures, interiorTextures } from '../render/Textures';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 
 // Procedural first-person geometry for the B-17 gun positions: fuselage interior,
 // Browning AN/M2 .50 cal with ring-and-post sight, ammunition belt, turret frames.
@@ -64,9 +65,13 @@ export class AmmoBelt {
     this.length = this.curve.getLength();
     this.count = Math.floor(this.length / this.pitch);
     this.visibleRounds = this.count;
-    const caseGeo = new THREE.CylinderGeometry(0.0105, 0.0102, 0.099, 10).rotateX(Math.PI / 2).translate(0, 0, -0.02);
-    const bulletGeo = new THREE.CylinderGeometry(0.0012, 0.0064, 0.05, 10).rotateX(Math.PI / 2).translate(0, 0, 0.054);
-    const linkGeo = new THREE.BoxGeometry(0.03, 0.026, 0.05).translate(0, 0, -0.025);
+    // .50 BMG: rimless bottlenecked case (99 mm) and a pointed ogive bullet
+    const caseProfile: [number, number][] = [[0, 0], [0.0098, 0], [0.0102, 0.003], [0.0102, 0.07], [0.0094, 0.078], [0.0068, 0.082], [0.0066, 0.099], [0, 0.099]];
+    const caseGeo = new THREE.LatheGeometry(caseProfile.map(([r, y]) => new THREE.Vector2(r, y)), 14).rotateX(Math.PI / 2).translate(0, 0, -0.07);
+    const bulletProfile: [number, number][] = [[0, 0], [0.0064, 0], [0.0064, 0.018], [0.0055, 0.032], [0.0035, 0.045], [0.0008, 0.056], [0, 0.057]];
+    const bulletGeo = new THREE.LatheGeometry(bulletProfile.map(([r, y]) => new THREE.Vector2(r, y)), 12).rotateX(Math.PI / 2).translate(0, 0, 0.029);
+    // M2 link: a pressed-steel loop gripping the case
+    const linkGeo = new THREE.TorusGeometry(0.0115, 0.0022, 6, 14).translate(0, 0, -0.03);
     this.cases = new THREE.InstancedMesh(caseGeo, brassMat(), this.count);
     this.bullets = new THREE.InstancedMesh(bulletGeo, bulletMat(), this.count);
     this.links = new THREE.InstancedMesh(linkGeo, linkMat(), this.count);
@@ -116,11 +121,23 @@ export function buildM2(opts: { ringSight: boolean; belt: boolean; beltSide: 1 |
   const recoilGroup = new THREE.Group();
   g.add(recoilGroup);
   // Receiver body
-  const recv = new THREE.Mesh(new THREE.BoxGeometry(0.105, 0.1, 0.56), park);
+  const recv = new THREE.Mesh(new RoundedBoxGeometry(0.105, 0.1, 0.56, 3, 0.008), park);
   recv.position.set(0, 0, -0.17);
   recoilGroup.add(recv);
+  // side-plate rivets and the trigger-block seam
+  const rivetGeo = new THREE.SphereGeometry(0.0035, 6, 4);
+  for (const sx of [1, -1]) for (let i = 0; i < 7; i++) {
+    for (const yy of [0.03, -0.03]) {
+      const r = new THREE.Mesh(rivetGeo, metal);
+      r.position.set(sx * 0.0535, yy, -0.4 + i * 0.075);
+      recoilGroup.add(r);
+    }
+  }
+  const hinge = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.1, 8).rotateZ(Math.PI / 2), metal);
+  hinge.position.set(0, 0.064, 0.07);
+  recoilGroup.add(hinge);
   // Top cover with feed tray hump
-  const cover = new THREE.Mesh(new THREE.BoxGeometry(0.095, 0.016, 0.34), metal);
+  const cover = new THREE.Mesh(new RoundedBoxGeometry(0.095, 0.016, 0.34, 2, 0.005), metal);
   cover.position.set(0, 0.058, -0.1);
   recoilGroup.add(cover);
   const coverLatch = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 0.05), metal);
@@ -135,7 +152,7 @@ export function buildM2(opts: { ringSight: boolean; belt: boolean; beltSide: 1 |
   handleKnob.position.set(-0.12, 0.0, -0.3);
   recoilGroup.add(handleKnob);
   // Backplate + spade grips
-  const back = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.11, 0.03), park);
+  const back = new THREE.Mesh(new RoundedBoxGeometry(0.12, 0.11, 0.03, 2, 0.006), park);
   back.position.set(0, 0, -0.465);
   recoilGroup.add(back);
   for (const s of [1, -1]) {
@@ -148,7 +165,7 @@ export function buildM2(opts: { ringSight: boolean; belt: boolean; beltSide: 1 |
     recoilGroup.add(arm);
   }
   // Barrel support / trunnion block
-  const trunnion = new THREE.Mesh(new THREE.BoxGeometry(0.095, 0.075, 0.1), park);
+  const trunnion = new THREE.Mesh(new RoundedBoxGeometry(0.095, 0.075, 0.1, 2, 0.007), park);
   trunnion.position.set(0, -0.01, 0.13);
   recoilGroup.add(trunnion);
   // Perforated cooling jacket with the barrel visible inside

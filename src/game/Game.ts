@@ -289,7 +289,7 @@ export class Game {
     // survival picks a random time of day
     const presets: Weather[] = CAMPAIGN.map((c) => c.weather!).filter(Boolean);
     this.setWeather(m.weather ?? (m.duration === Infinity ? presets[Math.floor(Math.random() * presets.length)] : DEFAULT_WEATHER));
-    this.world.playerDamageScale = m.playerArmor ?? (m.role === 'gunner' ? 0.6 : 0.75);
+    this.world.playerDamageScale = (m.playerArmor ?? (m.role === 'gunner' ? 0.6 : 0.75)) * (m.role === 'gunner' ? 0.55 : 0.6);
     this.world.aiGunnerFactor = 1;
     this.world.playerFocus = m.role === 'gunner' ? 0.75 : 0.2;
     const diff = this.settings.difficulty;
@@ -299,7 +299,7 @@ export class Game {
     this.streak = 0; this.lastKillAt = -99; this.aceAwarded = false; this.trauma = 0;
     this.world.spawnFormation(m.bombers, 1);
     const pb = this.world.playerBomber!;
-    if (m.role === 'pilot') for (const b of this.world.bombers()) for (const z of b.zones) { z.hp *= 1.25; z.maxHp *= 1.25; }
+    if (m.role === 'pilot') for (const b of this.world.bombers()) for (const z of b.zones) { z.hp *= 2.2; z.maxHp *= 2.2; }
     if (m.role === 'gunner') {
       this.gunner.resetAmmo();
       this.gunner.attach(pb, m.station ?? 'waistL');

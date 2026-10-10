@@ -52,8 +52,10 @@ export const CAMPAIGN: Mission[] = [
     objectives: ['Defend the formation', 'Survive the mission', 'Lose no more than 3 bombers'],
     bombers: 9, waves: [
       { at: 7, count: 3, from: 'left', attack: 'beam', skill: 0.75, radio: ['Navigator', 'Fighters coming up from the coast, nine o\'clock low. Stay sharp.'] },
-      { at: 0, afterClear: true, count: 4, from: 'front', attack: 'headon', skill: 0.8, radio: ['Pilot', 'More of them up ahead. Twelve o\'clock — here they come.'] },
+      { at: 0, afterClear: true, count: 3, from: 'front', attack: 'headon', skill: 0.8, radio: ['Pilot', 'More of them up ahead. Twelve o\'clock — here they come.'] },
+      { at: 0, afterClear: true, count: 3, from: 'left', attack: 'beam', skill: 0.85, radio: ['Waist', 'More coming in on the left! Watch your nine!'] },
       { at: 0, afterClear: true, count: 4, from: 'mixed', skill: 0.85 },
+      { at: 0, afterClear: true, count: 4, from: 'left', skill: 0.9, radio: ['Navigator', 'Last bunch before the target. Make them count!'] },
     ],
     duration: 120, maxBombersLost: 3,
   },
@@ -113,8 +115,9 @@ export const CAMPAIGN: Mission[] = [
     objectives: ['Stop the Sturmgruppe attack from astern', 'Survive the mission', 'Lose no more than 5 bombers'], playerArmor: 0.45,
     bombers: 12, waves: [
       { at: 7, count: 3, from: 'rear', attack: 'stern', skill: 1.0, radio: ['Navigator', 'Fighters assembling behind us, six o\'clock level. Lots of them.'] },
-      { at: 0, afterClear: true, count: 8, from: 'rear', attack: 'stern', skill: 1.15, rockets: 0.5, radio: ['Pilot', 'Here comes the whole gaggle! Tail, they\'re all yours!'] },
-      { at: 0, afterClear: true, count: 6, from: 'mixed', skill: 1.1 },
+      { at: 0, afterClear: true, count: 6, from: 'rear', attack: 'stern', skill: 1.1, rockets: 0.5, radio: ['Pilot', 'Here comes the whole gaggle! Tail, they\'re all yours!'] },
+      { at: 0, afterClear: true, count: 5, from: 'mixed', skill: 1.1 },
+      { at: 0, afterClear: true, count: 6, from: 'rear', attack: 'stern', skill: 1.15, radio: ['Tail', 'Another Staffel forming up astern!'] },
     ],
     duration: 160, maxBombersLost: 5,
   },
