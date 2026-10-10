@@ -3,6 +3,8 @@ import type { World } from '../world/World';
 import { Bomber, Fighter } from '../world/Aircraft';
 import { BossShip } from '../world/BossShip';
 import { drawBossBlip } from './BossHud';
+import { access } from '../core/Accessibility';
+import { keyMap } from '../core/KeyMap';
 
 /**
  * Plan-view radar plot, north-up = the formation's heading. Compact in the bottom-left
@@ -30,6 +32,9 @@ function hudBlockTop(H: number): number {
   }
   return blTop > 0 ? blTop : H - 130;
 }
+
+// Label of the map key (remappable); touch players get a MAP button instead
+const mapKey = () => (document.body.classList.contains('touch') ? '' : keyMap.label('map').toUpperCase() + '  ');
 
 export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world: World, expanded: number, incoming: Incoming | null, time: number) {
   const pl = world.player;
@@ -80,7 +85,7 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
     ctx.fillStyle = 'rgba(150,220,170,0.8)'; ctx.font = '11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
     for (let rr = step; rr < range; rr += step) ctx.fillText(`${rr / 1000} km`, cx + 3, cy - rr * k + 12);
     ctx.fillText('HEADING', cx, cy - R - 8);
-    ctx.fillText('TAB  close map', cx, cy + R + 18);
+    ctx.fillText(`${mapKey()}close map`, cx, cy + R + 18);
   }
 
   // incoming wave: pulsing sector where the next wave will appear, with countdown
@@ -96,12 +101,13 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
     ctx.fillText(e > 0.5 ? `${incoming.count} FIGHTERS  ${Math.ceil(incoming.eta)}s` : `${Math.ceil(incoming.eta)}s`, m.x, m.y - 12 - 6 * e);
   }
 
-  // aircraft
+  // aircraft (colours from the accessibility palette; colour-blind mode adds shapes)
+  const pal = access.palette, cb = access.prefs.colorBlind;
   for (const a of world.aircraft) {
     if (!a.alive || a.remove || a === pl) continue;
     toMap(a.pos, m);
     if (a instanceof Bomber) {
-      ctx.fillStyle = 'rgba(110,190,255,0.85)';
+      ctx.fillStyle = pal.friend;
       ctx.fillRect(m.x - 2, m.y - 2, 4, 4);
       continue;
     }
@@ -113,11 +119,18 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
     const ang = Math.atan2(hy, hx);
     const s = enemy ? 5 + 2 * e : 4;
     ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(ang);
-    ctx.fillStyle = enemy ? (m.clipped ? 'rgba(255,90,60,0.55)' : 'rgba(255,70,45,1)') : 'rgba(110,190,255,0.9)';
-    ctx.beginPath(); ctx.moveTo(s, 0); ctx.lineTo(-s * 0.7, -s * 0.6); ctx.lineTo(-s * 0.7, s * 0.6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = enemy ? (m.clipped ? pal.enemyDim : pal.enemy) : pal.friend;
+    if (cb && !enemy) {
+      // friendly fighters: a dot with a heading tick (enemies stay solid arrowheads)
+      ctx.beginPath(); ctx.arc(0, 0, 2.6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(2, -0.8, 4, 1.6);
+    } else {
+      ctx.beginPath(); ctx.moveTo(s, 0); ctx.lineTo(-s * 0.7, -s * 0.6); ctx.lineTo(-s * 0.7, s * 0.6); ctx.closePath(); ctx.fill();
+      if (cb) { ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.lineWidth = 1; ctx.stroke(); }
+    }
     ctx.restore();
     if (enemy && e > 0.5 && !m.clipped) {
-      ctx.fillStyle = 'rgba(255,120,90,0.9)'; ctx.font = '10px "IBM Plex Mono", monospace'; ctx.textAlign = 'left';
+      ctx.fillStyle = pal.enemyText; ctx.font = '10px "IBM Plex Mono", monospace'; ctx.textAlign = 'left';
       ctx.fillText(`${a.label} ${(a.pos.distanceTo(origin) / 1000).toFixed(1)}`, m.x + 8, m.y + 3);
     }
   }
@@ -126,7 +139,7 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
   ctx.beginPath(); ctx.moveTo(cx, cy - 6); ctx.lineTo(cx + 4.5, cy + 4); ctx.lineTo(cx, cy + 2); ctx.lineTo(cx - 4.5, cy + 4); ctx.closePath(); ctx.fill();
   if (e < 0.5) {
     ctx.fillStyle = 'rgba(150,220,170,0.7)'; ctx.font = '9px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
-    ctx.fillText('TAB  map', cx, cy + R + 11);
+    ctx.fillText(`${mapKey()}map`, cx, cy + R + 11);
   }
   ctx.restore();
 }

@@ -12,6 +12,7 @@ import { bulletHoleTexture } from '../render/Textures';
 import { Atmos } from '../render/Atmosphere';
 import { DustMotes } from './DustMotes';
 import { KeyAim, KEY_AIM_RATE } from './KeyAim';
+import { access } from '../core/Accessibility';
 
 interface StationState {
   def: StationDef;
@@ -572,8 +573,9 @@ export class GunnerController {
     // buffeting and gun shake
     const t = this.world.time;
     const buffet = 0.0025;
-    eye.x += Math.sin(t * 13.1) * buffet * 0.5 + R() * this.shake * 0.004;
-    eye.y += Math.sin(t * 17.3) * buffet * 0.4 + R() * this.shake * 0.004;
+    const shake = this.shake * access.shake;  // 'reduce screen shake' setting
+    eye.x += Math.sin(t * 13.1) * buffet * 0.5 + R() * shake * 0.004;
+    eye.y += Math.sin(t * 17.3) * buffet * 0.4 + R() * shake * 0.004;
     eye.z += -this.recoilT * 0.012;
     const worldEye = this.gunPivot.localToWorld(eye);
     cam.position.copy(worldEye);
@@ -581,7 +583,7 @@ export class GunnerController {
     const q = this.gunPivot.getWorldQuaternion(new THREE.Quaternion());
     // camera looks down -Z; gun forward is +Z
     cam.quaternion.copy(q).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI));
-    if (this.shake > 0) cam.rotateZ(R() * this.shake * 0.003);
+    if (shake > 0) cam.rotateZ(R() * shake * 0.003);
     cam.fov = this.fov;
     cam.updateProjectionMatrix();
     this.engine.post.nearFocus = def.type === 'waist' ? 0.42 : def.type === 'tail' ? 0.5 : 0.4;

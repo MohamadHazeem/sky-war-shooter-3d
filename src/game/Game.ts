@@ -34,6 +34,7 @@ import { Abilities } from './Abilities';
 import { MidRound } from './MidRound';
 import { isMissionReady, whenMissionReady } from '../core/Preload';
 import { BossBattle } from './BossBattle';
+import { access } from '../core/Accessibility';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -1084,7 +1085,7 @@ export class Game {
     }
     // trauma-based camera shake (explosions, flak, hits), applied after the controllers
     if (this.trauma > 0 && !this.menuMode) {
-      const k = this.trauma * this.trauma;
+      const k = this.trauma * this.trauma * access.shake;
       const cam = this.engine.camera;
       const tt = w.time * 40;
       // smooth (no per-frame random jitter): max ~0.3 deg, gone within ~0.4 s
@@ -1279,7 +1280,7 @@ export class Game {
         const d = a.pos.distanceTo(cam.position);
         if (d > (enemy ? 2800 : 1800)) continue;
         const p = a.pos.clone().project(cam);
-        const col = enemy ? 'rgba(255,70,45,0.95)' : 'rgba(110,190,255,0.85)';
+        const col = access.markerColor(enemy);
         if (!enemy) {
           // Friendlies: a small blue chevron above the aircraft, no brackets, so they never read as targets
           if (p.z < 1 && Math.abs(p.x) < 1 && Math.abs(p.y) < 1) {
@@ -1304,6 +1305,7 @@ export class Game {
             ctx.moveTo(x + sx * s, y + sy * s - sy * c); ctx.lineTo(x + sx * s, y + sy * s); ctx.lineTo(x + sx * s - sx * c, y + sy * s);
           }
           ctx.stroke();
+          access.enemyGlyph(ctx, x, y, s);
           ctx.fillStyle = col; ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
           ctx.fillText(d < 1600 ? `${a.label.toUpperCase()}  ${Math.round(d)}m` : a.label.toUpperCase(), x, y + s + 13);
         } else if (enemy && d < 1500) {
