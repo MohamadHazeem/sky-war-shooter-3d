@@ -23,7 +23,10 @@ npm run dev
 ```
 
 Open http://127.0.0.1:5173 in a desktop browser (Chrome, Edge, Firefox or Safari) with hardware
-acceleration enabled. Mouse and keyboard only. Click the game to capture the mouse; **Esc** pauses.
+acceleration enabled. Mouse and keyboard only.
+
+* Click the game to capture the mouse. If the browser refuses capture (some embedded views do), the game still works with a free cursor: move the mouse to aim, and hold the cursor near a screen edge to keep turning.
+* **Esc** pauses.
 
 ### Modes
 * **Campaign**: seven missions (Emden, Bremen, Ludwigshafen, Leipzig escort, Schweinfurt, a lone
@@ -60,6 +63,13 @@ acceleration enabled. Mouse and keyboard only. Click the game to capture the mou
 Settings cover difficulty (Recruit adds a lead indicator; Ace is harsher), mouse sensitivity,
 Y inversion, volume, music, radio voices, graphics quality (auto-lowered on slow machines),
 target markers (switch off for a purer simulation) and the P-51 control mode.
+
+## Combat design
+
+* **You are the decisive gun.** Fighters attacking your bomber fly their passes *through the field of fire of the gun position you are manning*: they form up out beyond your window or turret, run in on a collision course while firing, flash past close by, and loop back for another pass.
+* **Readable targets.** Enemy fighters are drawn and hit larger than life. A health bar appears on any fighter you are hitting, and it takes about 20 hits to bring one down, with smoke, then black smoke, then fire as it weakens.
+* **Your allies don't do your job.** The other crews' fire and the escorts mostly keep heads down rather than scoring kills.
+* **How they go down:** wings and tails are shot away and the pieces tumble apart (the model is cut with clipping planes), or the fighter blows up or spins in burning, and pilots sometimes bail out.
 
 ## How it works
 

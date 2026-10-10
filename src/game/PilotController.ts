@@ -156,7 +156,7 @@ export class PilotController {
     } else {
       // chase camera behind the aim direction
       const dir = this.freeLook ? _v2.set(0, 0, 1).applyEuler(new THREE.Euler(-this.lookPitch, this.aimYaw + this.lookYaw, 0, 'YXZ')) : this.aimDir(_v2);
-      const target = _v.copy(p.pos).addScaledVector(dir, -17).add(new THREE.Vector3(0, 3.2, 0).applyQuaternion(p.quat));
+      const target = _v.copy(p.pos).addScaledVector(dir, -12).add(new THREE.Vector3(0, 2.6, 0).applyQuaternion(p.quat));
       this.camPos.lerp(target, 1 - Math.exp(-dt * 12));
       cam.position.copy(this.camPos);
       const m = new THREE.Matrix4().lookAt(cam.position, cam.position.clone().addScaledVector(dir, 100), new THREE.Vector3(0, 1, 0).applyQuaternion(p.quat).lerp(new THREE.Vector3(0, 1, 0), 0.5));
@@ -164,7 +164,7 @@ export class PilotController {
       this.engine.post.nearFocus = 0.1;
       this.engine.post.dofStrength = 0;
       this.engine.post.noBlurDist = 25;
-      cam.fov += ((this.input.mouse(2) ? 45 : 68) - cam.fov) * Math.min(1, dt * 8);
+      cam.fov += ((this.input.mouse(2) ? 40 : 64) - cam.fov) * Math.min(1, dt * 8);
     }
     cam.updateProjectionMatrix();
     // G blackout via vignette
