@@ -26,7 +26,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 13 | Persistent pilot/gunner skill tree (perk points from rank-ups) | Done — 18 nodes in 3 branches (Marksman / Gunnery Sergeant / Survivor) with capstones (Deadeye, Iron Lungs, Fortress), points from promotions + every 3,000 XP past Major, respec for merit, blueprint screen + hangar section |
 | 14 | Dynamic campaign map: choose the next target, consequences (losses, morale, Luftwaffe strength) | Done — procedural 1943–44 strategic map, Luftwaffe strength / squadron / morale / escort gauges with real effects, 2–3 side raids per gap (rail, airfields, oil, U-boat pens, factories), intelligence reports, tour summary, save migration |
 | 15 | Weekly challenge event with its own leaderboard and a special reward | Done — seeded ISO-week scenario, its own online leaderboard per role, +2000 merit + weekly ribbon + exclusive "Lightning Shield" nose art, countdown card |
-| 16 | Replay theatre: save best moments, scrub, free camera, export screenshots | In progress |
+| 16 | Replay theatre: save best moments, scrub, free camera, export screenshots | Done — 90 s recorder (12 Hz, 48 aircraft, tracers, explosions, auto-marked moments), timeline scrub + speeds, player/orbit/free/auto-director cameras, photo mode (FOV, DOF, exposure, 1–3× PNG), 5 saved moments (IndexedDB) in a title-menu Theatre |
 
 ## Extra goals (added overnight)
 | # | Goal | Status |
@@ -41,3 +41,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 23:10 started role reversal + wingman commands (11, 12), replay theatre (16).
 - 23:20 started volumetric explosions + combat light (3, 5). Goals 1, 2, 4, 6, 8 wait for the Phase 4 graphics pass (same files).
 - 23:22 campaign map, skill tree, custom battle + weekly merged (226 tests); debrief "Next mission" now opens the campaign map.
+- 23:30 replay theatre merged (247 tests); started cloud quality + heat haze (1, 4), aircraft surface detail (2), new FlightGear aircraft (17).
