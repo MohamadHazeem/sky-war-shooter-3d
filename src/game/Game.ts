@@ -71,6 +71,7 @@ export class Game {
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
+    this.gunner.onNotice = (t) => this.ui.tip(t, 2200);
     // Esc releases pointer lock -> pause. If the browser never granted the lock the game
     // simply runs in free-cursor mode (no pause loop).
     input.onLockChange = (locked) => {
@@ -385,7 +386,14 @@ export class Game {
       const next = m.waves[this.waveIdx];
       if (next) {
         const ready = next.afterClear ? (enemies === 0 && this.waveTimer > 6) || this.waveTimer > 75 : t >= next.at;
-        if (ready) { this.spawnWave(next); this.waveIdx++; this.waveTimer = 0; }
+        if (ready) {
+          this.spawnWave(next); this.waveIdx++; this.waveTimer = 0;
+          // between waves the gunners restock and the Mustang's guns are topped up
+          if (this.waveIdx > 1) {
+            this.gunner.resetAmmo();
+            if (w.playerFighter) { w.playerFighter.guns.forEach((g) => (g.ammo = 500)); this.ui.tip('Guns topped up', 1800); }
+          }
+        }
       }
     } else if (m.duration === Infinity) {
       // Survival: endless escalating waves

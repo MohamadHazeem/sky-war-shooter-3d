@@ -48,6 +48,7 @@ export class GunnerController {
   private holeMat: THREE.MeshBasicMaterial | null = null;
   private beamMat: THREE.ShaderMaterial | null = null;
   onSwitch?: (st: StationDef) => void;
+  onNotice?: (text: string) => void;
   transition = 0; // >0 while crawling to another station (screen fades)
   private pendingStation: StationId | null = null;
 
@@ -283,7 +284,8 @@ export class GunnerController {
     if (s.reload > 0) {
       s.reload -= dt;
       if (s.reload <= 0) { s.ammo = s.maxAmmo; this.guns[this.station]?.forEach((g) => { if (g.belt) { g.belt.visibleRounds = 999; g.belt.update(); } }); }
-    } else if (inp.hit('KeyR') && s.ammo < s.maxAmmo) {
+    } else if ((inp.hit('KeyR') && s.ammo < s.maxAmmo) || s.ammo <= 0) {
+      if (s.ammo <= 0) this.onNotice?.('RELOADING — new ammunition box');
       s.reload = def.type === 'waist' ? 4.5 : 6;
       sound.play('click', null, { gain: 0.5, rate: 0.7 });
     }
@@ -304,7 +306,7 @@ export class GunnerController {
         this.shotCount++;
         s.ammo--;
         s.heat += def.twin ? 0.0075 : 0.011;
-        if (s.heat >= 1) { s.overheated = true; this.world.callout('hot', 'Pilot', 'Short bursts! You\'ll burn out that barrel!', 15); }
+        if (s.heat >= 1) { s.overheated = true; this.onNotice?.('BARREL OVERHEATED — let it cool'); this.world.callout('hot', 'Pilot', 'Short bursts! You\'ll burn out that barrel!', 15); }
         if (s.ammo <= 0) break;
       }
     } else if (this.cooldown < 0) this.cooldown = 0;
