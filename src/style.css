@@ -280,3 +280,12 @@ kbd { font-family: 'IBM Plex Mono', monospace; font-size: 12px; border: 1px soli
 .hcard .t { font-size: 17px; letter-spacing: 1px; text-transform: uppercase; }
 .hcard .d { color: var(--ink-dim); font-size: 13px; margin: 4px 0 8px; }
 .hcard .s { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--khaki); }
+
+/* online leaderboard */
+.lb-panel { margin-top: 16px; text-align: left; }
+.lb-submit { display: flex; gap: 8px; align-items: center; margin: 6px 0 8px; flex-wrap: wrap; }
+.lb-submit input { background: rgba(0,0,0,0.4); border: 1px solid var(--line); color: var(--ink); padding: 8px 10px; font-family: inherit; font-size: 15px; width: 200px; }
+.lb-submit .btn { padding: 8px 16px; font-size: 14px; }
+.lb-status { color: var(--ink-dim); font-size: 13px; font-family: 'IBM Plex Mono', monospace; }
+.lb-empty { color: var(--ink-dim); font-size: 13px; padding: 6px 0; }
+table.lb tr.me td { color: var(--khaki); }

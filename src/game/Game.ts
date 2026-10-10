@@ -19,6 +19,7 @@ import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
 import * as Radar from '../ui/Radar';
 import { Progression } from './Upgrades';
 import * as Chatter from './RadioChatter';
+import { mountLeaderboard } from '../ui/LeaderboardPanel';
 import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
 import { CombatTally } from './CombatTally';
@@ -306,7 +307,11 @@ export class Game {
     sound.setMode('menu');
     this.ui.title({
       campaign: () => this.showCampaign(),
-      survival: () => this.ui.survivalMenu(this.progress, (r) => this.showBriefing(survivalMission(r)), () => this.startMenu()),
+      survival: () => {
+        this.ui.survivalMenu(this.progress, (r) => this.showBriefing(survivalMission(r)), () => this.startMenu());
+        const host = document.querySelector<HTMLElement>('#survival .box');
+        if (host) { mountLeaderboard(host, 'survival-gunner', 'ONLINE TOP 10 — B-17 GUNNER'); mountLeaderboard(host, 'survival-pilot', 'ONLINE TOP 10 — P-51 ESCORT'); }
+      },
       armory: () => this.ui.hangar(this.prog, 'gunner', { title: 'ARMORY', sub: 'B-17 gunner loadout (P-51 loadout: between rounds)', next: 'Back' }, () => this.startMenu()),
       settings: () => this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => this.startMenu()),
       credits: () => this.ui.credits(() => this.startMenu()),
@@ -927,6 +932,10 @@ export class Game {
       armory: () => this.ui.armory(this.prog, () => this.ui.debrief({ ...d, merit: undefined, points: this.prog.points }, h)),
     };
     this.ui.debrief(d, h);
+    // online leaderboard: survival per role, campaign per mission
+    const host = document.querySelector<HTMLElement>('#debrief .box');
+    if (host) mountLeaderboard(host, survival ? `survival-${m.role}` : `campaign-${m.id}`, 'ONLINE LEADERBOARD',
+      { name: '', mode: survival ? `survival-${m.role}` : `campaign-${m.id}`, score: this.score, kills: w.stats.kills, rounds: this.roundIdx + 1 });
   }
 
   pause() {
