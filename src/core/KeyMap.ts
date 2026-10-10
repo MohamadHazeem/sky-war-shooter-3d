@@ -6,10 +6,17 @@
 // key no longer triggers it.
 //
 // Saved in localStorage under its own key so it never collides with the main Settings.
+//
+// Scoped actions: the gun positions only exist in the B-17 and the wingman commands only in
+// the P-51, so both default to the number keys. An action with a scope is translated only
+// while that role is being played (KeyMap.scope, set every frame by DeviceControls), and a
+// key may be held by one gunner action and one pilot action at the same time.
 
-export type ActionId = 'fire' | 'zoom' | 'reload' | 'map' | 'seat1' | 'seat2' | 'seat3' | 'seat4' | 'seat5' | 'pause' | 'help';
+export type ActionId = 'fire' | 'zoom' | 'reload' | 'map' | 'seat1' | 'seat2' | 'seat3' | 'seat4' | 'seat5' | 'wing1' | 'wing2' | 'wing3' | 'wing4' | 'pause' | 'help';
 
-export interface ActionDef { id: ActionId; label: string; def: string }
+export type ActionScope = 'gunner' | 'pilot';
+
+export interface ActionDef { id: ActionId; label: string; def: string; scope?: ActionScope }
 
 // def = the code the game listens for (and the default binding)
 export const ACTIONS: readonly ActionDef[] = [
@@ -17,11 +24,15 @@ export const ACTIONS: readonly ActionDef[] = [
   { id: 'zoom', label: 'Zoom / look down the sight (alternative to the right button)', def: 'KeyB' },
   { id: 'reload', label: 'Reload', def: 'KeyR' },
   { id: 'map', label: 'Big radar map', def: 'Tab' },
-  { id: 'seat1', label: 'Gun position 1', def: 'Digit1' },
-  { id: 'seat2', label: 'Gun position 2', def: 'Digit2' },
-  { id: 'seat3', label: 'Gun position 3', def: 'Digit3' },
-  { id: 'seat4', label: 'Gun position 4', def: 'Digit4' },
-  { id: 'seat5', label: 'Gun position 5', def: 'Digit5' },
+  { id: 'seat1', label: 'Gun position 1', def: 'Digit1', scope: 'gunner' },
+  { id: 'seat2', label: 'Gun position 2', def: 'Digit2', scope: 'gunner' },
+  { id: 'seat3', label: 'Gun position 3', def: 'Digit3', scope: 'gunner' },
+  { id: 'seat4', label: 'Gun position 4', def: 'Digit4', scope: 'gunner' },
+  { id: 'seat5', label: 'Gun position 5', def: 'Digit5', scope: 'gunner' },
+  { id: 'wing1', label: 'P-51 wingman: attack my target', def: 'Digit1', scope: 'pilot' },
+  { id: 'wing2', label: 'P-51 wingman: cover me', def: 'Digit2', scope: 'pilot' },
+  { id: 'wing3', label: 'P-51 wingman: protect the bombers', def: 'Digit3', scope: 'pilot' },
+  { id: 'wing4', label: 'P-51 wingman: form up', def: 'Digit4', scope: 'pilot' },
   { id: 'pause', label: 'Pause', def: 'KeyP' },
   { id: 'help', label: 'Controls card', def: 'KeyH' },
 ];
@@ -47,11 +58,21 @@ export function defaultBindings(): Bindings {
   return b;
 }
 
+// Two actions can hold the same key when they are never active together
+export function scopesOverlap(a: ActionDef, b: ActionDef) { return !a.scope || !b.scope || a.scope === b.scope; }
+
+// The actions live in a role (null = menus / gunner, the original key set)
+export function actionsFor(scope: ActionScope | null): ActionDef[] {
+  const s = scope ?? 'gunner';
+  return ACTIONS.filter((a) => !a.scope || a.scope === s);
+}
+
 // Physical code -> logical code ('' = switched off). Codes not in the table pass through.
-export function buildTranslation(b: Bindings): Map<string, string> {
+export function buildTranslation(b: Bindings, scope: ActionScope | null = null): Map<string, string> {
   const map = new Map<string, string>();
-  const bound = new Set(Object.values(b));
-  for (const a of ACTIONS) {
+  const acts = actionsFor(scope);
+  const bound = new Set(acts.map((a) => b[a.id]));
+  for (const a of acts) {
     const key = b[a.id];
     if (key === a.def) continue;
     map.set(key, a.def);
@@ -65,8 +86,9 @@ export type BindResult = { ok: true; swapped?: ActionId } | { ok: false; reason:
 
 export class KeyMap {
   bindings: Bindings = defaultBindings();
-  private table = new Map<string, string>();
+  private tables: Record<ActionScope, Map<string, string>> = { gunner: new Map(), pilot: new Map() };
   capturing = false;  // the settings screen is waiting for a key: no translation
+  scope: ActionScope | null = null;  // the role being played (null = menus, translated like the gunner)
   onChange?: () => void;
 
   constructor(private storage: Pick<Storage, 'getItem' | 'setItem'> | null = typeof localStorage !== 'undefined' ? localStorage : null) {
@@ -80,7 +102,7 @@ export class KeyMap {
     this.rebuild();
   }
 
-  private rebuild() { this.table = buildTranslation(this.bindings); }
+  private rebuild() { this.tables = { gunner: buildTranslation(this.bindings, 'gunner'), pilot: buildTranslation(this.bindings, 'pilot') }; }
 
   private save() {
     try { this.storage?.setItem(STORE_KEY, JSON.stringify(this.bindings)); } catch { /* storage unavailable */ }
@@ -91,8 +113,9 @@ export class KeyMap {
   bind(id: ActionId, code: string): BindResult {
     if (RESERVED[code]) return { ok: false, reason: `${keyLabel(code)} is used for ${RESERVED[code]}` };
     const old = this.bindings[id];
+    const me = ACTIONS.find((a) => a.id === id)!;
     let swapped: ActionId | undefined;
-    for (const a of ACTIONS) if (a.id !== id && this.bindings[a.id] === code) { this.bindings[a.id] = old; swapped = a.id; }
+    for (const a of ACTIONS) if (a.id !== id && this.bindings[a.id] === code && scopesOverlap(a, me)) { this.bindings[a.id] = old; swapped = a.id; }
     this.bindings[id] = code;
     this.rebuild();
     this.save();
@@ -109,7 +132,7 @@ export class KeyMap {
 
   /** Logical code for a physical key ('' = switched off while playing). */
   translate(code: string, playing: boolean): string {
-    const t = this.table.get(code);
+    const t = this.tables[this.scope ?? 'gunner'].get(code);
     if (t === undefined) return code;
     if (t === '' && !playing) return code;  // in menus the old key keeps its native meaning
     return t;

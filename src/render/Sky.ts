@@ -123,7 +123,7 @@ export function buildEnvironment(renderer: THREE.WebGLRenderer, sky: SkyDome): T
   // Cloud-sea floor so the lower hemisphere reflects bright white like the real thing.
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(5000, 32),
-    new THREE.MeshBasicMaterial({ color: new THREE.Color(0.95, 0.96, 1.0).multiplyScalar(1.6), side: THREE.DoubleSide }),
+    new THREE.MeshBasicMaterial({ color: new THREE.Color(0.95, 0.96, 1.0).multiplyScalar(1.6 * Atmos.envFloor), side: THREE.DoubleSide }),
   );
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -60;

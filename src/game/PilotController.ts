@@ -44,6 +44,8 @@ export class PilotController {
   view: 'cockpit' | 'chase' = 'chase';
   mode: 'mouseAim' | 'direct' = 'mouseAim';
   baseFov = 62;   // set from Settings; cockpit (+8) and chase (+2) keep their original offsets
+  sightLit = false; // night missions: the K-14's lamp is turned up (brighter reticle, glow on the glass)
+  private glassMat: THREE.MeshPhysicalMaterial | null = null;
   private cockpit: THREE.Object3D | null = null;
   private glass: THREE.Object3D | null = null;
   eyeOffset = new THREE.Vector3(0, 0.775, -1.174);
@@ -125,6 +127,7 @@ export class PilotController {
     const g = new THREE.Group();
     g.name = 'k14_sight';
     const mat = markOwned(new THREE.MeshPhysicalMaterial({ color: 0x9fb4a8, transparent: true, opacity: 0.12, roughness: 0.05, metalness: 0, depthWrite: false, side: THREE.DoubleSide }));
+    this.glassMat = mat;
     const glass = new THREE.Mesh(new THREE.PlaneGeometry(GLASS.hw * 2, GLASS.hh * 2), mat);
     glass.position.copy(GLASS.c);
     glass.rotation.x = -GLASS.tilt;
@@ -294,6 +297,7 @@ export class PilotController {
     this.updateCamera(dt);
     this.updateGunsight(dt);
     this.fx.update(dt, this.view, this.engine.camera.position);
+    this.glassMat?.emissive.setRGB(this.sightLit ? 0.06 : 0, this.sightLit ? 0.028 : 0, this.sightLit ? 0.006 : 0);
     this.tracerStream(p);
   }
 
@@ -497,14 +501,15 @@ export class PilotController {
       ctx.beginPath();
       corners.forEach((c, i) => (i ? ctx.lineTo(c.x, c.y) : ctx.moveTo(c.x, c.y)));
       ctx.closePath();
-      ctx.fillStyle = 'rgba(160,190,170,0.05)';
+      ctx.fillStyle = this.sightLit ? 'rgba(255,160,70,0.045)' : 'rgba(160,190,170,0.05)';
       ctx.fill();
       ctx.clip();
     }
-    const a = cockpit ? 0.95 : 0.75;
-    const col = inRange ? `rgba(255,190,90,${a})` : `rgba(255,150,60,${a * 0.85})`;
+    const lit = this.sightLit;
+    const a = lit ? 1 : cockpit ? 0.95 : 0.75;
+    const col = inRange ? (lit ? 'rgba(255,215,130,1)' : `rgba(255,190,90,${a})`) : (lit ? 'rgba(255,175,85,1)' : `rgba(255,150,60,${a * 0.85})`);
     ctx.strokeStyle = col; ctx.fillStyle = col;
-    ctx.shadowColor = 'rgba(255,120,30,0.9)'; ctx.shadowBlur = cockpit ? 7 : 4;
+    ctx.shadowColor = lit ? 'rgba(255,140,40,1)' : 'rgba(255,120,30,0.9)'; ctx.shadowBlur = lit ? (cockpit ? 14 : 9) : cockpit ? 7 : 4;
     // fixed reticle: the gun line at the harmonisation range (a cross with a gap)
     const bp = toScr(_v.copy(p.pos).addScaledVector(p.forward(_v2), CONVERGENCE));
     if (bp.ok) {

@@ -22,6 +22,7 @@ export const Atmos = {
   highCoverage: 0.55,
   highDensity: 1.8,
   cloudAmbient: 0.6,
+  envFloor: 1,       // brightness of the cloud-sea floor in the reflection map (Weather: ~0 at night)
   windOffset: new THREE.Vector3(), // accumulated wind drift + floating-origin shift
   originOffset: new THREE.Vector3(), // accumulated floating-origin shift only (ground)
   wind: new THREE.Vector3(9, 0, 4),

@@ -30,6 +30,7 @@ export interface ModeDef {
   id: string;                         // 'survival' | 'acehunt' | 'timeattack' | …
   title: string;
   blurb: string;
+  roles?: Role[];                     // roles it can be flown in (default both); Special operations are P-51 only
   mission(role: Role): Mission;
   matches(m: Mission): boolean;
   board(role: Role): string;          // online leaderboard mode string
@@ -268,15 +269,16 @@ export function mountModePanel(host: HTMLElement, onPick: (m: Mission) => void, 
   else host.appendChild(panel);
   const show = (id: string) => {
     const d = MODES.find((x) => x.id === id) ?? MODES[0];
+    const roles = d.roles ?? (['gunner', 'pilot'] as Role[]);
     panel.innerHTML = `<div class="mode-tabs">${MODES.map((x) => `<button class="mode-tab${x === d ? ' on' : ''}" data-tab="${esc(x.id)}">${esc(x.title)}</button>`).join('')}</div>
       <div class="mode-body"><p>${esc(d.blurb)}</p>
-      <div class="row"><button class="btn" data-mode-role="gunner">B-17 Gunner</button><button class="btn" data-mode-role="pilot">P-51 Escort</button></div>
+      <div class="row">${roles.includes('gunner') ? '<button class="btn" data-mode-role="gunner">B-17 Gunner</button>' : ''}${roles.includes('pilot') ? '<button class="btn" data-mode-role="pilot">P-51 Escort</button>' : ''}</div>
       <div data-boards></div></div>`;
     panel.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => b.addEventListener('click', () => show(b.dataset.tab!)));
     panel.querySelectorAll<HTMLButtonElement>('[data-mode-role]').forEach((b) => b.addEventListener('click', () => onPick(d.mission(b.dataset.modeRole as Role))));
     const boards = panel.querySelector<HTMLElement>('[data-boards]')!;
-    mountLeaderboard(boards, d.board('gunner'), `ONLINE TOP 10 — ${d.title.toUpperCase()} · B-17 GUNNER`);
-    mountLeaderboard(boards, d.board('pilot'), `ONLINE TOP 10 — ${d.title.toUpperCase()} · P-51 ESCORT`);
+    if (roles.includes('gunner')) mountLeaderboard(boards, d.board('gunner'), `ONLINE TOP 10 — ${d.title.toUpperCase()} · B-17 GUNNER`);
+    if (roles.includes('pilot')) mountLeaderboard(boards, d.board('pilot'), `ONLINE TOP 10 — ${d.title.toUpperCase()} · P-51 ESCORT`);
   };
   show(startTab);
 }

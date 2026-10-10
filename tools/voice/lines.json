@@ -94,6 +94,18 @@
       "voice": "Eddy (English (UK))",
       "rate": 195
     },
+    "blue2": {
+      "speaker": "Blue Two",
+      "aliases": [],
+      "voice": "Rocko (English (UK))",
+      "rate": 198
+    },
+    "control": {
+      "speaker": "Control",
+      "aliases": [],
+      "voice": "Sandy (English (UK))",
+      "rate": 180
+    },
     "briefing": {
       "speaker": "Intelligence Officer",
       "aliases": [],
@@ -1357,6 +1369,111 @@
       "id": "pilot_26",
       "role": "lead",
       "text": "Last push — they're throwing everything at the box!"
+    },
+    {
+      "group": "Phase 5 wingman + role reversal (Wingman.ts / RaidDefence.ts)"
+    },
+    {
+      "id": "wing_attack",
+      "role": "blue2",
+      "text": "Blue Two, engaging your target!"
+    },
+    {
+      "id": "wing_notarget",
+      "role": "blue2",
+      "text": "Blue Two — no target in front of you, staying on your wing."
+    },
+    {
+      "id": "wing_cover",
+      "role": "blue2",
+      "text": "Blue Two, covering your six!"
+    },
+    {
+      "id": "wing_bombers",
+      "role": "blue2",
+      "text": "Blue Two, going to the bombers!"
+    },
+    {
+      "id": "wing_raid",
+      "role": "blue2",
+      "text": "Blue Two, going after the bombers!"
+    },
+    {
+      "id": "wing_form",
+      "role": "blue2",
+      "text": "Blue Two, forming up on your wing."
+    },
+    {
+      "id": "wing_six",
+      "role": "blue2",
+      "text": "Bandit on your tail — Blue Two is on him!"
+    },
+    {
+      "id": "wing_splash",
+      "role": "blue2",
+      "text": "Blue Two — splash one!"
+    },
+    {
+      "id": "wing_hit",
+      "role": "blue2",
+      "text": "Blue Two, I'm hit! I'm going down!"
+    },
+    {
+      "id": "wing_join",
+      "role": "blue2",
+      "text": "Blue Two, replacement aircraft joining on your wing."
+    },
+    {
+      "id": "raid_r1",
+      "role": "control",
+      "text": "Control to Blue flight: raid inbound, Junkers with fighter cover. Get between them and the airfield!"
+    },
+    {
+      "id": "raid_r2",
+      "role": "control",
+      "text": "Control, second wave: bombers and Messerschmitts on the same heading. Hit the bombers first!"
+    },
+    {
+      "id": "raid_r3",
+      "role": "control",
+      "text": "Control: this is the main raid — everything they've got. Don't let them through!"
+    },
+    {
+      "id": "raid_n1",
+      "role": "control",
+      "text": "Control to Blue flight: raiders crossing the coast in the dark. Look for their exhaust flames and the searchlights."
+    },
+    {
+      "id": "raid_n2",
+      "role": "control",
+      "text": "Control: more of them coming in, with night fighters. The searchlights will find the bombers for you."
+    },
+    {
+      "id": "raid_n3",
+      "role": "control",
+      "text": "Control: the main stream is inbound. Every one you get is one less over the field!"
+    },
+    {
+      "id": "raid_through",
+      "role": "control",
+      "text": "Bombs on the airfield! Stop the rest of them!",
+      "urgent": true
+    },
+    {
+      "id": "raid_jettison",
+      "role": "blue2",
+      "text": "He's dumped his bombs — he's turning for home!"
+    },
+    {
+      "id": "raid_escorts",
+      "role": "blue2",
+      "text": "Messerschmitts coming down on us — they're covering the bombers!"
+    },
+    {
+      "id": "raid_coned",
+      "role": "blue2",
+      "text": "Searchlights have one coned! Get him while he's lit!",
+      "urgent": true
     },
     {
       "group": "briefings (tools/voice/briefings.mjs)"

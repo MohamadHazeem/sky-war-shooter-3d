@@ -83,7 +83,8 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
       for (const e of w.fighters('axis')) {
         if (!e.alive) continue;
         const d = e.pos.distanceTo(f.pos);
-        const onBombers = w.enemyPilot(e)?.state === 'attack' ? 0.7 : 1;
+        // bomber attackers first; raid missions: the bombers heading for the field
+        const onBombers = w.enemyPilot(e)?.state === 'attack' ? 0.7 : (e.ai as { inbound?: boolean } | null)?.inbound ? 0.35 : 1;
         const sc = d * onBombers * (e === chase ? 0.6 : 1);
         if (sc < ps) { ps = sc; pick = e; }
       }
@@ -105,12 +106,15 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
         tp.y += 0.5 * 9.81 * tof * tof;
         const dir = tp.sub(f.pos).normalize();
         pilot.aimYaw = Math.atan2(dir.x, dir.z); pilot.aimPitch = Math.asin(dir.y);
-        if (bd < (boss ? 1000 : 500) && f.forward().dot(dir) > (boss ? 0.993 : 0.998)) inp.buttons = 1;
+        // heavies are big targets (40+ m span at ENEMY_SCALE): a wider firing cone
+        const heavy = pick && (pick.enemyType === 'ju88' || pick.enemyType === 'bf110');
+        if (bd < (boss ? 1000 : 500) && f.forward().dot(dir) > (boss ? 0.993 : heavy ? 0.992 : 0.998)) inp.buttons = 1;
       } else if (f.alive) {
         const c = w.formationCenter.clone().add(new THREE.Vector3(0, 300, 0)).sub(f.pos).normalize();
         pilot.aimYaw = Math.atan2(c.x, c.z); pilot.aimPitch = Math.asin(c.y);
       }
-      pilot.throttleCmd = 1;
+      // don't overrun a slow raid bomber: ease off sitting close behind him
+      pilot.throttleCmd = chase && (chase.ai as { inbound?: boolean } | null)?.inbound && bd < 350 && chase.forward().dot(f.forward()) > 0.7 ? 0.45 : 1;
       // exercise the views: padlock on and off, cockpit / chase
       if (k % 700 === 200 || k % 700 === 500) inp.pressed.add('KeyT');
       if (k % 1500 === 750) inp.pressed.add('KeyV');

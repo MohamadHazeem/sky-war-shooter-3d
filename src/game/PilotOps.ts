@@ -9,6 +9,10 @@ import type { Mission } from './Missions';
 import type { Incoming } from '../ui/Radar';
 import { PILOT_ROUNDS, type PilotFrom, type PilotGroup, type PilotRound } from './PilotRounds';
 import { RearGunners } from './RearGunners';
+import { Wingman } from './Wingman';
+import { RaidDefence } from './RaidDefence';
+import type { Input } from '../core/Input';
+import type { PilotController } from './PilotController';
 
 // P-51 missions director layer.
 //  * Campaign pilot missions with a PILOT_ROUNDS entry (m4, m7) are flown as scripted rounds:
@@ -22,12 +26,16 @@ import { RearGunners } from './RearGunners';
 //
 // Game calls: start(mission) at mission start, direct(...) every frame of the mission,
 // objective() for the HUD line and drawOverlay(...) on the 2D overlay.
+//  * Every pilot mission also flies Blue Two, the player's wingman (Wingman.ts), and the
+//    role-reversal Special operations ("Defend the Field", "Night Fighter") are run by
+//    RaidDefence.ts in place of the scripted escort rounds (their fail state: OpsResult.fail).
 
 export interface OpsResult {
   scripted: boolean;          // true: PilotOps runs the round instead of Game's director
   score: number;              // points earned this frame (protection bonuses)
   incoming: Incoming | null;  // next group for the radar (scripted only)
   roundOver: boolean;         // scripted only
+  fail?: string | null;       // the mission is lost (raid missions: too many bombers through)
 }
 
 interface Tracked { goal: 'bombers' | 'player' | 'straggler' | 'mixed'; attacking: boolean; nearBomber: boolean; onStraggler: boolean }
@@ -58,13 +66,17 @@ export class PilotOps {
   private lastT = 0;
   private padTip = false;
   readonly rear = new RearGunners();
+  readonly wing: Wingman;        // Blue Two
+  readonly raid: RaidDefence;    // role-reversal missions
 
-  constructor(private world: World, private ui: UI) {
+  constructor(private world: World, private ui: UI, input: Input | null = null, private lead: PilotController | null = null) {
+    this.wing = new Wingman(world, ui, input, lead);
+    this.raid = new RaidDefence(world, ui);
     DogfightAI.onCall = (call, ai, side) => this.onCall(call, ai.me, side);
     this.rear.onOpenFire = (f) => this.world.callout('rear', 'Lead', `Careful, Blue two — that ${f.label} has a rear gunner. Come at him from below!`, 25, 2);
   }
 
-  get scripted() { return !!this.rounds; }
+  get scripted() { return !!this.rounds || this.raid.active; }
 
   start(m: Mission) {
     this.mission = m.role === 'pilot' ? m : null;
@@ -78,6 +90,12 @@ export class PilotOps {
     this.pending = 0;
     this.padTip = false;
     this.incomingOff = null;
+    this.raid.start(m);
+    this.wing.raidTargets = this.raid.active ? () => this.raid.inbound() : null;
+    this.wing.start(!!this.mission && !!this.world.playerFighter && m.id !== 'duel'); // no wingman on the dev duel bench
+    // raid missions: Blue Two starts out on the bombers
+    if (this.raid.active) this.wing.command('bombers');
+    if (this.lead) this.lead.sightLit = this.raid.night;
   }
 
   // ---------- radio ----------
@@ -104,6 +122,7 @@ export class PilotOps {
     if (!m) return res;
     const w = this.world;
     this.rear.update(dt, w);
+    this.wing.update(dt);
     res.score += this.track();
     if (!this.padTip && roundT > 20 && roundIdx === 0) {
       this.padTip = true;
@@ -111,8 +130,15 @@ export class PilotOps {
     }
     // a round changed (Game handles the hangar break between them)
     if (roundIdx !== this.roundIdx) {
-      if (this.roundIdx >= 0 && !this.rounds) res.score += this.roundBonus();
+      if (this.roundIdx >= 0 && !this.rounds && !this.raid.active) res.score += this.roundBonus();
+      if (this.roundIdx >= 0) this.wing.onRound();
       this.beginRound(roundIdx);
+    }
+    if (this.raid.active) {
+      const pf = w.playerFighter;
+      const r = this.raid.direct(dt, roundIdx, roundT, (f) => !!pf && (f.lastAttacker === pf || f.playerDamage >= f.damageTaken * 0.2));
+      res.score += r.score; res.incoming = r.incoming; res.roundOver = r.roundOver; res.fail = r.fail;
+      return res;
     }
     if (!this.rounds || this.roundDone) return res;
     const r = this.rounds[Math.min(roundIdx, this.rounds.length - 1)];
@@ -312,6 +338,7 @@ export class PilotOps {
 
   // HUD objective line (null: leave Game's own)
   objective(roundIdx: number, rounds: number): string | null {
+    if (this.raid.active) return this.raid.objective(roundIdx, rounds);
     if (!this.rounds) return null;
     const r = this.rounds[Math.min(roundIdx, this.rounds.length - 1)];
     const n = this.world.activeEnemies().length;
@@ -329,6 +356,8 @@ export class PilotOps {
   // Bombers under attack get a red marker; the straggler is labelled with her health
   drawOverlay(ctx: CanvasRenderingContext2D, W: number, H: number, cam: THREE.Camera) {
     if (!this.mission) return;
+    this.wing.drawOverlay(ctx, W, H, cam);
+    this.raid.drawOverlay(ctx, W, H, cam);
     const under = new Map<Bomber, number>();
     for (const [f, t] of this.tracked) {
       if (!f.alive || !t.nearBomber) continue;

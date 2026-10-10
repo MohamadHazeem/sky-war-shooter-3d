@@ -152,7 +152,7 @@ export class Game {
     this.target = new TargetArea(engine, this.world);
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
-    this.pilotOps = new PilotOps(this.world, ui);
+    this.pilotOps = new PilotOps(this.world, ui, input, this.pilot); // + Blue Two's orders (keys) and the padlock target
     this.photo = new PhotoMode(engine, input, this.world);
     this.feel = new GameFeel(engine, this.world, ui, this.combo); this.combat = new CombatFeedback(engine, this.world);
     this.cine = new Cinematics(engine, input, ui, this);
@@ -764,6 +764,7 @@ export class Game {
     }
     const ops = this.pilotOps.direct(dt, this.roundIdx, t - this.roundT0); // P-51 missions (PilotOps.ts)
     this.score += ops.score;
+    if (ops.fail && !this.endResult) { this.finish(false, ops.fail); return; } // raid missions: too many bombers through (RaidDefence.ts)
     if (ops.scripted) {
       this.incoming = ops.incoming; this.incomingOff = null;
       if (ops.roundOver && !this.roundClear && this.state === 'playing') { this.roundClear = true; this.endRound(m); }

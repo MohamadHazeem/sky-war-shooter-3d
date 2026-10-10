@@ -52,6 +52,7 @@ function weatherLabel(m: Mission): string {
   if (!w) return 'Fair';
   switch (w.mood) {
     case 'dusk': return 'Dusk';
+    case 'night': return 'Night, moonlit';
     case 'overcast': return 'Overcast';
     case 'storm': return 'Storm front';
     default: return w.sunEl < 16 ? 'Low winter sun' : w.low < 0.55 ? 'Clear' : 'Broken cloud';
