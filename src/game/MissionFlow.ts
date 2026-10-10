@@ -139,7 +139,7 @@ export class MissionFlow {
     setTimeout(() => {
       if (g.state !== 'playing') return;
       if (m.role === 'gunner') g.world.callout('start', 'Pilot', `Pilot to crew: we're at altitude. Test fire your guns, and keep your eyes open.`, 0, 3);
-      else g.world.callout('start', 'Lead', 'Blue flight, form up on the bombers. Keep your eyes peeled for bandits.', 0, 3);
+      else if (m.bombers > 0) g.world.callout('start', 'Lead', 'Blue flight, form up on the bombers. Keep your eyes peeled for bandits.', 0, 3); // raid/night/strafe ops have no bombers
     }, 2500);
     g.onboarding.onMissionStart(m);
     g.service.onMissionStart(m);
