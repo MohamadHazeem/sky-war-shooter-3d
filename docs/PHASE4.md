@@ -47,7 +47,7 @@ Player notes given at the start:
 | 11 | Audio pass 2 || Done — threat-driven adaptive music + climax track + synced layers, loudness-balanced mix, limiter, more variation |
 | 12 | Controls & accessibility (gamepad, colour-blind, subtitles, remap) || Done — gamepad, colour-blind markers, subtitle size/opacity, key remapping, reduce shake/flash |
 | 13 | Phone/tablet touch support || Done — drag-aim, FIRE/ZOOM/MAP/seat/ability buttons, pilot stick+throttle, compact HUD, rotate prompt |
-| 14 | Arabic (RTL) | |
+| 14 | Arabic (RTL) | Done — full Arabic UI + content (missions, briefings, radio subtitles, HUD, hangar, career), RTL layout, Kufi/Naskh fonts, Settings → Language |
 | 15 | Cloud save (Firebase) | Done — Firestore profile under a private transfer code; auto-push after missions |
 | 16 | Secure leaderboard | Done — append-only, validated, plausibility-checked, 1 entry / 20 s; live rules test passes |
 | 17 | Smarter enemy tactics || Done — company-front head-on, pincer, Me 163 slash, Me 262 passes, Ju 88/Bf 110 stand-off rockets, Bf 109 top cover |
@@ -85,3 +85,4 @@ Player notes given at the start:
 - 23:00 Phase 5 tracker; launched co-op, custom battle + weekly, skill tree, living interior, campaign map agents.
 - 23:05 field dressing (heals a gunner wound after 100 quiet s) after m5 regression failed on wounds; 7 missing callout clips.
 - 23:15 pilot-mode overhaul merged (+26 radio clips, briefings regenerated).
+- 23:22 Arabic (RTL) merged; Arabic for the pilot overhaul lines. Boss regression: m12 (4 warships) completes at 853 s; m7 completes.
