@@ -548,7 +548,7 @@ export class GroundTargets {
     w.ballistics.fire(_w, vel, 'axis', FLAK_DMG * (0.8 + 0.2 * w.difficulty), true, FLAK_TRACER, null, true, false, 2.9);
     this.stats.flakShots++;
     w.effects.muzzleFlash(_w, _d, 2.4);
-    if (this.stats.flakShots % 2 === 0) sound.play('cannon', _w, { gain: 0.55, ref: 180, reverb: 0.5 });
+    sound.play('flak20', _w, t.kind === 'flaktower' ? { gain: 1.3 } : undefined); // audio pass 3: 20 mm (the tower is a quad 20 mm)
     void t; void tg;
   }
 
