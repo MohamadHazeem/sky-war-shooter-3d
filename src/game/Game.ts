@@ -23,6 +23,8 @@ import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
 import { CombatTally } from './CombatTally';
 import { achievements } from './Achievements';
+import { GameFeel } from './GameFeel';
+import { CombatFeedback, killFeedText } from '../ui/CombatFeedback';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -96,6 +98,8 @@ export class Game {
   private slowmo = 0;
   private streak = 0;
   private combo = new Combo();
+  private feel: GameFeel;          // kill juice, streak meter / ON FIRE (GameFeel.ts)
+  private combat: CombatFeedback;  // damage arcs, lining-up warning (CombatFeedback.ts)
   private lastKillAt = -99;
   private aceAwarded = false;
   private tally = new CombatTally();
@@ -119,6 +123,7 @@ export class Game {
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
     this.photo = new PhotoMode(engine, input, this.world);
+    this.feel = new GameFeel(engine, this.world, ui, this.combo); this.combat = new CombatFeedback(engine, this.world);
     this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: true, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 65 });
     // settings saved before aim assist existed: switch the lead indicator on with it
     let raw = ''; try { raw = localStorage.getItem(SETTINGS_KEY) ?? ''; } catch { /* */ }
@@ -213,7 +218,7 @@ export class Game {
         if (byPlayer) {
           // paid at the multiplier held going in; the kill then builds the next step
           const base = victim instanceof Fighter ? (ENEMY_VARIANTS[victim.enemyType as EnemyType]?.score ?? 100) : 100;
-          const pts = Math.round(base * (1 + this.roundIdx * 0.1) * this.combo.mult * this.loadout.scoreMult);
+          const pts = Math.round(base * (1 + this.roundIdx * 0.1) * this.combo.scoreMult * this.loadout.scoreMult);
           this.score += pts;
           this.combo.onKill();
           this.killsSincePerk++;
@@ -225,10 +230,10 @@ export class Game {
             if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * repair);
             if (this.mission?.role === 'gunner') this.gunner.coolBarrel();
           }
-          this.popups.push({ pos: victim.pos.clone(), text: `+${pts}  KILL`, life: 1.6 });
+          this.feel.onKill(victim, pts);
           achievements.onConfirmedKill(w.stats.kills, cause ?? '');
           sound.confirm('kill_confirm');
-          this.ui.feed(`${victim.label} destroyed — confirmed`, 'mine');
+          this.ui.feed(killFeedText(victim, this.loadout.weapon.name), 'mine');
           // streaks: kills in quick succession
           this.streak = w.time - this.lastKillAt < 9 ? this.streak + 1 : 1;
           this.lastKillAt = w.time;
@@ -252,7 +257,7 @@ export class Game {
           w.callout('kill', ['Tail', 'Pilot', 'Top Turret', 'Navigator'][Math.floor(Math.random() * 4)], lines[Math.floor(Math.random() * lines.length)], 3, 2);
           Chatter.onFighterKilled(this.streak);
         } else {
-          this.ui.feed(`${victim.label} destroyed`);
+          this.ui.feed(killFeedText(victim, null));
           Chatter.onWingmanKill();
         }
       } else if (victim instanceof Fighter && !victim.isPlayer) {
@@ -275,11 +280,12 @@ export class Game {
         w.callout('wound', 'Navigator', 'Gunner\'s hit! Stay on that gun if you can!', 10, 2);
       }
     };
+    w.events.playerHitFrom = (e) => { this.combat.onPlayerHit(e); this.feel.onIncoming(e.damage); };
     w.events.fuselageHit = (local, dir) => { if (this.mission?.role === 'gunner') this.gunner.fuselageHit(local, dir); };
     // shake is kept small and short so the sight stays usable while under fire
     w.events.shake = (a) => { this.trauma = Math.min(0.6, this.trauma + a * 0.4); };
     // kills feed the combo in the kill handler; plain hits only keep it alive and nudge it up
-    w.events.hitMarker = (kill) => { if (kill) this.killMarkerT = 0.45; else { this.hitMarkerT = 0.12; this.combo.onHit(); } };
+    w.events.hitMarker = (kill) => { if (kill) this.killMarkerT = 0.45; else { this.hitMarkerT = 0.12; this.combo.onHit(); this.feel.onHit(); } };
   }
 
   // ---------------- Menu ----------------
@@ -405,6 +411,7 @@ export class Game {
     this.prog.perks = []; this.perkWave = 0; this.killsSincePerk = 0; this.spawnCd = 0; this.groups = 0;
     this.seenTypes.clear(); this.roundIdx = 0; this.roundT0 = 0; this.roundClear = false; this.roundsComplete = false; this.scoreBanked = 0; this.roundKills0 = 0;
     this.combo.reset();
+    this.feel.reset(); this.combat.reset();
     this.tally.reset();
     achievements.beginMission(m);
     this.world.spawnFormation(m.bombers, 1);
@@ -1012,6 +1019,8 @@ export class Game {
       cam.rotateZ(Math.sin(tt * 0.9 + 2) * 0.004 * k);
       this.trauma = Math.max(0, this.trauma - dt * 2.6);
     }
+    this.feel.update(dt, !this.menuMode && (this.state === 'playing' || this.state === 'ending'));
+    this.combat.update(dt, !this.menuMode && this.state === 'playing');
     this.autoQuality(dt);
     this.floatingOrigin();
     sound.setListener(this.engine.camera);
@@ -1312,6 +1321,8 @@ export class Game {
       for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { ctx.moveTo(hx + sx * b, hy + sy * b); ctx.lineTo(hx + sx * a, hy + sy * a); }
       ctx.stroke();
     }
+    this.feel.draw(ctx, W, H, hx, hy);
+    this.combat.draw(ctx, W, H, hx, hy);
     // Cracked glass sits in front of everything else on the gunner's view
     this.cracks.draw(ctx, W, H);
   }

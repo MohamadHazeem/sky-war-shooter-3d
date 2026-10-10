@@ -165,6 +165,7 @@ uniform float uGrainDark;
 uniform float uChroma;
 uniform vec2 uRes;
 uniform float uFlash;
+uniform float uZoomPulse; // kill punch: radial zoom blur folded into the motion-blur taps
 uniform vec2 uSunUV;
 uniform float uSunOn;
 uniform vec3 uSunCol;
@@ -283,6 +284,7 @@ void main() {
   float maxV = 0.06;
   if (vlen > maxV) vel *= maxV / vlen;
   vel *= smoothstep(uNoBlurDist, uNoBlurDist * 1.6, dist);
+  if (uZoomPulse > 0.0) vel += (vUv - 0.5) * uZoomPulse * smoothstep(uNoBlurDist, uNoBlurDist * 1.6, dist);
   vec3 col = vec3(0.0);
   float noise = hash12(gl_FragCoord.xy + uTime * 60.0);
   const int MB = 10;
@@ -382,6 +384,7 @@ export class PostFX {
   damageFlash = 0;
   desat = 0;   // wounded-crew look, 0..1 (set per frame by Game)
   flash = 0;
+  zoomPulse = 0;   // radial zoom-blur pulse on kills (GameFeel), ~0..0.05
   noBlurDist = 1.5;
   flareStrength = 1;
   shafts = 0.35;   // sun god-ray strength (0 disables)
@@ -398,7 +401,7 @@ export class PostFX {
         uNearFocus: { value: 1 }, uDofStrength: { value: 1 }, uTime: { value: 0 },
         uDamageFlash: { value: 0 }, uVignette: { value: 0.9 }, uGrain: { value: 0.03 },
         uGrainDark: { value: 0.03 }, uChroma: { value: 0.6 },
-        uRes: { value: new THREE.Vector2() }, uFlash: { value: 0 }, uNoBlurDist: { value: 1.5 },
+        uRes: { value: new THREE.Vector2() }, uFlash: { value: 0 }, uZoomPulse: { value: 0 }, uNoBlurDist: { value: 1.5 },
         uSunUV: { value: new THREE.Vector2() }, uSunOn: { value: 0 }, uSunCol: { value: new THREE.Vector3() },
         tCloud: { value: null }, tDirt: { value: makeDirt() }, uDirt: { value: 0.35 }, uAspect: { value: 1 },
         uDesat: { value: 0 },
@@ -446,6 +449,7 @@ export class PostFX {
     u.uGrainDark.value = this.grainDark;
     u.uChroma.value = this.chroma;
     u.uFlash.value = this.flash;
+    u.uZoomPulse.value = this.zoomPulse;
     u.uNoBlurDist.value = this.noBlurDist;
     // sun position on screen for the lens flare
     const sunW = new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld).addScaledVector(Atmos.sunDir, 5000);

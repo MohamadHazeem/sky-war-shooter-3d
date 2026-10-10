@@ -43,6 +43,7 @@ export interface WorldEvents {
   bomberLost(b: Bomber): void;
   playerHit(zone: string, heavy: boolean): void;
   hitMarker(kill: boolean): void;
+  playerHitFrom(e: HitEvent): void;   // every hit on the player's aircraft, with shooter / bullet velocity (combat feedback)
   fuselageHit(local: THREE.Vector3, dir: THREE.Vector3): void;
   shake(amount: number): void;
 }
@@ -151,6 +152,8 @@ export class World implements WorldView {
     if (!b || !b.alive || !st || this.player !== b) return null;
     return b.localToWorld(st.pivot.clone());
   }
+
+  enemyPilot(f: Fighter): EnemyPilot | undefined { const p = this.pilots.get(f); return p instanceof EnemyPilot ? p : undefined; }
 
   // gunner missions: send this fighter at a particular gun position on the player's ship
   assignStation(f: Fighter, id: string) {
@@ -483,6 +486,7 @@ export class World implements WorldView {
     this.effects.sparks(e.point, t.vel, heavy);
     if (t === this.player || t === this.playerBomber) {
       sound.playerImpact(heavy);
+      this.events.playerHitFrom?.(e);
       this.events.shake?.(heavy ? 0.25 : 0.05);
       if (heavy && t === this.playerBomber) this.lurch += (Math.random() - 0.5) * 0.12;
       this.events.playerHit?.(z.name, heavy);

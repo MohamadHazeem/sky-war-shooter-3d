@@ -135,6 +135,17 @@ export class Music {
     if (win) this.horn([62, 66, 69, 74], t + 0.4, 0.55);
   }
 
+  // ON FIRE: a short rising swell over whatever is playing (pads in D major, a timpani
+  // roll and two horn notes), kept well under the score so it reads as a lift, not a cue.
+  swell() {
+    if (!this.ctx || !this.enabled || this.scene !== 'mission') return;
+    const t = this.ctx.currentTime + 0.03;
+    for (const m of [50, 54, 57, 62]) this.pad(mtof(m), t, 2.4, 0.026, 1500);
+    this.timpani(mtof(38), t, 0.55);
+    this.timpani(mtof(38), t + 0.16, 0.4);
+    this.horn([62, 69], t + 0.3, 0.32, 1.4);
+  }
+
   private schedule() {
     const ctx = this.ctx!;
     if (this.scene === 'none' || !this.enabled) { this.nextTime = ctx.currentTime + 0.1; return; }
