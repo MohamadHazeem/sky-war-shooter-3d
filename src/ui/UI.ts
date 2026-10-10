@@ -207,6 +207,8 @@ export class UI {
   updateGunnerHud(d: { station: StationId; ammo: number; heat: number; overheated: boolean; reloading: number; zones: Record<string, number>; crew: string }) {
     this.setText('hStation', STATIONS[d.station].label + (d.reloading > 0 ? ' — RELOADING' : d.overheated ? ' — BARREL HOT' : ''));
     this.setText('hAmmo', String(d.ammo));
+    // under 60 rounds the belt warning colours the count red (.low in style.css)
+    document.getElementById('hAmmo')?.classList.toggle('low', d.ammo < 60);
     const h = document.getElementById('hHeat');
     if (h) h.style.width = `${Math.round(Math.min(1, d.heat) * 100)}%`;
     document.getElementById('hHeatM')?.classList.toggle('hot', d.overheated || d.heat > 0.8);
