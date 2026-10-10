@@ -131,7 +131,7 @@ export class Engine {
 
   resize() {
     const w = window.innerWidth, h = window.innerHeight;
-    const maxPr = this.quality === 'high' ? 1.5 : this.quality === 'medium' ? 1.0 : 0.75;
+    const maxPr = this.quality === 'high' ? 2 : this.quality === 'medium' ? 1.25 : 0.85;
     this.pixelRatio = Math.min(window.devicePixelRatio || 1, maxPr);
     this.width = w; this.height = h;
     this.renderer.setPixelRatio(this.pixelRatio);

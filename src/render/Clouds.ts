@@ -277,8 +277,8 @@ export class CloudRenderer {
   }
 
   setQuality(q: 'low' | 'medium' | 'high', w: number, h: number) {
-    this.scale = q === 'low' ? 0.33 : q === 'medium' ? 0.5 : 0.6;
-    this.steps = q === 'low' ? 36 : q === 'medium' ? 56 : 72;
+    this.scale = q === 'low' ? 0.33 : q === 'medium' ? 0.5 : 0.55;
+    this.steps = q === 'low' ? 36 : q === 'medium' ? 56 : 76;
     this.setSize(w, h);
   }
 

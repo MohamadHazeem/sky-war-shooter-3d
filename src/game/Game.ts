@@ -14,7 +14,7 @@ import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
-const SETTINGS_KEY = 'sws3d.settings.v1';
+const SETTINGS_KEY = 'sws3d.settings.v2';
 const PROGRESS_KEY = 'sws3d.progress.v1';
 
 function load<T>(key: string, def: T): T {
@@ -654,16 +654,17 @@ export class Game {
     }
   }
 
-  // Step graphics quality down once if the machine can't hold ~40 fps
+  // Step graphics quality down (this session only, never saved) if the machine really
+  // can't keep up: sustained <28 fps for 10 s of visible gameplay.
   private autoQuality(dt: number) {
-    if (this.autoQualityDone || dt <= 0 || this.state === 'paused') return;
-    if (this.engine.fps < 38) this.slowFrames += dt; else this.slowFrames = Math.max(0, this.slowFrames - dt * 0.5);
-    if (this.slowFrames > 5 && this.settings.quality !== 'low') {
-      this.settings.quality = this.settings.quality === 'high' ? 'medium' : 'low';
-      this.applySettings();
+    if (this.autoQualityDone || dt <= 0 || this.state !== 'playing' || document.hidden) return;
+    if (this.engine.fps < 28) this.slowFrames += dt; else this.slowFrames = Math.max(0, this.slowFrames - dt);
+    if (this.slowFrames > 10 && this.engine.quality !== 'low') {
+      const q = this.engine.quality === 'high' ? 'medium' : 'low';
+      this.engine.setQuality(q);
       this.slowFrames = 0;
-      if (this.settings.quality === 'low') this.autoQualityDone = true;
-      console.info('Graphics quality lowered to', this.settings.quality);
+      this.autoQualityDone = true;
+      this.ui.tip(`Graphics set to <kbd>${q}</kbd> to keep the frame rate up (change in Settings)`, 4500);
     }
   }
 
