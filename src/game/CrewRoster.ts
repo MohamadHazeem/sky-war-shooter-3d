@@ -108,11 +108,11 @@ const ROOKIE_SKILL = 24;
 
 // ---------- levels ----------
 export const MAX_CREW_LEVEL = 10;
-export const xpFor = (level: number) => 75 * (level - 1) * level;   // L2 150, L5 1500, L10 6750
+export const xpFor = (level: number) => 100 * (level - 1) * level;  // L2 200, L5 2000, L10 9000
 export const levelOf = (xp: number) => { let l = 1; while (l < MAX_CREW_LEVEL && xp >= xpFor(l + 1)) l++; return l; };
 export const STAT_PER_LEVEL = 4;
 const SPECIALIST_BONUS = 12;  // skill points in his own seat
-export const XP_KILL = 100, XP_MISSION_OK = 60, XP_MISSION_FAIL = 25;
+export const XP_KILL = 60, XP_MISSION_OK = 60, XP_MISSION_FAIL = 25;
 export const HEAL_COST = 300;
 
 // recorded in each gunner's own voice (tools/voice/lines.json; speaker = his surname alias)
@@ -139,7 +139,7 @@ const num = (v: unknown, d: number) => (typeof v === 'number' && Number.isFinite
 
 // What the game hands the roster (structural, so this file needs no UI import)
 interface RosterUI { banner(a: string, b: string, ms?: number): void; feed(text: string, kind?: 'mine' | 'loss' | ''): void }
-type Victim = { team: string; pos: { clone(): any; distanceTo(v: any): number } };
+type Victim = { team: string; pos: { clone(): any; distanceTo(v: any): number } } & object;
 
 export type RosterEvent = 'mission' | 'change' | 'levelup';
 
@@ -147,7 +147,14 @@ export class CrewRoster {
   men = {} as Record<ManId, ManState>;
   seats: Record<Post, ManId> = { ...DEFAULT_SEATS };
   // ---- this mission ----
-  active = false;
+  private live = false;
+  private missionBomber: object | null = null;
+  // A gunner mission is running. A mission left from the pause menu never reaches
+  // endMission: once the world holds another bomber it is closed out (no mission XP).
+  get active(): boolean {
+    if (this.live && this.world?.playerBomber !== this.missionBomber) this.finish(false, false);
+    return this.live;
+  }
   private world: World | null = null;
   private ui: RosterUI | null = null;
   private occ = {} as Record<CrewId, ManId | null>;   // null = a rookie mans it
@@ -158,6 +165,8 @@ export class CrewRoster {
   notes: string[] = [];                 // latest roster news for the hangar (heals, level-ups)
   private skillCache: Partial<Record<StationId, AISkill>> = {};
   private listeners: ((e: RosterEvent, who?: ManId) => void)[] = [];
+  private aiHits = new WeakMap<object, number>();   // fighter -> world time our AI gunners last hit it
+  private tapped = new WeakSet<object>();
 
   constructor() {
     for (const m of MEN) this.men[m.id] = fresh();
@@ -265,11 +274,22 @@ export class CrewRoster {
 
   // Game.startMission, after ui.hud(): who flies, rookies for resting men, HUD panel.
   beginMission(world: World, ui: RosterUI, role: 'gunner' | 'pilot') {
+    if (this.world === world) void this.active;   // close out an abandoned mission first
     this.world = world; this.ui = ui;
     this.wounded.clear(); this.benched.clear(); this.resting.clear(); this.flew.clear();
-    this.active = role === 'gunner';
-    world.crew.onWound = this.active ? (c) => this.onWound(c) : null;
-    if (!this.active) { this.placeAll(); this.emit('mission'); return; }
+    this.live = role === 'gunner';
+    this.missionBomber = world.playerBomber;
+    world.crew.onWound = this.live ? (c) => this.onWound(c) : null;
+    // note hits by the AI gunners of the player's own ship, to credit their kills
+    if (!this.tapped.has(world)) {
+      this.tapped.add(world);
+      const prev = world.ballistics.onHit;
+      world.ballistics.onHit = (e) => {
+        if (!e.playerShot && e.shooter && e.shooter === world.playerBomber) this.aiHits.set(e.target, world.time);
+        prev?.(e);
+      };
+    }
+    if (!this.live) { this.placeAll(); this.emit('mission'); return; }
     for (const m of MEN) if (this.men[m.id].rest > 0) this.resting.add(m.id);
     this.place();
     for (const m of MEN) if (this.resting.has(m.id)) {
@@ -288,9 +308,9 @@ export class CrewRoster {
     let station: StationId | null = null;
     if (byPlayer) station = w.player === pb && w.playerStation ? w.playerStation.id : null;
     else {
-      // AI kill: the player's ship must be the nearest bomber, the fighter inside a manned gun's arc
-      const d0 = victim.pos.distanceTo(pb.pos);
-      if (d0 > 900 || w.bombers().some((b) => b !== pb && b.alive && victim.pos.distanceTo(b.pos) < d0)) return;
+      // AI kill: our gunners hit it in the last few seconds; the gun whose arc it is in gets it
+      const t = this.aiHits.get(victim);
+      if (t === undefined || w.time - t > 6 || victim.pos.distanceTo(pb.pos) > 1200) return;
       let best = Infinity;
       for (const id of STATION_ORDER) {
         if (w.playerStation && w.player === pb && w.playerStation.id === id) continue; // the player's own gun
@@ -335,13 +355,14 @@ export class CrewRoster {
   }
 
   // Game.showDebrief: mission XP, rest for the wounded, the flight surgeon's rounds.
-  endMission(success: boolean) {
-    if (!this.active) return;
-    this.active = false;
+  endMission(success: boolean) { if (this.active) this.finish(success, true); }
+
+  private finish(success: boolean, completed: boolean) {
+    this.live = false;
     for (const m of MEN) {
       const st = this.men[m.id];
-      if (this.resting.has(m.id)) { st.rest = Math.max(0, st.rest - 1); continue; }
-      if (this.flew.has(m.id)) { st.missions++; this.award(m.id, success ? XP_MISSION_OK : XP_MISSION_FAIL, false); }
+      if (this.resting.has(m.id)) { if (completed) st.rest = Math.max(0, st.rest - 1); continue; }
+      if (this.flew.has(m.id) && completed) { st.missions++; this.award(m.id, success ? XP_MISSION_OK : XP_MISSION_FAIL, false); }
       if (this.wounded.has(m.id)) {
         st.rest = 1;
         if (success && Math.random() < 0.3) { st.rest = 0; this.note(`Flight surgeon: ${m.call}'s wound was light, fit for the next mission`); }
@@ -377,8 +398,8 @@ export class CrewRoster {
     const m = manDef(id);
     this.note(`${m.call} reached level ${after}`);
     if (loud && this.ui && this.world) {
-      const gain = `+${STAT_PER_LEVEL * (after - before)} accuracy, traverse and discipline`;
-      this.ui.banner(`LEVEL ${after} · ${m.rank.toUpperCase()} ${m.last.toUpperCase()}`, `"${m.nick}" — ${gain}`, 2800);
+      const gain = `+${STAT_PER_LEVEL * (after - before)} gun skills`;
+      this.ui.banner(`LEVEL ${after} · ${m.rank.toUpperCase()} ${m.last.toUpperCase()}`, `"${m.nick}" · ${gain}`, 2800);
       if (m.gunner) this.world.callout('lvl_' + id, m.voice, LEVEL_LINES[Math.floor(Math.random() * LEVEL_LINES.length)], 0, 2);
     }
     this.emit('levelup', id);
