@@ -23,6 +23,7 @@ import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
 import { CombatTally } from './CombatTally';
 import { achievements } from './Achievements';
+import { isMissionReady, whenMissionReady } from '../core/Preload';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -365,6 +366,8 @@ export class Game {
 
   // ---------------- Missions ----------------
   startMission(m: Mission) {
+    // Models and gameplay sounds stream in behind the menu: wait for them (loading screen)
+    if (!isMissionReady()) { whenMissionReady(this.ui, () => this.startMission(m)); return; }
     sound.init();
     this.photo.exit();
     this.mission = m;

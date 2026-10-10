@@ -1,0 +1,78 @@
+<!doctype html>
+<!--
+  QA: the uncompressed converter output (left) next to the compressed game model (right),
+  same camera and lights. Animated pivots get the same pose on both sides, so a pivot that
+  moved shows up as a difference.
+  Run the dev server (npm run dev) and open /tools/model_compare.html?m=b17
+  Params: m = model name, az / el = camera azimuth / elevation (degrees), d = distance factor,
+          t = target "x,y,z" (metres), fov, pose = 1 to rotate props / turrets / guns.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Model compare</title>
+  <style>
+    html, body { margin: 0; background: #20221a; color: #ddd; font: 13px monospace; }
+    #wrap { display: flex; gap: 4px; }
+    canvas { width: 50vw; height: 50vw; max-height: 96vh; }
+    #info { position: fixed; left: 8px; top: 6px; white-space: pre; text-shadow: 0 0 3px #000; }
+  </style>
+</head>
+<body>
+  <div id="wrap"></div>
+  <div id="info">loading…</div>
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+    import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+    import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+
+    const q = new URLSearchParams(location.search);
+    const name = q.get('m') ?? 'b17';
+    const az = THREE.MathUtils.degToRad(+(q.get('az') ?? 35)), el = THREE.MathUtils.degToRad(+(q.get('el') ?? 20));
+    const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+    const files = [`/tools/convert_models/output/${name}.glb`, `/public/models/${name}.glb`];
+    const sides = await Promise.all(files.map(async (f) => {
+      const t0 = performance.now();
+      const gltf = await loader.loadAsync(f);
+      return { f, scene: gltf.scene, ms: performance.now() - t0 };
+    }));
+    const box = new THREE.Box3().setFromObject(sides[0].scene);
+    const size = box.getSize(new THREE.Vector3()).length();
+    const target = q.get('t') ? new THREE.Vector3(...q.get('t').split(',').map(Number)) : box.getCenter(new THREE.Vector3());
+    const dist = size * +(q.get('d') ?? 0.9);
+    const info = [];
+    window.ready = false;
+    for (const s of sides) {
+      const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+      renderer.setPixelRatio(1);
+      renderer.setSize(900, 900, false);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      document.getElementById('wrap').appendChild(renderer.domElement);
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x8fa6bd);
+      scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+      const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+      sun.position.set(5, 10, 6);
+      scene.add(sun, new THREE.HemisphereLight(0xcfe0ff, 0x4a4030, 0.6), s.scene);
+      if (q.get('pose') === '1') {
+        s.scene.traverse((o) => {
+          if (/^(prop|fan)_\d+$|^cooling_fan$/.test(o.name)) o.rotateZ(0.7);
+          if (/^turret_(top|ball|chin)$/.test(o.name)) o.rotateY(0.9);
+          if (/^turret_.*_guns$/.test(o.name)) o.rotateX(-0.5);
+          if (/^gun_/.test(o.name)) o.rotateY(0.4);
+        });
+      }
+      const cam = new THREE.PerspectiveCamera(+(q.get('fov') ?? 40), 1, 0.05, 500);
+      cam.position.set(target.x + dist * Math.cos(el) * Math.sin(az), target.y + dist * Math.sin(el), target.z + dist * Math.cos(el) * Math.cos(az));
+      cam.lookAt(target);
+      renderer.render(scene, cam);
+      let tris = 0;
+      s.scene.traverse((o) => { if (o.isMesh) tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; });
+      info.push(`${s.f}  ${tris} tris  load+parse ${s.ms.toFixed(0)} ms`);
+    }
+    document.getElementById('info').textContent = info.join('\n');
+    window.ready = true;
+  </script>
+</body>
+</html>

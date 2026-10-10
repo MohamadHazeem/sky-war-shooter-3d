@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sky War Shooter 3D</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="theme-color" content="#2c301d" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Sky War" />
+  <!-- the menu's essentials (src/core/Preload.ts) download while the script loads -->
+  <link rel="preload" href="models/b17.glb" as="fetch" crossorigin="anonymous" />
+  <link rel="preload" href="models/p51d.glb" as="fetch" crossorigin="anonymous" />
+  <link rel="preload" href="models/fw190.glb" as="fetch" crossorigin="anonymous" />
+  <link rel="preload" href="audio/manifest.json" as="fetch" crossorigin="anonymous" />
   <meta name="description" content="Man the guns of a B-17 Flying Fortress or fly a P-51 Mustang escort in this WWII air combat game." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Special+Elite&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet" />

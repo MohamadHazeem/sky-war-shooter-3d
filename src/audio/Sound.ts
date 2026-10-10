@@ -5,6 +5,8 @@ import { Breathing } from './Breathing';
 import { Whizby } from './Whizby';
 import { Interphone } from './Interphone';
 import { Budget, FREQ, GAIN, RATE, fin, freeOnEnd, ok, place, setP, towards } from './Safe';
+import { json, take } from '../core/Assets';
+import { AUDIO_MANIFEST, P_LOOPS, P_MENU_MUSIC, P_MISSION_MUSIC, P_REST, P_SFX } from '../core/Preload';
 
 // Procedural audio engine (no sample files).
 // - Engines are synthesised as looping firing-pulse trains: Wright R-1820 Cyclones
@@ -529,12 +531,22 @@ export class Sound {
 
   // Real recordings (public/audio, see CREDITS.md) replace the synthesized sounds as
   // soon as they are decoded; anything missing keeps its synthesized fallback.
+  // The bytes come through core/Assets (shared with the preloader, which fetches the core
+  // one-shots before the menu and the rest in the background, see core/Preload.ts); each
+  // group is swapped in as soon as its files are in.
   private async loadSamples() {
-    const base = import.meta.env.BASE_URL + 'audio/';
     let man: any;
-    try { const r = await fetch(base + 'manifest.json'); if (!r.ok) return; man = await r.json(); } catch { return; }
-    // decode on whichever context is live (a rebuild closes the old one)
-    const decode = async (f: string) => { try { const r = await fetch(base + f); const ab = await r.arrayBuffer(); return this.ctx ? await this.ctx.decodeAudioData(ab) : null; } catch { return null; } };
+    try { man = await json(AUDIO_MANIFEST); } catch { return; }
+    // one decode per file (some files serve two names), on whichever context is live (a rebuild closes the old one)
+    const decoded = new Map<string, Promise<AudioBuffer | null>>();
+    const decode = (f: string, prio = P_REST) => {
+      let p = decoded.get(f);
+      if (!p) {
+        p = (async () => { try { const ab = await take('audio/' + f, prio); return this.ctx ? await this.ctx.decodeAudioData(ab) : null; } catch { return null; } })();
+        decoded.set(f, p);
+      }
+      return p;
+    };
     const SFX: [BufName, string, number][] = [
       ['m2', 'mg50_shot', 1], ['m2far', 'mg50_burst_far', 1], ['cannon', 'cannon_shot', 1], ['mg131', 'mg50_shot', 0.7],
       ['hit', 'impact_metal', 1], ['hitHeavy', 'impact_heavy', 1], ['explosion', 'explosion_air', 1], ['explosionFar', 'explosion_far', 1],
@@ -542,31 +554,36 @@ export class Sound {
       ['glass', 'glass_crack', 1], ['rocket', 'rocket_launch', 1], ['click', 'ui_click', 1], ['squelch', 'radio_squelch_on', 1],
       ['debris', 'shrapnel_rattle', 0.8], ['whoosh', 'flyby', 1],
     ];
-    await Promise.all(SFX.map(async ([name, key, g]) => {
+    const sfx = SFX.map(async ([name, key, g]) => {
       const e = man.sfx?.[key];
       if (!e) return;
       const files: string[] = e.files ?? (e.file ? [e.file] : []);
-      const bufs = (await Promise.all(files.map(decode))).filter((b): b is AudioBuffer => !!b);
+      const bufs = (await Promise.all(files.map((f) => decode(f, P_SFX)))).filter((b): b is AudioBuffer => !!b);
       if (bufs.length) { this.bufs.set(name, bufs); this.gainMap.set(name, (e.gain ?? 1) * g); if (name === 'whoosh') this.flybyPeak = e.peakAt ?? 0; }
-    }));
-    for (const k of ['hit_confirm', 'kill_confirm'] as const) {
+    });
+    const confirms = (['hit_confirm', 'kill_confirm'] as const).map(async (k) => {
       const e = man.sfx?.[k];
-      if (e) { const b = (await Promise.all((e.files ?? [e.file]).map(decode))).filter(Boolean) as AudioBuffer[]; if (b.length) { this.extra.set(k, b); this.extraGain.set(k, e.gain ?? 1); } }
-    }
-    const loop = async (k: string) => { const e = man.loops?.[k]; return e ? { buf: await decode(e.file), gain: e.gain ?? 1 } : null; };
-    const [b17, radial, merlin, wind, radio] = await Promise.all(['b17_interior', 'radial_exterior', 'merlin', 'wind', 'radio_static'].map(loop));
+      if (e) { const b = (await Promise.all((e.files ?? [e.file]).map((f: string) => decode(f, P_SFX)))).filter(Boolean) as AudioBuffer[]; if (b.length) { this.extra.set(k, b); this.extraGain.set(k, e.gain ?? 1); } }
+    });
+    const loop = async (k: string, prio: number) => { const e = man.loops?.[k]; return e ? { buf: await decode(e.file, prio), gain: e.gain ?? 1 } : null; };
     // (the graph may have been rebuilt while decoding: everything below uses the live one)
-    if (b17?.buf) this.b17Loop = { buf: b17.buf, gain: b17.gain };
-    if (wind?.buf) this.windBuf = wind.buf;
-    this.swapLoops();
-    if (radial?.buf) { this.engineBufs.bmw = radial.buf; this.voiceGain = radial.gain; this.radialRate = 2.2; for (const v of this.voices) this.reseat(v, radial.buf); }
-    if (merlin?.buf) { this.engineBufs.merlin = merlin.buf; this.merlinGain = merlin.gain; if (this.playerEngine) { this.playerEngine.src.stop(); this.playerEngine.src.disconnect(); this.playerEngine.src = this.loopSrc(merlin.buf); this.playerEngine.src.connect(this.playerEngine.filter); } }
-    if (radio?.buf) this.radioStaticBuf = radio.buf;
-    if (man.music) {
-      const tracks: Record<string, AudioBuffer> = {};
-      await Promise.all(Object.entries(man.music).map(async ([k, e]: [string, any]) => { const b = await decode(e.file); if (b) tracks[k] = b; }));
-      this.music.useTracks(tracks, Object.fromEntries(Object.entries(man.music).map(([k, e]: [string, any]) => [k, e.gain ?? 0.6])));
-    }
+    const loops = [
+      loop('b17_interior', P_LOOPS).then((b17) => { if (b17?.buf) { this.b17Loop = { buf: b17.buf, gain: b17.gain }; this.swapLoops(); } }),
+      loop('wind', P_LOOPS).then((wind) => { if (wind?.buf) { this.windBuf = wind.buf; this.swapLoops(); } }),
+      loop('radial_exterior', P_LOOPS).then((radial) => {
+        if (radial?.buf) { this.engineBufs.bmw = radial.buf; this.voiceGain = radial.gain; this.radialRate = 2.2; for (const v of this.voices) this.reseat(v, radial.buf); }
+      }),
+      loop('merlin', P_LOOPS).then((merlin) => {
+        if (merlin?.buf) { this.engineBufs.merlin = merlin.buf; this.merlinGain = merlin.gain; if (this.playerEngine) { this.playerEngine.src.stop(); this.playerEngine.src.disconnect(); this.playerEngine.src = this.loopSrc(merlin.buf); this.playerEngine.src.connect(this.playerEngine.filter); } }
+      }),
+      loop('radio_static', P_REST).then((radio) => { if (radio?.buf) this.radioStaticBuf = radio.buf; }),
+    ];
+    // music: each track joins the score as it arrives (the menu track first)
+    const music = Object.entries(man.music ?? {}).map(async ([k, e]: [string, any]) => {
+      const b = await decode(e.file, k === 'menu' ? P_MENU_MUSIC : k === 'tension' || k === 'combat' ? P_MISSION_MUSIC : P_REST);
+      if (b) this.music.useTracks({ [k]: b }, { [k]: e.gain ?? 0.6 });
+    });
+    await Promise.all([...sfx, ...confirms, ...loops, ...music]);
     this.samplesLoaded = true;
     console.info('Audio: recorded samples loaded');
   }
