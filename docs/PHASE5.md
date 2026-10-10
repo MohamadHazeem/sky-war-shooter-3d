@@ -28,6 +28,14 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 15 | Weekly challenge event with its own leaderboard and a special reward | Done — seeded ISO-week scenario, its own online leaderboard per role, +2000 merit + weekly ribbon + exclusive "Lightning Shield" nose art, countdown card |
 | 16 | Replay theatre: save best moments, scrub, free camera, export screenshots | In progress |
 
+## Extra goals (added overnight)
+| # | Goal | Status |
+|---|---|---|
+| 17 | New German aircraft from FlightGear (He 111 bomber, Me 410 with BK 5 cannon, optionally He 219 / Ta 152 / Do 335) as new enemy types | In progress |
+| 18 | P-51 ground attack: strafing trains, flak towers and airfields at low level | |
+| 19 | Arabic for every screen added overnight (campaign map, skills, custom battle, weekly, co-op, theatre, wingman) | |
+| 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | |
+
 ## Log
 - 23:00 started co-op (9), custom battle + weekly (10, 15), skill tree (13), living interior (7), campaign map (14).
 - 23:10 started role reversal + wingman commands (11, 12), replay theatre (16).
