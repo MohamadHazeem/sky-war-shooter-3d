@@ -13,8 +13,8 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 4 | Heat haze and distortion: engine exhausts, explosions, muzzle blast (screen-space refraction) | |
 | 5 | Explosion and muzzle light on clouds and aircraft; glowing tracers lighting the scene | Done — 4 pooled combat lights (explosions, heavy-gun muzzle flashes, hits) tint nearby aircraft and the player\'s gun; fixed light count, no recompiles. Tracer glow sprites not done |
 | 6 | Night mission: moonlight, searchlights, flares, flak flashes in cloud, exhaust flames, night-fighter attacks | Partly — night mood with moonlight, searchlights, exhaust flames and night fighters (Night Fighter operation); flares and flak flashes in cloud not done |
-| 7 | Living interior: the other waist gunner and crew visible and animated, spent brass piles, breath fog at altitude | In progress |
-| 8 | Canopy/turret glass effects: frost, rain streaks in storms, scratches catching the sun, oil smears | |
+| 7 | Living interior: the other waist gunner and crew visible and animated, spent brass piles, breath fog at altitude | Done — the other waist gunner (tracks and fires with flash, recoil and brass; slumps when wounded, rookie replaces him), radio room through the open door, ball turret top turning in the floor, tail gunner down the tunnel, brass piling up (900 cap), breath fog in ADS, frost growing on the windows, swinging sun shafts, free look (hold C) |
+| 8 | Canopy/turret glass effects: frost, rain streaks in storms, scratches catching the sun, oil smears | In progress (frost on the waist windows done with goal 7) |
 
 ## Gameplay
 | # | Goal | Status |
@@ -45,3 +45,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 23:32 co-op prototype merged (255 tests); started Arabic for the new screens (19).
 - 23:48 wingman + role reversal merged (Arabic added; wingman is Blue Four in escort missions to avoid the clash with the player's own Blue Two callsign); started P-51 ground attack (18).
 - 23:53 volumetric explosions + combat light merged. Known: the first Bf 109 / Fw 190 wing-off or blow-up kill still compiles 1–3 shader variants (clip-plane count); warm-up fixes tried and reverted.
+- 00:01 living interior merged; full regression running; started canopy/turret glass effects (8).
