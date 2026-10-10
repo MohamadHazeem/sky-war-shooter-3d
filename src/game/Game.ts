@@ -9,6 +9,7 @@ import { PilotController } from './PilotController';
 import { CAMPAIGN, Mission, survivalMission, SpawnFrom, Wave } from './Missions';
 import { STATIONS } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
+import { DistantBattle } from '../audio/DistantBattle';
 import type { AttackType } from '../world/AI';
 import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
 
@@ -58,6 +59,7 @@ export class Game {
   private menuShot = 0;
   private menuShotT = 0;
   private menuMode = true;
+  private distantBattle = new DistantBattle();
   private menuGunner = false;
   private bombs: { obj: THREE.Object3D; vel: THREE.Vector3; life: number }[] = [];
   private bombGeo = new THREE.CapsuleGeometry(0.2, 1.1, 4, 8);
@@ -329,6 +331,7 @@ export class Game {
       }
     }
     this.state = 'playing';
+    this.distantBattle.reset();
     this.ui.hud(m.role);
     this.ui.fadeTo(1);
     setTimeout(() => this.ui.fade(false), 50);
@@ -639,6 +642,7 @@ export class Game {
     this.autoQuality(dt);
     this.floatingOrigin();
     sound.setListener(this.engine.camera);
+    this.distantBattle.update(dt, this.engine.camera, this.state === 'playing' && !this.menuMode);
     w.listener = this.engine.camera.position;
     sound.updateFighterVoices(w.fighterSoundInfo());
     // screen effects
