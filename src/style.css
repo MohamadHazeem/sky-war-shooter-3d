@@ -280,3 +280,61 @@ kbd { font-family: 'IBM Plex Mono', monospace; font-size: 12px; border: 1px soli
 .hcard .t { font-size: 17px; letter-spacing: 1px; text-transform: uppercase; }
 .hcard .d { color: var(--ink-dim); font-size: 13px; margin: 4px 0 8px; }
 .hcard .s { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--khaki); }
+
+/* ---------- Mid-round bonus objectives & random events (ui/ObjectiveCard.ts) ---------- */
+#objCard { position: absolute; left: 22px; top: 104px; width: 290px; padding: 10px 14px 12px; background: rgba(12,14,9,0.74); border: 1px solid rgba(185,167,111,0.55); border-left: 3px solid var(--khaki); opacity: 0; transform: translateX(-16px); transition: opacity .35s, transform .35s, border-color .3s; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+#objCard.show { opacity: 1; transform: none; }
+#objCard .oc-k { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--ink-dim); }
+#objCard .oc-m { color: var(--khaki); }
+#objCard .oc-t { font-size: 20px; letter-spacing: 1px; text-transform: uppercase; color: var(--khaki); margin: 2px 0 1px; line-height: 1.15; }
+#objCard .oc-d { font-family: 'Special Elite', monospace; font-size: 12.5px; line-height: 1.35; color: var(--ink); }
+#objCard .oc-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+#objCard .oc-bar { flex: 1; height: 7px; background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.22); }
+#objCard .oc-bar i { display: block; height: 100%; width: 0; background: var(--khaki); transition: width .15s; }
+#objCard .oc-p { font-family: 'IBM Plex Mono', monospace; font-size: 12px; min-width: 92px; text-align: right; }
+#objCard .oc-timer { height: 2px; margin-top: 6px; background: rgba(255,255,255,0.12); }
+#objCard .oc-timer i { display: block; height: 100%; width: 100%; background: var(--ink-dim); }
+#objCard.late .oc-timer i { background: var(--bad); }
+#objCard .oc-res { font-size: 15px; letter-spacing: 2px; margin-top: 6px; display: none; }
+#objCard.won { border-color: var(--good); }
+#objCard.won .oc-res { display: block; color: var(--good); }
+#objCard.won .oc-bar i { background: var(--good); }
+#objCard.lost { border-color: var(--bad); }
+#objCard.lost .oc-res { display: block; color: var(--bad); }
+
+#evPrompt { position: absolute; left: 50%; top: calc(50% + 72px); transform: translate(-50%, 8px); min-width: 330px; max-width: 86vw; padding: 8px 16px 10px; text-align: center; background: rgba(14,10,6,0.78); border: 1px solid rgba(224,180,69,0.75); opacity: 0; transition: opacity .25s, transform .25s; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+#evPrompt.show { opacity: 1; transform: translate(-50%, 0); }
+#evPrompt .ev-k { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 3px; color: var(--warn); }
+#evPrompt .ev-a { font-size: 19px; letter-spacing: 1.5px; margin: 3px 0 6px; }
+#evPrompt .ev-a kbd { font-size: 17px; padding: 0 7px; color: var(--warn); border-color: var(--warn); }
+#evPrompt .ev-bar { height: 8px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.25); }
+#evPrompt .ev-bar i { display: block; height: 100%; width: 0; background: var(--warn); }
+#evPrompt .ev-timer { height: 2px; margin-top: 5px; background: rgba(255,255,255,0.12); }
+#evPrompt .ev-timer i { display: block; height: 100%; width: 100%; background: var(--ink-dim); }
+#evPrompt .ev-h { font-family: 'Special Elite', monospace; font-size: 12px; color: var(--ink-dim); margin-top: 4px; }
+#evPrompt .ev-h:empty { display: none; }
+#evPrompt.danger { border-color: var(--bad); animation: evPulse .8s ease-in-out infinite; }
+#evPrompt.danger .ev-k, #evPrompt.danger .ev-a kbd { color: #ff7a5c; border-color: #ff7a5c; }
+#evPrompt.danger .ev-bar i { background: #ff7a5c; }
+@keyframes evPulse { 50% { box-shadow: 0 0 22px rgba(217,87,63,0.55); background: rgba(40,10,6,0.82); } }
+
+/* oxygen failure: blur/grey come from backdrop-filter (set inline) plus the PostFX desaturation */
+#hypoxia { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(6,8,10,0.55) 72%, rgba(0,0,0,0.9) 100%); }
+#hypoxia.on { animation: hypSwim 3.2s ease-in-out infinite; }
+@keyframes hypSwim { 50% { transform: scale(1.04); } }
+
+#mrTags { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.mr-tag { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; font-family: 'IBM Plex Mono', monospace; color: #ffb43a; text-shadow: 0 1px 3px rgba(0,0,0,0.95); white-space: nowrap; }
+.mr-tag b { font-size: 11px; letter-spacing: 2px; font-weight: 600; padding: 1px 6px; border: 1px solid currentColor; background: rgba(0,0,0,0.45); }
+.mr-tag span { font-size: 10px; margin-top: 1px; }
+.mr-tag::after { content: ''; width: 0; height: 0; margin-top: 2px; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid currentColor; }
+.mr-tag.friend { color: #8fd0ff; }
+.mr-tag.edge { opacity: 0.8; }
+.mr-tag.edge::after { display: none; }
+@media (max-width: 720px) {
+  #objCard { width: 230px; top: 92px; }
+  #evPrompt { min-width: 0; width: 86vw; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #evPrompt.danger, #hypoxia.on { animation: none; }
+}

@@ -43,6 +43,7 @@ async function boot() {
     const { autoplay } = await import('./dev/autoplay');
     (window as any).sws.autoplay = (m: any, steps?: number) => autoplay(engine, game, m, steps);
     Object.assign((window as any).sws, { game, engine });
+    Object.assign((window as any).sws, { event: (n: any) => game.midRound.devEvent(n), objective: (n: any) => game.midRound.devObjective(n) });
     // Frame-time benchmark: n rendered frames, GPU synced with a 1-pixel readback each frame
     (window as any).sws.bench = (n = 120, render = true) => {
       const gl = engine.renderer.getContext(), px = new Uint8Array(4), t: number[] = [];

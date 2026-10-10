@@ -23,6 +23,7 @@ import { GlassCracks } from '../ui/Cracks';
 import { Combo } from './Combo';
 import { CombatTally } from './CombatTally';
 import { achievements } from './Achievements';
+import { MidRound } from './MidRound';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -48,6 +49,7 @@ export class Game {
   readonly gunner: GunnerController;
   readonly pilot: PilotController;
   readonly photo: PhotoMode;
+  readonly midRound: MidRound;   // mid-round bonus objectives + random events
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -128,6 +130,7 @@ export class Game {
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
+    this.midRound = new MidRound(this, engine, input, ui);
     this.gunner.onNotice = (t) => this.ui.tip(t, 2200);
     // Esc releases pointer lock -> pause. If the browser never granted the lock the game
     // simply runs in free-cursor mode (no pause loop).
@@ -1030,6 +1033,7 @@ export class Game {
     const woundTarget = this.menuMode ? 0 : Math.min(1, w.crewWounded / 4);
     this.woundT += (woundTarget - this.woundT) * (1 - Math.exp(-dt * 0.6));
     this.engine.post.desat = this.woundT < 0.002 ? 0 : this.woundT;
+    this.midRound.update(dt, this.roundIdx, this.roundT0);
     this.cracks.update(dt);
     this.ui.redVignette(Math.min(0.35, this.damageT * 0.45 + (this.mission?.role === 'gunner' && !this.menuMode ? w.crewWounded * 0.05 : 0)));
     if (this.mission?.role === 'pilot' && !this.menuMode) { /* pilot sets exposure/vignette */ }
