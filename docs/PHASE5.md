@@ -14,7 +14,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 5 | Explosion and muzzle light on clouds and aircraft; glowing tracers lighting the scene | Done — 4 pooled combat lights (explosions, heavy-gun muzzle flashes, hits) tint nearby aircraft and the player\'s gun; fixed light count, no recompiles. Tracer glow sprites not done |
 | 6 | Night mission: moonlight, searchlights, flares, flak flashes in cloud, exhaust flames, night-fighter attacks | Partly — night mood with moonlight, searchlights, exhaust flames and night fighters (Night Fighter operation); flares and flak flashes in cloud not done |
 | 7 | Living interior: the other waist gunner and crew visible and animated, spent brass piles, breath fog at altitude | Done — the other waist gunner (tracks and fires with flash, recoil and brass; slumps when wounded, rookie replaces him), radio room through the open door, ball turret top turning in the floor, tail gunner down the tunnel, brass piling up (900 cap), breath fog in ADS, frost growing on the windows, swinging sun shafts, free look (hold C) |
-| 8 | Canopy/turret glass effects: frost, rain streaks in storms, scratches catching the sun, oil smears | In progress (frost on the waist windows done with goal 7) |
+| 8 | Canopy/turret glass effects: frost, rain streaks in storms, scratches catching the sun, oil smears | Done — P-51 canopy/windscreen + B-17 top dome, ball port and tail window: airspeed-driven rain streaks in storms, scratches that glint near the sun, oil build-up from engine damage, frost in cold missions, persistent bullet cracks; faded around the gunsight |
 
 ## Gameplay
 | # | Goal | Status |
@@ -56,3 +56,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 00:48 nemesis system merged (302 tests).
 - 01:00 ground attack merged (311 tests).
 - 01:05 audio pass 3 merged (326 tests).
+- 01:08 glass effects merged.
