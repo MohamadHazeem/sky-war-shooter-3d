@@ -1,0 +1,50 @@
+{
+ "name": "fw190",
+ "_comment": "FlightGear model coords (x aft, y right, z up, metres) of fw190/Models/FW190-A8.xml. Gear is modelled retracted in the .ac (FW190-A8.xml gear animations are 0 deg at position-norm 0).",
+ "submodels": {
+  "include": ["^Models/pilot\\.xml$"],
+  "exclude": []
+ },
+ "exclude_objects": ["main/stopwheel\\..*", "main/Cube\\.007"],
+ "texture_files": {},
+ "translations": [
+  {"_comment": "tail wheel semi-retracted (translate 0.35 along (-0.2,0,1) at position-norm 0)",
+   "objects": ["main/tailwheel", "main/tailgear1", "main/tailgear2"], "offset": [-0.0686, 0, 0.3431]}
+ ],
+ "rotations": [
+  {"_comment": "pilot pose = pilot.xml animations with /sim/model/crew/pilot/visible = 1, inner joints first, in the pilot instance frame",
+   "instance": "pilot", "objects": ["pilot/arm2\\.R.*", "pilot/hand\\.R"], "center": [0.007, 0.533, 0.455], "axis": [0, -0.5, 1], "angle": 90},
+  {"instance": "pilot", "objects": ["pilot/arm[12]\\.R.*", "pilot/hand\\.R"], "center": [0.08, 0.2, 0.45], "axis": [-1, 0.2, 0], "angle": 90},
+  {"instance": "pilot", "objects": ["pilot/arm2\\.L.*", "pilot/hand\\.L"], "center": [0.007, -0.533, 0.455], "axis": [0, -0.5, -1], "angle": 90},
+  {"instance": "pilot", "objects": ["pilot/arm[12]\\.L.*", "pilot/hand\\.L"], "center": [0.08, -0.2, 0.45], "axis": [1, 0.2, 0], "angle": 90},
+  {"instance": "pilot", "objects": ["pilot/leg2\\.R.*", "pilot/foot\\.R"], "center": [-0.064, 0.109, -0.35], "axis": [0, -0.1, 0], "angle": 40},
+  {"instance": "pilot", "objects": ["pilot/leg[12]\\.R.*", "pilot/foot\\.R"], "center": [0.012, 0.199, -0.016], "axis": [0, 0.6, 0], "angle": 80},
+  {"instance": "pilot", "objects": ["pilot/leg2\\.L.*", "pilot/foot\\.L"], "center": [-0.064, -0.109, -0.35], "axis": [0, -0.1, 0], "angle": 40},
+  {"instance": "pilot", "objects": ["pilot/leg[12]\\.L.*", "pilot/foot\\.L"], "center": [0.012, -0.199, -0.016], "axis": [0, 0.6, 0], "angle": 80},
+  {"instance": "pilot", "objects": ["pilot/head"], "center": [0.055, 0, 0.563], "axis": [0, -1, 0], "angle": 10}
+ ],
+ "nodes": [
+  {"name": "prop_1", "objects": ["main/Prop", "main/prophub"], "axis": [[1.0, 0, 0], [0.0, 0, 0]]},
+  {"name": "cooling_fan", "objects": ["main/radiator"], "axis": [[1.0, 0, 0], [0.0, 0, 0]]}
+ ],
+ "groups": [
+  {"name": "glass", "objects": ["main/canopyglass", "main/frontglass"]},
+  {"name": "pilot", "objects": ["pilot/.*"]}
+ ],
+ "markers": {
+  "eye_pilot": [3.9, 0.0, 0.8],
+  "muzzle_cowl_left": [1.8, -0.18, 0.64],
+  "muzzle_cowl_right": [1.8, 0.18, 0.64],
+  "muzzle_wingroot_left": [1.74, -0.95, -0.38],
+  "muzzle_wingroot_right": [1.74, 0.95, -0.38],
+  "muzzle_wingouter_left": [1.93, -2.3, -0.24],
+  "muzzle_wingouter_right": [1.93, 2.3, -0.24]
+ },
+ "origin": {"auto": {"wing": ["main/wing\\.[LR]"], "fuselage": ["main/fuselage"], "station": 0.9, "chord_frac": 0.27}},
+ "materials": {"roughness": 0.68, "metallic": 0.1},
+ "preview_shots": [
+  {"name": "tail", "eye": [11.5, -2.5, 1.5], "target": [7.8, 0, 0.6], "lens": 35},
+  {"name": "cockpit", "eye": [3.9, 0.0, 0.8], "target": [-5, 0, 0.6], "lens": 18},
+  {"name": "under", "eye": [0.5, -3.5, -2.5], "target": [2.5, 0, -0.4], "lens": 30}
+ ]
+}

@@ -1,0 +1,21 @@
+{
+ "name": "p51d_cockpit",
+ "_comment": "Detailed P-51D cockpit (FlightGear Cockpit/cockpit.xml, CockpitDevices.xml, Instruments/Instruments.xml). Contains ONLY parts that are not in p51d.glb, in exactly the same frame (same origin) -> show both together for the first-person view (and hide p51d.glb's 'pilot' node).",
+ "submodels": {
+  "include": ["^Models/Cockpit/cockpit\\.xml$", "^Models/Cockpit/CockpitDevices\\.xml$",
+              "^Models/Cockpit/[^/]+/.*\\.(xml|ac)$", "^Models/Instruments/.*\\.(xml|ac)$"],
+  "exclude": []
+ },
+ "exclude_objects": ["main/.*"],
+ "origin": [2.116, 0.0, -0.10],
+ "groups": [{"name": "cockpit", "objects": [".*"]}],
+ "atlas": {"groups": ["cockpit"], "size": 2048, "max_tile": 512},
+ "materials": {"roughness": 0.6, "metallic": 0.2,
+               "glass": {"color": [0.8, 0.85, 0.9], "alpha": 0.08, "roughness": 0.05}},
+ "markers": {"eye_pilot": [3.28972, 0.0, 0.675]},
+ "preview_extra_glbs": ["p51d.glb"],
+ "preview_hide": ["pilot"],
+ "preview_shots": [
+  {"name": "cockpit", "eye": [3.28972, 0.0, 0.675], "target": [-3.0, 0, 0.2], "lens": 16}
+ ]
+}

@@ -1,0 +1,243 @@
+{
+ "name": "fw190",
+ "origin_fg": [
+  2.3119649118185044,
+  0.0,
+  0.0863802433013916
+ ],
+ "nodes": {
+  "prop_1": {
+   "triangles": 402,
+   "primitives": 2,
+   "materials": [
+    "misc.001",
+    "fw190-1"
+   ],
+   "bbox_min": [
+    -1.4344,
+    -0.9571,
+    1.6741
+   ],
+   "bbox_max": [
+    1.4485,
+    1.5748,
+    2.3136
+   ],
+   "pivot": [
+    0.0,
+    -0.0864,
+    1.9792
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "cooling_fan": {
+   "triangles": 138,
+   "primitives": 1,
+   "materials": [
+    "fw190-1"
+   ],
+   "bbox_min": [
+    -0.4543,
+    -0.5406,
+    1.5916
+   ],
+   "bbox_max": [
+    0.4542,
+    0.3679,
+    1.6741
+   ],
+   "pivot": [
+    0.0,
+    -0.0864,
+    1.6375
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  }
+ },
+ "markers": {
+  "eye_pilot": {
+   "position": [
+    0.0,
+    0.7136,
+    -1.588
+   ],
+   "parent": null
+  },
+  "muzzle_cowl_left": {
+   "position": [
+    0.18,
+    0.5536,
+    0.512
+   ],
+   "parent": null
+  },
+  "muzzle_cowl_right": {
+   "position": [
+    -0.18,
+    0.5536,
+    0.512
+   ],
+   "parent": null
+  },
+  "muzzle_wingroot_left": {
+   "position": [
+    0.95,
+    -0.4664,
+    0.572
+   ],
+   "parent": null
+  },
+  "muzzle_wingroot_right": {
+   "position": [
+    -0.95,
+    -0.4664,
+    0.572
+   ],
+   "parent": null
+  },
+  "muzzle_wingouter_left": {
+   "position": [
+    2.3,
+    -0.3264,
+    0.382
+   ],
+   "parent": null
+  },
+  "muzzle_wingouter_right": {
+   "position": [
+    -2.3,
+    -0.3264,
+    0.382
+   ],
+   "parent": null
+  }
+ },
+ "groups": {
+  "airframe": {
+   "triangles": 5392,
+   "primitives": 12,
+   "materials": [
+    "misc",
+    "panels",
+    "interiour",
+    "metal",
+    "misc.002",
+    "fw190-1",
+    "misc.003",
+    "exhaust",
+    "gear",
+    "misc.004",
+    "fw190-1.001",
+    "Material"
+   ],
+   "bbox_min": [
+    -5.2045,
+    -0.6904,
+    -6.5219
+   ],
+   "bbox_max": [
+    5.2045,
+    1.6509,
+    1.7483
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "glass": {
+   "triangles": 36,
+   "primitives": 1,
+   "materials": [
+    "glass_glass"
+   ],
+   "bbox_min": [
+    -0.2873,
+    0.4412,
+    -2.3086
+   ],
+   "bbox_max": [
+    0.2873,
+    0.9031,
+    -0.7067
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "pilot": {
+   "triangles": 3570,
+   "primitives": 2,
+   "materials": [
+    "pilot1",
+    "Material"
+   ],
+   "bbox_min": [
+    -0.2983,
+    -0.3585,
+    -1.792
+   ],
+   "bbox_max": [
+    0.2983,
+    0.7911,
+    -0.5685
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  }
+ },
+ "bbox_min": [
+  -5.2045,
+  -0.9571,
+  -6.5219
+ ],
+ "bbox_max": [
+  5.2045,
+  1.6509,
+  2.3136
+ ],
+ "triangles": 9538,
+ "primitives": 18,
+ "materials": [
+  "Material",
+  "exhaust",
+  "fw190-1",
+  "fw190-1.001",
+  "gear",
+  "glass_glass",
+  "interiour",
+  "metal",
+  "misc",
+  "misc.001",
+  "misc.002",
+  "misc.003",
+  "misc.004",
+  "panels",
+  "pilot1"
+ ],
+ "excluded_objects": [
+  "main/Cube.007",
+  "main/stopwheel.L",
+  "main/stopwheel.R"
+ ],
+ "file_bytes": 596016
+}

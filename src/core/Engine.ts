@@ -3,6 +3,7 @@ import { Atmos, atmosUniforms, syncAtmosUniforms } from '../render/Atmosphere';
 import { CloudRenderer } from '../render/Clouds';
 import { PostFX } from '../render/PostFX';
 import { buildEnvironment, SkyDome } from '../render/Sky';
+import { envRef } from '../render/EnvRef';
 
 export type Quality = 'low' | 'medium' | 'high';
 
@@ -23,7 +24,7 @@ export class Engine {
   private sceneRT: THREE.WebGLRenderTarget;
   private hdrRT: THREE.WebGLRenderTarget;
   private updatables = new Set<Updatable>();
-  private clock = new THREE.Clock();
+  private last = 0;
   time = 0;
   timeScale = 1;
   paused = false;
@@ -88,6 +89,7 @@ export class Engine {
     this.post = new PostFX(this.reversed);
 
     this.scene.environment = buildEnvironment(this.renderer, this.sky);
+    envRef.tex = this.scene.environment;
     this.scene.environmentIntensity = 0.75;
 
     window.addEventListener('resize', () => this.resize());
@@ -121,12 +123,16 @@ export class Engine {
   }
 
   start() {
-    this.clock.start();
+    this.last = performance.now();
     this.renderer.setAnimationLoop(() => this.frame());
   }
 
-  private frame() {
-    let dt = Math.min(this.clock.getDelta(), 0.05);
+  // Advance one frame. A fixed dt can be passed by automated playtests, which run in
+  // background tabs where requestAnimationFrame is paused.
+  frame(fixedDt?: number, render = true) {
+    const now = performance.now();
+    let dt = fixedDt ?? Math.min((now - this.last) / 1000, 0.05);
+    this.last = now;
     this.fpsAcc += dt; this.fpsN++;
     if (this.fpsAcc > 0.5) { this.fps = this.fpsN / this.fpsAcc; this.fpsAcc = 0; this.fpsN = 0; }
     const realDt = dt;
@@ -135,7 +141,7 @@ export class Engine {
     Atmos.windOffset.addScaledVector(Atmos.wind, dt);
     for (const u of this.updatables) u.update(dt, this.time);
     this.onFrame?.(dt, this.time);
-    this.render(realDt);
+    if (render) this.render(realDt);
   }
 
   render(dt: number) {

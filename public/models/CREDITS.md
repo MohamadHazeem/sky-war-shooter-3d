@@ -1,0 +1,40 @@
+# 3D model credits and licences
+
+The aircraft models in this folder are converted from FlightGear flight-simulator
+aircraft (AC3D models and textures) with `tools/convert_models/convert_ac.py`.
+They are derivative works and remain under the original licence (GNU GPL v2).
+If you redistribute them, you must also make the corresponding source available: the
+upstream repositories and commits below, plus the converter in `tools/convert_models/`.
+Conversion changes: format conversion to glTF, re-orientation and re-centring,
+gear retracted, props/turrets split into pivot nodes, parts merged, textures
+resized and re-encoded (JPEG/PNG), and the cockpit textures packed into atlases.
+
+## b17.glb — Boeing B-17G Flying Fortress
+* Source: https://github.com/FGMEMBERS/B-17 (commit `949abb7615da96104a72c2b1a351a05d60a0bf3c`)
+* Licence: GNU General Public License v2 (`COPYING` in the repository).
+* 3D model and FDM: Emmanuel Baranger (2009), http://helijah.free.fr/flightgear/hangar.htm
+* 3D model changes: Detlef Faber. Turret system: Fabien Barbier.
+* Livery used: "GD-L" by Brett Harrison (2009/2011). Other liveries in the source: default (Emmanuel Baranger), 398bg, 447bg, 48457, 483575 (Brett Harrison), Memphis Belle (Alex Lerr).
+* Crew figure (`ww2_pilot_old`): from Bertrand Augras' X-Plane pilot collection, as included in the FlightGear package.
+
+## fw190.glb — Focke-Wulf Fw 190 A-8
+* Source: https://github.com/FGMEMBERS/fw190 (commit `49575361d5700466329e73d083867da5983451cd`)
+* Licence: GNU General Public License v2 (stated in the repository `README`).
+* Author: Detlef Faber (FlightGear hangar).
+* Livery used: "Green" (`fw190-1.png`). It has no swastika, so the texture is not edited.
+* Pilot figure: `pilot-b.ac` from the same package, posed with its FlightGear animations.
+* The upstream README says instrument photo textures were used with permission from
+  http://www.cockpitinstrumente.de. Only the low-detail panel texture (`panels.png`) of the
+  exterior model is in this glb.
+
+## p51d.glb and p51d_cockpit.glb — North American P-51D-25-NA Mustang
+* Source: https://github.com/FGMEMBERS/p51d (commit `cb3bcd6ef41182f6b1bae91395f38d0dadd974e5`)
+* Licence: the repository has no licence file. It is the P-51D from the official FlightGear
+  aircraft collection (FGAddon), which accepts only GPL-compatible content (GPL v2 or later).
+  Treat it as GPL v2+.
+* Authors: Jim Wilson (original model, 2003), Hal V. Engel (3D model, cockpit and JSBSim FDM, 2010–2014),
+  Jon S. Berndt (JSBSim), later fixes by githlar and Daniel Dubreuil (see `p51d-contributors.txt`).
+* Livery used: "Delivery Day – March 1944" (`Liveries/DD*.png`).
+* Pilot figure (`pilotWWII`): same origin as the B-17 crew figure (Bertrand Augras' collection, via FlightGear).
+* Not included: the K-14 gun sight and the other `Aircraft/Instruments-3d` parts, which are in the
+  FlightGear base package and not in this repository.

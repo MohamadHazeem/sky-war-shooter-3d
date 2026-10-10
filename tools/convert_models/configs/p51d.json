@@ -1,0 +1,68 @@
+{
+ "name": "p51d",
+ "_comment": "FlightGear model coords (x aft, y right, z up, metres) of p51d/Models/p51d-jw-jsbsim.xml. Livery: 'Delivery Day - March 1944' (Liveries/DD.xml, natural metal). Gear doors are modelled closed in the .ac; struts/wheels are dropped.",
+ "submodels": {
+  "include": ["^Models/Pilot/pilotWWII\\.xml$", "^Models/prop\\.xml$", "^Models/Cockpit/enclosure\\.xml$"],
+  "exclude": []
+ },
+ "exclude_objects": [
+  "main/(upper|lower)Strut(Left|Right)", "main/mainWheel(Left|Right)", "main/(upper|lower)Scissors(Left|Right)",
+  "main/(forward|rear)GearDoor(Link|EyeBolt)(Left|Right)", "main/mainGearRetract(Strut|Piston)(Left|Right)",
+  "main/landingGearPivit(Left|Right)", "main/wheelWells", "main/GearDoorHydralic.*",
+  "main/[Hh]ydraulicLine.*",
+  "main/tailWheel", "main/tailWheelKnuckle", "main/tailWheelSpinleAssembly", "main/tailWheelOleoHousing"
+ ],
+ "opaque_textures": ["DDwing1.png", "DDwing2.png", "DDfuselage.png", "p51d-jw-01.png", "DDspinner.png", "DDenclosure.png", "enclosure.png"],
+ "texture_files": {
+  "fus-texture.png": "Models/Liveries/DDfuselage.png",
+  "wing-texture.png": "Models/Liveries/DDwing2.png",
+  "enclosure.png": "Models/Liveries/DDenclosure.png"
+ },
+ "texture_objects": [
+  {"objects": ["main/(wingRight|flapsRight|aileronRight|aileronTrimTabRight|innerGearDoorRight|outerDoorRight|AN-104A|gunBastTubeFairingRight|gunBastTubeFairingLeft)"],
+   "texture": "Models/Liveries/DDwing1.png"},
+  {"objects": ["main/(wingLeft|flapsLeft|aileronLeft|aileronTrimTabLeft|innerGearDoorLeft|outerDoorLeft|tailLightfixture|rudder|rudderTrimTab|rudderTrimLinkageFairing|elevatorTrimTabLeft|elevatorTrimTabRight|elevator|horizontalStabilizer|VerticalStab|dorsal)"],
+   "texture": "Models/Liveries/DDwing2.png"},
+  {"objects": ["main/(fuselage|wingFilletLeft|wingFilletRight|cowl|tailWheelDoorLeft|tailWheelDoorRight|coolingDoor|oilCoolerDoor|tailFaringLeft|tailFaringRight|dogHouse)"],
+   "texture": "Models/Liveries/DDfuselage.png"},
+  {"objects": ["prop/spinner"], "texture": "Models/Liveries/DDspinner.png"}
+ ],
+ "rotations": [
+  {"_comment": "pilot seated pose from pilotWWII.xml params (legs), innermost joint first, pilot instance frame",
+   "instance": "pilot", "objects": ["pilot/RightFoot"], "center": [0.2601, 0.1103, -0.9902], "axis": [0, 1, 0], "angle": 15},
+  {"instance": "pilot", "objects": ["pilot/LeftFoot"], "center": [0.2601, -0.1103, -0.9902], "axis": [0, 1, 0], "angle": 15},
+  {"instance": "pilot", "objects": ["pilot/(Right|Left)(LowerLeg|Foot)"], "center": [0.298, 0, -0.615], "axis": [0, 1, 0], "angle": -35},
+  {"instance": "pilot", "objects": ["pilot/(Right|Left)(UpperLeg|LowerLeg|Foot)"], "center": [0.27, 0, -0.179], "axis": [0, 1, 0], "angle": 87}
+ ],
+ "nodes": [
+  {"name": "prop_1", "objects": ["prop/propBlade[1-4]", "prop/spinner"],
+   "axis": [[-0.2125359, -0.0004501, -0.0631098], [-0.828942, 0.00081717, -0.0816373]]}
+ ],
+ "groups": [
+  {"name": "glass", "objects": ["enclosure/(canopy|windshield|windshieldLeft|windshieldRight)"]},
+  {"name": "pilot", "objects": ["pilot/.*"]}
+ ],
+ "markers": {
+  "eye_pilot": [3.28972, 0.0, 0.675],
+  "muzzle_left_1": [1.8471, -2.0094, -0.534216],
+  "muzzle_left_2": [1.9171, -2.2115, -0.516539],
+  "muzzle_left_3": [1.9224, -2.4074, -0.491615],
+  "muzzle_right_1": [1.8471, 2.0094, -0.534216],
+  "muzzle_right_2": [1.9171, 2.2115, -0.516539],
+  "muzzle_right_3": [1.9224, 2.4074, -0.491615]
+ },
+ "_origin_comment": "x = 27% of wing root chord at |y|=0.75 (LE 1.556, TE 3.628, auto mode); z = between thrust line (-0.07) and section centre. p51d_cockpit.json MUST use the same origin.",
+ "origin": [2.116, 0.0, -0.10],
+ "materials": {"_comment": "natural-metal finish, but metallic kept <= 0.2 so it still reads well without an environment map",
+               "roughness": 0.5, "metallic": 0.2,
+               "by_texture": {"invariant-texture.png": {"roughness": 0.6, "metallic": 0.15},
+                              "p51d-jw-01.png": {"roughness": 0.6, "metallic": 0.1},
+                              "pilotWWII.png": {"roughness": 0.8, "metallic": 0.0},
+                              "DDenclosure.png": {"roughness": 0.55, "metallic": 0.2}},
+               "glass": {"color": [0.75, 0.8, 0.85], "alpha": 0.15, "roughness": 0.05}},
+ "preview_shots": [
+  {"name": "cockpit", "eye": [3.28972, 0.0, 0.675], "target": [-5, 0, -0.3], "lens": 16},
+  {"name": "under", "eye": [0.5, -3.5, -2.8], "target": [2.5, 0, -0.6], "lens": 30},
+  {"name": "canopy", "eye": [1.5, -2.5, 1.6], "target": [3.4, 0, 0.6], "lens": 35}
+ ]
+}

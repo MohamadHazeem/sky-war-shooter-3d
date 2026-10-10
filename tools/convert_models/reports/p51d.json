@@ -1,0 +1,245 @@
+{
+ "name": "p51d",
+ "origin_fg": [
+  2.116,
+  0.0,
+  -0.1
+ ],
+ "nodes": {
+  "prop_1": {
+   "triangles": 3884,
+   "primitives": 2,
+   "materials": [
+    "p51d-jw-01",
+    "DDspinner"
+   ],
+   "bbox_min": [
+    -1.7226,
+    -1.6887,
+    2.3177
+   ],
+   "bbox_max": [
+    1.7225,
+    1.7549,
+    2.9452
+   ],
+   "pivot": [
+    -0.0001,
+    0.0295,
+    2.5728
+   ],
+   "parent": null,
+   "local_z_axis": [
+    -0.0021,
+    -0.03,
+    0.9995
+   ]
+  }
+ },
+ "markers": {
+  "eye_pilot": {
+   "position": [
+    0.0,
+    0.775,
+    -1.1737
+   ],
+   "parent": null
+  },
+  "muzzle_left_1": {
+   "position": [
+    2.0094,
+    -0.4342,
+    0.2689
+   ],
+   "parent": null
+  },
+  "muzzle_left_2": {
+   "position": [
+    2.2115,
+    -0.4165,
+    0.1989
+   ],
+   "parent": null
+  },
+  "muzzle_left_3": {
+   "position": [
+    2.4074,
+    -0.3916,
+    0.1936
+   ],
+   "parent": null
+  },
+  "muzzle_right_1": {
+   "position": [
+    -2.0094,
+    -0.4342,
+    0.2689
+   ],
+   "parent": null
+  },
+  "muzzle_right_2": {
+   "position": [
+    -2.2115,
+    -0.4165,
+    0.1989
+   ],
+   "parent": null
+  },
+  "muzzle_right_3": {
+   "position": [
+    -2.4074,
+    -0.3916,
+    0.1936
+   ],
+   "parent": null
+  }
+ },
+ "groups": {
+  "airframe": {
+   "triangles": 89361,
+   "primitives": 10,
+   "materials": [
+    "DDwing1",
+    "DefaultWhite_2s",
+    "DDwing2_2s",
+    "DDwing2",
+    "invariant-texture",
+    "DDfuselage",
+    "DDfuselage_2s",
+    "invariant-texture_2s",
+    "invariant-texture.001",
+    "DDenclosure_2s"
+   ],
+   "bbox_min": [
+    -5.6663,
+    -1.0761,
+    -6.9223
+   ],
+   "bbox_max": [
+    5.6682,
+    1.759,
+    2.3399
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "pilot": {
+   "triangles": 3874,
+   "primitives": 1,
+   "materials": [
+    "pilotWWII"
+   ],
+   "bbox_min": [
+    -0.265,
+    -0.2054,
+    -1.3295
+   ],
+   "bbox_max": [
+    0.2979,
+    0.876,
+    -0.2697
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "glass": {
+   "triangles": 6470,
+   "primitives": 1,
+   "materials": [
+    "glass_glass_2s"
+   ],
+   "bbox_min": [
+    -0.3677,
+    0.3958,
+    -2.5687
+   ],
+   "bbox_max": [
+    0.368,
+    1.0014,
+    -0.3908
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  }
+ },
+ "bbox_min": [
+  -5.6663,
+  -1.6887,
+  -6.9223
+ ],
+ "bbox_max": [
+  5.6682,
+  1.759,
+  2.9452
+ ],
+ "triangles": 103589,
+ "primitives": 14,
+ "materials": [
+  "DDenclosure_2s",
+  "DDfuselage",
+  "DDfuselage_2s",
+  "DDspinner",
+  "DDwing1",
+  "DDwing2",
+  "DDwing2_2s",
+  "DefaultWhite_2s",
+  "glass_glass_2s",
+  "invariant-texture",
+  "invariant-texture.001",
+  "invariant-texture_2s",
+  "p51d-jw-01",
+  "pilotWWII"
+ ],
+ "excluded_objects": [
+  "main/GearDoorHydralicArmLeft",
+  "main/GearDoorHydralicArmRight",
+  "main/GearDoorHydralicBodyLeft",
+  "main/GearDoorHydralicBodyRight",
+  "main/HydraulicLine2Left",
+  "main/HydraulicLine2Right",
+  "main/hydraulicLine1Left",
+  "main/hydraulicLine1Right",
+  "main/landingGearPivitLeft",
+  "main/landingGearPivitRight",
+  "main/mainGearRetractPistonLeft",
+  "main/mainGearRetractPistonRight",
+  "main/mainGearRetractStrutLeft",
+  "main/mainGearRetractStrutRight",
+  "main/mainWheelLeft",
+  "main/mainWheelRight",
+  "main/tailWheel",
+  "main/tailWheelKnuckle",
+  "main/tailWheelOleoHousing",
+  "main/tailWheelSpinleAssembly",
+  "main/wheelWells",
+  "main/forwardGearDoorEyeBoltLeft",
+  "main/forwardGearDoorEyeBoltRight",
+  "main/forwardGearDoorLinkLeft",
+  "main/forwardGearDoorLinkRight",
+  "main/lowerScissorsLeft",
+  "main/lowerScissorsRight",
+  "main/lowerStrutLeft",
+  "main/lowerStrutRight",
+  "main/rearGearDoorEyeBoltLeft",
+  "main/rearGearDoorEyeBoltRight",
+  "main/rearGearDoorLinkLeft",
+  "main/rearGearDoorLinkRight",
+  "main/upperScissorsLeft",
+  "main/upperScissorsRight",
+  "main/upperStrutLeft",
+  "main/upperStrutRight"
+ ],
+ "file_bytes": 4188284
+}

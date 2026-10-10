@@ -1,19 +1,43 @@
-import * as THREE from 'three';
 import { Engine } from './core/Engine';
-import { Atmos, syncAtmosUniforms } from './render/Atmosphere';
+import { Input } from './core/Input';
+import { UI } from './ui/UI';
+import { Game } from './game/Game';
+import { loadModels } from './world/Models';
+import { CAMPAIGN, survivalMission } from './game/Missions';
 import './style.css';
 
-const engine = new Engine(document.getElementById('app')!);
-engine.camera.position.set(0, 7600, 0);
-const params = new URLSearchParams(location.search);
-const yaw = parseFloat(params.get('yaw') ?? '90');
-const pitch = parseFloat(params.get('pitch') ?? '-8');
-engine.camera.rotation.set(THREE.MathUtils.degToRad(pitch), THREE.MathUtils.degToRad(yaw), 0, 'YXZ');
-const box = new THREE.Mesh(new THREE.BoxGeometry(30, 5, 5), new THREE.MeshStandardMaterial({ color: 0x8a8460, roughness: 0.7 }));
-box.position.set(-200, 7610, -40);
-box.castShadow = box.receiveShadow = true;
-engine.scene.add(box);
-(window as any).engine = engine;
-(window as any).Atmos = Atmos;
-(window as any).syncAtmos = syncAtmosUniforms;
-engine.start();
+async function boot() {
+  const ui = new UI();
+  const app = document.getElementById('app')!;
+  ui.loading(0.05, 'Starting the engines…');
+  await new Promise((r) => setTimeout(r, 30));
+  let engine: Engine;
+  try {
+    engine = new Engine(app);
+  } catch (e) {
+    ui.loading(0, 'WebGL 2 is required. Please use a recent desktop browser with hardware acceleration enabled.');
+    throw e;
+  }
+  ui.loading(0.25, 'Loading aircraft…');
+  await loadModels((f) => ui.loading(0.25 + f * 0.6, 'Loading aircraft…'));
+  ui.loading(0.9, 'Forming up over England…');
+  const input = new Input(engine.renderer.domElement);
+  const game = new Game(engine, input, ui);
+  game.startMenu();
+  // Warm up shaders before revealing the menu
+  engine.render(1 / 60);
+  engine.start();
+  ui.loading(1);
+  setTimeout(() => document.getElementById('loading')!.classList.remove('show'), 250);
+  (window as any).game = game;
+  (window as any).engine = engine;
+  // Debug hooks used by automated playtests (tools/playtest)
+  (window as any).sws = {
+    CAMPAIGN, survivalMission,
+    // Step the simulation manually (headless playtests): n frames of dt seconds
+    step: (n: number, dt = 1 / 60, render = false) => { for (let i = 0; i < n; i++) engine.frame(dt, render || i === n - 1); },
+    shot: (q = 0.85) => { engine.render(1 / 60); return engine.renderer.domElement.toDataURL('image/jpeg', q); },
+  };
+}
+
+boot();

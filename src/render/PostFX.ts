@@ -187,7 +187,7 @@ void main() {
   if (coc > 0.01) {
     vec3 acc = col;
     float wsum = 1.0;
-    float r = coc * 14.0;
+    float r = coc * 22.0 * (uRes.y / 900.0);
     for (int i = 0; i < 16; i++) {
       float a = float(i) * 2.39996 + noise * 6.283;
       float rr = sqrt((float(i) + 0.5) / 16.0) * r;

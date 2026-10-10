@@ -1,0 +1,747 @@
+{
+ "name": "b17",
+ "origin_fg": [
+  -4.770261453092099,
+  0.0,
+  -0.11173510551452637
+ ],
+ "nodes": {
+  "prop_4": {
+   "triangles": 763,
+   "primitives": 1,
+   "materials": [
+    "GD-L"
+   ],
+   "bbox_min": [
+    -8.0101,
+    -1.8125,
+    2.3736
+   ],
+   "bbox_max": [
+    -4.996,
+    0.827,
+    3.4315
+   ],
+   "pivot": [
+    -6.505,
+    -0.0723,
+    3.1047
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "prop_3": {
+   "triangles": 763,
+   "primitives": 1,
+   "materials": [
+    "GD-L"
+   ],
+   "bbox_min": [
+    -4.5261,
+    -2.2135,
+    2.9437
+   ],
+   "bbox_max": [
+    -1.512,
+    0.426,
+    4.0016
+   ],
+   "pivot": [
+    -3.021,
+    -0.4733,
+    3.6816
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "prop_1": {
+   "triangles": 763,
+   "primitives": 1,
+   "materials": [
+    "GD-L"
+   ],
+   "bbox_min": [
+    4.9999,
+    -1.8125,
+    2.3736
+   ],
+   "bbox_max": [
+    8.014,
+    0.827,
+    3.4315
+   ],
+   "pivot": [
+    6.505,
+    -0.0723,
+    3.1047
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "prop_2": {
+   "triangles": 763,
+   "primitives": 1,
+   "materials": [
+    "GD-L"
+   ],
+   "bbox_min": [
+    1.5159,
+    -2.2135,
+    2.9437
+   ],
+   "bbox_max": [
+    4.53,
+    0.426,
+    4.0016
+   ],
+   "pivot": [
+    3.021,
+    -0.4733,
+    3.6816
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "turret_chin": {
+   "triangles": 416,
+   "primitives": 1,
+   "materials": [
+    "GD-L"
+   ],
+   "bbox_min": [
+    -0.5024,
+    -1.5702,
+    4.8026
+   ],
+   "bbox_max": [
+    0.5024,
+    -0.9024,
+    5.8074
+   ],
+   "pivot": [
+    0.0,
+    -1.2577,
+    5.305
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "turret_chin_guns": {
+   "triangles": 1568,
+   "primitives": 1,
+   "materials": [
+    "guns"
+   ],
+   "bbox_min": [
+    -0.1918,
+    -1.4209,
+    5.3769
+   ],
+   "bbox_max": [
+    0.1916,
+    -1.3439,
+    6.3452
+   ],
+   "pivot": [
+    0.0,
+    -1.379,
+    5.6102
+   ],
+   "parent": "turret_chin",
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "turret_top": {
+   "triangles": 1412,
+   "primitives": 2,
+   "materials": [
+    "GD-L",
+    "transparent_glass"
+   ],
+   "bbox_min": [
+    -0.4668,
+    1.3877,
+    0.7851
+   ],
+   "bbox_max": [
+    0.4668,
+    1.8034,
+    1.7188
+   ],
+   "pivot": [
+    0.0,
+    1.3877,
+    1.252
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "turret_top_guns": {
+   "triangles": 1568,
+   "primitives": 1,
+   "materials": [
+    "guns"
+   ],
+   "bbox_min": [
+    -0.1878,
+    1.5321,
+    1.1776
+   ],
+   "bbox_max": [
+    0.1876,
+    1.6091,
+    2.146
+   ],
+   "pivot": [
+    0.0,
+    1.5677,
+    1.452
+   ],
+   "parent": "turret_top",
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "turret_ball": {
+   "triangles": 1782,
+   "primitives": 2,
+   "materials": [
+    "GD-L",
+    "transparent_glass"
+   ],
+   "bbox_min": [
+    -0.5894,
+    -1.9952,
+    -5.195
+   ],
+   "bbox_max": [
+    0.5894,
+    -0.9771,
+    -4.0163
+   ],
+   "pivot": [
+    0.0,
+    -0.9771,
+    -4.6057
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "turret_ball_guns": {
+   "triangles": 1568,
+   "primitives": 1,
+   "materials": [
+    "guns"
+   ],
+   "bbox_min": [
+    -0.1787,
+    -1.4679,
+    -4.4076
+   ],
+   "bbox_max": [
+    0.1785,
+    -1.3909,
+    -3.4392
+   ],
+   "pivot": [
+    0.0,
+    -1.4302,
+    -4.3766
+   ],
+   "parent": "turret_ball",
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "gun_cheek_left": {
+   "triangles": 784,
+   "primitives": 1,
+   "materials": [
+    "guns"
+   ],
+   "bbox_min": [
+    0.8293,
+    -0.1833,
+    4.3721
+   ],
+   "bbox_max": [
+    1.3389,
+    -0.1063,
+    5.2224
+   ],
+   "pivot": [
+    1.0593,
+    -0.1496,
+    4.7607
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "gun_cheek_right": {
+   "triangles": 784,
+   "primitives": 1,
+   "materials": [
+    "guns"
+   ],
+   "bbox_min": [
+    -1.3364,
+    -0.1833,
+    4.3756
+   ],
+   "bbox_max": [
+    -0.8267,
+    -0.1063,
+    5.2239
+   ],
+   "pivot": [
+    -1.0593,
+    -0.1496,
+    4.7607
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "gun_tail": {
+   "triangles": 1568,
+   "primitives": 1,
+   "materials": [
+    "guns"
+   ],
+   "bbox_min": [
+    -0.1786,
+    0.0771,
+    -16.5761
+   ],
+   "bbox_max": [
+    0.1788,
+    0.1541,
+    -15.6077
+   ],
+   "pivot": [
+    0.0,
+    0.1109,
+    -16.0508
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "gun_waist_left": {
+   "triangles": 784,
+   "primitives": 1,
+   "materials": [
+    "guns"
+   ],
+   "bbox_min": [
+    0.5735,
+    0.1183,
+    -7.4686
+   ],
+   "bbox_max": [
+    1.5419,
+    0.1953,
+    -7.3994
+   ],
+   "pivot": [
+    1.0166,
+    0.152,
+    -7.4341
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "gun_waist_right": {
+   "triangles": 784,
+   "primitives": 1,
+   "materials": [
+    "guns"
+   ],
+   "bbox_min": [
+    -1.5419,
+    0.1183,
+    -7.4688
+   ],
+   "bbox_max": [
+    -0.5735,
+    0.1953,
+    -7.3996
+   ],
+   "pivot": [
+    -1.0166,
+    0.152,
+    -7.4341
+   ],
+   "parent": null,
+   "local_z_axis": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  }
+ },
+ "markers": {
+  "muzzle_top_left": {
+   "position": [
+    0.1531,
+    1.5709,
+    2.1507
+   ],
+   "parent": "turret_top_guns"
+  },
+  "muzzle_top_right": {
+   "position": [
+    -0.1531,
+    1.5709,
+    2.1507
+   ],
+   "parent": "turret_top_guns"
+  },
+  "muzzle_ball_left": {
+   "position": [
+    0.144,
+    -1.4291,
+    -3.4345
+   ],
+   "parent": "turret_ball_guns"
+  },
+  "muzzle_ball_right": {
+   "position": [
+    -0.144,
+    -1.4291,
+    -3.4345
+   ],
+   "parent": "turret_ball_guns"
+  },
+  "muzzle_chin_left": {
+   "position": [
+    0.1571,
+    -1.3821,
+    6.35
+   ],
+   "parent": "turret_chin_guns"
+  },
+  "muzzle_chin_right": {
+   "position": [
+    -0.1571,
+    -1.3821,
+    6.35
+   ],
+   "parent": "turret_chin_guns"
+  },
+  "muzzle_waist_left": {
+   "position": [
+    1.5467,
+    0.157,
+    -7.4341
+   ],
+   "parent": "gun_waist_left"
+  },
+  "muzzle_waist_right": {
+   "position": [
+    -1.5466,
+    0.157,
+    -7.4341
+   ],
+   "parent": "gun_waist_right"
+  },
+  "muzzle_tail_left": {
+   "position": [
+    0.1441,
+    0.1159,
+    -16.5808
+   ],
+   "parent": "gun_tail"
+  },
+  "muzzle_tail_right": {
+   "position": [
+    -0.1441,
+    0.1159,
+    -16.5808
+   ],
+   "parent": "gun_tail"
+  },
+  "muzzle_cheek_left": {
+   "position": [
+    1.3243,
+    -0.1446,
+    5.2197
+   ],
+   "parent": "gun_cheek_left"
+  },
+  "muzzle_cheek_right": {
+   "position": [
+    -1.3243,
+    -0.1446,
+    5.2197
+   ],
+   "parent": "gun_cheek_right"
+  },
+  "eye_waist_left": {
+   "position": [
+    0.4,
+    0.4417,
+    -7.4303
+   ],
+   "parent": null
+  },
+  "eye_waist_right": {
+   "position": [
+    -0.4,
+    0.4417,
+    -7.4303
+   ],
+   "parent": null
+  },
+  "eye_tail": {
+   "position": [
+    0.0,
+    0.8117,
+    -15.1203
+   ],
+   "parent": null
+  },
+  "eye_turret_top": {
+   "position": [
+    0.0,
+    1.5317,
+    1.0797
+   ],
+   "parent": "turret_top"
+  },
+  "eye_turret_ball": {
+   "position": [
+    0.0,
+    -1.4683,
+    -4.7203
+   ],
+   "parent": "turret_ball"
+  },
+  "eye_pilot": {
+   "position": [
+    0.38,
+    1.0217,
+    2.4797
+   ],
+   "parent": null
+  },
+  "eye_copilot": {
+   "position": [
+    -0.38,
+    1.0217,
+    2.4797
+   ],
+   "parent": null
+  },
+  "eye_bombardier": {
+   "position": [
+    0.0,
+    -0.1383,
+    5.4297
+   ],
+   "parent": null
+  },
+  "window_waist_left": {
+   "position": [
+    1.07,
+    0.3917,
+    -7.4453
+   ],
+   "parent": null
+  },
+  "window_waist_right": {
+   "position": [
+    -1.07,
+    0.3917,
+    -7.4453
+   ],
+   "parent": null
+  }
+ },
+ "groups": {
+  "airframe": {
+   "triangles": 34140,
+   "primitives": 2,
+   "materials": [
+    "GD-L",
+    "engine"
+   ],
+   "bbox_min": [
+    -15.7602,
+    -1.5326,
+    -16.0828
+   ],
+   "bbox_max": [
+    15.7602,
+    4.9238,
+    5.8858
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "glass": {
+   "triangles": 699,
+   "primitives": 1,
+   "materials": [
+    "transparent_glass"
+   ],
+   "bbox_min": [
+    -1.1379,
+    -0.9751,
+    -15.5549
+   ],
+   "bbox_max": [
+    1.1379,
+    1.3255,
+    6.5292
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "interior": {
+   "triangles": 6304,
+   "primitives": 3,
+   "materials": [
+    "interior",
+    "panel",
+    "seat"
+   ],
+   "bbox_min": [
+    -1.1513,
+    -1.3126,
+    -16.0555
+   ],
+   "bbox_max": [
+    1.1513,
+    1.3501,
+    5.8858
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "crew": {
+   "triangles": 7300,
+   "primitives": 1,
+   "materials": [
+    "ww2_pilot_old"
+   ],
+   "bbox_min": [
+    -0.2585,
+    0.0031,
+    -15.9191
+   ],
+   "bbox_max": [
+    0.6385,
+    1.1627,
+    3.2966
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  }
+ },
+ "bbox_min": [
+  -15.7602,
+  -2.2135,
+  -16.5761
+ ],
+ "bbox_max": [
+  15.7602,
+  4.9238,
+  6.5292
+ ],
+ "triangles": 64513,
+ "primitives": 24,
+ "materials": [
+  "GD-L",
+  "engine",
+  "guns",
+  "interior",
+  "panel",
+  "seat",
+  "transparent_glass",
+  "ww2_pilot_old"
+ ],
+ "excluded_objects": [
+  "main/propblurDE",
+  "main/propblurDI",
+  "main/propblurGE",
+  "main/propblurGI",
+  "main/propdiscDE",
+  "main/propdiscDI",
+  "main/propdiscGE",
+  "main/propdiscGI",
+  "turretup/intverretourelle1",
+  "turretdown/intverretourelle2",
+  "interior/intverriere",
+  "engine/echappes",
+  "engine#1/echappes",
+  "engine#2/echappes",
+  "engine#3/echappes"
+ ],
+ "file_bytes": 2198036
+}
