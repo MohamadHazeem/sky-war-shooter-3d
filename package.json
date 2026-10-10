@@ -16,5 +16,7 @@
     "@types/three": "^0.186.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.4"
-  }
+  },
+  "license": "GPL-2.0-or-later",
+  "description": "WWII B-17 gunner and P-51 escort combat game for the browser (Three.js)"
 }
