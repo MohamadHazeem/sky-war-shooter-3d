@@ -1014,6 +1014,8 @@ export class Game {
     this.autoQuality(dt);
     this.floatingOrigin();
     sound.setListener(this.engine.camera);
+    // tracer streaks are rebuilt every frame from the live rounds (camera-facing ribbons)
+    w.ballistics.renderTracers(this.engine.camera, Math.max(1, this.engine.renderer.domElement.height));
     this.distantBattle.update(dt, this.engine.camera, this.state === 'playing' && !this.menuMode);
     sound.updateWind(dt);
     w.listener = this.engine.camera.position;

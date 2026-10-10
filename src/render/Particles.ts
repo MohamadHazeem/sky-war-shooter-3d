@@ -276,7 +276,8 @@ export class TracerRenderer {
           gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
           vQ = position.xy;
           // Thin far tracers get dimmer per pixel but keep their energy
-          vC = vec4(iC.rgb * clamp(iC.a / w, 0.25, 1.0), 1.0);
+          // fade out close to the eye so a round passing the camera is not a beam across the screen
+          vC = vec4(iC.rgb * clamp(iC.a / w, 0.25, 1.0) * smoothstep(6.0, 28.0, dist), 1.0);
         }`,
       fragmentShader: /* glsl */ `
         varying vec2 vQ; varying vec4 vC;
