@@ -20,6 +20,8 @@ export const ALTITUDE = 7600;      // m (25,000 ft)
 const _v = new THREE.Vector3();
 const _v2 = new THREE.Vector3();
 const _q = new THREE.Quaternion();
+// Per-bomber phases for the hold-station drift, so a box of B-17s never moves in lockstep
+const holdPhase = new WeakMap<Bomber, { surge: number; yaw: number }>();
 const R = () => Math.random() * 2 - 1;
 
 export interface WorldEvents {
@@ -194,7 +196,12 @@ export class World implements WorldView {
 
   private placeBomber(b: Bomber, dt: number) {
     const t = this.time + b.wobblePhase;
+    let ph = holdPhase.get(b);
+    if (!ph) holdPhase.set(b, ph = { surge: Math.random() * Math.PI * 2, yaw: Math.random() * Math.PI * 2 });
     const wob = _v.set(Math.sin(t * 0.31) * 2.2, Math.sin(t * 0.47) * 1.4 + Math.sin(t * 1.3) * 0.25, Math.sin(t * 0.23) * 2.5).multiplyScalar(b.wobbleAmp);
+    // Slow independent surge along the formation (+-3 m, ~1 min period); absolute, so not scaled by wobbleAmp
+    const surge = Math.sin(this.time * 0.11 + ph.surge) * 3;
+    wob.z += surge;
     if (b.straggling) {
       b.slot.z -= dt * 3.5 * Math.max(1, b.enginesOut);
       b.slot.y -= dt * 2.0 * b.enginesOut;
@@ -203,10 +210,14 @@ export class World implements WorldView {
     if (dt > 0) b.vel.copy(target).sub(b.root.position).divideScalar(dt);
     else b.vel.copy(this.formationForward).multiplyScalar(CRUISE);
     b.root.position.copy(target);
-    // gentle bank/pitch from the wobble derivative
-    const roll = Math.cos(t * 0.31) * 0.03 * b.wobbleAmp + (b.straggling ? 0.05 * b.enginesOut : 0);
+    // Lateral rate of the sway (m/s), which drives the bank and yaw so they follow the drift
+    const latRate = Math.cos(t * 0.31) * 0.68 * b.wobbleAmp;
+    // Roll: a counter-bank against the drift plus a weak pull back toward the slot (positive roll tilts the lift toward -x)
+    const roll = latRate * 0.045 + wob.x * 0.004 + (b.straggling ? 0.05 * b.enginesOut : 0);
+    // Yaw: slight heading wander that follows the lateral drift, plus a slow independent wander
+    const yaw = latRate * 0.02 + Math.sin(this.time * 0.07 + ph.yaw) * 0.008;
     const pitch = Math.cos(t * 0.47) * 0.012 * b.wobbleAmp;
-    b.root.quaternion.setFromEuler(new THREE.Euler(-pitch, 0, roll, 'YXZ'));
+    b.root.quaternion.setFromEuler(new THREE.Euler(-pitch, yaw, roll, 'YXZ'));
   }
 
   add(a: Aircraft) {
