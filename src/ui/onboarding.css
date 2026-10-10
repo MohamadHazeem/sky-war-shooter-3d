@@ -1,0 +1,87 @@
+/* ---------- First-time player experience (Onboarding.ts, Tutorial.ts, Hints.ts, ControlsCard.ts) ---------- */
+
+/* Title: first-launch prompt */
+#title .ob-prompt {
+  position: absolute; right: 6vw; bottom: 9vh; z-index: 5; width: min(380px, calc(100vw - 32px));
+  background: rgba(14, 16, 10, 0.86); border: 1px solid var(--khaki); padding: 18px 20px 16px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  animation: ob-in 0.6s ease-out 1.6s both;
+}
+#title .ob-prompt .k { font-family: 'Special Elite', monospace; color: var(--khaki); font-size: 12px; letter-spacing: 3px; }
+#title .ob-prompt .t { font-size: 22px; letter-spacing: 1px; margin: 6px 0 6px; line-height: 1.15; }
+#title .ob-prompt .d { color: var(--ink-dim); font-size: 14px; line-height: 1.45; margin-bottom: 14px; }
+#title .ob-prompt .btn { padding: 9px 18px; font-size: 15px; }
+@keyframes ob-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (max-width: 720px) { #title .ob-prompt { right: 16px; bottom: 16px; } }
+
+/* Tutorial instruction card: left side, under the mission line, clear of the perk card */
+#tutCard {
+  position: fixed; left: 24px; top: 118px; z-index: 7; width: min(360px, calc(100vw - 32px)); pointer-events: none;
+  background: rgba(12, 14, 9, 0.78); border: 1px solid rgba(185, 167, 111, 0.55); border-left: 3px solid var(--khaki);
+  padding: 12px 16px 12px; opacity: 0; transform: translateX(-12px); transition: opacity 0.35s, transform 0.35s, border-color 0.3s;
+}
+#tutCard.show { opacity: 1; transform: none; }
+#tutCard.done { border-left-color: var(--good); }
+#tutCard .k { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2.5px; color: var(--ink-dim); }
+#tutCard .t { font-size: 24px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--khaki); margin: 3px 0 4px; }
+#tutCard .b { font-size: 15px; line-height: 1.45; color: var(--ink); }
+#tutCard .b kbd { color: var(--khaki); }
+#tutCard .b .red { color: #ff6a4d; }
+#tutCard .b .gold { color: #ffc85a; }
+#tutCard .b .ok { color: var(--good); font-size: 18px; letter-spacing: 1px; }
+#tutCard .b .warn { color: var(--bad); margin-top: 6px; }
+#tutCard .b .st { margin-top: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--ink-dim); }
+#tutCard .b .bar { margin-top: 8px; height: 4px; background: rgba(255, 255, 255, 0.12); }
+#tutCard .b .bar div { height: 100%; background: var(--khaki); transition: width 0.1s; }
+#tutCard .dots { display: flex; gap: 5px; margin-top: 10px; }
+#tutCard .dots i { width: 22px; height: 3px; background: rgba(255, 255, 255, 0.16); }
+#tutCard .dots i.on { background: var(--good); }
+#tutCard .dots i.cur { background: var(--khaki); }
+
+/* "H — controls" reminder, top centre for the first seconds of a mission */
+#controlsHint {
+  position: fixed; left: 50%; top: 12px; transform: translateX(-50%); z-index: 7; pointer-events: none;
+  background: rgba(10, 10, 6, 0.6); border: 1px solid rgba(185, 167, 111, 0.4); padding: 4px 12px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 1.5px; color: var(--ink-dim);
+  opacity: 0; transition: opacity 0.6s;
+}
+#controlsHint.show { opacity: 1; }
+#controlsHint kbd { color: var(--khaki); }
+
+/* Controls card (H / F1) */
+#controlsCard {
+  position: fixed; inset: 0; z-index: 44; display: none; align-items: center; justify-content: center; padding: 16px;
+  background: rgba(4, 5, 3, 0.35); cursor: pointer;
+}
+#controlsCard.show { display: flex; }
+#controlsCard .cc-box {
+  width: min(640px, 100%); max-height: calc(100vh - 32px); overflow: auto; padding: 22px 26px 18px;
+  background: rgba(14, 16, 10, 0.74); border: 1px solid rgba(185, 167, 111, 0.5);
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+#controlsCard .cc-k { font-family: 'Special Elite', monospace; color: var(--khaki); font-size: 13px; letter-spacing: 3px; margin-bottom: 12px; }
+#controlsCard .cc-grid { display: grid; grid-template-columns: auto 1fr; gap: 7px 18px; align-items: baseline; }
+#controlsCard .cc-key { white-space: nowrap; text-align: right; color: var(--khaki); font-size: 13px; }
+#controlsCard .cc-key kbd { color: var(--khaki); }
+#controlsCard .cc-what { font-size: 15px; color: var(--ink); line-height: 1.35; }
+#controlsCard .cc-tips { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--ink-dim); font-size: 14px; line-height: 1.6; }
+#controlsCard .cc-tips div::before { content: '— '; color: var(--khaki); }
+#controlsCard .cc-foot { margin-top: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-dim); text-align: center; }
+@media (max-width: 560px) {
+  #controlsCard .cc-grid { grid-template-columns: 1fr; gap: 2px; }
+  #controlsCard .cc-key { text-align: left; margin-top: 6px; }
+}
+
+/* Context hints */
+#tip .hint-k { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--khaki); margin-right: 6px; }
+#hangar .hint-hangar {
+  margin: 10px 0 4px; padding: 9px 12px; border: 1px solid rgba(185, 167, 111, 0.5); border-left: 3px solid var(--khaki);
+  background: rgba(185, 167, 111, 0.08); font-size: 14px; line-height: 1.45; color: var(--ink);
+}
+#hangar .hint-hangar .hint-k { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--khaki); margin-bottom: 2px; }
+#hangar .hint-hangar kbd { color: var(--khaki); }
+
+@media (prefers-reduced-motion: reduce) {
+  #title .ob-prompt { animation: none; }
+  #tutCard { transition: none; transform: none; }
+}

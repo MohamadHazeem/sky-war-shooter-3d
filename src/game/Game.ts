@@ -29,6 +29,7 @@ import { CombatTally } from './CombatTally';
 import { achievements } from './Achievements';
 import { GameFeel } from './GameFeel';
 import { CombatFeedback, killFeedText } from '../ui/CombatFeedback';
+import { Onboarding } from './Onboarding';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -54,6 +55,7 @@ export class Game {
   readonly gunner: GunnerController;
   readonly pilot: PilotController;
   readonly photo: PhotoMode;
+  readonly onboarding: Onboarding;
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -159,6 +161,7 @@ export class Game {
     const unlock = () => { sound.init(); window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock); };
     window.addEventListener('pointerdown', unlock);
     window.addEventListener('keydown', unlock);
+    this.onboarding = new Onboarding(this, engine, input, ui, { awardPerk: (l) => this.awardPerk(l), showCampaign: () => this.showCampaign() });
   }
 
   // Compile shaders for objects that only appear mid-mission (debris, chutes, bombs,
@@ -349,6 +352,7 @@ export class Game {
       settings: () => { this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => this.startMenu()); this.mountCloud(); },
       credits: () => this.ui.credits(() => this.startMenu()),
     });
+    this.onboarding.onTitle();
     this.ui.fade(false);
   }
 
@@ -502,6 +506,7 @@ export class Game {
       if (m.role === 'gunner') this.world.callout('start', 'Pilot', `Pilot to crew: we're at altitude. Test fire your guns, and keep your eyes open.`, 0, 3);
       else this.world.callout('start', 'Lead', 'Blue flight, form up on the bombers. Keep your eyes peeled for bandits.', 0, 3);
     }, 2500);
+    this.onboarding.onMissionStart(m);
   }
 
   // Armory levels + this mission's perks -> guns, ammo, fire, aim aid
@@ -705,6 +710,7 @@ export class Game {
     const w = this.world;
     const t = w.time;
     const enemies = w.activeEnemies().length;
+    if (this.onboarding.direct(dt, m)) return;
     // field promotion: every 5 kills, once the kill's slow-motion beat has played
     if (this.killsSincePerk >= 6 && t - this.lastKillAt > 1.2 && this.state === 'playing' && w.player?.alive) {
       this.killsSincePerk = 0;
@@ -1025,6 +1031,7 @@ export class Game {
     const w = this.world;
     const playing = !this.menuMode && (this.state === 'playing' || this.state === 'ending');
     this.input.active = playing;
+    this.onboarding.update(dt);
     const canvas = this.engine.renderer.domElement;
     const cur = playing ? 'crosshair' : 'default';
     if (canvas.style.cursor !== cur) canvas.style.cursor = cur;
