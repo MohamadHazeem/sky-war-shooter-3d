@@ -766,7 +766,7 @@ export class World implements WorldView {
         if (a.isPlayer) this.stats.shots++;
         if (g.count % 2 === 0) this.effects.muzzleFlash(muzzle, dir, a.isPlayer ? 0.4 : g.cannon ? 2.6 : 1.8, a.vel);
         if (g.count % 3 === 0) {
-          if (a.isPlayer) sound.playerGun(true);
+          if (a.isPlayer) sound.playerGun(true, !!g.cannon);
           else sound.play(g.cannon ? 'cannon' : 'mg131', muzzle, { gain: g.cannon ? 0.9 : 0.6, ref: 70 });
         }
       }

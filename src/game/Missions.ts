@@ -109,10 +109,10 @@ export const CAMPAIGN: Mission[] = [
     id: 'm4', weather: { sunEl: 30, sunAz: 150, low: 0.75, high: 0.6 }, success: "The Big Friends made it to Leipzig and back. Outstanding work, Blue Leader.", number: 4, title: 'Little Friends', target: 'Escort — Leipzig', date: '20 February 1944', role: 'pilot',
     briefing: [
       'Big Week. The whole Eighth Air Force is going after the German aircraft industry, and this time the bombers will not go alone.',
-      'You are flying a P-51D Mustang on close escort for a box of twelve Fortresses. Your job is to break up the fighter attacks before they reach the bombers. Do not chase the enemy all over Germany — stay with the big friends.',
-      'Mouse aim flies the aircraft toward where you look. W and S for throttle. Your six fifties are harmonised at three hundred yards.',
+      'You are flying a P-51D Mustang on close escort for a box of twelve Fortresses. First the Focke-Wulfs and Zerstörers will go for the bombers — intercept them before they reach the box. Then expect a fighter sweep of 109s hunting the escort, flying in pairs: watch for the wingman. And if a Fortress falls out of formation, the wolves will go for her. Do not let them.',
+      'Mouse aim flies the aircraft toward where you look. W and S for throttle, V for cockpit or chase view, T padlocks the nearest bandit. Your six fifties are harmonised at two hundred and fifty metres — get in close.',
     ],
-    objectives: ['Protect the bombers', 'Destroy the attacking fighters', 'Lose no more than 4 bombers'],
+    objectives: ['Intercept the attackers before they reach the bombers', 'Win the dogfight against the fighter sweep', 'Save the straggler', 'Lose no more than 4 bombers'],
     bombers: 12, escorts: 3, waves: [
       { at: 9, count: 4, from: 'front', attack: 'headon', skill: 1.0, radio: ['Lead', 'Bandits twelve o\'clock low, climbing for the bombers. Let\'s go get them.'] },
       { at: 0, afterClear: true, count: 6, from: 'mixed', skill: 1.0 },
@@ -154,9 +154,10 @@ export const CAMPAIGN: Mission[] = [
     id: 'm7', weather: { sunEl: 38, sunAz: 170, low: 0.6, high: 0.62 }, success: "Berlin has been hit, and the Luftwaffe lost more than it can replace. The air war has turned.", number: 7, title: 'Big Week', target: 'Escort — Berlin', date: '8 March 1944', role: 'pilot',
     briefing: [
       'This is the big one. The Luftwaffe is throwing everything it has left at the bomber stream over Berlin.',
-      'You lead the escort for our box. There will be more fighters than you can count — pick your targets, protect the bombers, and keep your speed up. Ammunition is limited: six hundred seconds of combat will not last six hundred seconds.',
+      'You lead the escort for our box. Rocket-armed Zerstörers will try to break up the formation, then the 109s and the new jets will come for the escort. The Me 262 is faster than anything we have — do not chase it, turn inside it and catch it when it comes back round. Bf 110s carry a rear gunner: come at them from below.',
+      'Over the target a crippled Fortress will need you. Pick your targets, protect the bombers, and keep your speed up.',
     ],
-    objectives: ['Protect the bombers', 'Destroy as many attackers as possible', 'Lose no more than 6 bombers'],
+    objectives: ['Break up the Zerstörer attacks', 'Survive the sweep of 109s and jets', 'Save the straggler over Berlin', 'Lose no more than 6 bombers'],
     bombers: 12, escorts: 5, waves: [
       { at: 8, count: 6, from: 'front', attack: 'headon', skill: 1.1, radio: ['Lead', 'Here they come. Big gaggle at twelve o\'clock — drop tanks and go!'] },
       { at: 0, afterClear: true, count: 8, from: 'rear', attack: 'stern', skill: 1.15, rockets: 0.4 },

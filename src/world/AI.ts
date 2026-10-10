@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { FlightModel } from './FlightModel';
 import type { Aircraft, Bomber, Fighter } from './Aircraft';
+import { DogfightAI } from './DogfightAI';
 
 const _l = new THREE.Vector3();
 const _r = new THREE.Vector3();
@@ -114,6 +115,10 @@ export class EnemyPilot {
   // gunner missions: a fixed gun position on the player's ship to attack (null = whichever
   // one the player is manning), so attacks come from every quarter and switching seats pays
   station: string | null = null;
+  // P-51 missions: share of new fighters that go straight for the player's Mustang (PilotOps sets it)
+  dogfightChance = 0.4;
+  // basic fighter manoeuvres while fighting the player's Mustang (DogfightAI.ts)
+  bfm: DogfightAI | null = null;
   private arcOf(w: WorldView) { return this.station ? w.stationArc(this.station) : w.playerArc(); }
   private gunOf(w: WorldView) { return this.station ? w.stationGunPos(this.station) : w.playerGunPos(); }
 
@@ -218,7 +223,7 @@ export class EnemyPilot {
     switch (this.state) {
       case 'approach': {
         // escort missions: a share of the Fw 190s come for the player's Mustang
-        if (!this.target && w.playerFighter?.alive && Math.random() < 0.4) {
+        if (!this.target && w.playerFighter?.alive && Math.random() < this.dogfightChance) {
           this.target = w.playerFighter; this.state = 'dogfight'; this.timer = 0; break;
         }
         if (!this.target || !this.target.alive || this.target.team !== 'allied' || !(this.target as any).zones) { this.target = this.pickTarget(w); if (!this.target) return; this.computeSetup(w); }
@@ -343,6 +348,17 @@ export class EnemyPilot {
       }
       case 'dogfight': {
         const t = this.target;
+        // against the player's Mustang: real BFM (DogfightAI); done -> back to the bombers
+        if (t && t === w.playerFighter && t.alive) {
+          this.bfm ??= new DogfightAI(me, this.skill);
+          if (!this.bfm.update(dt, w, t as Fighter)) {
+            this.bfm.end(); this.bfm = null;
+            this.state = 'approach'; this.timer = 0;
+            this.target = this.pickTarget(w);
+            if (this.target) this.computeSetup(w);
+          }
+          break;
+        }
         if (!t || !t.alive || this.timer > 40) { this.state = 'approach'; this.target = null; this.timer = 0; break; }
         if (Math.floor(this.timer / 3) !== Math.floor((this.timer - dt) / 3)) this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((6 + Math.random() * 12) / this.skill * w.enemyAimMult);
         leadPoint(me.pos, me.vel, t, 760, this.aim).add(this.aimOffset);

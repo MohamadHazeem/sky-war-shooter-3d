@@ -17,9 +17,11 @@ export interface FlightParams {
   stability: number;      // weathervane strength
 }
 
+// The Mustang: faster and slicker than the Fw 190 (energy fighter), a crisper roll and pitch
+// response than before so the mouse-aim "instructor" can put the nose where the player looks.
 export const P51_PARAMS: FlightParams = {
-  power: 470, dragK: 6.2e-5, inducedK: 5200, liftK: 0.0125, alphaStall: 0.28, maxG: 8,
-  rollRate: 2.4, pitchRate: 1.15, yawRate: 0.45, vAuthority: 85, stability: 3.2,
+  power: 510, dragK: 6.0e-5, inducedK: 4400, liftK: 0.0125, alphaStall: 0.28, maxG: 8,
+  rollRate: 2.75, pitchRate: 1.25, yawRate: 0.5, vAuthority: 85, stability: 3.2,
 };
 
 export const FW190_PARAMS: FlightParams = {
@@ -48,6 +50,9 @@ export class FlightModel {
   thrustScale = 1; // reduced by engine damage
   rollBias = 0;    // from wing damage
   gLoad = 1;
+  // Specific force (world frame, m/s^2): what the pilot feels — acceleration minus gravity.
+  // ~(0, 9.81, 0) in level flight; drives the cockpit head-lean.
+  readonly load = new THREE.Vector3(0, G, 0);
   alpha = 0;
   speed = 0;
   stalled = false;
@@ -101,6 +106,7 @@ export class FlightModel {
     _a.addScaledVector(_ld, lift);
     // side force from fuselage/fin
     _a.addScaledVector(_r, beta * v * v * 0.0018);
+    this.load.copy(_a);
     _a.y -= G;
     this.vel.addScaledVector(_a, dt);
 
