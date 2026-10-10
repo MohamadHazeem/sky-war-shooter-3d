@@ -91,7 +91,7 @@ export class Game {
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
     this.photo = new PhotoMode(engine, input, this.world);
-    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: false, music: true, quality: 'high', markers: true, flightMode: 'mouseAim', difficulty: 'veteran' });
+    this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: false, music: true, quality: 'high', markers: true, leadPip: 'recruit', flightMode: 'mouseAim', difficulty: 'veteran' });
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.wireWorldEvents();
@@ -956,8 +956,9 @@ export class Game {
     // Threat ring (bottom-left): enemy fighters within 3 km around the nose. Target markers
     // 'Off (realistic)' hides it too.
     if (this.mission && this.settings.markers) ThreatRing.draw(ctx, W, H, w, cam);
-    // Recruit aim aid: lead pip for the enemy nearest the line of fire
-    if (this.settings.difficulty === 'recruit' && pl?.alive) this.drawLeadPip(ctx, W, H);
+    // Lead indicator aim aid: pip for the enemy nearest the line of fire ('recruit' = only on Recruit difficulty)
+    const leadMode = this.settings.leadPip ?? 'recruit';
+    if (pl?.alive && (leadMode === 'always' || (leadMode === 'recruit' && this.settings.difficulty === 'recruit'))) this.drawLeadPip(ctx, W, H);
     // Pilot gunsight
     if (this.mission?.role === 'pilot' && w.playerFighter?.alive) {
       const g = this.pilot.gunsight;
