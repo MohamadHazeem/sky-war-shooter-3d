@@ -27,6 +27,7 @@ interface StationState {
 
 const _v = new THREE.Vector3();
 const _q = new THREE.Quaternion();
+const _up = new THREE.Vector3(0, 1, 0);
 const R = () => Math.random() * 2 - 1;
 const OVERDRIVE_TRACER: [number, number, number] = [14, 5.5, 1.6]; // white-hot tracer during Overdrive
 
@@ -81,6 +82,10 @@ export class GunnerController {
   private holes: THREE.Object3D[] = [];
   private holeMat: THREE.MeshBasicMaterial | null = null;
   private beamMat: THREE.ShaderMaterial | null = null;
+  private skyBeamMat: THREE.ShaderMaterial | null = null; // fainter, cooler shafts through holes facing away from the sun
+  // shared unit geometries for holes and light shafts (scaled per hole, never disposed)
+  private holeGeo = new THREE.PlaneGeometry(1, 1);
+  private beamGeo = new THREE.CylinderGeometry(0.16, 1, 1, 10, 1, true);
   onSwitch?: (st: StationDef) => void;
   onNotice?: (text: string) => void;
   loadout: Loadout = new Progression().loadout(); // upgrades + perks (set by Game)
@@ -165,9 +170,12 @@ export class GunnerController {
 
   // A round passed through the fuselage (bomber-local point and direction): punch
   // entry/exit holes in the waist interior, with daylight and sunbeams through them.
+  // Cannon and flak hits tear bigger holes with a spray of splinter holes around them,
+  // throw sparks and blow insulation, paint chips and dust through the compartment.
   fuselageHit(local: THREE.Vector3, dir: THREE.Vector3) {
     const wi = this.waistInterior;
     if (!wi || !this.bomber) return;
+    const heavy = this.world.bomberDamage.lastHeavy;
     const a = 1.08, b = 1.12, yC = 0.15;
     const wl = STATIONS.waistL.pivot;
     const z0 = wl.z - 3.1, z1 = wl.z + 3.1;
@@ -180,17 +188,28 @@ export class GunnerController {
     if (A < 1e-6 || disc < 0) return;
     const sq = Math.sqrt(disc);
     const sunLocal = Atmos.sunDir.clone().applyQuaternion(this.bomber.root.quaternion.clone().invert());
+    const onSkin = (p: THREE.Vector3) => p.z >= z0 && p.z <= z1 && !(Math.abs(p.z - wl.z) < 0.42 && p.y > 0.05 && p.y < 0.72); // no holes in the open windows
+    const normal = (p: THREE.Vector3) => new THREE.Vector3(p.x / (a * a), (p.y - yC) / (b * b), 0).normalize();
+    let first = true;
     for (const t of [(-B - sq) / (2 * A), (-B + sq) / (2 * A)]) {
       const p = o.clone().addScaledVector(d, t);
-      if (p.z < z0 || p.z > z1) continue;
-      // no holes in the open windows
-      if (Math.abs(p.z - wl.z) < 0.42 && p.y > 0.05 && p.y < 0.72) continue;
-      const n = new THREE.Vector3(p.x / (a * a), (p.y - yC) / (b * b), 0).normalize();
-      this.addHole(p, n, sunLocal);
+      if (!onSkin(p)) continue;
+      const n = normal(p);
+      this.addHole(p, n, sunLocal, heavy ? (first ? 3.2 : 2.2) : 1, heavy || first);
+      if (heavy && first) {
+        // splinters: a scatter of small holes around the entry
+        const th = Math.atan2((p.y - yC) / b, p.x / a);
+        for (let k = 0; k < 3 + Math.floor(Math.random() * 3); k++) {
+          const tk = th + R() * 0.22;
+          const q = new THREE.Vector3(Math.cos(tk) * a, yC + Math.sin(tk) * b, p.z + R() * 0.35);
+          if (onSkin(q)) this.addHole(q, normal(q), sunLocal, 0.6 + Math.random() * 0.5, false);
+        }
+      }
+      first = false;
     }
   }
 
-  private addHole(p: THREE.Vector3, n: THREE.Vector3, sunLocal: THREE.Vector3) {
+  private addHole(p: THREE.Vector3, n: THREE.Vector3, sunLocal: THREE.Vector3, size = 1, debris = true) {
     const wi = this.waistInterior!;
     this.holeMat ??= new THREE.MeshBasicMaterial({ map: bulletHoleTexture(), transparent: true, depthWrite: false, color: new THREE.Color(3.2, 3.1, 2.9), polygonOffset: true, polygonOffsetFactor: -2 });
     this.beamMat ??= new THREE.ShaderMaterial({
@@ -213,27 +232,39 @@ export class GunnerController {
         }`,
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     });
+    this.skyBeamMat ??= this.beamMat.clone();
     this.beamMat.uniforms.uCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.028);
+    this.skyBeamMat.uniforms.uCol.value.setRGB(0.55, 0.66, 0.85).multiplyScalar(0.012 + Atmos.sunIntensity * 0.004);
     const g = new THREE.Group();
-    const hole = new THREE.Mesh(new THREE.PlaneGeometry(0.045 + Math.random() * 0.03, 0.045 + Math.random() * 0.03), this.holeMat);
+    const hole = new THREE.Mesh(this.holeGeo, this.holeMat);
+    const hs = (0.045 + Math.random() * 0.03) * size;
+    hole.scale.set(hs, hs * (0.8 + Math.random() * 0.45), 1);
     hole.position.copy(p).addScaledVector(n, -0.006);
     hole.lookAt(hole.position.clone().sub(n));
     hole.rotateZ(Math.random() * 6.28);
     g.add(hole);
-    if (n.dot(sunLocal) > 0.06) {
-      const len = 2.8;
-      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.075, len, 10, 1, true), this.beamMat);
-      const into = sunLocal.clone().negate();
-      beam.position.copy(p).addScaledVector(into, len / 2);
-      beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), sunLocal);
+    const sunward = n.dot(sunLocal) > 0.06;
+    // a sunbeam through holes facing the sun; a fainter cool shaft of skylight through the rest
+    if (sunward || size >= 1) {
+      const len = sunward ? 2.8 : 1.6;
+      const beam = new THREE.Mesh(this.beamGeo, sunward ? this.beamMat : this.skyBeamMat);
+      const r = 0.075 * Math.sqrt(size) * (sunward ? 1 : 0.8);
+      beam.scale.set(r, len, r);
+      const into = sunward ? sunLocal : n;
+      beam.position.copy(p).addScaledVector(into, -len / 2);
+      beam.quaternion.setFromUnitVectors(_up, into);
       g.add(beam);
     }
     wi.add(g);
     this.holes.push(g);
-    if (this.holes.length > 36) { const old = this.holes.shift()!; old.removeFromParent(); old.traverse((o) => (o as THREE.Mesh).geometry?.dispose()); }
-    // splinters and dust inside the fuselage
-    const wpos = this.bomber!.localToWorld(p.clone().addScaledVector(n, -0.05));
-    this.world.effects.sparks(wpos, this.bomber!.vel, false);
+    if (this.holes.length > 48) this.holes.shift()!.removeFromParent();
+    if (!debris) return;
+    // splinters and dust inside the fuselage; big hits blow debris through the compartment
+    const b = this.bomber!;
+    const wpos = b.localToWorld(p.clone().addScaledVector(n, -0.05));
+    this.world.effects.sparks(wpos, b.vel, size > 2);
+    const inward = n.clone().negate().applyQuaternion(b.quat);
+    this.world.bomberDamage.interiorDebris(wpos, inward, size > 2 ? 16 : 3);
   }
 
   requestStation(id: StationId) {
@@ -578,6 +609,12 @@ export class GunnerController {
     eye.x += Math.sin(t * 13.1) * buffet * 0.5 + R() * shake * 0.004;
     eye.y += Math.sin(t * 17.3) * buffet * 0.4 + R() * shake * 0.004;
     eye.z += -this.recoilT * 0.012;
+    // airframe vibration from dead / windmilling engines and a shot-up tail (smooth, no jitter)
+    const bz = this.world.bomberDamage.buzz;
+    if (bz > 0) {
+      eye.x += (Math.sin(t * 71.3) * 0.7 + Math.sin(t * 19.1 + 0.4) * 0.3) * 0.0016 * bz;
+      eye.y += (Math.sin(t * 83.9 + 1.3) * 0.7 + Math.sin(t * 23.7) * 0.3) * 0.0019 * bz;
+    }
     const worldEye = this.gunPivot.localToWorld(eye);
     cam.position.copy(worldEye);
     if (cam.parent !== this.engine.scene) this.engine.scene.add(cam);
@@ -585,6 +622,7 @@ export class GunnerController {
     // camera looks down -Z; gun forward is +Z
     cam.quaternion.copy(q).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI));
     if (shake > 0) cam.rotateZ(R() * shake * 0.003);
+    if (bz > 0) { cam.rotateZ(Math.sin(t * 57.1) * 0.0012 * bz * access.shake); cam.rotateX(Math.sin(t * 63.7 + 0.7) * 0.0009 * bz * access.shake); }
     cam.fov = this.fov;
     cam.updateProjectionMatrix();
     this.engine.post.nearFocus = def.type === 'waist' ? 0.42 : def.type === 'tail' ? 0.5 : 0.4;

@@ -25,6 +25,7 @@ import { Crew, STATION_CREW } from './Crew';
 import { prewarmBoss } from './BossShip';
 import { bomberName, dressPlayerBomber } from '../game/Customize';
 import { aiGunnerSkill } from '../game/CrewRoster';
+import { PlayerBomberDamage } from './PlayerBomberDamage';
 
 export const ENEMY_SCALE = 6.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 460; // ~40 hits from a .50 to wear one down
@@ -116,6 +117,7 @@ export class World implements WorldView {
   lastKillCause = '';
   private lastConfirm = 0;
   listener: THREE.Vector3 | null = null; // camera position (set by the game)
+  readonly bomberDamage = new PlayerBomberDamage(this); // visible damage on the player's own B-17
 
   constructor(private engine: Engine) {
     this.scene = engine.scene;
@@ -226,6 +228,7 @@ export class World implements WorldView {
     this.lastCrewWound = -99;
     this.lastKillCause = '';
     this.lastCallout.clear();
+    this.bomberDamage.reset();
   }
 
   // Compile every shader variant a kill can need (clipped wreck materials, shadow casters,
@@ -249,7 +252,9 @@ export class World implements WorldView {
     this.effects.explosion(at, new THREE.Vector3(), 1);
     this.effects.parachute(at, new THREE.Vector3());
     const unwarmBoss = prewarmBoss(this.scene, camera.position, fwd);
+    const unwarm = this.bomberDamage.warmup(this.scene, at);
     render();
+    unwarm();
     unwarmBoss();
     for (const f of dummies) this.scene.remove(f.root);
     this.wrecks.clear();
@@ -495,6 +500,7 @@ export class World implements WorldView {
     }
     const heavy = e.cannon;
     this.effects.sparks(e.point, t.vel, heavy);
+    if (t === this.playerBomber) this.bomberDamage.onHit(e);
     if (t === this.player || t === this.playerBomber) {
       sound.playerImpact(heavy);
       this.events.playerHitFrom?.(e);
@@ -650,6 +656,7 @@ export class World implements WorldView {
     this.flak(dt);
     this.updateRockets(dt);
     this.fires(dt);
+    this.bomberDamage.update(dt);
     updateBomberDeath(dt);
     updateFighterDeath(dt);
     this.ballistics.update(dt, this.aircraft);
