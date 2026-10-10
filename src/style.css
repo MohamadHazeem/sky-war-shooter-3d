@@ -134,6 +134,10 @@ kbd { font-family: 'IBM Plex Mono', monospace; font-size: 12px; border: 1px soli
 .result.ok { color: var(--good); }
 .result.fail { color: var(--bad); }
 .medal { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid var(--khaki); color: var(--khaki); margin: 4px 6px 4px 0; font-size: 14px; letter-spacing: 1px; }
+/* Debrief badges stamp in one after another; the delay is set inline and matches the fanfare */
+.medal.pop { opacity: 0; animation: medalIn 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) forwards; }
+@keyframes medalIn { from { opacity: 0; transform: scale(1.7) rotate(-5deg); filter: brightness(2.2); } to { opacity: 1; transform: none; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .medal.pop { opacity: 1; animation: none; } }
 .leader { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 14px; margin-top: 10px; }
 .leader td { padding: 5px 6px; border-bottom: 1px solid var(--line); }
 .credits p { font-size: 14px; line-height: 1.6; color: var(--ink-dim); font-family: 'IBM Plex Mono', monospace; }
