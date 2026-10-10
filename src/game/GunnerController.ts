@@ -44,6 +44,7 @@ export class GunnerController {
   private beltTickT = 0; // time until the next low-ammo belt tick
   zoom = false;
   fov = 62;
+  baseFov = 62;   // set from Settings; zoom-in keeps the original 34/62 magnification ratio
   bomber: Bomber | null = null;
   private casings: { m: THREE.Mesh; v: THREE.Vector3; life: number }[] = [];
   private burstT = 0;        // seconds the trigger has been held continuously
@@ -296,7 +297,7 @@ export class GunnerController {
 
     // Zoom (squint down the sight)
     this.zoom = inp.mouse(2);
-    const targetFov = this.zoom ? 34 : 62;
+    const targetFov = this.zoom ? this.baseFov * (34 / 62) : this.baseFov;
     this.fov += (targetFov - this.fov) * Math.min(1, dt * 10);
 
     // Reload

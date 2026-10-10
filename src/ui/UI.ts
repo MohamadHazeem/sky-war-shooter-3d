@@ -23,6 +23,7 @@ export interface Settings {
   leadPip: 'off' | 'recruit' | 'always';
   flightMode: 'mouseAim' | 'direct';
   difficulty: 'recruit' | 'veteran' | 'ace';
+  fov: number;   // base field of view in degrees (gunner and P-51 views); zoom scales from it
 }
 
 export interface Progress { unlocked: number; medals: Record<string, string[]>; best: Record<string, number>; survival: { name: string; score: number; waves: number; role: string; date: string }[] }
@@ -381,6 +382,7 @@ export class UI {
       <div class="kicker">CONFIGURATION</div><h2 class="h2">Settings</h2>
       <label class="setting">Difficulty <select data-k="difficulty"><option value="recruit" ${s.difficulty === 'recruit' ? 'selected' : ''}>Recruit (lead indicator)</option><option value="veteran" ${s.difficulty === 'veteran' ? 'selected' : ''}>Veteran</option><option value="ace" ${s.difficulty === 'ace' ? 'selected' : ''}>Ace</option></select></label>
       <label class="setting">Mouse sensitivity <input type="range" min="0.3" max="2.5" step="0.05" data-k="sensitivity" value="${s.sensitivity}"></label>
+      <label class="setting"><span>Field of view <b class="fov-val" style="font-weight:400;color:var(--ink-dim)">${s.fov}°</b></span> <input type="range" min="50" max="80" step="1" data-k="fov" value="${s.fov}"></label>
       <label class="setting">Invert mouse Y <select data-k="invertY"><option value="false">Off</option><option value="true" ${s.invertY ? 'selected' : ''}>On</option></select></label>
       <label class="setting">Master volume <input type="range" min="0" max="1" step="0.05" data-k="volume" value="${s.volume}"></label>
       <label class="setting">Music volume <input type="range" min="0" max="1" step="0.05" data-k="musicVolume" value="${s.musicVolume}"></label>
@@ -397,9 +399,10 @@ export class UI {
     st.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-k]').forEach((i) => i.addEventListener('input', () => {
       const k = i.dataset.k as keyof Settings;
       let v: any = i.value;
-      if (k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume') v = parseFloat(v);
+      if (k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume' || k === 'fov') v = parseFloat(v);
       if (k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music') v = v === 'true';
       (s as any)[k] = v;
+      if (k === 'fov') { const b = i.closest('label')?.querySelector('.fov-val'); if (b) b.textContent = `${v}°`; }
       onChange(s);
     }));
     st.querySelector('[data-back]')!.addEventListener('click', () => { st.classList.remove('show'); onBack(); });
