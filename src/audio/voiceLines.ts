@@ -138,6 +138,7 @@ export const VOICE_LINES = {
   playerdown: { speakers: ["Pilot"], text: "We've had it! Bail out! Bail out!" },
   raid_coned: { speakers: ["Blue Two"], text: "Searchlights have one coned! Get him while he's lit!" },
   raid_escorts: { speakers: ["Blue Two"], text: "Messerschmitts coming down on us — they're covering the bombers!" },
+  raid_flares: { speakers: ["Control"], text: "Control: pathfinder flares going down over the field! The bombers will aim on them — get under the flares and you'll see them." },
   raid_he111_lead: { speakers: ["Lead"], text: "Heinkels! A whole formation of bombers — get into them before they reach the target!" },
   raid_he111_nav: { speakers: ["Navigator"], text: "German bombers crossing ahead — a whole formation of Heinkels!" },
   raid_jettison: { speakers: ["Blue Two"], text: "He's dumped his bombs — he's turning for home!" },
@@ -236,6 +237,10 @@ export const VOICE_LINES = {
   wing_six: { speakers: ["Blue Two"], text: "Bandit on your tail — Blue Two is on him!" },
   wing_splash: { speakers: ["Blue Two"], text: "Blue Two — splash one!" },
   wound: { speakers: ["Navigator"], text: "Gunner's hit! Stay on that gun if you can!" },
+  wx_clear_g: { speakers: ["Pilot"], text: "We're breaking out of the cloud — clear sky ahead. They'll see us coming now." },
+  wx_clear_p: { speakers: ["Lead"], text: "Blue flight, the cloud's breaking up. Clear sky ahead — keep your eyes open." },
+  wx_front_g: { speakers: ["Pilot"], text: "Storm front dead ahead. Tighten it up — we're going right through it." },
+  wx_front_p: { speakers: ["Lead"], text: "Blue flight, storm front dead ahead. Close it up and stay on my wing in the murk." },
 } as const;
 
 export type VoiceLineId = keyof typeof VOICE_LINES;

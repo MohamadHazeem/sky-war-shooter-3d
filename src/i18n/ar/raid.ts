@@ -25,6 +25,7 @@ const table: PhraseTable = {
 
     // radio
     "Searchlights have one coned! Get him while he's lit!": 'الكشّافات حاصرت واحدة! انقضّ عليها ما دامت مضاءة!',
+    "Control: pathfinder flares going down over the field! The bombers will aim on them — get under the flares and you'll see them.": 'المراقبة: مشاعل الطائرات الدليلة تهبط فوق المطار! ستصوّب القاذفات عليها — ادخل تحت المشاعل وستراها.',
     "Messerschmitts coming down on us — they're covering the bombers!": 'طائرات مسرشميت تنقضّ علينا — إنها تحمي القاذفات!',
     "He's dumped his bombs — he's turning for home!": 'ألقى قنابله — إنه يستدير عائداً!',
     'Control to Blue flight: raiders crossing the coast in the dark. Look for their exhaust flames and the searchlights.': 'المراقبة إلى السرب الأزرق: مغيرون يعبرون الساحل في الظلام. ابحثوا عن لهب عوادمهم وعن الكشّافات.',
@@ -77,8 +78,8 @@ const table: PhraseTable = {
       'تحطّمت الغارة. المطار ما زال لنا — أطقم الأرض تردم الحفر منذ الآن. عمل رائع يا قائد الأزرق.',
     'The Baby Blitz. Every few nights the Junkers come back across the Channel in the dark, and tonight they are after the airfields.':
       'الهجوم الخاطف الصغير. كل بضع ليالٍ تعود طائرات اليونكرز عبر القنال في الظلام، والليلة هدفها المطارات.',
-    'You will not see them until you are close. Look for the exhaust flames — they show for miles — and watch the searchlights: when the beams cone a bomber, go for him while he is lit. Your gunsight lamp is turned up for the night.':
-      'لن تراها حتى تقترب. ابحث عن لهب العوادم — يُرى من على بُعد أميال — وراقب الكشّافات: حين تحاصر الأشعة قاذفة، انقضّ عليها ما دامت مضاءة. مصباح منظارك مرفوع لليل.',
+    'You will not see them until you are close. Look for the exhaust flames — they show for miles — and watch the searchlights: when the beams cone a bomber, go for him while he is lit. Their pathfinders will mark the field with parachute flares, and anything flying under them is lit up, the bombers included. Your gunsight lamp is turned up for the night.':
+      'لن تراها حتى تقترب. ابحث عن لهب العوادم — يُرى من على بُعد أميال — وراقب الكشّافات: حين تحاصر الأشعة قاذفة، انقضّ عليها ما دامت مضاءة. ستعلّم طائرات الاستطلاع الدليلة المطارَ بمشاعل مظلية، وكل ما يطير تحتها يغدو مضاءً، والقاذفات معه. مصباح منظارك مرفوع لليل.',
     'From the second wave they are sending Messerschmitt 110 night fighters ahead of the bombers. If more than four bombers get through to the field, we have lost the night.':
       'من الموجة الثانية يرسلون مقاتلات مسرشميت 110 الليلية أمام القاذفات. إن عبرت أكثر من أربع قاذفات إلى المطار، فقد خسرنا الليلة.',
     'Dawn over the field, and every runway still in use. The Junkers will think twice about coming back. Good hunting, Blue Leader.':

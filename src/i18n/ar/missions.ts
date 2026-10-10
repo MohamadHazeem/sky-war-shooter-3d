@@ -142,7 +142,7 @@ const table: PhraseTable = {
     "The Sky Queen came back from Emden with forty-one holes in her and not a scratch on her crew. Sergeant Reilly says the ball turret is the safest seat in the house, because the Germans cannot find him down there. Lieutenant Doyle says nobody else can either. Mission two. Keep it off the interphone once we cross the coast.": "عادت Sky Queen من إمدن وفي هيكلها واحد وأربعون ثقبًا، دون خدش واحد في طاقمها. يقول الرقيب رايلي إن البرج الكروي أكثر المقاعد أمانًا، لأن الألمان لا يستطيعون العثور عليه هناك في الأسفل. ويقول الملازم دويل إن أحدًا غيرهم لا يستطيع ذلك أيضًا. المهمة الثانية. التزموا الصمت على الاتصال الداخلي حالما نعبر الساحل.",
 
     // m3 Flak Alley
-    "The I.G. Farben works at Ludwigshafen is ringed by more than two hundred heavy flak guns. There is nothing you can do about flak but pray — and keep the fighters off us.": "تطوّق مصانعَ «آي. جي. فاربن» في لودفيغسهافن أكثرُ من مئتي قطعة مضادات ثقيلة. لا حيلة لكم أمام نيران المضادات سوى الدعاء — وإبعاد المقاتلات عنا.",
+    "The I.G. Farben works at Ludwigshafen is ringed by more than two hundred heavy flak guns. There is nothing you can do about flak but pray — and keep the fighters off us. The forecast has the overcast breaking up short of the target, so the gunners down there will have a clear view of us.": "تطوّق مصانعَ «آي. جي. فاربن» في لودفيغسهافن أكثرُ من مئتي قطعة مضادات ثقيلة. لا حيلة لكم أمام نيران المضادات سوى الدعاء — وإبعاد المقاتلات عنا. وتتوقّع النشرة الجوية أن تنقشع الغيوم قبل الهدف، فيرانا رماة المدافع في الأسفل بوضوح.",
     "You are right waist gunner. Fighters will hit us on the way in, then pull off when we reach the flak belt. Once bombs are away, they will be back for the cripples.": "أنت رامي الجانب الأيمن. ستضربنا المقاتلات في طريق الذهاب، ثم تنسحب حين نبلغ حزام المضادات. وما إن نُلقي القنابل حتى تعود لاصطياد القاذفات المعطوبة.",
     "Stay at your gun through the bomb run. Do not get out of position.": "الزم رشاشك طوال مسار القصف. لا تغادر موقعك.",
     "Since Schweinfurt the bunks across the aisle have changed names twice. The Lucky Lady never came back from that one, and her crew had been with the Sky Queen since training. Sergeant Mendez has blessed every gun aboard with a Saint Christopher medal. Lieutenant Kessler wants only one thing for Christmas: the aiming point.": "منذ شفاينفورت، تبدّلت أسماء أصحاب الأسرّة على الجانب الآخر من الممر مرتين. لم تعد «Lucky Lady» من تلك المهمة، وكان طاقمها رفيق Sky Queen منذ أيام التدريب. وقد بارك الرقيب منديز كل رشاش على متن الطائرة بميدالية القديس كريستوفر. أما الملازم كيسلر فلا يتمنى في عيد الميلاد إلا شيئًا واحدًا: نقطة التصويب.",
@@ -176,7 +176,7 @@ const table: PhraseTable = {
 
     // m9 Into the Front
     "Until now the bombers have gone into Germany alone the moment the escort ran short of fuel. As of today that changes. The Mustang can reach Kiel and come home again, and you are going all the way with them.": "حتى الآن، كانت القاذفات تتوغّل في ألمانيا وحدها ما إن يشحّ وقود المرافقة. اعتبارًا من اليوم يتغيّر ذلك. موستانغ قادرة على بلوغ كيل والعودة، وأنت سترافقهم طوال الطريق.",
-    "The weather is the worst we have flown in. A front lies across the North Sea from the Frisian Islands to Denmark: towering cloud, icing above eight thousand feet and lightning in the tops. Stay on your leader's wing in the murk. The German fighters will come at the bombers through the gaps.": "هذا أسوأ طقس طرنا فيه. جبهة هوائية تمتد عبر بحر الشمال من الجزر الفريزية حتى الدنمارك: سحب شاهقة، وتجمّد فوق ثمانية آلاف قدم، وبرق في قممها. الزم جناح قائدك وسط العتمة. ستنفذ المقاتلات الألمانية إلى القاذفات عبر الفجوات.",
+    "The weather is the worst we have flown in. A front lies across the North Sea from the Frisian Islands to Denmark: towering cloud, icing above eight thousand feet and lightning in the tops. We take off in clear air, and you will see it ahead long before we reach it. Once we are in, stay on your leader's wing in the murk. The German fighters will come at the bombers through the gaps.": "هذا أسوأ طقس طرنا فيه. جبهة هوائية تمتد عبر بحر الشمال من الجزر الفريزية حتى الدنمارك: سحب شاهقة، وتجمّد فوق ثمانية آلاف قدم، وبرق في قممها. سنقلع في جوّ صافٍ، وسترى الجبهة أمامك قبل أن نبلغها بوقت طويل. وما إن ندخلها حتى تلزم جناح قائدك وسط العتمة. ستنفذ المقاتلات الألمانية إلى القاذفات عبر الفجوات.",
     "The bomber crews are watching you today. The Sky Queen's tail gunner, Sergeant Dawson, has seen too many friends go down after the escort turned for home. He says that if a Mustang sticks with them all the way to Kiel, he will buy its pilot dinner for a month.": "أطقم القاذفات تراقبك اليوم. رامي الذيل في Sky Queen، الرقيب داوسون، رأى أصدقاء كثيرين يسقطون بعد أن عادت المرافقة أدراجها. يقول إنه إن بقيت موستانغ معهم حتى كيل، فسيدعو طيارها إلى العشاء شهرًا كاملًا.",
     "Mouse aim flies the aeroplane where you look. Keep your speed up, do not chase them into the cloud, and stay with the big friends.": "التصويب بالفأرة يوجّه الطائرة إلى حيث تنظر. حافظ على سرعتك، ولا تطاردهم داخل السحب، وابقَ مع الأصدقاء الكبار.",
 
@@ -273,6 +273,10 @@ const table: PhraseTable = {
     "Dusk": "غسق",
     "Overcast": "غائم كليًا",
     "Storm front": "جبهة عاصفة",
+    "Storm front ahead": "جبهة عاصفة في الطريق",
+    "Clearing later": "ينقشع لاحقاً",
+    "Changing": "متقلّب",
+    "Clearing": "انقشاع",
     "Low winter sun": "شمس شتوية منخفضة",
     "Clear": "صافٍ",
     "Broken cloud": "غيوم متقطعة",

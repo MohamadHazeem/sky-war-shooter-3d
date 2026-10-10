@@ -56,6 +56,7 @@ const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).
 function weatherLabel(m: Mission): string {
   const w = m.weather;
   if (!w) return 'Fair';
+  if (w.front) return w.front.to === 'storm' ? 'Storm front ahead' : w.front.to === 'clear' ? 'Clearing later' : 'Changing';
   switch (w.mood) {
     case 'dusk': return 'Dusk';
     case 'night': return 'Night, moonlit';

@@ -96,6 +96,29 @@ describe('config -> mission', () => {
     expect(buildCustomMission(cfg({ mood: 'dusk', sunEl: 50 })).weather!.sunEl).toBe(DUSK_MAX_SUN);
   });
 
+  it('weather front option: off by default, a storm rolls in (or a storm clears) mid-battle', () => {
+    expect(buildCustomMission(cfg()).weather!.front).toBeUndefined();
+    expect(sanitizeConfig({ front: 'yes' }).front).toBe(false);
+    const clear = buildCustomMission(cfg({ mood: 'clear', front: true, roundLength: 120 })).weather!;
+    expect(clear.front).toMatchObject({ to: 'storm', at: 60 });
+    expect(buildCustomMission(cfg({ mood: 'storm', front: true })).weather!.front!.to).toBe('clear');
+    expect(buildCustomMission(cfg({ front: true, roundLength: 360 })).weather!.front!.at).toBe(150);
+    expect(describeConfig(cfg({ mood: 'overcast', front: true }))).toContain('storm front later');
+  });
+
+  it('survival rounds roll for an occasional front, never at night', async () => {
+    const { survivalFront, frontTarget, ROUND_WEATHER } = await import('../src/render/Weather');
+    const seq = (vals: number[]) => { let i = 0; return () => vals[i++ % vals.length]; };
+    expect(survivalFront(ROUND_WEATHER[0], seq([0.9]))).toBeNull();
+    const f = survivalFront(ROUND_WEATHER[0], seq([0.1, 0.5, 0.0]))!;
+    expect(f.to).toBe('storm');
+    expect(f.at).toBeGreaterThanOrEqual(40);
+    expect(survivalFront({ ...ROUND_WEATHER[0], mood: 'night' }, seq([0]))).toBeNull();
+    expect(survivalFront(ROUND_WEATHER[4], seq([0.1, 0.5, 0.0]))!.to).toBe('clear');
+    const t = frontTarget(ROUND_WEATHER[1], { at: 10, to: 'storm' });
+    expect(t).toMatchObject({ mood: 'storm', sunEl: ROUND_WEATHER[1].sunEl, contrails: false });
+  });
+
   it('boss round on/off and which round', () => {
     const off = buildCustomMission(cfg({ rounds: 5, boss: false }));
     expect(off.boss).toBe(false);

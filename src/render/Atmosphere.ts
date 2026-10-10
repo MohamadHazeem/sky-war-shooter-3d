@@ -23,6 +23,7 @@ export const Atmos = {
   highDensity: 1.8,
   cloudAmbient: 0.6,
   envFloor: 1,       // brightness of the cloud-sea floor in the reflection map (Weather: ~0 at night)
+  haze: 1,           // distance-haze length scale (1 = clear air; storms and overcast thicken the murk: < 1)
   windOffset: new THREE.Vector3(), // accumulated wind drift + floating-origin shift
   originOffset: new THREE.Vector3(), // accumulated floating-origin shift only (ground)
   wind: new THREE.Vector3(9, 0, 4),
@@ -42,6 +43,7 @@ export const atmosUniforms = {
   uHorizon: { value: new THREE.Vector3() },
   uGround: { value: new THREE.Vector3() },
   uCamAlt: { value: 7600 },
+  uHaze: { value: 1 },   // Atmos.haze (declared only by the shaders that use it: cloud march, composite, storm wall)
 };
 
 export function syncAtmosUniforms() {
@@ -50,6 +52,7 @@ export function syncAtmosUniforms() {
   atmosUniforms.uZenith.value.set(Atmos.zenith.r, Atmos.zenith.g, Atmos.zenith.b);
   atmosUniforms.uHorizon.value.set(Atmos.horizon.r, Atmos.horizon.g, Atmos.horizon.b);
   atmosUniforms.uGround.value.set(Atmos.ground.r, Atmos.ground.g, Atmos.ground.b);
+  atmosUniforms.uHaze.value = Atmos.haze;
 }
 syncAtmosUniforms();
 

@@ -31,6 +31,7 @@ export interface CustomConfig {
   specials: boolean;       // special events (ace squadron, Zerstörer wave, rocket barrage)
   flak: boolean;           // flak barrage through the middle of every round
   escorts: boolean;        // Mustang wingmen (pilot) / Mustangs joining the box (gunner)
+  front: boolean;          // a weather front rolls through part-way into the battle (Weather.ts)
 }
 
 export const ALL_ENEMIES: EnemyType[] = ['fw190', 'bf109', 'bf110', 'ju88', 'me262', 'me163', 'me410', 'do335', 'he111'];
@@ -63,13 +64,16 @@ const MOOD_SKY: Record<Mood, { low: number; high: number; contrails: boolean }> 
   dusk: { low: 0.62, high: 0.4, contrails: true },
 };
 
+// What a weather front turns each mood into (a storm clears; anything else runs into a storm)
+export const FRONT_TO: Record<Mood, 'clear' | 'storm'> = { clear: 'storm', overcast: 'storm', storm: 'clear', dusk: 'storm' };
+
 export const DUSK_MAX_SUN = 8;            // the red-dusk mood keeps the sun on the horizon
 export const ENDLESS_DURATION = 1e9;      // finite on purpose: an endless custom battle is not Survival
 export const ESCORT_ARRIVE = 45;          // s: the gunner's Mustangs join the box
 
 export const DEFAULT_CONFIG: CustomConfig = {
   role: 'gunner', station: 'waistL', enemies: ['fw190', 'bf109'], min: 3, max: 8, skill: 'veteran',
-  roundLength: 120, rounds: 3, mood: 'clear', sunEl: 45, boss: false, bossRound: 3, specials: true, flak: false, escorts: true,
+  roundLength: 120, rounds: 3, mood: 'clear', sunEl: 45, boss: false, bossRound: 3, specials: true, flak: false, escorts: true, front: false,
 };
 
 const clampInt = (v: unknown, lo: number, hi: number, def: number) => {
@@ -104,15 +108,22 @@ export function sanitizeConfig(raw: unknown): CustomConfig {
     specials: bool(o.specials, d.specials),
     flak: bool(o.flak, d.flak),
     escorts: bool(o.escorts, d.escorts),
+    front: bool(o.front, d.front),
   };
 }
 
-// Sky for a mood and sun elevation (low sun swings round to the west)
-export function customWeather(mood: Mood, sunEl: number): Weather {
+// Sky for a mood and sun elevation (low sun swings round to the west). frontAt: seconds into
+// the battle a weather front arrives (FRONT_TO), none if unset.
+export function customWeather(mood: Mood, sunEl: number, frontAt?: number): Weather {
   const el = mood === 'dusk' ? Math.min(sunEl, DUSK_MAX_SUN) : sunEl;
   const sky = MOOD_SKY[mood];
-  return { sunEl: el, sunAz: el < 20 ? 250 : 200, low: sky.low, high: sky.high, contrails: sky.contrails, mood };
+  const w: Weather = { sunEl: el, sunAz: el < 20 ? 250 : 200, low: sky.low, high: sky.high, contrails: sky.contrails, mood };
+  if (frontAt !== undefined) w.front = { at: frontAt, to: FRONT_TO[mood], duration: 50 };
+  return w;
 }
+
+// When the front arrives: half-way through the first round (45 s at the earliest, 150 s at the latest)
+export const frontArrival = (roundLength: number) => Math.round(Math.min(150, Math.max(45, roundLength * 0.5)));
 
 export function timeOfDayLabel(sunEl: number, mood?: Mood): string {
   if (mood === 'dusk') return 'dusk';
@@ -136,7 +147,8 @@ export function configParts(c: CustomConfig): string[] {
   const rounds = c.rounds === 0 ? `endless ${mmss(c.roundLength)} rounds` : `${c.rounds} × ${mmss(c.roundLength)}`;
   const boss = c.boss ? (c.rounds === 0 ? `battle group every ${c.bossRound} rounds` : `battle group in round ${c.bossRound}`) : '';
   return [who, enemiesLabel(c.enemies), `${c.min}–${c.max} at once`, SKILL_DEF[c.skill].label, rounds,
-    `${MOOD_LABEL[c.mood]}, ${timeOfDayLabel(c.sunEl, c.mood)}`, boss, c.specials ? 'special events' : '', c.flak ? 'flak' : '', c.escorts ? 'escorts' : '']
+    `${MOOD_LABEL[c.mood]}, ${timeOfDayLabel(c.sunEl, c.mood)}`, c.front ? (FRONT_TO[c.mood] === 'storm' ? 'storm front later' : 'clearing later') : '',
+    boss, c.specials ? 'special events' : '', c.flak ? 'flak' : '', c.escorts ? 'escorts' : '']
     .filter(Boolean);
 }
 
@@ -169,7 +181,7 @@ export function buildCustomMission(raw: Partial<CustomConfig> | CustomConfig, te
     escorts: c.role === 'pilot' && c.escorts ? 3 : 0,
     escortArrive: c.role === 'gunner' && c.escorts ? ESCORT_ARRIVE : undefined,
     waves: [],
-    weather: customWeather(c.mood, c.sunEl),
+    weather: customWeather(c.mood, c.sunEl, c.front ? frontArrival(c.roundLength) : undefined),
     round: { duration: c.roundLength, start: 6, min: c.min, max: c.max, skill: [sk.skill[0], sk.skill[1]], rockets: sk.rockets },
     rounds: endless ? Infinity : c.rounds,
     flatRounds: true,

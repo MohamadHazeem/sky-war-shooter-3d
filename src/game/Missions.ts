@@ -98,9 +98,10 @@ export const CAMPAIGN: Mission[] = [
     duration: 180, maxBombersLost: 4,
   },
   {
-    id: 'm3', weather: { sunEl: 15, sunAz: 205, low: 0.56, high: 0.4 }, success: "Bombs on target through the worst flak of the war. The chemical works at Ludwigshafen are in flames.", number: 3, title: 'Flak Alley', target: 'Chemical works, Ludwigshafen', date: '30 December 1943', role: 'gunner', station: 'waistR',
+    // overcast on the way in, breaking up over the Rhine before the bomb run (Weather.ts front)
+    id: 'm3', weather: { sunEl: 15, sunAz: 205, low: 0.9, high: 0.9, contrails: false, mood: 'overcast', front: { at: 55, to: 'clear', duration: 50, low: 0.56, high: 0.4 } }, success: "Bombs on target through the worst flak of the war. The chemical works at Ludwigshafen are in flames.", number: 3, title: 'Flak Alley', target: 'Chemical works, Ludwigshafen', date: '30 December 1943', role: 'gunner', station: 'waistR',
     briefing: [
-      'The I.G. Farben works at Ludwigshafen is ringed by more than two hundred heavy flak guns. There is nothing you can do about flak but pray — and keep the fighters off us.',
+      'The I.G. Farben works at Ludwigshafen is ringed by more than two hundred heavy flak guns. There is nothing you can do about flak but pray — and keep the fighters off us. The forecast has the overcast breaking up short of the target, so the gunners down there will have a clear view of us.',
       'You are right waist gunner. Fighters will hit us on the way in, then pull off when we reach the flak belt. Once bombs are away, they will be back for the cripples.',
       'Stay at your gun through the bomb run. Do not get out of position.',
     ],
@@ -200,11 +201,12 @@ const STORY_MISSIONS: (Mission & { after: string })[] = [
   },
   {
     after: 'm8', id: 'm9', number: 0, title: 'Into the Front', target: 'Escort — Kiel', date: '13 December 1943', role: 'pilot',
-    weather: { sunEl: 18, sunAz: 195, low: 0.97, high: 0.98, contrails: false, mood: 'storm' },
+    // clear air at take-off; the front stands on the horizon ahead and swallows the formation (Weather.ts)
+    weather: { sunEl: 18, sunAz: 195, low: 0.62, high: 0.4, contrails: true, mood: 'clear', front: { at: 110, to: 'storm', duration: 55 } },
     success: 'The Mustangs went all the way to Kiel and back. Somewhere in the Sky Queen, Sergeant Dawson owes a fighter pilot a month of dinners.',
     briefing: [
       'Until now the bombers have gone into Germany alone the moment the escort ran short of fuel. As of today that changes. The Mustang can reach Kiel and come home again, and you are going all the way with them.',
-      'The weather is the worst we have flown in. A front lies across the North Sea from the Frisian Islands to Denmark: towering cloud, icing above eight thousand feet and lightning in the tops. Stay on your leader\'s wing in the murk. The German fighters will come at the bombers through the gaps.',
+      'The weather is the worst we have flown in. A front lies across the North Sea from the Frisian Islands to Denmark: towering cloud, icing above eight thousand feet and lightning in the tops. We take off in clear air, and you will see it ahead long before we reach it. Once we are in, stay on your leader\'s wing in the murk. The German fighters will come at the bombers through the gaps.',
       'The bomber crews are watching you today. The Sky Queen\'s tail gunner, Sergeant Dawson, has seen too many friends go down after the escort turned for home. He says that if a Mustang sticks with them all the way to Kiel, he will buy its pilot dinner for a month.',
       'Mouse aim flies the aeroplane where you look. Keep your speed up, do not chase them into the cloud, and stay with the big friends.',
     ],

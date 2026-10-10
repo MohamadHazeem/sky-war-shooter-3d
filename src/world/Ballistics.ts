@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { weatherNow } from '../render/WeatherState';
 import type { Aircraft, HitZone } from './Aircraft';
 import { TracerRenderer } from '../render/Particles';
 
@@ -161,6 +162,8 @@ export class Ballistics {
     // hot tracers: brighter, shifted toward white-yellow, wider and a touch longer
     const ht = this.playerTracerHeat;
     const hg = 1 + 0.6 * ht, hw = 1 + 0.55 * ht, hl = 1 + 0.25 * ht;
+    // night: the tracer compound burns against a black sky, brighter and wider for the bloom
+    const nt = weatherNow.night, ng = 1 + 1.3 * nt, nw = 1 + 0.7 * nt;
     for (let i = 0; i < this.n; i++) {
       if (!this.tracer[i]) continue;
       const pl = this.player[i] === 1;
@@ -170,11 +173,11 @@ export class Ballistics {
       const x = this.px[i], y = this.py[i], z = this.pz[i];
       // fade slightly as the tracer compound burns out
       // everyone else's tracers a little dimmer than the player's own
-      const k = Math.min(1, this.ttl[i] / 0.6) * (pl ? hg : gf ? 1 : 0.55);
+      const k = Math.min(1, this.ttl[i] / 0.6) * (pl ? hg : gf ? 1 : 0.55) * ng;
       let r = this.col[i * 3] * k, g = this.col[i * 3 + 1] * k, b = this.col[i * 3 + 2] * k;
       if (pl && ht > 0) { g += r * 0.32 * ht; b += r * 0.08 * ht; }
       const wd = gf ? 0.4 : this.cannon[i] ? 0.3 : pl ? 0.17 : 0.09;
-      tr.push(x - this.vx[i] * len, y - this.vy[i] * len, z - this.vz[i] * len, x, y, z, r, g, b, pl ? wd * hw : wd);
+      tr.push(x - this.vx[i] * len, y - this.vy[i] * len, z - this.vz[i] * len, x, y, z, r, g, b, (pl ? wd * hw : wd) * nw);
     }
     tr.end(camera, screenH);
   }

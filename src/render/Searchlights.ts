@@ -54,7 +54,9 @@ function beamMaterial() {
       varying vec3 vV;
       void main() {
         float edge = abs(dot(normalize(vN), normalize(vV)));
-        float along = pow(1.0 - vT, 1.6) * smoothstep(0.0, 0.02, vT);
+        // clamped: vT interpolates a hair past 1 at the open end, and pow() of a negative is NaN
+        // (the bloom spread those NaN pixels into white blobs at the beam tips)
+        float along = pow(clamp(1.0 - vT, 0.0, 1.0), 1.6) * smoothstep(0.0, 0.02, vT);
         float a = uIntensity * along * pow(edge, 1.4);
         gl_FragColor = vec4(uColor * a, a);
       }`,

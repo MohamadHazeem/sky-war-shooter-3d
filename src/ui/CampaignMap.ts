@@ -325,6 +325,7 @@ function roleLabel(m: Mission) {
 function moodLabel(m: Mission) {
   const w = m.weather;
   if (!w) return tx('Fair');
+  if (w.front) return tx(w.front.to === 'storm' ? 'Storm front' : 'Clearing');
   return tx(w.mood === 'dusk' ? 'Dusk' : w.mood === 'overcast' ? 'Overcast' : w.mood === 'storm' ? 'Storm front' : w.sunEl < 16 ? 'Low sun' : 'Clear');
 }
 
