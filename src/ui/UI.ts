@@ -5,6 +5,9 @@ export interface Settings {
   sensitivity: number;
   invertY: boolean;
   volume: number;
+  musicVolume: number;
+  sfxVolume: number;
+  ambVolume: number;
   radio: boolean;
   music: boolean;
   quality: 'low' | 'medium' | 'high';
@@ -300,7 +303,10 @@ export class UI {
       <label class="setting">Difficulty <select data-k="difficulty"><option value="recruit" ${s.difficulty === 'recruit' ? 'selected' : ''}>Recruit (lead indicator)</option><option value="veteran" ${s.difficulty === 'veteran' ? 'selected' : ''}>Veteran</option><option value="ace" ${s.difficulty === 'ace' ? 'selected' : ''}>Ace</option></select></label>
       <label class="setting">Mouse sensitivity <input type="range" min="0.3" max="2.5" step="0.05" data-k="sensitivity" value="${s.sensitivity}"></label>
       <label class="setting">Invert mouse Y <select data-k="invertY"><option value="false">Off</option><option value="true" ${s.invertY ? 'selected' : ''}>On</option></select></label>
-      <label class="setting">Volume <input type="range" min="0" max="1" step="0.05" data-k="volume" value="${s.volume}"></label>
+      <label class="setting">Master volume <input type="range" min="0" max="1" step="0.05" data-k="volume" value="${s.volume}"></label>
+      <label class="setting">Music volume <input type="range" min="0" max="1" step="0.05" data-k="musicVolume" value="${s.musicVolume}"></label>
+      <label class="setting">Effects volume <input type="range" min="0" max="1" step="0.05" data-k="sfxVolume" value="${s.sfxVolume}"></label>
+      <label class="setting">Ambience volume <input type="range" min="0" max="1" step="0.05" data-k="ambVolume" value="${s.ambVolume}"></label>
       <label class="setting">Music <select data-k="music"><option value="true">On</option><option value="false" ${!s.music ? 'selected' : ''}>Off</option></select></label>
       <label class="setting">Radio voices <select data-k="radio"><option value="true">On</option><option value="false" ${!s.radio ? 'selected' : ''}>Subtitles only</option></select></label>
       <label class="setting">Graphics quality <select data-k="quality">${['low', 'medium', 'high'].map((q) => `<option ${s.quality === q ? 'selected' : ''}>${q}</option>`).join('')}</select></label>
@@ -311,7 +317,7 @@ export class UI {
     st.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-k]').forEach((i) => i.addEventListener('input', () => {
       const k = i.dataset.k as keyof Settings;
       let v: any = i.value;
-      if (k === 'sensitivity' || k === 'volume') v = parseFloat(v);
+      if (k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume') v = parseFloat(v);
       if (k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music') v = v === 'true';
       (s as any)[k] = v;
       onChange(s);

@@ -14,6 +14,7 @@ type BufName =
   | 'crack' | 'casing' | 'click' | 'glass' | 'whoosh' | 'static' | 'squelch' | 'rattle' | 'rocket' | 'debris';
 
 const rand = () => Math.random() * 2 - 1;
+const clamp01 = (v: number) => (Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 1);
 
 // One-pole filter helpers for offline synthesis
 class LP { y = 0; constructor(public a: number) {} run(x: number) { this.y += (x - this.y) * this.a; return this.y; } }
@@ -31,6 +32,10 @@ export class Sound {
   private sfx!: GainNode;
   private amb!: GainNode;
   private duck!: GainNode;
+  // Music bus (dry) and its reverb send: both follow the music slider so muting music
+  // also silences its reverb tail.
+  private musicBus!: GainNode;
+  private musicWet!: GainNode;
   private revIn!: ConvolverNode;
   private revOut!: ConvolverNode;
   private revInSend!: GainNode;
@@ -48,6 +53,10 @@ export class Sound {
   private radioBed: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
   readonly music = new Music();
   volume = 0.8;
+  // Per-bus levels (0..1) from the Settings sliders
+  musicVolume = 1;
+  sfxVolume = 1;
+  ambVolume = 1;
   radioEnabled = true;
   musicEnabled = true;
   private lastShot = 0;
@@ -67,8 +76,10 @@ export class Sound {
     // ducking bus for radio/explosions (music + ambience go through it)
     this.duck = ctx.createGain();
     this.duck.connect(this.master);
-    this.sfx = ctx.createGain(); this.sfx.connect(this.master);
-    this.amb = ctx.createGain(); this.amb.connect(this.duck);
+    this.sfx = ctx.createGain(); this.sfx.gain.value = this.sfxVolume; this.sfx.connect(this.master);
+    this.amb = ctx.createGain(); this.amb.gain.value = this.ambVolume; this.amb.connect(this.duck);
+    this.musicBus = ctx.createGain(); this.musicBus.gain.value = this.musicVolume; this.musicBus.connect(this.duck);
+    this.musicWet = ctx.createGain(); this.musicWet.gain.value = this.musicVolume;
     // Reverbs
     this.revIn = ctx.createConvolver(); this.revIn.buffer = this.impulse(0.75, 6.5, true);
     this.revOut = ctx.createConvolver(); this.revOut.buffer = this.impulse(3.8, 1.4, false);
@@ -76,10 +87,11 @@ export class Sound {
     this.revOutSend = ctx.createGain(); this.revOutSend.gain.value = 0.5;
     this.revInSend.connect(this.revIn).connect(this.master);
     this.revOutSend.connect(this.revOut).connect(this.master);
+    this.musicWet.connect(this.revOutSend);
     this.buildBuffers();
     this.startAmbience();
     for (let i = 0; i < 6; i++) this.voices.push(this.makeVoice());
-    this.music.init(ctx, this.duck, this.revOutSend);
+    this.music.init(ctx, this.musicBus, this.musicWet);
     this.music.enabled = this.musicEnabled;
     void this.loadSamples();
     this.setMode(this.mode);
@@ -87,6 +99,22 @@ export class Sound {
 
   setVolume(v: number) { this.volume = v; if (this.master) this.master.gain.value = v; }
   setMusic(on: boolean) { this.musicEnabled = on; this.music.enabled = on; if (!on) this.music.stop(); }
+
+  // Bus levels from the Settings sliders. Before init() they are only remembered and
+  // applied when the graph is built.
+  setMusicVolume(v: number) {
+    this.musicVolume = clamp01(v);
+    this.setBus(this.musicBus, this.musicVolume);
+    this.setBus(this.musicWet, this.musicVolume);
+  }
+  setSfxVolume(v: number) { this.sfxVolume = clamp01(v); this.setBus(this.sfx, this.sfxVolume); }
+  setAmbVolume(v: number) { this.ambVolume = clamp01(v); this.setBus(this.amb, this.ambVolume); }
+
+  // Short smoothing ramp so dragging a slider does not click
+  private setBus(node: GainNode | undefined, v: number) {
+    if (!node || !this.ctx) return;
+    node.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
+  }
 
   // ---------------- synthesis ----------------
   private stereo(len: number, fn: (t: number, ch: number, i: number) => number, normalize = 0.95): AudioBuffer {
