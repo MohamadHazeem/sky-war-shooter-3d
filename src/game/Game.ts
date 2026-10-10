@@ -295,7 +295,7 @@ export class Game {
     this.ui.title({
       campaign: () => this.showCampaign(),
       survival: () => this.ui.survivalMenu(this.progress, (r) => this.showBriefing(survivalMission(r)), () => this.startMenu()),
-      armory: () => this.ui.armory(this.prog, () => this.startMenu()),
+      armory: () => this.ui.hangar(this.prog, 'gunner', { title: 'ARMORY', sub: 'B-17 gunner loadout (P-51 loadout: between rounds)', next: 'Back' }, () => this.startMenu()),
       settings: () => this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => this.startMenu()),
       credits: () => this.ui.credits(() => this.startMenu()),
     });
