@@ -31,7 +31,7 @@ const MAX_VOICES = 8;       // concurrent hit-feedback voices
 const BODY_GAIN = 0.34;
 const TICK_GAIN = 0.2;
 const CRUNCH_GAIN = 0.58;
-const KILL_GAIN = 0.8;
+const KILL_GAIN = 0.55;      // loudness report: ~-11 LUFS-M, under the guns and the kill explosion
 const STAGE_AT = [0.85, 0.65, 0.45, 0.25]; // as DamageStages
 
 const rnd = Math.random;

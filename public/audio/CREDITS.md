@@ -6,15 +6,16 @@ CC0 sounds need no attribution and are listed for provenance. CC BY sounds **mus
 
 ## Music
 
-Music by Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0 License (https://creativecommons.org/licenses/by/4.0/). Edited (trimmed, faded, looped).
+Music by Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0 License (https://creativecommons.org/licenses/by/4.0/). Edited (trimmed, faded, looped). In the game, synthesized drums, brass and strings are layered over the combat and climax loops (adaptive score).
 
 | File | Track | Source | Licence | Edit |
 |---|---|---|---|---|
 | `music_menu.mp3` | "For the Fallen" by Kevin MacLeod | https://incompetech.com/music/royalty-free/mp3-royaltyfree/For%20the%20Fallen.mp3 | CC BY 4.0 | Full piece, trimmed, 3 s fade-out; loops by restarting. |
-| `music_combat.mp3` | "Clenched Teeth" by Kevin MacLeod | https://incompetech.com/music/royalty-free/mp3-royaltyfree/Clenched%20Teeth.mp3 | CC BY 4.0 | 55-bar section (from 0:02) baked into a seamless loop with a 1-bar crossfade. |
+| `music_combat.m4a` | "Clenched Teeth" by Kevin MacLeod | https://incompetech.com/music/royalty-free/mp3-royaltyfree/Clenched%20Teeth.mp3 | CC BY 4.0 | 56-bar section at 166 bpm (from 0:02.9, on a downbeat) baked into a bar-exact loop with a 1-bar crossfade (music_build.mjs). |
 | `music_tension.mp3` | "Constance" by Kevin MacLeod | https://incompetech.com/music/royalty-free/mp3-royaltyfree/Constance.mp3 | CC BY 4.0 | 44-bar section baked into a seamless loop with a 1-bar crossfade. |
 | `music_victory.mp3` | "Long Road Ahead" by Kevin MacLeod | https://incompetech.com/music/royalty-free/mp3-royaltyfree/Long%20Road%20Ahead.mp3 | CC BY 4.0 | Triumphant final ~28 s (from 1:56), 1.5 s fade-in. |
 | `music_defeat.mp3` | "Taps v2" by Kevin MacLeod | https://incompetech.com/music/royalty-free/mp3-royaltyfree/Taps%20v2.mp3 | CC BY 4.0 | First ~28 s (two phrases) with 3 s fade-out. |
+| `music_climax.m4a` | "Heroic Age" by Kevin MacLeod | https://incompetech.com/music/royalty-free/mp3-royaltyfree/Heroic%20Age.mp3 | CC BY 4.0 | 16-bar section at 130 bpm (from 0:54.5, the finale) baked into a bar-exact loop with a 1-bar crossfade (music_build.mjs). |
 
 ## Sound effects and loops (Freesound.org)
 
@@ -91,3 +92,4 @@ Music by Kevin MacLeod (incompetech.com), licensed under Creative Commons: By At
 - "Constance" Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/. Modified.
 - "Long Road Ahead" Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/. Modified.
 - "Taps v2" Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/. Modified.
+- "Heroic Age" Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/. Modified.
