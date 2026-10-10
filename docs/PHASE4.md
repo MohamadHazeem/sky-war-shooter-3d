@@ -40,7 +40,7 @@ Player notes given at the start:
 |---|---|---|
 | 5 | Progression depth (crew levels, medals, dailies, stats, online leaderboard) | Done — career/rank ladder + stats, medals unlock weapons/aircraft, 3 daily orders, online leaderboard |
 | 6 | Campaign 7 → 12 missions with story || Done — 12 missions (m8 Black Thursday, m9 storm escort, m10 dusk straggler, m11 flak bomb run, m12 finale), story through all briefings; boss finales m5/m7/m12 |
-| 7 | Special events (ace squadrons, Zerstörer waves, rocket barrages) | |
+| 7 | Special events (ace squadrons, Zerstörer waves, rocket barrages) || Done — ace squadron (named leader, yellow noses), Zerstörer wave, rocket barrage |
 | 8 | Visual match to Yarnhub reference | |
 | 9 | Cinematics (kill cam, replay, fly-by) || Done — kill cam (special kills, skippable, setting), mission fly-by, best-moment replay |
 | 10 | Pilot mode overhaul | |
@@ -50,7 +50,7 @@ Player notes given at the start:
 | 14 | Arabic (RTL) | |
 | 15 | Cloud save (Firebase) | Done — Firestore profile under a private transfer code; auto-push after missions |
 | 16 | Secure leaderboard | Done — append-only, validated, plausibility-checked, 1 entry / 20 s; live rules test passes |
-| 17 | Smarter enemy tactics | |
+| 17 | Smarter enemy tactics || Done — company-front head-on, pincer, Me 163 slash, Me 262 passes, Ju 88/Bf 110 stand-off rockets, Bf 109 top cover |
 | 18 | Own bomber visible damage + bail-out || Done — skin holes, engine smoke/fire spread, feathering, fuel vapour, torn wingtip/tail, 7.6 s bail-out cinematic |
 | 19 | Weather & time of day | Done — overcast, storm (lightning/thunder), dusk; survival cycles weather per round |
 | 20 | Bombing-run payoff || Done — target city, cloud gap, bomb streams from every bomber, carpet impacts, ground fires/smoke, ground flak |
@@ -80,4 +80,5 @@ Player notes given at the start:
 - 22:13 boss battle group merged; deploy #4. Launched tactics/special events + pacing/modes agents.
 - 22:20 campaign 12 missions + voiced briefings merged.
 - 22:30 touch/gamepad/accessibility + loot/customisation merged.
-- 22:45–23:10 crew, bomber damage, bombing run, cinematics, career/trophies/dailies, pacing+modes, audio pass 2 merged; voice clips for all new lines; CI lockfile fixed.
+- 22:20–22:45 crew, bomber damage, bombing run, cinematics, career/trophies/dailies, pacing+modes, audio pass 2 merged; voice clips for all new lines; CI lockfile fixed.
+- 22:55 tactics + special events merged; frozen regression server (tools/regression_server.sh); graphics, Arabic, share/analytics, pilot agents running.
