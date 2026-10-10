@@ -3,6 +3,7 @@ import { Music } from './Music';
 import { AirframeCreaks } from './Creaks';
 import { Breathing } from './Breathing';
 import { Whizby } from './Whizby';
+import { Interphone } from './Interphone';
 
 // Procedural audio engine (no sample files).
 // - Engines are synthesised as looping firing-pulse trains: Wright R-1820 Cyclones
@@ -53,6 +54,7 @@ export class Sound {
   private voices: Voice[] = [];
   private playerEngine: { src: AudioBufferSourceNode; gain: GainNode; filter: BiquadFilterNode } | null = null;
   private radioBed: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
+  private interphone: Interphone | null = null;
   readonly music = new Music();
   private creaks: AirframeCreaks | null = null;
   private breathing: Breathing | null = null;
@@ -78,6 +80,7 @@ export class Sound {
     this.duck = ctx.createGain();
     this.duck.connect(this.master);
     this.sfx = ctx.createGain(); this.sfx.connect(this.master);
+    this.interphone = new Interphone(ctx, this.sfx);
     this.amb = ctx.createGain(); this.amb.connect(this.duck);
     // Reverbs
     this.revIn = ctx.createConvolver(); this.revIn.buffer = this.impulse(0.75, 6.5, true);
@@ -691,7 +694,8 @@ export class Sound {
     this.duck.gain.setTargetAtTime(1, t + seconds, 0.4);
   }
 
-  radioStatic() { this.play('squelch', null, { gain: 0.25 }); }
+  // Interphone call-click + static burst; the click-off follows automatically
+  radioStatic() { this.interphone?.call(); }
 
   // Alarm bell inside the bomber: a struck-bell partial stack plus a clapper click, rung
   // `strikes` times. Synthesised on the fly (no sample), through the sfx bus and interior reverb.
@@ -762,7 +766,7 @@ export class Sound {
     this.radioBed.gain.gain.setTargetAtTime(on ? 0.035 : 0, t, 0.05);
   }
 
-  stopSpeech() { try { speechSynthesis.cancel(); } catch { /* ignore */ } this.radioBedOn(false); }
+  stopSpeech() { try { speechSynthesis.cancel(); } catch { /* ignore */ } this.radioBedOn(false); this.interphone?.cancel(); }
 }
 
 export const sound = new Sound();

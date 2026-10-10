@@ -12,6 +12,7 @@ import { CAMPAIGN, Mission, survivalMission, SpawnFrom, Wave } from './Missions'
 import { STATIONS } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
 import { DistantBattle } from '../audio/DistantBattle';
+import { INTERPHONE_LEAD_S } from '../audio/Interphone';
 import type { AttackType } from '../world/AI';
 import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
 import * as ThreatRing from '../ui/ThreatRing';
@@ -150,10 +151,13 @@ export class Game {
   private wireWorldEvents() {
     const w = this.world;
     w.events.radio = (speaker, text) => {
-      this.ui.subtitle(speaker, text);
+      // interphone: call-click and static first, then the line and subtitle
       sound.radioStatic();
       const voice = ['Pilot', 'Navigator', 'Tail', 'Top Turret', 'Ball Turret', 'Bombardier', 'Radio', 'Lead', 'Big Friend'].indexOf(speaker);
-      sound.speak(text, Math.max(0, voice));
+      setTimeout(() => {
+        this.ui.subtitle(speaker, text);
+        sound.speak(text, Math.max(0, voice));
+      }, INTERPHONE_LEAD_S * 1000);
     };
     w.events.kill = (victim, byPlayer) => {
       if (victim.team === 'axis') {
