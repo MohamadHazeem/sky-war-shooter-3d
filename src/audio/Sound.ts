@@ -651,6 +651,45 @@ export class Sound {
 
   radioStatic() { this.play('squelch', null, { gain: 0.25 }); }
 
+  // Alarm bell inside the bomber: a struck-bell partial stack plus a clapper click, rung
+  // `strikes` times. Synthesised on the fly (no sample), through the sfx bus and interior reverb.
+  alarmBell(strikes = 4, gap = 0.7, gain = 0.35) {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    const t0 = ctx.currentTime + 0.02;
+    const partials: [number, number, number][] = [ // [frequency ratio, amplitude, decay seconds]
+      [1, 1, 1.9], [2.0, 0.55, 1.4], [2.76, 0.4, 1.0], [4.07, 0.2, 0.6], [5.4, 0.12, 0.35],
+    ];
+    const click = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.012), ctx.sampleRate);
+    const cd = click.getChannelData(0);
+    for (let i = 0; i < cd.length; i++) cd[i] = rand() * Math.exp(-i / 30);
+    const bus = ctx.createGain();
+    bus.gain.value = gain;
+    bus.connect(this.sfx);
+    const send = ctx.createGain(); send.gain.value = 0.5;
+    bus.connect(send).connect(this.revInSend);
+    for (let s = 0; s < strikes; s++) {
+      const t = t0 + s * gap;
+      for (const [ratio, amp, decay] of partials) {
+        const o = ctx.createOscillator();
+        o.type = 'sine';
+        o.frequency.value = 620 * ratio;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(amp, t + 0.002);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+        o.connect(g).connect(bus);
+        o.start(t);
+        o.stop(t + decay + 0.05);
+      }
+      const c = ctx.createBufferSource();
+      c.buffer = click;
+      const cg = ctx.createGain(); cg.gain.value = 0.35;
+      c.connect(cg).connect(bus);
+      c.start(t);
+    }
+  }
+
   speak(text: string, voiceIdx = 0) {
     if (!this.radioEnabled || !('speechSynthesis' in window)) return;
     try {

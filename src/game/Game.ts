@@ -28,6 +28,11 @@ function save(key: string, v: unknown) { try { localStorage.setItem(key, JSON.st
 const _v = new THREE.Vector3();
 const R = () => Math.random() * 2 - 1;
 
+// Bail-out sequence when a gunner's B-17 is shot down (before the debrief)
+const BAIL_SEQ_TIME = 6.5;                            // seconds of sequence
+const BAIL_STRIKES = 4, BAIL_GAP = 0.7;               // alarm bell strikes (each also jolts the camera)
+const BAIL_CHUTES = [0.9, 1.1, 1.4, 1.8, 2.4, 3.1];   // when each crewman's chute is released
+
 export class Game {
   state: State = 'menu';
   readonly world: World;
@@ -44,6 +49,9 @@ export class Game {
   private bombsDropped = false;
   private endTimer = 0;
   private endResult: { success: boolean; reason: string } | null = null;
+  private bailT = -1;     // seconds into the bail-out sequence, -1 when inactive
+  private bailBell = 0;   // alarm strikes rung so far
+  private bailCue = 0;    // crew chutes released so far
   private score = 0;
   private hudAcc = 0;
   private hitMarkerT = 0;
@@ -291,6 +299,7 @@ export class Game {
     this.bombsDropped = false;
     this.endTimer = 0;
     this.endResult = null;
+    this.bailT = -1;
     this.score = 0;
     this.damageT = 0;
     this.engine.post.resetHistory();
@@ -478,7 +487,7 @@ export class Game {
         : cause.startsWith('wing') ? 'A wing was shot off.'
         : cause === 'all engines' ? 'All four engines were knocked out.'
         : 'The Sky Queen was shot down.';
-      this.finish(false, m.role === 'gunner' ? `${why} The crew bailed out over enemy territory.` : pl.pos.y < 300 ? 'Your Mustang flew into the ground.' : 'Your Mustang was shot down.');
+      this.finish(false, m.role === 'gunner' ? `${why} The crew bailed out over enemy territory.` : pl.pos.y < 300 ? 'Your Mustang flew into the ground.' : 'Your Mustang was shot down.', m.role === 'gunner');
       return;
     }
     if (m.role === 'gunner' && w.crewWounded >= 4) {
@@ -532,12 +541,46 @@ export class Game {
     this.bombs = this.bombs.filter((b) => b.life > 0);
   }
 
-  private finish(success: boolean, reason: string) {
+  private finish(success: boolean, reason: string, bailOut = false) {
     if (this.endResult) return;
     this.endResult = { success, reason };
-    this.endTimer = success ? 3.5 : 5;
+    this.endTimer = success ? 3.5 : bailOut ? BAIL_SEQ_TIME : 5;
     this.state = 'ending';
-    this.ui.banner(success ? 'ALL GUNS SECURE' : 'MISSION FAILED', success ? 'Mission complete' : 'Shot down', 3500);
+    if (bailOut) this.startBailOut();
+    else this.ui.banner(success ? 'ALL GUNS SECURE' : 'MISSION FAILED', success ? 'Mission complete' : 'Shot down', 3500);
+  }
+
+  // Gunner's B-17 shot down: the crew bails out before the debrief. Driven from the ending
+  // state, so it freezes with the game; chutes are spawned from the live bomber each time,
+  // so floating-origin rebases stay correct.
+  private startBailOut() {
+    this.bailT = 0;
+    this.bailBell = 0;
+    this.bailCue = 0;
+    this.ui.banner('BAIL OUT! BAIL OUT!', 'Crew, abandon the aircraft', 3000);
+    sound.alarmBell(BAIL_STRIKES, BAIL_GAP);
+  }
+
+  private updateBailOut(dt: number) {
+    this.bailT += dt;
+    // each alarm strike jolts the camera and flashes red
+    if (this.bailBell < BAIL_STRIKES && this.bailT >= this.bailBell * BAIL_GAP) {
+      this.bailBell++;
+      this.trauma = Math.min(1, this.trauma + 0.45);
+      this.damageT = Math.max(this.damageT, 0.6);
+    }
+    while (this.bailCue < BAIL_CHUTES.length && this.bailT >= BAIL_CHUTES[this.bailCue]) {
+      this.bailCue++;
+      this.releaseCrewChute();
+    }
+  }
+
+  private releaseCrewChute() {
+    const b = this.world.player;
+    if (!b || b.remove) return;
+    // crew leave through the waist, bomb bay and tail hatches: scattered along the fuselage
+    const exit = new THREE.Vector3(R() * 3.5, -1.2 + Math.random() * 0.8, -5 + Math.random() * 7);
+    this.world.effects.parachute(b.localToWorld(exit), b.vel.clone().multiplyScalar(0.5));
   }
 
   private showDebrief() {
@@ -630,6 +673,7 @@ export class Game {
       else this.pilot.update(dt);
       if (this.state === 'ending') {
         this.endTimer -= dt;
+        if (this.bailT >= 0) this.updateBailOut(dt);
         if (this.endTimer <= 0) this.showDebrief();
       }
     }
