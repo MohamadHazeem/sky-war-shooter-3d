@@ -130,14 +130,19 @@ export function enemiesLabel(list: readonly EnemyType[]): string {
 
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-// One line for the Survival screen's Custom Battle tab
-export function describeConfig(c: CustomConfig): string {
+// The pieces of the one-line summary (the screen translates each one)
+export function configParts(c: CustomConfig): string[] {
   const who = c.role === 'gunner' ? `B-17 ${SEAT_NAME[c.station]}` : 'P-51 Escort';
   const rounds = c.rounds === 0 ? `endless ${mmss(c.roundLength)} rounds` : `${c.rounds} × ${mmss(c.roundLength)}`;
   const boss = c.boss ? (c.rounds === 0 ? `battle group every ${c.bossRound} rounds` : `battle group in round ${c.bossRound}`) : '';
   return [who, enemiesLabel(c.enemies), `${c.min}–${c.max} at once`, SKILL_DEF[c.skill].label, rounds,
     `${MOOD_LABEL[c.mood]}, ${timeOfDayLabel(c.sunEl, c.mood)}`, boss, c.specials ? 'special events' : '', c.flak ? 'flak' : '', c.escorts ? 'escorts' : '']
-    .filter(Boolean).join(' · ');
+    .filter(Boolean);
+}
+
+// One line for the Survival screen's Custom Battle tab
+export function describeConfig(c: CustomConfig): string {
+  return configParts(c).join(' · ');
 }
 
 export interface MissionText {

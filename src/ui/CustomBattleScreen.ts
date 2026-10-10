@@ -3,7 +3,7 @@
 // Importing this module registers both modes (CustomBattle.ts, Weekly.ts) and their panels.
 import {
   type CustomConfig, type Mood, type Skill, ALL_ENEMIES, CUSTOM_MODE, DUSK_MAX_SUN, LIMITS, MOOD_LABEL, MOODS, SEATS, SKILL_DEF, SKILLS,
-  buildCustomMission, describeConfig, loadConfig, sanitizeConfig, saveConfig, timeOfDayLabel,
+  buildCustomMission, configParts, loadConfig, sanitizeConfig, saveConfig, timeOfDayLabel,
 } from '../game/CustomBattle';
 import {
   WEEKLY_MERIT, WEEKLY_MODE, WEEKLY_NOSE, WEEKLY_NOSE_NAME, fmtWeekCountdown, msUntilNextWeek, weekKey, weeklyCompletions, weeklyDone,
@@ -16,6 +16,10 @@ import { ENEMY_VARIANTS } from '../world/EnemyTypes';
 import { STATIONS } from '../world/B17Layout';
 import { mountLeaderboard } from './LeaderboardPanel';
 import { esc, onBackKey, showLayer } from './serviceCommon';
+import { tx } from '../i18n';
+
+// the set-up summary, each piece translated
+const describe = (c: CustomConfig) => configParts(c).map((p) => tx(p)).join(' · ');
 
 function injectCss() {
   if (document.getElementById('cb-css')) return;
@@ -44,6 +48,8 @@ function injectCss() {
 .cb-f input[type=range] { width: 100%; accent-color: var(--khaki); }
 .cb-f input[type=range]:disabled { opacity: 0.35; }
 .cb-pair { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; font-size: 13px; color: var(--ink-dim); }
+.cb-pair.cb-scale { grid-template-columns: 1fr 1fr 1fr; font-size: 11px; }
+.cb-scale span:nth-child(2) { text-align: center; } .cb-scale span:last-child { text-align: right; }
 .cb-toggles { display: flex; flex-wrap: wrap; gap: 6px; }
 .cb-sum { margin-top: 16px; padding: 10px 12px; border: 1px dashed var(--line); color: var(--ink-dim); font-size: 13px; line-height: 1.5; }
 .cb-note { color: var(--ink-dim); font-size: 13px; margin: 8px 0 0; }
@@ -64,12 +70,22 @@ function injectCss() {
 .wk-card .rw { margin-top: 10px; font-size: 13px; color: var(--ink); }
 .wk-card .rw.done { color: #9fd38a; }
 @media (max-width: 560px) { .wk-card .cd { position: static; text-align: left; margin-bottom: 6px; } }
+/* Arabic: the set-up reads from the right; sliders run right to left (their scale labels follow) */
+html[dir=rtl] #cb-screen .box, html[dir=rtl] .cb-chk, html[dir=rtl] .wk-strip { text-align: right; }
+html[dir=rtl] .cb-scale span:last-child { text-align: left; }
+html[dir=rtl] .cb-summary { border-left: none; border-right: 3px solid var(--khaki); }
+html[dir=rtl] .wk-strip { background: linear-gradient(270deg, rgba(31,47,87,0.55), rgba(0,0,0,0.2)); }
+html[dir=rtl] .wk-card ul { padding-left: 0; padding-right: 18px; }
+html[dir=rtl] .wk-card .cd { right: auto; left: 14px; text-align: left; }
+html[lang=ar] .cb-l, html[lang=ar] .wk-strip .k, html[lang=ar] .wk-card .k { font-family: 'Special Elite', 'Noto Naskh Arabic', monospace; font-size: 13px; }
+html[lang=ar] .cb-chk small { font-size: 12px; line-height: 1.5; }
+@media (max-width: 560px) { html[dir=rtl] .wk-card .cd { text-align: right; } }
 `;
   document.head.appendChild(st);
 }
 
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-const sunLabel = (el: number, mood: Mood) => mood === 'dusk' ? `dusk · ${Math.min(el, DUSK_MAX_SUN)}°` : `${timeOfDayLabel(el)} · ${el}°`;
+const sunLabel = (el: number, mood: Mood) => mood === 'dusk' ? `${tx('dusk')} · ${Math.min(el, DUSK_MAX_SUN)}°` : `${tx(timeOfDayLabel(el))} · ${el}°`;
 
 // ---------------- the set-up screen ----------------
 export interface CustomScreenOpts {
@@ -86,34 +102,34 @@ export function showCustomBattleScreen(o: CustomScreenOpts) {
   const toggle = (key: string, label: string, sub: string) =>
     `<label class="cb-chk" data-tog="${key}"><input type="checkbox" data-k="${key}"/><span>${esc(label)}<small>${esc(sub)}</small></span></label>`;
   el.innerHTML = `<div class="screen-center"><div class="box panel">
-    <div class="kicker">SURVIVAL · YOUR RULES</div><h2 class="h2">Custom Battle</h2>
+    <div class="kicker">${tx('SURVIVAL · YOUR RULES')}</div><h2 class="h2">${tx('Custom Battle')}</h2>
     <div class="cb-grid">
-      <div class="cb-f"><div class="cb-l">Role</div>${seg('role', ['gunner', 'pilot'] as const, (v) => (v === 'gunner' ? 'B-17 Gunner' : 'P-51 Escort'))}</div>
-      <div class="cb-f" data-seatbox><div class="cb-l">Gunner seat</div>${seg('station', SEATS, (v) => STATIONS[v].label)}</div>
-      <div class="cb-f wide"><div class="cb-l">Enemy types <b data-out="enemies"></b></div>
-        <div class="cb-chks">${ALL_ENEMIES.map((t) => `<label class="cb-chk" data-en="${t}"><input type="checkbox" data-enemy="${t}"/><span>${esc(ENEMY_VARIANTS[t].label)}<small>${esc(ENEMY_VARIANTS[t].blurb)}</small></span></label>`).join('')}</div></div>
-      <div class="cb-f"><div class="cb-l">Fighters at once <b data-out="fighters"></b></div>
-        <div class="cb-pair"><span>min</span><input type="range" data-k="min" min="${LIMITS.fighters[0]}" max="${LIMITS.fighters[1]}" step="1"/>
-        <span>max</span><input type="range" data-k="max" min="${LIMITS.fighters[0]}" max="${LIMITS.fighters[1]}" step="1"/></div></div>
-      <div class="cb-f"><div class="cb-l">Enemy skill <b data-out="skill"></b></div>${seg('skill', SKILLS, (v: Skill) => SKILL_DEF[v].label)}</div>
-      <div class="cb-f"><div class="cb-l">Round length <b data-out="roundLength"></b></div>
+      <div class="cb-f"><div class="cb-l">${tx('Role')}</div>${seg('role', ['gunner', 'pilot'] as const, (v) => tx(v === 'gunner' ? 'B-17 Gunner' : 'P-51 Escort'))}</div>
+      <div class="cb-f" data-seatbox><div class="cb-l">${tx('Gunner seat')}</div>${seg('station', SEATS, (v) => tx(STATIONS[v].label))}</div>
+      <div class="cb-f wide"><div class="cb-l">${tx('Enemy types')} <b data-out="enemies"></b></div>
+        <div class="cb-chks">${ALL_ENEMIES.map((t) => `<label class="cb-chk" data-en="${t}"><input type="checkbox" data-enemy="${t}"/><span>${esc(ENEMY_VARIANTS[t].label)}<small>${esc(tx(ENEMY_VARIANTS[t].blurb))}</small></span></label>`).join('')}</div></div>
+      <div class="cb-f"><div class="cb-l">${tx('Fighters at once')} <b data-out="fighters"></b></div>
+        <div class="cb-pair"><span>${tx('min')}</span><input type="range" data-k="min" min="${LIMITS.fighters[0]}" max="${LIMITS.fighters[1]}" step="1"/>
+        <span>${tx('max')}</span><input type="range" data-k="max" min="${LIMITS.fighters[0]}" max="${LIMITS.fighters[1]}" step="1"/></div></div>
+      <div class="cb-f"><div class="cb-l">${tx('Enemy skill')} <b data-out="skill"></b></div>${seg('skill', SKILLS, (v: Skill) => tx(SKILL_DEF[v].label))}</div>
+      <div class="cb-f"><div class="cb-l">${tx('Round length')} <b data-out="roundLength"></b></div>
         <input type="range" data-k="roundLength" min="${LIMITS.roundLength[0]}" max="${LIMITS.roundLength[1]}" step="30"/></div>
-      <div class="cb-f"><div class="cb-l">Rounds <b data-out="rounds"></b></div>
+      <div class="cb-f"><div class="cb-l">${tx('Rounds')} <b data-out="rounds"></b></div>
         <input type="range" data-k="rounds" min="${LIMITS.rounds[0]}" max="${LIMITS.rounds[1]}" step="1"/>
-        <div class="cb-toggles">${toggle('endless', 'Endless', 'until you are shot down')}</div></div>
-      <div class="cb-f"><div class="cb-l">Weather</div>${seg('mood', MOODS, (v) => MOOD_LABEL[v])}</div>
-      <div class="cb-f"><div class="cb-l">Time of day <b data-out="sunEl"></b></div>
-        <input type="range" data-k="sunEl" min="${LIMITS.sunEl[0]}" max="${LIMITS.sunEl[1]}" step="1" aria-label="Sun elevation: dawn to noon"/>
-        <div class="cb-pair" style="grid-template-columns:1fr 1fr 1fr;font-size:11px"><span>dawn / dusk</span><span style="text-align:center">morning</span><span style="text-align:right">noon</span></div></div>
-      <div class="cb-f"><div class="cb-l">Battle group <b data-out="boss"></b></div>
-        <div class="cb-toggles">${toggle('boss', 'Boss round', 'giant flying warships')}</div>
-        <input type="range" data-k="bossRound" min="1" max="10" step="1" aria-label="Boss round"/></div>
-      <div class="cb-f"><div class="cb-l">Extras</div>
-        <div class="cb-toggles">${toggle('specials', 'Special events', 'aces, Zerstörer, rockets')}${toggle('flak', 'Flak', 'mid-round barrage')}${toggle('escorts', 'Escorts', 'Mustangs on your side')}</div></div>
+        <div class="cb-toggles">${toggle('endless', tx('Endless'), tx('until you are shot down'))}</div></div>
+      <div class="cb-f"><div class="cb-l">${tx('Weather')}</div>${seg('mood', MOODS, (v) => tx(MOOD_LABEL[v]))}</div>
+      <div class="cb-f"><div class="cb-l">${tx('Time of day')} <b data-out="sunEl"></b></div>
+        <input type="range" data-k="sunEl" min="${LIMITS.sunEl[0]}" max="${LIMITS.sunEl[1]}" step="1" aria-label="${tx('Sun elevation: dawn to noon')}"/>
+        <div class="cb-pair cb-scale"><span>${tx('dawn / dusk')}</span><span>${tx('morning')}</span><span>${tx('noon')}</span></div></div>
+      <div class="cb-f"><div class="cb-l">${tx('Battle group')} <b data-out="boss"></b></div>
+        <div class="cb-toggles">${toggle('boss', tx('Boss round'), tx('giant flying warships'))}</div>
+        <input type="range" data-k="bossRound" min="1" max="10" step="1" aria-label="${tx('Boss round')}"/></div>
+      <div class="cb-f"><div class="cb-l">${tx('Extras')}</div>
+        <div class="cb-toggles">${toggle('specials', tx('Special events'), tx('aces, Zerstörer, rockets'))}${toggle('flak', tx('Flak'), tx('mid-round barrage'))}${toggle('escorts', tx('Escorts'), tx('Mustangs on your side'))}</div></div>
     </div>
     <div class="cb-sum" data-sum></div>
-    <p class="cb-note">Custom battles are not posted to the online leaderboards. Your last set-up is kept.</p>
-    <div class="cb-actions"><button class="btn ghost" data-back>Back</button><button class="btn ghost" data-reset>Defaults</button><button class="btn" data-start>Start</button></div>
+    <p class="cb-note">${tx('Custom battles are not posted to the online leaderboards. Your last set-up is kept.')}</p>
+    <div class="cb-actions"><button class="btn ghost" data-back>${tx('Back')}</button><button class="btn ghost" data-reset>${tx('Defaults')}</button><button class="btn" data-start>${tx('Start')}</button></div>
   </div></div>`;
 
   const q = <T extends HTMLElement>(s: string) => el.querySelector<T>(s)!;
@@ -145,14 +161,14 @@ export function showCustomBattleScreen(o: CustomScreenOpts) {
     tog('specials').checked = c.specials; tog('flak').checked = c.flak; tog('escorts').checked = c.escorts;
     el.querySelectorAll<HTMLElement>('[data-tog]').forEach((t) => t.classList.toggle('on', tog(t.dataset.tog!).checked));
     const out = (k: string, s: string) => (q<HTMLElement>(`[data-out="${k}"]`).textContent = s);
-    out('enemies', `${c.enemies.length} of ${ALL_ENEMIES.length}`);
-    out('fighters', `${c.min}–${c.max}`);
-    out('skill', SKILL_DEF[c.skill].label);
+    out('enemies', tx('{n} of {total}', { n: c.enemies.length, total: ALL_ENEMIES.length }));
+    out('fighters', tx('{min}–{max}', { min: c.min, max: c.max }));
+    out('skill', tx(SKILL_DEF[c.skill].label));
     out('roundLength', mmss(c.roundLength));
-    out('rounds', c.rounds === 0 ? 'endless' : String(c.rounds));
+    out('rounds', c.rounds === 0 ? tx('endless') : String(c.rounds));
     out('sunEl', sunLabel(c.sunEl, c.mood));
-    out('boss', !c.boss ? 'off' : c.rounds === 0 ? `round ${c.bossRound}, then every ${c.bossRound}` : `round ${c.bossRound}`);
-    q<HTMLElement>('[data-sum]').textContent = describeConfig(c);
+    out('boss', !c.boss ? tx('off') : tx(c.rounds === 0 ? 'round {n}, then every {n}' : 'round {n}', { n: c.bossRound }));
+    q<HTMLElement>('[data-sum]').textContent = describe(c);
     saveConfig(c);
   };
 
@@ -196,9 +212,9 @@ function backToSurvival(refresh: () => void) {
 CUSTOM_MODE.panel = function draw(body, onPick) {
   injectCss();
   const c = loadConfig();
-  body.innerHTML = `<p>${esc(CUSTOM_MODE.blurb)}</p>
-    <div class="cb-summary"><div class="cb-l" style="margin-bottom:4px">Last set-up</div>${esc(describeConfig(c))}</div>
-    <div class="row"><button class="btn" data-cb-setup>Set up battle</button><button class="btn ghost" data-cb-fly>Fly last set-up</button></div>`;
+  body.innerHTML = `<p>${esc(tx(CUSTOM_MODE.blurb))}</p>
+    <div class="cb-summary"><div class="cb-l" style="margin-bottom:4px">${tx('Last set-up')}</div>${esc(describe(c))}</div>
+    <div class="row"><button class="btn" data-cb-setup>${tx('Set up battle')}</button><button class="btn ghost" data-cb-fly>${tx('Fly last set-up')}</button></div>`;
   body.querySelector('[data-cb-fly]')!.addEventListener('click', () => onPick(buildCustomMission(loadConfig())));
   body.querySelector('[data-cb-setup]')!.addEventListener('click', () => showCustomBattleScreen({
     start: onPick,
@@ -211,7 +227,7 @@ function tickCountdown(el: HTMLElement, sel: string) {
   const t = setInterval(() => {
     const out = el.querySelector(sel);
     if (!out || !el.isConnected || !el.closest('.layer.show')) { clearInterval(t); return; }
-    out.textContent = fmtWeekCountdown(msUntilNextWeek());
+    out.textContent = tx(fmtWeekCountdown(msUntilNextWeek()));
   }, 20000);
 }
 
@@ -223,27 +239,27 @@ WEEKLY_MODE.panel = (body, onPick) => {
   const ribbons = prog ? weeklyCompletions(prog) : 0;
   const haveNose = !!prog?.unlocked.has(WEEKLY_NOSE);
   const lines = [
-    `${c.rounds} rounds of ${mmss(c.roundLength)} · ${c.min}–${c.max} fighters at once · ${SKILL_DEF[c.skill].label} skill`,
-    `${MOOD_LABEL[c.mood]} · ${timeOfDayLabel(c.sunEl, c.mood)}${c.boss ? ` · battle group in round ${c.bossRound}` : ''}`,
-    [c.specials ? 'special events' : 'no special events', c.flak ? 'flak' : 'no flak', c.escorts ? 'escorts' : 'no escorts'].join(' · '),
-    `Gunners fly the ${STATIONS[c.station].label.toLowerCase()} · the enemy schedule is the same for every crew all week`,
+    tx('{r} rounds of {len} · {min}–{max} fighters at once · {skill} skill', { r: c.rounds, len: mmss(c.roundLength), min: c.min, max: c.max, skill: tx(SKILL_DEF[c.skill].label) }),
+    `${tx(MOOD_LABEL[c.mood])} · ${tx(timeOfDayLabel(c.sunEl, c.mood))}${c.boss ? tx(' · battle group in round {n}', { n: c.bossRound }) : ''}`,
+    [c.specials ? 'special events' : 'no special events', c.flak ? 'flak' : 'no flak', c.escorts ? 'escorts' : 'no escorts'].map((x) => tx(x)).join(' · '),
+    tx('Gunners fly the {seat} · the enemy schedule is the same for every crew all week', { seat: tx(STATIONS[c.station].label).toLowerCase() }),
   ];
   body.innerHTML = `<div class="wk-card">
-      <div class="cd">NEXT SCENARIO IN<b data-wk-cd>${fmtWeekCountdown(msUntilNextWeek())}</b></div>
-      <div class="k">WEEKLY CHALLENGE · WEEK ${s.week}, ${s.year}</div>
-      <h3>Operation ${esc(s.operation)}</h3>
-      <div class="hl">${esc(s.headline)}</div>
+      <div class="cd">${tx('NEXT SCENARIO IN')}<b data-wk-cd>${tx(fmtWeekCountdown(msUntilNextWeek()))}</b></div>
+      <div class="k">${tx('WEEKLY CHALLENGE · WEEK {w}, {y}', { w: s.week, y: s.year })}</div>
+      <h3>${esc(tx(`Operation ${s.operation}`))}</h3>
+      <div class="hl">${esc(tx(s.headline))}</div>
       <ul>${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>
       <div class="rw ${done ? 'done' : ''}">${done
-        ? `✔ Completed this week · ${ribbons} weekly ribbon${ribbons === 1 ? '' : 's'}`
-        : `Reward for completing it: +${WEEKLY_MERIT} merit, a weekly ribbon${haveNose ? '' : ` and the <b>${esc(WEEKLY_NOSE_NAME)}</b> nose art (weekly-only)`}`}</div>
+        ? (ribbons === 1 ? tx('✔ Completed this week · 1 weekly ribbon') : tx('✔ Completed this week · {n} weekly ribbons', { n: ribbons }))
+        : `${tx('Reward for completing it: +{n} merit, a weekly ribbon', { n: WEEKLY_MERIT })}${haveNose ? '' : tx(' and the <b>{name}</b> nose art (weekly-only)', { name: esc(tx(WEEKLY_NOSE_NAME)) })}`}</div>
     </div>
-    <div class="row"><button class="btn" data-wk-role="gunner">B-17 Gunner</button><button class="btn" data-wk-role="pilot">P-51 Escort</button></div>
+    <div class="row"><button class="btn" data-wk-role="gunner">${tx('B-17 Gunner')}</button><button class="btn" data-wk-role="pilot">${tx('P-51 Escort')}</button></div>
     <div data-boards></div>`;
   body.querySelectorAll<HTMLButtonElement>('[data-wk-role]').forEach((b) => b.addEventListener('click', () => onPick(weeklyMission(b.dataset.wkRole as 'gunner' | 'pilot', key))));
   const boards = body.querySelector<HTMLElement>('[data-boards]')!;
-  mountLeaderboard(boards, weeklyMode('gunner', key), `WEEK ${s.week} · B-17 GUNNER · TOP 10`);
-  mountLeaderboard(boards, weeklyMode('pilot', key), `WEEK ${s.week} · P-51 ESCORT · TOP 10`);
+  mountLeaderboard(boards, weeklyMode('gunner', key), tx(`WEEK ${s.week} · B-17 GUNNER · TOP 10`));
+  mountLeaderboard(boards, weeklyMode('pilot', key), tx(`WEEK ${s.week} · P-51 ESCORT · TOP 10`));
   tickCountdown(body, '[data-wk-cd]');
 };
 
@@ -254,7 +270,7 @@ PANEL_HEADERS.push((el, open, tab) => {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = 'wk-strip';
-  b.innerHTML = `<span class="k">WEEKLY CHALLENGE</span><span class="t">${esc(s.headline)}</span><span class="c">ends in <span data-wk-cd>${fmtWeekCountdown(msUntilNextWeek())}</span></span>`;
+  b.innerHTML = `<span class="k">${tx('WEEKLY CHALLENGE')}</span><span class="t">${esc(tx(s.headline))}</span><span class="c">${tx('ends in')} <span data-wk-cd>${tx(fmtWeekCountdown(msUntilNextWeek()))}</span></span>`;
   b.addEventListener('click', () => open('weekly'));
   el.appendChild(b);
   tickCountdown(b, '[data-wk-cd]');

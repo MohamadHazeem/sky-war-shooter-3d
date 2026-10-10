@@ -99,3 +99,8 @@ html[dir=rtl] kbd, html[dir=rtl] .hud-big, html[dir=rtl] .instr .v, html[dir=rtl
 html[dir=rtl] .stat .v { text-align: right; }
 /* service record and trophy progress bars fill from the right */
 html[dir=rtl] .tro-bar i, html[dir=rtl] .svc-bar i { inset: 0 0 0 auto; }
+
+/* grouped title menu (UI.organizeMenu): the 2-column grid already flows from the right; the hover
+   nudge and the divider under the play modes mirror with it */
+html[dir=rtl] #title .menu.grouped > button.sec:hover, html[dir=rtl] #title .menu.grouped > button.sec:focus-visible { padding-left: 0; padding-right: 4px; }
+html[dir=rtl] #title .menu.grouped::after { background: linear-gradient(270deg, rgba(200,185,140,0.45), rgba(200,185,140,0)); }

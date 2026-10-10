@@ -13,6 +13,7 @@ import {
   Recorder, type ClipData, type EntityMeta, findFrame, samplePose, sampleCamera, sliceClip, markLabel,
   MAX_ENT, GUN_SLOTS, F_ALIVE, F_FIRE, stageOf, EV_KILL, EV_EXPLOSION, EV_FLAK, MK_KILL,
 } from './Recorder';
+import { tx } from '../i18n';
 import { TheatreScreen, SPEEDS, type CamMode, type PhotoSettings, type TheatreControl, type TimelineMark, type AircraftItem, type MomentItem } from '../ui/TheatreScreen';
 
 // Replay theatre (Phase 5 goal 16).
@@ -209,7 +210,7 @@ export class Theatre implements TheatreControl {
     const b = document.createElement('button');
     b.className = 'btn ghost';
     b.dataset.theatre = '1';
-    b.textContent = 'Replay theatre';
+    b.textContent = tx('Replay theatre');
     b.addEventListener('click', () => this.openLive());
     row.prepend(b);
   }
@@ -223,7 +224,7 @@ export class Theatre implements TheatreControl {
     if (!menu || menu.querySelector('[data-a="theatre"]')) return;
     const b = document.createElement('button');
     b.dataset.a = 'theatre';
-    b.innerHTML = 'Theatre <small>saved moments</small>';
+    b.innerHTML = `${tx('Theatre')} <small>${tx('saved moments')}</small>`;
     b.addEventListener('click', () => this.openLibrary());
     const settings = menu.querySelector('[data-a="settings"]');
     menu.insertBefore(b, settings);
