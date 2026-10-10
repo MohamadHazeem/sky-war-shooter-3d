@@ -9,6 +9,7 @@ const R = () => Math.random() * 2 - 1;
 interface Debris { mesh: THREE.Object3D; vel: THREE.Vector3; spin: THREE.Vector3; life: number; smoke: boolean; fire: boolean }
 interface Chute { obj: THREE.Group; vel: THREE.Vector3; life: number; open: number; phase: number }
 interface Light { light: THREE.PointLight; life: number; max: number; intensity: number }
+interface PendingFlak { t: number; pos: THREE.Vector3; scale: number }
 
 // Visual effects layer: smoke/fire/flash particles, debris, falling drop tanks, parachutes.
 export class Effects {
@@ -18,6 +19,7 @@ export class Effects {
   private chutes: Chute[] = [];
   private lights: Light[] = [];
   private lightPool: THREE.PointLight[] = [];
+  private pendingFlak: PendingFlak[] = [];
   private debrisGeo = [
     new THREE.BoxGeometry(0.9, 0.05, 0.5),
     new THREE.BoxGeometry(0.4, 0.04, 1.2),
@@ -155,15 +157,38 @@ export class Effects {
     this.spawnDebris(pos, vel, Math.floor(12 * scale), true);
   }
 
+  // Flak burst: a bright core, a spray of fast glowing fragments, and 3-6 dark puffs of
+  // varying size and darkness. Sometimes a smaller second burst follows a moment later.
   flak(pos: THREE.Vector3) {
-    this.flashLight(pos, 700, 0.15, 0xffaa66);
-    this.glow.spawn({ pos, life: 0.12, size0: 6, size1: 14, color0: [40, 22, 8], alpha0: 1, alpha1: 0, frame: 1 });
-    this.glow.spawn({ pos, life: 0.35, size0: 5, size1: 10, color0: [9, 3.5, 0.8], alpha0: 1, alpha1: 0, frame: 2, rotVel: 2 });
-    this.glow.spawn({ pos, life: 0.3, size0: 3, size1: 40, color0: [3, 2.6, 2.2], alpha0: 0.7, alpha1: 0, frame: 3, rotVel: 0 });
-    for (let i = 0; i < 9; i++) {
-      _v.set(R(), R() * 0.6, R()).multiplyScalar(5 + Math.random() * 6);
-      _p.copy(pos).addScaledVector(_v, 0.3);
-      this.smoke.spawn({ pos: _p, vel: _v, life: 14 + Math.random() * 8, size0: 5, size1: 16 + Math.random() * 6, color0: [0.03, 0.03, 0.03], color1: [0.12, 0.12, 0.12], alpha0: 0.95, alpha1: 0, drag: 1.6, rise: 0.2, lit: true });
+    this.flakBurst(pos, 1, true);
+    if (Math.random() < 0.3) {
+      _v.set(R(), R() * 0.5 + 0.2, R()).normalize().multiplyScalar(8 + Math.random() * 8);
+      this.pendingFlak.push({ t: 0.2 + Math.random() * 0.35, pos: pos.clone().add(_v), scale: 0.55 + Math.random() * 0.25 });
+    }
+  }
+
+  private flakBurst(pos: THREE.Vector3, scale: number, core: boolean) {
+    this.flashLight(pos, 700 * scale, 0.15, 0xffaa66);
+    if (core) this.glow.spawn({ pos, life: 0.12, size0: 6, size1: 14, color0: [40, 22, 8], alpha0: 1, alpha1: 0, frame: 1 });
+    this.glow.spawn({ pos, life: 0.35, size0: 5 * scale, size1: 10 * scale, color0: [9, 3.5, 0.8], alpha0: 1, alpha1: 0, frame: 2, rotVel: 2 });
+    this.glow.spawn({ pos, life: 0.3, size0: 3 * scale, size1: 40 * scale, color0: [3, 2.6, 2.2], alpha0: 0.7, alpha1: 0, frame: 3, rotVel: 0 });
+    // fragment spray: hot streaks thrown out fast, bent down by gravity and slowed by drag
+    const nF = Math.round((8 + Math.random() * 7) * scale);
+    for (let i = 0; i < nF; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar((40 + Math.random() * 60) * scale);
+      const hot = 0.6 + Math.random() * 0.6;
+      this.glow.spawn({ pos, vel: _v, life: 0.12 + Math.random() * 0.2, size0: 0.22 * scale, size1: 0.04, color0: [30 * hot, 18 * hot, 6 * hot], color1: [8, 2, 0.5], alpha0: 1, alpha1: 0, frame: 1, drag: 2.5, rise: -9 });
+    }
+    // 3-6 sub-puffs scattered around the burst centre, each with its own size and darkness
+    const nP = 3 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < nP; i++) {
+      _v.set(R() * 4, R() * 1.5 + 1, R() * 4);
+      _p.copy(pos).addScaledVector(_v, scale);
+      const k = 0.7 + Math.random() * 0.7;
+      const g = 0.015 + Math.random() * 0.07;
+      _v.set(R(), R() * 0.6, R()).multiplyScalar((5 + Math.random() * 6) * scale);
+      this.smoke.spawn({ pos: _p, vel: _v, life: 12 + Math.random() * 10, size0: 4.5 * k * scale, size1: (13 + Math.random() * 9) * k * scale,
+        color0: [g, g, g], color1: [g + 0.06, g + 0.06, g + 0.06], alpha0: 0.85 + Math.random() * 0.15, alpha1: 0, drag: 1.6, rise: 0.2, lit: true });
     }
   }
 
@@ -220,11 +245,16 @@ export class Effects {
     this.smoke.rebase(off);
     this.glow.rebase(off);
     for (const l of this.lights) l.light.position.sub(off);
+    for (const p of this.pendingFlak) p.pos.sub(off);
   }
 
   update(dt: number) {
     this.smoke.update(dt);
     this.glow.update(dt);
+    if (this.pendingFlak.length) {
+      for (const p of this.pendingFlak) { p.t -= dt; if (p.t <= 0) this.flakBurst(p.pos, p.scale, false); }
+      this.pendingFlak = this.pendingFlak.filter((p) => p.t > 0);
+    }
     for (const l of this.lights) {
       l.life -= dt;
       l.light.intensity = Math.max(0, l.intensity * (l.life / l.max));
@@ -273,5 +303,6 @@ export class Effects {
     this.debris = []; this.chutes = [];
     for (const l of this.lights) { l.light.intensity = 0; l.light.userData.free = true; }
     this.lights = [];
+    this.pendingFlak = [];
   }
 }
