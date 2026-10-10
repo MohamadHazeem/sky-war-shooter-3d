@@ -76,6 +76,7 @@ export class World implements WorldView {
   playerExplosive = 0;        // perk: chance a player hit explodes for triple damage
   playerSplash = 0;           // cannon shells: extra structure damage per hit
   enemyAimMult = 1;           // perk: >1 spoils the enemy's aim
+  crewWoundMult = 1; extinguishChance = 0.75; extinguisherBottles = 1; // skill tree (SkillRuntime.ts)
   // Action flying: the whole box drifts and climbs, and the player's ship jinks under attack
   private formOff = new THREE.Vector3();
   private formRoll = 0;
@@ -515,7 +516,7 @@ export class World implements WorldView {
       if (t === this.playerBomber && this.playerStation) {
         // Rounds hitting the section of fuselage you are standing in can wound you
         const near = e.point.distanceTo(t.localToWorld(this.playerStation.pivot, _v)) < 2.2;
-        if (near && this.time - this.lastWound > 18 && Math.random() < (heavy ? 0.05 : 0.006)) {
+        if (near && this.time - this.lastWound > 18 && Math.random() < (heavy ? 0.05 : 0.006) * this.crewWoundMult) {
           this.lastWound = this.time;
           this.crewWounded++;
           this.crew.wound(STATION_CREW[this.playerStation.id]);
@@ -524,7 +525,7 @@ export class World implements WorldView {
         if (near && Math.random() < 0.3) sound.play('glass', null, { gain: 0.4 });
       }
       // Heavy cannon hits on the bomber can also wound a crewman elsewhere in the ship (rare, spaced out)
-      if (t === this.playerBomber && heavy && this.time - this.lastCrewWound > 25 && Math.random() < 0.008) this.woundCrewman();
+      if (t === this.playerBomber && heavy && this.time - this.lastCrewWound > 25 && Math.random() < 0.008 * this.crewWoundMult) this.woundCrewman();
     } else if (e.playerShot) {
       sound.play('hit', e.point, { gain: 0.35, delay: false, ref: 60 });
       playRicochet(e.point);
@@ -753,11 +754,11 @@ export class World implements WorldView {
         this.fireTimers.set(key, t);
         if (t > 0.1 && t - dt <= 0.1) this.callout('fire' + key, 'Top Turret', `Fire in number ${z.engine + 1} engine!`, 1, 3);
         if (t > 4.5) {
-          const bottles = this.extinguishers.get(key) ?? 1;
+          const bottles = this.extinguishers.get(key) ?? this.extinguisherBottles;
           this.fireTimers.set(key, -6); // next attempt (if any) later
           if (bottles > 0) {
             this.extinguishers.set(key, bottles - 1);
-            if (Math.random() < 0.75) { z.burning = false; this.fireTimers.delete(key); this.callout('fireout' + key, 'Pilot', `Extinguisher's in. Fire's out on number ${z.engine + 1}.`, 1, 3); }
+            if (Math.random() < this.extinguishChance) { z.burning = false; this.fireTimers.delete(key); this.callout('fireout' + key, 'Pilot', `Extinguisher's in. Fire's out on number ${z.engine + 1}.`, 1, 3); }
             else this.callout('firestill' + key, 'Pilot', `Extinguisher didn't take! Number ${z.engine + 1} is still burning!`, 1, 3);
           }
         }

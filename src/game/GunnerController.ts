@@ -59,6 +59,7 @@ export class GunnerController {
   // barrel (overdrive 0..1 is the visual intensity); Focus = bullet-time, where aimTimeScale
   // (1 / engine.timeScale) keeps the gun traverse and sight responsive in real time.
   heatFree = false;
+  noOverheat = false; // skill tree Iron Lungs: at full heat the gun slows to 75% instead of seizing
   overdrive = 0;
   aimTimeScale = 1;
   private odGlow = new Map<GunModel, THREE.Mesh>();
@@ -410,7 +411,7 @@ export class GunnerController {
     } else this.beltTickT = 0;
     const guns = this.guns[this.station]!;
     const W = this.loadout.weapon;
-    const rate = W.rate * this.loadout.rate * this.rateBoost;
+    const rate = W.rate * this.loadout.rate * this.rateBoost * (this.noOverheat && s.heat > 0.97 ? 0.75 : 1);
     if (wantFire) {
       while (this.cooldown <= 0) {
         this.cooldown += 1 / rate;
@@ -419,7 +420,8 @@ export class GunnerController {
         this.shotCount++;
         // unlimited belts: the counter never runs down
         if (!this.heatFree) s.heat += W.heat * this.loadout.heat;
-        if (s.heat >= 1) { s.overheated = true; this.onNotice?.('BARREL OVERHEATED — let it cool'); this.world.callout('hot', 'Pilot', 'Short bursts! You\'ll burn out that barrel!', 15); }
+        if (s.heat >= 1 && this.noOverheat) s.heat = 1;
+        else if (s.heat >= 1) { s.overheated = true; this.onNotice?.('BARREL OVERHEATED — let it cool'); this.world.callout('hot', 'Pilot', 'Short bursts! You\'ll burn out that barrel!', 15); }
         if (s.ammo <= 0) break;
       }
     } else if (this.cooldown < 0) this.cooldown = 0;

@@ -24,9 +24,14 @@ const MUSTANG_INBOUND = 4; // seconds of dive before the sweep proper
 // Game hooks: new Abilities(...) in the constructor, reset(role) in startMission and
 // update(dt) in frame() just after the kill slow-motion block (so Focus can override the
 // time scale and Overdrive can raise the gunner's rateBoost after Game sets it).
+// Skill tree (Skills.ts / SkillRuntime.ts): setTuning() scales cooldowns and durations; with
+// odKillExtend each kill during Overdrive adds that many seconds to it (Iron Lungs).
 
 export type AbilityId = 'mustangs' | 'overdrive' | 'focus';
 type Role = 'gunner' | 'pilot';
+
+export interface AbilityTuning { cooldown: number; duration: Record<AbilityId, number>; odKillExtend: number }
+export const neutralTuning = (): AbilityTuning => ({ cooldown: 1, duration: { mustangs: 1, overdrive: 1, focus: 1 }, odKillExtend: 0 });
 
 interface Def { id: AbilityId; name: string; cooldown: number; duration: number; killCharge: number; startCd: number; keys: Record<Role, [string, string]> }
 
@@ -68,6 +73,7 @@ export class Abilities {
   private tipShown = false;
   private missionT = 0;
   onUse?: (id: AbilityId) => void;   // anonymous gameplay stats (net/Analytics.ts)
+  private tuning: AbilityTuning = neutralTuning();
 
   constructor(private engine: Engine, private input: Input, private ui: UI, private game: Game) {}
 
@@ -82,7 +88,7 @@ export class Abilities {
     this.tipShown = false;
     this.missionT = 0;
     for (const s of this.slots) {
-      s.cd = s.def.startCd; s.active = 0;
+      s.cd = s.def.startCd * this.tuning.cooldown; s.active = 0;
       s.view.key = s.def.keys[role][1];
       s.view.ready = s.cd <= 0;
     }
@@ -92,6 +98,11 @@ export class Abilities {
 
   get(id: AbilityId) { return this.slots.find((s) => s.def.id === id)!; }
 
+  // Skill tree: cooldown and duration multipliers (applied from the next trigger / reset)
+  setTuning(t: AbilityTuning) { this.tuning = t; }
+  cooldownOf(s: Slot) { return s.def.cooldown * this.tuning.cooldown; }
+  durationOf(s: Slot) { return s.def.id === 'mustangs' ? s.def.duration : s.def.duration * this.tuning.duration[s.def.id]; }
+
   // Trigger an ability (keys, or the dev console: sws.game.abilities.trigger('focus')).
   // force skips the cooldown check (testing).
   trigger(id: AbilityId, force = false): boolean {
@@ -99,8 +110,8 @@ export class Abilities {
     const g = this.game, w = g.world;
     if (g.state !== 'playing' || g.photo.active || !w.player?.alive) return false;
     if (!force && (s.cd > 0 || s.active > 0)) { this.bar.deny(id); playAbilityDenied(); return false; }
-    s.cd = s.def.cooldown;
-    s.active = s.def.duration;
+    s.cd = this.cooldownOf(s);
+    s.active = this.durationOf(s);
     s.view.ready = false;
     if (id === 'mustangs') this.callMustangs();
     else if (id === 'overdrive') this.startOverdrive();
@@ -131,6 +142,8 @@ export class Abilities {
     if (kills > this.lastKills) {
       const n = kills - this.lastKills;
       for (const s of this.slots) if (s.cd > 0) s.cd = Math.max(0, s.cd - s.def.killCharge * n);
+      const od = this.slots[1];
+      if (this.tuning.odKillExtend > 0 && od.active > 0) od.active = Math.min(this.durationOf(od), od.active + this.tuning.odKillExtend * n);
     }
     this.lastKills = kills;
 
@@ -149,9 +162,9 @@ export class Abilities {
       const ready = s.cd <= 0 && s.active <= 0;
       if (ready && !s.view.ready && g.state === 'playing') playAbilityReady();
       s.view.ready = ready;
-      s.view.cd = s.active > 0 ? 1 : s.cd / s.def.cooldown;
+      s.view.cd = s.active > 0 ? 1 : Math.min(1, s.cd / this.cooldownOf(s));
       s.view.cdLeft = s.cd;
-      s.view.active = s.active / s.def.duration;
+      s.view.active = Math.min(1, s.active / this.durationOf(s));
     }
 
     // Mustang sweep: the slot drains with the sweep; the flight is forgotten once it has left
@@ -170,7 +183,7 @@ export class Abilities {
     // Focus: ease the time scale down and back up; the sight keeps real-time response
     if (this.focusOn) {
       this.focusT += realDt;
-      const dur = this.slots[2].def.duration;
+      const dur = this.durationOf(this.slots[2]);
       const k = Math.min(1, this.focusT / FOCUS_EASE_IN, (dur - this.focusT) / FOCUS_EASE_OUT);
       if (k <= 0 || this.focusT >= dur) this.endFocus();
       else {

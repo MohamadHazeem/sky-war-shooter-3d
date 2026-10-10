@@ -43,6 +43,7 @@ import { BailOutCinematic, BAIL_TOTAL } from './BailOutCinematic';
 import { TargetArea } from '../world/TargetArea';
 import { Cinematics } from './Cinematics';
 import { ServiceRecord } from './ServiceRecord';
+import { SkillRuntime } from './SkillRuntime';
 import { Pacing } from './Pacing';
 import { ModeRunner, mountModePanel, leaderboardMode } from './Modes';
 import { SpecialEvents } from './SpecialEvents';
@@ -78,6 +79,7 @@ export class Game {
   readonly midRound: MidRound;   // mid-round bonus objectives + random events
   readonly boss: BossBattle;
   readonly service: ServiceRecord; // career, medal rewards, daily orders, trophies (ServiceRecord.ts)
+  readonly skills: SkillRuntime;   // skill tree effects + title entry (SkillRuntime.ts)
   readonly modes: ModeRunner;   // Ace Hunt / Time Attack rules and scores (Modes.ts)
   readonly pacing: Pacing;      // build -> breather -> final wave inside each round (Pacing.ts)
   readonly specials: SpecialEvents; // special events (ace squadron, Zerstörer wave, rocket barrage) + enemy group tactics
@@ -197,6 +199,7 @@ export class Game {
     window.addEventListener('keydown', unlock);
     this.onboarding = new Onboarding(this, engine, input, ui, { awardPerk: (l) => this.awardPerk(l), showCampaign: () => this.showCampaign() });
     this.service = new ServiceRecord(this, ui, { showBriefing: (m) => this.showBriefing(m) });
+    this.skills = new SkillRuntime(this, ui);
   }
 
   // Compile shaders for objects that only appear mid-mission (debris, chutes, bombs,
@@ -391,6 +394,7 @@ export class Game {
     });
     this.onboarding.onTitle();
     this.service.onTitle();
+    this.skills.onTitle();
     this.ui.fade(false);
   }
 
@@ -554,12 +558,14 @@ export class Game {
     this.onboarding.onMissionStart(m);
     this.service.onMissionStart(m);
     analytics.missionStart(m);
+    this.skills.onMissionStart();
   }
 
   // Armory levels + this mission's perks -> guns, ammo, fire, aim aid
   private applyLoadout(refill = false) {
     const l = this.loadout = this.prog.loadout();
     this.gunner.applyLoadout(l, refill);
+    this.skills?.applyLoadout(l);
     const w = this.world;
     w.playerIncendiary = l.incendiary;
     w.playerExecute = l.execute;
@@ -695,6 +701,7 @@ export class Game {
     const pl = w.player;
     if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * 0.3);
     this.applyLoadout(true);
+    this.skills.onRoundStart();
     this.state = 'playing';
     this.engine.paused = false;
     this.input.lock();
@@ -1067,6 +1074,7 @@ export class Game {
     }
     this.cine.preFrame(dt);
     this.abilities.update(dt);
+    this.skills.update(dt);
     // Photo mode: the mission is frozen (engine.paused) and only the free camera moves
     if (this.photo.active) {
       this.photo.update();
@@ -1249,7 +1257,7 @@ export class Game {
     const shooter = pilot ? w.playerFighter! : w.playerBomber!;
     const origin = pilot ? shooter.pos : cam.position;
     const aim = pilot ? shooter.forward(new THREE.Vector3()) : this.gunner.aimDirection();
-    const muzzle = pilot ? 880 : 870;
+    const muzzle = this.loadout.leadVel || (pilot ? 880 : 870);
     let best: Fighter | null = null, bestAng = THREE.MathUtils.degToRad(pilot ? 18 : 25);
     for (const f of w.fighters('axis')) {
       if (!f.alive) continue;
