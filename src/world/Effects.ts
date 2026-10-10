@@ -214,8 +214,11 @@ export class Effects {
     this.debris.push({ mesh: obj, vel: vel.clone().add(new THREE.Vector3(0, -3, 0)), spin: new THREE.Vector3(0.6, 0.1, 0.2), life: 14, smoke: false, fire: false });
   }
 
-  parachute(pos: THREE.Vector3, vel: THREE.Vector3) {
+  // scale > 1 draws the chute (and its jumper) larger, like the 4.2x enemy fighters, so a
+  // bail-out still reads at combat range
+  parachute(pos: THREE.Vector3, vel: THREE.Vector3, scale = 1) {
     const obj = new THREE.Group();
+    obj.scale.setScalar(scale);
     const canopy = new THREE.Mesh(this.chuteGeo, this.chuteMat);
     canopy.position.y = 5.5;
     canopy.scale.setScalar(0.01);

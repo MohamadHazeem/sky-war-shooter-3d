@@ -3,6 +3,7 @@ import type { Fighter, HitZone } from './Aircraft';
 import type { Effects } from './Effects';
 import type { ParticleOpts, ParticleSystem } from '../render/Particles';
 import { ENEMY_SCALE } from './World';
+import { deathOwned } from './FighterDeath';
 
 // Staged battle damage on enemy fighters, driven by structureFrac:
 //   >85% clean, <=85% grey wisps, <=65% engine smoke + torn skin, <=45% oily black
@@ -95,7 +96,7 @@ function emit(sys: ParticleSystem, pos: THREE.Vector3, vel: THREE.Vector3 | unde
   sys.spawn(O);
 }
 
-const stageOf = (frac: number) => {
+export const stageOf = (frac: number) => {
   let s = 0;
   while (s < 4 && frac <= STAGE_AT[s]) s++;
   return s;
@@ -151,7 +152,7 @@ export function update(f: Fighter, dt: number, worldTime: number, fx: Effects, l
 
   if (!f.alive) {
     // burning spin down: keep the stage-4 fire and column so the death reads continuous
-    if (f.falling && near && f.fallTime < FALL_EMIT) {
+    if (f.falling && near && f.fallTime < FALL_EMIT && !deathOwned(f)) {
       st.acc += dt;
       if (st.acc >= TICK) { st.acc = 0; emitStage(f, st, 4, fx, dt, true); }
     }

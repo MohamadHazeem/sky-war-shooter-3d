@@ -16,8 +16,10 @@ import { updateExhausts } from './Exhaust';
 import { WingVapor } from './WingVapor';
 import { makeDropTank } from './Props';
 import { startBomberDeath, updateBomberDeath, clearBomberDeath } from './BomberDeath';
+import { startFighterDeath, updateFighterDeath, clearFighterDeath, rebaseFighterDeath, deathOwned } from './FighterDeath';
+import { hitSounds } from '../audio/HitSounds';
 import { setup as setupDamageLook, update as updateDamageLook } from './DamageLook';
-import { update as updateDamageStages } from './DamageStages';
+import { update as updateDamageStages, stageOf, damageStage } from './DamageStages';
 import { Crew, STATION_CREW } from './Crew';
 
 export const ENEMY_SCALE = 6.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
@@ -195,6 +197,7 @@ export class World implements WorldView {
     this.contrails.clear();
     this.wrecks.clear();
     clearBomberDeath();
+    clearFighterDeath();
     for (const r of this.rockets) r.obj.removeFromParent();
     this.rockets = [];
     this.extinguishers.clear();
@@ -501,7 +504,7 @@ export class World implements WorldView {
     } else if (e.playerShot) {
       sound.play('hit', e.point, { gain: 0.35, delay: false, ref: 60 });
       playRicochet(e.point);
-      if (this.time - this.lastConfirm > 0.07) { this.lastConfirm = this.time; sound.confirm('hit_confirm'); }
+      hitSounds.onHit(t, heavy, t instanceof Fighter && stageOf(t.structureFrac) > damageStage(t));
       this.events.hitMarker?.(false);
       // visible battle damage: panels and cowling pieces tearing off
       if (z.hp < z.maxHp * 0.55 && !(z as any).shed) {
@@ -557,23 +560,8 @@ export class World implements WorldView {
     const credited = byPlayer || a.playerDamage >= a.damageTaken * 0.2;
     if (a instanceof Fighter) {
       a.spin.set(R() * 0.6, R() * 0.4, (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 2.5));
-      // how it comes apart depends on what was shot away
-      let kind: BreakKind | 'burn' = cause === 'wingL' || cause === 'wingR' || cause === 'tail' ? cause : Math.random() < 0.55 ? 'blowup' : 'burn';
-      if (a.team === 'allied' && kind !== 'burn') kind = 'burn';
-      if (kind !== 'burn') {
-        this.wrecks.break(a, kind);
-        a.remove = true;
-        if (kind === 'blowup') {
-          this.effects.explosion(a.pos, a.vel, 1.2);
-          sound.play('explosion', a.pos, { gain: 1.5, ref: 140, reverb: 0.7 });
-        } else {
-          this.effects.explosion(a.localToWorld(new THREE.Vector3(kind === 'wingL' ? 1.5 : kind === 'wingR' ? -1.5 : 0, 0, kind === 'tail' ? -5.5 : 0)), a.vel, 0.45);
-          sound.play('explosion', a.pos, { gain: 1.0, ref: 100, reverb: 0.6 });
-        }
-        if (this.player) this.events.shake?.(Math.max(0, 1 - a.pos.distanceTo(this.player.pos) / 300) * 0.8);
-        if (this.player && a.pos.distanceTo(this.player.pos) < 500) sound.play('debris', a.pos, { gain: 0.7, ref: 40 });
-        if (Math.random() < 0.45) setTimeout(() => this.effects.parachute(a.pos.clone(), a.vel.clone().multiplyScalar(0.3)), 1200 + Math.random() * 2000);
-      } else {
+      // axis fighters get varied endings (fireball, wing/tail shot away, engine fire, bail-out, dead pilot)
+      if (a.team === 'axis') { startFighterDeath(a, cause, this); if (credited) hitSounds.onKill(a); } else {
         // engine or pilot hit: goes down burning in a spin
         this.effects.explosion(a.localToWorld(new THREE.Vector3(0, 0, 1.2)), a.vel, 0.35);
         this.effects.spawnDebris(a.pos, a.vel, 5, true);
@@ -645,6 +633,7 @@ export class World implements WorldView {
     this.updateRockets(dt);
     this.fires(dt);
     updateBomberDeath(dt);
+    updateFighterDeath(dt);
     this.ballistics.update(dt, this.aircraft);
     this.effects.update(dt);
     this.wrecks.update(dt);
@@ -784,7 +773,7 @@ export class World implements WorldView {
       this.effects.trail(p, a.vel, Math.min(1, dmg), !!z.burning, a instanceof Bomber ? 1.3 : 0.8);
     }
     // worn-down fighters: staged smoke, fire and debris live in DamageStages
-    if (a.falling && a instanceof Fighter && Math.random() < 0.6) {
+    if (a.falling && a instanceof Fighter && !deathOwned(a) && Math.random() < 0.6) {
       this.effects.trail(a.localToWorld(_v.set(0, 0, 1.5), new THREE.Vector3()), a.vel, 1, true, 1);
     }
   }
@@ -892,6 +881,7 @@ export class World implements WorldView {
     this.effects.rebase(off);
     // rockets are scene children (shifted by the engine); nothing else to do
     this.contrails.rebase(off);
+    rebaseFighterDeath(off);
     this.wingVapor.rebase(off);
     for (const p of this.pilots.values()) if (p instanceof EnemyPilot) p.setupPoint.sub(off);
   }
