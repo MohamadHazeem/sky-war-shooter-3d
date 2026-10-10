@@ -179,7 +179,7 @@ def main():
              (str(deploys), 'deploys to the live site'), (str(commits), 'commits overnight')]
     if a.tests: stats.append((str(a.tests), 'automated tests passing'))
     if a.grade: stats.append((a.grade, 'self-assessed grade'))
-    page = f"""<title>Sky War Overnight Report</title>
+    page = f"""<meta charset="utf-8"><title>Sky War Overnight Report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Special+Elite&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 <style>{CSS}</style>
