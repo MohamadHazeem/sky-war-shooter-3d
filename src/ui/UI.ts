@@ -27,7 +27,8 @@ export interface Settings {
   ambVolume: number;
   radio: boolean;
   music: boolean;
-  quality: 'low' | 'medium' | 'high';
+  quality: 'low' | 'medium' | 'high' | 'ultra';
+  fpsCounter?: boolean;   // on-screen frame-rate readout (render/FpsCounter.ts); undefined = off
   markers: boolean;
   leadPip: 'off' | 'recruit' | 'always';
   aimAssist: 'off' | 'low' | 'high';
@@ -445,7 +446,8 @@ export class UI {
       <label class="setting">${t('settings.ambVolume')} <input type="range" min="0" max="1" step="0.05" data-k="ambVolume" value="${s.ambVolume}"></label>
       <label class="setting">${t('settings.music')} <select data-k="music"><option value="true">${t('common.on')}</option><option value="false" ${!s.music ? 'selected' : ''}>${t('common.off')}</option></select></label>
       <label class="setting">${t('settings.radio')} <select data-k="radio"><option value="true">${t('common.on')}</option><option value="false" ${!s.radio ? 'selected' : ''}>${t('settings.subsOnly')}</option></select></label>
-      <label class="setting">${t('settings.quality')} <select data-k="quality">${(['low', 'medium', 'high'] as const).map((q) => `<option value="${q}" ${s.quality === q ? 'selected' : ''}>${t(`settings.q.${q}`)}</option>`).join('')}</select></label>
+      <label class="setting">${t('settings.quality')} <select data-k="quality">${(['low', 'medium', 'high', 'ultra'] as const).map((q) => `<option value="${q}" ${s.quality === q ? 'selected' : ''}>${t(`settings.q.${q}`)}</option>`).join('')}</select></label>
+      <label class="setting">${t('settings.fpsCounter')} <select data-k="fpsCounter"><option value="false">${t('common.off')}</option><option value="true" ${s.fpsCounter ? 'selected' : ''}>${t('common.on')}</option></select></label>
       <label class="setting">${t('settings.markers')} <select data-k="markers"><option value="true">${t('common.on')}</option><option value="false" ${!s.markers ? 'selected' : ''}>${t('settings.markersOff')}</option></select></label>
       <label class="setting">${t('settings.aimAssist')} <select data-k="aimAssist"><option value="off" ${s.aimAssist === 'off' ? 'selected' : ''}>${t('common.off')}</option><option value="low" ${s.aimAssist === 'low' ? 'selected' : ''}>${t('settings.low')}</option><option value="high" ${s.aimAssist === 'high' || !s.aimAssist ? 'selected' : ''}>${t('settings.high')}</option></select></label>
       <label class="setting">${t('settings.leadPip')} <select data-k="leadPip"><option value="off" ${s.leadPip === 'off' ? 'selected' : ''}>${t('common.off')}</option><option value="recruit" ${s.leadPip === 'recruit' || !s.leadPip ? 'selected' : ''}>${t('settings.recruitOnly')}</option><option value="always" ${s.leadPip === 'always' ? 'selected' : ''}>${t('settings.always')}</option></select></label>
@@ -457,7 +459,7 @@ export class UI {
       const k = i.dataset.k as keyof Settings;
       let v: any = i.value;
       if (k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume' || k === 'fov') v = parseFloat(v);
-      if (k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'killCam') v = v === 'true';
+      if (k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'killCam' || k === 'fpsCounter') v = v === 'true';
       (s as any)[k] = v;
       if (k === 'fov') { const b = i.closest('label')?.querySelector('.fov-val'); if (b) b.textContent = `${v}°`; }
       onChange(s);

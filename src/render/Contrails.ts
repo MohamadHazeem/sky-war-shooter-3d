@@ -5,7 +5,7 @@ import { Atmos } from './Atmosphere';
 // buffer of world-space points; the ribbon starts a little behind the engine (the
 // condensation gap), widens and drifts as it ages, and fades out.
 const PTS = 90;           // points per trail
-const INTERVAL = 0.18;    // seconds between points
+const INTERVAL = 0.24;    // seconds between points (~22 s, 1.6 km of trail at cruise: long streams, same CPU cost)
 const LIFE = PTS * INTERVAL;
 
 interface Trail { emit: () => THREE.Vector3 | null; px: Float32Array; born: Float32Array; head: number; last: number; alive: boolean }

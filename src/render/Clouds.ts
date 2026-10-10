@@ -133,8 +133,10 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
       // Multiple-scattering approximation (sum of attenuated octaves)
       float beer = exp(-ls) + 0.3 * exp(-ls * 0.25) + 0.12 * exp(-ls * 0.06);
       float powder = 1.0 - exp(-dens * 2.0 * dt * sigma * 2.0);
-      vec3 sun = uSunColor * beer * phase * mix(0.45, 1.0, powder) * 0.44;
-      vec3 amb = mix(uHorizon * 0.3 + vec3(0.02), uZenith * 0.7 + uHorizon * 0.45, h) * uAmb * mix(0.5, 1.0, h);
+      // a touch more sun and less flat ambient than physically tidy: brighter sunlit tops and
+      // greyer bases give the cumulus sea its towering relief (the film's look)
+      vec3 sun = uSunColor * beer * phase * mix(0.45, 1.0, powder) * 0.47;
+      vec3 amb = mix(uHorizon * 0.3 + vec3(0.02), uZenith * 0.7 + uHorizon * 0.45, h) * uAmb * mix(0.42, 1.0, h * h * (3.0 - 2.0 * h));
       if (sel < 0.5 && uGlow.w > 0.0) {
         vec2 gq = p.xz - uGlow.xy;
         amb += vec3(1.0, 0.45, 0.15) * uGlow.w * exp(-dot(gq, gq) / (uGlow.z * uGlow.z)) * (1.0 - h);
@@ -300,9 +302,10 @@ export class CloudRenderer {
     this.mat.uniforms.uRes.value.set(this.rt.width, this.rt.height);
   }
 
-  setQuality(q: 'low' | 'medium' | 'high', w: number, h: number) {
-    this.scale = q === 'low' ? 0.33 : q === 'medium' ? 0.45 : 0.5;
-    this.steps = q === 'low' ? 36 : q === 'medium' ? 52 : 64;
+  // Buffer scale and raymarch steps of the quality tier (Engine QUALITY presets; max 96 steps)
+  setQuality(p: { cloudScale: number; cloudSteps: number }, w: number, h: number) {
+    this.scale = p.cloudScale;
+    this.steps = Math.min(96, p.cloudSteps);
     this.setSize(w, h);
   }
 

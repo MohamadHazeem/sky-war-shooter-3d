@@ -109,6 +109,8 @@ export const ar: Record<UiKey, string> = {
   'settings.q.low': 'منخفضة',
   'settings.q.medium': 'متوسطة',
   'settings.q.high': 'عالية',
+  'settings.q.ultra': 'فائقة',
+  'settings.fpsCounter': 'عدّاد الإطارات',
   'settings.markers': 'علامات الأهداف',
   'settings.markersOff': 'إيقاف (واقعي)',
   'settings.aimAssist': 'مساعدة التصويب',

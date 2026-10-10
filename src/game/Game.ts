@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Engine } from '../core/Engine';
+import { Engine, lowerQuality } from '../core/Engine';
 import { Input } from '../core/Input';
 import { UI, Settings, Progress, DebriefData, PauseInfo } from '../ui/UI';
 import { World, ALTITUDE } from '../world/World';
@@ -265,7 +265,7 @@ export class Game {
     const fov = THREE.MathUtils.clamp(Number.isFinite(s.fov) ? s.fov : 62, 50, 80);
     this.gunner.baseFov = fov;
     this.pilot.baseFov = fov;
-    if (this.engine.quality !== s.quality) this.engine.setQuality(s.quality);
+    this.engine.applyGraphics(s.quality, !!s.fpsCounter);
     save(SETTINGS_KEY, s);
   }
 
@@ -1166,7 +1166,7 @@ export class Game {
     // dynamic resolution handles most of it; drop the quality tier only when that is not enough
     if (this.engine.fps < 40 && this.engine.renderScale <= 0.56) this.slowFrames += dt; else this.slowFrames = Math.max(0, this.slowFrames - dt);
     if (this.slowFrames > 10 && this.engine.quality !== 'low') {
-      const q = this.engine.quality === 'high' ? 'medium' : 'low';
+      const q = lowerQuality(this.engine.quality);
       this.engine.setQuality(q);
       this.slowFrames = 0;
       this.autoQualityDone = true;

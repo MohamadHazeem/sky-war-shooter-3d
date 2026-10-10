@@ -109,6 +109,8 @@ export const en = {
   'settings.q.low': 'low',
   'settings.q.medium': 'medium',
   'settings.q.high': 'high',
+  'settings.q.ultra': 'ultra',
+  'settings.fpsCounter': 'FPS counter',
   'settings.markers': 'Target markers',
   'settings.markersOff': 'Off (realistic)',
   'settings.aimAssist': 'Aim assist',

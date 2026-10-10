@@ -33,6 +33,7 @@ async function boot() {
   ui.loading(0.9, 'Forming up over England…');
   const input = new Input(engine.renderer.domElement);
   const game = new Game(engine, input, ui);
+  engine.livingSky.bind(game.world);   // distant boxes, dogfights and flak fly with our formation
   const devices = new DeviceControls(engine, input, game);   // touch, gamepad, accessibility
   installShare(game, engine);                                 // photo mode: Enter / button shares the view
   analytics.install(engine, game, () => devices.pad.connected); // anonymous per-mission stats (opt-out in Settings)
@@ -96,6 +97,9 @@ async function boot() {
     // autoplay starts a mission synchronously: it appears once every model and gameplay sound is in
     while (!isMissionReady()) await new Promise((r) => setTimeout(r, 100));
     (window as any).sws.autoplay = (m: any, steps?: number) => autoplay(engine, game, m, steps);
+    // Before/after screenshot gallery (tools/gallery/README.md)
+    const { gallery } = await import('./dev/gallery');
+    (window as any).sws.gallery = gallery(engine, game);
   }
 }
 
