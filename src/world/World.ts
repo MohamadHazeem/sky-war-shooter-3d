@@ -18,8 +18,10 @@ import { startBomberDeath, updateBomberDeath, clearBomberDeath } from './BomberD
 import { setup as setupDamageLook, update as updateDamageLook } from './DamageLook';
 import { Crew, STATION_CREW } from './Crew';
 
-export const ENEMY_SCALE = 1.7;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
-export const ENEMY_STRUCTURE = 260; // ~20 hits from a .50 to wear one down
+export const ENEMY_SCALE = 2.4;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
+export const ENEMY_STRUCTURE = 460; // ~40 hits from a .50 to wear one down
+export const ENEMY_ZONE_HP = 2.2;   // vital zones (cockpit, engine, wings) toughened to match
+const FORMATION_SPREAD = 1.8;       // spacing between B-17s, so friends never crowd the sight picture
 
 export const CRUISE = 75;          // m/s formation speed (~170 mph)
 export const ALTITUDE = 7600;      // m (25,000 ft)
@@ -179,7 +181,7 @@ export class World implements WorldView {
     const slots: THREE.Vector3[] = [];
     const vic = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(36, -8, -34), new THREE.Vector3(-36, -8, -34)];
     const elements = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(95, 45, -70), new THREE.Vector3(-95, -45, -80), new THREE.Vector3(0, -90, -160), new THREE.Vector3(120, 30, -220), new THREE.Vector3(-120, 60, -230)];
-    for (const e of elements) for (const v of vic) slots.push(e.clone().add(v));
+    for (const e of elements) for (const v of vic) slots.push(e.clone().add(v).multiplyScalar(FORMATION_SPREAD));
     const names = [...BOMBER_NAMES];
     for (let i = 0; i < count && i < slots.length; i++) {
       const b = new Bomber();
@@ -275,6 +277,7 @@ export class World implements WorldView {
       }
     }
     f.setScale(ENEMY_SCALE);
+    for (const z of f.zones) { z.hp *= ENEMY_ZONE_HP; z.maxHp *= ENEMY_ZONE_HP; }
     f.structure = f.maxStructure = ENEMY_STRUCTURE * (0.85 + 0.15 * this.difficulty) * variant.structure;
     f.label = variant.label;
     setupDamageLook(f); // after tank/rockets so their materials are per-instance too
@@ -365,7 +368,7 @@ export class World implements WorldView {
     this.effects.sparks(e.point, t.vel, heavy);
     if (t === this.player || t === this.playerBomber) {
       sound.playerImpact(heavy);
-      this.events.shake?.(heavy ? 0.45 : 0.15);
+      this.events.shake?.(heavy ? 0.25 : 0.05);
       this.events.playerHit?.(z.name, heavy);
       if (t === this.playerBomber && /fuselage|tail|nose/.test(z.name)) {
         const local = t.worldToLocal(e.point.clone());

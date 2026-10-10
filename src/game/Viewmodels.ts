@@ -45,6 +45,7 @@ export interface GunModel {
   eye: THREE.Vector3;         // eye position in gun frame
   belt?: AmmoBelt;
   ejectPort: THREE.Object3D;
+  sight: THREE.Object3D[];    // ring-sight parts, shown only when looking down the sight
 }
 
 export class AmmoBelt {
@@ -191,6 +192,7 @@ export function buildM2(opts: { ringSight: boolean; belt: boolean; beltSide: 1 |
   recoilGroup.add(muzzle);
 
   const eye = new THREE.Vector3(0, 0.122, -0.46);
+  const sight: THREE.Object3D[] = [];
   if (opts.ringSight) {
     // Ring-and-post: ring at the jacket rear, post (bead) near the muzzle, both on the eye line
     const ringZ = 0.05;
@@ -207,6 +209,7 @@ export function buildM2(opts: { ringSight: boolean; belt: boolean; beltSide: 1 |
     const stem = new THREE.Mesh(new THREE.BoxGeometry(0.006, ringY - 0.066 - 0.02, 0.008), metal);
     stem.position.set(0, (ringY - 0.066 + 0.02) / 2, ringZ);
     recoilGroup.add(stem);
+    sight.push(ring, wireV, wireH, stem);
     const post = new THREE.Mesh(new THREE.BoxGeometry(0.004, ringY - 0.02, 0.006), metal);
     post.position.set(0, ringY / 2 + 0.005, 1.06);
     recoilGroup.add(post);
@@ -237,7 +240,7 @@ export function buildM2(opts: { ringSight: boolean; belt: boolean; beltSide: 1 |
   eject.position.set(0, -0.08, -0.08);
   recoilGroup.add(eject);
   g.traverse((o) => { if ((o as THREE.Mesh).isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-  return { group: g, muzzles: [muzzle], recoil: [recoilGroup], eye, belt, ejectPort: eject };
+  return { group: g, muzzles: [muzzle], recoil: [recoilGroup], eye, belt, ejectPort: eject, sight };
 }
 
 // Fuselage interior around the waist windows: an elliptical tube with real window

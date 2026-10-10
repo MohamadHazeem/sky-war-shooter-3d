@@ -109,7 +109,9 @@ export class GlassCracks {
   // Called on a heavy hit to the gunner's position
   hit(): void {
     if (this.layers.length >= MAX_LAYERS) this.layers.shift();
-    this.layers.push(buildLayer(rnd(0.3, 0.7), rnd(0.28, 0.66)));
+    // impact points stay out toward the edges so the sight picture stays clear
+    const side = Math.random() < 0.5 ? rnd(0.06, 0.24) : rnd(0.76, 0.94);
+    this.layers.push(buildLayer(side, rnd(0.12, 0.88)));
   }
 
   update(dt: number): void {

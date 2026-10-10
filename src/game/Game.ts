@@ -218,15 +218,16 @@ export class Game {
     w.events.playerHit = (zone, heavy) => {
       sound.airframeHit(heavy);
       achievements.onPlayerHit();
-      this.damageT = Math.min(1, this.damageT + (heavy ? 0.6 : 0.25));
-      if (heavy && this.mission?.role === 'gunner') this.cracks.hit();
+      this.damageT = Math.min(0.5, this.damageT + (heavy ? 0.22 : 0.08));
+      if (heavy && this.mission?.role === 'gunner' && this.gunner.def.type !== 'waist' && Math.random() < 0.35) this.cracks.hit(); // waist windows are open: no glass
       if (zone === 'gunner') {
         this.ui.feed('You are wounded', 'loss');
         w.callout('wound', 'Navigator', 'Gunner\'s hit! Stay on that gun if you can!', 10, 2);
       }
     };
     w.events.fuselageHit = (local, dir) => { if (this.mission?.role === 'gunner') this.gunner.fuselageHit(local, dir); };
-    w.events.shake = (a) => { this.trauma = Math.min(1, this.trauma + a); };
+    // shake is kept small and short so the sight stays usable while under fire
+    w.events.shake = (a) => { this.trauma = Math.min(0.6, this.trauma + a * 0.4); };
     // kills feed the combo in the kill handler; plain hits only keep it alive and nudge it up
     w.events.hitMarker = (kill) => { if (kill) this.killMarkerT = 0.45; else { this.hitMarkerT = 0.12; this.combo.onHit(); } };
   }
@@ -750,10 +751,11 @@ export class Game {
       const k = this.trauma * this.trauma;
       const cam = this.engine.camera;
       const tt = w.time * 40;
-      cam.rotateX((Math.sin(tt * 1.3) * 0.5 + (Math.random() - 0.5)) * 0.012 * k);
-      cam.rotateY((Math.sin(tt * 1.7 + 1) * 0.5 + (Math.random() - 0.5)) * 0.012 * k);
-      cam.rotateZ((Math.random() - 0.5) * 0.02 * k);
-      this.trauma = Math.max(0, this.trauma - dt * 1.4);
+      // smooth (no per-frame random jitter): max ~0.3 deg, gone within ~0.4 s
+      cam.rotateX(Math.sin(tt * 1.3) * 0.006 * k);
+      cam.rotateY(Math.sin(tt * 1.7 + 1) * 0.006 * k);
+      cam.rotateZ(Math.sin(tt * 0.9 + 2) * 0.004 * k);
+      this.trauma = Math.max(0, this.trauma - dt * 2.6);
     }
     this.autoQuality(dt);
     this.floatingOrigin();
@@ -766,13 +768,13 @@ export class Game {
     if (this.mission?.role === 'gunner' && w.playerBomber) sound.setEngineHealth(4 - w.playerBomber.enginesOut);
     // screen effects
     this.damageT = Math.max(0, this.damageT - dt * 1.8);
-    this.engine.post.damageFlash = this.damageT * 0.35;
+    this.engine.post.damageFlash = this.damageT * 0.18;
     // wounded gunner (crewWounded 0..4): the picture drains of colour, easing in and out slowly
     const woundTarget = this.menuMode ? 0 : Math.min(1, w.crewWounded / 4);
     this.woundT += (woundTarget - this.woundT) * (1 - Math.exp(-dt * 0.6));
     this.engine.post.desat = this.woundT < 0.002 ? 0 : this.woundT;
     this.cracks.update(dt);
-    this.ui.redVignette(this.damageT * 0.8 + (this.mission?.role === 'gunner' && !this.menuMode ? w.crewWounded * 0.12 : 0));
+    this.ui.redVignette(Math.min(0.35, this.damageT * 0.45 + (this.mission?.role === 'gunner' && !this.menuMode ? w.crewWounded * 0.05 : 0)));
     if (this.mission?.role === 'pilot' && !this.menuMode) { /* pilot sets exposure/vignette */ }
     else { this.engine.post.vignette = 0.9; this.engine.post.exposure = 1; }
     this.hitMarkerT -= dt;
@@ -899,26 +901,38 @@ export class Game {
     const pl = w.player;
     if (this.settings.markers && pl) {
       for (const a of w.aircraft) {
-        if (a === pl || !(a instanceof Fighter) || !a.alive) continue;
-        const d = a.pos.distanceTo(cam.position);
-        if (d > 2800) continue;
-        const p = a.pos.clone().project(cam);
+        if (a === pl || !a.alive) continue;
         const enemy = a.team === 'axis';
-        const col = enemy ? 'rgba(235,90,60,0.85)' : 'rgba(140,190,240,0.75)';
+        const d = a.pos.distanceTo(cam.position);
+        if (d > (enemy ? 2800 : 1800)) continue;
+        const p = a.pos.clone().project(cam);
+        const col = enemy ? 'rgba(255,70,45,0.95)' : 'rgba(110,190,255,0.85)';
+        if (!enemy) {
+          // Friendlies: a small blue chevron above the aircraft, no brackets, so they never read as targets
+          if (p.z < 1 && Math.abs(p.x) < 1 && Math.abs(p.y) < 1) {
+            const x = (p.x * 0.5 + 0.5) * W, y = (-p.y * 0.5 + 0.5) * H;
+            const up = THREE.MathUtils.clamp((a instanceof Fighter ? 1400 : 3200) / d, 10, 46);
+            ctx.fillStyle = col;
+            ctx.beginPath(); ctx.moveTo(x - 6, y - up - 8); ctx.lineTo(x + 6, y - up - 8); ctx.lineTo(x, y - up); ctx.closePath(); ctx.fill();
+            if (d < 900) {
+              ctx.font = '10px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
+              ctx.fillText(a instanceof Fighter ? 'P-51' : 'B-17', x, y - up - 12);
+            }
+          }
+          continue;
+        }
         if (p.z < 1 && Math.abs(p.x) < 1 && Math.abs(p.y) < 1) {
           const x = (p.x * 0.5 + 0.5) * W, y = (-p.y * 0.5 + 0.5) * H;
-          const s = THREE.MathUtils.clamp(2400 / d, 7, 28);
-          ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+          const s = THREE.MathUtils.clamp(3200 / d, 9, 34);
+          ctx.strokeStyle = col; ctx.lineWidth = 2;
           ctx.beginPath();
           const c = s * 0.45;
           for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
             ctx.moveTo(x + sx * s, y + sy * s - sy * c); ctx.lineTo(x + sx * s, y + sy * s); ctx.lineTo(x + sx * s - sx * c, y + sy * s);
           }
           ctx.stroke();
-          if (d < 1600) {
-            ctx.fillStyle = col; ctx.font = '11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
-            ctx.fillText(enemy ? `${Math.round(d)}` : 'P-51', x, y + s + 12);
-          }
+          ctx.fillStyle = col; ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
+          ctx.fillText(d < 1600 ? `${a.label.toUpperCase()}  ${Math.round(d)}m` : a.label.toUpperCase(), x, y + s + 13);
         } else if (enemy && d < 1500) {
           // edge arrow toward off-screen attacker
           let ex = p.x, ey = p.y;
@@ -961,6 +975,20 @@ export class Game {
     // Lead indicator aim aid: pip for the enemy nearest the line of fire ('recruit' = only on Recruit difficulty)
     const leadMode = this.settings.leadPip ?? 'recruit';
     if (pl?.alive && (leadMode === 'always' || (leadMode === 'recruit' && this.settings.difficulty === 'recruit'))) this.drawLeadPip(ctx, W, H);
+    // Gunner hip reticle: waist guns without the ring sight up (fades as RMB brings the eye down)
+    if (this.mission?.role === 'gunner' && this.gunner.def.type === 'waist' && this.gunner.ads < 0.6) {
+      const a = 0.85 * (1 - this.gunner.ads / 0.6);
+      const r = Math.min(W, H) * 0.05;
+      ctx.save();
+      ctx.strokeStyle = `rgba(255,236,190,${a})`; ctx.fillStyle = ctx.strokeStyle; ctx.lineWidth = 1.5;
+      ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 3;
+      ctx.beginPath(); ctx.arc(W / 2, H / 2, r, 0, Math.PI * 2); ctx.stroke();
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        ctx.beginPath(); ctx.moveTo(W / 2 + dx * r * 0.45, H / 2 + dy * r * 0.45); ctx.lineTo(W / 2 + dx * r * 0.85, H / 2 + dy * r * 0.85); ctx.stroke();
+      }
+      ctx.beginPath(); ctx.arc(W / 2, H / 2, 1.8, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
     // Pilot gunsight
     if (this.mission?.role === 'pilot' && w.playerFighter?.alive) {
       const g = this.pilot.gunsight;

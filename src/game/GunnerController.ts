@@ -26,6 +26,7 @@ const _q = new THREE.Quaternion();
 const R = () => Math.random() * 2 - 1;
 
 // First-person B-17 gunner: heavy, sprung gun traverse, recoil, barrel heat, belts.
+
 export class GunnerController {
   station: StationId = 'waistL';
   private states = new Map<StationId, StationState>();
@@ -44,6 +45,8 @@ export class GunnerController {
   private beltTickT = 0; // time until the next low-ammo belt tick
   zoom = false;
   fov = 62;
+  ads = 0;       // 0 = over-the-gun view, 1 = eye down the ring sight (RMB)
+  hipWaist = new THREE.Vector3(0, 0.1, 0.3);  // head offset in the unzoomed view (gun frame)
   baseFov = 62;   // set from Settings; zoom-in keeps the original 34/62 magnification ratio
   bomber: Bomber | null = null;
   private casings: { m: THREE.Mesh; v: THREE.Vector3; life: number }[] = [];
@@ -435,6 +438,15 @@ export class GunnerController {
     // eye: behind the sight (waist/tail) or centred in the turret between the guns
     const eye = def.type === 'turret' ? new THREE.Vector3(0, 0.05, -0.05) : guns[0].eye.clone();
     if (def.type === 'tail') eye.set(0, 0.242, -0.2);
+    // Unzoomed, the head sits up and forward over the gun so the receiver and window frame
+    // drop out of the picture; RMB brings the eye down onto the ring sight.
+    this.ads += ((this.zoom ? 1 : 0) - this.ads) * Math.min(1, dt * 9);
+    const hip = 1 - this.ads;
+    if (def.type === 'waist') {
+      eye.addScaledVector(this.hipWaist, hip);
+      // the ring would fill the screen from this close: show it only once the eye is on it
+      for (const g of guns) for (const o of g.sight) o.visible = this.ads > 0.6;
+    }
     // buffeting and gun shake
     const t = this.world.time;
     const buffet = 0.0025;
