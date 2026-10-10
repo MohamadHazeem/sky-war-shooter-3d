@@ -50,8 +50,8 @@ export class Contrails {
       uniforms: { uLife: { value: LIFE }, uSun: { value: new THREE.Vector3() }, uSunCol: { value: new THREE.Color() }, uTime: { value: 0 } },
       vertexShader: /* glsl */ `
         attribute vec3 aDir; attribute float aAge; attribute float aSide; attribute float aSeed;
-        uniform float uLife; uniform float uTime;
-        varying float vAlpha; varying float vSide; varying float vT; varying float vSeed; varying float vNear;
+        uniform float uLife; uniform float uTime; uniform vec3 uSun;
+        varying float vAlpha; varying float vSide; varying float vT; varying float vSeed; varying float vNear; varying float vSun;
         void main() {
           float t = clamp(aAge / uLife, 0.0, 1.0);
           float width = mix(0.4, 7.5, pow(t, 0.6));
@@ -60,24 +60,45 @@ export class Contrails {
           vec3 side = normalize(cross(d, toCam));
           // slow drift and spread as the trail ages
           vec3 p = position + side * aSide * width + vec3(sin(aSeed + t * 3.0) * t * 6.0, -t * 9.0, cos(aSeed * 1.3 + t * 2.0) * t * 6.0);
+          // turbulent wobble: each point wanders sideways on its own phase (driven by its
+          // age, so it evolves along the length); amplitude grows with age so the head
+          // stays pinned to the engine. Both vertices of a point share the offset.
+          float wob = sin(aSeed * 1.7 + aAge * 2.3) * 0.7 + sin(aSeed * 3.1 - aAge * 5.7 + 1.3) * 0.3;
+          p += side * wob * smoothstep(0.02, 0.5, t) * (0.4 + 1.6 * t);
+          p.y += cos(aSeed * 2.1 + aAge * 3.1) * t * 0.5;
           gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
           float gap = smoothstep(0.012, 0.05, t);   // condensation gap behind the engine
           float fade = 1.0 - smoothstep(0.55, 1.0, t);
           vAlpha = aAge < 0.0 ? 0.0 : gap * fade;
           vSide = aSide; vT = t; vSeed = aSeed;
+          // how much this edge of the ribbon faces the sun (-1 shadow side .. 1 sun side)
+          vSun = dot(side * aSide, uSun);
           vNear = smoothstep(18.0, 70.0, distance(cameraPosition, p));
           // seen end-on a ribbon turns into a flat sheet: fade it out
           vNear *= 1.0 - smoothstep(0.82, 0.97, abs(dot(d, toCam)));
         }`,
       fragmentShader: /* glsl */ `
         uniform vec3 uSunCol;
-        varying float vAlpha; varying float vSide; varying float vT; varying float vSeed; varying float vNear;
+        varying float vAlpha; varying float vSide; varying float vT; varying float vSeed; varying float vNear; varying float vSun;
+        float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float vnoise(vec2 p) {
+          vec2 i = floor(p), f = fract(p);
+          f = f * f * (3.0 - 2.0 * f);
+          return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+        }
         void main() {
           float edge = 1.0 - vSide * vSide;
           float a = vAlpha * edge * mix(0.9, 0.35, vT) * vNear;
           // a little break-up along the trail
           a *= 0.8 + 0.2 * sin(vT * 90.0 + vSeed);
-          vec3 col = uSunCol * 0.75 + vec3(0.45, 0.5, 0.58);
+          // puffy density: slightly denser lumps, and small gaps that open up as it ages
+          vec2 q = vec2(vT * 28.0 + fract(vSeed * 0.13) * 40.0, vSide * 1.5 + fract(vSeed * 0.71) * 9.0);
+          float puff = vnoise(q) * 0.65 + vnoise(q * 2.3 + 7.1) * 0.35;
+          float gaps = smoothstep(0.35, 0.6, vnoise(q * vec2(0.6, 1.4) + 3.7));
+          a *= mix(0.8, 1.15, puff) * mix(1.0, mix(0.35, 1.0, gaps), smoothstep(0.15, 0.7, vT));
+          // sun-facing edge is a touch brighter than the shadowed edge
+          float sunSide = clamp(vSun * 0.5 + 0.5, 0.0, 1.0);
+          vec3 col = (uSunCol * 0.75 + vec3(0.45, 0.5, 0.58)) * mix(0.92, 1.2, sunSide);
           gl_FragColor = vec4(col, a);
         }`,
       transparent: true,
@@ -107,6 +128,7 @@ export class Contrails {
     const u = this.mat.uniforms;
     u.uTime.value = time;
     u.uSunCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.32);
+    u.uSun.value.copy(Atmos.sunDir);
     this.mesh.visible = this.enabled;
     if (!this.enabled) return;
     const P = this.pos.array as Float32Array, D = this.dir.array as Float32Array, A = this.age.array as Float32Array;
