@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Atmos } from './Atmosphere';
 import { envRef } from './EnvRef';
+import { installSurfaceDetail, prepareSurface } from './SurfaceDetail';
 
 // How aircraft catch the light, tuned toward the Yarnhub "B-17 gunner" look: satin painted
 // metal with a strong sun highlight, glossy canopies, matte interiors, and a sky-coloured
@@ -32,6 +33,8 @@ export function installAircraftLook() {
   if (installed) return;
   installed = true;
   THREE.ShaderChunk.lights_fragment_end += RIM_GLSL;
+  // panel lines, rivets and weathering on the skins (SurfaceDetail.ts)
+  installSurfaceDetail();
 }
 
 // Hemisphere light from the current sky: sky colour from the horizon/zenith blend, ground
@@ -101,13 +104,26 @@ const SKIN: Look = { rough: 0.66, metal: 0.12, env: 0.6 };
 // natural-metal P-51: polished aluminium
 const BARE: Look = { rough: 0.32, metal: 0.72, env: 0.9 };
 
-export function tuneAircraftMaterial(mat: THREE.Material, kind: string) {
+// Returns true for the airframe skin (painted, bare metal or nacelle): the surfaces that get
+// panel lines, rivets and weathering (SurfaceDetail.ts).
+export function tuneAircraftMaterial(mat: THREE.Material, kind: string): boolean {
   const m = mat as THREE.MeshStandardMaterial;
-  if (!m.isMeshStandardMaterial) return;
+  if (!m.isMeshStandardMaterial) return false;
   // the P-51 cockpit sits around the camera: keep its authored surfaces, just tame reflections
-  if (kind === 'p51d_cockpit') { useSkyEnv(m, /glass/i.test(m.name) ? 1.3 : 0.55); return; }
-  const look = LOOKS.find((l) => l.test.test(m.name))?.look ?? (kind === 'p51d' ? BARE : SKIN);
+  if (kind === 'p51d_cockpit') { useSkyEnv(m, /glass/i.test(m.name) ? 1.3 : 0.55); return false; }
+  const part = LOOKS.find((l) => l.test.test(m.name));
+  const look = part?.look ?? (kind === 'p51d' ? BARE : SKIN);
   m.roughness = look.rough;
   m.metalness = look.metal;
   useSkyEnv(m, look.env);
+  return (!part || part.look === LOOKS[3].look) && !m.transparent && !/tire|wheel/i.test(m.name);
+}
+
+// After a model's materials are tuned: tag its skins for the surface detail. Materials it
+// has to split per mesh transform are tracked for sky env map changes like the originals.
+export function prepareAircraftSurface(root: THREE.Object3D, kind: string, skins: Set<THREE.Material>) {
+  prepareSurface(root, kind, (m) => skins.has(m), (orig, copy) => {
+    const s = copy as THREE.MeshStandardMaterial;
+    if (s.isMeshStandardMaterial) useSkyEnv(s, (orig as THREE.MeshStandardMaterial).envMapIntensity);
+  });
 }

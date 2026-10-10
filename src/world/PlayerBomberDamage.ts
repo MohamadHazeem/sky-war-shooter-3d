@@ -4,6 +4,7 @@ import type { HitEvent } from './Ballistics';
 import type { World } from './World';
 import type { ParticleOpts, ParticleSystem } from '../render/Particles';
 import { sound } from '../audio/Sound';
+import { patchSurface, surfaceKey } from '../render/SurfaceDetail';
 
 // Visible battle damage on the player's own B-17, seen from the gun positions:
 //  - engines: oil smoke creeping back over the nacelle, a coughing engine, a feathered
@@ -89,7 +90,7 @@ let voidSrc: THREE.Material | null = null;
 function makeVoidMat(src: THREE.MeshStandardMaterial) {
   const m = src.clone();
   m.name = 'GD-L-damage';
-  m.customProgramCacheKey = () => 'sws-player-voids-1';
+  m.customProgramCacheKey = () => 'sws-player-voids-1' + surfaceKey(m);   // + panel lines / weathering (SurfaceDetail.ts)
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uVoidA = voidUniforms.uVoidA;
     sh.uniforms.uVoidB = voidUniforms.uVoidB;
@@ -131,6 +132,7 @@ diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.022, 0.019, 0.016), vChar * 0.94
 diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.5, 0.48), vBare);`)
       .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
 metalnessFactor = mix(metalnessFactor, 0.85, vBare);`);
+    patchSurface(sh, m);   // after ours, so the charred void edges land on top of the detail
   };
   return m;
 }

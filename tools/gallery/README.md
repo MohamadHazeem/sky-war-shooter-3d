@@ -15,6 +15,32 @@ Yarnhub "B-17 gunner" animation (the waist-gunner shot at 0:54-0:58, frames in
 
 All shots: 1512x900 viewport, High preset, PNG downscaled to 1200 px wide.
 
+## Aircraft surface detail (Phase 5 graphics goal 2)
+
+Procedural panel lines, rivets and weathering on the aircraft skins (`render/SurfaceDetail.ts`).
+Before = detail off (`swsSurf.level(0)`, what Low renders), after = High.
+
+| Setup | Before | After |
+|---|---|---|
+| The player's B-17 wing and nacelles, close outside view | ![](surface/before/wing.jpg) | ![](surface/after/wing.jpg) |
+| Neighbouring B-17 through a long lens from the right waist | ![](surface/before/neighbour.jpg) | ![](surface/after/neighbour.jpg) |
+| Fw 190 passing the waist window (~60 m) | ![](surface/before/fw190close.jpg) | ![](surface/after/fw190close.jpg) |
+| P-51 cockpit, its own left wing | ![](surface/before/p51wing.jpg) | ![](surface/after/p51wing.jpg) |
+| B-17 Olive Drab | ![](surface/before/paint-olive.jpg) | ![](surface/after/paint-olive.jpg) |
+| B-17 Natural Metal | ![](surface/before/paint-silver.jpg) | ![](surface/after/paint-silver.jpg) |
+| B-17 Desert Pink | ![](surface/before/paint-desert.jpg) | ![](surface/after/paint-desert.jpg) |
+| B-17 Invasion Stripes | ![](surface/before/paint-invasion.jpg) | ![](surface/after/paint-invasion.jpg) |
+| The formation from outside (distance: must be identical, no shimmer) | ![](surface/before/formation.jpg) | ![](surface/after/formation.jpg) |
+
+Rebuild (JPEG q86 after the PNG capture, 1200 px wide):
+```js
+swsSurf.level(0); await sws.gallery.captureSurface('surface/before')
+swsSurf.level(null); await sws.gallery.captureSurface('surface/after')
+```
+Other dev hooks: `swsSurf.debug(1)` shows the chip / streak / grime masks as RGB, `debug(2)`
+walkway / wing-root junction / forward faces; `?surf=0|1|2` in the URL forces a level from
+the first frame (program counts, A/B benches).
+
 ## Rebuilding
 
 1. `npx vite --port 5209 --strictPort` (dev build: the gallery hook is dev-only)

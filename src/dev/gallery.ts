@@ -4,6 +4,7 @@ import type { Game } from '../game/Game';
 import { CAMPAIGN } from '../game/Missions';
 import { applyWeather, ROUND_WEATHER } from '../render/Weather';
 import { STATIONS, type StationId } from '../world/B17Layout';
+import { applyPaint } from '../render/Paint';
 
 // Development-only: fixed camera setups for the before/after screenshot gallery
 // (tools/gallery/README.md). Math.random is seeded while a setup runs, so the formation
@@ -14,6 +15,10 @@ export type ShotName = 'waist' | 'top' | 'fw190' | 'formation' | 'dusk' | 'dista
 export const SHOTS: ShotName[] = ['waist', 'top', 'fw190', 'formation', 'dusk'];
 // 'distant' (the living sky through a long lens) has nothing to show before it existed
 export const SHOTS_AFTER: ShotName[] = [...SHOTS, 'distant'];
+// Close-ups for the aircraft surface detail (render/SurfaceDetail.ts): before = detail off
+// (swsSurf.level(0)), after = the High level. sws.gallery.captureSurface('surface/after')
+export type SurfaceShot = 'wing' | 'neighbour' | 'fw190close' | 'p51wing' | 'paint-olive' | 'paint-silver' | 'paint-desert' | 'paint-invasion' | 'formation';
+export const SURFACE_SHOTS: SurfaceShot[] = ['wing', 'neighbour', 'fw190close', 'p51wing', 'paint-olive', 'paint-silver', 'paint-desert', 'paint-invasion', 'formation'];
 
 function mulberry(seed: number) {
   return () => {
@@ -135,5 +140,74 @@ export function gallery(engine: Engine, game: Game) {
     return out;
   }
 
-  return { setup, png, save, capture, SHOTS, SHOTS_AFTER };
+  // Camera placed in an aircraft's frame (metres, +Z nose, +X left wing), gun view detached
+  function place(obj: THREE.Object3D, from: THREE.Vector3Tuple, at: THREE.Vector3Tuple, fov: number) {
+    gun.detach();
+    const cam = engine.camera;
+    cam.position.copy(obj.localToWorld(new THREE.Vector3(...from)));
+    cam.up.set(0, 1, 0).applyQuaternion(obj.getWorldQuaternion(new THREE.Quaternion()));
+    cam.lookAt(obj.localToWorld(new THREE.Vector3(...at)));
+    cam.fov = fov;
+    cam.updateProjectionMatrix();
+    cam.updateMatrixWorld();
+  }
+
+  function surface(name: SurfaceShot) {
+    if (name === 'p51wing') {
+      // the Mustang's cockpit, looking out and down at the left wing
+      const rnd = Math.random;
+      Math.random = mulberry(1944);
+      try {
+        game.startMission(CAMPAIGN.find((m) => m.role === 'pilot')!);
+        applyWeather(engine, CAMPAIGN[0].weather!);   // the clear first-mission sky
+        for (let i = 0; i < 120; i++) { clearEnemies(); engine.frame(1 / 60, false); }
+        const pilot = game.pilot as any;
+        pilot.view = 'cockpit'; pilot.applyViewVisibility();
+        for (let i = 0; i < 3; i++) { clearEnemies(); engine.frame(1 / 60, false); }
+        const cam = engine.camera;
+        cam.rotateY(1.2); cam.rotateX(-0.3);
+        cam.updateMatrixWorld();
+        engine.post.resetHistory();
+      } finally { Math.random = rnd; }
+      return;
+    }
+    setup(name === 'neighbour' ? 'waist' : name === 'formation' ? 'formation' : 'fw190');
+    if (name === 'formation') return;
+    const pb = w.playerBomber!;
+    if (name === 'neighbour') {
+      // a long lens from the right waist window onto the neighbour's wing and engines
+      const cam = engine.camera;
+      const nb = w.bombers().filter((b) => b !== pb).sort((a, b) => a.pos.distanceTo(cam.position) - b.pos.distanceTo(cam.position))[0];
+      cam.lookAt(nb.root.localToWorld(new THREE.Vector3(-4.5, 0, 0.5)));
+      cam.fov = 13;
+      cam.updateProjectionMatrix();
+    } else if (name === 'fw190close') {
+      // the Fw 190 from the setup, brought in to ~60 m
+      const cam = engine.camera;
+      const f = w.aircraft.find((a) => a.team === 'axis' && !a.remove);
+      if (f) {
+        const fwd = cam.getWorldDirection(new THREE.Vector3());
+        f.root.position.copy(cam.position).addScaledVector(fwd, 60);
+        f.root.updateMatrixWorld(true);
+      }
+    } else if (name === 'wing') {
+      place(pb.root, [9, 3.5, 4], [4, -0.3, 0], 50);
+    } else {
+      // the player's B-17 from outside, front quarter, in each paint scheme
+      applyPaint(pb.model, name.slice(6));
+      place(pb.root, [9, 5, 16], [0, 0, 0], 50);
+    }
+    engine.post.resetHistory();
+  }
+
+  async function captureSurface(set: string, names: SurfaceShot[] = SURFACE_SHOTS, port = 5219) {
+    const out: string[] = [];
+    for (const n of names) {
+      surface(n);
+      out.push(await save(`${set}/${n}.png`, png(), port));
+    }
+    return out;
+  }
+
+  return { setup, png, save, capture, surface, captureSurface, SHOTS, SHOTS_AFTER, SURFACE_SHOTS };
 }
