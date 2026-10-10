@@ -1,5 +1,6 @@
 import type { Mission } from '../game/Missions';
 import { STATION_ORDER, STATIONS, StationId } from '../world/B17Layout';
+import { briefingMapSvg } from './BriefingMap';
 
 export interface Settings {
   sensitivity: number;
@@ -152,8 +153,13 @@ export class UI {
       <div class="kicker" style="color:#6b5a2a">${m.number ? `MISSION No. ${m.number}` : 'SURVIVAL'}</div>
       <h2>${esc(m.title)}</h2>
       <div class="target">TARGET: ${esc(m.target)} &nbsp;·&nbsp; ASSIGNMENT: ${m.role === 'gunner' ? 'B-17G "Sky Queen" — ' + STATIONS[m.station ?? 'waistL'].label : 'P-51D Mustang — close escort'}</div>
-      ${m.briefing.map((p) => `<p>${esc(p)}</p>`).join('')}
-      <div class="obj"><b>OBJECTIVES</b>${m.objectives.map((o) => `<div>☐ ${esc(o)}</div>`).join('')}</div>
+      <div class="brief-grid">
+        <div class="brief-text">
+          ${m.briefing.map((p) => `<p>${esc(p)}</p>`).join('')}
+          <div class="obj"><b>OBJECTIVES</b>${m.objectives.map((o) => `<div>☐ ${esc(o)}</div>`).join('')}</div>
+        </div>
+        ${briefingMapSvg(m)}
+      </div>
       <div class="controls">${m.role === 'gunner' ? gunnerControls : pilotControls}</div>
       <div class="row"><button class="btn" data-go>Man your station</button><button class="btn ghost" data-back>Back</button></div>
     </div></div>`;
