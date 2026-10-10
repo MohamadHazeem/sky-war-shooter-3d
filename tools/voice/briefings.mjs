@@ -5,8 +5,7 @@
 //
 //   node --experimental-strip-types tools/voice/briefings.mjs && python3 tools/voice/generate.py
 //
-// The block is rewritten in place at the end of the "lines" array; everything else in
-// lines.json is left byte for byte.
+// The block is replaced and moved to the end of the "lines" array; other lines keep their order.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,7 +13,7 @@ import { CAMPAIGN } from '../../src/game/Missions.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FILE = join(HERE, 'lines.json');
-const MARK = '{ "group": "briefings (tools/voice/briefings.mjs)" }';
+const MARK_GROUP = 'briefings (tools/voice/briefings.mjs)';
 
 // How `say` should pronounce names and designations the briefings use (spoken text only;
 // lines.json "spoken" substitutions apply on top of these)
@@ -37,14 +36,10 @@ for (const m of CAMPAIGN) {
   });
 }
 
-const src = readFileSync(FILE, 'utf8');
-const end = src.lastIndexOf('\n  ]');
-if (end < 0) throw new Error('lines array not found');
-let head = src.slice(0, end);
-const at = head.indexOf(MARK);
-if (at >= 0) head = head.slice(0, head.lastIndexOf('\n', at));
-head = head.replace(/,?\s*$/, '');
-const block = ['', '', `    ${MARK},`, ...entries.map((e, i) => `    ${JSON.stringify(e).replace(/^\{/, '{ ').replace(/\}$/, ' }').replace(/","/g, '", "').replace(/":"/g, '": "')}${i < entries.length - 1 ? ',' : ''}`)].join('\n');
-writeFileSync(FILE, head + ',' + block + src.slice(end));
+// Parse, drop the old briefing block (marker + role "briefing" lines) wherever it sits, append the fresh one
+const data = JSON.parse(readFileSync(FILE, 'utf8'));
+data.lines = data.lines.filter((l) => l.role !== 'briefing' && l.group !== MARK_GROUP);
+data.lines.push({ group: MARK_GROUP }, ...entries);
+writeFileSync(FILE, JSON.stringify(data, null, 2) + '\n');
 const words = entries.reduce((n, e) => n + e.text.split(/\s+/).length, 0);
 console.log(`${entries.length} briefing paragraphs from ${CAMPAIGN.length} missions (${words} words) written to tools/voice/lines.json`);

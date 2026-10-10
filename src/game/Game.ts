@@ -7,6 +7,7 @@ import { randomEnemyType, ENEMY_VARIANTS, EnemyType } from '../world/EnemyTypes'
 import { Aircraft, Bomber, Fighter } from '../world/Aircraft';
 import { GunnerController } from './GunnerController';
 import { PilotController } from './PilotController';
+import { PilotOps } from './PilotOps';
 import { PhotoMode } from './PhotoMode';
 import { CAMPAIGN, Mission, Round, roundDef, survivalMission, SpawnFrom, Wave } from './Missions';
 import { STATIONS, STATION_ORDER, StationId } from '../world/B17Layout';
@@ -67,6 +68,7 @@ export class Game {
   readonly world: World;
   readonly gunner: GunnerController;
   readonly pilot: PilotController;
+  readonly pilotOps: PilotOps;   // P-51 missions: scripted rounds, bomber-protection score (PilotOps.ts)
   readonly photo: PhotoMode;
   readonly onboarding: Onboarding;
   readonly abilities: Abilities;
@@ -150,6 +152,7 @@ export class Game {
     this.target = new TargetArea(engine, this.world);
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
+    this.pilotOps = new PilotOps(this.world, ui);
     this.photo = new PhotoMode(engine, input, this.world);
     this.feel = new GameFeel(engine, this.world, ui, this.combo); this.combat = new CombatFeedback(engine, this.world);
     this.cine = new Cinematics(engine, input, ui, this);
@@ -519,6 +522,7 @@ export class Game {
       }
     }
     this.prog.role = m.role;
+    this.pilotOps.start(m);
     Chatter.attachRadioChatter(this.world, m.role);
     this.abilities.reset(m.role);
     this.baseDamageScale = this.world.playerDamageScale;
@@ -758,7 +762,12 @@ export class Game {
       this.killsSincePerk = 0;
       this.awardPerk('6 KILLS · FIELD UPGRADE');
     }
-    if (m.round) {
+    const ops = this.pilotOps.direct(dt, this.roundIdx, t - this.roundT0); // P-51 missions (PilotOps.ts)
+    this.score += ops.score;
+    if (ops.scripted) {
+      this.incoming = ops.incoming; this.incomingOff = null;
+      if (ops.roundOver && !this.roundClear && this.state === 'playing') { this.roundClear = true; this.endRound(m); }
+    } else if (m.round) {
       this.director(dt, m, roundDef(m, this.roundIdx), enemies);
     } else if (m.waves.length) {
       this.waveTimer += dt;
@@ -1175,6 +1184,7 @@ export class Game {
     else if (m.escortArrive && !this.escortsSpawned) objective = `Hold out — escort ETA ${Math.max(0, Math.ceil(m.escortArrive - w.time))}s`;
     else if (enemies > 0) objective = `${enemies} enemy fighter${enemies > 1 ? 's' : ''} attacking`;
     else if (this.waveIdx < m.waves.length) objective = 'Scan the sky — more fighters expected';
+    if (m.role === 'pilot') objective = this.pilotOps.objective(this.roundIdx, m.rounds ?? 1) ?? objective;
     const mm = Math.floor(w.time / 60), ss = Math.floor(w.time % 60);
     this.ui.updateCommon({
       mission: `${m.title.toUpperCase()} · ${mm}:${String(ss).padStart(2, '0')}`,
@@ -1382,6 +1392,7 @@ export class Game {
         ctx.restore();
       }
     }
+    if (this.mission?.role === 'pilot') { this.pilot.drawOverlay(ctx, W, H); this.pilotOps.drawOverlay(ctx, W, H, cam); } // K-14 reflector sight, padlock, bombers under attack
     // Hit / kill markers at the aim point
     let hx = W / 2, hy = H / 2;
     if (this.mission?.role === 'pilot') { const g = this.pilot.gunsight; hx = (g.x * 0.5 + 0.5) * W; hy = (-g.y * 0.5 + 0.5) * H; }

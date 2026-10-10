@@ -1204,7 +1204,8 @@ export class Sound {
     }
     // the guns drown out everything else for an instant
     this.duckFor(0.09, 0.5);
-    if (Math.random() < 0.35) setTimeout(() => this.play('casing', null, { gain: 0.07, rate: 0.9 + Math.random() * 0.4, reverb: 0.3 }), 150 + Math.random() * 250);
+    // spent brass rings on the turret floor; a Mustang's casings fall out of the wing chutes unheard
+    if (this.mode !== 'fighter' && Math.random() < 0.35) setTimeout(() => this.play('casing', null, { gain: 0.07, rate: 0.9 + Math.random() * 0.4, reverb: 0.3 }), 150 + Math.random() * 250);
   }
 
   // Shrapnel / rounds hitting our own aircraft
