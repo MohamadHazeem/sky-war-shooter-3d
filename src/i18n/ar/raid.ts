@@ -97,6 +97,8 @@ const table: PhraseTable = {
     'The main bomber stream': 'تيار القاذفات الرئيسي',
     'more raiders inbound': 'مزيد من المغيرين قادمون',
     'Free look (hold): look around the fuselage': 'نظر حر (استمر بالضغط): تلفّت داخل جسم الطائرة',
+    'Flak coming up — heavy guns below us. Hold steady.': 'نيران مضادة قادمة — مدافع ثقيلة تحتنا. اثبتوا.',
+    'That one bounced right off the armour plate!': 'تلك ارتدّت عن الدرع مباشرة!',
     'Padlock the nearest bandit': 'ثبّت النظر على أقرب معادٍ',
   },
   patterns,

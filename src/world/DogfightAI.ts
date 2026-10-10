@@ -10,7 +10,8 @@ import type { Fighter } from './Aircraft';
 //   Fw 190  boom-and-zoom: dives in, takes a slashing shot, zooms back up; won't stay in a turn
 //   Bf 109  turn fighter: hangs in the turn, breaks into you, reverses into scissors
 //   Me 262 / Me 163  slashers: a high-speed pass, extend far away, wide turn back, again
-//   Bf 110 / Ju 88  heavies: lumbering, mild defensive turns that give the rear gunner a shot
+//   Bf 110 / Ju 88 / Me 410 / He 111  heavies: lumbering, mild defensive turns that give the rear gunner a shot
+//   Do 335  boom-and-zoom like the Fw 190 (fast, heavy in the turn)
 // Shared moves: break turn when the Mustang is on its six (a warning call goes out), defensive
 // spiral, head-on passes, climbing / unloading to regain energy, and leader + wingman pairs in
 // which the wingman flies cover and goes for the Mustang when it gets behind his leader.
@@ -42,7 +43,7 @@ export function styleOf(enemyType: string): DogfightStyle {
   switch (enemyType) {
     case 'bf109': return 'turner';
     case 'me262': case 'me163': return 'slasher';
-    case 'bf110': case 'ju88': return 'heavy';
+    case 'bf110': case 'ju88': case 'me410': case 'he111': return 'heavy';
     default: return 'boomzoom';
   }
 }

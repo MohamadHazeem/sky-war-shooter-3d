@@ -99,7 +99,7 @@ describe('phrase tables', () => {
 // ---------------- screens added after the first translation pass ----------------
 
 // Latin that stays in Arabic text: aircraft and unit designations, keys, file types, the bomber's name
-const KEEP = /B-17G?|P-51D?|Fw 190|Bf 109|Bf 110|Ju 88|Me 262|Me 163|Sky Queen|TM 1-SK|SK-1944|FM 1-[MGS]|PNG|WASD|Q\/E|Shift|Tab|Esc|\bH\b/g;
+const KEEP = /B-17G?|P-51D?|Fw 190|Bf 109|Bf 110|Ju 88|Me 262|Me 163|Me 410|He 111|Do 335|Sky Queen|TM 1-SK|SK-1944|FM 1-[MGS]|PNG|WASD|Q\/E|Shift|Tab|Esc|\bH\b/g;
 // The Arabic for an English text: translated, and with no English words left in it
 function arabicFor(s: string): string {
   const out = tx(s);

@@ -38,7 +38,7 @@ import { num, tx } from '../i18n';
 import '../ui/career.css';
 
 const STREAK_WINDOW = 9;   // seconds between kills to keep a streak (same as Game)
-const HEAVY = new Set(['bf110', 'ju88']);
+const HEAVY = new Set(['bf110', 'ju88', 'me410', 'he111']);
 const FAST = new Set(['me262', 'me163']);
 
 export interface ServiceHost { showBriefing(m: Mission): void }

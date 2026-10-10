@@ -536,7 +536,7 @@ export class SpecialEvents {
     // a mission the scheduler has not seen yet (e.g. just started by sws.special): adopt it first
     if (this.game.mission !== this.mission || this.world.time < this.lastTime - 1e-6) this.resetMission(this.game.mission);
     this.lastTime = this.world.time;
-    if (!name) return `specials: ${SPECIAL_IDS.join(', ')} · tactics: companyFront, schwarm, pincer, comet, jet, standoff, topCover, zerstorer-tactic`;
+    if (!name) return `specials: ${SPECIAL_IDS.join(', ')} · tactics: companyFront, schwarm, pincer, comet, jet, standoff, topCover, zerstorer-tactic, bigGun, pfeil, raid`;
     if ((SPECIAL_IDS as string[]).includes(name)) {
       if (this.bossUp()) return 'boss fight in progress';
       if (this.roundIdx < 0) this.newRound(0, this.world.time);

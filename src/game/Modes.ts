@@ -158,6 +158,18 @@ export function roundFlakOn(r: Round, t: number): boolean {
 // Enemy-mix providers for missions no mode claims (the campaign's side raids register one in
 // ui/CampaignMap.ts); the first non-null answer wins, null everywhere = the normal mix
 export const ENEMY_MIX: ((m: Mission, tier: number) => EnemyType | null)[] = [];
+// Late-war types, sparingly: the Me 410 in the last two campaign missions (m11, m12) and from
+// survival tier 3, the Do 335 in the finale and from survival tier 5 (Tactics.perType flies them)
+ENEMY_MIX.push((m, tier) => {
+  const r = Math.random();
+  if (m.id === 'm11') return r < 0.07 ? 'me410' : null;
+  if (m.id === 'm12') return r < 0.08 ? 'me410' : r < 0.12 ? 'do335' : null;
+  if (m.id.startsWith('survival-') && tier >= 3) {
+    if (r < Math.min(0.09, 0.04 + 0.01 * (tier - 3))) return 'me410';
+    if (tier >= 5 && r > 0.95) return 'do335';
+  }
+  return null;
+});
 function enemyMixFor(m: Mission, tier: number): EnemyType | null {
   for (const f of ENEMY_MIX) { const t = f(m, tier); if (t) return t; }
   return null;
@@ -253,7 +265,7 @@ export class ModeRunner {
       if (v instanceof Fighter && (v as any).ace) {
         this.aces++;
         if (this.def?.id === 'acehunt') this.ui.feed(`ACE DOWN — ${v.label} · +1000`, 'mine');
-      } else if (v instanceof Fighter && (v.enemyType === 'bf110' || v.enemyType === 'ju88')) this.heavies++;
+      } else if (v instanceof Fighter && ['bf110', 'ju88', 'me410', 'he111'].includes(v.enemyType)) this.heavies++;
       this.modeScore += Math.round(100 * mult);
       this.bestCombo = Math.max(this.bestCombo, mult);
     };

@@ -330,7 +330,7 @@ export class Game {
           }
           this.killMarkerT = 0.45;
           // slow motion only for kills that deserve it: heavies, bosses and aces, or a triple streak
-          const big = victim instanceof Fighter && ['bf110', 'ju88'].includes(victim.enemyType);
+          const big = victim instanceof Fighter && ['bf110', 'ju88', 'me410', 'he111'].includes(victim.enemyType);
           const special = victim instanceof Fighter && ((victim as any).boss || (victim as any).ace);
           if (special) this.slowmo = 1.4;
           else if (big || this.streak >= 3) this.slowmo = this.loadout.bulletTime ? 1.1 : 0.6;

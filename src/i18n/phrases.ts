@@ -14,8 +14,9 @@ import campaign from './ar/campaign';
 import skills from './ar/skills';
 import battle from './ar/battle';
 import theatre from './ar/theatre';
+import aircraft from './ar/aircraft';
 
-const TABLES: PhraseTable[] = [missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre];
+const TABLES: PhraseTable[] = [missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft];
 
 export const PHRASES: Record<string, string> = Object.assign({}, ...TABLES.map((t) => t.phrases));
 export const PATTERNS: Pattern[] = TABLES.flatMap((t) => t.patterns ?? []);

@@ -3,14 +3,16 @@ import type { World } from '../world/World';
 import { Fighter } from '../world/Aircraft';
 import { sound } from '../audio/Sound';
 
-// Rear gunners of the twin-engine heavies (Bf 110, Ju 88): an MG 81Z on a flexible mount that
-// swings onto an allied fighter sitting in the rear cone and fires bursts back at it. The
-// Bf 110 model's gun_rear node (with its muzzle_rear child) is traversed so the guns visibly
-// track; airframes without one fire from the rear cockpit position.
+// Rear gunners of the twin-engine heavies (Bf 110, Ju 88, He 111, Me 410): an MG 81Z on a flexible
+// mount that swings onto an allied fighter sitting in the rear cone and fires bursts back at it.
+// The model's gun_rear node (with its muzzle_rear child: Bf 110 rear cockpit, He 111 dorsal B-Stand)
+// is traversed so the gun visibly tracks; airframes without one fire from the rear cockpit
+// position. The Me 410's two remote FDL 131 barbettes (barbette_left / barbette_right, fitted by
+// world/EnemyDress.ts) both swing onto the target and fire alternately.
 //
 // Driven every frame of a P-51 mission by PilotOps, independent of what the pilot is doing.
 
-const HEAVIES = new Set(['bf110', 'ju88']);
+const HEAVIES = new Set(['bf110', 'ju88', 'he111', 'me410']);
 const RANGE = 680;                // m
 const CONE = Math.cos(1.15);      // ~66 deg either side of dead astern
 const RATE = 18;                  // rounds/s (the twin MG 81Z, slowed for game balance)
@@ -19,7 +21,8 @@ const DAMAGE = 2.6;
 const TRACER: [number, number, number] = [10, 8, 3.5];
 const FALLBACK = new THREE.Vector3(0, 0.63, -1.46); // rear cockpit (model frame, unscaled)
 
-interface Gunner { node: THREE.Object3D | null; muzzle: THREE.Object3D | null; rest: THREE.Quaternion; cur: THREE.Vector3; burst: number; cooldown: number; err: THREE.Vector3; acc: number; seen: boolean }
+interface Mount { node: THREE.Object3D; muzzle: THREE.Object3D | null; rest: THREE.Quaternion; restDir: THREE.Vector3 }
+interface Gunner { mounts: Mount[]; cur: THREE.Vector3; burst: number; cooldown: number; err: THREE.Vector3; acc: number; seen: boolean; shot: number }
 
 const _p = new THREE.Vector3();
 const _d = new THREE.Vector3();
@@ -38,9 +41,19 @@ export class RearGunners {
   private gunnerOf(f: Fighter): Gunner {
     let g = this.gunners.get(f);
     if (!g) {
-      const node = f.model.getObjectByName('gun_rear') ?? null;
-      const muzzle = node?.getObjectByName('muzzle_rear') ?? null;
-      g = { node, muzzle, rest: node ? node.quaternion.clone() : new THREE.Quaternion(), cur: BACK.clone(), burst: 0, cooldown: 0, err: new THREE.Vector3(), acc: 0, seen: false };
+      const mounts: Mount[] = [];
+      const add = (name: string, muzzleName: string) => {
+        const node = f.model.getObjectByName(name);
+        if (!node) return;
+        const muzzle = node.getObjectByName(muzzleName) ?? null;
+        // the barrel's own rest direction (model frame), so the gun points where it fires
+        const restDir = muzzle && muzzle.position.lengthSq() > 1e-6 ? muzzle.position.clone().applyQuaternion(node.quaternion).normalize() : BACK.clone();
+        mounts.push({ node, muzzle, rest: node.quaternion.clone(), restDir });
+      };
+      add('barbette_left', 'muzzle_barbette_left');
+      add('barbette_right', 'muzzle_barbette_right');
+      if (!mounts.length) add('gun_rear', 'muzzle_rear');
+      g = { mounts, cur: BACK.clone(), burst: 0, cooldown: 0, err: new THREE.Vector3(), acc: 0, seen: false, shot: 0 };
       this.gunners.set(f, g);
     }
     return g;
@@ -53,8 +66,9 @@ export class RearGunners {
       if (!f.alive || !HEAVIES.has(f.enemyType)) continue;
       const g = this.gunnerOf(f);
       g.cooldown -= dt;
-      // gun position in the world
-      if (g.muzzle) { f.model.updateMatrixWorld(true); g.muzzle.getWorldPosition(_p); }
+      // gun position in the world (the next mount to fire)
+      const mt = g.mounts.length ? g.mounts[g.shot % g.mounts.length] : null;
+      if (mt?.muzzle) { f.model.updateMatrixWorld(true); mt.muzzle.getWorldPosition(_p); }
       else f.localToWorld(_p.copy(FALLBACK).multiplyScalar(f.model.scale.x), _p);
       // the nearest allied fighter in the rear cone (the player's Mustang first)
       const tail = _d.copy(BACK).applyQuaternion(f.quat);
@@ -75,7 +89,7 @@ export class RearGunners {
         want.copy(_v).sub(_p).normalize().applyQuaternion(_q.copy(f.quat).invert());
       }
       g.cur.lerp(want, 1 - Math.exp(-dt * 5)).normalize();
-      if (g.node) g.node.quaternion.copy(g.rest).premultiply(_qa.setFromUnitVectors(BACK, g.cur));
+      for (const m of g.mounts) m.node.quaternion.copy(m.rest).premultiply(_qa.setFromUnitVectors(m.restDir, g.cur));
       if (!target) { g.burst = 0; continue; }
       // bursts: ~1 s on, a breather, new aim error every burst
       if (g.burst <= 0 && g.cooldown <= 0 && Math.random() < dt * 2.5) {
@@ -89,6 +103,9 @@ export class RearGunners {
       g.acc += dt * RATE;
       while (g.acc >= 1) {
         g.acc -= 1;
+        g.shot++;
+        // barbettes: the two guns fire in turn
+        if (g.mounts.length > 1) g.mounts[g.shot % g.mounts.length].muzzle?.getWorldPosition(_p);
         const dir = _d.copy(g.cur).applyQuaternion(f.quat);
         dir.x += R() * 0.012; dir.y += R() * 0.012; dir.z += R() * 0.012;
         dir.normalize();

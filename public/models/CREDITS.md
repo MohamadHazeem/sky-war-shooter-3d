@@ -79,3 +79,29 @@ resized and re-encoded (JPEG/PNG), and the cockpit textures packed into atlases.
   (FGAddon, `trunk/Aircraft/me163`), which accepts only GPL-compatible content (GPL v2 or later). Treat it as GPL v2+.
 * Author: Detlef Faber (`me163-set.xml`).
 * Livery used: `Models/me163-1.png`. No swastika.
+
+## he111.glb — Heinkel He 111
+* Source: https://github.com/FGMEMBERS/Heinkel-He-111 (commit `0625f5535e022166045c9470668f5243dbcab2dd`)
+* Licence: GNU General Public License v2 (`COPYING` in the repository).
+* 3D model and FDM: Emmanuel Baranger (2012), http://helijah.free.fr/flightgear/hangar.htm
+* Livery used: default (`Models/texture.png`, RLM 70/71 splinter camouflage over RLM 65) by Emmanuel Baranger.
+  It carries only Balkenkreuz crosses (no swastika, no unit codes), so the texture is not edited.
+  Other liveries in the source: camo, desert, black, 1GHK, 1TKX.
+* Crew figure (`ww2_pilot_old`): Bertrand Augras' X-Plane pilot collection, as included in the FlightGear package.
+* The dorsal MG 15 (`gun_rear`) and the nose and ventral guns are the package's `Models/Interior/Guns/guns.ac`.
+* Not included: the instrument panel, the interior-only glass, lights and shadow.
+
+## do335.glb — Dornier Do 335 Pfeil
+* Source: https://github.com/FGMEMBERS/DO-335 (commit `135d343e0aa0ae2c4b6fe1d986d811ef208104b5`)
+* Licence: GNU General Public License v2 (`COPYING` in the repository).
+* 3D model and FDM: Emmanuel Baranger (2008).
+* Livery used: `Models/Liveries/1024x1024/Do335.png` ("ZH", RLM 81/82 over RLM 76) by Alex Kerr (2010).
+  The fin carries a plain "X" where a swastika would be; there is no swastika, so the texture is not edited.
+  Other liveries in the source: default (`texture.png`) and `gris.png` (Emmanuel Baranger).
+* Pilot figure (`ww2_pilot_old`): Bertrand Augras' collection, as above.
+* Not included: the instrument panels, the interior-only glass, lights and shadow.
+
+## Me 410 (no model of its own)
+There is no GPL-compatible Me 410 model in the FlightGear repositories (FGMEMBERS, FGAddon), so the game's Me 410
+flies `bf110.glb` (above) as a stand-in, repainted lighter at runtime and fitted with a procedural BK 5 cannon tray and
+barrel and two FDL 131 barbette blisters (`src/world/EnemyDress.ts`). No He 219 or Ta 152 model exists there either.

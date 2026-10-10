@@ -1535,6 +1535,22 @@
       "text": "Blue Four, replacement aircraft joining on your wing."
     },
     {
+      "group": "skills / custom battle"
+    },
+    {
+      "id": "sk_fortress",
+      "roles": [
+        "pilot",
+        "lead"
+      ],
+      "text": "That one bounced right off the armour plate!"
+    },
+    {
+      "id": "rflak",
+      "role": "nav",
+      "text": "Flak coming up — heavy guns below us. Hold steady."
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {
@@ -1781,6 +1797,60 @@
       "role": "briefing",
       "text": "You are back on the left waist gun, where you started at Emden. Think of the crews who are not here today: the Lucky Lady over Schweinfurt, and the new boys who never finished their first week. Fly this one for them. Then come home, all of you.",
       "say": "You are back on the left waist gun, where you started at Emden. Think of the crews who are not here today: the Lucky Lady over Shvine-foort, and the new boys who never finished their first week. Fly this one for them. Then come home, all of you."
+    },
+    {
+      "id": "bk5_spotted",
+      "roles": [
+        "nav",
+        "bigfriend"
+      ],
+      "text": "Me 410 hanging back out of range — he's carrying a fifty-millimetre cannon!",
+      "say": "M E four-ten hanging back out of range — he's carrying a fifty-millimetre cannon!"
+    },
+    {
+      "id": "bk5_lineup",
+      "roles": [
+        "nav",
+        "bigfriend"
+      ],
+      "text": "Me 410 lining up with the big gun!",
+      "say": "M E four-ten lining up with the big gun!",
+      "urgent": true
+    },
+    {
+      "id": "bk5_fire",
+      "roles": [
+        "pilot",
+        "bigfriend"
+      ],
+      "text": "He's firing the big gun! Kill him before he reloads!",
+      "urgent": true
+    },
+    {
+      "id": "bk5_down",
+      "roles": [
+        "top",
+        "bigfriend"
+      ],
+      "text": "Got the Me 410 before he could fire!",
+      "say": "Got the M E four-ten before he could fire!"
+    },
+    {
+      "id": "pfeil",
+      "role": "tail",
+      "text": "Do 335 diving on us from high astern — he's as fast as a jet!",
+      "say": "Dornier three-thirty-five diving on us from high astern — he's as fast as a jet!",
+      "urgent": true
+    },
+    {
+      "id": "raid_he111_lead",
+      "role": "lead",
+      "text": "Heinkels! A whole formation of bombers — get into them before they reach the target!"
+    },
+    {
+      "id": "raid_he111_nav",
+      "role": "nav",
+      "text": "German bombers crossing ahead — a whole formation of Heinkels!"
     }
   ]
 }

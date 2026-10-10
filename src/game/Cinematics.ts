@@ -42,7 +42,7 @@ const FADE_OUT = 0.14, FADE_IN = 0.22;
 const FLY_DELAY = 1.3;            // real s of the gun view ("ALL GUNS SECURE") before the fly-by
 const FLY_DUR = 4.6;
 const HP_LOW = 0.5, HP_DROP = 0.035;
-const HEAVY = ['bf110', 'ju88'];
+const HEAVY = ['bf110', 'ju88', 'me410', 'he111'];
 
 type Mode = 'none' | 'kill' | 'flyby' | 'replay';
 

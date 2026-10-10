@@ -15,7 +15,7 @@ const OPS: Record<string, string> = {
   'Steel Rain': 'المطر الفولاذي', Nightjar: 'السُّبَد', Overcast: 'السماء الملبّدة', 'High Card': 'الورقة الرابحة',
 };
 const OP = `(${Object.keys(OPS).join('|')})`;
-const ENEMY = '(?:Fw 190|Bf 109|Bf 110|Ju 88|Me 262|Me 163)';
+const ENEMY = '(?:Fw 190|Bf 109|Bf 110|Ju 88|Me 262|Me 163|Me 410|He 111|Do 335)';
 const SEAT = '(Left Waist|Right Waist|Top Turret|Ball Turret|Tail Gun)';
 const TOD = '(?:dawn|morning sun|noon|dusk)';
 

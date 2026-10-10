@@ -15,7 +15,7 @@ const POLL = 0.25;      // s between checks of the game state
 
 export type HintId = 'perk' | 'heavy' | 'overheat' | 'hangar' | 'seat' | 'boss';
 
-const HEAVY: EnemyType[] = ['bf110', 'ju88'];
+const HEAVY: EnemyType[] = ['bf110', 'ju88', 'me410', 'he111'];
 
 export class Hints {
   private seen: Set<string>;
