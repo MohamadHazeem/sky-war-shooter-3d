@@ -91,6 +91,7 @@ export class World implements WorldView {
   playerBomber: Bomber | null = null;
   playerFighter: Fighter | null = null;
   playerStation: StationDef | null = null;
+  remoteStations = new Set<string>(); // co-op: gun positions on the player's ship manned by the remote partner (CoopSession); their AI crewmen stand down
   time = 0;
   difficulty = 1;
   aiGunnerFactor = 1; // damage multiplier for AI bomber crews
@@ -810,6 +811,7 @@ export class World implements WorldView {
       if (!b.alive) continue;
       for (const g of gs) {
         if (b.isPlayer && g.station && this.playerStation && g.station.id === this.playerStation.id) continue;
+        if (b.isPlayer && g.station && this.remoteStations.has(g.station.id)) continue;
         const sk = aiGunnerSkill(b.isPlayer ? g.station?.id : null); // crew skill (CrewRoster); default elsewhere
         g.retarget -= dt;
         g.cooldown -= dt;

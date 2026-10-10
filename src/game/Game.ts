@@ -45,6 +45,7 @@ import { ServiceRecord } from './ServiceRecord';
 import { Pacing } from './Pacing';
 import { ModeRunner, mountModePanel, leaderboardMode } from './Modes';
 import { SpecialEvents } from './SpecialEvents';
+import { CoopSession } from './CoopSession';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -76,6 +77,7 @@ export class Game {
   readonly modes: ModeRunner;   // Ace Hunt / Time Attack rules and scores (Modes.ts)
   readonly pacing: Pacing;      // build -> breather -> final wave inside each round (Pacing.ts)
   readonly specials: SpecialEvents; // special events (ace squadron, Zerstörer wave, rocket barrage) + enemy group tactics
+  readonly coop: CoopSession;   // online co-op (beta): host/guest session, see CoopSession.ts
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -191,6 +193,7 @@ export class Game {
     window.addEventListener('keydown', unlock);
     this.onboarding = new Onboarding(this, engine, input, ui, { awardPerk: (l) => this.awardPerk(l), showCampaign: () => this.showCampaign() });
     this.service = new ServiceRecord(this, ui, { showBriefing: (m) => this.showBriefing(m) });
+    this.coop = new CoopSession(this, engine, ui);
   }
 
   // Compile shaders for objects that only appear mid-mission (debris, chutes, bombs,
@@ -383,6 +386,7 @@ export class Game {
       settings: () => { this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => this.startMenu()); this.mountCloud(); },
       credits: () => this.ui.credits(() => this.startMenu()),
     });
+    this.coop.onTitle();
     this.onboarding.onTitle();
     this.service.onTitle();
     this.ui.fade(false);
@@ -748,6 +752,7 @@ export class Game {
   }
 
   private direct(dt: number) {
+    if (this.coop.blocksDirector) return; // co-op guest: the host runs the battle
     const m = this.mission!;
     const w = this.world;
     const t = w.time;
@@ -1056,6 +1061,7 @@ export class Game {
     }
     if (this.state === 'paused') { this.drawOverlay(); this.input.endFrame(); return; }
     w.update(dt);
+    this.coop.update(dt);
     this.updateBombs(dt);
     if (this.menuMode) {
       this.menuCamera(dt);
