@@ -3,6 +3,7 @@ import { Engine } from '../core/Engine';
 import { Input } from '../core/Input';
 import { UI, Settings, Progress, DebriefData } from '../ui/UI';
 import { World, ALTITUDE } from '../world/World';
+import { randomEnemyType } from '../world/EnemyTypes';
 import { Aircraft, Bomber, Fighter } from '../world/Aircraft';
 import { GunnerController } from './GunnerController';
 import { PilotController } from './PilotController';
@@ -146,7 +147,7 @@ export class Game {
           this.score += Math.round(100 * (1 + this.survivalWave * 0.1));
           this.popups.push({ pos: victim.pos.clone(), text: '+100  KILL', life: 1.6 });
           sound.confirm('kill_confirm');
-          this.ui.feed(`Fw 190 destroyed — confirmed`, 'mine');
+          this.ui.feed(`${victim.label} destroyed — confirmed`, 'mine');
           // streaks: kills in quick succession
           this.streak = w.time - this.lastKillAt < 9 ? this.streak + 1 : 1;
           this.lastKillAt = w.time;
@@ -163,10 +164,10 @@ export class Game {
           }
           this.killMarkerT = 0.45;
           this.slowmo = 0.55;
-          const lines = ['Got him! He\'s going down!', 'You got him! Nice shooting!', 'He\'s smoking — he\'s finished!', 'Scratch one Focke-Wulf!'];
+          const lines = ['Got him! He\'s going down!', 'You got him! Nice shooting!', 'He\'s smoking — he\'s finished!', victim.label === 'Bf 109' ? 'Scratch one Messerschmitt!' : 'Scratch one Focke-Wulf!'];
           w.callout('kill', ['Tail', 'Pilot', 'Top Turret', 'Navigator'][Math.floor(Math.random() * 4)], lines[Math.floor(Math.random() * lines.length)], 3, 2);
         } else {
-          this.ui.feed('Fw 190 destroyed');
+          this.ui.feed(`${victim.label} destroyed`);
         }
       } else if (victim instanceof Fighter && !victim.isPlayer) {
         this.ui.feed('P-51 lost', 'loss');
@@ -377,7 +378,7 @@ export class Game {
       const p = fromArc ? base.clone().add(new THREE.Vector3(R() * 150 + i * 45, R() * 60, R() * 150)) : w.from === 'mixed' ? this.spawnPos('mixed') : this.spawnPos(w.from).add(new THREE.Vector3(R() * 120 + i * 40, R() * 50, R() * 120));
       let attack: AttackType | undefined = w.attack;
       if (!attack) attack = (['headon', 'stern', 'beam', 'high'] as AttackType[])[Math.floor(Math.random() * 4)];
-      this.world.spawnEnemy(p, attack, w.skill, true, Math.random() < (w.rockets ?? 0));
+      this.world.spawnEnemy(p, attack, w.skill, true, Math.random() < (w.rockets ?? 0), randomEnemyType());
     }
     if (w.radio) this.world.callout('wave' + this.waveIdx, w.radio[0], w.radio[1], 0, 3);
   }

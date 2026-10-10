@@ -4,7 +4,8 @@ import { Aircraft, Bomber, Fighter, makeGun } from './Aircraft';
 import { Ballistics, HitEvent } from './Ballistics';
 import { Effects } from './Effects';
 import { EnemyPilot, EscortPilot, AttackType, WorldView } from './AI';
-import { FW190_PARAMS, P51_PARAMS } from './FlightModel';
+import { P51_PARAMS } from './FlightModel';
+import { ENEMY_VARIANTS, EnemyType, tintModel } from './EnemyTypes';
 import { AI_EXTRA, dirFromYawPitch, inArc, STATIONS, STATION_ORDER, StationDef } from './B17Layout';
 import { sound } from '../audio/Sound';
 import { playRicochet } from '../audio/Ricochet';
@@ -226,13 +227,16 @@ export class World implements WorldView {
     this.scene.add(a.root);
   }
 
-  spawnEnemy(pos: THREE.Vector3, attack?: AttackType, skill = 1, dropTank = true, rockets = false): Fighter {
-    const f = new Fighter('fw190', 'axis', FW190_PARAMS);
+  spawnEnemy(pos: THREE.Vector3, attack?: AttackType, skill = 1, dropTank = true, rockets = false, type: EnemyType = 'fw190'): Fighter {
+    const variant = ENEMY_VARIANTS[type];
+    const f = new Fighter('fw190', 'axis', variant.params);
     f.root.position.copy(pos);
     const dir = _v.copy(this.formationCenter).sub(pos).setY(0).normalize();
     f.root.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
     f.fm.vel.copy(dir).multiplyScalar(180);
     f.vel.copy(f.fm.vel);
+    // Bf 109 paint: done before the drop tank and rockets are fitted so they keep their colours
+    if (variant.tint) tintModel(f.model, variant.tint);
     // Fw 190 A-8: 2x MG 131 (13 mm) cowling, 4x MG 151/20 wing cannon
     const tracerY: [number, number, number] = [10, 8, 3.5];
     f.guns = [
@@ -262,8 +266,8 @@ export class World implements WorldView {
       }
     }
     f.setScale(ENEMY_SCALE);
-    f.structure = f.maxStructure = ENEMY_STRUCTURE * (0.85 + 0.15 * this.difficulty);
-    f.label = 'Fw 190';
+    f.structure = f.maxStructure = ENEMY_STRUCTURE * (0.85 + 0.15 * this.difficulty) * variant.structure;
+    f.label = variant.label;
     this.add(f);
     this.pilots.set(f, new EnemyPilot(f, attack, skill * this.difficulty));
     this.stats.enemiesSpawned++;
