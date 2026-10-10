@@ -1278,6 +1278,151 @@
         "bigfriend"
       ],
       "text": "Secondary explosion! Something big just went up down there!"
+    },
+    {
+      "group": "phase4: abilities, tutorial, boss, evasive"
+    },
+    {
+      "id": "p4_world_0",
+      "role": "pilot",
+      "text": "Hang on — evasive action!",
+      "urgent": true
+    },
+    {
+      "id": "p4_abilities_1",
+      "role": "pilot",
+      "text": "Little friends coming in!",
+      "urgent": true
+    },
+    {
+      "id": "p4_abilities_2",
+      "role": "pilot",
+      "text": "Little friends coming in! Red flight, sweep the bombers!",
+      "urgent": true
+    },
+    {
+      "id": "p4_abilities_3",
+      "role": "pilot",
+      "text": "Pour it on, gunner! Give 'em everything!",
+      "urgent": true
+    },
+    {
+      "id": "p4_abilities_4",
+      "role": "lead",
+      "text": "Give 'em everything you've got, Blue two!"
+    },
+    {
+      "id": "p4_abilities_5",
+      "role": "pilot",
+      "text": "Steady... take your time. Lead him."
+    },
+    {
+      "id": "p4_abilities_6",
+      "role": "lead",
+      "text": "Steady, Blue two... line him up."
+    },
+    {
+      "id": "p4_tutorial_7",
+      "role": "pilot",
+      "text": "You're ready, gunner! Welcome to the crew of the Sky Queen."
+    },
+    {
+      "id": "p4_tutorial_8",
+      "role": "pilot",
+      "text": "This is a training flight, gunner. Nobody shoots back today. See that target drone? Put your sight on it."
+    },
+    {
+      "id": "p4_tutorial_9",
+      "role": "pilot",
+      "text": "Short bursts! Watch your tracers and walk them in."
+    },
+    {
+      "id": "p4_tutorial_10",
+      "role": "pilot",
+      "text": "Lead him! Aim where he's going to be, not where he is."
+    },
+    {
+      "id": "p4_tutorial_11",
+      "role": "pilot",
+      "text": "Use the ring sight for the long ones. Hold the right button."
+    },
+    {
+      "id": "p4_tutorial_12",
+      "role": "pilot",
+      "text": "Fighter on the other side! Somebody get on that gun!",
+      "urgent": true
+    },
+    {
+      "id": "p4_tutorial_13",
+      "role": "nav",
+      "text": "Navigator here. Watch the radar plot — and Tab gives you the big picture."
+    },
+    {
+      "id": "p4_tutorial_14",
+      "role": "pilot",
+      "text": "Nice shooting. The ground crew fitted you something extra."
+    },
+    {
+      "id": "p4_tutorial_15",
+      "role": "pilot",
+      "text": "Here they come — three bandits. Show me what you've learned!"
+    },
+    {
+      "id": "p4_bossbattle_16",
+      "role": "pilot",
+      "text": "That's the last of them! Scratch one battle group — drinks are on me!"
+    },
+    {
+      "id": "p4_bossbattle_17",
+      "role": "pilot",
+      "text": "You got it just in time!"
+    },
+    {
+      "id": "p4_bossbattle_18",
+      "role": "pilot",
+      "text": "Nice shooting — that broke it up!"
+    },
+    {
+      "id": "p4_bossbattle_19",
+      "role": "tail",
+      "text": "Rockets! Rockets incoming!",
+      "urgent": true
+    },
+    {
+      "id": "p4_bossbattle_20",
+      "role": "tail",
+      "text": "Jesus, that was close! She nearly took our tail off!",
+      "urgent": true
+    },
+    {
+      "id": "p4_bossbattle_21",
+      "role": "top",
+      "text": "Turret knocked out! Keep at it!"
+    },
+    {
+      "id": "p4_bossbattle_22",
+      "role": "top",
+      "text": "Rocket pod went up like a firework!"
+    },
+    {
+      "id": "p4_bossbattle_23",
+      "role": "top",
+      "text": "Engine hit! She's dropping back!"
+    },
+    {
+      "id": "p4_bossbattle_24",
+      "role": "top",
+      "text": "Fighters dropping out of that thing's belly!"
+    },
+    {
+      "id": "p4_bossbattle_25",
+      "role": "ball",
+      "text": "She's breaking up! That's the last of them!"
+    },
+    {
+      "id": "p4_bossbattle_26",
+      "role": "ball",
+      "text": "Look at her go — she's breaking in two!"
     }
   ]
 }
