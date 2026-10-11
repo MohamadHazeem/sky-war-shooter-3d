@@ -78,6 +78,8 @@ GALLERY = [
     ('boss-battle-group.jpg', 'Boss battle group: giant warships, escorts and the formation (m12)'),
     ('takeoff-runway.jpg', 'Dawn take-off at Deenethorpe'),
     ('takeoff-climb.jpg', 'Climbing out above the overcast to join the formation'),
+    ('p51-takeoff.jpg', 'P-51 pair take-off at Boxted'),
+    ('p51-landing.jpg', 'P-51 roll-out after an overhead break'),
     ('belly-landing.jpg', 'A badly damaged Sky Queen comes home on her belly'),
     ('crew-room.jpg', 'Crew-room interlude after Black Thursday: Hut 14, an emptied bunk across the aisle'),
     ('campaign-map.jpg', 'Strategic campaign map with side raids and gauges'),
