@@ -48,6 +48,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 32 | Achievements for the new content (~20: Train Buster, Not Over My Field, Got Him First, Brought Her Home, Recognition Expert…) | Done — 22 new (68 total): Raider, Strategist, Not Over My Field, Steinbock Broken, Searchlight Hunter, Train Buster, End of the Line, Teamwork, Weather Man, Got Him First, Big Gun Spotter, Heinkel Hunter, Broken Arrow, Specialist, War Games, Weekly Warrior, Director\'s Cut, Full Crew, Recognition Expert + 3 secrets; emblems, Arabic |
 | 33 | First-launch auto quality: short silent GPU benchmark picks Low/Medium/High/Ultra; "Detect best settings" button | Done — first launch benchmarks the idle title scene (~1.5–2.5 s, GPU-synced, abortable), picks Low–Ultra against the refresh budget, saves it with a toast; Settings → Detect best settings re-runs it; touch/data-saver start on Medium; thresholds untested on weak hardware |
 | 34 | Balance follow-up: fairer m12 finale, a real night hunt in Night Fighter (markers only when coned/close), P-51 target commitment so escort missions end on kills | In progress |
+| 35 | P-51 take-off and landing scenes (fighter station, pair take-off, overhead break landing) | In progress |
 | 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | Done — Game.ts 1469 → 536 lines + Director, MissionFlow, WorldEvents, GameHud, MenuScene; docs/ARCHITECTURE.md (loop order, where to hook features); README layout; A/B regression of all 12 missions (no behaviour change) |
 
 ## Log
