@@ -45,7 +45,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 29 | Visual QA sweep: every mode, view, mood and quality preset scanned for artifacts in combination (NaN, blobs, ghosting, sorting), fixes with before/after | Done — ~300 frames scanned (no NaN/Inf), 6 artifacts fixed: tail-view sight dots, stale sky reflections after weather changes, white night tail-window streaks, P-51 canopy veil, banding inside cloud layers, boss bar overlap; recommendations in tools/gallery/visual-qa/README.md |
 | 30 | Crew-room interludes: voiced barracks scenes after each story mission, reacting to wounds, losses, aces and the campaign state | Done — 12 vignettes in Hut 14, the club or the Manston transit hut (drawn hut with stove glow, weather windows, portraits), lines chosen by outcome (wounds, empty bunks, Experten, strategy, kills), 301 recorded clips, m12 epilogue, Arabic, skippable, setting |
 | 31 | Visual polish from the QA recommendations (night readability, shock ring, debris trails, gunsight glass, hole rims, searchlight starts, debrief after landing) | Done — night fill 34 % of day with near-camera rim/fill (own aircraft readable), shock ring scaled by light, continuous jittered debris/ember trails, additive K-14 glass, sooty hole rims, searchlights start at the lamp below ~250 m, parked Sky Queen behind the debrief; cloud-top stipple still open |
-| 32 | Achievements for the new content (~20: Train Buster, Not Over My Field, Got Him First, Brought Her Home, Recognition Expert…) | In progress |
+| 32 | Achievements for the new content (~20: Train Buster, Not Over My Field, Got Him First, Brought Her Home, Recognition Expert…) | Done — 22 new (68 total): Raider, Strategist, Not Over My Field, Steinbock Broken, Searchlight Hunter, Train Buster, End of the Line, Teamwork, Weather Man, Got Him First, Big Gun Spotter, Heinkel Hunter, Broken Arrow, Specialist, War Games, Weekly Warrior, Director\'s Cut, Full Crew, Recognition Expert + 3 secrets; emblems, Arabic |
 | 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | Done — Game.ts 1469 → 536 lines + Director, MissionFlow, WorldEvents, GameHud, MenuScene; docs/ARCHITECTURE.md (loop order, where to hook features); README layout; A/B regression of all 12 missions (no behaviour change) |
 
 ## Log
@@ -77,3 +77,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 04:26 visual QA merged; follow-up polish for its recommendations started.
 - 05:04 visual polish merged.
 - 05:08 crew-room interludes merged (384 tests).
+- 05:19 achievements merged (393 tests).
