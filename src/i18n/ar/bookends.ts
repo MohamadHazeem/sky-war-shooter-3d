@@ -30,6 +30,22 @@ const table: PhraseTable = {
     'DEENETHORPE · STATION 128': 'دينيثورب · المحطة 128',
     '401ST BOMB GROUP · TAKE-OFF': 'مجموعة القاذفات 401 · الإقلاع',
     '401ST BOMB GROUP · RETURN TO BASE': 'مجموعة القاذفات 401 · العودة إلى القاعدة',
+
+    // P-51 escort missions (FighterBookends.ts): the fighter station at Boxted
+    'Boxted tower to Blue flight: you are cleared for take-off. Good hunting.':
+      'برج بوكستد إلى السرب الأزرق: مسموح لكم بالإقلاع. صيداً موفقاً.',
+    'Blue Four, rolling with you.': 'أزرق أربعة، أنطلق معك.',
+    'Blue flight, Big Friends at twelve o\'clock low. Take station on the box.':
+      'السرب الأزرق، الأصدقاء الكبار عند الساعة الثانية عشرة منخفضين. اتخذوا مواقعكم حول التشكيل.',
+    'Blue flight, initial for the break. Breaking left.': 'السرب الأزرق، في الاقتراب الأولي للانعطاف. انعطاف إلى اليسار.',
+    'Blue flight, cleared to land. Welcome home.': 'السرب الأزرق، مسموح لكم بالهبوط. أهلاً بعودتكم.',
+    'Engine\'s gone — coming in dead-stick!': 'المحرك توقف — أهبط بلا محرك!',
+    'Gear won\'t come down — I\'m putting her down on her belly!': 'العجلات لا تنزل — سأهبط بها على بطنها!',
+    'Crash crew to the runway! Mustang coming in wheels up!': 'فرق الطوارئ إلى المدرج! موستانغ تهبط بلا عجلات!',
+    'Blue Four is down. Nice flying today, Two.': 'أزرق أربعة هبط. طيران رائع اليوم يا اثنان.',
+    'BOXTED · STATION 150': 'بوكستد · المحطة 150',
+    '354TH FIGHTER GROUP · TAKE-OFF': 'مجموعة المقاتلات 354 · الإقلاع',
+    '354TH FIGHTER GROUP · RETURN TO BASE': 'مجموعة المقاتلات 354 · العودة إلى القاعدة',
   },
 };
 
