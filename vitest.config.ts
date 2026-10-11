@@ -8,5 +8,8 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     restoreMocks: true,
     unstubGlobals: true,
+    // the offline audio-synthesis tests render every generated voice/buffer: ~2 s locally,
+    // 8-12 s on GitHub's shared runners, so the 5 s default timed CI out
+    testTimeout: 60_000,
   },
 });
