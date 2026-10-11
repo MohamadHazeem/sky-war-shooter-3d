@@ -1,6 +1,7 @@
 import { Atmos } from '../render/Atmosphere';
 import { weatherNow } from '../render/WeatherState';
 import type { WeatherPreset } from '../render/WeatherPresets';
+import { AADefence } from './AADefence';
 import { Bombardier } from './Bombardier';
 import * as THREE from 'three';
 import { Engine, lowerQuality } from '../core/Engine';
@@ -81,6 +82,7 @@ export class Game {
   readonly world: World;
   readonly gunner: GunnerController;
   readonly pilot: PilotController;
+  readonly aa: AADefence;
   readonly pilotOps: PilotOps;   // P-51 missions: scripted rounds, bomber-protection score (PilotOps.ts)
   readonly photo: PhotoMode;
   readonly onboarding: Onboarding;
@@ -174,7 +176,7 @@ export class Game {
     // Esc releases pointer lock -> pause. If the browser never granted the lock the game
     // simply runs in free-cursor mode (no pause loop).
     input.onLockChange = (locked) => {
-      if (this.state === 'playing' && !locked && this.input.everLocked) this.pause();
+      if (this.state === 'playing' && !locked && this.input.everLocked && !this.aa?.choosing) this.pause();
       this.ui.showLockHint(false);
     };
     engine.renderer.domElement.addEventListener('click', () => {
@@ -196,6 +198,7 @@ export class Game {
     this.skills = new SkillRuntime(this, ui);
     this.coop = new CoopSession(this, engine, ui);
     this.extras = new TitleExtras(this, engine);
+    this.aa = new AADefence(this);
     this.feats = new FeatWatch(this); // after worldEvents.wire / service: chains world.events.kill
   }
 
@@ -274,6 +277,7 @@ export class Game {
   // ---------------- Menu ----------------
   startMenu() {
     this.pilotOps.sea.stop();
+    this.aa.release();
     this.ditching.release();
     this.bookends.release();   // the parked field behind a debrief gives the world back first
     this.photo.exit();
@@ -313,6 +317,7 @@ export class Game {
   }
 
   showBriefing(m: Mission) {
+    this.aa.release();
     this.ditching.release();
     this.bookends.release();
     sound.init();
@@ -447,6 +452,7 @@ export class Game {
     const cur = playing ? 'crosshair' : 'default';
     if (canvas.style.cursor !== cur) canvas.style.cursor = cur;
     this.storm(dt);
+    if (this.aa.active) { this.aa.frame(dt); return; }
     this.berserkT = Math.max(0, this.berserkT - dt);
     this.gunner.rateBoost = this.berserkT > 0 ? 1.4 : 1;
     // Brief slow-motion beat on a confirmed kill

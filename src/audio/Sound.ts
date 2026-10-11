@@ -253,7 +253,7 @@ export class Sound {
   musicEnabled = true;
   private lastShot = 0;
   private interior = 1;
-  private mode: 'bomber' | 'fighter' | 'menu' = 'menu';
+  private mode: 'bomber' | 'fighter' | 'ground' | 'menu' = 'menu';
   // Watchdog state. wanted: the game wants sound (false only while it is deliberately
   // suspended, e.g. the pause menu); the context's own suspend/resume are wrapped to track it.
   private wanted = true;
@@ -1085,7 +1085,7 @@ export class Sound {
     }
   }
 
-  setMode(mode: 'bomber' | 'fighter' | 'menu') {
+  setMode(mode: 'bomber' | 'fighter' | 'ground' | 'menu') {
     this.turretDrive?.update(0);
     this.mode = mode;
     if (mode !== 'menu') this.onMission?.();
@@ -1105,14 +1105,14 @@ export class Sound {
     else if (this.playerEngine) this.playerEngine.gain.gain.setTargetAtTime(0, t, 0.3);
     this.music.setScene(mode === 'menu' ? 'menu' : 'mission');
     // Oxygen-mask breathing runs in the aircraft, silent on the menus
-    if (mode === 'menu' || !this.breathingEnabled) this.breathing?.stop(); else this.breathing?.start();
+    if (mode === 'menu' || mode === 'ground' || !this.breathingEnabled) this.breathing?.stop(); else this.breathing?.start();
   }
 
   // Settings: oxygen-mask breathing on/off
   setBreathing(on: boolean) {
     this.breathingEnabled = on !== false;
     if (!this.breathingEnabled) this.breathing?.stop();
-    else if (this.mode !== 'menu') this.breathing?.start();
+    else if (this.mode !== 'menu' && this.mode !== 'ground') this.breathing?.start();
   }
 
   // Settings "Audio detail": 'reduced' for weak devices (fewer one-shot voices, HRTF voices and

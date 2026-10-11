@@ -1,3 +1,4 @@
+import { warmAAGuns } from '../game/AADefenceScene';
 import * as THREE from 'three';
 import { DitchingSea } from './DitchingSea';
 import { warmTargetSmoke } from '../render/TargetSmoke';
@@ -302,6 +303,7 @@ export class World implements WorldView {
     const unwarm = this.bomberDamage.warmup(this.scene, at);
     const unwarmCrew = warmLivingInterior(this.scene, at); // gunner interior: crew, brass, shafts, frost, breath
     const unwarmTurrets = warmTurretViewmodels(this.scene, at);
+    const unwarmAA = warmAAGuns(this.scene, at);
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     const unwarmTargetSmoke = warmTargetSmoke(this.scene);
     this.engine.precipitation.warm(render);
@@ -312,6 +314,7 @@ export class World implements WorldView {
     unwarmCrew();
     unwarmTurrets();
     unwarmGlass();
+    unwarmAA();
     unwarmBoss();
     unwarmSea();
     for (const f of dummies) this.scene.remove(f.root);

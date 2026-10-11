@@ -1,3 +1,4 @@
+export const AA_LEADERBOARD = 'survival-aa';
 import { cachedSquadron } from './SquadronProfile';
 // Online leaderboard on Firebase (Firestore + anonymous auth). The SDK is loaded on demand
 // so the game's first load stays small. The web config below is public by design: access is

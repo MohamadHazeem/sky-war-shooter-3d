@@ -3,6 +3,9 @@
 // A clip for each exists in public/audio/voice/ (id, or id__role for multi-speaker lines).
 
 export const VOICE_LINES = {
+  aa_inbound: { speakers: ["Control"], text: "Control to gun crews: raiders inbound. Protect the tower and the parked Fortresses!" },
+  aa_major: { speakers: ["Control"], text: "Control: major raid approaching. All gun pits, open fire!" },
+  aa_repair: { speakers: ["Control"], text: "Control: raid broken up. Repair crews, move out!" },
   ace: { speakers: ["Pilot"], text: "That's five! You're an ace, gunner — drinks are on me tonight!" },
   bk5_down: { speakers: ["Top Turret", "Big Friend"], text: "Got the Me 410 before he could fire!" },
   bk5_fire: { speakers: ["Pilot", "Big Friend"], text: "He's firing the big gun! Kill him before he reloads!" },

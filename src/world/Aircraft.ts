@@ -131,6 +131,7 @@ const _xAxis = new THREE.Vector3(1, 0, 0);
 const _qa = new THREE.Quaternion();
 
 export class Fighter extends Aircraft {
+  kinematic = false; // fixed-gun airfield raid profiles own living aircraft motion
   readonly fm: FlightModel;
   guns: Gun[] = [];
   trigger = false;
@@ -177,7 +178,7 @@ export class Fighter extends Aircraft {
       this.fm.thrustScale = eng.hp > 0 ? 0.55 + 0.45 * (eng.hp / eng.maxHp) : 0;
       const wl = this.zone('wingL')!, wr = this.zone('wingR')!;
       this.fm.rollBias = ((1 - wl.hp / wl.maxHp) - (1 - wr.hp / wr.maxHp)) * -0.25;
-      this.fm.step(dt);
+      if (!this.kinematic) this.fm.step(dt);
       this.vel.copy(this.fm.vel);
     } else if (this.falling) {
       this.fallTime += dt;

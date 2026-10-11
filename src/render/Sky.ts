@@ -11,11 +11,12 @@ export const skyGround = { uGroundHaze: { value: 24000 } };
 // depthWrite=false + renderOrder trick, so clouds/aerial-perspective treat it as infinity.
 export class SkyDome {
   readonly mesh: THREE.Mesh;
+  readonly cirrus = { value: 1 };
 
   constructor() {
     const geo = new THREE.SphereGeometry(1, 64, 32);
     const mat = new THREE.ShaderMaterial({
-      uniforms: { ...atmosUniforms, ...targetUniforms, ...farTerrainUniforms, ...skyGround, uGroundXZ: { value: new THREE.Vector2() } },
+      uniforms: { ...atmosUniforms, ...targetUniforms, ...farTerrainUniforms, ...skyGround, uCirrus: this.cirrus, uGroundXZ: { value: new THREE.Vector2() } },
       vertexShader: /* glsl */ `
         varying vec3 vDir;
         void main() {
@@ -27,6 +28,7 @@ export class SkyDome {
         ${skyGLSL}
         uniform vec2 uGroundXZ;
         uniform float uGroundHaze;
+        uniform float uCirrus;
         uniform float uHaze;
         varying vec3 vDir;
 
@@ -79,7 +81,7 @@ export class SkyDome {
           // Faint cirrus above the horizon, fading toward the horizon and the zenith. Skipped
           // when the camera is already above the layer (it would sit behind the viewer).
           float cirAlt = 11000.0 - uCamAlt;
-          if (d.y > 0.03 && cirAlt > 0.0) {
+          if (uCirrus > 0.0 && d.y > 0.03 && cirAlt > 0.0) {
             float tc = cirAlt / d.y;
             float band = smoothstep(0.03, 0.2, d.y) * (1.0 - smoothstep(0.5, 0.95, d.y));
             float cir = cirrus(uGroundXZ + d.xz * tc) * band;

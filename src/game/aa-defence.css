@@ -1,0 +1,49 @@
+.aa-mode #hud .hud-tl,.aa-mode #hud .hud-tr,.aa-mode #hBL,.aa-mode #hBR,.aa-mode #lockHint,.aa-mode #tip,.aa-mode .abilities,.aa-mode .th-stations,.aa-mode .th-abilities,.aa-mode #abilityBar,.aa-mode #abilityTint,.aa-mode #controlsHint,.aa-mode .th-abil { display:none!important }
+#aaHud { position:fixed;inset:18px 22px;z-index:7;pointer-events:none;color:var(--ink,#e9e2cf);font:11px 'IBM Plex Mono',monospace;text-shadow:0 1px 3px #000 }
+#aaHud .aa-status { font:18px 'Oswald',sans-serif;letter-spacing:1px;margin-bottom:8px }
+#aaHud label { display:flex;align-items:center;gap:8px }
+#aaHud meter { appearance:none;width:100px;height:5px;border:0;background:#41473c;border-radius:0 }
+#aaHud meter::-webkit-meter-bar { background:#41473c;border:0;border-radius:0 }
+#aaHud meter::-webkit-meter-optimum-value { background:#a9ba87;border-radius:0 }
+#aaHud meter.hot::-webkit-meter-optimum-value { background:#dc8657 }
+#aaHud>label { font-size:10px;text-transform:uppercase;letter-spacing:1px }
+#aaHud>label meter { width:120px }
+#aaHud .aa-assets { width:232px;margin-top:9px;padding:8px 10px;background:linear-gradient(90deg,#11180ee6,#11180e99);border-inline-start:2px solid #a5ad88;display:grid;gap:4px }
+#aaHud .aa-asset { display:grid;grid-template-columns:14px 1fr 48px;gap:6px;font-size:10px }
+#aaHud .aa-asset meter { width:48px;height:4px }
+#aaHud .aa-asset>span:first-child { color:#c3c9a6;font-size:14px;line-height:14px;text-align:center }
+#aaHud .aa-asset.lost { color:#df967e }
+#aaHud .aa-asset.locked { opacity:.4 }
+#aaHud .aa-gun { position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:max-content;max-width:90vw;text-align:center;background:#11180ee0;border:1px solid #737d61;border-top:2px solid #b5ba8f;padding:7px 12px }
+#aaHud .aa-gun-title { font:13px 'Oswald',sans-serif;letter-spacing:.7px;margin-bottom:5px }
+#aaHud .aa-gauges { display:flex;justify-content:center;gap:18px;margin-bottom:5px;font-size:10px }
+#aaHud .aa-gauges meter { width:90px }
+#aaHud button { pointer-events:auto;background:#273023;color:var(--ink,#e9e2cf);border:1px solid #657153;border-radius:2px;padding:6px 10px;margin:2px;cursor:pointer;font:11px 'IBM Plex Mono',monospace }
+#aaHud button.selected { border-color:#e6cf86;background:#485333 }
+#aaHud button:disabled { opacity:.4;cursor:default }
+#aaHud .aa-help { font-size:9px;margin-top:4px;color:#aeb69a }
+#aaHud .aa-choices { pointer-events:auto;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(600px,90vw);padding:25px;background:#111a16f2;border:1px solid #b3a579;text-align:center }
+#aaHud .aa-choices[hidden] { display:none }
+.aa-mode #feed { top:300px }
+body.aa-mode #subs { bottom:150px;max-width:min(640px,85vw) }
+html[dir=rtl] #aaHud { direction:rtl }
+html[lang=ar] #aaHud,html[lang=ar] #aaHud button,html[lang=ar] #aaHud .aa-status,html[lang=ar] #aaHud .aa-gun-title { font-family:'IBM Plex Sans Arabic',sans-serif;letter-spacing:0 }
+@media(max-width:800px) {
+  #aaHud { inset:8px;font-size:10px }
+  #aaHud .aa-status {font-size:14px}
+  #aaHud .aa-assets {width:200px;gap:2px;padding:5px 7px}
+  #aaHud .aa-asset {font-size:9px;line-height:11px}
+  #aaHud .aa-gun {padding:4px 6px;max-width:85vw}
+  #aaHud .aa-gun-title {font-size:11px}
+  #aaHud button {padding:7px 5px;font-size:10px}
+  #aaHud .aa-help {display:none}
+  #aaHud .aa-gauges {gap:10px;font-size:9px}
+  #aaHud .aa-gauges meter {width:55px}
+  body.aa-mode #subs {bottom:120px}
+  body.touch #aaHud .aa-gun {bottom:85px}
+  body.touch.aa-mode #subs {bottom:8px;max-width:calc(100vw - 330px);left:12px;transform:none;width:auto}
+  .aa-mode #feed {top:270px}
+}
+body.touch.aa-mode #aaHud { top:55px }
+body.aa-mode #touchHud .th-look,body.aa-mode #touchHud [data-t=map],body.aa-mode #touchHud [data-t=help] { display:none }
+html[dir=rtl] body.aa-mode #subs .line,html[dir=rtl] body.aa-mode #subs .who { letter-spacing:0 }

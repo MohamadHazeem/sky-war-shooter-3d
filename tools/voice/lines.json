@@ -3316,6 +3316,25 @@
       "text": "Radar is down. Their flak crews are aiming by eye now."
     },
     {
+      "group": "fixed AA airfield defence"
+    },
+    {
+      "id": "aa_inbound",
+      "role": "control",
+      "text": "Control to gun crews: raiders inbound. Protect the tower and the parked Fortresses!"
+    },
+    {
+      "id": "aa_major",
+      "role": "control",
+      "text": "Control: major raid approaching. All gun pits, open fire!",
+      "urgent": true
+    },
+    {
+      "id": "aa_repair",
+      "role": "control",
+      "text": "Control: raid broken up. Repair crews, move out!"
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {
