@@ -46,6 +46,7 @@ import { MissionFlow } from './MissionFlow';
 import { GameHud } from './GameHud';
 import { MenuScene } from './MenuScene';
 import { WorldEvents } from './WorldEvents';
+import { TitleExtras } from './TitleExtras';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -89,6 +90,7 @@ export class Game {
   readonly hud: GameHud;          // HUD panels + 2D overlay (GameHud.ts)
   readonly menuScene: MenuScene;  // menu camera shots (MenuScene.ts)
   readonly worldEvents: WorldEvents; // world.events handlers: kill scoring, radio (WorldEvents.ts)
+  readonly extras: TitleExtras;   // What's new bulletin + aircraft recognition gallery (TitleExtras.ts)
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -178,6 +180,7 @@ export class Game {
     this.service = new ServiceRecord(this, ui, { showBriefing: (m) => this.showBriefing(m) });
     this.skills = new SkillRuntime(this, ui);
     this.coop = new CoopSession(this, engine, ui);
+    this.extras = new TitleExtras(this, engine);
   }
 
   // Compile shaders for objects that only appear mid-mission (debris, chutes, bombs,
@@ -272,13 +275,14 @@ export class Game {
         if (host) mountModePanel(host, (mm) => this.showBriefing(mm));
       },
       armory: () => this.ui.hangar(this.prog, 'gunner', { title: 'ARMORY', sub: 'B-17 gunner loadout (P-51 loadout: between rounds)', next: 'Back' }, () => this.startMenu()),
-      settings: () => { this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => this.startMenu()); this.mountCloud(); },
+      settings: () => { this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => this.startMenu()); this.mountCloud(); this.extras.onSettings(); },
       credits: () => this.ui.credits(() => this.startMenu()),
     });
     this.coop.onTitle();
     this.onboarding.onTitle();
     this.service.onTitle();
     this.skills.onTitle();
+    this.extras.onTitle();
     this.ui.fade(false);
   }
 

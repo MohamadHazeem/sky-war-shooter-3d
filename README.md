@@ -37,8 +37,12 @@ English and Arabic (right-to-left) under Settings → Language.
 * **Survival**: endless rounds as a B-17 gunner or P-51 pilot, with a hangar between rounds
   (aircraft, weapons, upgrades), weather that changes per round and a boss group every third round.
 * **Ace Hunt, Time Attack, Daily Run, Weekly Challenge**: online leaderboards (Firebase).
+* **Special operations (P-51)**: *Defend the Field* (role reversal: Ju 88 raids on your airfield),
+  *Night Fighter* (searchlights, flares, exhaust flames) and *Train Busting* (low-level strafing of
+  trains, convoys and airfields over a procedural Normandy countryside, with 20 mm flak firing back).
+  You lead a wingman with orders on keys 1–4.
 * **Custom Battle**: pick role, seat, enemy types, numbers, skill, rounds, weather, time of day,
-  boss round, special events, flak and escorts.
+  weather fronts, boss round, special events, flak and escorts.
 * **Co-op (beta)**: two players crew one B-17 over the internet (6-character room code).
 * **Training**: a 2-minute gunnery course.
 
@@ -46,6 +50,11 @@ English and Arabic (right-to-left) under Settings → Language.
 Career ranks and medals, 42 achievements, daily orders, a persistent **skill tree** (18 skills in
 three branches), loot crates with weapon mods and cosmetics, bomber customisation (name, nose art,
 paint), a crew of ten named men with levels and wounds, and cloud save via a private transfer code.
+A roster of named Luftwaffe **Experten** remembers you: aces come back with scars and grudges, get
+promoted, and carry bounties (Career → Experten). Campaign missions open with a dawn take-off from
+Deenethorpe and end with a landing (a belly landing when the Sky Queen is badly damaged); weather
+fronts roll in mid-mission. The **replay theatre** saves your best moments (scrub, free camera,
+photo mode), and the **aircraft gallery** shows every type in 3D with a recognition quiz.
 
 ### Controls
 
@@ -106,7 +115,7 @@ reduced shake/flashes, kill cam and anonymous stats.
 * **AI**:
   * Luftwaffe pilots run head-on, stern, beam and high-side attacks, each pass with its own aiming error. They drop their belly tanks, break away under the box, extend and come back. They turn to fight escorts that jump them.
   * Turrets on every bomber visibly track their crews' targets.
-* **Audio**: fully procedural Web Audio.
+* **Audio**: Web Audio with recorded samples plus synthesised engine voices per aircraft type (radials, Jumo/DB 603 twins, jet turbines, the Me 163 rocket, the warships), distance-delayed explosions and a recorded crew voice cast (800+ lines, also in Arabic subtitles).
   * Engines are synthesised from firing pulses and propeller blade-pass: four beating Wright Cyclones inside the bomber, BMW 801s on the Fw 190s, and the Merlin in the P-51.
   * HRTF positioning, Doppler fly-bys with an air rush, and convolution reverb: a metallic fuselage inside, open air outside.
   * Layered weapons and impacts, flak shrapnel rattling on the skin, and speed-of-sound delays.
@@ -178,6 +187,7 @@ Headless browser tabs don't fire `requestAnimationFrame`, so the dev build expos
   * B-17G: Emmanuel Baranger et al.
   * Fw 190 A-8: Detlef Faber.
   * P-51D: Jim Wilson, Hal V. Engel et al.
+  * Bf 109, Bf 110, Ju 88, Me 262, Me 163, He 111 and Do 335: see CREDITS.md (Emmanuel Baranger and others).
 * **Licence:** the models are GPL v2, so the whole game is distributed under the
   **GNU General Public License v2 or later** (see `LICENSE`).
 * **Visual reference:** Yarnhub. No footage or assets from the video are used.
