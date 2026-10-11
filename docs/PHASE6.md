@@ -24,7 +24,7 @@ Repo rules for Codex: `AGENTS.md`.
 ## Tier C — graphics and immersion
 | # | Goal | Status |
 |---|---|---|
-| 10 | Europe below the clouds: terrain, rivers, cities, burning targets through cloud gaps | Codex working |
+| 10 | Europe below the clouds: terrain, rivers, cities, burning targets through cloud gaps | Codex revising — first pass works (coast, rivers, burning target with smoke through the clouds, cloud shadows, ≤0.3 ms) but fields looked like a regular checkerboard; sent back for irregular parcels, muted palette, real town shapes |
 | 11 | Ball and tail turret interiors at the waist's "living interior" standard | |
 | 12 | Music: adaptive tracks for night, raids, Train Busting and the crew room | |
 
