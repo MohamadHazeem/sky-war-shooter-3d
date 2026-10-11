@@ -542,7 +542,7 @@ export interface Merit { earn(n: number): void }
  * End of Game.showDebrief: record the result in the campaign, pay a raid's merit bonus and show
  * the intelligence report on the debrief, with a way back to the map. No-op for other missions.
  */
-export function mountCampaignReport(m: Mission, o: Outcome, prog: Merit, progress: ProgressLike, toMap: () => void) {
+export function mountCampaignReport(m: Mission, o: Outcome, prog: Merit, progress: ProgressLike, toMap: (then?: () => void) => void) {
   const res = recordCampaignOutcome(m, o, progress);
   if (!res) return;
   if (res.reward) prog.earn(res.reward);
@@ -563,9 +563,9 @@ export function mountCampaignReport(m: Mission, o: Outcome, prog: Merit, progres
     <div class="row"><button class="btn ${res.data.complete && res.report.effect ? 'ghost' : ''}" data-cm-map>${tx('Campaign map')}</button>${res.data.complete ? `<button class="btn" data-cm-sum>${tx('Campaign summary')}</button>` : ''}</div>`;
   const row = host.querySelector('.row');
   if (row) row.after(box); else host.appendChild(box);
-  box.querySelector('[data-cm-map]')!.addEventListener('click', toMap);
+  box.querySelector('[data-cm-map]')!.addEventListener('click', () => toMap());
   // the map (built by Game with its own callbacks) carries the summary button once the tour is complete
-  box.querySelector('[data-cm-sum]')?.addEventListener('click', () => { toMap(); document.querySelector<HTMLElement>('#campaign [data-summary]')?.click(); });
+  box.querySelector('[data-cm-sum]')?.addEventListener('click', () => toMap(() => document.querySelector<HTMLElement>('#campaign [data-summary]')?.click()));
 }
 
 // ---------------- briefing sheet ----------------

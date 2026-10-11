@@ -71,6 +71,8 @@ Most features need one line in one of these places:
 | React to a round ending or starting | `MissionFlow.endRound()` / `startNextRound()`. |
 | React to the mission ending | `MissionFlow.finish()` (the moment it ends) or `MissionFlow.showDebrief()` (the debrief screen, next to `service.onDebrief` / `specials.nemesis.onDebrief`). |
 | Play a scene before or after the mission | `Bookends.ts` holds the pattern: `bookends.takeoff()` at the top of `MissionFlow.startMission`, `bookends.landing()` at the top of `MissionFlow.showDebrief`, and `bookends.frame()` in `Game.frame()` before the paused check. Each one returns `true` while the scene runs and calls back when it ends. After a landing the parked field stays behind the debrief until `bookends.release()` (top of `Game.startMenu` / `showBriefing`). |
+| Play a scene before or after the mission | `Bookends.ts` holds the pattern: `bookends.takeoff()` at the top of `MissionFlow.startMission`, `bookends.landing()` at the top of `MissionFlow.showDebrief`, and `bookends.frame()` in `Game.frame()` before the paused check. Each one returns `true` while the scene runs and calls back when it ends. |
+| Play a scene between the debrief and the campaign map | `ui/CrewRoomScene.ts` (the crew-room interludes, content in `game/CrewRoom.ts`): `crewRoomScene.capture(g, m, d)` at the end of `MissionFlow.showDebrief`, and the debrief's map buttons go through `crewRoomScene.play(m, done)`. A DOM/canvas overlay, so it needs no frame hook. |
 | React to a kill, a loss or a hit on the player | `WorldEvents.wire()`, in the matching `world.events` handler. |
 | Draw on the 2D overlay | `GameHud.drawOverlay()`. Mind the order: the cracked glass is drawn last. |
 | Show a value in the HUD panels | `GameHud.updateHud()`. |
