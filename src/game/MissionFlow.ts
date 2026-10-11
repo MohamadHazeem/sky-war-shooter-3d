@@ -6,7 +6,7 @@ import type { DebriefData } from '../ui/UI';
 import { CAMPAIGN, Mission } from './Missions';
 import { missionCold } from './LivingInterior';
 import { sound } from '../audio/Sound';
-import { DEFAULT_WEATHER, ROUND_WEATHER, Weather } from '../render/Weather';
+import { DEFAULT_WEATHER, ROUND_WEATHER } from '../render/Weather';
 import * as Chatter from './RadioChatter';
 import { mountLeaderboard } from '../ui/LeaderboardPanel';
 import { pushSave } from '../net/CloudSave';
@@ -67,7 +67,7 @@ export class MissionFlow {
     g.cracks.clear();
     g.engine.post.resetHistory();
     // survival picks a random time of day
-    const presets: Weather[] = CAMPAIGN.map((c) => c.weather!).filter(Boolean);
+    const presets = ROUND_WEATHER;
     g.setWeather(m.weather ?? (m.duration === Infinity ? presets[Math.floor(Math.random() * presets.length)] : DEFAULT_WEATHER));
     g.world.playerDamageScale = (m.playerArmor ?? (m.role === 'gunner' ? 0.6 : 0.75)) * (m.role === 'gunner' ? 0.55 : 0.6);
     g.world.aiGunnerFactor = 1;
@@ -176,7 +176,7 @@ export class MissionFlow {
   private startNextRound() {
     const g = this.g, w = g.world;
     // survival: every round brings different weather and light
-    if (g.mission && g.mission.duration === Infinity) g.setWeather(ROUND_WEATHER[(g.roundIdx + 1) % ROUND_WEATHER.length]);
+    if (g.mission && g.mission.duration === Infinity) g.setWeather(ROUND_WEATHER[Math.floor(Math.random() * ROUND_WEATHER.length)]);
     g.roundIdx++;
     g.roundT0 = w.time;
     g.director.beginRound();

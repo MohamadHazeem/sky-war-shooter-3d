@@ -5,7 +5,7 @@ import type { HitEvent } from '../world/Ballistics';
 import type { Engine } from '../core/Engine';
 import type { StationId } from '../world/B17Layout';
 import { Atmos } from '../render/Atmosphere';
-import { weatherNow, rainFor } from '../render/WeatherState';
+import { weatherNow } from '../render/WeatherState';
 import { access } from '../core/Accessibility';
 import { frostTexture } from './InteriorFx';
 
@@ -285,6 +285,7 @@ const FRAG = /* glsl */ `
       float edge = 10.0;
       if (uShape > 0.5 && uShape < 1.5) { float e = clamp(dot(n, uEdge.xyz), 0.0, 1.0); edge = uR * e * (1.0 + 0.1667 * e * e); }   // ~asin
       else if (uShape > 1.5) edge = uEdge.y > 0.0 ? min(uEdge.x - abs(rel.x), uEdge.y - abs(rel.y)) : uEdge.x - length(rel.xy);
+      if (uShape < 0.5) edge = max(0.0, vP.y - uEdge.x); // lower canopy frame
       float reach = mix(0.03, 0.3, uFrost);
       if (edge < reach + 0.05) {   // only near the frame (texture fetches skipped elsewhere)
         vec2 fuv = glassUV(rel, n);
@@ -541,21 +542,19 @@ export class GlassPane {
   // per-frame pane state
   apply(rain: number) {
     const U = this.mat.uniforms;
-    U.uRain.value = rain;
+    U.uRain.value = weatherNow.effects ? rain : 0;
     U.uOil.value = this.oil;
     U.uSpat.value = this.spat;
-    U.uFrost.value = this.frost;
+    U.uFrost.value = weatherNow.effects ? this.frost : 0;
   }
 }
 
 // ---------------- shared weather / environment ----------------
 
-// rain intensity by mood: storms pour, overcast skies drift through showers now and then; a
-// weather front (Weather.ts) blends the two moods as it passes
+// All panes share the blended condition; the quality toggle affects cosmetics only.
 export function rainTarget(time: number): number {
-  const w = weatherNow;
-  if (w.k <= 0) return rainFor(w.mood, time);
-  return rainFor(w.from, time) * (1 - w.k) + rainFor(w.to, time) * w.k;
+  void time;
+  return weatherNow.effects ? weatherNow.rain : 0;
 }
 const SUN_VIS: Record<string, number> = { clear: 1, dusk: 0.9, overcast: 0.3, storm: 0.08, night: 0.35 };
 const sunVis = () => {
@@ -652,6 +651,9 @@ export class PilotGlass {
       shape: SHAPE_CANOPY, C: new THREE.Vector3(0, 0.0, 0), R: 0.85, axis: AFT, up: UP,
       oilMask: new THREE.Vector2(0.45, 0.95), dust: 0.55, renderOrder: 5,
     });
+    g.geometry.computeBoundingBox();
+    const glassBounds = g.geometry.boundingBox!.clone().applyMatrix4(toModel);
+    pane.mat.uniforms.uEdge.value.x = glassBounds.min.y;
     // parented to the root, not the model: wreck pieces clone the model and must not take it along
     _m.copy(plane.root.matrixWorld).invert().multiply(g.matrixWorld);
     _m.decompose(pane.mesh.position, pane.mesh.quaternion, pane.mesh.scale);
@@ -706,6 +708,7 @@ export class PilotGlass {
     const dmg = eng ? 1 - Math.max(0, eng.hp) / eng.maxHp : 0;
     if (p.alive) pane.oil = Math.min(dmg > 0.3 ? 0.85 : 0.18, pane.oil + dt * (0.0003 + 0.004 * Math.max(0, dmg - 0.3)));
     if (pane.oil > 0.85) pane.oil = 0.85;
+    pane.frost += (weatherNow.snow * .7 - pane.frost) * Math.min(1, dt / 8);
     const target = rainTarget(this.world.time);
     pane.wet += (target - pane.wet) * Math.min(1, dt / (target > pane.wet ? 5 : 20));
     if (!on) return;
@@ -821,7 +824,7 @@ export class GunnerGlass {
     this.station = station;
     this.t += dt;
     const target = rainTarget(this.world.time);
-    const frost = cold * (0.3 + 0.7 * THREE.MathUtils.smoothstep(this.t, 0, 240));
+    const frost = Math.max(cold * (0.3 + 0.7 * THREE.MathUtils.smoothstep(this.t, 0, 240)), weatherNow.snow * .65);
     // oil from damaged engines streams back over the top turret
     let rate = 0;
     for (let i = 0; i < 4; i++) {

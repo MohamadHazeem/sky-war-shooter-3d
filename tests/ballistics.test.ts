@@ -1,3 +1,4 @@
+import { weatherNow } from '../src/render/WeatherState';
 import { describe, it, expect, beforeEach } from 'vitest';
 import * as THREE from 'three';
 import { Ballistics, segSphere, type HitEvent } from '../src/world/Ballistics';
@@ -42,6 +43,7 @@ describe('Ballistics', () => {
   let b: Ballistics;
   let hits: HitEvent[];
   beforeEach(() => {
+    weatherNow.windX = weatherNow.windZ = 0; // isolate the gravity / collision fixtures from crosswind
     b = new Ballistics(64);
     hits = [];
     b.onHit = (e) => hits.push(e);

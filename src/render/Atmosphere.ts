@@ -43,6 +43,7 @@ export const atmosUniforms = {
   uHorizon: { value: new THREE.Vector3() },
   uGround: { value: new THREE.Vector3() },
   uCamAlt: { value: 7600 },
+  uWeatherFog: { value: 0 },
   uHaze: { value: 1 },   // Atmos.haze (declared only by the shaders that use it: cloud march, composite, storm wall)
 };
 

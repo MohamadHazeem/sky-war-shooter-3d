@@ -1,5 +1,7 @@
+import { access } from '../core/Accessibility';
+import { WEATHER_PRESETS, blendConditions, type WeatherPreset } from './WeatherPresets';
 import * as THREE from 'three';
-import { Atmos, syncAtmosUniforms, updateSunDir } from './Atmosphere';
+import { Atmos, atmosUniforms, syncAtmosUniforms, updateSunDir } from './Atmosphere';
 import { syncAircraftLook } from './AircraftLook';
 import { StormWall } from './StormWall';
 import { cloudLights } from './CloudLights';
@@ -15,6 +17,7 @@ export type { Mood } from './WeatherState';
 // stands on the horizon ahead for the last WALL_LEAD seconds before it arrives, and the
 // lightning starts once it is overhead. Cover / contrails of the new sky default to the mood's.
 export interface WeatherFront {
+  preset?: WeatherPreset;
   at: number;            // s of flying time
   to: Exclude<Mood, 'night'>;
   duration?: number;     // s (default 45)
@@ -26,6 +29,8 @@ export interface WeatherFront {
 // Time of day + cloud cover for a mission. Low sun elevations warm the light and
 // the horizon for golden-hour missions.
 export interface Weather {
+  preset?: WeatherPreset;
+  wind?: { speed: number; direction: number }; // m/s, degrees clockwise from +Z; capped at 12 m/s
   sunEl: number;        // degrees
   sunAz: number;        // degrees
   low: number;          // low (cumulus sea) coverage 0..1
@@ -113,6 +118,16 @@ function skyFor(w: Weather, o: Sky): Sky {
     o[AMB] = 0.5;
     o[HAZE] = 0.62; o[DARK] = 0.45;
   }
+  const condition = WEATHER_PRESETS[presetFor(w)];
+  const cloud = condition.cloud;
+  o[SUN_I] *= 1 - cloud * .55;
+  o[DARK] = Math.max(o[DARK], cloud * .45);
+  for (let i = ZEN; i < GND; i += 3) {
+    const grey = (o[i] + o[i + 1] + o[i + 2]) / 3;
+    for (let j = 0; j < 3; j++) o[i + j] = THREE.MathUtils.lerp(o[i + j], grey, cloud * .85) * (1 - cloud * .22);
+  }
+  o[LOW] = Math.max(o[LOW], cloud * .97);
+  o[HIGH] = Math.max(o[HIGH], cloud * .98);
   return o;
 }
 
@@ -138,6 +153,27 @@ function pushSky(engine: Engine, s: Sky) {
   syncAircraftLook(engine.hemi);
 }
 
+export function presetFor(w: Weather): WeatherPreset { return w.preset ?? (w.mood === 'storm' ? 'thunderstorm' : 'clear'); }
+/** A mode can pass this to Game.setWeather, retaining any time-of-day fields it needs. */
+export function presetWeather(preset: WeatherPreset, base: Weather = DEFAULT_WEATHER): Weather {
+  return { ...base, preset, front: undefined, contrails: preset === 'clear', mood: base.mood === 'night' || base.mood === 'dusk' ? base.mood : 'clear' };
+}
+function conditionFor(w: Weather) {
+  const c = { ...WEATHER_PRESETS[presetFor(w)] };
+  if (w.wind) {
+    const speed = THREE.MathUtils.clamp(Number.isFinite(w.wind.speed) ? w.wind.speed : 0, 0, 12);
+    const angle = (Number.isFinite(w.wind.direction) ? w.wind.direction : 0) * Math.PI / 180;
+    c.windX = Math.sin(angle) * speed; c.windZ = Math.cos(angle) * speed;
+  }
+  return c;
+}
+function pushCondition(k: number) {
+  blendConditions(weatherNow, conditionA, conditionB, k);
+  Atmos.wind.set(weatherNow.windX, 0, weatherNow.windZ);
+  atmosUniforms.uWeatherFog.value = weatherNow.fog;
+}
+const conditionA = { ...WEATHER_PRESETS.clear }, conditionB = { ...WEATHER_PRESETS.clear };
+
 // ---------------- the front in progress ----------------
 const skyA = new Float64Array(N), skyB = new Float64Array(N), skyNow = new Float64Array(N);
 const front = {
@@ -152,7 +188,6 @@ const front = {
   wallSet: false,
   lightningT: 6,
   flashT: 0,
-  lightK: 1,                      // 1 = the mission's own storm (Game.storm) still flashes
 };
 let wall: StormWall | null = null;
 
@@ -163,11 +198,13 @@ export function applyWeather(engine: Engine, w: Weather) {
     // the reflection map catches up with a front at the next pause (keeps the temporal history)
     engine.add({ update: () => { if (front.envDirty && engine.paused) { front.envDirty = false; engine.refreshLighting(false); } } });
   }
+  Object.assign(conditionA, conditionFor(w));
+  Object.assign(conditionB, conditionA);
+  pushCondition(0);
+  weatherNow.preset = presetFor(w);
   const mood = w.mood ?? 'clear';
   weatherNow.mood = weatherNow.from = weatherNow.to = mood;
   weatherNow.k = 0;
-  weatherNow.flash = 0;
-  weatherNow.stormGate = 1;
   Atmos.sunElevationDeg = w.sunEl;
   Atmos.sunAzimuthDeg = w.sunAz;
   updateSunDir();
@@ -178,15 +215,15 @@ export function applyWeather(engine: Engine, w: Weather) {
   front.def = f;
   front.base = w;
   front.t = 0; front.k = -1; front.envDirty = false; front.rearm = false; front.told = 0;
-  front.wallSet = false; front.flashT = 0; front.lightningT = 4; front.lightK = 1;
+  front.wallSet = false; front.flashT = 0; front.lightningT = 4;
   wall.uniforms.uFade.value = 0;
-  if (f) skyFor(frontTarget(w, f), skyB);
+  if (f) { const target = frontTarget(w, f); skyFor(target, skyB); Object.assign(conditionB, conditionFor(target)); }
 }
 
 // The sky a front turns into: the base weather with the front's mood and cover (same sun)
 export function frontTarget(w: Weather, f: WeatherFront): Weather {
   const sky = FRONT_SKY[f.to];
-  return { sunEl: w.sunEl, sunAz: w.sunAz, low: f.low ?? sky.low, high: f.high ?? sky.high, contrails: f.contrails ?? sky.contrails, mood: f.to };
+  return { sunEl: w.sunEl, sunAz: w.sunAz, low: f.low ?? sky.low, high: f.high ?? sky.high, contrails: f.contrails ?? sky.contrails, mood: f.to, preset: f.preset, wind: w.wind };
 }
 
 // Survival: now and then the weather of a round turns part-way through it
@@ -194,11 +231,14 @@ export function survivalFront(w: Weather, rnd: () => number): WeatherFront | nul
   if (w.mood === 'night' || rnd() > 0.35) return null;
   const from = w.mood ?? 'clear';
   const options: WeatherFront['to'][] = from === 'storm' ? ['clear', 'overcast'] : from === 'overcast' ? ['storm', 'clear'] : ['storm', 'overcast'];
-  return { at: 40 + Math.floor(rnd() * 50), to: options[Math.floor(rnd() * options.length)], duration: FRONT_DURATION };
+  const at = 40 + Math.floor(rnd() * 50);
+  const to = options[Math.floor(rnd() * options.length)];
+  const presets: WeatherPreset[] = ['lightRain', 'heavyRain', 'snow', 'fog'];
+  return { at, to, preset: to === 'overcast' ? presets[Math.min(3, Math.floor(rnd() * 4))] : undefined, duration: FRONT_DURATION };
 }
 
 // World.reset: a restart of the same mission (Game skips an unchanged weather) starts the front over
-export function weatherRestart() { if (front.def && front.k >= 0) front.rearm = true; }
+export function weatherRestart() { if (front.def) front.rearm = true; }
 
 export const FRONT_EVENT = { none: 0, sighted: 1, arriving: 2, clearing: 3, done: 4 } as const;
 
@@ -215,11 +255,12 @@ export function updateWeather(engine: Engine, dt: number, forward: THREE.Vector3
     const base = front.base;
     applyWeather(engine, base);
     front.def = f;   // keep the same front (a random Survival one included)
-    skyFor(frontTarget(base, f), skyB);
+    const target = frontTarget(base, f);
+    skyFor(target, skyB); Object.assign(conditionB, conditionFor(target));
   }
   front.t += dt;
   const dur = Math.max(5, f.duration ?? FRONT_DURATION);
-  const storm = f.to === 'storm';
+  const storm = f.to === 'storm' || f.preset === 'thunderstorm';
   let ev = 0;
   // ---- the wall on the horizon (storms only) ----
   const u = wall.uniforms;
@@ -253,6 +294,8 @@ export function updateWeather(engine: Engine, dt: number, forward: THREE.Vector3
     const k = THREE.MathUtils.smoothstep(raw, 0, 1);
     for (let i = 0; i < N; i++) skyNow[i] = skyA[i] + (skyB[i] - skyA[i]) * k;
     pushSky(engine, skyNow);
+    pushCondition(k);
+    weatherNow.preset = k < .5 ? presetFor(front.base) : (f.preset ?? (f.to === 'storm' ? 'thunderstorm' : 'clear'));
     weatherNow.from = front.base.mood ?? 'clear';
     weatherNow.to = f.to;
     weatherNow.k = k;
@@ -266,31 +309,18 @@ export function updateWeather(engine: Engine, dt: number, forward: THREE.Vector3
       ev = ev || FRONT_EVENT.done;
     }
   }
-  // ---- lightning ----
-  // into a storm: strikes start once it is mostly overhead; out of the mission's own storm: its
-  // flashes stop (Game.storm keeps the thunder far off)
-  const baseStorm = front.base.mood === 'storm';
-  weatherNow.stormGate = baseStorm && front.k > 0.45 ? 0 : 1;
-  const ownStorm = storm && !baseStorm && front.k > 0.55;
-  const wallUp = u.uFade.value > 0.05;
-  if (ownStorm || wallUp) {
+  // Distant lightning inside the approaching wall. Game.storm owns overhead strikes.
+  if (u.uFade.value > .05 && weatherNow.effects) {
     front.lightningT -= dt;
     if (front.lightningT <= 0) {
-      front.lightningT = ownStorm ? 5 + Math.random() * 9 : 3 + Math.random() * 5;
-      front.flashT = 0.22;
-      if (ownStorm) {
-        stormStrike(engine);
-        const dist = 800 + Math.random() * 4000;
-        weatherEvents.thunder?.(dist);
-      } else u.uFlashAt.value = (Math.random() * 2 - 1) * 0.6;
+      front.lightningT = 3 + Math.random() * 5;
+      front.flashT = .22;
+      u.uFlashAt.value = (Math.random() * 2 - 1) * .6;
     }
   }
-  if (front.flashT > 0) {
-    front.flashT -= dt;
-    const k = Math.max(0, front.flashT) / 0.22;
-    const fl = (k > 0.6 || (k > 0.2 && k < 0.4) ? 0.55 : 0.08) * k;   // double-stroke flicker (as Game.storm)
-    if (ownStorm) weatherNow.flash = fl; else u.uFlash.value = fl * 1.8;
-  } else { weatherNow.flash = 0; u.uFlash.value = 0; }
+  front.flashT = Math.max(0, front.flashT - dt);
+  const flash = front.flashT / .22;
+  u.uFlash.value = weatherNow.effects ? (flash > .6 || (flash > .2 && flash < .4) ? .55 : .08) * flash * 1.8 * access.flash : 0;
   return ev;
 }
 
@@ -305,13 +335,13 @@ export function stormStrike(engine: Engine) {
   const a = Math.random() * Math.PI * 2, r = 1500 + Math.random() * 4500;
   _p.x += Math.cos(a) * r; _p.z += Math.sin(a) * r;
   _p.y = Math.random() < 0.6 ? THREE.MathUtils.lerp(Atmos.lowBase, Atmos.lowTop, 0.3 + Math.random() * 0.5) : THREE.MathUtils.lerp(Atmos.highBase, Atmos.highTop, 0.4);
-  cloudLights.flash(_p, 0.75, 0.82, 1.0, 3, 1300, 0.3, false);
+  cloudLights.flash(_p, 0.75, 0.82, 1.0, 3 * access.flash, 1300, 0.3, false);
 }
 
 // The front in force right now (dev / tests): progress 0..1 of the change, or -1 before it, null if none
-export function frontState(): { to: Mood; at: number; t: number; k: number; wall: number } | null {
+export function frontState(): { to: Mood; preset?: WeatherPreset; at: number; t: number; k: number; wall: number } | null {
   const f = front.def;
-  return f ? { to: f.to, at: f.at, t: front.t, k: front.k, wall: wall?.uniforms.uFade.value ?? 0 } : null;
+  return f ? { to: f.to, preset: f.preset, at: f.at, t: front.t, k: front.k, wall: wall?.uniforms.uFade.value ?? 0 } : null;
 }
 
 // Weather sets that survival rounds cycle through (campaign missions set their own)
@@ -321,4 +351,5 @@ export const ROUND_WEATHER: Weather[] = [
   { sunEl: 40, sunAz: 180, low: 0.9, high: 0.95, contrails: false, mood: 'overcast' },
   { sunEl: 5, sunAz: 265, low: 0.62, high: 0.4, contrails: true, mood: 'dusk' },
   { sunEl: 30, sunAz: 170, low: 0.97, high: 0.98, contrails: false, mood: 'storm' },
+  ...(['lightRain', 'heavyRain', 'snow', 'fog'] as WeatherPreset[]).map(preset => presetWeather(preset)),
 ];

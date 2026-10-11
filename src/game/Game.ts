@@ -1,3 +1,6 @@
+import { Atmos } from '../render/Atmosphere';
+import { weatherNow } from '../render/WeatherState';
+import type { WeatherPreset } from '../render/WeatherPresets';
 import { Bombardier } from './Bombardier';
 import * as THREE from 'three';
 import { Engine, lowerQuality } from '../core/Engine';
@@ -14,7 +17,7 @@ import { STATIONS } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
 import { DistantBattle } from '../audio/DistantBattle';
 import { computeThreat, finalStretch } from '../audio/Threat';
-import { applyWeather, DEFAULT_WEATHER, Weather } from '../render/Weather';
+import { applyWeather, presetWeather, stormStrike, weatherEvents, DEFAULT_WEATHER, Weather } from '../render/Weather';
 import { Progression } from './Upgrades';
 import { mountCloudSave } from '../ui/CloudSavePanel';
 import { Adaptive } from './Adaptive';
@@ -212,38 +215,41 @@ export class Game {
   }
 
   private weatherKey = '';
-  setWeather(w: Weather) {
+  readonly weatherNow = weatherNow;
+  setWeather(w: Weather | WeatherPreset) {
+    if (typeof w === 'string') w = presetWeather(w, this.mission?.weather ?? DEFAULT_WEATHER);
     const key = JSON.stringify(w);
     this.world.contrails.enabled = w.contrails !== false;
     if (key === this.weatherKey) return;
     this.weatherKey = key;
-    this.mood = w.mood ?? 'clear';
     applyWeather(this.engine, w);
   }
 
   // Storm rounds: lightning flashes through the cloud, thunder rolls in a moment later
-  private mood: string = 'clear';
   private lightningT = 8;
   private flashT = 0;
   private storm(dt: number) {
-    if (this.mood !== 'storm' || this.menuMode) { if (this.flashT > 0) { this.flashT = 0; this.feel.ambientFlash = 0; } return; }
+    if (weatherNow.lightning < .5 || this.menuMode || this.state === 'paused') { if (this.flashT > 0) { this.flashT = 0; this.feel.ambientFlash = 0; } return; }
     this.lightningT -= dt;
     if (this.lightningT <= 0) {
       this.lightningT = 5 + Math.random() * 9;
       this.flashT = 0.22;
       const dist = 800 + Math.random() * 4000;
-      setTimeout(() => sound.play('explosionFar', null, { gain: 0.9, rate: 0.45 + Math.random() * 0.15, reverb: 0.8 }), (dist / 343) * 1000);
+      weatherEvents.thunder?.(dist);
+      if (weatherNow.effects) stormStrike(this.engine);
+      if (Math.random() < .15 && access.flash > .5) this.engine.precipitation.strike(this.engine.camera);
     }
     if (this.flashT > 0) {
       this.flashT -= dt;
       // double-stroke flicker
       const k = Math.max(0, this.flashT) / 0.22;
-      this.feel.ambientFlash = (k > 0.6 || (k > 0.2 && k < 0.4) ? 0.55 : 0.08) * k;
+      this.feel.ambientFlash = (weatherNow.effects ? access.flash : 0) * (k > 0.6 || (k > 0.2 && k < 0.4) ? 0.55 : 0.08) * k;
     } else this.feel.ambientFlash = 0;
   }
 
   applySettings() {
     const s = this.settings;
+    weatherNow.effects = s.weatherEffects !== false;
     this.input.sensitivity = s.sensitivity;
     this.input.invertY = s.invertY;
     sound.setVolume(s.volume);
@@ -429,6 +435,7 @@ export class Game {
   // ---------------- Frame ----------------
   private frame(dt: number) {
     const w = this.world;
+    this.engine.precipitation.velocity.copy(w.player?.vel ?? Atmos.wind);
     this.world.effects.vol.setQuality(this.engine.quality === 'low');
     syncSurfaceDetail(this.engine.quality);   // follows auto-quality drops (no-op unless the tier changed)
     const playing = !this.menuMode && (this.state === 'playing' || this.state === 'ending');
@@ -472,6 +479,11 @@ export class Game {
       if (this.mission?.role === 'gunner') { if (!this.bombardier.active) this.gunner.update(dt); }
       else this.pilot.update(dt);
       if (this.state === 'ending') this.flow.updateEnding(dt);   // count down to the debrief (bail-out / fly-by)
+    }
+    if (playing && weatherNow.turbulence > 0) {
+      const k = weatherNow.turbulence * .002 * access.shake;
+      this.engine.camera.rotateX(Math.sin(w.time * 7.1) * k);
+      this.engine.camera.rotateZ(Math.sin(w.time * 5.3) * k);
     }
     // trauma-based camera shake (explosions, flak, hits), applied after the controllers
     if (this.trauma > 0 && !this.menuMode) {

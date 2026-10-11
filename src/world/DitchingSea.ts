@@ -1,3 +1,4 @@
+import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import { DitchingSpray } from './DitchingSpray';
 
@@ -41,11 +42,11 @@ export class DitchingSea {
     const sun = new THREE.DirectionalLight(0xe4e7dc, 2.5); sun.position.set(-100, 180, 100);
     this.sun = sun; this.hemi = new THREE.HemisphereLight(0xb6c7d0, 0x41484b, 2);
     this.scene.add(sun, this.hemi);
-    const material = new THREE.ShaderMaterial({ uniforms: { time: { value: 0 }, night: { value: 0 } },
-      vertexShader: `varying vec3 p; uniform float time;
-        void main(){ vec3 v=position; v.z+=sin(v.x*.09+time*1.4)*.32+sin(v.y*.13-time)*.18;
+    const material = new THREE.ShaderMaterial({ uniforms: { time: { value: 0 }, night: { value: 0 }, swell: { value: 1 } },
+      vertexShader: `varying vec3 p; uniform float time, swell;
+        void main(){ vec3 v=position; v.z+=(sin(v.x*.09+time*1.4)*.32+sin(v.y*.13-time)*.18)*swell;
           vec4 w=modelMatrix*vec4(v,1.); p=w.xyz; gl_Position=projectionMatrix*viewMatrix*w; }`,
-      fragmentShader: `varying vec3 p; uniform float time; uniform float night;
+      fragmentShader: `varying vec3 p; uniform float time, swell; uniform float night;
         float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
         float noise(vec2 p){vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
           return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1)),f.x),f.y);}
@@ -58,7 +59,7 @@ export class DitchingSea {
           return (1.-smoothstep(width*.25,width,across))*ends*smoothstep(.38,.85,h);
         }
         void main(){ float a=p.x*.09+time*1.4+noise(p.xz*.025)*4., b=-p.z*.13-time+noise(p.zx*.018)*5.;
-          vec3 n=normalize(vec3(-.14*cos(a),1.,.11*cos(b)));
+          vec3 n=normalize(vec3(-.14*cos(a)*swell,1.,.11*cos(b)*swell));
           vec3 v=normalize(cameraPosition-p); float f=pow(1.-max(dot(n,v),0.),3.);
           float distance=length(cameraPosition-p);
           // Two offset wind-aligned scales, random occupancy, width, length and brightness.
@@ -137,6 +138,7 @@ export class DitchingSea {
     }
   }
   update(t: number, night: boolean, low = false) {
+    this.sea.material.uniforms.swell.value = weatherNow.swell;
     this.sun.intensity = night ? 0.7 : 2.5; this.hemi.intensity = night ? 0.65 : 2;
     this.sea.material.uniforms.time.value = t; this.sea.material.uniforms.night.value = night ? 1 : 0;
     (this.scene.background as THREE.Color).setHex(night ? 0x303e51 : 0x77868c);

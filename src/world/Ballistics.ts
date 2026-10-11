@@ -1,3 +1,4 @@
+import { windDrift } from '../render/WeatherPresets';
 import * as THREE from 'three';
 import { weatherNow } from '../render/WeatherState';
 import type { Aircraft, HitZone } from './Aircraft';
@@ -105,12 +106,14 @@ export class Ballistics {
 
   update(dt: number, aircraft: Aircraft[]) {
     const L = this.listener;
+    const driftX = windDrift(weatherNow.windX, dt), driftZ = windDrift(weatherNow.windZ, dt);
     let i = 0;
     while (i < this.n) {
       this.ttl[i] -= dt;
       if (this.ttl[i] <= 0) { this.kill(i); continue; }
       const ax = this.px[i], ay = this.py[i], az = this.pz[i];
       this.vy[i] -= 9.81 * dt;
+      this.vx[i] += driftX; this.vz[i] += driftZ;
       // light drag
       const dragK = Math.exp(-0.12 * dt);
       this.vx[i] *= dragK; this.vy[i] *= dragK; this.vz[i] *= dragK;

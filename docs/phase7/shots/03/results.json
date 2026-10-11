@@ -1,0 +1,900 @@
+{
+  "errors": [],
+  "shots": [
+    {
+      "name": "gunner-clear",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 108,
+      "count": 0,
+      "weather": {
+        "rain": 0,
+        "snow": 0,
+        "fog": 0,
+        "cloud": 0,
+        "windX": 9,
+        "windZ": 4,
+        "spotting": 1,
+        "aimError": 1,
+        "traverse": 1,
+        "turbulence": 0,
+        "wetness": 0,
+        "swell": 1,
+        "lightning": 0,
+        "preset": "clear",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "gunner-lightRain",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 104,
+      "count": 960,
+      "weather": {
+        "rain": 0.35,
+        "snow": 0,
+        "fog": 0.00008,
+        "cloud": 0.45,
+        "windX": 10,
+        "windZ": 4,
+        "spotting": 0.94,
+        "aimError": 1.05,
+        "traverse": 1,
+        "turbulence": 0.1,
+        "wetness": 0.5,
+        "swell": 1.1,
+        "lightning": 0,
+        "preset": "lightRain",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.2025,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "gunner-heavyRain",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 104,
+      "count": 960,
+      "weather": {
+        "rain": 1,
+        "snow": 0,
+        "fog": 0.00018,
+        "cloud": 0.85,
+        "windX": 10.8,
+        "windZ": 4.8,
+        "spotting": 0.85,
+        "aimError": 1.15,
+        "traverse": 1,
+        "turbulence": 0.45,
+        "wetness": 1,
+        "swell": 1.5,
+        "lightning": 0,
+        "preset": "heavyRain",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.3825,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "gunner-snow",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 104,
+      "count": 960,
+      "weather": {
+        "rain": 0,
+        "snow": 1,
+        "fog": 0.00014,
+        "cloud": 0.6,
+        "windX": 7.2,
+        "windZ": 3.2,
+        "spotting": 0.9,
+        "aimError": 1.1,
+        "traverse": 0.9,
+        "turbulence": 0.1,
+        "wetness": 0.15,
+        "swell": 1.1,
+        "lightning": 0,
+        "preset": "snow",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.27,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "gunner-fog",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 104,
+      "count": 0,
+      "weather": {
+        "rain": 0,
+        "snow": 0,
+        "fog": 0.0004,
+        "cloud": 0.65,
+        "windX": 7.2,
+        "windZ": 3.2,
+        "spotting": 0.8,
+        "aimError": 1.1,
+        "traverse": 1,
+        "turbulence": 0,
+        "wetness": 0.2,
+        "swell": 1,
+        "lightning": 0,
+        "preset": "fog",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.29250000000000004,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "gunner-thunderstorm",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 104,
+      "count": 960,
+      "weather": {
+        "rain": 1,
+        "snow": 0,
+        "fog": 0.00022,
+        "cloud": 1,
+        "windX": 10.8,
+        "windZ": -4.8,
+        "spotting": 0.8,
+        "aimError": 1.2,
+        "traverse": 1,
+        "turbulence": 1,
+        "wetness": 1,
+        "swell": 1.8,
+        "lightning": 1,
+        "preset": "thunderstorm",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.45,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "pilot-clear",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 102,
+      "count": 0,
+      "weather": {
+        "rain": 0,
+        "snow": 0,
+        "fog": 0,
+        "cloud": 0,
+        "windX": 9,
+        "windZ": 4,
+        "spotting": 1,
+        "aimError": 1,
+        "traverse": 1,
+        "turbulence": 0,
+        "wetness": 0,
+        "swell": 1,
+        "lightning": 0,
+        "preset": "clear",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "pilot-lightRain",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 108,
+      "count": 960,
+      "weather": {
+        "rain": 0.35,
+        "snow": 0,
+        "fog": 0.00008,
+        "cloud": 0.45,
+        "windX": 10,
+        "windZ": 4,
+        "spotting": 0.94,
+        "aimError": 1.05,
+        "traverse": 1,
+        "turbulence": 0.1,
+        "wetness": 0.5,
+        "swell": 1.1,
+        "lightning": 0,
+        "preset": "lightRain",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.2025,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "pilot-heavyRain",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 108,
+      "count": 960,
+      "weather": {
+        "rain": 1,
+        "snow": 0,
+        "fog": 0.00018,
+        "cloud": 0.85,
+        "windX": 10.8,
+        "windZ": 4.8,
+        "spotting": 0.85,
+        "aimError": 1.15,
+        "traverse": 1,
+        "turbulence": 0.45,
+        "wetness": 1,
+        "swell": 1.5,
+        "lightning": 0,
+        "preset": "heavyRain",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.3825,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "pilot-snow",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 108,
+      "count": 960,
+      "weather": {
+        "rain": 0,
+        "snow": 1,
+        "fog": 0.00014,
+        "cloud": 0.6,
+        "windX": 7.2,
+        "windZ": 3.2,
+        "spotting": 0.9,
+        "aimError": 1.1,
+        "traverse": 0.9,
+        "turbulence": 0.1,
+        "wetness": 0.15,
+        "swell": 1.1,
+        "lightning": 0,
+        "preset": "snow",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.27,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "pilot-fog",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 108,
+      "count": 0,
+      "weather": {
+        "rain": 0,
+        "snow": 0,
+        "fog": 0.0004,
+        "cloud": 0.65,
+        "windX": 7.2,
+        "windZ": 3.2,
+        "spotting": 0.8,
+        "aimError": 1.1,
+        "traverse": 1,
+        "turbulence": 0,
+        "wetness": 0.2,
+        "swell": 1,
+        "lightning": 0,
+        "preset": "fog",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.29250000000000004,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "pilot-thunderstorm",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 108,
+      "count": 960,
+      "weather": {
+        "rain": 1,
+        "snow": 0,
+        "fog": 0.00022,
+        "cloud": 1,
+        "windX": 10.8,
+        "windZ": -4.8,
+        "spotting": 0.8,
+        "aimError": 1.2,
+        "traverse": 1,
+        "turbulence": 1,
+        "wetness": 1,
+        "swell": 1.8,
+        "lightning": 1,
+        "preset": "thunderstorm",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.45,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "pilot-heavyRain-low",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 109,
+      "count": 160,
+      "weather": {
+        "rain": 1,
+        "snow": 0,
+        "fog": 0.00018,
+        "cloud": 0.85,
+        "windX": 10.8,
+        "windZ": 4.8,
+        "spotting": 0.85,
+        "aimError": 1.15,
+        "traverse": 1,
+        "turbulence": 0.45,
+        "wetness": 1,
+        "swell": 1.5,
+        "lightning": 0,
+        "preset": "heavyRain",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.3825,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "pilot-heavyRain-off",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 109,
+      "count": 0,
+      "weather": {
+        "rain": 1,
+        "snow": 0,
+        "fog": 0.00018,
+        "cloud": 0.85,
+        "windX": 10.8,
+        "windZ": 4.8,
+        "spotting": 0.85,
+        "aimError": 1.15,
+        "traverse": 1,
+        "turbulence": 0.45,
+        "wetness": 1,
+        "swell": 1.5,
+        "lightning": 0,
+        "preset": "heavyRain",
+        "effects": false,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.3825,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "defend-field-rain",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 109,
+      "count": 960,
+      "weather": {
+        "rain": 1,
+        "snow": 0,
+        "fog": 0.00018,
+        "cloud": 0.85,
+        "windX": 10.8,
+        "windZ": 4.8,
+        "spotting": 0.85,
+        "aimError": 1.15,
+        "traverse": 1,
+        "turbulence": 0.45,
+        "wetness": 1,
+        "swell": 1.5,
+        "lightning": 0,
+        "preset": "heavyRain",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.3825,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "train-busting-rain",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 118,
+      "count": 960,
+      "weather": {
+        "rain": 1,
+        "snow": 0,
+        "fog": 0.00018,
+        "cloud": 0.85,
+        "windX": 10.8,
+        "windZ": 4.8,
+        "spotting": 0.85,
+        "aimError": 1.15,
+        "traverse": 1,
+        "turbulence": 0.45,
+        "wetness": 1,
+        "swell": 1.5,
+        "lightning": 0,
+        "preset": "heavyRain",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.3825,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "wet-airfield",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 132,
+      "count": 960,
+      "weather": {
+        "rain": 1,
+        "snow": 0,
+        "fog": 0.00018,
+        "cloud": 0.85,
+        "windX": 10.8,
+        "windZ": 4.8,
+        "spotting": 0.85,
+        "aimError": 1.15,
+        "traverse": 1,
+        "turbulence": 0.45,
+        "wetness": 1,
+        "swell": 1.5,
+        "lightning": 0,
+        "preset": "heavyRain",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.3825,
+        "muzzle": 0
+      }
+    },
+    {
+      "name": "storm-sea",
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "programs": 120,
+      "count": 960,
+      "weather": {
+        "rain": 1,
+        "snow": 0,
+        "fog": 0.00022,
+        "cloud": 1,
+        "windX": 10.8,
+        "windZ": -4.8,
+        "spotting": 0.8,
+        "aimError": 1.2,
+        "traverse": 1,
+        "turbulence": 1,
+        "wetness": 1,
+        "swell": 1.8,
+        "lightning": 1,
+        "preset": "thunderstorm",
+        "effects": true,
+        "mood": "clear",
+        "from": "clear",
+        "to": "clear",
+        "k": 0,
+        "night": 0,
+        "dark": 0.45,
+        "muzzle": 0
+      }
+    }
+  ],
+  "bench": [
+    {
+      "quality": "high",
+      "preset": "clear",
+      "avg": 14.67,
+      "p50": 14.3,
+      "p95": 18.5,
+      "max": 28.6,
+      "calls": 1,
+      "tris": 1,
+      "programs": 109,
+      "w": 2063,
+      "h": 1114
+    },
+    {
+      "quality": "high",
+      "preset": "heavyRain",
+      "avg": 14.16,
+      "p50": 13.5,
+      "p95": 20.5,
+      "max": 24,
+      "calls": 1,
+      "tris": 1,
+      "programs": 109,
+      "w": 2063,
+      "h": 1114
+    },
+    {
+      "quality": "high",
+      "preset": "thunderstorm",
+      "avg": 24.19,
+      "p50": 23.5,
+      "p95": 38.5,
+      "max": 43.4,
+      "calls": 1,
+      "tris": 1,
+      "programs": 109,
+      "w": 2063,
+      "h": 1114
+    },
+    {
+      "quality": "low",
+      "preset": "clear",
+      "avg": 10.17,
+      "p50": 9.8,
+      "p95": 13.5,
+      "max": 21.1,
+      "calls": 1,
+      "tris": 1,
+      "programs": 110,
+      "w": 1291,
+      "h": 697
+    },
+    {
+      "quality": "low",
+      "preset": "heavyRain",
+      "avg": 12.96,
+      "p50": 12.8,
+      "p95": 17.1,
+      "max": 22.8,
+      "calls": 1,
+      "tris": 1,
+      "programs": 110,
+      "w": 1291,
+      "h": 697
+    },
+    {
+      "quality": "low",
+      "preset": "thunderstorm",
+      "avg": 10.66,
+      "p50": 10.9,
+      "p95": 14.6,
+      "max": 15.7,
+      "calls": 1,
+      "tris": 1,
+      "programs": 110,
+      "w": 1291,
+      "h": 697
+    }
+  ],
+  "extra": [
+    {
+      "test": "effects-off",
+      "particles": 0,
+      "spotting": 0.85
+    },
+    {
+      "test": "front-midpoint",
+      "snow": 0.6479999999999972,
+      "spotting": 0.9352000000000003
+    },
+    {
+      "test": "front-finished",
+      "snow": 1,
+      "preset": "snow"
+    },
+    {
+      "test": "sea-swell",
+      "swell": 1.8
+    }
+  ],
+  "weatherCompiles": 0,
+  "done": true
+}

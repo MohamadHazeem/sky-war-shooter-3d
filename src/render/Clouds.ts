@@ -82,6 +82,7 @@ uniform float uWeatherScale;
 uniform vec2 uRes;
 uniform vec4 uGap;   // break in the low deck over the bombing target: x, z (local), radius, strength
 uniform vec4 uGlow;  // fire / flash light from the target on the deck: x, z (local), radius, intensity
+uniform float uWeatherFog;
 uniform float uHaze; // distance-haze scale (Atmos.haze)
 // point lights inside the cloud (CloudLights.ts): flak and explosions at night, flares, lightning
 uniform int uPLn;
@@ -365,6 +366,7 @@ uniform sampler2D tClouds;
 uniform vec3 uCamPos;
 uniform vec4 uLow;
 uniform vec4 uHigh;
+uniform float uWeatherFog;
 uniform float uHaze;
 varying vec2 vUv;
 void main() {
@@ -386,6 +388,9 @@ void main() {
     vec4 c = texture2D(tClouds, vUv);
     col = scene * c.a + c.rgb;
   }
+  // Local mist veils the cloud sea and sky too; nearby cockpit geometry remains crisp.
+  float fogD = min(d, 4500.0);
+  col = mix(col, mix(uHorizon, uZenith, .2), 1.0 - exp(-fogD * uWeatherFog));
   gl_FragColor = vec4(col, 1.0);
 }
 `;

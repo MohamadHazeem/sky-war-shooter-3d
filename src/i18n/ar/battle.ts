@@ -36,7 +36,7 @@ const patterns: Pattern[] = [
   [/^(\d+)–(\d+) at once$/, 'من $1 إلى $2 في آن واحد'],
   [/^endless (\d+:\d\d) rounds$/, 'جولات لا تنتهي، مدة كل منها $1'],
   [/^(\d+) × (\d+:\d\d)$/, (m) => `${rounds(m[1])} × ${m[2]}`],
-  [new RegExp(`^(Clear|Overcast|Storm|Red dusk), (${TOD})$`), (m, tr) => `${tr(m[1])}، ${tr(m[2])}`],
+  [new RegExp(`^(Clear|Overcast|Storm|Red dusk|Light rain|Heavy rain|Snow|Fog / low cloud|Thunderstorm), (${TOD})$`), (m, tr) => `${tr(m[1])}، ${tr(m[2])}`],
   [/^battle group every (\d+) rounds$/, (m) => `مجموعة قتالية كل ${rounds(m[1])}`],
   [/^battle group in round (\d+)$/, 'مجموعة قتالية في الجولة $1'],
   [/^(\d+) rounds?$/, (m) => rounds(m[1])],

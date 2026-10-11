@@ -1,3 +1,4 @@
+import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { createTargetSmoke, syncTargetSmoke } from '../render/TargetSmoke';
@@ -216,6 +217,7 @@ export class TargetArea {
       b.vel.addScaledVector(b.vel, -k * sp * dt);
       b.vel.y -= 9.81 * dt;
       b.pos.addScaledVector(b.vel, dt);
+      b.pos.x += weatherNow.windX * dt; b.pos.z += weatherNow.windZ * dt;
       return b.age < FALL && b.pos.y > 200;
     });
   }

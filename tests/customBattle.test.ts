@@ -17,7 +17,7 @@ describe('custom battle config', () => {
   it('fills a missing or broken config with the defaults', () => {
     expect(sanitizeConfig(null)).toEqual(DEFAULT_CONFIG);
     expect(sanitizeConfig('junk')).toEqual(DEFAULT_CONFIG);
-    expect(sanitizeConfig({ role: 'tank', skill: 'god', mood: 'fog', station: 'cockpit', min: 'x', boss: 1 })).toEqual(DEFAULT_CONFIG);
+    expect(sanitizeConfig({ role: 'tank', skill: 'god', mood: 'invalid', station: 'cockpit', min: 'x', boss: 1 })).toEqual(DEFAULT_CONFIG);
   });
 
   it('clamps numbers, orders min/max and keeps at least one valid enemy type', () => {

@@ -1,3 +1,4 @@
+import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { hazed, vcolored } from './Countryside';
@@ -659,6 +660,7 @@ export class Airbase {
   private geos: THREE.BufferGeometry[] = [];
   private tex: THREE.Texture[] = [];
   private sock: THREE.Mesh | null = null;
+  private wet = { value: 0 };
   private savedHaze = -1;
 
   constructor(quality: 'low' | 'medium' | 'high' | 'ultra' = 'high') {
@@ -713,6 +715,7 @@ export class Airbase {
     this.tex.push(tex);
     const mat = this.keep(new THREE.MeshLambertMaterial({ color: 0xffffff }));
     hazed(mat, { key: 'abGround', vertHead: 'varying vec3 vMap;', vertBody: 'vMap = position;', fragHead: GROUND_FRAG_HEAD, fragColor: GROUND_FRAG });
+    this.wetSurface(mat);
     const inner = mat.onBeforeCompile;
     mat.onBeforeCompile = (sh, r) => { inner(sh, r); sh.uniforms.uAbMap = { value: tex }; sh.uniforms.uAbHalf = { value: H }; };
     const m = this.add(geo, mat, 'ab_ground', false);
@@ -724,6 +727,7 @@ export class Airbase {
     this.tex.push(tex);
     const mk = (color: number, off: number, key: string) => this.keep(hazed(new THREE.MeshLambertMaterial({ map: tex, color, polygonOffset: true, polygonOffsetFactor: off, polygonOffsetUnits: off }), { key }));
     const rwy = mk(0xffffff, -3, 'abRunway'), track = mk(0xd2d0ca, -2, 'abTrack'), pan = mk(0xc9c7c0, -2, 'abPan');
+    this.wetSurface(rwy); this.wetSurface(track); this.wetSurface(pan);
     const parts: THREE.BufferGeometry[] = [];
     for (const [a0, b0, a1, b1] of RUNWAYS) {
       const ext = a0 === -RWY.half ? 50 : 0;   // the main runway runs on to meet the track
@@ -919,7 +923,20 @@ export class Airbase {
   }
 
   /** Windsock flutter (cheap, per frame while shown). */
+  private wetSurface(mat: THREE.Material) {
+    const inner = mat.onBeforeCompile;
+    mat.onBeforeCompile = (sh, renderer) => {
+      inner(sh, renderer); sh.uniforms.uWet = this.wet;
+      sh.fragmentShader = sh.fragmentShader.replace('uniform float uCsHaze;', 'uniform float uCsHaze; uniform float uWet;')
+        .replace('#include <dithering_fragment>', `#include <dithering_fragment>
+          vec3 wetV = normalize(cameraPosition - vCsWorld);
+          float wetF = pow(1.0 - abs(wetV.y), 4.0);
+          float wetPatch = .55 + .45*sin(vCsWorld.x*.17)*sin(vCsWorld.z*.23);
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb*.7 + uHorizon*wetF*.5, uWet*wetPatch);`);
+    };
+  }
   update(time: number) {
+    this.wet.value = weatherNow.effects ? weatherNow.wetness : 0;
     if (this.sock) this.sock.rotation.z = Math.sin(time * 2.3) * 0.02;
   }
 
