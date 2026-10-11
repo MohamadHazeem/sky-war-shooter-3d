@@ -71,6 +71,22 @@ describe('Ballistics', () => {
     expect(b.n).toBe(0);
   });
 
+  it('keeps fresh tracer tails ahead of the muzzle, including after pool compaction', () => {
+    const camera = new THREE.PerspectiveCamera();
+    b.fire(new THREE.Vector3(0, 0, 3), new THREE.Vector3(0, 0, 880), 'allied', 1, true, RED, null, false, true, 0.001);
+    b.fire(new THREE.Vector3(0, 0, 3), new THREE.Vector3(0, 0, 880), 'allied', 1, true, RED, null, false, true);
+    b.update(DT, []);
+    expect(b.n).toBe(1);
+    b.renderTracers(camera, 800);
+    const geo = b.tracers.mesh.geometry;
+    const tail = geo.getAttribute('iA'), head = geo.getAttribute('iB');
+    expect(tail.getZ(0)).toBeCloseTo(3, 4);
+    expect(head.getZ(0)).toBeGreaterThan(tail.getZ(0));
+    for (let i = 0; i < 10; i++) b.update(DT, []);
+    b.renderTracers(camera, 800);
+    expect(tail.getZ(0)).toBeGreaterThan(3);
+  });
+
   it('caps the pool at max', () => {
     for (let i = 0; i < 100; i++) b.fire(new THREE.Vector3(), new THREE.Vector3(0, 0, 800), 'allied', 1, false, RED, null);
     expect(b.n).toBe(64);

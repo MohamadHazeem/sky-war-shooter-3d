@@ -1,0 +1,33 @@
+.aa-mode #hud .hud-tl,.aa-mode #hud .hud-tr,.aa-mode #hBL,.aa-mode #hBR,.aa-mode #lockHint,.aa-mode #tip,.aa-mode .abilities,.aa-mode .th-stations,.aa-mode .th-abilities,.aa-mode #abilityBar,.aa-mode #abilityTint,.aa-mode #controlsHint,.aa-mode .th-abil { display:none!important }
+#aaHud { position:fixed;inset:18px 22px;z-index:7;pointer-events:none;color:#f3e9cd;font:14px Georgia,serif;text-shadow:0 2px 3px #000 }
+#aaHud .aa-status { font-size:22px;letter-spacing:1px;margin-bottom:8px }
+#aaHud label { display:flex;align-items:center;gap:12px }
+#aaHud meter { width:210px;height:16px }
+#aaHud .aa-assets { max-width:720px;margin-top:8px;font-size:12px;line-height:1.6;color:#d3cfb9 }
+#aaHud .aa-gun { position:absolute;bottom:0;left:50%;transform:translateX(-50%);text-align:center;white-space:nowrap;background:#121914df;border:1px solid #92916b;padding:12px 18px }
+#aaHud .aa-gun>div:first-child { font-size:18px;margin-bottom:8px }
+#aaHud button { pointer-events:auto;background:#293125;color:#eee3c5;border:1px solid #818265;border-radius:2px;padding:9px 12px;margin:3px;cursor:pointer;font:inherit }
+#aaHud button.selected { border-color:#efd482;background:#4c5435 }
+#aaHud button:disabled { opacity:.4;cursor:default }
+#aaHud .aa-help { font-size:12px;margin-top:5px;color:#bab9a6 }
+#aaHud .aa-choices { pointer-events:auto;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(600px,90vw);padding:25px;background:#111a16f2;border:1px solid #b3a579;text-align:center }
+#aaHud .aa-choices[hidden] { display:none }
+.aa-mode #feed { top:150px }
+html[dir=rtl] #aaHud { direction:rtl }
+@media(max-width:800px) {
+  #aaHud { inset:8px;font-size:12px }
+  #aaHud .aa-status {font-size:16px}
+  #aaHud .aa-assets {max-width:65vw;font-size:10px}
+  #aaHud .aa-gun {bottom:5px;padding:4px 6px;max-width:80vw}
+  #aaHud .aa-gun>div:first-child {font-size:13px}
+  #aaHud button {padding:8px 5px;font-size:11px}
+  #aaHud .aa-help {display:none}
+  .touch #aaHud .aa-gun {bottom:100px}
+}
+
+.aa-mode #subs { bottom:155px }
+
+body.touch.aa-mode #aaHud { top:55px }
+body.touch.aa-mode #subs { top:auto;bottom:12px;left:12px;transform:none;max-width:calc(100vw - 330px);width:auto }
+body.aa-mode #touchHud .th-look,body.aa-mode #touchHud [data-t=map],body.aa-mode #touchHud [data-t=help] { display:none }
+html[dir=rtl] body.aa-mode #subs .line,html[dir=rtl] body.aa-mode #subs .who { letter-spacing:0 }

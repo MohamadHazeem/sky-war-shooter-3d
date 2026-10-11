@@ -149,7 +149,6 @@ export class Searchlights<T extends BeamTarget = BeamTarget> {
     if (!this.beams.length) return;
     this.t += dt;
     this.coned.clear();
-    const live = targets.filter((x) => x.alive && !x.remove);
     for (const b of this.beams) {
       const lamp = this.lamp(b, _w);
       if (b.target && (!b.target.alive || b.target.remove || b.holdT <= 0 || b.target.pos.distanceTo(lamp) > LENGTH * 0.95)) b.target = null;
@@ -167,12 +166,14 @@ export class Searchlights<T extends BeamTarget = BeamTarget> {
           b.scanT = 0.25;
           // a raider in the beam, or one a neighbouring beam already holds (they converge on him)
           let pick: T | null = null, best = CATCH;
-          for (const x of live) {
+          for (const x of targets) {
+            if (!x.alive || x.remove) continue;
             const to = _d.copy(x.pos).sub(lamp);
             const dist = to.length();
             if (dist > LENGTH * 0.9) continue;
             const ang = to.divideScalar(dist).angleTo(b.dir);
-            const held = this.beams.some((o) => o !== b && o.target === x);
+            let held = false;
+            for (const other of this.beams) if (other !== b && other.target === x) { held = true; break; }
             const lim = held ? 0.45 : CATCH;
             if (ang < lim && ang < (held ? 0.45 : best)) { best = ang; pick = x; }
           }

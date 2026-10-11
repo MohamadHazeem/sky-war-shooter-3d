@@ -246,14 +246,15 @@ export class UI {
 
   briefing(m: Mission, onStart: () => void, onBack: () => void) {
     const b = $('#briefing');
-    const gunnerControls = t('brief.gunnerControls');
+    const groundAA = m.id === 'survival-aa';
+    const gunnerControls = groundAA ? tx('Mouse / drag: aim · Fire: mouse / Space · 1–3: gun pits · R: reload · Right button: zoom') : t('brief.gunnerControls');
     const pilotControls = t('brief.pilotControls');
     b.innerHTML = `<div class="screen-center"><div class="sheet">
       <div class="stamp">${t('brief.stamp')}</div>
       <div class="hdr"><span>${t('brief.hdr')}</span><span>${esc(tx(m.date))}</span></div>
       <div class="kicker" style="color:#6b5a2a">${m.number ? t('brief.missionNo', { n: m.number }) : t('brief.survival')}</div>
       <h2>${esc(tx(m.title))}</h2>
-      <div class="target">${t('brief.target')} ${esc(tx(m.target))} &nbsp;·&nbsp; ${t('brief.assignment')} ${m.role === 'gunner' ? `<bdi>B-17G "${esc(bomberName())}"</bdi> — ` + tx(STATIONS[m.station ?? 'waistL'].label) : t('brief.escort')}</div>
+      <div class="target">${t('brief.target')} ${esc(tx(m.target))} &nbsp;·&nbsp; ${t('brief.assignment')} ${groundAA ? tx('Ground AA battery') : m.role === 'gunner' ? `<bdi>B-17G "${esc(bomberName())}"</bdi> — ` + tx(STATIONS[m.station ?? 'waistL'].label) : t('brief.escort')}</div>
       <div class="brief-grid">
         <div class="brief-text">
           ${m.briefing.map((p) => `<p>${esc(withName(tx(p)))}</p>`).join('')}
