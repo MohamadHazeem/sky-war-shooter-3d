@@ -17,6 +17,7 @@ import { leaderboardMode } from './Modes';
 import { mountShare, shareStamp } from './Share';
 import { analytics } from '../net/Analytics';
 import { mountCampaignReport, prepareCampaignMission, campaignMeritMult } from '../ui/CampaignMap';
+import { crewRoomScene } from '../ui/CrewRoomScene';
 
 // Bail-out sequence when a gunner's B-17 is shot down (before the debrief): BailOutCinematic.ts
 const BAIL_SEQ_TIME = BAIL_TOTAL;
@@ -278,8 +279,10 @@ export class MissionFlow {
       killsByGun: m.role === 'gunner' ? g.tally.killsByGun() : undefined,
       merit, points: g.prog.points,
     };
+    // the crew-room scene first after a story mission (CrewRoomScene.ts); `then` runs once the map is up
+    const toMap = (then?: unknown) => crewRoomScene.play(m, () => { g.showCampaign(); if (typeof then === 'function') then(); });
     const h = {
-      next: () => g.showCampaign(), // campaign map: next operation card + optional side raids
+      next: toMap, // campaign map: next operation card + optional side raids
       retry: () => g.showBriefing(m),
       menu: () => g.startMenu(),
       armory: () => g.ui.armory(g.prog, () => g.ui.debrief({ ...d, merit: undefined, points: g.prog.points }, h)),
@@ -293,7 +296,8 @@ export class MissionFlow {
     mountShare(host, g.engine, () => shareStamp(g), () => ({ title: m.title, kills: d.kills, score: d.score, success: d.success, survival, waves: d.waves, role: m.role }));
     analytics.missionEnd(m, d);
     g.service.onDebrief(m, d, medals);
-    mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers }, g.prog, g.progress, () => g.showCampaign());
+    mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers }, g.prog, g.progress, toMap);
     g.specials.nemesis.onDebrief(m); // named Experten: this mission's ace outcomes (NemesisRuntime.ts)
+    crewRoomScene.capture(g, m, d); // the outcome the crew-room scene talks about
   }
 }

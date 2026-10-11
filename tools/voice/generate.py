@@ -53,7 +53,7 @@ def expand(cfg):
         if role not in roles:
             sys.exit(f'unknown role {role!r} in {cid}')
         rate = line.get('rate', roles[role]['rate'] + (boost if line.get('urgent') else 0))
-        clips.append(dict(id=cid, role=role, text=text, spoken=spoken(line.get('say', text)), rate=rate, base=base, kind=kind))
+        clips.append(dict(id=cid, role=role, text=text, spoken=spoken(line.get('say', text)), rate=rate, base=base, kind=kind, noTable=bool(line.get('noTable'))))
 
     for line in cfg['lines']:
         if 'id' not in line:
@@ -242,7 +242,7 @@ def write_ts(cfg, clips):
     roles = cfg['roles']
     table = {}
     for c in clips:
-        if c['kind'] != 'line' or roles[c['role']].get('noTable'):  # briefings: played by id, not by game code
+        if c['kind'] != 'line' or roles[c['role']].get('noTable') or c['noTable']:  # briefings / crew room: found by id or text, not named in game code
             continue
         e = table.setdefault(c['base'], {'speakers': [], 'text': c['text']})
         e['speakers'].append(roles[c['role']]['speaker'])

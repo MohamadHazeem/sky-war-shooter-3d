@@ -2126,6 +2126,1053 @@
       "text": "They got him! God bless those little friends!"
     },
     {
+      "group": "crew room (tools/voice/crewroom.mjs)"
+    },
+    {
+      "id": "cr_m1_1",
+      "role": "radio",
+      "text": "Well, that's one. First thing tomorrow I'm painting a bomb under the window.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m1_2",
+      "role": "top",
+      "text": "I counted forty-one holes in her. Forty-one, and not one of them in us.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m1_3",
+      "role": "nav",
+      "text": "Emden on the first try. I said I would.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m1_4",
+      "role": "ball",
+      "text": "Told you. Nobody can find me down in that ball.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m1_5",
+      "role": "copilot",
+      "text": "Nobody wants to, Shorty.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m1_6",
+      "role": "waist",
+      "text": "My hands didn't stop shaking till we crossed the English coast. Is that normal?",
+      "rate": 206,
+      "noTable": true
+    },
+    {
+      "id": "cr_m1_7",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "It's normal. Mine haven't stopped yet.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m1_8",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "Get some sleep, all of you. One down. Twenty-four to go.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m2_1",
+      "role": "bombardier",
+      "text": "They came straight at the nose. All I could see was the propeller hub and the guns winking at me.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m2_2",
+      "role": "top",
+      "text": "That top turret earned its keep today. Twin fifties, and somebody who knew what to do with them.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m2_3",
+      "role": "radio",
+      "text": "Lieutenant, you've been humming the same four bars since we landed.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m2_4",
+      "role": "copilot",
+      "text": "It helps. Don't ask me why. It helps.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m2_5",
+      "role": "nav",
+      "text": "Two down. I'm keeping the tally in the back of my navigation log.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m2_6",
+      "role": "ball",
+      "text": "Fog's coming in. Maybe they'll stand us down tomorrow.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m2_7",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "Maybe. Sleep while you can.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m8_1",
+      "role": "waist",
+      "text": "They came for the Lucky Lady's things an hour ago. Folded the blankets. Took the photographs off the wall.",
+      "rate": 206,
+      "noTable": true
+    },
+    {
+      "id": "cr_m8_2",
+      "role": "waist",
+      "text": "Their tail gunner owed me two dollars. I'd give anything for him to walk in here and not pay it.",
+      "rate": 180,
+      "noTable": true
+    },
+    {
+      "id": "cr_m8_3",
+      "role": "nav",
+      "text": "Sixty Fortresses. Six hundred men. I keep doing the arithmetic, and it keeps coming out the same.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m8_4",
+      "role": "ball",
+      "text": "From the ball I could see the chutes. I tried to count them. I couldn't keep up.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m8_5",
+      "role": "top",
+      "text": "I lit a candle for them in the chapel. I didn't know what else to do.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m8_6",
+      "role": "waist",
+      "text": "Still got the rabbit's foot. I don't know if that makes me lucky, or them not.",
+      "rate": 206,
+      "noTable": true
+    },
+    {
+      "id": "cr_m8_7",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "We came home. Tomorrow we'll think about why. Tonight, try to sleep.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m9_1",
+      "role": "tail",
+      "text": "There he is. The Mustang that stayed with us all the way to Kiel. Sit down, sir. Dinner's on me.",
+      "say": "There he is. The Mustang that stayed with us all the way to Keel. Sit down, sir. Dinner's on me.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m9_2",
+      "role": "radio",
+      "text": "For a month, Hawkeye. You said a month. The whole ship heard you on the interphone.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m9_3",
+      "role": "tail",
+      "text": "I know what I said. Worth every penny.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m9_4",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "We couldn't see our own wingtips in that front. When the Germans came through the gaps, you were already there.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m9_5",
+      "role": "nav",
+      "text": "The first time anyone's gone all the way with us. It changes the arithmetic.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m9_6",
+      "role": "copilot",
+      "text": "To the little friends.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m9_7",
+      "role": "bombardier",
+      "text": "To the little friends. May they never run short of fuel.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m9_8",
+      "role": "tail",
+      "text": "Same time tomorrow, sir? I'll bring my wallet.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m3_1",
+      "role": "bombardier",
+      "text": "Two hundred guns down there, and I still put the bombs right on the aiming point. I've never seen flak like it.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m3_2",
+      "role": "copilot",
+      "text": "Merry Christmas, Ray. Five days late.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m3_3",
+      "role": "top",
+      "text": "Every gun had its Saint Christopher today, and every one of us came home. I'm not saying it's the medals. I'm not saying it isn't.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m3_4",
+      "role": "ball",
+      "text": "On Christmas Eve I kept thinking about the Lucky Lady's boys. They'd have liked the snow.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m3_5",
+      "role": "nav",
+      "text": "Tomorrow is the last day of the year. Nineteen forty-four, gentlemen.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m3_6",
+      "role": "waist",
+      "text": "Next Christmas at home. Everybody say it.",
+      "rate": 206,
+      "noTable": true
+    },
+    {
+      "id": "cr_m3_7",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "Next Christmas at home.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m10_1",
+      "role": "radio",
+      "text": "I kissed that runway, and I'd do it again. The RAF boys think I've gone flak happy.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m10_2",
+      "roles": [
+        "pilot",
+        "nav"
+      ],
+      "text": "They took Frank to the hospital. The surgeon says he'll keep the leg.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m10_3",
+      "role": "pilot",
+      "text": "I told you. I wasn't putting an old lady in the Channel on her thirteenth.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m10_4",
+      "role": "tail",
+      "text": "When the Spitfires showed up off the coast, I could have cried. Maybe I did.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m10_5",
+      "role": "bombardier",
+      "text": "Somebody write to Frank tonight. Tell him the old lady made it.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m10_6",
+      "role": "radio",
+      "text": "I'll write it. I'll make it long. He hates long letters.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m10_7",
+      "roles": [
+        "pilot",
+        "nav"
+      ],
+      "text": "Lights out. We fly home in the morning.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m4_1",
+      "role": "tail",
+      "text": "Leipzig and back, and not one of them got through to us. I said there was a steak in it, didn't I?",
+      "say": "Lipe-zig and back, and not one of them got through to us. I said there was a steak in it, didn't I?",
+      "noTable": true
+    },
+    {
+      "id": "cr_m4_2",
+      "role": "radio",
+      "text": "He's been saving his coupons for a week. Don't ask him where he found a steak in England.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m4_3",
+      "role": "bombardier",
+      "text": "Big Week, they're calling it. The whole Eighth went out today, all of us after the aircraft factories.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m4_4",
+      "roles": [
+        "pilot",
+        "nav"
+      ],
+      "text": "When that Fortress fell out of formation, I thought she was finished. Then you came down on the wolves.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m4_5",
+      "role": "nav",
+      "text": "Frank wrote from the hospital. He says the nurses are lovely and the food is a crime.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m4_6",
+      "role": "top",
+      "text": "There's a rumour we're going back to Schweinfurt. Nobody say it out loud.",
+      "say": "There's a rumour we're going back to Shvine-foort. Nobody say it out loud.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m4_7",
+      "role": "tail",
+      "text": "Eat your steak, sir. You earned it.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m5_1",
+      "role": "copilot",
+      "text": "Schweinfurt. There, I said it. Somebody had to.",
+      "say": "Shvine-foort. There, I said it. Somebody had to.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m5_2",
+      "role": "tail",
+      "text": "A hundred yards. I could see the rounds sparking off their windscreens, and they still didn't break.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m5_3",
+      "role": "copilot",
+      "text": "I've got my piece of Frankfurt on my key ring. It came up through the floor and found my leg. I'm keeping it.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m5_4",
+      "role": "top",
+      "text": "Sixty ships stayed behind the last time. Today we brought ours home. That's enough for me.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m5_5",
+      "role": "nav",
+      "text": "Nineteen missions. Six to go. I don't like saying the number out loud either.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m5_6",
+      "role": "bombardier",
+      "text": "Same socks tomorrow. Don't anybody say a word.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m5_7",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "Long day tomorrow. Lights out in ten minutes.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m11_1",
+      "role": "bombardier",
+      "text": "Right on the aiming point. I've seen the photographs. The assembly hall is gone.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m11_2",
+      "role": "radio",
+      "text": "He's shown everybody the photographs. Twice. He showed the barman.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m11_3",
+      "role": "bombardier",
+      "text": "I waited nineteen missions for that target. I'm entitled.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m11_4",
+      "role": "top",
+      "text": "Four minutes straight and level through that flak. I said it in September and I'll say it now. I do not like flak.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m11_5",
+      "role": "copilot",
+      "text": "Noted, Sergeant.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m11_6",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "Every Messerschmitt they don't build is one that won't be waiting for the next crew. Remember that.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m11_7",
+      "role": "waist",
+      "text": "Buy the man a drink. Even if he is insufferable.",
+      "rate": 180,
+      "noTable": true
+    },
+    {
+      "id": "cr_m11_8",
+      "role": "bombardier",
+      "text": "I'll take it.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m6_1",
+      "role": "top",
+      "text": "Two engines, all the way across Holland. I listened to every cylinder the whole way home.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m6_2",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "Twenty-two missions, and she carried us home again.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m6_3",
+      "role": "waist",
+      "text": "When the Mustangs came over the horizon, Price started laughing and couldn't stop.",
+      "rate": 206,
+      "noTable": true
+    },
+    {
+      "id": "cr_m6_4",
+      "role": "waist",
+      "text": "Wasn't laughing. Something in my eye.",
+      "rate": 180,
+      "noTable": true
+    },
+    {
+      "id": "cr_m6_5",
+      "role": "nav",
+      "text": "The ground crew has been out there since we landed. In the rain, with lamps. They say she'll be ready by Wednesday.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m6_6",
+      "role": "copilot",
+      "text": "Somebody take those boys a thermos of coffee. They've earned it more than we have.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m6_7",
+      "role": "tail",
+      "text": "I'll go. I owe them.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m6_8",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "We all do.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m7_1",
+      "role": "copilot",
+      "text": "Berlin. We went to Berlin and back, and the Mustangs never left us.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m7_2",
+      "role": "tail",
+      "text": "I saw a Fortress with a crown on her nose get a lot of extra cover today. Somebody told you, didn't they?",
+      "noTable": true
+    },
+    {
+      "id": "cr_m7_3",
+      "role": "radio",
+      "text": "I painted that crown. I'm taking the credit for the whole escort.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m7_4",
+      "role": "bombardier",
+      "text": "They say the Luftwaffe lost more today than it can replace. You could feel it. They didn't press like they used to.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m7_5",
+      "roles": [
+        "pilot",
+        "nav"
+      ],
+      "text": "The ground crew put her back together in two days. She flew today with every man who wouldn't leave her.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m7_6",
+      "role": "nav",
+      "text": "I've stopped pretending I don't count the missions. We're close now.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m7_7",
+      "role": "copilot",
+      "text": "To the little friends. Again.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m7_8",
+      "role": "tail",
+      "text": "And put it on my tab.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_1",
+      "role": "radio",
+      "text": "I rubbed out the pencil. It's in paint now. Twenty-five bombs under the window.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_2",
+      "role": "copilot",
+      "text": "In paint. Now it counts.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_3",
+      "role": "top",
+      "text": "I went out to her after we landed and put my hand on number three engine. Still warm. I said thank you.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_4",
+      "role": "ball",
+      "text": "I'm going to miss the ball. Don't tell anybody I said that.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_5",
+      "role": "bombardier",
+      "text": "I'm burning these socks. Out behind the hut, a proper funeral.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_6",
+      "role": "nav",
+      "text": "Twenty-five missions. I've worked it out a dozen ways, and it never adds up to why we came home and the others didn't.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_7",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "I want to say something about the Lucky Lady's boys. And the new crews who never finished their first week.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_8",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "We knew some of their names. Not all of them. We carry them home anyway.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_9",
+      "role": "waist",
+      "text": "Twenty-five missions and never a scratch. I think about that more than I should.",
+      "rate": 206,
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_10",
+      "role": "tail",
+      "text": "First thing, I'm going to stand in the middle of the cornfield and look at the sky. Just look at it.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_11",
+      "role": "waist",
+      "text": "The ranch will still be there. Cattle don't know there was a war.",
+      "rate": 180,
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_12",
+      "role": "radio",
+      "text": "Brooklyn. My mother's going to cook for three days, and I'm going to let her.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_13",
+      "role": "copilot",
+      "text": "Boston. I'm singing at my sister's wedding, and this time I'll know all the words.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_14",
+      "role": "nav",
+      "text": "Philadelphia. A classroom full of kids who think arithmetic is boring. God bless every one of them.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_15",
+      "role": "top",
+      "text": "San Antonio. I'm going to fix my father's truck, and nobody is going to shoot at me while I do it.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_16",
+      "role": "bombardier",
+      "text": "I'm going to sleep for a week. Then I'll think about it.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_17",
+      "role": "pilot",
+      "text": "Kansas. Low and slow over the wheat, and nobody shooting.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_18",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "It was an honour to fly with every one of you. Thank you.",
+      "say": "It was an honor to fly with every one of you. Thank you.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_19",
+      "roles": [
+        "radio",
+        "ball"
+      ],
+      "text": "Somebody wind up the gramophone.",
+      "noTable": true
+    },
+    {
+      "id": "cr_m12_20",
+      "roles": [
+        "pilot",
+        "copilot",
+        "nav"
+      ],
+      "text": "Twenty-five. Let's go home.",
+      "noTable": true
+    },
+    {
+      "id": "cr_hosp_{i}",
+      "roles": [
+        "radio",
+        "top"
+      ],
+      "text": "Doc says {name} will be in the hospital a week or two. I'll take him his mail.",
+      "vars": {
+        "name": [
+          "the Skipper",
+          "Lieutenant Doyle",
+          "Lieutenant Stern",
+          "Lieutenant Kessler",
+          "Mendez",
+          "Gallo",
+          "Reilly",
+          "Price",
+          "Walsh",
+          "Dawson"
+        ]
+      },
+      "noTable": true
+    },
+    {
+      "id": "cr_hosp2_{i}",
+      "roles": [
+        "nav",
+        "bombardier"
+      ],
+      "text": "{name} is in the next bed over. He asked us to keep his place by the stove.",
+      "vars": {
+        "name": [
+          "the Skipper",
+          "Lieutenant Doyle",
+          "Lieutenant Stern",
+          "Lieutenant Kessler",
+          "Mendez",
+          "Gallo",
+          "Reilly",
+          "Price",
+          "Walsh",
+          "Dawson"
+        ]
+      },
+      "noTable": true
+    },
+    {
+      "id": "cr_hosp_visit",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "We'll go over and see him in the morning.",
+      "noTable": true
+    },
+    {
+      "id": "cr_hosp_visit2",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "We'll go over and see them both in the morning.",
+      "noTable": true
+    },
+    {
+      "id": "cr_patch_q_{i}",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "How are you holding up, {nick}?",
+      "vars": {
+        "nick": [
+          "Skipper",
+          "Irish",
+          "Prof",
+          "Deadeye",
+          "Wrench",
+          "Sparks",
+          "Shorty",
+          "Tex",
+          "Lucky",
+          "Hawkeye"
+        ]
+      },
+      "noTable": true
+    },
+    {
+      "id": "cr_patch_a",
+      "roles": [
+        "pilot",
+        "copilot",
+        "nav",
+        "bombardier",
+        "top",
+        "radio",
+        "ball",
+        "waist",
+        "tail"
+      ],
+      "text": "Doc put a few stitches in it. I'll be flying the next one.",
+      "noTable": true
+    },
+    {
+      "id": "cr_lost_0",
+      "roles": [
+        "nav",
+        "pilot",
+        "bombardier"
+      ],
+      "text": "Every ship in the group came home today. I counted them twice.",
+      "noTable": true
+    },
+    {
+      "id": "cr_lost_1",
+      "roles": [
+        "nav",
+        "pilot",
+        "bombardier"
+      ],
+      "text": "One ship didn't come back today. Ten men.",
+      "noTable": true
+    },
+    {
+      "id": "cr_lost_2",
+      "roles": [
+        "nav",
+        "pilot",
+        "bombardier"
+      ],
+      "text": "Two ships went down today. Twenty men.",
+      "noTable": true
+    },
+    {
+      "id": "cr_lost_n_{i}",
+      "roles": [
+        "nav",
+        "pilot",
+        "bombardier"
+      ],
+      "text": "{n} ships didn't come back today. I wrote down every name I knew.",
+      "vars": {
+        "n": [
+          "Three",
+          "Four",
+          "Five",
+          "Six",
+          "Seven",
+          "Eight",
+          "Nine"
+        ]
+      },
+      "noTable": true
+    },
+    {
+      "id": "cr_bunk",
+      "roles": [
+        "waist",
+        "tail"
+      ],
+      "text": "They came for the bunks across the aisle an hour ago. Folded the blankets. Took the photographs down.",
+      "noTable": true
+    },
+    {
+      "id": "cr_bunk_reply",
+      "roles": [
+        "top",
+        "pilot"
+      ],
+      "text": "Nobody sleeps in those bunks tonight. Leave them be.",
+      "noTable": true
+    },
+    {
+      "id": "cr_ace_down_{i}",
+      "role": "tail",
+      "text": "{ace} won't be back. I watched him go down.",
+      "vars": {
+        "ace": [
+          "Brückner",
+          "Dorn",
+          "Eckhardt",
+          "Faber",
+          "Gebhardt",
+          "Hollmann",
+          "Kranz",
+          "Lindner",
+          "Neumeyer",
+          "Ostermann",
+          "Pfeiffer",
+          "Reuter",
+          "Sauer",
+          "Thalberg",
+          "Vossberg",
+          "Wendt",
+          "Zeller",
+          "Kaltenbach",
+          "Riedel",
+          "Stahl",
+          "Winterfeld",
+          "Haller",
+          "Ritter",
+          "Engel"
+        ]
+      },
+      "noTable": true
+    },
+    {
+      "id": "cr_ace_away_{i}",
+      "role": "tail",
+      "text": "{ace} got away from us again. He'll be back.",
+      "vars": {
+        "ace": [
+          "Brückner",
+          "Dorn",
+          "Eckhardt",
+          "Faber",
+          "Gebhardt",
+          "Hollmann",
+          "Kranz",
+          "Lindner",
+          "Neumeyer",
+          "Ostermann",
+          "Pfeiffer",
+          "Reuter",
+          "Sauer",
+          "Thalberg",
+          "Vossberg",
+          "Wendt",
+          "Zeller",
+          "Kaltenbach",
+          "Riedel",
+          "Stahl",
+          "Winterfeld",
+          "Haller",
+          "Ritter",
+          "Engel"
+        ]
+      },
+      "noTable": true
+    },
+    {
+      "id": "cr_ace_yours",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "That was your shooting. Don't go looking for a parade. There was a man in that cockpit, too.",
+      "noTable": true
+    },
+    {
+      "id": "cr_lw_weak",
+      "roles": [
+        "bombardier",
+        "nav"
+      ],
+      "text": "Intelligence says the Luftwaffe is running short of pilots. You can see it. The new ones break off early.",
+      "noTable": true
+    },
+    {
+      "id": "cr_lw_strong",
+      "roles": [
+        "radio",
+        "bombardier"
+      ],
+      "text": "Intelligence says they're stronger than they were a month ago. More of them every time we go.",
+      "noTable": true
+    },
+    {
+      "id": "cr_lw_strong_reply",
+      "roles": [
+        "pilot",
+        "copilot"
+      ],
+      "text": "Then we fly a tighter formation.",
+      "noTable": true
+    },
+    {
+      "id": "cr_lw_even",
+      "roles": [
+        "nav",
+        "bombardier"
+      ],
+      "text": "Intelligence calls it even. They lose fighters, they build more. So do we.",
+      "noTable": true
+    },
+    {
+      "id": "cr_gun_0",
+      "role": "waist",
+      "text": "Didn't get one today? Don't let it eat at you. Every burst you fired kept one of them off us.",
+      "rate": 180,
+      "noTable": true
+    },
+    {
+      "id": "cr_gun_1",
+      "role": "waist",
+      "text": "You got one today. Some fellows fly ten missions and never see one fall.",
+      "rate": 180,
+      "noTable": true
+    },
+    {
+      "id": "cr_gun_3",
+      "role": "waist",
+      "text": "The low squadron saw you knock them down, one after another. They're asking who was on that gun.",
+      "rate": 206,
+      "noTable": true
+    },
+    {
+      "id": "cr_gun_5",
+      "roles": [
+        "radio",
+        "ball"
+      ],
+      "text": "Five or more in one day. They're putting your name in for the Cross, and I'm telling everybody I know you.",
+      "noTable": true
+    },
+    {
+      "id": "cr_acc_high",
+      "role": "waist",
+      "text": "You shoot like a man who's paying for his own shells.",
+      "rate": 180,
+      "noTable": true
+    },
+    {
+      "id": "cr_acc_low",
+      "roles": [
+        "top",
+        "ball"
+      ],
+      "text": "The armourers say you nearly burned out a barrel. Short bursts. Let the gun cool between them.",
+      "say": "The armorers say you nearly burned out a barrel. Short bursts. Let the gun cool between them.",
+      "noTable": true
+    },
+    {
+      "id": "cr_fly_0",
+      "roles": [
+        "tail",
+        "ball"
+      ],
+      "text": "You didn't get one? Doesn't matter. Every time one of them saw you coming, he broke off.",
+      "noTable": true
+    },
+    {
+      "id": "cr_fly_1",
+      "roles": [
+        "tail",
+        "ball"
+      ],
+      "text": "I watched you from the tail. You came down on them like a hawk on a chicken run.",
+      "noTable": true
+    },
+    {
+      "id": "cr_fly_5",
+      "roles": [
+        "radio",
+        "ball"
+      ],
+      "text": "Five or more, the way Dawson tells it. Somebody paint a row of crosses under that canopy.",
+      "noTable": true
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {

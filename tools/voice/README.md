@@ -20,5 +20,10 @@ python3 tools/voice/generate.py --check   # only check that every callout text i
   `node --experimental-strip-types tools/voice/briefings.mjs`; run it, then `generate.py`, after
   editing any briefing text (`tests/story.test.ts` fails while a clip's text is out of date).
   `src/audio/BriefingVoice.ts` plays them clean (no radio chain) on the briefing screen.
-  Roles may set `bitrate` (overrides `audio.bitrate`) and `noTable` (left out of `voiceLines.ts`).
+  Roles may set `bitrate` (overrides `audio.bitrate`) and `noTable` (left out of `voiceLines.ts`); a line may
+  set `noTable` too.
+- Crew-room interludes (`src/game/CrewRoom.ts`, played by `src/ui/CrewRoomScene.ts`) are copied into
+  `lines.json` by `node --experimental-strip-types tools/voice/crewroom.mjs` (group "crew room", ids `cr_*`,
+  the crewmen's own voice roles); run it, then `generate.py`, after editing a vignette (`tests/crewRoom.test.ts`
+  fails while a line has no clip).
 - Needs macOS (`say`, `afconvert`) and Python 3 (standard library only).

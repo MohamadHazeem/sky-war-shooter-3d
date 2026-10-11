@@ -125,6 +125,7 @@ export const ar: Record<UiKey, string> = {
   'settings.always': 'دائمًا',
   'settings.killCam': 'كاميرا الإسقاط',
   'settings.bookends': 'مشاهد الإقلاع والهبوط',
+  'settings.crewRoom': 'مشاهد استراحة الطاقم',
   'settings.flightMode': 'تحكم طيران P-51',
   'settings.mouseAim': 'التوجيه بالفأرة',
   'settings.direct': 'مباشر (الفأرة = عصا القيادة)',
