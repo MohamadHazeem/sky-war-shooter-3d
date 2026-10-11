@@ -52,6 +52,10 @@ export class PilotController {
   private glassMat: THREE.MeshPhysicalMaterial | null = null;
   private cockpit: THREE.Object3D | null = null;
   private glass: THREE.Object3D | null = null;
+  // the player's own canopy panes on a material of their own (the model's is shared by every
+  // P-51): from the cockpit they mirror far less of the sky (applyViewVisibility)
+  // (DamageLook may later swap in clones of its own: the setting follows whatever the mesh holds)
+  private canopy: { mesh: THREE.Mesh; shared: THREE.Material; own: THREE.MeshStandardMaterial; env: number }[] = [];
   eyeOffset = new THREE.Vector3(0, 0.775, -1.174);
   gBlack = 0;     // 0..1 blackout
   freeLook = false;
@@ -105,6 +109,14 @@ export class PilotController {
       this.cockpit = instantiate('p51d_cockpit');
       plane.model.add(this.cockpit);
     }
+    this.canopy = [];
+    plane.model.traverse((o) => {
+      const m = o as THREE.Mesh, mat = m.material as THREE.MeshStandardMaterial;
+      if (!m.isMesh || !/glass/i.test(m.name) || Array.isArray(mat) || !mat.isMeshStandardMaterial) return;
+      const own = mat.clone();
+      this.canopy.push({ mesh: m, shared: mat, own, env: mat.envMapIntensity });
+      m.material = own;
+    });
     this.glass = this.makeGlass();
     plane.model.add(this.glass);
     this.fx.attach(plane);
@@ -116,6 +128,8 @@ export class PilotController {
     if (this.cockpit) this.cockpit.removeFromParent();
     if (this.glass) this.glass.removeFromParent();
     this.cockpit = this.glass = null;
+    for (const c of this.canopy) { if (c.mesh.material === c.own) c.mesh.material = c.shared; c.own.dispose(); }
+    this.canopy = [];
     this.fx.detach();
     this.glassFx.detach();
     this.plane = null;
@@ -159,6 +173,13 @@ export class PilotController {
     for (const pr of this.plane.props) (pr.disc.material as THREE.MeshBasicMaterial).opacity = this.view === 'cockpit' ? 0.3 : 1;
     if (this.cockpit) this.cockpit.visible = this.view === 'cockpit';
     if (this.glass) this.glass.visible = this.view === 'cockpit';
+    // Seen from inside, the two-sided canopy mirrored the sky env at full strength (x1.6) over the
+    // whole view: a storm or dusk sky through it came out as a pale grey veil, twice as bright as
+    // the same sky outside. A real canopy mostly mirrors the dark cockpit from inside.
+    for (const c of this.canopy) {
+      const m = c.mesh.material as THREE.MeshStandardMaterial;
+      if (m !== c.shared && m.isMeshStandardMaterial) m.envMapIntensity = this.view === 'cockpit' ? c.env * 0.16 : c.env;
+    }
     // hide the pilot figure from inside the cockpit
     this.plane.model.traverse((o) => {
       if (/pilot/i.test(o.name)) o.visible = this.view !== 'cockpit';

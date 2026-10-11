@@ -53,7 +53,7 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
   ctx.textBaseline = 'alphabetic';
   // ---------------- top: group bar + one bar per ship ----------------
   if (b.ships.length) {
-    const bw = Math.min(560, W * 0.46), x0 = W / 2 - bw / 2, y0 = W < 1250 ? 110 : 22; // narrow screens: below the corner HUD blocks
+    const bw = Math.min(560, W * 0.46), x0 = W / 2 - bw / 2, y0 = W < 1250 ? 110 : 78; // narrow screens: below the corner HUD blocks; wide: below the streak meter and the controls hint (top centre, ~16-50 px), which the bars covered at 22
     ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(232,214,160,0.95)';
     ctx.font = `600 12px ${MONO}`;
     ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 4;

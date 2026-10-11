@@ -164,7 +164,14 @@ export class GunnerController {
     }
     // ring-and-post sight on a bracket above the guns, on the gunner's eye line
     const sightGun = buildM2({ ringSight: true, belt: false, beltSide: 1 });
-    sightGun.group.traverse((o) => { if ((o as THREE.Mesh).isMesh && !(o as THREE.Mesh).geometry.type.startsWith('Torus') && (o as THREE.Mesh).geometry.type !== 'SphereGeometry') o.visible = false; });
+    // only the ring and the bead near the muzzle stay (the receiver's rivets and charging-handle
+    // knob are spheres too: they floated in the air across the tail window)
+    sightGun.group.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh) return;
+      const type = m.geometry.type;
+      if (!(type.startsWith('Torus') || (type === 'SphereGeometry' && m.position.z > 0.9))) o.visible = false;
+    });
     sightGun.group.position.set(0, 0.12, 0.25);
     this.interiors.tail.add(sightGun.group);
     this.guns.tail = tg;
