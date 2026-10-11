@@ -9,6 +9,8 @@ import { hasModel, loadModels, type ModelKind } from '../world/Models';
 import { disposeOwned } from '../render/Dispose';
 import { tx } from '../i18n';
 import { GalleryScreen, type GalleryControl } from '../ui/GalleryScreen';
+import { achievements } from './Achievements';
+import { quizFeats } from './Feats';
 import { AIRCRAFT_SPECS, QUIZ_ROUNDS, quizChoices, quizSequence, saveQuiz, specById, type AircraftId } from './AircraftData';
 
 // Aircraft recognition gallery (Phase 5 goal 28): a hangar where every aircraft in the game
@@ -359,6 +361,7 @@ export class AircraftGallery implements GalleryControl {
     if (q.i >= q.seq.length) {
       q.phase = 'done';
       const { rec, best } = saveQuiz(q.score);
+      for (const id of quizFeats(q.score, QUIZ_ROUNDS)) achievements.unlock(id); // achievement hook (Feats.ts)
       this.screen.quizDone(q.score, QUIZ_ROUNDS, rec.best, best);
       return;
     }

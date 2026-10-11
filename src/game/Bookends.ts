@@ -579,6 +579,7 @@ export class Bookends {
     this.begin('landing');
     e.timeScale = 1;
     this.sev = this.severity(pb);
+    if (this.sev === 2) this.game.feats?.onBellyLanding(); // achievement hook: Brought Her Home (FeatWatch.ts)
     this.note(`landing, severity ${this.sev} (engines out ${pb.enginesOut}, integrity ${pb.integrity.toFixed(2)})`);
     this.pb = pb;
     this.pbPos.copy(pb.root.position); this.pbQuat.copy(pb.root.quaternion); this.pbVel.copy(pb.vel); this.pbSpin.copy(pb.spin);

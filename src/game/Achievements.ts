@@ -7,6 +7,7 @@ import {
 } from './Career';
 import { tx } from '../i18n';
 import { fmtDate } from '../ui/serviceCommon';
+import { FREE_LOOK_S, RAID_KINDS, SEARCHLIGHT_KILLS, raidKindsFlown } from './Feats';
 
 const STORE_KEY = 'sws3d.achievements.v1';
 const TOAST_MS = 4200;
@@ -21,7 +22,9 @@ export const RARITY_LABEL: Record<Rarity, string> = { common: 'Common', uncommon
 
 // goal + stat: a lifetime counter read from the career record (progress bar on the Trophies
 // screen, unlocked by checkStats). Without them the achievement is event-driven.
-export interface AchievementDef { id: string; name: string; desc: string; rarity: Rarity; goal?: number; stat?: (c: CareerData) => number }
+// icon: an emblem on the trophy cup (TrophyScreen ICONS; default the star). secret: name and
+// description stay hidden on the Trophies screen until it is unlocked.
+export interface AchievementDef { id: string; name: string; desc: string; rarity: Rarity; goal?: number; stat?: (c: CareerData) => number; icon?: string; secret?: boolean }
 
 const kills = (t: string) => (c: CareerData) => c.killsByType[t] ?? 0;
 
@@ -77,7 +80,33 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'daily25', name: 'Reliable', desc: 'Complete 25 daily orders.', rarity: 'rare', goal: 25, stat: (c) => c.dailyDone },
   { id: 'dailyAll', name: 'Clean Sheet', desc: 'Complete all three daily orders in one day.', rarity: 'uncommon', goal: 1, stat: (c) => c.dailyPerfectDays },
   { id: 'dailyRun', name: 'Daily Sortie', desc: 'Fly a Daily Run.', rarity: 'common', goal: 1, stat: (c) => c.dailyRuns },
+  // ---- Phase 5 content (conditions: Feats.ts; hooks: FeatWatch.ts) ----
+  { id: 'raider', name: 'Raider', desc: 'Fly a side raid from the campaign map.', rarity: 'common', icon: 'map' },
+  { id: 'strategist', name: 'Strategist', desc: 'Fly a side raid of every kind: rail yards, airfields, oil, U-boat pens and aircraft factories.', rarity: 'rare', icon: 'compass', goal: RAID_KINDS.length, stat: () => raidKindsFlown() },
+  { id: 'notOverMyField', name: 'Not Over My Field', desc: 'Win Defend the Field without a single bomber getting through.', rarity: 'epic', icon: 'field' },
+  { id: 'nightFighter', name: 'Steinbock Broken', desc: 'Win Night Fighter.', rarity: 'uncommon', icon: 'moon' },
+  { id: 'searchlightHunter', name: 'Searchlight Hunter', desc: `Shoot down ${SEARCHLIGHT_KILLS} bombers caught in the searchlights in one Night Fighter mission.`, rarity: 'rare', icon: 'beam' },
+  { id: 'trainBuster', name: 'Train Buster', desc: 'Stop the locomotive yourself before the train reaches the tunnel.', rarity: 'uncommon', icon: 'train' },
+  { id: 'endOfLine', name: 'End of the Line', desc: 'Destroy the whole supply train in Train Busting: the locomotive and all nine wagons.', rarity: 'epic', icon: 'rails' },
+  { id: 'teamwork', name: 'Teamwork', desc: 'Order Blue Two to attack your target and have him make the kill.', rarity: 'uncommon', icon: 'wing' },
+  { id: 'weatherMan', name: 'Weather Man', desc: 'Complete Into the Front after the storm arrives.', rarity: 'uncommon', icon: 'storm' },
+  { id: 'gotHimFirst', name: 'Got Him First', desc: 'Shoot down the burning Fw 190 before it rams the Fortress.', rarity: 'rare', icon: 'cross' },
+  { id: 'broughtHerHome', name: 'Brought Her Home', desc: 'Survive a belly landing.', rarity: 'rare', icon: 'wheel', secret: true },
+  { id: 'bigGunSpotter', name: 'Big Gun Spotter', desc: 'Shoot down an Me 410 while it lines up its 50 mm cannon.', rarity: 'rare', icon: 'shell' },
+  { id: 'he111x10', name: 'Heinkel Hunter', desc: 'Down 10 He 111 bombers.', rarity: 'uncommon', icon: 'bomber', goal: 10, stat: kills('he111') },
+  { id: 'do335', name: 'Broken Arrow', desc: 'Down a Do 335 Pfeil.', rarity: 'rare', icon: 'arrow', goal: 1, stat: kills('do335') },
+  { id: 'specialist', name: 'Specialist', desc: 'Fill a whole branch of the skill tree.', rarity: 'rare', icon: 'tree' },
+  { id: 'warGames', name: 'War Games', desc: 'Win a Custom Battle.', rarity: 'common', icon: 'flag' },
+  { id: 'weeklyWarrior', name: 'Weekly Warrior', desc: 'Complete a Weekly Challenge.', rarity: 'uncommon', icon: 'calendar' },
+  { id: 'directorsCut', name: 'Director\'s Cut', desc: 'Save a moment in the replay theatre.', rarity: 'common', icon: 'film' },
+  { id: 'fullCrew', name: 'Full Crew', desc: 'Fly a co-op mission with a friend.', rarity: 'uncommon', icon: 'crew' },
+  { id: 'recognition', name: 'Recognition Expert', desc: 'Score 10/10 in the aircraft recognition quiz.', rarity: 'rare', icon: 'eye' },
+  { id: 'friendOrFoe', name: 'Friend or Foe?', desc: 'Score 0/10 in the aircraft recognition quiz.', rarity: 'uncommon', icon: 'question', secret: true },
+  { id: 'roomWithView', name: 'Room with a View', desc: `Spend ${FREE_LOOK_S} seconds looking around with free look in one mission.`, rarity: 'common', icon: 'look', secret: true },
 ];
+
+// Something that follows every mission (FeatWatch): told when it begins and at the debrief
+export interface MissionWatcher { begin?(m: Mission): void; end?(success: boolean): void }
 
 interface MissionTrack {
   hitsTaken: number;
@@ -123,8 +152,11 @@ class Achievements {
   private queue: AchievementDef[] = [];
   private toastBusy = false;
   private toastHost: HTMLElement | null = null;
+  private watchers: MissionWatcher[] = [];
 
   constructor() { this.unlocked = readStore(); }
+
+  watch(w: MissionWatcher) { this.watchers.push(w); }
 
   has(id: string) { return this.unlocked[id] !== undefined; }
   unlockedAt(id: string): number | undefined { return this.unlocked[id]; }
@@ -158,6 +190,7 @@ class Achievements {
   // ---- mission hooks ----
   beginMission(m: Mission) {
     this.mission = { hitsTaken: 0, startedDamaged: !!m.playerDamaged, flak: !!m.flak };
+    for (const w of this.watchers) w.begin?.(m);
   }
 
   onPlayerHit() {
@@ -183,6 +216,7 @@ class Achievements {
     if (success && t.flak) this.unlock('flakSurvivor');
     if (success && t.hitsTaken === 0 && !t.startedDamaged) this.unlock('untouchable');
     if (shots >= SHARP_MIN_SHOTS && hits / shots > SHARP_ACCURACY) this.unlock('sharpshooter');
+    for (const w of this.watchers) w.end?.(success);
   }
 
   // ---- toast ----
