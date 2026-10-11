@@ -78,6 +78,7 @@ Most features need one line in one of these places:
 | Show a value in the HUD panels | `GameHud.updateHud()`. |
 | Add something to the title screen | `Game.startMenu()`, next to `coop/onboarding/service/skills.onTitle`. |
 | Change the menu background camera | `MenuScene.update()`. |
+| Change how the graphics preset is picked on first launch | `render/QualityPick.ts` (pure decision, `tests/qualityPick.test.ts`). The benchmark itself is `game/AutoGraphics.ts`, created in `main.ts`. It takes over the animation loop via `engine.loopOverride`. `Game`'s constructor only marks a first launch (`firstRunGraphics`). |
 | Show a screen with a 3D scene of its own | Take over `engine.onFrame` (as `Theatre.ts` does) and set `engine.renderOverride` to draw it with `engine.renderStudio(scene, camera, dt)`: the world's MSAA target and post stack. Copy the world's light counts so the aircraft materials keep their compiled programs, and compile anything new with `engine.compileStudio()` before showing it (`AircraftGallery.ts`). Title-menu screens of this kind hook in through `TitleExtras.ts`. |
 
 Formation set pieces (`SetPieces.ts`: a neighbouring B-17 downed by flak, a mid-air collision, a

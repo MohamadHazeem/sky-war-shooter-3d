@@ -9,7 +9,7 @@ import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { freshEnv, installAircraftLook, retargetEnvMaps, retireEnv, syncAircraftLook } from '../render/AircraftLook';
 import { LivingSky } from '../render/LivingSky';
 import { FpsCounter } from '../render/FpsCounter';
-import { drsFloor, drsTargetMs, fasterRefreshFrom, refreshFromTimestamps } from '../render/FrameTiming';
+import { DRS_FAST, DRS_HARD, DRS_SLOW, drsFloor, drsTargetMs, fasterRefreshFrom, refreshFromTimestamps } from '../render/FrameTiming';
 
 export type Quality = 'low' | 'medium' | 'high' | 'ultra';
 
@@ -78,6 +78,9 @@ export class Engine {
   // A screen with a scene of its own (the aircraft gallery, game/AircraftGallery.ts) draws it
   // here instead of the world: see renderStudio()
   renderOverride?: (dt: number) => void;
+  // Takes over the animation loop while set: the graphics benchmark (game/AutoGraphics.ts)
+  // runs its own timed frames in the menu's frame slots
+  loopOverride?: () => void;
   fps = 60;
   // Dynamic resolution: the render scale drops when frames run long and creeps back up
   // when there is headroom; a scale that proved too slow becomes a ceiling for a while.
@@ -254,7 +257,7 @@ export class Engine {
 
   start() {
     this.last = performance.now();
-    this.renderer.setAnimationLoop(() => { if (!this.probing) this.frame(); });
+    this.renderer.setAnimationLoop(() => { if (this.probing) return; if (this.loopOverride) this.loopOverride(); else this.frame(); });
     this.probeRefresh();
     // back from a hidden tab (or dragged to another screen and refocused): measure again
     document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => this.probeRefresh(), 300); });
@@ -277,6 +280,18 @@ export class Engine {
       if (hz) this.setRefresh(hz, true);
     };
     requestAnimationFrame(tick);
+  }
+
+  get refreshProbing() { return this.probing; }
+
+  // One rendered frame of dt seconds, GPU synced with a 1-pixel readback: its full cost in ms
+  // (sws.bench, the graphics benchmark). A fixed dt, so dynamic resolution sits it out.
+  timedFrame(dt = 1 / 60): number {
+    const gl = this.renderer.getContext();
+    const t0 = performance.now();
+    this.frame(dt, true);
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, _px);
+    return performance.now() - t0;
   }
 
   private setRefresh(next: number, measured: boolean) {
@@ -339,18 +354,18 @@ export class Engine {
     const hi = target < 1000 / 65;
     // high-refresh tier: don't trade more than ~28 % of the resolution for the extra frames
     const floor = drsFloor(target);
-    if (hi && ms > target * 1.14 && this.renderScale <= floor + 0.001) {
+    if (hi && ms > target * DRS_SLOW && this.renderScale <= floor + 0.001) {
       // three misses in a row at the floor: this machine can't hold the full rate, run at 60
       if (++this.hiMiss >= 3) { this.hiGiveUp = true; this.hiMiss = 0; this.drsCeil = 1; this.drsCeilT = 0; }
       return;
     }
-    if (ms > target * 1.14 && this.renderScale > floor) {
+    if (ms > target * DRS_SLOW && this.renderScale > floor) {
       // a raise that made things slow sets a ceiling for the next 30 s
       if (this.time - this.lastRaiseAt < 6) { this.drsCeil = this.renderScale - 0.01; this.drsCeilT = 30; }
-      this.renderScale = Math.max(floor, this.renderScale - (ms > target * 1.68 ? 0.15 : 0.08));
+      this.renderScale = Math.max(floor, this.renderScale - (ms > target * DRS_HARD ? 0.15 : 0.08));
       this.drsUp = 0; this.drsHold = 1; this.hiMiss = 0;
       this.resize();
-    } else if (ms < target * 1.054 && this.renderScale < Math.min(1, this.drsCeil)) {
+    } else if (ms < target * DRS_FAST && this.renderScale < Math.min(1, this.drsCeil)) {
       if (++this.drsUp >= 4) {
         this.renderScale = Math.min(1, this.drsCeil, this.renderScale + 0.07);
         this.drsUp = 0; this.drsHold = 2; this.lastRaiseAt = this.time;
@@ -456,3 +471,4 @@ const _origin = new THREE.Vector3();
 const _up = new THREE.Vector3(0, 1, 0);
 const _v = new THREE.Vector3();
 const _m = new THREE.Matrix4();
+const _px = new Uint8Array(4);

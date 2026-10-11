@@ -48,6 +48,7 @@ import { MenuScene } from './MenuScene';
 import { WorldEvents } from './WorldEvents';
 import { TitleExtras } from './TitleExtras';
 import { FeatWatch } from './FeatWatch';
+import { firstRunGraphics } from './AutoGraphics';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -150,6 +151,8 @@ export class Game {
     if (raw && !raw.includes('aimAssist')) { this.settings.aimAssist = 'high'; this.settings.leadPip = 'always'; if (this.settings.fov === 62) this.settings.fov = 65; }
     // wider view by default (enemies were enlarged to match): move old 55/62 defaults to 65
     if (raw && !raw.includes('"fovV"')) { if (this.settings.fov === 55 || this.settings.fov === 62) this.settings.fov = 65; (this.settings as any).fovV = 2; }
+    // first launch: a device-class guess now, the menu benchmark picks the preset (AutoGraphics.ts)
+    if (!raw.includes('"quality"')) firstRunGraphics(this.settings);
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.worldEvents.wire();
