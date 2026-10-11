@@ -23,6 +23,7 @@ PLAY_FIRST = [
     ('Train Busting', 'Survival → Special operations → Train Busting: low-level P-51 strafing over the countryside.'),
     ('Night Fighter', 'Survival → Night Fighter: searchlights, exhaust flames, Blue Two on your wing (keys 1–4).'),
     ('Luftwaffe Experten', 'Career → Experten: the named aces who come back with grudges.'),
+    ('Crew room', 'After each story mission the crew talks it over in Hut 14 (voiced, reacting to what happened).'),
     ('Arabic', 'Settings → Language → العربية: the whole game in Arabic, right to left.'),
 ]
 
@@ -76,6 +77,7 @@ GALLERY = [
     ('takeoff-runway.jpg', 'Dawn take-off at Deenethorpe'),
     ('takeoff-climb.jpg', 'Climbing out above the overcast to join the formation'),
     ('belly-landing.jpg', 'A badly damaged Sky Queen comes home on her belly'),
+    ('crew-room.jpg', 'Crew-room interlude after Black Thursday: Hut 14, an emptied bunk across the aisle'),
     ('campaign-map.jpg', 'Strategic campaign map with side raids and gauges'),
     ('combat-right-waist.jpg', 'Right waist gun in combat'),
     ('interior-other-gunner.jpg', 'Free look: the other waist gunner at his M2'),
