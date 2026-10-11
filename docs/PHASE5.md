@@ -42,6 +42,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 26 | Balance pass: autoplay statistics at near-perfect and human-like bot skill across all modes; tune boss length, raid fairness, round lengths; docs/BALANCE.md | In progress |
 | 27 | Formation drama set pieces: neighbour B-17 downed by flak with chutes counted, mid-air collision, bomb-bay explosion buffeting the formation, straggler, P-51s diving past the window | Done — 5 staged set pieces in your gun\'s view during breathers (max 3 per mission, never in boss fights), radio drama, optional drama cam, accessibility-aware shake/flash; scripted losses never fail a mission |
 | 28 | "What's new" screen with Try-it buttons + aircraft recognition gallery (3D viewer, spec cards, quiz) | Done — cork-board bulletin shown once per version with 12 feature cards and Try-it shortcuts; hangar 3D viewer for all 11 aircraft + the fictional Luftkreuzer with spec cards, career kills and a 10-round silhouette quiz; menu, phone and Arabic |
+| 29 | Visual QA sweep: every mode, view, mood and quality preset scanned for artifacts in combination (NaN, blobs, ghosting, sorting), fixes with before/after | In progress |
 | 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | Done — Game.ts 1469 → 536 lines + Director, MissionFlow, WorldEvents, GameHud, MenuScene; docs/ARCHITECTURE.md (loop order, where to hook features); README layout; A/B regression of all 12 missions (no behaviour change) |
 
 ## Log
