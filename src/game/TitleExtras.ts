@@ -9,6 +9,7 @@ import { AircraftGallery } from './AircraftGallery';
 import type { AircraftId } from './AircraftData';
 import { NEWS, WHATS_NEW_VERSION, loadSeen, markSeen, shouldShow, type TryTarget } from './WhatsNew';
 import { hideWhatsNew, showWhatsNew } from '../ui/WhatsNewScreen';
+import { ManualHooks } from './ManualHooks';
 
 // Title-menu extras (Phase 5 goal 28): the "What's new" bulletin and the aircraft recognition
 // gallery. Kept out of Game.ts; Game's hooks:
@@ -23,6 +24,7 @@ const BOSS_BRIEF = 'A Luftkreuzer battle group is coming for the formation in th
 
 export class TitleExtras {
   readonly gallery: AircraftGallery;
+  readonly manual: ManualHooks;   // Field Manual entries: title, pause, Settings (ManualHooks.ts)
   private returnTo: Element[] = [];
   private promptWatch: MutationObserver | null = null;
   private settingsWatch: MutationObserver | null = null;
@@ -33,6 +35,7 @@ export class TitleExtras {
       kills: (id) => this.kills(id),
       onClose: () => this.backToMenu(),
     });
+    this.manual = new ManualHooks(game, () => this.openGallery());
   }
 
   // ---------------- hooks ----------------
@@ -51,6 +54,7 @@ export class TitleExtras {
     };
     add('aircraft', `${tx('Aircraft')} <small>${tx('recognition · quiz')}</small>`, () => this.openGallery());
     add('whatsnew', `${tx("What's new")} <small>${tx('bulletin · version {v}', { v: WHATS_NEW_VERSION })}</small>`, () => this.openWhatsNew());
+    this.manual.onTitle(menu);
     this.promptWatch?.disconnect();
     this.promptWatch = null;
     clearTimeout(this.openTimer);

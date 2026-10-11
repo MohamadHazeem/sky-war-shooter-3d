@@ -85,3 +85,6 @@
   #title .ob-prompt { animation: none; }
   #tutCard { transition: none; transform: none; }
 }
+#controlsCard .cc-manual { margin-inline-start: 12px; font: 600 12px/1 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; letter-spacing: 1px; color: var(--khaki);
+  background: transparent; border: 1px solid var(--khaki); padding: 7px 10px; min-height: 32px; cursor: pointer; }
+#controlsCard .cc-manual:hover, #controlsCard .cc-manual:focus-visible { background: var(--khaki); color: #14160e; outline: none; }
