@@ -81,6 +81,7 @@ export class LivingInterior {
   private ballPitch = new THREE.Group();
   private radioMan: THREE.Mesh | null = null;
   private tailMan: THREE.Mesh | null = null;
+  private tailGlimpse = new THREE.Group();
   private tailBase = new THREE.Vector3();
   private radioBase = new THREE.Vector3();
   private frostT = 0;
@@ -134,7 +135,8 @@ export class LivingInterior {
       // eye in bomber space: inside the fuselage section around the waist (the hip view leans
       // ~1 m out of the window, so allow a little beyond the skin)
       const l = bomber.root.worldToLocal(cam.getWorldPosition(_camW));
-      this.cabinGeometry(this.waist.visible && Math.abs(l.x) < 1.9 && Math.abs(l.y) < 2.2 && Math.abs(l.z - zc) < 4.5);
+      const inBall = Math.abs(l.x) < 0.65 && Math.abs(l.y - STATIONS.ball.pivot.y) < 0.65 && Math.abs(l.z - STATIONS.ball.pivot.z) < 0.7;
+      this.cabinGeometry(inBall || this.waist.visible && Math.abs(l.x) < 1.9 && Math.abs(l.y) < 2.2 && l.z > STATIONS.tail.pivot.z - 0.35 && l.z < zc + 4.5);
     };
   }
 
@@ -162,7 +164,9 @@ export class LivingInterior {
   // GunnerController.setStation (after the player's own guns are on his mount): the other
   // waist gun goes to its crewman
   setStation(id: StationId) {
-    const other: Waist | null = id === 'waistL' ? 'waistR' : id === 'waistR' ? 'waistL' : null;
+    if (this.tailMan) this.tailMan.visible = id !== 'tail';
+    this.tailGlimpse.visible = id !== 'tail';
+    const other: Waist | null = id === 'waistL' ? 'waistR' : id === 'waistR' || id === 'tail' ? 'waistL' : null;
     if (!other || other === this.other || !this.waist) return;
     this.other = other;
     const def = STATIONS[other];
@@ -336,6 +340,7 @@ export class LivingInterior {
     g.add(ring);
 
     // --- tail tunnel aft of the waist, narrowing to the tail gunner's position ---
+    g.add(this.tailGlimpse);
     const zt = STATIONS.tail.pivot.z + 0.55;
     const rings = 9;
     const pos: number[] = [], idx: number[] = [];
@@ -355,29 +360,29 @@ export class LivingInterior {
     tg.computeVertexNormals();
     const tunnel = new THREE.Mesh(tg, M.wall);
     tunnel.receiveShadow = true;
-    g.add(tunnel);
+    this.tailGlimpse.add(tunnel);
     // formers along the tunnel and the catwalk
     for (let i = 1; i < rings; i += 2) {
       const p = prof(i / rings);
       const f = new THREE.Mesh(new THREE.TorusGeometry(1, 0.025, 4, 24), M.dark);
       f.scale.set(p.a - 0.02, p.b - 0.02, 1); f.position.set(0, p.y, p.z);
-      g.add(f);
+      this.tailGlimpse.add(f);
     }
     const p0 = prof(0), pEnd = prof(1);
     const wy0 = p0.y - p0.b * 0.85, wy1 = pEnd.y - pEnd.b * 0.85;
     const walk = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.025, Math.hypot(pEnd.z - z0, wy1 - wy0)), M.wall);
     walk.position.set(0, (wy0 + wy1) / 2, (z0 + pEnd.z) / 2);
     walk.rotation.x = Math.atan2(wy1 - wy0, Math.abs(pEnd.z - z0));
-    g.add(walk);
+    this.tailGlimpse.add(walk);
     // tail gunner's compartment: a short cocoon with the window open to the sky behind him
     const tz = zt - 0.3;
     const cocoon = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.4, 0.8, 18, 1, true).rotateX(Math.PI / 2), M.wallBack);
     cocoon.scale.set(1, 1.12, 1);
     cocoon.position.set(0, 0.3, tz - 0.4);
-    g.add(cocoon);
+    this.tailGlimpse.add(cocoon);
     const frame = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.03, 4, 20), M.dark);
     frame.scale.set(1, 1.1, 1); frame.position.set(0, 0.32, tz - 0.8);
-    g.add(frame);
+    this.tailGlimpse.add(frame);
     this.tailBase.set(0, 0.3 - 0.44 * 1.12 + 0.05, tz - 0.25);
     return g;
   }
@@ -577,6 +582,8 @@ export function cabinAirframe(b: Bomber, zc: number): AirframeSwap[] {
   const z0 = zc - 3.2, zt = STATIONS.tail.pivot.z + 0.25;
   const c = new THREE.Vector3();
   const inside = (p: THREE.Vector3) => {
+    // The ball's access throat must not be capped by the external model's belly skin.
+    if (Math.abs(p.x) < 0.48 && Math.abs(p.z - STATIONS.ball.pivot.z) < 0.65 && p.y > -1.7 && p.y < -0.4) return true;
     if (p.z > zFwd || p.z < zAft) return false;
     if (p.z >= z0) return (p.x / (A * 0.985)) ** 2 + ((p.y - YC) / (B * 0.985)) ** 2 < 1 && p.y > FLOOR_TOP - 0.03;
     const u = THREE.MathUtils.clamp((z0 - p.z) / (z0 - zt), 0, 1);

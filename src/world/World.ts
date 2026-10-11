@@ -27,6 +27,7 @@ import { prewarmBoss } from './BossShip';
 import { warmGlassFx } from '../game/GlassFx';
 import { bomberName, dressPlayerBomber } from '../game/Customize';
 import { aiGunnerSkill } from '../game/CrewRoster';
+import { warmTurretViewmodels } from '../game/Viewmodels';
 import { warmLivingInterior } from '../game/LivingInterior';
 import { PlayerBomberDamage } from './PlayerBomberDamage';
 import { dressEnemy } from './EnemyDress';
@@ -294,11 +295,13 @@ export class World implements WorldView {
     const unwarmBoss = prewarmBoss(this.scene, camera.position, fwd);
     const unwarm = this.bomberDamage.warmup(this.scene, at);
     const unwarmCrew = warmLivingInterior(this.scene, at); // gunner interior: crew, brass, shafts, frost, breath
+    const unwarmTurrets = warmTurretViewmodels(this.scene, at);
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     render();
     this.wrecks.keepWarm(b17Pieces);   // B-17 wreck programs stay compiled for the set pieces
     unwarm();
     unwarmCrew();
+    unwarmTurrets();
     unwarmGlass();
     unwarmBoss();
     for (const f of dummies) this.scene.remove(f.root);
