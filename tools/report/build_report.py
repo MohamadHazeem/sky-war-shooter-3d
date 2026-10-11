@@ -97,7 +97,7 @@ GALLERY = [
     ('dusk.jpg', 'Dusk with the warm rim light'),
     ('skill-tree.jpg', 'Skill tree (blueprint style)'),
     ('weekly.jpg', 'Weekly challenge with its own leaderboard'),
-    ('title-menu.jpg', 'Grouped title menu'),
+    ('title-menu.jpg', 'Title menu on the live site this morning'),
 ]
 
 CSS = r"""
