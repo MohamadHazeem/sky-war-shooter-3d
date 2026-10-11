@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { createTargetSmoke, syncTargetSmoke } from '../render/TargetSmoke';
+import { setFarTerrain } from '../render/FarTerrain';
 import { Atmos } from '../render/Atmosphere';
 import { targetUniforms, TGT_IMPACTS, TGT_PLUMES } from '../render/TargetGround';
 import { cloudTargetUniforms } from '../render/Clouds';
@@ -73,7 +75,7 @@ export class TargetArea {
     this.mesh.count = 0;
     this.mesh.frustumCulled = false;
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    engine.scene.add(this.mesh);
+    engine.scene.add(this.mesh, createTargetSmoke());
     this.disable();
   }
 
@@ -90,6 +92,7 @@ export class TargetArea {
     this.said.clear();
     this.mesh.count = 0;
     this.disable();
+    setFarTerrain(null, this.world, CRUISE, FALL * DRAG_LAG);
   }
 
   // Bomb release: every bomber in the formation salvos its stick, the lead ship first
@@ -113,6 +116,7 @@ export class TargetArea {
     if (mission !== this.mission || w.time < this.lastTime - 0.5) {
       this.clear();
       this.mission = mission;
+      setFarTerrain(mission, w, CRUISE, FALL * DRAG_LAG);
       if (mission?.bombsAway) this.arm(mission);
     }
     this.lastTime = w.time;
@@ -269,6 +273,7 @@ export class TargetArea {
   }
 
   private sync(clock: number, dt: number, m: Mission) {
+    syncTargetSmoke();
     const u = targetUniforms;
     u.uTgt.value.set(this.aim.x, this.aim.y, CITY_R, 1);
     u.uTgtClock.value = clock;

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { warmTargetSmoke } from '../render/TargetSmoke';
 import { Engine } from '../core/Engine';
 import { Aircraft, Bomber, Fighter, makeGun } from './Aircraft';
 import { hasModel, ModelKind } from './Models';
@@ -295,7 +296,9 @@ export class World implements WorldView {
     const unwarm = this.bomberDamage.warmup(this.scene, at);
     const unwarmCrew = warmLivingInterior(this.scene, at); // gunner interior: crew, brass, shafts, frost, breath
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
+    const unwarmTargetSmoke = warmTargetSmoke(this.scene);
     render();
+    unwarmTargetSmoke();
     this.wrecks.keepWarm(b17Pieces);   // B-17 wreck programs stay compiled for the set pieces
     unwarm();
     unwarmCrew();
