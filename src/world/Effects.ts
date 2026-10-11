@@ -450,7 +450,8 @@ export class Effects {
     }
   }
 
-  spawnDebris(pos: THREE.Vector3, vel: THREE.Vector3, count: number, burning: boolean) {
+  // toward: an extra velocity added to every piece (set pieces throw debris through the formation)
+  spawnDebris(pos: THREE.Vector3, vel: THREE.Vector3, count: number, burning: boolean, toward?: THREE.Vector3) {
     const sz = Math.sqrt(this.explosionScale);
     for (let i = 0; i < count; i++) {
       let d: Debris | null = null;
@@ -465,6 +466,7 @@ export class Effects {
       d.mesh.position.copy(pos);
       d.mesh.scale.setScalar((0.6 + Math.random() * 1.4) * sz);
       d.vel.set(R(), R() + 0.3, R()).multiplyScalar(15 + Math.random() * 30).add(vel);
+      if (toward) d.vel.addScaledVector(toward, 0.75 + Math.random() * 0.5);
       d.spin.set(R(), R(), R()).multiplyScalar(8);
       d.life = d.max = 6 + Math.random() * 4;
       d.fire = burning && Math.random() < 0.35;

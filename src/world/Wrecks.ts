@@ -1,12 +1,12 @@
 import * as THREE from 'three';
-import type { Fighter } from './Aircraft';
+import type { Aircraft, Fighter } from './Aircraft';
 import type { Effects } from './Effects';
 import type { ParticleOpts } from '../render/Particles';
 
 // Breaking aircraft apart: the model is cloned once per piece and each clone is cut
 // with clipping planes (wing shot off, tail sheared away, or blown into four parts).
-// Pieces tumble away under gravity trailing fire and smoke. Every kind uses one or
-// three clip planes, the counts World.prewarm compiles.
+// Pieces tumble away under gravity trailing fire and smoke. Fighter kinds use one or
+// three clip planes, the B-17 kinds (breakBomber) one, two or three: World.prewarm compiles them all.
 //
 // Piece motion:
 //   tumble     constant random spin (detached parts, blown-apart sections)
@@ -14,7 +14,9 @@ import type { ParticleOpts } from '../render/Particles';
 //              a lazy yaw, so it corkscrews down instead of tumbling at random
 //   dive       the fuselage that lost its tail: the nose drops over into a vertical
 //              dive while a roll builds up, the flight path bending after the nose
-type Motion = 'tumble' | 'autorotate' | 'dive';
+//   flatspin   the B-17 that lost an outer wing panel: rolls over toward the stump for ~2.5 s,
+//              then settles into a slow flat spin, sinking at ~24 m/s
+type Motion = 'tumble' | 'autorotate' | 'dive' | 'flatspin';
 
 interface Piece {
   root: THREE.Group;
@@ -32,7 +34,8 @@ interface Piece {
   age: number;
   main: boolean;   // the main fuselage section: throws a thick black column for its first seconds
   motion: Motion;
-  roll: number;    // dive: roll rate it builds up to (rad/s, signed)
+  roll: number;    // dive: roll rate it builds up to (rad/s, signed); flatspin: the roll-over rate
+  drag: number;    // < 0: the motion's own drag; otherwise this (a steered chunk flies with 0)
 }
 
 const R = () => Math.random() * 2 - 1;
@@ -45,6 +48,7 @@ const _q = new THREE.Quaternion();
 const _e = new THREE.Euler();
 const DOWN = new THREE.Vector3(0, -1, 0);
 const Z = new THREE.Vector3(0, 0, 1);
+const UP = new THREE.Vector3(0, 1, 0);
 const COLUMN_TIME = 4; // seconds the fuselage keeps a thick black column
 const NOSE_OVER = 1.7; // rad/s, dive: how fast the nose drops
 
@@ -63,19 +67,36 @@ function opts(life: number, s0: number, s1: number, c0: [number, number, number]
 }
 
 export type BreakKind = 'wingL' | 'wingR' | 'tail' | 'blowup';
+// B-17 break-ups staged by the formation set pieces (game/SetPieces.ts):
+//   wingFold  a flak hit folds the outer wing panel up and off (outboard of the inner engine);
+//             the rest of the ship rolls over toward the stump and settles into a flat spin
+//   blowup    a bomb-bay explosion: both wings, the nose section, the tail section and a loose
+//             wingtip, which the caller can steer past the player's gun position
+export type BomberBreak = 'wingFold' | 'blowup';
+
+// A piece handed back to the caller (set pieces track the spinning hulk, steer a chunk).
+// drag < 0: the motion's own air drag; 0 lets a steered piece fly a clean ballistic arc.
+export interface WreckPiece { readonly root: THREE.Group; readonly vel: THREE.Vector3; readonly spin: THREE.Vector3; life: number; drag: number }
+
+type Spec = {
+  planes: THREE.Plane[]; kick: THREE.Vector3; spin: number; spinVec?: THREE.Vector3; fire: number; smoke: number;
+  emit: THREE.Vector3; main?: boolean; motion?: Motion; roll?: number; life?: number;
+};
+
+const B17_FOLD = 4.6;    // m from the centre line: between the inner and the outer engine
+const B17_ROOT = 2.4;    // wing root, just outside the fuselage
+const B17_TIP = 9.0;     // the loose wingtip of a blow-up
+const B17_SPLIT = -5.0;  // fuselage break behind the wing trailing edge, ahead of the stabilisers
 
 export class Wrecks {
   private pieces: Piece[] = [];
+  private warm: Piece[] = [];   // prewarm pieces kept out of the scene: their materials hold the compiled programs
 
   constructor(private scene: THREE.Scene, private effects: Effects) {}
 
   break(f: Fighter, kind: BreakKind) {
     // cut planes in the model's own (unscaled) frame: +X left wing, +Z nose
     const W = 1.05, T = -4.3;
-    type Spec = {
-      planes: THREE.Plane[]; kick: THREE.Vector3; spin: number; spinVec?: THREE.Vector3; fire: number; smoke: number;
-      emit: THREE.Vector3; main?: boolean; motion?: Motion; roll?: number;
-    };
     const specs: Spec[] = [];
     const body = (planes: THREE.Plane[], extra: Partial<Spec> = {}): Spec => ({
       planes, kick: new THREE.Vector3(R() * 3, -2, R() * 3), spin: 2.5, fire: 1, smoke: 1, emit: new THREE.Vector3(0, 0, 1.2), main: true, ...extra,
@@ -99,6 +120,36 @@ export class Wrecks {
       specs.push({ planes: [P(0, 0, -1, T), P(-1, 0, 0, W), P(1, 0, 0, W)], kick: new THREE.Vector3(R() * 6, 14, -20), spin: 6, fire: 0.45, smoke: 0.6, emit: new THREE.Vector3(0, 0, -4.5) });
       specs.push({ planes: [P(0, 0, 1, -T), P(-1, 0, 0, W), P(1, 0, 0, W)], kick: new THREE.Vector3(R() * 6, -6, 10), spin: 4, fire: 1, smoke: 1, emit: new THREE.Vector3(0, 0, 1.2), main: true });
     }
+    this.cut(f, specs);
+  }
+
+  // B-17 break-ups (set pieces). side: model x sign (+1 left) of the folding wing / of the loose
+  // wingtip. Returns the pieces in spec order: wingFold [outer panel, hulk]; blowup [side wing,
+  // side wingtip, other wing, nose section, tail section]. Uses one, two and three clip planes (World.prewarm compiles both
+  // kinds on a dummy B-17).
+  breakBomber(b: Aircraft, kind: BomberBreak, side: 1 | -1 = 1): WreckPiece[] {
+    const specs: Spec[] = [];
+    const s = side;
+    if (kind === 'wingFold') {
+      // the panel folds up and back, then flutters away burning
+      specs.push({ planes: [P(s, 0, 0, -B17_FOLD)], kick: new THREE.Vector3(9 * s, 9, -6), spin: 0, spinVec: new THREE.Vector3(R() * 0.8, R() * 0.6, 3.2 * s),
+        fire: 0.8, smoke: 0.8, emit: new THREE.Vector3(B17_FOLD * s, 0, 0.2), life: 22 });
+      specs.push({ planes: [P(-s, 0, 0, B17_FOLD)], kick: new THREE.Vector3(R() * 1.5, -1.5, R() * 1.5), spin: 0, spinVec: new THREE.Vector3(),
+        fire: 1, smoke: 1, emit: new THREE.Vector3(B17_FOLD * s, 0, 0.3), main: true, motion: 'flatspin', roll: -s * 0.85, life: 30 });
+    } else {
+      // mirrored by side: the loose tip and the two-cut wing are on side s (toward the player)
+      const fwd = () => P(0, 0, 1, -B17_SPLIT);   // keeps z >= split
+      specs.push({ planes: [P(s, 0, 0, -B17_ROOT), P(-s, 0, 0, B17_TIP), fwd()], kick: new THREE.Vector3(16 * s, 8, R() * 6), spin: 2.2, fire: 0.9, smoke: 0.8, emit: new THREE.Vector3((B17_ROOT + 0.5) * s, 0, 0.5), life: 24 });
+      specs.push({ planes: [P(s, 0, 0, -B17_TIP)], kick: new THREE.Vector3(26 * s, 12, R() * 8), spin: 0, spinVec: new THREE.Vector3(7, R() * 1.5, R() * 1.2), fire: 0.35, smoke: 0.6, emit: new THREE.Vector3(B17_TIP * s, 0, -0.5), life: 16 });
+      specs.push({ planes: [P(-s, 0, 0, -B17_ROOT), fwd()], kick: new THREE.Vector3(-16 * s, 8, R() * 6), spin: 2.2, fire: 1, smoke: 0.8, emit: new THREE.Vector3(-(B17_ROOT + 0.5) * s, 0, 0.5), life: 24 });
+      specs.push({ planes: [fwd(), P(-1, 0, 0, B17_ROOT), P(1, 0, 0, B17_ROOT)], kick: new THREE.Vector3(R() * 4, -6, 9), spin: 1.4, fire: 1, smoke: 1, emit: new THREE.Vector3(0, 0, 1.5), main: true, life: 26 });
+      specs.push({ planes: [P(0, 0, -1, B17_SPLIT)], kick: new THREE.Vector3(R() * 4, 6, -12), spin: 1.8, fire: 0.5, smoke: 0.7, emit: new THREE.Vector3(0, 0.3, -5.5), life: 24 });
+    }
+    return this.cut(b, specs);
+  }
+
+  private cut(f: Aircraft, specs: Spec[]): WreckPiece[] {
+    const out: WreckPiece[] = [];
     f.root.updateMatrixWorld(true);
     for (const sp of specs) {
       const root = new THREE.Group();
@@ -127,12 +178,15 @@ export class Wrecks {
       this.scene.add(root);
       const kick = sp.kick.clone().applyQuaternion(f.root.quaternion);
       const spin = sp.spinVec ?? new THREE.Vector3(R(), R(), R()).normalize().multiplyScalar(sp.spin);
-      this.pieces.push({
+      const p: Piece = {
         root, model, vel: f.vel.clone().add(kick), spin,
-        life: 14, local: sp.planes, world, mats, fire: sp.fire, smoke: sp.smoke, emit: sp.emit.clone().multiplyScalar(f.model.scale.x), acc: 0,
-        age: 0, main: sp.main === true, motion: sp.motion ?? 'tumble', roll: sp.roll ?? 0,
-      });
+        life: sp.life ?? 14, local: sp.planes, world, mats, fire: sp.fire, smoke: sp.smoke, emit: sp.emit.clone().multiplyScalar(f.model.scale.x), acc: 0,
+        age: 0, main: sp.main === true, motion: sp.motion ?? 'tumble', roll: sp.roll ?? 0, drag: -1,
+      };
+      this.pieces.push(p);
+      out.push(p);
     }
+    return out;
   }
 
   update(dt: number) {
@@ -155,8 +209,19 @@ export class Wrecks {
         _sv.copy(_fw).multiplyScalar(sp);
         p.vel.lerp(_sv, 1 - Math.exp(-1.4 * dt));
         p.vel.multiplyScalar(Math.exp(-0.03 * dt));
+      } else if (p.motion === 'flatspin') {
+        // roll over toward the stump, then the spin builds about the vertical
+        const a = p.age;
+        const rollK = a < 1.8 ? 1 : Math.max(0, 1 - (a - 1.8) / 1.2);
+        if (rollK > 0) p.root.quaternion.multiply(_q.setFromAxisAngle(Z, p.roll * rollK * dt));
+        if (a > 1.2) p.root.quaternion.premultiply(_q.setFromAxisAngle(UP, Math.sign(p.roll || 1) * Math.min(1.35, (a - 1.2) * 0.5) * dt));
+        // a flat spin sinks slowly (~24 m/s) and bleeds its forward speed off gently, so it stays
+        // in sight of the box for a while
+        const k = Math.exp(-0.05 * dt);
+        p.vel.x *= k; p.vel.z *= k;
+        if (p.vel.y < -24) p.vel.y = -24;
       } else {
-        p.vel.multiplyScalar(Math.exp((p.motion === 'autorotate' ? -0.2 : -0.12) * dt));
+        p.vel.multiplyScalar(Math.exp((p.drag >= 0 ? -p.drag : p.motion === 'autorotate' ? -0.2 : -0.12) * dt));
         _e.set(p.spin.x * dt, p.spin.y * dt, p.spin.z * dt);
         p.root.quaternion.multiply(_q.setFromEuler(_e));
       }
@@ -191,6 +256,20 @@ export class Wrecks {
       else this.pieces[n++] = p;
     }
     this.pieces.length = n;
+  }
+
+  // World.prewarm: take these pieces out of play but keep their (clipped) materials alive, so the
+  // shader programs compiled for them are not released (three.js drops a program when the last
+  // material using it is disposed) and the first set piece doesn't compile them again
+  keepWarm(list: WreckPiece[]) {
+    for (const w of list) {
+      const i = this.pieces.indexOf(w as Piece);
+      if (i < 0) continue;
+      const p = this.pieces[i];
+      this.pieces.splice(i, 1);
+      p.root.removeFromParent();
+      this.warm.push(p);
+    }
   }
 
   clear() {

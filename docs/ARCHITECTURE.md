@@ -78,6 +78,13 @@ Most features need one line in one of these places:
 | Change the menu background camera | `MenuScene.update()`. |
 | Show a screen with a 3D scene of its own | Take over `engine.onFrame` (as `Theatre.ts` does) and set `engine.renderOverride` to draw it with `engine.renderStudio(scene, camera, dt)`: the world's MSAA target and post stack. Copy the world's light counts so the aircraft materials keep their compiled programs, and compile anything new with `engine.compileStudio()` before showing it (`AircraftGallery.ts`). Title-menu screens of this kind hook in through `TitleExtras.ts`. |
 
+Formation set pieces (`SetPieces.ts`: a neighbouring B-17 downed by flak, a mid-air collision, a
+bomb-bay explosion, the straggler, P-51s diving past) are owned by `MidRound` and scheduled from its
+`update`, in the round's breather (`pacing.phase`); `Pacing.hushUntil` holds new groups back while one
+plays and `Cinematics.drama()` gives them a short drama shot. Their losses go through
+`World.scriptedLoss` and are left out of `world.combatLosses`, which the mission's loss limit uses.
+Trigger one with `sws.drama('flakHit')` (or `collision`, `bombBay`, `straggler`, `littleFriends`).
+
 A bigger system belongs in its own class that takes the `Game` (or a small host interface) in its
 constructor, like `MidRound`, `SpecialEvents`, `SkillRuntime` or `CoopSession`. Create it in the
 `Game` constructor and call it from one of the places above.

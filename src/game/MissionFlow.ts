@@ -248,7 +248,7 @@ export class MissionFlow {
     const medals: string[] = [];
     if (r.success && !survival) medals.push('Air Medal');
     if (w.stats.kills >= 5) medals.push(m.role === 'pilot' ? 'Ace in a Day' : 'Distinguished Flying Cross');
-    if (w.stats.kills >= 8 && w.stats.bombersLost <= 1) medals.push('Silver Star');
+    if (w.stats.kills >= 8 && w.combatLosses <= 1) medals.push('Silver Star');   // set-piece losses left out
     if (w.crewWounded > 0) medals.push('Purple Heart');
     medals.push(...g.service.bonusMedals(m, r.success, medals));
     const survivalWave = g.director.survivalWave;

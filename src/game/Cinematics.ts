@@ -26,6 +26,12 @@ import { tx } from '../i18n';
 // debrief (camera on the side that looks into the sun, path checked clear of every
 // bomber), with contrails on and a MISSION COMPLETE card. Click / Space / Enter skips.
 //
+// Drama cam: a formation set piece (SetPieces.ts: a B-17 downed by flak, a collision, a bomb-bay
+// explosion, a straggler, P-51s diving past) asks for a 2.4-3.4 s over-the-shoulder shot from just
+// outside the player's own B-17, looking past it at the drama, in gentle slow motion. Same rules as
+// the kill cam (setting, tutorial, the player's health, station change, cooldown shared with it),
+// and never while fighters are pressing an attack nearby (2+ within 1.5 km, or one within 600 m).
+//
 // Ownership rules, so control is never broken:
 //   - The controllers keep running every frame and keep their own state. preFrame() hands
 //     them back their own FOV/zoom/near/far and blocks their input (no aim drift, no
@@ -44,7 +50,12 @@ const FLY_DUR = 4.6;
 const HP_LOW = 0.5, HP_DROP = 0.035;
 const HEAVY = ['bf110', 'ju88', 'me410', 'he111'];
 
-type Mode = 'none' | 'kill' | 'flyby' | 'replay';
+type Mode = 'none' | 'kill' | 'flyby' | 'replay' | 'drama';
+const DRAMA_SLOW = 0.55;          // drama cam slow motion (eases back to 1 over its second half)
+const DRAMA_NEAR = 1500, DRAMA_CLOSE = 600;
+
+/** Drama cam subject: writes its current position into `out`; false once it is gone. */
+export type DramaFocus = (out: THREE.Vector3) => boolean;
 
 const UP = new THREE.Vector3(0, 1, 0);
 const _a = new THREE.Vector3();
@@ -87,6 +98,14 @@ export class Cinematics {
     anchor: new THREE.Vector3(), anchorVel: new THREE.Vector3(),
     dir: new THREE.Vector3(), look: new THREE.Vector3(), cam: new THREE.Vector3(),
   };
+  // drama cam (set pieces)
+  private dramaReq: { focus: DramaFocus; dur: number; title: string; sub: string } | null = null;
+  private dr = {
+    focus: null as DramaFocus | null, t: 0, dur: 3, gone: false,
+    off: new THREE.Vector3(),      // camera offset from the player's aircraft (rebase-proof: both move together)
+    look: new THREE.Vector3(),     // smoothed look point, relative to the player's aircraft
+    subj: new THREE.Vector3(),
+  };
   // fly-by
   private flyQueued = false;
   private flyDelay = 0;
@@ -117,6 +136,14 @@ export class Cinematics {
       this.pending = victim;
       this.pendingDur = special ? DUR_SPECIAL : heavy ? DUR_HEAVY : DUR_STREAK;
     }
+  }
+
+  /** Set pieces: ask for a short drama shot of `focus`. Returns false when the rules say no now
+   *  (the shot then simply doesn't happen); true when it will start this frame. */
+  drama(focus: DramaFocus, dur: number, title: string, sub: string): boolean {
+    if (this.mode !== 'none' || this.dramaReq || !this.dramaAllowed()) return false;
+    this.dramaReq = { focus, dur, title, sub };
+    return true;
   }
 
   /** Mission succeeded: schedule the fly-by. Returns the ending time to use; done() ends
@@ -157,6 +184,10 @@ export class Cinematics {
       const u = this.kc.t / this.kc.dur;
       const s = u < 0.72 ? KC_SLOW : THREE.MathUtils.lerp(KC_SLOW, KC_SLOW_END, (u - 0.72) / 0.28);
       if (e.timeScale > s) { e.timeScale = s; this.lastSet = s; }
+    } else if (this.mode === 'drama') {
+      const u = this.dr.t / this.dr.dur;
+      const s = u < 0.5 ? DRAMA_SLOW : THREE.MathUtils.lerp(DRAMA_SLOW, 1, (u - 0.5) / 0.5);
+      if (e.timeScale > s) { e.timeScale = s; this.lastSet = s; }
     } else if (e.timeScale !== 1 && e.timeScale > 0.06) e.timeScale = 1;   // fly-by runs at normal speed (leave a hit-stop alone)
   }
 
@@ -177,12 +208,17 @@ export class Cinematics {
       this.trackHealth(real);
       this.flushed = false;
     }
-    if (this.mode === 'kill' || this.mode === 'flyby') this.snap.refresh(e);
+    if (this.mode === 'kill' || this.mode === 'flyby' || this.mode === 'drama') this.snap.refresh(e);
 
     // kill cam request from this frame's kill event
     if (this.pending) {
       if (this.mode === 'none' && this.killCamAllowed()) this.startKill(this.pending, this.pendingDur);
       this.pending = null;
+    }
+    if (this.dramaReq) {
+      const q = this.dramaReq;
+      this.dramaReq = null;
+      if (this.mode === 'none' && this.dramaAllowed()) this.startDrama(q.focus, q.dur, q.title, q.sub);
     }
     if (this.flyQueued) {
       this.flyDelay -= real;
@@ -195,6 +231,7 @@ export class Cinematics {
     }
 
     if (this.mode === 'kill') this.updateKill(dt, real);
+    else if (this.mode === 'drama') this.updateDrama(real);
     else if (this.mode === 'flyby') this.updateFlyby(real);
     else if (this.mode === 'replay') this.replay.update(real);
 
@@ -218,6 +255,30 @@ export class Cinematics {
     const g = this.game, w = g.world, m = g.mission;
     if (g.settings.killCam === false || !m || m.tutorial || g.state !== 'playing' || g.photo.active) return false;
     if (w.time - this.lastKillCam < COOLDOWN || this.flyQueued) return false;
+    return this.playerFit();
+  }
+
+  // Drama cam: the kill-cam rules (but its own, shorter gap after a kill cam), never in co-op
+  // (both players share the clock), and never with fighters pressing an attack close by
+  private dramaAllowed(): boolean {
+    const g = this.game, w = g.world, m = g.mission;
+    if (g.settings.killCam === false || !m || m.tutorial || g.state !== 'playing' || g.photo.active || g.coop.role) return false;
+    if (w.time - this.lastKillCam < 8 || this.flyQueued) return false;
+    const pl = w.player;
+    if (!pl) return false;
+    let near = 0;
+    for (const f of w.activeEnemies()) {
+      if (!w.enemyPilot(f)) continue;   // a set piece's own scripted aircraft (no AI: not attacking)
+      const d = f.pos.distanceTo(pl.pos);
+      if (d < DRAMA_CLOSE) return false;
+      if (d < DRAMA_NEAR) near++;
+    }
+    return near < 2 && this.playerFit();
+  }
+
+  // the player isn't in trouble: alive, healthy, not mid station-change (P-51: can fly on hands-off)
+  private playerFit(): boolean {
+    const g = this.game, w = g.world, m = g.mission!;
     const pl = w.player;
     if (!pl || !pl.alive || pl.remove) return false;
     // under heavy fire: low integrity, or a real chunk of it lost in the last few seconds
@@ -299,6 +360,65 @@ export class Cinematics {
     cam.rotateZ(k.side * 0.07 * (1 - eu));
     cineLens(e, 40 - 6 * eu);
     this.overlay.setFade(k.t > k.dur - FADE_OUT ? (k.t - (k.dur - FADE_OUT)) / FADE_OUT : 0);
+  }
+
+  // ---------------- drama cam (set pieces) ----------------
+
+  private startDrama(focus: DramaFocus, dur: number, title: string, sub: string) {
+    const e = this.engine, g = this.game, w = g.world, d = this.dr;
+    const pl = w.player;
+    if (!pl || !focus(d.subj)) return;
+    this.snap.capture(e);
+    if (g.mission?.role === 'gunner') this.reveal.reveal(w.playerBomber?.model);
+    this.hud.hide(this.ui.canvas);
+    this.overlay.show(true, title, sub, tx('CLICK TO SKIP'));
+    this.overlay.setFade(0);
+    this.fadeIn = 0;
+    // over the shoulder: behind the player's ship as seen from the subject, out to one side and a
+    // little above, so the ship frames the near edge of the shot and the drama plays beyond it
+    _f.copy(d.subj).sub(pl.pos);
+    const dist = _f.length();
+    _f.divideScalar(Math.max(1, dist));
+    _l.crossVectors(UP, _f);
+    if (_l.lengthSq() < 1e-4) _l.set(1, 0, 0);
+    _l.normalize();
+    const back = THREE.MathUtils.clamp(dist * 0.3, 40, 70);
+    let best = -1;
+    for (const side of [1, -1]) {
+      for (const lat of [30, 44]) {
+        _a.copy(_f).multiplyScalar(-back).addScaledVector(_l, side * lat).addScaledVector(UP, 10);
+        // keep clear of every other bomber in the box
+        let clear = Infinity;
+        for (const b of w.bombers()) { if (b !== pl && b.alive) clear = Math.min(clear, _b.copy(pl.pos).add(_a).distanceTo(b.pos)); }
+        if (clear > best) { best = clear; d.off.copy(_a); }
+        if (clear > 45) break;
+      }
+      if (best > 45) break;
+    }
+    d.look.copy(d.subj).sub(pl.pos);
+    d.focus = focus; d.t = 0; d.dur = dur; d.gone = false;
+    this.lastSet = -1;
+    this.lastKillCam = w.time;   // the kill cam waits its cooldown after a drama shot too
+    this.mode = 'drama';
+    e.post.resetHistory();
+    this.updateDrama(0);
+  }
+
+  private updateDrama(real: number) {
+    const d = this.dr, e = this.engine, cam = e.camera, pl = this.game.world.player;
+    d.t += real;
+    if (d.t >= d.dur || !pl) { this.end(); return; }
+    if (!d.gone && d.focus && !d.focus(d.subj)) d.gone = true;
+    // subject relative to the player's ship (the look point eases after it; once it is gone the
+    // shot holds on where it was)
+    if (!d.gone) _a.copy(d.subj).sub(pl.pos); else _a.copy(d.look);
+    if (real > 0) d.look.lerp(_a, 1 - Math.exp(-real * 5)); else d.look.copy(_a);
+    const u = THREE.MathUtils.clamp(d.t / d.dur, 0, 1), eu = u * u * (3 - 2 * u);
+    // a slow push in
+    cam.position.copy(pl.pos).addScaledVector(d.off, 1 - 0.14 * eu);
+    cam.lookAt(_b.copy(pl.pos).add(d.look));
+    cineLens(e, 38 - 6 * eu);
+    this.overlay.setFade(d.t > d.dur - FADE_OUT ? (d.t - (d.dur - FADE_OUT)) / FADE_OUT : 0);
   }
 
   // ---------------- fly-by ----------------
@@ -469,10 +589,11 @@ export class Cinematics {
     this.hud.restore();
     this.overlay.show(false);
     this.kc.victim = null;
+    this.dr.focus = null;
     // back to the gun out of black (a skip comes out of half-black: it should feel instant)
     this.overlay.setFade(skipped ? 0.5 : 1);
     this.fadeIn = skipped ? FADE_IN * 0.5 : FADE_IN;
-    if (mode === 'kill') {
+    if (mode === 'kill' || mode === 'drama') {
       const e = this.engine;
       if (e.timeScale === this.lastSet) e.timeScale = 1;
       // a hit-stop that started during the kill cam restores our slow-mo when it ends: undo that too
@@ -501,6 +622,7 @@ export class Cinematics {
     this.theatre.newMission();
     this.lastKillCam = -1e9;
     this.pending = null;
+    this.dramaReq = null;
     this.flyQueued = false;
     this.flyDone = null;
     this.restoreContrails();

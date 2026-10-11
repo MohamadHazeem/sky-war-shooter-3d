@@ -173,7 +173,7 @@ export class ServiceRecord {
     const add = (n: string) => { if (!medals.includes(n) && !out.includes(n)) out.push(n); };
     if (st.kills >= 5) add('Ace in a Day');
     if (m.role === 'gunner' && success && st.shots >= 150 && st.hits / st.shots >= 0.25) add('Gunner\'s Wings');
-    if (success && m.duration !== Infinity && st.bombersLost === 0) add('Fortress Defender');
+    if (success && m.duration !== Infinity && this.game.world.combatLosses === 0) add('Fortress Defender');   // set-piece losses left out
     if (b.bosses > 0) add('Giant Killer');
     if (nemesisMissionKills() > 0) add('Experten Killer');
     return out;
@@ -206,7 +206,7 @@ export class ServiceRecord {
     if (d.success && !survival && m.number > 0) {
       if (!c.campaignWins.includes(m.id)) c.campaignWins.push(m.id);
       this.daily.record('campaignWins', 1);
-      if (d.bombersLost === 0) this.daily.record('noLossWin', 1);
+      if (w.combatLosses === 0) this.daily.record('noLossWin', 1);
     }
     if (survival) {
       const reached = (d.waves ?? 0) + 1;

@@ -62,6 +62,8 @@ async function boot() {
     (window as any).sws.tutorialAutoplay = (o?: any) => tutorialAutoplay(engine, game, o);
     Object.assign((window as any).sws, { game, engine });
     Object.assign((window as any).sws, { event: (n: any) => game.midRound.devEvent(n), objective: (n: any) => game.midRound.devObjective(n) });
+    // Formation set piece now (gunner mission in progress): sws.drama('flakHit' | 'collision' | 'bombBay' | 'straggler' | 'littleFriends'); sws.drama() lists them
+    (window as any).sws.drama = (n?: any) => (n ? game.midRound.devDrama(n) : 'flakHit, collision, bombBay, straggler, littleFriends');
     // Sharing / trailer / social card tools (docs/TRAILER.md): sws.trailer(), sws.ogCard(), sws.analytics.last
     const { trailer } = await import('./dev/Trailer');
     const { ogCard } = await import('./dev/OgCard');

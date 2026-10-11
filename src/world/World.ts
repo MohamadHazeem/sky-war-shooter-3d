@@ -31,6 +31,7 @@ import { warmLivingInterior } from '../game/LivingInterior';
 import { PlayerBomberDamage } from './PlayerBomberDamage';
 import { dressEnemy } from './EnemyDress';
 import { updateWeather, weatherRestart, weatherEvents, frontState, FRONT_EVENT } from '../render/Weather';
+import { access } from '../core/Accessibility';
 
 export const ENEMY_SCALE = 6.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
 export const ENEMY_STRUCTURE = 460; // ~40 hits from a .50 to wear one down
@@ -117,7 +118,7 @@ export class World implements WorldView {
   private radioCooldown = 0;
   private lastCallout = new Map<string, number>();
   events: Partial<WorldEvents> = {};
-  stats = { kills: 0, shots: 0, hits: 0, damage: 0, bombersLost: 0, assists: 0, enemiesSpawned: 0 };
+  stats = { kills: 0, shots: 0, hits: 0, damage: 0, bombersLost: 0, scriptedLost: 0, assists: 0, enemiesSpawned: 0 };
   crewWounded = 0;
   private lastWound = -99;
   readonly crew = new Crew();   // crew positions and who is wounded (gunner missions)
@@ -145,6 +146,11 @@ export class World implements WorldView {
     // a weather front's storm (Weather.ts): thunder rolls in after its lightning
     weatherEvents.thunder = (dist) => setTimeout(() => sound.play('explosionFar', null, { gain: 0.9, rate: 0.45 + Math.random() * 0.15, reverb: 0.8 }), (dist / 343) * 1000);
   }
+
+  // Losses that count against the mission's loss limit: set-piece losses (scriptedLoss) are
+  // left out, so the formation dramas never make a mission fail. bombersLost (the debrief,
+  // career totals) still counts every ship that went down.
+  get combatLosses() { return this.stats.bombersLost - this.stats.scriptedLost; }
 
   // ---------- WorldView ----------
   bombers(): Bomber[] { return this.aircraft.filter((a): a is Bomber => a instanceof Bomber && !a.remove); }
@@ -183,6 +189,8 @@ export class World implements WorldView {
 
   // Swap a fighter's AI (Abilities: the called-in Mustang sweep flies its own EscortPilot)
   setPilot(f: Fighter, p: EnemyPilot | EscortPilot) { this.pilots.set(f, p); }
+  // No AI at all: a set piece (SetPieces.ts) flies this aircraft on a scripted path
+  clearPilot(f: Fighter) { this.pilots.delete(f); }
 
   playerStationId(): string | null { return this.player === this.playerBomber && this.playerStation ? this.playerStation.id : null; }
 
@@ -234,7 +242,7 @@ export class World implements WorldView {
     this.formationForward.set(0, 0, 1);
     this.time = 0;
     this.flakIntensity = 0;
-    this.stats = { kills: 0, shots: 0, hits: 0, damage: 0, bombersLost: 0, assists: 0, enemiesSpawned: 0 };
+    this.stats = { kills: 0, shots: 0, hits: 0, damage: 0, bombersLost: 0, scriptedLost: 0, assists: 0, enemiesSpawned: 0 };
     this.crewWounded = 0;
     this.lastWound = -99;
     this.crew.reset();
@@ -262,6 +270,15 @@ export class World implements WorldView {
       dummies.push(f);
       this.wrecks.break(f, k);
     }));
+    // B-17 break-ups of the formation set pieces (one, two and three clip planes on its materials)
+    const b17 = new Bomber();
+    b17.root.position.copy(camera.position).addScaledVector(fwd, 45);   // close: inside the shadow frustum, so the clipped shadow-depth programs compile too
+    const b17Pieces = [...this.wrecks.breakBomber(b17, 'wingFold', 1), ...this.wrecks.breakBomber(b17, 'blowup')];
+    // the Mustangs of the 'little friends' set piece (gunner missions may have no escort)
+    const p51 = new Fighter('p51d', 'allied', P51_PARAMS);
+    p51.root.position.copy(camera.position).addScaledVector(fwd, 70);
+    this.scene.add(p51.root);
+    dummies.push(p51);
     const at = camera.position.clone().addScaledVector(fwd, 80);
     this.effects.explosion(at, new THREE.Vector3(), 1);
     this.effects.parachute(at, new THREE.Vector3());
@@ -270,6 +287,7 @@ export class World implements WorldView {
     const unwarmCrew = warmLivingInterior(this.scene, at); // gunner interior: crew, brass, shafts, frost, breath
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     render();
+    this.wrecks.keepWarm(b17Pieces);   // B-17 wreck programs stay compiled for the set pieces
     unwarm();
     unwarmCrew();
     unwarmGlass();
@@ -589,6 +607,35 @@ export class World implements WorldView {
     if (!m) return;
     this.lastCrewWound = this.time;
     this.callout('crewwound', 'Pilot', `${m.name} is hit ${m.spot}! Somebody get him some help!`, 20, 2);
+  }
+
+  // A B-17 lost in a formation set piece (SetPieces.ts). It counts in bombersLost (debrief) and
+  // in scriptedLost, which combatLosses (the mission's loss limit) leaves out. No visuals, crew or
+  // radio here: the set piece stages them. fall: the ship goes down on its own spin and velocity
+  // (set b.spin / b.vel); false: it is replaced by wreck pieces and removed.
+  scriptedLoss(b: Bomber, fall: boolean) {
+    if (!b.alive) return;
+    b.alive = false;
+    b.scripted = true;
+    b.falling = fall;
+    b.fallTime = 0;
+    if (!fall) b.remove = true;
+    this.stats.bombersLost++;
+    this.stats.scriptedLost++;
+    this.events.bomberLost?.(b);
+  }
+
+  // Debris coming through (set pieces): the pilot throws the ship into an evasive jink now,
+  // sliding toward formation x sign `side`. Skipped while a jink is already on.
+  evade(side: number) {
+    if (this.jinkT < this.jinkDur) return;
+    this.jinkT = 0; this.jinkDur = 3.6; this.jinkSide = side < 0 ? -1 : 1;
+    this.nextJink = 10 + Math.random() * 6;
+  }
+
+  // A blast close by rocks the player's ship (a roll kick; 'reduce screen shake' scales it down)
+  buffet(k: number) {
+    this.lurch += (Math.random() < 0.5 ? -1 : 1) * Math.min(0.16, 0.1 * k) * access.shake;
   }
 
   killAircraft(a: Aircraft, byPlayer: boolean, cause = '') {

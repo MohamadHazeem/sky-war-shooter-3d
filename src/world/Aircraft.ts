@@ -200,6 +200,7 @@ export class Bomber extends Aircraft {
   straggling = false;
   gunners: { station: string; offset: THREE.Vector3; cooldown: number; target: Aircraft | null; burst: number; arc: (d: THREE.Vector3) => boolean }[] = [];
   crewBailed = 0;
+  scripted = false;                // lost in a formation set piece (World.scriptedLoss): not a combat loss
   bombsAway = false;
   name = '';
   // Animated gun positions (driven by the AI crews): desired + current aim, model frame

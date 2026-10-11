@@ -132,6 +132,10 @@ export class GameFeel {
   /** A player round connected (not a kill). */
   onHit() { this.bloom = Math.min(1, this.bloom + 0.45); }
 
+  /** A big blast nearby (set pieces: a B-17 blowing up): the screen flash, 0..1. PostFX scales
+   *  it by the 'reduce flashes' setting (access.flash). */
+  blastFlash(k: number) { this.flash = Math.max(this.flash, Math.min(0.7, k)); }
+
   /** Damage taken by the player's aircraft (already scaled). A burst puts the fire out. */
   onIncoming(damage: number) {
     if (!Number.isFinite(damage) || damage <= 0) return;
