@@ -17,7 +17,11 @@ export function shouldDitch(s: DitchState): boolean {
   // Last Light starts on two engines: its authored handicap alone must not force failure.
   // Integrity counts only once it has fallen well below where the mission started.
   const deteriorated = s.enginesOut > (s.initialEnginesOut ?? 0) || s.integrity < Math.min(0.5, (s.initialIntegrity ?? 1) - 0.15) || s.leaking;
-  return s.ending ? beyondLanding : deteriorated && s.progress >= 0.75 && s.coastKm > 25 && (s.enginesOut >= 2 || beyondLanding);
+  if (s.ending) return beyondLanding;
+  // Missions that start crippled (Last Light, The Long Way Home) are about nursing her home:
+  // no mid-mission ditching, only the end-of-mission rule above.
+  if ((s.initialEnginesOut ?? 0) >= 2) return false;
+  return deteriorated && s.progress >= 0.75 && s.coastKm > 25 && (s.enginesOut >= 2 || beyondLanding);
 }
 export function ditchSuccess(bombsRequired: boolean, bombsDropped: boolean, success: boolean): boolean {
   return bombsRequired ? bombsDropped : success;

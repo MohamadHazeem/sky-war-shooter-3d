@@ -42,7 +42,7 @@ describe('ditching trigger boundaries', () => {
   });
   it('does not make the authored two-engine Last Light start an unavoidable failure', () => {
     expect(shouldDitch({ ...state, ending: false, enginesOut: 2, initialEnginesOut: 2 })).toBe(false);
-    expect(shouldDitch({ ...state, ending: false, enginesOut: 2, initialEnginesOut: 2, integrity: 0.49 })).toBe(true);
+    expect(shouldDitch({ ...state, ending: false, enginesOut: 2, initialEnginesOut: 2, integrity: 0.49 })).toBe(false); // crippled-start missions never ditch mid-mission (only at the end)
   });
   it('preserves the bomb objective, independently of surviving the ditch', () => {
     expect(ditchSuccess(true, true, false)).toBe(true);
@@ -106,6 +106,7 @@ describe('scripted pre-damage', () => {
     const base = { campaign: true, gunner: true, coop: false, controllable: true, enginesOut: 2, initialEnginesOut: 2,
       integrity: 0.42, initialIntegrity: 0.45, leaking: false, progress: 0.8, coastKm: 48, ending: false };
     expect(_sd(base)).toBe(false);
-    expect(_sd({ ...base, integrity: 0.25 })).toBe(true);   // fell well below where it started
+    expect(_sd({ ...base, integrity: 0.25, leaking: true })).toBe(false);  // never mid-mission when it starts crippled
+    expect(_sd({ ...base, integrity: 0.15, ending: true })).toBe(true);    // but beyond a belly landing at the end
   });
 });
