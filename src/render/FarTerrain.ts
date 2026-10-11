@@ -2,16 +2,17 @@ import * as THREE from 'three';
 import { Atmos } from './Atmosphere';
 import type { Mission } from '../game/Missions';
 import type { World } from '../world/World';
-import { COAST_WIDTH, COAST_HEIGHT, CROSS_SPAN, ROUTE_PAD, coastPixels, terrainPixels, terrainRoute, terrainSeason } from '../world/FarTerrainData';
+import { COVER_SIZE, COVER_SPAN, COAST_WIDTH, COAST_HEIGHT, CROSS_SPAN, ROUTE_PAD, coastPixels, terrainPixels, terrainRoute, terrainSeason } from '../world/FarTerrainData';
 
 // Far-view ground at y=0, sampled by Sky's ray/plane intersection. Texture mips supply
 // continuous LOD without terrain draws or per-pixel procedural noise. Coast/season state is
 // prepared once per mission; only shared quality/shadow uniforms change during flight.
-const cover = new THREE.DataTexture(terrainPixels(), 512, 512);
-cover.wrapS = cover.wrapT = THREE.RepeatWrapping;
+const cover = new THREE.DataTexture(terrainPixels(), COVER_SIZE, COVER_SIZE);
+cover.wrapS = cover.wrapT = THREE.ClampToEdgeWrapping;
 cover.generateMipmaps = true;
 cover.minFilter = THREE.LinearMipmapLinearFilter;
 cover.magFilter = THREE.LinearFilter;
+cover.anisotropy = 4;
 cover.needsUpdate = true;
 const coast = new THREE.DataTexture(new Uint8Array(COAST_WIDTH * COAST_HEIGHT).fill(255), COAST_WIDTH, COAST_HEIGHT, THREE.RedFormat);
 coast.minFilter = coast.magFilter = THREE.LinearFilter;
@@ -58,15 +59,24 @@ vec3 terrain(vec2 xz, float dist) {
   // Keep the existing industrial city on dry land even on a chart's coarse port outline.
   if (uTgt.w > 0.0) land = max(land, 1.0 - smoothstep(uTgt.z, uTgt.z * 1.8, length(xz - uTgt.xy)));
   vec3 water = vec3(0.025, 0.060, 0.085);
-  vec3 grass = uFarSeason < 0.5 ? vec3(0.09, 0.18, 0.065) : uFarSeason < 1.5 ? vec3(0.17, 0.135, 0.065) : vec3(0.53, 0.57, 0.56);
+  vec3 grass = uFarSeason < 0.5 ? vec3(0.15, 0.17, 0.115) : uFarSeason < 1.5 ? vec3(0.19, 0.17, 0.125) : vec3(0.49, 0.52, 0.52);
   if (uFarQuality < 0.5) return mix(water, grass, land); // Low: one coast fetch, no detail/shadows
-  // Medium deliberately uses a coarser mip; derivatives provide smooth LOD at the horizon.
-  vec4 mask = texture2D(tLandCover, xz / 16000.0, uFarQuality < 1.5 ? 1.5 : 0.0);
-  vec3 field = mix(grass * 0.55, grass * 1.5, mask.r);
-  vec3 woods = uFarSeason > 1.5 ? vec3(0.12, 0.17, 0.15) : vec3(0.035, 0.075, 0.036);
-  field = mix(field, woods, mask.g * 0.9);
-  field = mix(field, mix(vec3(0.10, 0.085, 0.075), vec3(0.29, 0.23, 0.19), mask.r), mask.a);
-  field = mix(field, water, mask.b);
+  // One unique regional atlas, aligned with the route and fixed in absolute space.
+  // No wrapping, tile grid or repeated towns. Medium favours coarser mips.
+  vec2 coverUV = vec2(dot(rel, vec2(uFarRoute.w, -uFarRoute.z)), dot(rel, uFarRoute.zw)) / ${COVER_SPAN}.0 + vec2(0.5, 0.25);
+  vec4 mask = texture2D(tLandCover, coverUV, uFarQuality < 1.5 ? 1.0 : 0.0);
+  // Final dusty crop/roof/wood colours are baked, so trilinear filtering cannot
+  // create false colour outlines or turn distant mixed parcels into a single crop.
+  vec3 field = mask.rgb / 3.0;
+  if (uFarSeason > 0.5 && uFarSeason < 1.5) field *= vec3(1.04, 0.96, 0.91);
+  if (uFarSeason > 1.5) field = mix(field, vec3(0.56, 0.59, 0.59), mask.a * 0.78);
+  // Very broad relief: a gentle sun-facing bias, baked features remain flat.
+  field *= 0.97 + 0.035 * sin(xz.x / 2800.0 + xz.y / 3700.0) * uSunDir.x
+    + 0.025 * sin(xz.y / 1900.0) * uSunDir.z;
+  // At the finite atlas boundary fade to regional colour before clamp could
+  // stretch the last texel. Normal mission views are well inside this margin.
+  vec2 atlasEdge = min(coverUV, 1.0 - coverUV);
+  field = mix(grass, field, smoothstep(0.0, 0.06, min(atlasEdge.x, atlasEdge.y)));
   vec3 alb = mix(water, field, smoothstep(0.25, 0.75, land));
   if (uFarQuality > 1.5 && uFarShadowBox.z > 1.0) {
     vec2 q = xz - uFarOrigin.xz + uSunDir.xz * (uFarCloudBase / max(uSunDir.y, 0.05));

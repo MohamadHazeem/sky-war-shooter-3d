@@ -69,7 +69,12 @@ export class SkyDome {
             else g = alb * light;
             // 7 km of air: strong blue haze, heavier toward the horizon
             float haze = 1.0 - exp(-t / max(uGroundHaze * uHaze, 1.0));
-            col = mix(g + uHorizon * 0.22, col, haze);
+            // Desaturated blue-grey air between the camera and the countryside;
+            // preserve the low-level ground match, with stronger veiling at cruise.
+            float veil = (1.0 - exp(-t / 18500.0)) * smoothstep(800.0, 6500.0, uCamAlt);
+            vec3 air = mix(uHorizon, vec3(dot(uHorizon, vec3(0.2126, 0.7152, 0.0722))), 0.62) * vec3(0.82, 0.89, 1.0);
+            g = mix(g, air * 0.38, veil * 0.5);
+            col = mix(g + uHorizon * mix(0.22, 0.18, smoothstep(800.0, 6500.0, uCamAlt)), col, haze);
           }
           // Faint cirrus above the horizon, fading toward the horizon and the zenith. Skipped
           // when the camera is already above the layer (it would sit behind the viewer).

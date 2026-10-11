@@ -1,1 +1,95 @@
-{"id":12,"result":{"targetScan":{"ldr":{"black":0,"white":0,"blackClusters":[],"whiteClusters":[]},"hdr":{"nan":0,"hot":0,"neg":0,"nanBox":null,"hotBox":null}},"rows":[{"detail":0,"avg":5.75,"p50":5.3,"p95":7.4,"max":8.5,"calls":1,"tris":1,"programs":78,"w":2055,"h":1118},{"detail":2,"avg":5.94,"p50":5.7,"p95":7.3,"max":8.7,"calls":1,"tris":1,"programs":78,"w":2055,"h":1118},{"detail":2,"avg":6,"p50":5.9,"p95":7.4,"max":7.7,"calls":1,"tris":1,"programs":78,"w":2055,"h":1118},{"detail":0,"avg":5.55,"p50":5.1,"p95":7.1,"max":7.3,"calls":1,"tris":1,"programs":78,"w":2055,"h":1118}],"time":225.03333333340456,"clock":105.01666666674342,"errors":[]}}
+{
+  "revision": true,
+  "scan": {
+    "ldr": {
+      "black": 0,
+      "white": 0,
+      "blackClusters": [],
+      "whiteClusters": []
+    },
+    "hdr": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    }
+  },
+  "rows": [
+    {
+      "detail": 0,
+      "avg": 4.16,
+      "p50": 4.2,
+      "p95": 4.4,
+      "max": 4.6,
+      "calls": 1,
+      "tris": 1,
+      "programs": 78,
+      "w": 2055,
+      "h": 1118
+    },
+    {
+      "detail": 2,
+      "avg": 4.28,
+      "p50": 4.3,
+      "p95": 4.6,
+      "max": 4.8,
+      "calls": 1,
+      "tris": 1,
+      "programs": 78,
+      "w": 2055,
+      "h": 1118
+    },
+    {
+      "detail": 2,
+      "avg": 4.27,
+      "p50": 4.2,
+      "p95": 4.6,
+      "max": 4.8,
+      "calls": 1,
+      "tris": 1,
+      "programs": 78,
+      "w": 2055,
+      "h": 1118
+    },
+    {
+      "detail": 0,
+      "avg": 4.13,
+      "p50": 4.1,
+      "p95": 4.4,
+      "max": 4.8,
+      "calls": 1,
+      "tris": 1,
+      "programs": 78,
+      "w": 2055,
+      "h": 1118
+    },
+    {
+      "detail": 0,
+      "avg": 4.13,
+      "p50": 4.1,
+      "p95": 4.4,
+      "max": 4.5,
+      "calls": 1,
+      "tris": 1,
+      "programs": 78,
+      "w": 2055,
+      "h": 1118
+    },
+    {
+      "detail": 2,
+      "avg": 4.26,
+      "p50": 4.2,
+      "p95": 4.6,
+      "max": 4.9,
+      "calls": 1,
+      "tris": 1,
+      "programs": 78,
+      "w": 2055,
+      "h": 1118
+    }
+  ],
+  "time": 225.03333333340456,
+  "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+  "errors": []
+}
