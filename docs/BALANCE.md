@@ -302,3 +302,31 @@ is unchanged (it is in the voiced briefing). No new player-visible strings.
 * **m12 human level:** re-measure with more runs; the target is 15–25 % failures.
 * **Night Fighter:** more runs needed for the human-level target (25–35 % failures). If it is still too easy:
   `SPOT_NEAR` 1200 -> 1000 m, or a shorter cone hold in `Searchlights`.
+
+## Validation of goal 34 (more runs)
+
+Same harness, a frozen development build of this branch (preview on port 4179, the `SPOT_NEAR` variant on 4180;
+the sink on 4176), Veteran, aim assist high. Raw runs: `docs/balance/results-2026-10-11-val35.jsonl` (tag `val35` =
+the goal-34 code as committed; `val35-near1000` = the night variant below).
+
+| Mission | Bot | Fail | Mission time | Detail | Failures | Target |
+|---|---|---|---|---|---|---|
+| m12 | human | 1/8 (13 %) | 12:59 | boss 6:03 (median 5:38, 4:20–10:17), wounds 1.5, min hp 0.53 (lowest 0.24) | tail shot away in round 3 (before the boss) | 15–25 %, boss 5–7 min |
+| m12 | bot | 1/3 (33 %) | 9:48 | boss 3:36 (2:50–4:21), wounds 2.0, min hp 0.62 | wounded out in round 2 (4 wounds, before the boss) | - |
+| night | human | 4/18 (22 %) | 7:14 | through 2.7 (0–7), kills 14 | 5–6 bombers through | 25–35 % |
+| night | bot | 1/9 (11 %) | 7:26 | through 2.8 (1–5), kills 14 | 5 bombers through | ≤ 10 % |
+| night, `SPOT_NEAR` 1000 | human | 2/9 (22 %) | 7:07 | through 3.0 (0–7), kills 13 | 5–7 bombers through | 25–35 % |
+| night, `SPOT_NEAR` 1000 | bot | 1/5 (20 %) | 6:50 | through 3.2 (1–5), kills 10 | 5 bombers through | ≤ 10 % |
+
+* **m12:** with 8 human-level runs (1/10 with the two `fix34` runs) the failure rate is just under the 15–25 % band,
+  and the boss takes 6 min on average (median 5:38), inside 5–7 min. Several wins were close (min hp 0.24, 0.40),
+  and both failures here came before the boss (the tail in round 3, wounds in round 2), so the boss is no longer the
+  wall it was (6/12 failures before goal 34). Not changed: one more failure in 8 would put it in the band, and the
+  sample cannot tell 13 % from 20 %.
+* **Night Fighter:** with 18 human-level runs it fails 22 % (pooled with `fix34`: 4/21, 19 %), just under 25–35 %;
+  the bot fails 11 % (pooled 1/12, 8 %), at its ≤ 10 % cap. The documented knob, `SPOT_NEAR` 1200 -> 1000 m, did not
+  separate the two: the human level stayed at 22 % (2/9) and the bot went to 20 % (1/5), because the scripted pilot
+  obeys the same visibility rule. Reverted; `SPOT_NEAR` stays 1200 m. A shorter cone hold would hit both the same way.
+* **No balance numbers changed.** Only a comment in `RaidDefence.ts` was fixed (the AA bursts comment had slipped
+  onto the `SPOT_FLASH` line).
+* Next, if wanted: human playtests on m12 and the night; the bot data no longer argues for a change on either.
