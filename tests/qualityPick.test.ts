@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deviceTiers, frameStats, MIN_FRAMES, pickQuality, pickTargetMs, type FrameStats } from '../src/render/QualityPick';
+import { deviceTiers, frameStats, MIN_FRAMES, MENU_TO_MISSION, PICK_SCALE, PIXEL_SHARE, needsRecoveryProbe, pickQuality, pickTargetMs, type FrameStats } from '../src/render/QualityPick';
 import { drsAbsorb } from '../src/render/FrameTiming';
 
 // steady frames around a median (p90 a little above it)
@@ -37,34 +37,57 @@ describe('graphics preset pick', () => {
   });
 
   it('a mid-range machine keeps high without trying ultra', () => {
-    for (const ms of [12, 16, 20]) expect(pickQuality({ tier: 'high', stats: st(ms), refreshHz: 60 })).toEqual({ quality: 'high', tryUpper: false });
+    for (const ms of [12, 14, 16]) expect(pickQuality({ tier: 'high', stats: st(ms), refreshHz: 60 })).toEqual({ quality: 'high', tryUpper: false });
   });
 
   it('over budget drops to medium, badly over to low', () => {
-    expect(pickQuality({ tier: 'high', stats: st(28), refreshHz: 60 }).quality).toBe('medium');
-    expect(pickQuality({ tier: 'high', stats: st(36), refreshHz: 60 }).quality).toBe('medium');
+    expect(pickQuality({ tier: 'high', stats: st(17.3), refreshHz: 60 }).quality).toBe('medium');
+    expect(pickQuality({ tier: 'high', stats: st(17.45), refreshHz: 60 }).quality).toBe('medium');
     expect(pickQuality({ tier: 'high', stats: st(50), refreshHz: 60 }).quality).toBe('low');
     expect(pickQuality({ tier: 'high', stats: st(120), refreshHz: 60 }).quality).toBe('low');
   });
 
   it('frequent spikes count even when the median looks fine', () => {
-    expect(pickQuality({ tier: 'high', stats: st(14, 45), refreshHz: 60 }).quality).toBe('medium');
+    expect(pickQuality({ tier: 'high', stats: st(14, 22.5), refreshHz: 60 }).quality).toBe('medium');
     // a fast median with spiky frames doesn't earn an ultra try
-    expect(pickQuality({ tier: 'high', stats: st(6, 16), refreshHz: 60 }).tryUpper).toBe(false);
+    expect(pickQuality({ tier: 'high', stats: st(6, 24), refreshHz: 60 }).tryUpper).toBe(false);
   });
 
   it('a high-refresh display plans for 60 fps, a 50 Hz one for 50', () => {
     expect(pickQuality({ tier: 'high', stats: st(15), refreshHz: 144 }).quality).toBe('high');
-    // 24 ms: medium at 60 Hz, still high on a 50 Hz display (20 ms period)
-    expect(pickQuality({ tier: 'high', stats: st(24.5), refreshHz: 60 }).quality).toBe('medium');
-    expect(pickQuality({ tier: 'high', stats: st(24.5), refreshHz: 50 }).quality).toBe('high');
+    // 17.3 ms: medium at 60 Hz, still high on a 50 Hz display (20 ms period)
+    expect(pickQuality({ tier: 'high', stats: st(17.3), refreshHz: 60 }).quality).toBe('medium');
+    expect(pickQuality({ tier: 'high', stats: st(17.3), refreshHz: 50 }).quality).toBe('high');
   });
 
   it('the hold limit is what dynamic resolution can absorb', () => {
-    const limit = pickTargetMs(60) * 1.14 * drsAbsorb(0.8);
-    const justIn = limit / 1.1 - 0.05, justOut = limit / 1.1 + 0.05;
+    const limit = pickTargetMs(60) * 1.14 * drsAbsorb(PICK_SCALE, PIXEL_SHARE.high);
+    const justIn = limit / MENU_TO_MISSION - 0.05, justOut = limit / MENU_TO_MISSION + 0.05;
     expect(pickQuality({ tier: 'high', stats: st(justIn, justIn), refreshHz: 60 }).quality).toBe('high');
     expect(pickQuality({ tier: 'high', stats: st(justOut, justOut), refreshHz: 60 }).quality).toBe('medium');
+  });
+
+  it('uses measured recovery before dropping a tier, even when the model predicts a drop', () => {
+    expect(needsRecoveryProbe(st(24), 60)).toBe(true);
+    expect(needsRecoveryProbe(st(8), 60)).toBe(false);
+    expect(pickQuality({ tier: 'high', stats: st(24), refreshHz: 60, recovered: st(14) }).quality).toBe('high');
+    // CPU-bound: fewer pixels do not save it, even when the optimistic estimate would hold.
+    expect(pickQuality({ tier: 'high', stats: st(17), refreshHz: 60, recovered: st(17) }).quality).toBe('medium');
+    expect(pickQuality({ tier: 'high', stats: st(24), refreshHz: 60, recovered: st(4, 5, 2) }).quality).toBe('low');
+  });
+
+  it('checks exact hold boundaries for every tier and refresh rate', () => {
+    for (const tier of ['medium', 'high', 'ultra'] as const) for (const hz of [50, 60, 144]) {
+      const limit = pickTargetMs(hz) * 1.14 * drsAbsorb(PICK_SCALE, PIXEL_SHARE[tier]) / MENU_TO_MISSION;
+      expect(pickQuality({ tier, stats: st(limit - 0.01), refreshHz: hz }).quality).toBe(tier);
+      expect(pickQuality({ tier, stats: st(limit + 0.01), refreshHz: hz }).quality).not.toBe(tier);
+    }
+  });
+
+  it('ignores malformed percentiles and scales costs when capped below the measured tier', () => {
+    expect(pickQuality({ tier: 'high', stats: st(2, Infinity), refreshHz: 60 }).tryUpper).toBe(false);
+    expect(pickQuality({ tier: 'high', stats: st(2), upper: st(2, NaN), refreshHz: 60 }).quality).toBe('high');
+    expect(pickQuality({ tier: 'ultra', stats: st(22), refreshHz: 60, cap: 'medium' }).quality).toBe('medium');
   });
 
   it('respects the device cap', () => {

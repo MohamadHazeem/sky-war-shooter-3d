@@ -1,0 +1,620 @@
+{
+  "environment": {
+    "cpu": "Apple M5 Pro",
+    "browser": "Headless Google Chrome, ANGLE Metal",
+    "viewport": [
+      1440,
+      900
+    ],
+    "deviceScaleFactor": 2,
+    "cpuThrottle": 4,
+    "sync": "1-pixel WebGL readPixels after each frame",
+    "note": "Visual QA uses CPU throttle 1; detect8 uses 8. Timings in milliseconds."
+  },
+  "before": {
+    "low": {
+      "avg": 10.74,
+      "p50": 10.6,
+      "p95": 13.2,
+      "max": 14.9,
+      "calls": 1,
+      "tris": 1,
+      "programs": 53,
+      "w": 1200,
+      "h": 750
+    },
+    "medium": {
+      "avg": 11.95,
+      "p50": 11.8,
+      "p95": 14,
+      "max": 14.4,
+      "calls": 1,
+      "tris": 1,
+      "programs": 61,
+      "w": 1549,
+      "h": 968
+    },
+    "high": {
+      "avg": 14.46,
+      "p50": 14.5,
+      "p95": 17.4,
+      "max": 18,
+      "calls": 1,
+      "tris": 1,
+      "programs": 62,
+      "w": 1918,
+      "h": 1198
+    },
+    "ultra": {
+      "avg": 20.14,
+      "p50": 19.9,
+      "p95": 22.9,
+      "max": 38.8,
+      "calls": 1,
+      "tris": 1,
+      "programs": 62,
+      "w": 2433,
+      "h": 1520
+    }
+  },
+  "model": {
+    "low": {
+      "1": {
+        "p50": 8.6,
+        "p90": 9.7,
+        "n": 60
+      },
+      "0.8": {
+        "p50": 8.3,
+        "p90": 8.9,
+        "n": 60
+      },
+      "0.55": {
+        "p50": 8.2,
+        "p90": 9.1,
+        "n": 60
+      }
+    },
+    "medium": {
+      "1": {
+        "p50": 9.8,
+        "p90": 12.6,
+        "n": 60
+      },
+      "0.8": {
+        "p50": 8.8,
+        "p90": 12,
+        "n": 60
+      },
+      "0.55": {
+        "p50": 8.8,
+        "p90": 12,
+        "n": 60
+      }
+    },
+    "high": {
+      "1": {
+        "p50": 13.2,
+        "p90": 15.1,
+        "n": 60
+      },
+      "0.8": {
+        "p50": 11.8,
+        "p90": 13.6,
+        "n": 60
+      },
+      "0.55": {
+        "p50": 9.6,
+        "p90": 12.9,
+        "n": 60
+      }
+    },
+    "ultra": {
+      "1": {
+        "p50": 17.3,
+        "p90": 18.9,
+        "n": 60
+      },
+      "0.8": {
+        "p50": 15.6,
+        "p90": 17,
+        "n": 60
+      },
+      "0.55": {
+        "p50": 13.3,
+        "p90": 14.9,
+        "n": 60
+      }
+    }
+  },
+  "full": {
+    "menu": {
+      "low": {
+        "p50": 9,
+        "p90": 11.1,
+        "n": 72,
+        "width": 1200,
+        "height": 750,
+        "programs": 52
+      },
+      "medium": {
+        "p50": 13.9,
+        "p90": 16.1,
+        "n": 72,
+        "width": 1549,
+        "height": 968,
+        "programs": 52
+      },
+      "high": {
+        "p50": 14.6,
+        "p90": 15.9,
+        "n": 72,
+        "width": 1918,
+        "height": 1198,
+        "programs": 52
+      },
+      "ultra": {
+        "p50": 18.5,
+        "p90": 20.7,
+        "n": 72,
+        "width": 2433,
+        "height": 1520,
+        "programs": 52
+      }
+    },
+    "waist": {
+      "low": {
+        "p50": 12.5,
+        "p90": 14.9,
+        "n": 72,
+        "width": 1200,
+        "height": 750,
+        "programs": 73
+      },
+      "medium": {
+        "p50": 16.6,
+        "p90": 18.1,
+        "n": 72,
+        "width": 1549,
+        "height": 968,
+        "programs": 74
+      },
+      "high": {
+        "p50": 17.6,
+        "p90": 20.5,
+        "n": 72,
+        "width": 1918,
+        "height": 1198,
+        "programs": 75
+      },
+      "ultra": {
+        "p50": 22.9,
+        "p90": 29.8,
+        "n": 72,
+        "width": 2433,
+        "height": 1520,
+        "programs": 74
+      }
+    }
+  },
+  "features": {
+    "baseline": {
+      "p50": 15.4,
+      "p90": 16.5,
+      "n": 72,
+      "width": 1918,
+      "height": 1198,
+      "programs": 80
+    },
+    "noCloudMarch": {
+      "p50": 12.9,
+      "p90": 15.7,
+      "n": 72,
+      "width": 1918,
+      "height": 1198,
+      "programs": 80
+    },
+    "noShadows": {
+      "p50": 14.3,
+      "p90": 15.6,
+      "n": 72,
+      "width": 1918,
+      "height": 1198,
+      "programs": 90
+    },
+    "noPost": {
+      "p50": 13.8,
+      "p90": 15.5,
+      "n": 72,
+      "width": 1918,
+      "height": 1198,
+      "programs": 90
+    },
+    "noSurface": {
+      "p50": 15,
+      "p90": 16.4,
+      "n": 72,
+      "width": 1918,
+      "height": 1198,
+      "programs": 91
+    },
+    "noLivingSky": {
+      "p50": 14.9,
+      "p90": 16.3,
+      "n": 72,
+      "width": 1918,
+      "height": 1198,
+      "programs": 91
+    },
+    "baselineAgain": {
+      "p50": 14.7,
+      "p90": 16.6,
+      "n": 72,
+      "width": 1918,
+      "height": 1198,
+      "programs": 91
+    },
+    "explosion": {
+      "p50": 16.2,
+      "p90": 17.4,
+      "n": 72,
+      "width": 1918,
+      "height": 1198,
+      "programs": 91
+    },
+    "noExplosion": {
+      "p50": 15.2,
+      "p90": 16.6,
+      "n": 72,
+      "width": 1918,
+      "height": 1198,
+      "programs": 91
+    },
+    "simpleExplosion": {
+      "p50": 15.3,
+      "p90": 18.8,
+      "n": 72,
+      "width": 1918,
+      "height": 1198,
+      "programs": 91
+    }
+  },
+  "country": {
+    "low": {
+      "on": {
+        "p50": 7.9,
+        "p90": 9,
+        "n": 72,
+        "width": 1200,
+        "height": 750,
+        "programs": 90
+      },
+      "off": {
+        "p50": 6.7,
+        "p90": 8.1,
+        "n": 72,
+        "width": 1200,
+        "height": 750,
+        "programs": 90
+      },
+      "stats": {
+        "trees": 3431,
+        "poplars": 430,
+        "houses": 173,
+        "ms": 309
+      }
+    },
+    "medium": {
+      "on": {
+        "p50": 8.5,
+        "p90": 9.8,
+        "n": 72,
+        "width": 1549,
+        "height": 968,
+        "programs": 93
+      },
+      "off": {
+        "p50": 8.5,
+        "p90": 9.2,
+        "n": 72,
+        "width": 1549,
+        "height": 968,
+        "programs": 93
+      },
+      "stats": {
+        "trees": 5910,
+        "poplars": 727,
+        "houses": 173,
+        "ms": 333
+      }
+    },
+    "high": {
+      "on": {
+        "p50": 12.6,
+        "p90": 14.1,
+        "n": 72,
+        "width": 1918,
+        "height": 1198,
+        "programs": 93
+      },
+      "off": {
+        "p50": 9.9,
+        "p90": 12.2,
+        "n": 72,
+        "width": 1918,
+        "height": 1198,
+        "programs": 93
+      },
+      "stats": {
+        "trees": 8941,
+        "poplars": 888,
+        "houses": 173,
+        "ms": 325
+      }
+    },
+    "ultra": {
+      "on": {
+        "p50": 17.2,
+        "p90": 19.3,
+        "n": 72,
+        "width": 2433,
+        "height": 1520,
+        "programs": 93
+      },
+      "off": {
+        "p50": 15.6,
+        "p90": 17.7,
+        "n": 72,
+        "width": 2433,
+        "height": 1520,
+        "programs": 93
+      },
+      "stats": {
+        "trees": 8941,
+        "poplars": 888,
+        "houses": 173,
+        "ms": 314
+      }
+    }
+  },
+  "detect4": {
+    "quality": "low",
+    "from": "low",
+    "start": {
+      "p50": 21.8,
+      "p90": 25.2,
+      "n": 64
+    },
+    "recovered": {
+      "p50": 21.2,
+      "p90": 23.7,
+      "n": 43
+    },
+    "scale": 1,
+    "refreshHz": 60
+  },
+  "detect8": {
+    "quality": "low",
+    "from": "low",
+    "start": {
+      "p50": 37.3,
+      "p90": 42.5,
+      "n": 38
+    },
+    "recovered": {
+      "p50": 38.6,
+      "p90": 50.9,
+      "n": 22
+    },
+    "scale": 1,
+    "refreshHz": 60
+  },
+  "qa": {
+    "scans": {
+      "medium-clouds": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "clear-waistL": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "clear-waistR": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "clear-top": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "clear-ball": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "clear-tail": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "night-waistL": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "night-waistR": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "night-top": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "night-ball": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "night-tail": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "low-explosion": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      "low-countryside": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    },
+    "programs": {
+      "before": 82,
+      "after": 82
+    },
+    "hud": {
+      "sceneWidth": 660,
+      "hudWidth": 2880,
+      "cssWidth": 1440
+    }
+  }
+}

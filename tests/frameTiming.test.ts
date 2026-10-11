@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { drsFloor, drsTargetMs, fasterRefreshFrom, refreshFromTimestamps, snapRefreshHz } from '../src/render/FrameTiming';
-import { lowerQuality, QUALITY, QUALITY_ORDER } from '../src/core/Engine';
+import { drsFloor, drsTargetMs, qualityFallbackReady, fasterRefreshFrom, refreshFromTimestamps, snapRefreshHz } from '../src/render/FrameTiming';
+import { Engine, lowerQuality, QUALITY, QUALITY_ORDER } from '../src/core/Engine';
 
 const stamps = (periodMs: number, n: number, jitter = 0.3) => {
   const ts: number[] = [];
@@ -51,7 +51,45 @@ describe('dynamic resolution target', () => {
   });
 });
 
+describe('dynamic resolution recovery', () => {
+  it('reduces pixel load to recover frame time without requiring a tier drop', () => {
+    // Exercise the actual controller without constructing a WebGL context.
+    const engine = Object.assign(Object.create(Engine.prototype), {
+      refreshHz: 60, hiGiveUp: false, hiMiss: 0, renderScale: 1, ftEma: 1 / 60,
+      drsT: 0, drsHold: 0, drsUp: 0, drsCeil: 1, drsCeilT: 0,
+      lastRaiseAt: -99, time: 0, intervals: [], pendingHz: null, resize: () => {},
+    });
+    for (let i = 0; i < 1200; i++) {
+      const dt = (8 + 18 * engine.renderScale ** 2) / 1000;
+      engine.time += dt;
+      engine.dynamicResolution(dt);
+    }
+    expect(engine.renderScale).toBeLessThan(1);
+    expect(engine.renderScale).toBeGreaterThan(0.55);
+    expect(engine.ftEma * 1000).toBeLessThan(19);
+    expect(qualityFallbackReady(1000 / (engine.ftEma * 1000), engine.renderScale, engine.targetMs)).toBe(false);
+  });
+});
+
+describe('last-resort tier fallback', () => {
+  it('waits for DRS and high-refresh recovery before dropping a tier', () => {
+    expect(qualityFallbackReady(30, 0.8, 1000 / 60)).toBe(false);
+    expect(qualityFallbackReady(30, 0.72, 1000 / 120)).toBe(false);
+    expect(qualityFallbackReady(30, 0.55, 1000 / 120)).toBe(false);
+    expect(qualityFallbackReady(30, 0.55, 1000 / 60)).toBe(true);
+    expect(qualityFallbackReady(60, 0.55, 1000 / 60)).toBe(false);
+  });
+});
+
 describe('quality presets', () => {
+  it('keeps hull-occluding shadows and volumetric clouds on Low', () => {
+    expect(QUALITY.low.shadows).toBe(1024);
+    expect(QUALITY.low.shadowRange / QUALITY.low.shadows).toBeLessThanOrEqual(QUALITY.medium.shadowRange / QUALITY.medium.shadows);
+    expect(QUALITY.low.cloudSteps).toBeGreaterThanOrEqual(32);
+    expect(QUALITY.low.cloudTemporal).toBe(false);
+    expect(QUALITY.low.haze).toBe(false);
+    expect(QUALITY.medium.msaa).toBeGreaterThan(QUALITY.low.msaa);
+  });
   it('orders the tiers and steps down one at a time', () => {
     expect(QUALITY_ORDER).toEqual(['low', 'medium', 'high', 'ultra']);
     expect(lowerQuality('ultra')).toBe('high');

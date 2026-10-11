@@ -41,6 +41,7 @@ import { mountStatsToggle } from '../net/Analytics';
 import { showCampaignMap, prepareCampaignMission, isSideRaid } from '../ui/CampaignMap';
 import '../ui/CustomBattleScreen'; // registers the Custom Battle and Weekly Challenge modes + their Survival-screen tabs
 import { CoopSession } from './CoopSession';
+import { qualityFallbackReady } from '../render/FrameTiming';
 import { syncSurfaceDetail } from '../render/SurfaceDetail';
 import { Director } from './Director';
 import { MissionFlow } from './MissionFlow';
@@ -423,6 +424,7 @@ export class Game {
   // ---------------- Frame ----------------
   private frame(dt: number) {
     const w = this.world;
+    this.world.effects.vol.setQuality(this.engine.quality === 'low');
     syncSurfaceDetail(this.engine.quality);   // follows auto-quality drops (no-op unless the tier changed)
     const playing = !this.menuMode && (this.state === 'playing' || this.state === 'ending');
     this.input.active = playing;
@@ -524,11 +526,11 @@ export class Game {
   }
 
   // Step graphics quality down (this session only, never saved) if the machine really
-  // can't keep up: sustained <28 fps for 10 s of visible gameplay.
+  // can't keep up: sustained <40 fps for 10 s of visible gameplay.
   private autoQuality(dt: number) {
     if (this.autoQualityDone || dt <= 0 || this.state !== 'playing' || document.hidden) return;
     // dynamic resolution handles most of it; drop the quality tier only when that is not enough
-    if (this.engine.fps < 40 && this.engine.renderScale <= 0.56) this.slowFrames += dt; else this.slowFrames = Math.max(0, this.slowFrames - dt);
+    if (qualityFallbackReady(this.engine.fps, this.engine.renderScale, this.engine.targetMs)) this.slowFrames += dt; else this.slowFrames = Math.max(0, this.slowFrames - dt);
     if (this.slowFrames > 10 && this.engine.quality !== 'low') {
       const q = lowerQuality(this.engine.quality);
       this.engine.setQuality(q);

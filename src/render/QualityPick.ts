@@ -19,10 +19,13 @@ export function frameStats(ms: number[]): FrameStats {
 
 // Fewer timed frames than this and the pick keeps the tier it measured
 export const MIN_FRAMES = 12;
-// One tier down costs about this share of the frame (pixel budget, MSAA, cloud steps, AO, shadows)
-export const TIER_STEP_COST = 0.6;
+// Rounded costs relative to High: throttled menu measurements, checked in the gunner view.
+// Medium keeps the shadow submission cost; it is much closer to High than a 0.6 step.
+// See docs/phase6/reports/02.md for the measured model and its limitations.
+export const TIER_COST: Record<Tier, number> = { low: 0.7, medium: 0.8, high: 1, ultra: 1.35 };
+export const PIXEL_SHARE: Record<Tier, number> = { low: 0.1, medium: 0.2, high: 0.4, ultra: 0.35 };
 // Missions draw more than the menu (cockpit, more fighters, effects): menu frames are scaled up
-export const MENU_TO_MISSION = 1.1;
+export const MENU_TO_MISSION = 1.3;
 // A tier holds while dynamic resolution can keep it on time at this render scale or above
 export const PICK_SCALE = 0.8;
 // Spikes count too: a p90 this many times the median is normal frame-to-frame noise
@@ -40,30 +43,38 @@ export interface PickInput {
   stats: FrameStats;
   refreshHz: number;
   cap?: Tier;            // highest preset this device may get (touch phones: medium)
+  recovered?: FrameStats; // same tier measured at PICK_SCALE: test DRS before downgrading
   upper?: FrameStats;    // frames measured at the tier above, after a { tryUpper } answer
 }
 export interface Pick { quality: Tier; tryUpper: boolean }
 
-export function pickQuality({ tier, stats, refreshHz, cap = 'ultra', upper }: PickInput): Pick {
+const valid = (s: FrameStats) => s.n >= MIN_FRAMES && Number.isFinite(s.p50)
+  && Number.isFinite(s.p90) && s.p50 >= 0 && s.p90 >= s.p50;
+
+export const needsRecoveryProbe = (stats: FrameStats, refreshHz: number) =>
+  valid(stats) && load(stats) > pickTargetMs(refreshHz) * DRS_SLOW;
+
+export function pickQuality({ tier, stats, refreshHz, cap = 'ultra', upper, recovered }: PickInput): Pick {
   const T = pickTargetMs(refreshHz);
-  const top = Math.min(idx(cap), TIERS.length - 1);
-  let i = Math.min(idx(tier), top);
-  if (stats.n < MIN_FRAMES || !Number.isFinite(stats.p50)) return { quality: TIERS[i], tryUpper: false };
+  const top = idx(cap), measured = idx(tier);
+  let i = Math.min(measured, top);
+  if (!valid(stats)) return { quality: TIERS[i], tryUpper: false };
   const l = load(stats);
-  if (i < top) {
-    // the tier above was tried: keep it if it runs at full resolution (no point in a richer
-    // preset that dynamic resolution then has to blur)
+  if (i === measured && i < top) {
     if (upper) {
-      if (upper.n >= MIN_FRAMES && load(upper) <= T * DRS_FAST) return { quality: TIERS[i + 1], tryUpper: false };
-    } else if (l / TIER_STEP_COST <= T * DRS_FAST) {
-      // comfortably under budget: the next tier up would still be on time at full resolution
+      if (valid(upper) && load(upper) <= T * DRS_FAST) return { quality: TIERS[i + 1], tryUpper: false };
+    } else if (l * TIER_COST[TIERS[i + 1]] / TIER_COST[tier] <= T * DRS_FAST) {
       return { quality: TIERS[i], tryUpper: true };
     }
   }
-  // over budget: step down until dynamic resolution can carry the rest
-  const limit = T * DRS_SLOW * drsAbsorb(PICK_SCALE);
-  let cost = l;
-  while (i > 0 && cost > limit) { i--; cost *= TIER_STEP_COST; }
+  // The actual reduced-resolution sample wins over the model for the measured tier.
+  // Other tiers retain their own fixed/pixel split, including when a cap lowers the start.
+  for (; i > 0; i--) {
+    const candidate = TIERS[i];
+    const cost = i === measured && recovered && valid(recovered) ? load(recovered)
+      : l * TIER_COST[candidate] / TIER_COST[tier] / drsAbsorb(PICK_SCALE, PIXEL_SHARE[candidate]);
+    if (cost <= T * DRS_SLOW) break;
+  }
   return { quality: TIERS[i], tryUpper: false };
 }
 
