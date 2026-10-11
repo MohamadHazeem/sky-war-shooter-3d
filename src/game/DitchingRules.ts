@@ -13,7 +13,8 @@ export interface DitchState {
 export function shouldDitch(s: DitchState): boolean {
   if (!s.campaign || !s.gunner || s.coop || !s.controllable) return false;
   // Two engines alone still permit a belly landing when close to England.
-  const beyondLanding = s.enginesOut >= 3 || s.integrity < 0.22 || (s.leaking && s.enginesOut >= 2);
+  // (a ship that started on two engines needs a third one gone before a leak forces it down)
+  const beyondLanding = s.enginesOut >= 3 || s.integrity < 0.22 || (s.leaking && s.enginesOut >= Math.max(2, (s.initialEnginesOut ?? 0) + 1));
   // Last Light starts on two engines: its authored handicap alone must not force failure.
   // Integrity counts only once it has fallen well below where the mission started.
   const deteriorated = s.enginesOut > (s.initialEnginesOut ?? 0) || s.integrity < Math.min(0.5, (s.initialIntegrity ?? 1) - 0.15) || s.leaking;
