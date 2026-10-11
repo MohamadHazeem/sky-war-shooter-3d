@@ -7,9 +7,9 @@ import type { Fighter } from './Aircraft';
 // fights with the AI escorts and every bomber attack stay in AI.ts).
 //
 // Each enemy type flies its own way:
-//   Fw 190  boom-and-zoom: dives in, takes a slashing shot, zooms back up; won't stay in a turn
+//   Fw 190  rolling reversals and short energy climbs; occasionally zooms out of a hard turn
 //   Bf 109  turn fighter: hangs in the turn, breaks into you, reverses into scissors
-//   Me 262 / Me 163  slashers: a high-speed pass, extend far away, wide turn back, again
+//   Me 262 / Me 163  slashers: a high-speed pass, short extension, wide turn back, again
 //   Bf 110 / Ju 88 / Me 410 / He 111  heavies: lumbering, mild defensive turns that give the rear gunner a shot
 //   Do 335  boom-and-zoom like the Fw 190 (fast, heavy in the turn)
 // Shared moves: break turn when the Mustang is on its six (a warning call goes out), defensive
@@ -28,14 +28,14 @@ export interface StyleDef {
   turnTime: number;    // s of hard turning before going vertical / extending (Infinity = stays in it)
   fireRange: number;   // m: opens fire inside this
   extendTo: number;    // m of separation before coming back round
-  engageTime: number;  // s before giving up on the Mustang and going back to the bombers
+  engageTime: number;  // minimum s engaged before returning to bombers after losing contact
   detect: number;      // chance per decision (x skill) to notice a bandit closing on his six
 }
 
 export const STYLES: Record<DogfightStyle, StyleDef> = {
-  boomzoom: { pull: 0.95, turnTime: 5, fireRange: 620, extendTo: 1500, engageTime: 60, detect: 0.5 },
+  boomzoom: { pull: 0.95, turnTime: 8, fireRange: 620, extendTo: 750, engageTime: 60, detect: 0.5 },
   turner: { pull: 1.0, turnTime: Infinity, fireRange: 520, extendTo: 900, engageTime: 70, detect: 0.55 },
-  slasher: { pull: 0.75, turnTime: 2.5, fireRange: 720, extendTo: 2300, engageTime: 55, detect: 0.45 },
+  slasher: { pull: 0.75, turnTime: 2.5, fireRange: 720, extendTo: 1100, engageTime: 55, detect: 0.45 },
   heavy: { pull: 0.7, turnTime: 9, fireRange: 560, extendTo: 1100, engageTime: 35, detect: 0.35 },
 };
 
@@ -98,6 +98,7 @@ export class DogfightAI {
   private aim = new THREE.Vector3();
   private burstT = 0;           // > 0: firing burst left; < 0: pause before the next one
   private turnT = 0;            // time spent pulling hard (bleeding energy)
+  private lastContact = 0;     // s without a close fight or incoming fire
   private lastThreat = 99;      // s since the Mustang was last on his six
   private jink = 1;             // head-on: pull up (+1) or push under (-1)
   private engageFor: number;
@@ -139,7 +140,6 @@ export class DogfightAI {
     if (!me.alive || !t.alive) return false;
     this.timer += dt; this.modeT += dt; this.decideT -= dt; this.lastThreat += dt;
     if (!DEFENSIVE.has(this.mode)) this.breakCd = Math.max(0, this.breakCd - dt);
-    if (this.timer > this.engageFor && !this.defensive && !this.leader) return false;
     if (this.leader && !this.leader.me.alive) this.leader = null;
 
     // ---- geometry ----
@@ -154,9 +154,14 @@ export class DogfightAI {
     const behindHim = tf.dot(los);      // 1: I'm sitting on his six
     const lat = los.dot(right);         // + he is to my right
 
-    const threatened = dist < 1100 && threat > 0.82 && myAim < 0.25;
+    const threatened = dist < 1200 && threat > 0.82 && myAim < 0.25;
     leadPoint(me.pos, me.vel, t, 760, this.aim).add(this.aimErr);
     if (threatened) this.lastThreat = 0;
+    const underFire = dist < 1400 && t.trigger && threat > 0.97;
+    this.lastContact = dist < 900 || threatened || underFire ? 0 : this.lastContact + dt;
+    // Don't abandon a live turning fight when a lifetime timer expires. Once the
+    // Mustang leaves, resume the bomber mission rather than chase it indefinitely.
+    if (this.timer > this.engageFor && this.lastContact > 8 && !this.leader) return false;
 
     if (this.decideT <= 0) {
       this.decideT = this.reaction * (0.7 + Math.random() * 0.6);
@@ -219,8 +224,8 @@ export class DogfightAI {
         // climb back to an energy advantage, turning gently back toward the fight
         horiz(fwd, _h);
         const toT = horiz(rel, _a);
-        if (this.style === 'slasher') dir = _d.copy(_h).lerp(toT, 0.55).normalize().addScaledVector(UP, 0.12);
-        else dir = _d.copy(_h).lerp(toT, 0.3).normalize().addScaledVector(UP, 0.62);
+        if (this.style === 'slasher') dir = _d.copy(toT).addScaledVector(UP, 0.06);
+        else dir = _d.copy(_h).lerp(toT, 0.55).normalize().addScaledVector(UP, 0.4);
         gain = 1;
         break;
       }
@@ -279,7 +284,18 @@ export class DogfightAI {
       if (m === 'cover') return;
     }
 
-    if (threatened) {
+    // Bound the extension even when the Mustang is still following. Previously the
+    // threatened branch could skip the turn-back and keep opening the separation.
+    if (m === 'extend' && (dist > this.def.extendTo || this.modeT > (this.style === 'slasher' ? 5.5 : 3))) {
+      this.setMode('zoom'); return;
+    }
+
+    if ((m === 'break' && this.modeT > 4.5) || (m === 'spiral' && this.modeT > 4)) {
+      this.setMode(dist < 650 ? 'scissors' : 'pursue', dist < 650 ? 'scissors' : undefined); return;
+    }
+    if (m === 'scissors' && this.modeT > 6) { this.setMode('pursue'); return; }
+
+    if (threatened && m !== 'zoom' && m !== 'regain') {
       // low-skill pilots don't always see him coming: a free shot for the player
       const responding = DEFENSIVE.has(m) && !(m === 'extend' && dist < 450 && this.style !== 'slasher');
       // a bandit at long range or dead astern in the blind spot is easier to miss
@@ -287,21 +303,11 @@ export class DogfightAI {
       if (!responding && this.breakCd <= 0 && Math.random() < see + (m === 'headon' ? 0.5 : 0)) {
         this.side = Math.abs(lat) > 0.05 ? Math.sign(lat) : (Math.random() < 0.5 ? -1 : 1);
         if (this.style === 'slasher' && speed > 150) this.setMode('extend', 'extend');
-        else if (this.style === 'boomzoom' && speed > 175 && me.pos.y > 6600 && Math.random() < 0.6) this.setMode('extend', 'extend');
+        else if (this.style === 'boomzoom' && speed > 175 && me.pos.y > 6600 && Math.random() < 0.2) this.setMode('zoom', 'zoom');
+        else if (this.style !== 'heavy' && me.pos.y > 6900 && Math.random() < 0.2) this.setMode('spiral', 'spiral');
         else this.setMode('break', 'break');
         return;
       }
-      // still on him: tighten into a spiral (fighters), or reverse the weave (heavies, giving the gunner a shot)
-      if (m === 'break' && this.modeT > 4.5) {
-        if (this.style === 'heavy') { this.side = -this.side; this.modeT = 0; }
-        else if (me.pos.y > 6600 && this.style !== 'slasher') this.setMode('spiral', 'spiral');
-      }
-      if (m === 'spiral' && (me.pos.y < 6300 || this.modeT > 6)) {
-        if (this.style === 'boomzoom') this.setMode('extend');
-        else { this.side = -this.side; this.setMode('break'); }
-      }
-      // running doesn't shake him: turn and fight
-      if (m === 'extend' && this.modeT > (this.style === 'slasher' ? 10 : 6)) { this.side = Math.abs(lat) > 0.05 ? Math.sign(lat) : this.side; this.setMode('break'); }
       return;
     }
 
@@ -313,14 +319,13 @@ export class DogfightAI {
       return;
     }
     if ((m === 'break' || m === 'spiral') && this.lastThreat > 1.4) {
-      this.setMode(this.style === 'boomzoom' ? 'zoom' : this.style === 'slasher' ? 'extend' : 'pursue', this.style === 'boomzoom' ? 'zoom' : undefined);
+      this.setMode(this.style === 'slasher' ? 'extend' : 'pursue');
       return;
     }
-    if (m === 'scissors' && ((behindHim > 0.5 && myAim > 0.7) || this.modeT > 9)) {
-      this.setMode(this.modeT > 9 && this.style !== 'turner' ? 'extend' : 'pursue');
+    if (m === 'scissors' && behindHim > 0.5 && myAim > 0.7) {
+      this.setMode('pursue');
       return;
     }
-    if (m === 'extend' && this.lastThreat > 1 && (dist > this.def.extendTo || this.modeT > 8)) { this.setMode('zoom'); return; }
 
     // neutral, noses on each other: a head-on pass
     if (threat > 0.88 && myAim > 0.88 && dist < 1700 && m !== 'headon' && !DEFENSIVE.has(m)) {
@@ -329,17 +334,19 @@ export class DogfightAI {
       return;
     }
     if (m === 'headon') {
-      if ((myAim < 0 && dist > 140) || this.modeT > 9) this.setMode(this.style === 'boomzoom' ? 'zoom' : this.style === 'slasher' ? 'extend' : 'pursue');
+      if ((myAim < 0 && dist > 140) || this.modeT > 9) this.setMode(this.style === 'slasher' ? 'extend' : this.style === 'boomzoom' && speed > 170 && Math.random() < 0.3 ? 'zoom' : 'pursue');
       return;
     }
 
     // out of energy: unload to get speed back
     if (speed < 85 && m !== 'regain') { this.setMode('regain'); return; }
-    if (m === 'regain') { if (speed > 125) this.setMode(this.style === 'boomzoom' ? 'zoom' : 'pursue'); return; }
+    if (m === 'regain') { if (speed > 125 || this.modeT > 4) this.setMode('pursue'); return; }
 
     if (m === 'zoom') {
+      // Jets need time to complete their wider reversal, but steer directly back
+      // at the Mustang; a shallow chase turn just creates another long orbit.
       const above = me.pos.y - t.pos.y;
-      if ((above > 320 && this.modeT > 2) || speed < 125 || this.modeT > 9 || (this.style === 'slasher' && myAim > 0.7)) this.setMode('pursue');
+      if ((this.style !== 'slasher' && above > 320 && this.modeT > 2) || speed < 125 || this.modeT > (this.style === 'slasher' ? 16 : 4.5) || (this.style === 'slasher' && myAim > 0.7)) this.setMode('pursue');
       return;
     }
     if (m === 'engage') {
@@ -351,11 +358,11 @@ export class DogfightAI {
     if (m === 'pursue') {
       const solution = dist < this.def.fireRange && myAim > 0.97;
       if (this.style === 'boomzoom' && this.turnT > this.def.turnTime && !solution) { this.setMode('zoom', 'zoom'); return; }
-      if (this.style === 'heavy' && this.turnT > this.def.turnTime && !solution) { this.setMode('extend'); return; }
+      if (this.style === 'heavy' && this.turnT > this.def.turnTime && !solution) { this.setMode('regain'); return; }
       if (this.style === 'slasher' && this.modeT > 1.5 && (dist < 230 || (myAim < 0.4 && dist < 800) || this.turnT > this.def.turnTime)) { this.setMode('extend', 'extend'); return; }
       // a long turning fight wears a pilot down: he loses sight or unloads to get his speed
       // back for a moment, and the Mustang gets its shot (sooner against the less skilled)
-      if (this.turnT > 7 + 6 * this.skill && myAim < 0.9 && Math.random() < 0.35) { this.turnT = 0; this.setMode(speed < 140 ? 'regain' : 'extend'); return; }
+      if (this.turnT > 7 + 6 * this.skill && myAim < 0.9 && Math.random() < 0.35) { this.turnT = 0; this.setMode('regain'); return; }
     }
     if (m === 'cover') this.setMode('pursue');
   }
