@@ -16,10 +16,10 @@ Repo rules for Codex: `AGENTS.md`.
 | # | Goal | Status |
 |---|---|---|
 | 5 | Bombardier seat: the Norden bombsight on the bomb run, accuracy scores the mission | Done (Codex) — offered 30 s before release (N / Y / touch): stabilised magnified Norden view with course and rate cross-hairs over the real target, clouds and flak; release by sighting angle or by hand; deterministic impact pattern, % within 1,000 ft, strike photo in the debrief, score + career stat + achievement. Close-up city texture is blocky on Low (polish later) |
-| 6 | Ditching in the Channel: ditch a badly damaged Sky Queen, dinghy + air-sea rescue | Codex revising — 31 s ditching + RAF rescue launch works; impact spray (flat white discs) and uniform foam streaks sent back |
+| 6 | Ditching in the Channel: ditch a badly damaged Sky Queen, dinghy + air-sea rescue | Done (Codex, 1 revision) — 31 s skippable scene: grey Channel sea with irregular whitecaps, braced crew, spray-sheet impact with mist, foam ring and wake, settling bomber, two dinghies, flare, RAF rescue launch; mission still counts if bombs were dropped; Goldfish Club |
 | 7 | Second tour: endless generated campaign after mission 12 | Done (Codex) — "Volunteer for a second tour": 25 generated operations (targets, weather, fronts, alternating roles, jets/Sturmböcke later, battle group every 5th) then endless; Experten and strategy carry over; Second Tour Medal |
 | 8 | Crew that matters: assign crewmen to positions, skills change accuracy / repairs / spotting | Done (Codex) — five XP-growing stats + traits per man; assigned gunnery drives AI accuracy (rookie 44 % vs veteran 57 % hits), lookouts give earlier warnings, engineer repairs/fires, radio man first aid, pilots jinks/formation; hospital stays, rare deaths, memorial; recommended layout |
-| 9 | Squadron leaderboards: share a squadron code for a private board | Codex fixing — merged and rules deployed; live check found squadron creation denied, sent back with permission to deploy Firestore rules |
+| 9 | Squadron leaderboards: share a squadron code for a private board | Done (Codex, 1 live fix) — create/join/leave with codes, Global/Squadron tabs on every board, members\' bests, weekly rivalry, activity; rules live-verified (45 checks) |
 
 ## Tier C — graphics and immersion
 | # | Goal | Status |
@@ -38,3 +38,4 @@ Repo rules for Codex: `AGENTS.md`.
 - Goal 12 merged (457 tests).
 - Goals 8 and 5 merged (486 tests); goal 5 voice clips rendered by Claude (sandbox).
 - Goal 9 merged + rules deployed; live create failed → Codex fixing live. Goal 4 merged (524 tests); its rules change ships with the goal 9 fix.
+- Codex runs hung ~3 h waiting on stdin (launcher fixed with </dev/null). Goal 9 live fix and goal 6 revision merged (536 tests).
