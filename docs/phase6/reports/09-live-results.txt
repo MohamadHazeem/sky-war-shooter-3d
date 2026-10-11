@@ -1,0 +1,50 @@
+Test squadron 2PXYLQ; users ZeYWkr9j4wNCGRdmyjewhkp9UAD3, Iug1mi1EfwdOZhoD11wegiWMQnc2
+PASS register immutable callsigns
+PASS reject callsign change
+PASS reject extra profile fields
+PASS reject squadron creation without atomic membership
+PASS reject client timestamp in atomic create
+PASS reject string member count in atomic create
+PASS reject invitation code as public board id
+PASS create squadron with atomic membership/count
+PASS outsider cannot read private roster
+PASS outsider cannot read activity
+PASS outsider cannot list squads
+PASS outsider cannot forge squadron score
+PASS join second anonymous user
+PASS reject activity spam after join
+PASS atomic count is two
+PASS members see both pilots
+PASS members read ordered join activity
+PASS reject forged member count
+PASS reject unsafe squadron rename
+PASS reject deleting another member
+PASS reject non-atomic leave
+PASS reject impersonated score name
+PASS reject invalid mode
+PASS reject implausible score
+PASS submit A score and linked best atomically
+PASS submit B score and linked best atomically
+PASS reject rate-limit bypass
+PASS read ordered squadron index
+PASS read public squadron score index
+PASS reject arbitrary personal best
+Waiting 21 seconds for the real score/activity cooldowns
+PASS submit A weekly score
+PASS submit B weekly score
+PASS read weekly bests as the client does
+PASS record Experte activity after cooldown
+PASS second pilot reads Experte activity
+PASS reject repeated Experte activity
+PASS atomic leave
+PASS former member loses board access
+PASS former member cannot submit squadron score
+PASS atomic count after leave is one
+PASS rejoin preserves callsign
+Waiting 21 seconds for the real co-op score cooldown
+PASS submit coop-gunner squadron score
+PASS preserve 43-character global co-op crew name
+PASS both pilots leave atomically
+PASS empty squadron count is zero
+CLEAN 27 test document paths removed
+45 checks passed

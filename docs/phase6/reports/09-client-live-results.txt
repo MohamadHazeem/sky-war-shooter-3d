@@ -1,0 +1,3 @@
+PASS two real browser identities create/join, submit and read each other through actual client modules
+PASS actual client leave and departed-member exclusion
+CLEAN 13 browser test document paths removed and verified
