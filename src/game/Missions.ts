@@ -79,7 +79,7 @@ export const CAMPAIGN: Mission[] = [
       { at: 0, afterClear: true, count: 4, from: 'mixed', skill: 0.85 },
       { at: 0, afterClear: true, count: 4, from: 'left', skill: 0.9, radio: ['Navigator', 'Last bunch before the target. Make them count!'] },
     ],
-    duration: 120, maxBombersLost: 3,
+    bombsAway: 85, duration: 120, maxBombersLost: 3,
   },
   {
     id: 'm2', weather: { sunEl: 34, sunAz: 165, low: 0.82, high: 0.35 }, success: "The head-on attacks broke against a wall of fifty-calibre fire. Bremen's docks are burning.", number: 2, title: 'Twelve O\'Clock High', target: 'Port facilities, Bremen', date: '8 October 1943', role: 'gunner', station: 'top',

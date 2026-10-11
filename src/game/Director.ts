@@ -253,7 +253,7 @@ export class Director {
       w.flakIntensity = inFlak ? m.flak.intensity : 0;
       if (inFlak && t - dt < m.flak.start) w.callout('flak', 'Navigator', 'Flak ahead. Initial point in two minutes — here it comes.', 0, 3);
     }
-    if (m.bombsAway && !this.bombsDropped && t >= m.bombsAway) {
+    if (m.bombsAway && !this.bombsDropped && !g.target.playerControlled && t >= m.bombsAway) {
       this.bombsDropped = true;
       g.dropBombs();
       w.callout('bombs', 'Bombardier', 'Bombs away! Let\'s get out of here!', 0, 3);
@@ -313,7 +313,7 @@ export class Director {
     }
     const roundDone = m.round ? this.roundsComplete : false;
     if (roundDone || (!m.round && m.waves.length && this.waveIdx >= m.waves.length && enemies === 0 && t >= Math.min(m.duration, (m.flak?.end ?? 0) + 5))) {
-      if (!m.bombsAway || this.bombsDropped) {
+      if ((!m.bombsAway || this.bombsDropped) && !g.bombardier.awaitingImpact) {
         if (!m.escortArrive || this.escortsSpawned) g.flow.finish(true, m.success ?? (m.role === 'gunner' ? 'The formation fought its way through. Good shooting, gunner.' : 'The bombers made it through. Outstanding work, Blue Leader.'));
       }
     }

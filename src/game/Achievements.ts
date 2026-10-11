@@ -55,6 +55,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'allTypes', name: 'Know Your Enemy', desc: 'Down every enemy type: Fw 190, Bf 109, Bf 110, Ju 88, Me 262 and Me 163.', rarity: 'rare', goal: 6, stat: typesDowned },
   { id: 'boss1', name: 'Giant Killer', desc: 'Bring down a boss.', rarity: 'rare', goal: 1, stat: (c) => c.bosses },
   { id: 'boss10', name: 'Dragon Slayer', desc: 'Bring down 10 bosses.', rarity: 'epic', goal: 10, stat: (c) => c.bosses },
+  { id: 'pickleBarrel', name: 'Pickle Barrel', desc: 'Place more than 80% of the bomb pattern within 1,000 ft of the aiming point.', rarity: 'epic' },
   { id: 'streak3', name: 'Triple Threat', desc: 'Chain a 3-kill streak.', rarity: 'common', goal: 3, stat: (c) => c.bestStreak },
   { id: 'streak6', name: 'Chain Reaction', desc: 'Chain a 6-kill streak.', rarity: 'epic', goal: 6, stat: (c) => c.bestStreak },
   { id: 'pilot50', name: 'Mustang Ace', desc: 'Down 50 fighters flying the P-51.', rarity: 'rare', goal: 50, stat: (c) => c.killsByRole.pilot },

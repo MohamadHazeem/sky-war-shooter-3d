@@ -71,6 +71,7 @@ export function showCareerScreen(c: CareerData, h: { back(): void; trophies(): v
           ${row('Rounds fired', c.shots)}
           ${row('Accuracy', c.shots ? `${(acc * 100).toFixed(1)}%` : '—')}
           ${row('Best kill streak', c.bestStreak)}
+          ${row('Best bombing', `${c.bestBombing}%`)}
           ${row('Bosses downed', c.bosses)}
           ${row('Bombers brought home', c.bombersSaved)}
           ${row('Bombers lost', c.bombersLost)}

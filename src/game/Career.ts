@@ -126,6 +126,7 @@ export interface CareerData {
   shots: number;
   hits: number;
   seconds: number;         // time in the air
+  bestBombing: number;
   bestStreak: number;
   bosses: number;
   bombersSaved: number;    // bombers brought home on successful missions
@@ -152,7 +153,7 @@ export function emptyCareer(): CareerData {
   return {
     v: 1, serial: newSerial(), enlisted: Date.now(), xp: 0, missions: 0, wins: 0, deaths: 0, kills: 0,
     killsByType: {}, killsByRole: { gunner: 0, pilot: 0 }, killsByStation: {}, shots: 0, hits: 0, seconds: 0,
-    bestStreak: 0, bosses: 0, bombersSaved: 0, bombersLost: 0, medals: {}, cosmetics: [], overdrives: 0,
+    bestBombing: 0, bestStreak: 0, bosses: 0, bombersSaved: 0, bombersLost: 0, medals: {}, cosmetics: [], overdrives: 0,
     campaignWins: [], bestSurvivalRound: 0, dailyDone: 0, dailyPerfectDays: 0, dailyRuns: 0, dailyBest: {},
   };
 }

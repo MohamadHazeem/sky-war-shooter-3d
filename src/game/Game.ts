@@ -1,3 +1,4 @@
+import { Bombardier } from './Bombardier';
 import * as THREE from 'three';
 import { Engine, lowerQuality } from '../core/Engine';
 import { Input } from '../core/Input';
@@ -120,6 +121,7 @@ export class Game {
   readonly cine: Cinematics;       // kill cam, mission fly-by, best-moment replay (Cinematics.ts)
   readonly bookends: Bookends;     // take-off / landing scenes at Deenethorpe (Bookends.ts)
   readonly distantBattle = new DistantBattle();
+  readonly bombardier: Bombardier;
   readonly target: TargetArea;      // bomb run: target city, bomb stream, impacts (TargetArea.ts)
   // ---- Game-only state ----
   private woundT = 0;   // eased wounded-crew amount for the PostFX desaturation
@@ -136,6 +138,7 @@ export class Game {
     this.worldEvents = new WorldEvents(this);
     this.world = new World(engine);
     this.target = new TargetArea(engine, this.world);
+    this.bombardier = new Bombardier(this);
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
     this.pilotOps = new PilotOps(this.world, ui, input, this.pilot); // + Blue Two's orders (keys) and the padlock target
@@ -372,7 +375,7 @@ export class Game {
 
   dropBombs() { this.target.bombsAway(); }
 
-  clearBombs() { this.target.clear(); }
+  clearBombs() { this.bombardier.reset(); this.target.clear(); }
 
   private updateBombs(dt: number) { this.target.update(dt, this.menuMode ? null : this.mission); }
 
@@ -451,12 +454,13 @@ export class Game {
     if (this.state === 'paused') { this.hud.drawOverlay(); this.input.endFrame(); return; }
     w.update(dt);
     this.coop.update(dt);
+    this.bombardier.update(dt);
     this.updateBombs(dt);
     if (this.menuMode) {
       this.menuScene.update(dt);
     } else if (this.state === 'playing' || this.state === 'ending' || this.state === 'debrief') {
       if (this.state !== 'debrief') this.director.direct(dt);
-      if (this.mission?.role === 'gunner') this.gunner.update(dt);
+      if (this.mission?.role === 'gunner') { if (!this.bombardier.active) this.gunner.update(dt); }
       else this.pilot.update(dt);
       if (this.state === 'ending') this.flow.updateEnding(dt);   // count down to the debrief (bail-out / fly-by)
     }
@@ -474,6 +478,8 @@ export class Game {
     this.feel.update(dt, !this.menuMode && (this.state === 'playing' || this.state === 'ending'));
     this.combat.update(dt, !this.menuMode && this.state === 'playing');
     this.cine.update(dt);
+    this.bombardier.camera();
+    this.bombardier.capture();
     this.autoQuality(dt);
     this.floatingOrigin();
     sound.setListener(this.engine.camera);

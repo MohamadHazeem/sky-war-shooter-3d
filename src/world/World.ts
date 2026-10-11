@@ -392,7 +392,7 @@ export class World implements WorldView {
     // Roll: a counter-bank against the drift plus a weak pull back toward the slot (positive roll tilts the lift toward -x)
     const roll = latRate * 0.045 + (wob.x - this.formOff.x) * 0.004 + (b.straggling ? 0.05 * b.enginesOut : 0) + this.formRoll + jinkRoll + (b.isPlayer ? this.lurch + turb : 0);
     // Yaw: slight heading wander that follows the lateral drift, plus a slow independent wander
-    const yaw = latRate * 0.02 + Math.sin(this.time * 0.07 + ph.yaw) * 0.008;
+    const yaw = Math.atan2(this.formationForward.x, this.formationForward.z) + latRate * 0.02 + Math.sin(this.time * 0.07 + ph.yaw) * 0.008;
     const pitch = Math.cos(t * 0.47) * 0.012 * b.wobbleAmp + Math.cos(this.time * 0.09 + 1) * 35 * 0.09 / CRUISE + jinkPitch + turb * 0.6;
     b.root.quaternion.setFromEuler(new THREE.Euler(-pitch, yaw, roll, 'YXZ'));
   }
