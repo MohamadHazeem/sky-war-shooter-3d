@@ -210,12 +210,12 @@ const STORY_MISSIONS: (Mission & { after: string })[] = [
       'The bomber crews are watching you today. The Sky Queen\'s tail gunner, Sergeant Dawson, has seen too many friends go down after the escort turned for home. He says that if a Mustang sticks with them all the way to Kiel, he will buy its pilot dinner for a month.',
       'Mouse aim flies the aeroplane where you look. Keep your speed up, do not chase them into the cloud, and stay with the big friends.',
     ],
-    objectives: ['Escort the bombers through the storm front', 'Break up the attacks on the bombers', 'Lose no more than 4 bombers'],
+    objectives: ['Escort the bombers through the storm front', 'Break up the attacks on the bombers', 'Lose no more than 5 bombers'],
     bombers: 12, escorts: 3, waves: [
       { at: 9, count: 4, from: 'front', attack: 'headon', skill: 1.0, radio: ['Lead', 'Bandits climbing out of the murk, twelve o\'clock low. Blue flight, stay with me!'] },
       { at: 0, afterClear: true, count: 6, from: 'mixed', skill: 1.05 },
     ],
-    duration: 240, maxBombersLost: 4,
+    duration: 240, maxBombersLost: 5, // 4 → 5 (8 with the swarm bonus): escorting into the storm front cost the autoplay escort 8 ships in ~1 of 3 runs
   },
   {
     after: 'm3', id: 'm10', number: 0, title: 'Last Light', target: 'Return leg — over the Channel', date: '29 January 1944', role: 'gunner', station: 'waistR',
