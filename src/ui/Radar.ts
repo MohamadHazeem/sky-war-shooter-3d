@@ -130,6 +130,7 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
     if (a instanceof BossShip) { drawBossBlip(ctx, m.x, m.y, e, m.clipped, time, a, a.vel.dot(_r), -a.vel.dot(_f)); continue; }
     if (!(a instanceof Fighter)) continue;
     const enemy = a.team === 'axis';
+    if (enemy && !world.spotted(a)) continue;   // Night Fighter: only coned / close raiders show
     // heading arrow
     const hx = a.vel.dot(_r), hy = -a.vel.dot(_f);
     const ang = Math.atan2(hy, hx);

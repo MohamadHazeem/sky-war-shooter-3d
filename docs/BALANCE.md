@@ -191,7 +191,10 @@ weak points and breach.
 | Final-wave size, round pacing | `src/game/Pacing.ts:39` `DEFAULT_PROFILE` |
 | Adaptive difficulty range | `src/game/Adaptive.ts:26` |
 | Enemy base structure | `src/world/World.ts:37` `ENEMY_STRUCTURE` |
-| Player gunner wound chance (4 wounds = mission over) | `src/world/World.ts:557`, `src/game/Director.ts:306` |
+| Player gunner wound chance (4 wounds = mission over) | `src/world/World.ts:566`, `src/game/Director.ts:306` |
+| Field dressing interval, boss-fight wound factor | `src/world/World.ts:38-40` `DRESSING`, `DRESSING_BOSS`, `BOSS_WOUND` |
+| Night Fighter visibility (what the HUD, radar, padlock, lead pip and bot see) | `src/game/RaidDefence.ts:620` `spotted`, `SPOT_NEAR` / `SPOT_FLASH` (`:142`); hook `World.spotted` |
+| Pilot bot target commitment | `src/dev/autoplay.ts` `COMMIT` (8 s, switch at < 0.45x the score) |
 | Straggler drift | `src/world/World.ts:364` |
 | Difficulty multipliers (enemy skill and structure, player damage) | `src/game/MissionFlow.ts:72-73` |
 | Raid definitions (allowed through, speed, groups) | `src/game/RaidDefence.ts:74, 101` |
@@ -222,3 +225,80 @@ weak points and breach.
   Round 2 (the convoy) still takes 4–5 min.
 * **Sample sizes:** most campaign rows are single runs per skill (the boss missions, m9, m7 and the raids have 3–8).
   Run-to-run spread is large (±25 % on boss times), so re-run with `suite('bosses')` and `suite('raids')` after any change.
+
+## Follow-up: the three open issues (Phase 5, goal 34)
+
+Same harness, frozen development builds, Veteran, aim assist high. "Before" is the code as committed after the
+pass above: the archived runs in `docs/balance/results-2026-10-11.jsonl` (m12: tags `post2` + `final2`, the current
+boss values; Night Fighter, m4, m7: every tag) plus fresh m4 / m7 runs on this branch's base (tag `before`). "After" is
+this branch (tags `fix34*` in `docs/balance/results-2026-10-11-fix34.jsonl`; m12 and Night Fighter pool `fix34`–`fix34d`,
+whose differences only touch the P-51 dogfight AI; m4 / m7 show `fix34`–`fix34c`, see 3. below). Samples are small
+(2–8 runs per row): read the rows as a direction, not as a measurement to the percent.
+The preview server ran on port 4178, because `tools/balance_sink.mjs` listens on 4176.
+
+| Mission | Bot | Before: fail | time | detail | After: fail | time | detail | After failures |
+|---|---|---|---|---|---|---|---|---|
+| m12 | bot | 0/3 (0 %) | 11:16 | boss 3:22, wounds 1.7, min hp 0.57 | 0/1 (0 %) | 11:45 | boss 3:31, wounds 0.0, min hp 0.73 | - |
+| m12 | human | 6/12 (50 %) | 12:58 | boss 6:44, wounds 2.2, min hp 0.54 | 0/2 (0 %) | 12:54 | boss 5:15, wounds 1.0, min hp 0.56 | - |
+| night | bot | 3/23 (13 %) | 7:21 | through 1.8 (max 5), kills 15 | 0/3 (0 %) | 7:37 | through 1.3 (max 3), kills 14 | - |
+| night | human | 1/31 (3 %) | 7:14 | through 1.3 (max 6), kills 16 | 0/3 (0 %) | 7:19 | through 2.0 (max 4), kills 16 | - |
+| m4 | bot | 0/5 | 9:06 | kills 12 (9-13), rounds ended early 0/15 | 0/3 | 9:05 | kills 11 (8-12), rounds ended early 2/9; <600 m 150 s, 600-1500 m 168 s, beyond 226 s, firing 15 s | - |
+| m4 | human | 0/5 | 9:06 | kills 13 (6-15), rounds ended early 3/15 | 0/2 | 9:06 | kills 9.0 (7-11), rounds ended early 0/6; <600 m 176 s, 600-1500 m 216 s, beyond 150 s, firing 22 s | - |
+| m7 | bot | 0/13 | 10:06 | kills 11 (7-21), rounds ended early 2/39 | 0/3 | 10:06 | kills 10 (6-18), rounds ended early 0/9; <600 m 160 s, 600-1500 m 240 s, beyond 204 s, firing 13 s | - |
+| m7 | human | 0/8 | 10:06 | kills 15.0 (6-21), rounds ended early 1/24 | 0/3 | 10:06 | kills 9 (6-13), rounds ended early 0/9; <600 m 135 s, 600-1500 m 242 s, beyond 227 s, firing 21 s | - |
+
+`fix34` is the final bot code (commitment) with the old dogfight AI; `fix34b` / `fix34c` add the AI changes that were tried and reverted (3. below). m12 "after" is still only 1–2 runs per skill (the batch was cut short by the time box): the human-level failure rate is **not yet measured** against the 15–25 % target.
+
+### 1. m12 finale (human level failed ~50 %)
+
+The failures were spread over the whole mission, not only the boss: four crew wounds in rounds 2–3 (the mission
+ends at 4), the tail shot away in round 2, and the B-17 shot apart in the boss fight. Fairness changes, no change
+to the boss mechanics:
+
+| Where | Was | Now |
+|---|---|---|
+| `World.ts` wound chance at the player's station | same in every round | x0.5 while a battle group is up (`BOSS_WOUND`; `World.bossFight`, set by `BossBattle`) |
+| `World.ts` field dressing | one wound patched per 100 s without a new wound | 85 s (`DRESSING`), 65 s in a battle-group fight (`DRESSING_BOSS`) |
+| `BossBattle.ts` `BOSS_TUNING.dmg.gunner` | 0.85 | 0.75 |
+
+The dressing change also helps the long m5 / weekly gunner missions, where wounds ended ~1 in 6 human-level runs.
+Ace keeps its multipliers on top (player damage x1.3, guns x1.2, +1 escort); it was not re-measured here.
+
+### 2. Night Fighter (nobody lost the night)
+
+The HUD now shows only what a pilot could make out at night. One predicate, `RaidDefence.spotted(f)`, installed
+as `World.spotted` while a night raid runs (always true otherwise): a raider is marked if it is **coned** by the
+searchlights, **within 1.2 km** (`SPOT_NEAR`), or **fired at the Mustang / was hit by it in the last 6 s**
+(`SPOT_FLASH`; muzzle flashes and strikes give it away). Everything else shows only as exhaust flames in the 3D view.
+It is applied to the enemy brackets and edge arrows (`GameHud.drawOverlay`), the radar blips (`Radar.draw`), the
+padlock pick (`PilotController.pickPadlock`), the lead pip, and the raid's own "km TO FIELD" markers.
+The scripted pilot obeys the same rule (it only picks spotted bandits) and, with nothing in sight, flies out 3.5 km
+along the raid's approach under the searchlight belt instead of circling the field. The allowed-through count (4)
+is unchanged (it is in the voiced briefing). No new player-visible strings.
+
+### 3. P-51 campaign kills (5–21 per mission; rounds end on the time limit)
+
+* **Target switching was not the cause.** The bot now commits to a bandit (hysteresis: 8 s, then a switch only to one
+  at < 0.45x its score; damaged bandits preferred) and records `extra.switches` and where its time goes
+  (`extra.near / mid / far / none / fire`: s with the chased bandit < 600 m / 600–1500 m / beyond / nothing, and s on
+  the trigger). Kills did not move (table).
+* **The time metrics show the real cause:** in a 9–10 min mission the bot has its bandit inside 600 m for only
+  ~2.5 min, spends ~7 min chasing beyond 600 m (bomber attackers fly 1.5–2.3 km set-up runs between passes, and the
+  P-51 is only ~10–15 m/s faster than an Fw 190: `power / dragK` gives ~204 vs ~189 m/s), and is on the trigger for
+  only 10–35 s. Even inside 600 m it rarely gets its nose on: the scripted pursuit (lead pursuit at full throttle)
+  cannot follow a breaking bandit.
+* **AI changes tried and reverted** (measured, no gain, so the live game keeps the old dogfight AI): bandits noticing
+  the Mustang on their tail at 1200 m instead of 600 m and turning to fight (80 % dogfight instead of 50 %);
+  Fw 190 `turnTime` 5 -> 8 s and longer `engageTime`; at most one bandit zooming / extending at a time; the bot easing
+  the throttle when closing fast. With those: m4 kills 12 / 7 / 11, m7 10 / 9 / 13 / 6, vs 6–21 before.
+* So this stays open (below). The kill rate is limited by the scripted pilot's flying, which probably says little
+  about a human with the lead pip and padlock; the next step is a better pursuit in `autoplay.ts` (cut-off / lag
+  pursuit towards the bandit's set-up point, throttle and energy management in a turn), then re-measure before any
+  AI or data change. Human playtest numbers would settle whether the AI needs anything at all.
+
+### Still open after goal 34
+
+* **P-51 kills** (3. above): not fixed; the m4 / m7 rounds still end on `maxTime`.
+* **m12 human level:** re-measure with more runs; the target is 15–25 % failures.
+* **Night Fighter:** more runs needed for the human-level target (25–35 % failures). If it is still too easy:
+  `SPOT_NEAR` 1200 -> 1000 m, or a shorter cone hold in `Searchlights`.

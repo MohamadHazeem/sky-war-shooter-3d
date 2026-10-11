@@ -102,7 +102,9 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
   game.startMission(mission);
   const log: string[] = [];
   let perks = 0;
-  let chase: Fighter | null = null;
+  let chase: Fighter | null = null, commitT = 0, switches = 0;
+  const pt = { near: 0, mid: 0, far: 0, none: 0, fire: 0 };   // pilot bot: s with the chased bandit < 600 m / < 1500 m / beyond, none; s on the trigger
+  const COMMIT = 8;   // s the pilot bot stays on a bandit before it may switch
   let taken = 0, dmg = 0, hitsOnMe = 0;
   const prevHit = w.events.playerHitFrom;
   w.events.playerHitFrom = (e) => { if (e.target === w.playerFighter) taken++; if (e.target === w.player) { dmg += e.damage; hitsOnMe++; } prevHit?.(e); };
@@ -234,17 +236,26 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
     } else {
       const f = w.playerFighter!;
       let target = null as THREE.Vector3 | null, tvel = new THREE.Vector3(), bd = 5000;
-      // stick with the bandit being chased unless another is much closer; bomber attackers first
+      // Target choice with commitment (hysteresis): bomber attackers first (raids: the bombers
+      // heading for the field), damaged bandits preferred (finish him off); once on a bandit, stay
+      // on him for COMMIT s, and after that switch only to one at well under half his score. The
+      // old rule (the chased one x0.6) flipped between bandits every few seconds as they turned and
+      // extended, spreading the hits over many of them (docs/BALANCE.md, P-51 kills).
+      // Night: only the raiders the player can see (World.spotted: coned, close, firing at him).
+      const score = (e: Fighter) => {
+        const onBombers = w.enemyPilot(e)?.state === 'attack' ? 0.7 : (e.ai as { inbound?: boolean } | null)?.inbound ? 0.35 : 1;
+        return e.pos.distanceTo(f.pos) * onBombers * (0.55 + 0.45 * e.structureFrac);
+      };
       let pick: Fighter | null = null, ps = Infinity;
       for (const e of w.fighters('axis')) {
-        if (!e.alive) continue;
-        const d = e.pos.distanceTo(f.pos);
-        // bomber attackers first; raid missions: the bombers heading for the field
-        const onBombers = w.enemyPilot(e)?.state === 'attack' ? 0.7 : (e.ai as { inbound?: boolean } | null)?.inbound ? 0.35 : 1;
-        const sc = d * onBombers * (e === chase ? 0.6 : 1);
+        if (!e.alive || !w.spotted(e)) continue;
+        const sc = score(e);
         if (sc < ps) { ps = sc; pick = e; }
       }
-      chase = pick;
+      const keep = chase && chase.alive && !chase.remove && w.spotted(chase) && chase.pos.distanceTo(f.pos) < 3000;
+      commitT += DT;
+      if (keep && pick !== chase && (commitT < COMMIT || ps > score(chase!) * 0.45)) pick = chase;
+      if (pick !== chase) { if (chase && pick) switches++; chase = pick; commitT = 0; }
       if (pick) { bd = pick.pos.distanceTo(f.pos); target = pick.pos.clone(); tvel.copy(pick.vel); }
       let boss = false;
       if (game.boss.active && bd > 400) {
@@ -270,9 +281,12 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
         const aimDir = skill < 1 ? new THREE.Vector3(Math.sin(pilot.aimYaw) * Math.cos(pilot.aimPitch), Math.sin(pilot.aimPitch), Math.cos(pilot.aimYaw) * Math.cos(pilot.aimPitch)) : dir;
         if (aimer.trigger(bd < aimer.range(boss ? 1000 : 500) && f.forward().dot(aimDir) > cone, DT)) inp.buttons = 1;
       } else if (f.alive) {
-        const c = w.formationCenter.clone().add(new THREE.Vector3(0, 300, 0)).sub(f.pos).normalize();
+        // nothing in sight: back to the box (night raid: out along the approach, under the searchlight belt)
+        const out = game.pilotOps.raid.night ? 3500 : 0;
+        const c = w.formationCenter.clone().addScaledVector(w.formationForward, out).add(new THREE.Vector3(0, 300, 0)).sub(f.pos).normalize();
         pilot.aimYaw = Math.atan2(c.x, c.z); pilot.aimPitch = Math.asin(c.y);
       }
+      if (f.alive) { if (!target) pt.none += DT; else if (bd < 600) pt.near += DT; else if (bd < 1500) pt.mid += DT; else pt.far += DT; if (inp.buttons) pt.fire += DT; }
       // don't overrun a slow raid bomber: ease off sitting close behind him
       pilot.throttleCmd = chase && (chase.ai as { inbound?: boolean } | null)?.inbound && bd < 350 && chase.forward().dot(f.forward()) > 0.7 ? 0.45 : 1;
       // exercise the views: padlock on and off, cockpit / chase
@@ -311,7 +325,8 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
     dmgTaken: Math.round(dmg), hitsTaken: hitsOnMe, minHp: +minHp.toFixed(2), endHp: +(w.player?.integrity ?? 0).toFixed(2), wounds,
     bombersLost: w.stats.bombersLost, kills: w.stats.kills, kpm: +(w.stats.kills / Math.max(1, w.time / 60)).toFixed(2),
     accuracy: +(w.stats.hits / Math.max(1, w.stats.shots)).toFixed(3), shots: w.stats.shots, hits: w.stats.hits, perks,
-    extra: game.pilotOps.raid.active ? { through: game.pilotOps.raid.through, allow: game.pilotOps.raid.def?.allowThrough, down: game.pilotOps.raid.shotDown, jettisoned: game.pilotOps.raid.jettisoned }
+    extra: mission.role === 'pilot' && !game.pilotOps.raid.active && !game.pilotOps.strafe.active && !passes ? { switches, ...Object.fromEntries(Object.entries(pt).map(([k, v]) => [k, Math.round(v)])) }
+      : game.pilotOps.raid.active ? { switches, ...Object.fromEntries(Object.entries(pt).map(([k, v]) => [k, Math.round(v)])), through: game.pilotOps.raid.through, allow: game.pilotOps.raid.def?.allowThrough, down: game.pilotOps.raid.shotDown, jettisoned: game.pilotOps.raid.jettisoned }
       : game.pilotOps.strafe.active || passes ? { objectives: game.pilotOps.strafe.objectives.slice(), passes, ends: game.pilotOps.strafe.log.filter((l) => l.includes('over') || l.includes('scramble')) } : {},
   };
   if (trace.length && !w.playerFighter?.alive) log.push('last frames: ' + trace.join(' / '));

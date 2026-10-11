@@ -230,7 +230,7 @@ export class PilotController {
     const look = cam.getWorldDirection(_v3);
     let best: Fighter | null = null, bs = Infinity;
     for (const e of this.world.fighters('axis')) {
-      if (!e.alive) continue;
+      if (!e.alive || !this.world.spotted(e)) continue;
       const to = _v.copy(e.pos).sub(cam.position);
       const d = to.length();
       if (d > 3500) continue;
