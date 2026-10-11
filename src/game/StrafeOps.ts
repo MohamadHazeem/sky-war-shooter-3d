@@ -387,7 +387,8 @@ export class StrafeOps {
     const gt = this.gt!;
     const c = Math.cos(AIRFIELD.ang), s = Math.sin(AIRFIELD.ang);
     const at = (a: number, b: number) => [AIRFIELD.u + a * c - b * s, AIRFIELD.v + a * s + b * c] as const;
-    const types: ModelKind[] = ['fw190', 'fw190', 'bf109', 'fw190', 'ju88', 'bf109', 'fw190', 'ju88', 'bf109', 'fw190'];
+    // eight parked aircraft (was ten: the airfield round ran to its time limit, docs/BALANCE.md)
+    const types: ModelKind[] = ['fw190', 'fw190', 'bf109', 'fw190', 'ju88', 'bf109', 'fw190', 'ju88'];
     types.forEach((m, i) => {
       const side = i % 2 ? 1 : -1;
       const a = -600 + Math.floor(i / 2) * 260 + (side > 0 ? 90 : 0);

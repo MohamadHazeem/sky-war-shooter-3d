@@ -329,7 +329,7 @@ const ROUNDS: Record<string, Round> = {
   m7: { duration: 300, start: 8, min: 7, max: 14, skill: [1.05, 1.3], rockets: 0.3 },
   // story-arc missions
   m8: { duration: 270, start: 6, min: 8, max: 14, skill: [0.95, 1.2], rockets: 0.45 },   // Black Thursday: the mass attack
-  m9: { duration: 240, start: 8, min: 6, max: 11, skill: [0.95, 1.15] },                  // P-51 through the storm front
+  m9: { duration: 240, start: 8, min: 6, max: 9, skill: [0.95, 1.1] },                    // P-51 through the storm front
   m10: { duration: 240, start: 6, min: 4, max: 9, skill: [1.0, 1.2] },                    // crippled, alone over the Channel
   m11: { duration: 270, start: 6, min: 5, max: 11, skill: [1.0, 1.25], rockets: 0.2 },    // flak on the bomb run
   m12: { duration: 320, start: 8, min: 8, max: 15, skill: [1.05, 1.3], rockets: 0.35 },   // the finale, four rounds

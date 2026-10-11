@@ -76,10 +76,10 @@ const INTRO_OFF = new THREE.Vector3(0, 240, 2300);
 // guns' damage is the difficulty x dmg[role] x (1 + tierDmg x tier). Most of a human's time in
 // the fight went on the escort fighters, so their cadence and cap are knobs too.
 export const BOSS_TUNING = {
-  hp: { gunner: 0.18, pilot: 0.4 },       // was 0.5 / 0.85
+  hp: { gunner: 0.16, pilot: 0.4 },       // was 0.5 / 0.85
   dmg: { gunner: 0.85, pilot: 0.45 },     // the P-51 is the turrets' first choice (was 1 / 1)
   diffHp: 0.3,                            // hp x (1 - diffHp + diffHp x difficulty): Recruit 0.94, Ace 1.06 (was 0.15)
-  tierHp: 0.06, tierDmg: 0.03,            // per tier (were 0.12 / 0.06) (campaign: m7 1, m12 2; survival: every 3rd round)
+  tierHp: 0, tierDmg: 0.03,               // per tier (were 0.12 / 0.06) (campaign: m7 1, m12 2; survival: every 3rd round)
   escortEvery: [40, 12] as [number, number],  // s between launches: base + random (was 28 + 10)
   escortCap: 2,                           // fighters in the air before no more launch (+1 per 3 rounds, +1 last stand, +1 Ace; was 3)
 };
