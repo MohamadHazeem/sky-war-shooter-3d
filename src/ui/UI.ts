@@ -39,7 +39,7 @@ export interface Settings {
   killCam?: boolean;   // cinematic kill cam on special kills (Cinematics.ts); undefined = on
   audioDetail?: 'normal' | 'reduced';   // Sound.setDetail: Reduced for weak devices; undefined = normal
   breathing?: boolean;  // oxygen-mask breathing (Sound.setBreathing); undefined = on
-  bookends?: boolean;  // take-off and landing scenes around B-17 campaign missions (Bookends.ts); undefined = on
+  bookends?: boolean;  // take-off and landing scenes around B-17 and P-51 campaign missions (Bookends.ts, FighterBookends.ts); undefined = on
   crewRoom?: boolean;  // crew-room scenes between story missions (CrewRoomScene.ts); undefined = on
   gfxAuto?: 'pending'; // first-launch graphics benchmark still to run (game/AutoGraphics.ts); a preset picked here clears it
 }

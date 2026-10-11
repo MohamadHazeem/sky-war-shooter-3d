@@ -3173,6 +3173,59 @@
       "noTable": true
     },
     {
+      "group": "fighter bookends: P-51 take-off and landing at Boxted (src/game/FighterBookends.ts)"
+    },
+    {
+      "id": "fbk_clear",
+      "role": "tower",
+      "text": "Boxted tower to Blue flight: you are cleared for take-off. Good hunting."
+    },
+    {
+      "id": "fbk_ack",
+      "role": "blue4",
+      "text": "Blue Four, rolling with you."
+    },
+    {
+      "id": "fbk_rv",
+      "role": "lead",
+      "text": "Blue flight, Big Friends at twelve o'clock low. Take station on the box."
+    },
+    {
+      "id": "fbk_break",
+      "role": "lead",
+      "text": "Blue flight, initial for the break. Breaking left."
+    },
+    {
+      "id": "fbk_land",
+      "role": "tower",
+      "text": "Blue flight, cleared to land. Welcome home."
+    },
+    {
+      "id": "fbk_deadstick",
+      "role": "blue2",
+      "text": "Engine's gone — coming in dead-stick!",
+      "say": "Engine's gone! Coming in dead stick!",
+      "urgent": true
+    },
+    {
+      "id": "fbk_wheelsup",
+      "role": "blue2",
+      "text": "Gear won't come down — I'm putting her down on her belly!",
+      "say": "Gear won't come down! I'm putting her down on her belly!",
+      "urgent": true
+    },
+    {
+      "id": "fbk_crash",
+      "role": "tower",
+      "text": "Crash crew to the runway! Mustang coming in wheels up!",
+      "urgent": true
+    },
+    {
+      "id": "fbk_home",
+      "role": "blue4",
+      "text": "Blue Four is down. Nice flying today, Two."
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {

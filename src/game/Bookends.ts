@@ -17,6 +17,7 @@ import { INTERPHONE_LEAD_S } from '../audio/Interphone';
 import { FieldSounds, type CrewVehicle } from '../audio/Field';
 import { dressPlayerBomber, withName } from './Customize';
 import { tx } from '../i18n';
+import { FighterBookends } from './FighterBookends';
 
 // Mission bookends (Phase 5 goal 23): short, skippable cinematics around a B-17 gunner campaign
 // mission, at the 401st Bomb Group's base at Deenethorpe (Airbase.ts).
@@ -209,9 +210,14 @@ export class Bookends {
   private subT = 0;
   private readonly O: ParticleOpts = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), life: 1, size0: 1, size1: 1, color0: C_DUST };
 
-  constructor(private engine: Engine, private ui: UI, private game: Game) {}
+  /** The P-51 escort missions' scenes (FighterBookends.ts): every hook below hands over to it first. */
+  readonly fighter: FighterBookends;
 
-  get active() { return this.seq !== 'none' && this.seq !== 'hold'; }
+  constructor(private engine: Engine, private ui: UI, private game: Game) {
+    this.fighter = new FighterBookends(engine, ui, game, this);
+  }
+
+  get active() { return (this.seq !== 'none' && this.seq !== 'hold') || this.fighter.active; }
   /** The parked scene is showing behind the debrief (dev / tests). */
   get holding() { return this.seq === 'hold'; }
   get phase() { return this.seq; }
@@ -227,6 +233,7 @@ export class Bookends {
   /** Briefing opened for m: arm the take-off, build the base behind the sheet and prewarm it. */
   prepare(m: Mission) {
     this.auto = false;
+    this.fighter.prepare(m);
     this.armed = this.applies(m) ? m : null;
     if (this.armed) this.field.prepare();   // synthesise the airfield sounds behind the briefing
     if (!this.armed || this.compiled || this.building) return;
@@ -239,6 +246,7 @@ export class Bookends {
 
   /** Top of Game.startMission: true while the take-off plays (it calls resume() when done). */
   takeoff(m: Mission, resume: () => void): boolean {
+    if (this.fighter.takeoff(m, resume)) return true;
     if (this.resumeFor === m) { this.resumeFor = null; this.landFor = m; return false; }
     if (this.seq !== 'none') this.abort();
     const ok = this.armed === m && !this.auto && this.applies(m);
@@ -252,6 +260,7 @@ export class Bookends {
 
   /** Top of Game.showDebrief on a success: true while the landing plays (done() when over). */
   landing(m: Mission, done: () => void): boolean {
+    if (this.fighter.landing(m, done)) return true;
     if (this.seq === 'landing') return true;
     if (this.landedFor === m) { this.landedFor = null; return false; }
     if (this.seq !== 'none' || this.landFor !== m || this.auto || !this.applies(m)) return false;
@@ -265,6 +274,7 @@ export class Bookends {
 
   /** Early in Game.frame: true while a bookend owns the frame. */
   frame(dt: number): boolean {
+    if (this.fighter.frame(dt)) return true;
     if (this.seq === 'none') return false;
     if (this.seq === 'hold') return this.holdFrame(dt);
     const g = this.game;
@@ -293,10 +303,23 @@ export class Bookends {
 
   // ---------------- build ----------------
 
+  /** The airfield, built once per session and shared with the fighter scenes (FighterBookends). */
+  sharedBase(): Airbase {
+    return this.base ??= new Airbase(this.engine.quality);
+  }
+
+  /** The letterbox overlay's stylesheet (shared with the fighter scenes). */
+  ensureCss() {
+    if (document.getElementById('bkCineCss')) return;
+    const s = document.createElement('style');
+    s.id = 'bkCineCss'; s.textContent = CSS;
+    document.head.appendChild(s);
+  }
+
   private ensure(compile: boolean) {
-    if (!this.base) {
+    if (!this.cast.length) {
       const t0 = performance.now();
-      this.base = new Airbase(this.engine.quality);
+      this.base = this.sharedBase();
       // ten Fortresses: the Sky Queen, four in the take-off queue, five on their hardstands
       for (let i = 0; i < 10; i++) {
         const b = new Bomber();
@@ -1048,6 +1071,7 @@ export class Bookends {
   /** Leaving the debrief (Game.startMenu / showBriefing): put the world back now, before the
    *  next screen sets up its own scene. */
   release() {
+    this.fighter.release();
     if (this.seq !== 'hold') return;
     if (this.holdSusp) this.pb = null;   // the live ship is already flying as the world left her
     this.note('hold: release');
