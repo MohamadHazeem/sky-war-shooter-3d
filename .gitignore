@@ -8,3 +8,7 @@ dist/
 .claude/worktrees/
 .wrangler/
 trailer-out/
+
+# local TTS environment (tools/voice/chatterbox_*.py)
+.venv-tts/
+tools/voice/.cache/
