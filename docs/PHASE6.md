@@ -8,7 +8,7 @@ Repo rules for Codex: `AGENTS.md`.
 | # | Goal | Status |
 |---|---|---|
 | 1 | P-51 dogfight feel: bandits that stay and fight instead of extending 2 km between passes, so escort missions end on kills | Done (Codex) — engaged bandits turn and fight; compact bomber set-ups near the escort; jets extend ≤5.5 s then reverse. Headless sims: time <600 m up 10–40 s per type, Me 262 kills 1/5 → 3/5; bomber threat kept |
-| 2 | Weak-laptop pass: simulated low-end GPU, tuned first-launch quality thresholds, a Low preset that looks good | Codex working |
+| 2 | Weak-laptop pass: simulated low-end GPU, tuned first-launch quality thresholds, a Low preset that looks good | Done (Codex) — measured cost model per preset/feature on simulated weak hardware (Low ≈ 0.65–0.71× High), quality picker retuned with a measured dynamic-resolution recovery phase, Low gets shadows and no sunlight through the hull |
 | 3 | Cloud-top shimmer: the speckle just above the cloud deck (end of the take-off climb) | Done (Codex) — footprint-selected noise mip levels + fading jitter for grazing rays above the deck: banding gone, flicker −55–58 %, no frame-time cost, views from below/inside unchanged |
 | 4 | Co-op v2: shared score + guest debrief; TURN relay (needs a Cloudflare TURN key from the player) | Done (Codex) — host-authoritative crew score on both HUDs, partner kills credited, personal debrief + merit/XP for the guest, back to the lobby, coop-gunner board with both callsigns; /api/turn Worker mints Cloudflare TURN credentials once the owner sets TURN_KEY_ID / TURN_KEY_API_TOKEN (STUN fallback until then) |
 
@@ -39,3 +39,4 @@ Repo rules for Codex: `AGENTS.md`.
 - Goals 8 and 5 merged (486 tests); goal 5 voice clips rendered by Claude (sandbox).
 - Goal 9 merged + rules deployed; live create failed → Codex fixing live. Goal 4 merged (524 tests); its rules change ships with the goal 9 fix.
 - Codex runs hung ~3 h waiting on stdin (launcher fixed with </dev/null). Goal 9 live fix and goal 6 revision merged (536 tests).
+- Goal 2 merged — all 12 Phase 6 goals done (545 tests). Final regression + deploy next.
