@@ -39,8 +39,14 @@ function beamMaterial() {
       varying float vT;
       varying vec3 vN;
       varying vec3 vV;
+      varying float vCut;
       void main() {
         vT = uv.y;
+        // how much of the near-lamp glow to cut (see the fragment shader): by the camera's height
+        // above this lamp. From the ground or low (below ~250 m) the beam starts at the lamp; from
+        // ~1200 m up (the night fighter flies at 3-8 km) the cut is fully in.
+        float camH = cameraPosition.y - modelMatrix[3].y;
+        vCut = smoothstep(250.0, 1200.0, camH);
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
         vN = normalize(normalMatrix * normal);
         vV = -mv.xyz;
@@ -52,13 +58,17 @@ function beamMaterial() {
       varying float vT;
       varying vec3 vN;
       varying vec3 vV;
+      varying float vCut;
       void main() {
         float edge = abs(dot(normalize(vN), normalize(vV)));
-        // no glow right at the lamp: seen from the bomber stream far above, the narrow lamp end
-        // faced the camera and bloomed into white blobs ringed by the cone's last segments.
+        // no glow right at the lamp when seen from high above: from the bomber stream the narrow
+        // lamp end faced the camera and bloomed into white blobs ringed by the cone's last
+        // segments. Seen from the ground or low the cut made the beams start in mid-air, so it
+        // fades out with the camera's height (vCut).
         // 1 - vT is clamped: vT interpolates a hair past 1 at the open end, and pow() of a
         // negative is NaN (bloom spread those NaN pixels into white blobs at the beam tips too)
-        float along = pow(clamp(1.0 - vT, 0.0, 1.0), 1.6) * smoothstep(0.04, 0.3, vT);
+        float near = mix(smoothstep(0.0, 0.006, vT), smoothstep(0.04, 0.3, vT), vCut);
+        float along = pow(clamp(1.0 - vT, 0.0, 1.0), 1.6) * near;
         float a = min(uIntensity * along * pow(edge, 1.4), 0.14);
         gl_FragColor = vec4(uColor * a, a);
       }`,

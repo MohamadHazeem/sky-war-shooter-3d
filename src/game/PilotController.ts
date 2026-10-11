@@ -143,12 +143,19 @@ export class PilotController {
     for (const g of p.guns) g.dir.set(-g.offset.x, drop - g.offset.y, CONVERGENCE - g.offset.z).normalize();
   }
 
-  // The K-14 sight: a dark body on the coaming and its tilted reflector glass, a faint tinted
-  // pane the reticle is "projected" onto
+  // The K-14 sight: a dark body on the coaming and its tilted reflector glass, the pane the
+  // reticle is "projected" onto. The glass adds only what it reflects (additive, black diffuse),
+  // scaled down by the opacity: seen from the seat it mirrors the bright cloud sea below (the sky
+  // env), where a real one mirrors the dark cockpit, so a faint reflection and sun glint are all
+  // that is left. As a pale see-through pane (normal blend, light diffuse lit by the fill) it read
+  // as a pale rectangle in a storm or night windscreen. Blending is GL state: same program.
   private makeGlass() {
     const g = new THREE.Group();
     g.name = 'k14_sight';
-    const mat = markOwned(new THREE.MeshPhysicalMaterial({ color: 0x9fb4a8, transparent: true, opacity: 0.12, roughness: 0.05, metalness: 0, depthWrite: false, side: THREE.DoubleSide }));
+    const mat = markOwned(new THREE.MeshPhysicalMaterial({
+      color: 0x000000, transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0, depthWrite: false, side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+    }));
     this.glassMat = mat;
     const glass = new THREE.Mesh(new THREE.PlaneGeometry(GLASS.hw * 2, GLASS.hh * 2), mat);
     glass.position.copy(GLASS.c);
@@ -327,7 +334,7 @@ export class PilotController {
     this.updateGunsight(dt);
     this.fx.update(dt, this.view, this.engine.camera.position);
     this.glassFx.update(dt, this.view === 'cockpit', this.gunsight.x, this.gunsight.y, this.input.mouse(2));
-    this.glassMat?.emissive.setRGB(this.sightLit ? 0.06 : 0, this.sightLit ? 0.028 : 0, this.sightLit ? 0.006 : 0);
+    this.glassMat?.emissive.setRGB(this.sightLit ? 0.024 : 0, this.sightLit ? 0.011 : 0, this.sightLit ? 0.0024 : 0);   // the lamp's faint spill on the glass (additive)
     this.tracerStream(p);
   }
 

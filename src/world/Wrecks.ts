@@ -36,11 +36,14 @@ interface Piece {
   motion: Motion;
   roll: number;    // dive: roll rate it builds up to (rad/s, signed); flatspin: the roll-over rate
   drag: number;    // < 0: the motion's own drag; otherwise this (a steered chunk flies with 0)
+  last: THREE.Vector3;  // emitter world position at the last trail emission
+  hasLast: boolean;
 }
 
 const R = () => Math.random() * 2 - 1;
 const P = (nx: number, ny: number, nz: number, c: number) => new THREE.Plane(new THREE.Vector3(nx, ny, nz), c);
 const _at = new THREE.Vector3();
+const _em = new THREE.Vector3();
 const _sv = new THREE.Vector3();
 const _fw = new THREE.Vector3();
 const _ax = new THREE.Vector3();
@@ -62,7 +65,7 @@ const O: ParticleOpts = { pos: _at, life: 1, size0: 1, size1: 1, color0: C_SMOKE
 function opts(life: number, s0: number, s1: number, c0: [number, number, number], c1: [number, number, number] | undefined,
   a0: number, drag: number, rise: number, lit: boolean, frame: number) {
   O.pos = _at; O.vel = _sv; O.life = life; O.size0 = s0; O.size1 = s1; O.color0 = c0; O.color1 = c1;
-  O.alpha0 = a0; O.alpha1 = 0; O.drag = drag; O.rise = rise; O.lit = lit; O.frame = frame; O.rotVel = undefined;
+  O.alpha0 = a0; O.alpha1 = 0; O.drag = drag; O.rise = rise; O.lit = lit; O.frame = frame; O.rotVel = undefined; O.age = 0;
   return O;
 }
 
@@ -182,6 +185,7 @@ export class Wrecks {
         root, model, vel: f.vel.clone().add(kick), spin,
         life: sp.life ?? 14, local: sp.planes, world, mats, fire: sp.fire, smoke: sp.smoke, emit: sp.emit.clone().multiplyScalar(f.model.scale.x), acc: 0,
         age: 0, main: sp.main === true, motion: sp.motion ?? 'tumble', roll: sp.roll ?? 0, drag: -1,
+        last: new THREE.Vector3(), hasLast: false,
       };
       this.pieces.push(p);
       out.push(p);
@@ -237,20 +241,43 @@ export class Wrecks {
       }
       p.acc += dt;
       if (p.acc > 0.05) {
-        p.acc = 0;
-        _at.copy(p.emit);
-        p.root.localToWorld(_at);
+        // Every ~3-4 frames: the puffs are spread back along the path flown since the last
+        // emission (Effects.trail does the same for the flames), with jitter and varied size, so
+        // a falling wreck draws a continuous trail rather than a row of evenly spaced beads.
+        const span = p.acc;
+        p.acc = -Math.random() * 0.012;
+        _em.copy(p.emit);
+        p.root.localToWorld(_em);
         const fade = Math.min(1, p.life / 4);
-        if (p.fire > 0) this.effects.trail(_at, p.vel, 1, true, 0.9 * p.fire);
+        // the emitter swings round the tumbling piece: the puffs follow its real path since the last emission
+        const from = p.hasLast ? p.last : undefined;
+        if (p.fire > 0) this.effects.trail(_em, p.vel, 1, true, 0.9 * p.fire, span, from);
         else if (p.smoke > 0) {
           _sv.copy(p.vel).multiplyScalar(0.2);
-          this.effects.smoke.spawn(opts(3, 0.8, 4 * p.smoke, C_SMOKE, undefined, 0.55 * fade, 0.8, 0, true, 0));
+          for (let i = 0; i < 2; i++) {
+            const ago = (span * (i + Math.random())) / 2;
+            if (from) _at.lerpVectors(_em, from, ago / span).addScaledVector(p.vel, 0.2 * ago);
+            else _at.copy(_em).addScaledVector(p.vel, -0.8 * ago);
+            const k = 0.8 + Math.random() * 0.4;
+            const o = opts(3, 0.8 * k, 4 * p.smoke * k, C_SMOKE, undefined, 0.55 * fade * 0.75 * (0.8 + Math.random() * 0.4), 0.8, 0, true, 0);
+            o.age = ago;
+            this.effects.smoke.spawn(o);
+          }
         }
         // the main fuselage lays a thick black column behind it for its first seconds
         if (p.main && p.age < COLUMN_TIME) {
           _sv.copy(p.vel).multiplyScalar(0.15);
-          this.effects.smoke.spawn(opts(6, 2.6, 8, C_COL0, C_COL1, 0.8, 0.8, 0, true, 0));
+          for (let i = 0; i < 2; i++) {
+            const ago = (span * (i + Math.random())) / 2;
+            if (from) _at.lerpVectors(_em, from, ago / span).addScaledVector(p.vel, 0.15 * ago);
+            else _at.copy(_em).addScaledVector(p.vel, -0.85 * ago);
+            const k = 0.85 + Math.random() * 0.3;
+            const o = opts(6, 2.6 * k, 8 * k, C_COL0, C_COL1, 0.8 * 0.7 * (0.85 + Math.random() * 0.3), 0.8, 0, true, 0);
+            o.age = ago;
+            this.effects.smoke.spawn(o);
+          }
         }
+        p.last.copy(_em); p.hasLast = true;
       }
       if (p.life <= 0) { p.root.removeFromParent(); for (const m of p.mats) m.dispose(); }
       else this.pieces[n++] = p;

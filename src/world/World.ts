@@ -865,17 +865,18 @@ export class World implements WorldView {
   private damageEffects(a: Aircraft, dt: number) {
     a.smokeAcc += dt;
     if (a.smokeAcc < 0.05) return;
+    const span = a.smokeAcc;   // the trail puffs are spread back over the path flown since the last emission
     a.smokeAcc = 0;
     for (const z of a.zones) {
       const dmg = 1 - Math.max(0, z.hp) / z.maxHp;
       const smoking = z.engine !== undefined ? dmg > 0.35 : dmg > 0.85;
       if (!smoking && !z.burning) continue;
       const p = a.localToWorld(_v.copy(z.offset).add(_v2.set(0, 0.2, -0.6)), new THREE.Vector3());
-      this.effects.trail(p, a.vel, Math.min(1, dmg), !!z.burning, a instanceof Bomber ? 1.3 : 0.8);
+      this.effects.trail(p, a.vel, Math.min(1, dmg), !!z.burning, a instanceof Bomber ? 1.3 : 0.8, span);
     }
     // worn-down fighters: staged smoke, fire and debris live in DamageStages
     if (a.falling && a instanceof Fighter && !deathOwned(a) && Math.random() < 0.6) {
-      this.effects.trail(a.localToWorld(_v.set(0, 0, 1.5), new THREE.Vector3()), a.vel, 1, true, 1);
+      this.effects.trail(a.localToWorld(_v.set(0, 0, 1.5), new THREE.Vector3()), a.vel, 1, true, 1, span);
     }
   }
 
