@@ -41,6 +41,7 @@ export interface Settings {
   breathing?: boolean;  // oxygen-mask breathing (Sound.setBreathing); undefined = on
   bookends?: boolean;  // take-off and landing scenes around B-17 campaign missions (Bookends.ts); undefined = on
   crewRoom?: boolean;  // crew-room scenes between story missions (CrewRoomScene.ts); undefined = on
+  gfxAuto?: 'pending'; // first-launch graphics benchmark still to run (game/AutoGraphics.ts); a preset picked here clears it
 }
 
 export interface Progress { unlocked: number; medals: Record<string, string[]>; best: Record<string, number>; survival: { name: string; score: number; waves: number; role: string; date: string }[] }
@@ -115,6 +116,8 @@ export class UI {
   private subsTimer: number | null = null;
   private bannerTimer: number | null = null;
   private relang: (() => void) | null = null;   // rebuilds the paused screen after a language switch
+  // Settings → "Detect best settings": set by game/AutoGraphics.ts (re-runs the graphics benchmark)
+  detectGraphics?: () => Promise<{ quality: Settings['quality'] } | null>;
 
   constructor() {
     document.body.insertAdjacentHTML('beforeend', `
@@ -454,6 +457,7 @@ export class UI {
       <label class="setting">${t('settings.breathing')} <select data-k="breathing"><option value="true">${t('common.on')}</option><option value="false" ${s.breathing === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
       <label class="setting">${t('settings.radio')} <select data-k="radio"><option value="true">${t('common.on')}</option><option value="false" ${!s.radio ? 'selected' : ''}>${t('settings.subsOnly')}</option></select></label>
       <label class="setting">${t('settings.quality')} <select data-k="quality">${(['low', 'medium', 'high', 'ultra'] as const).map((q) => `<option value="${q}" ${s.quality === q ? 'selected' : ''}>${t(`settings.q.${q}`)}</option>`).join('')}</select></label>
+      ${this.detectGraphics ? `<div class="setting"><span></span><button class="btn ghost" style="padding:6px 10px;font-size:12px;letter-spacing:1px" data-detect title="${t('settings.detectHint')}">${t('settings.detect')}</button></div>` : ''}
       <label class="setting">${t('settings.fpsCounter')} <select data-k="fpsCounter"><option value="false">${t('common.off')}</option><option value="true" ${s.fpsCounter ? 'selected' : ''}>${t('common.on')}</option></select></label>
       <label class="setting">${t('settings.markers')} <select data-k="markers"><option value="true">${t('common.on')}</option><option value="false" ${!s.markers ? 'selected' : ''}>${t('settings.markersOff')}</option></select></label>
       <label class="setting">${t('settings.aimAssist')} <select data-k="aimAssist"><option value="off" ${s.aimAssist === 'off' ? 'selected' : ''}>${t('common.off')}</option><option value="low" ${s.aimAssist === 'low' ? 'selected' : ''}>${t('settings.low')}</option><option value="high" ${s.aimAssist === 'high' || !s.aimAssist ? 'selected' : ''}>${t('settings.high')}</option></select></label>
@@ -470,10 +474,23 @@ export class UI {
       if (k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume' || k === 'fov') v = parseFloat(v);
       if (k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'killCam' || k === 'fpsCounter' || k === 'breathing' || k === 'bookends' || k === 'crewRoom') v = v === 'true';
       (s as any)[k] = v;
+      if (k === 'quality') delete s.gfxAuto;   // the player's choice wins over the first-launch pick
       if (k === 'fov') { const b = i.closest('label')?.querySelector('.fov-val'); if (b) b.textContent = `${v}°`; }
       onChange(s);
     }));
     st.querySelector('[data-back]')!.addEventListener('click', () => { st.classList.remove('show'); onBack(); });
+    // Detect best settings: re-runs the graphics benchmark (game/AutoGraphics.ts), which saves the pick
+    const detect = st.querySelector<HTMLButtonElement>('[data-detect]');
+    detect?.addEventListener('click', async () => {
+      if (!this.detectGraphics || detect.disabled) return;
+      detect.disabled = true;
+      detect.textContent = t('settings.detecting');
+      const r = await this.detectGraphics();
+      detect.disabled = false;
+      detect.textContent = t('settings.detect');
+      const sel = st.querySelector<HTMLSelectElement>('[data-k="quality"]');
+      if (r && sel) sel.value = r.quality;
+    });
     // Language: switch now and rebuild this screen (and the paused screen behind it) in place
     st.querySelector<HTMLSelectElement>('[data-lang]')!.addEventListener('change', (e) => {
       const cloud = !!st.querySelector('.cloud');
