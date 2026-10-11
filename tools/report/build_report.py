@@ -29,8 +29,8 @@ PLAY_FIRST = [
 
 # Things the player should know or decide (short, honest)
 NOTES = [
-    'Boss fights were rebalanced with a human-like autoplay bot (35–45 % accuracy): about 5 min for the m5 battle group and 5–7 min for the m12 finale, with every mechanic kept. The m12 finale still fails roughly 2 in 5 human-level runs (the B-17 shot apart or crew wounds). That is "very hard"; the knobs are in docs/BALANCE.md if you want it easier.',
-    'Night Fighter is still on the easy side, and P-51 campaign missions give fewer kills than gunner ones (target switching in big furballs). Both are listed in docs/BALANCE.md.',
+    'Boss fights were rebalanced with a human-like autoplay bot (35–45 % accuracy): about 5 min for the m5 battle group and 5–7 min for the m12 finale, with every mechanic kept. The m12 finale was failing about half of human-level runs; wounds during the boss fight and turret damage were eased (first runs pass, more samples needed). Knobs in docs/BALANCE.md.',
+    'Night Fighter is now a real hunt: raiders only show on the HUD and radar when a searchlight cones them, when close, or when they engage you. P-51 escort missions still give fewer kills than gunner missions (the bot spends most of its time chasing bandits that extend); that one needs your hands on the stick to judge.',
     'Performance on this Mac (heavy combat, 34 aircraft, 2.3 MP): about 4.4 ms on Low, 5.5 ms on Medium, 7.5–9 ms on High and 10.4 ms on Ultra per frame, with no steady-state stutters. A first-launch benchmark now picks the preset; its thresholds have not been tried on a weak laptop yet.',
     'First-kill shader stutters are fixed (the warm-up was discarding its compiled shaders); one shadow variant for an exploding Fw 190 still compiles once per session.',
     'The Me 410 uses the Bf 110 airframe with its own guns: no open-licence Me 410 model exists. He 219 and Ta 152 are not available either.',
