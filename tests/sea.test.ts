@@ -138,3 +138,32 @@ it('lets bullets disable battleship flak before the armoured hull opens', () => 
   callbacks.ballistic(p.x, 100, p.z, p.x, -10, p.z, false, 100, true, null, false);
   expect(p.hp).toBe(0); expect(ship.combat.hp).toBe(ship.combat.spec.hp);
 });
+
+// Art proportions must stay tied to hit volumes; changing visual length cannot change armour/sink rules.
+describe('naval visual contracts', () => {
+  it('uses metre-scale hulls and keeps superfiring mounts clear of the bridge', () => {
+    const sea = new SeaWorld();
+    for (const [kind, length, beam] of [['battleship', 250, 36], ['destroyer', 120, 12], ['uboat', 67, 6.2], ['eboat', 33, 7]] as const) {
+      const s = sea.add(kind, 0, 0); expect(s.combat.spec.length).toBe(length); expect(s.combat.spec.beam).toBe(beam);
+      const bounds = new THREE.Box3();
+      for (const half of s.halves) { half.geometry.computeBoundingBox(); bounds.union(half.geometry.boundingBox!); }
+      expect(bounds.max.z - bounds.min.z).toBeCloseTo(length, 2);
+      for (const m of s.halves) for (const value of m.geometry.getAttribute('position').array) expect(Number.isFinite(value)).toBe(true);
+    }
+    const s = sea.ships[0], guns = s.combat.parts.filter(p => p.kind === 'turret');
+    expect(guns.map(p => p.z)).toEqual([-85, -60, 60, 85]);
+    expect(guns[1].y).toBeGreaterThan(guns[0].y); expect(guns[2].y).toBeGreaterThan(guns[3].y);
+  });
+  it('bounds effects, gates fine detail and rotates the radar without changing combat state', () => {
+    const sea = new SeaWorld(), s = sea.add('battleship', 0, 0), radar = sea.add('radar', 3340, 0);
+    sea.update(0, false, new THREE.Vector3(0, 100, 0)); expect(s.detail.every(m => m.visible)).toBe(true);
+    sea.update(0, false, new THREE.Vector3(4000, 100, 0)); expect(s.detail.every(m => !m.visible)).toBe(true);
+    sea.update(0, true, new THREE.Vector3()); expect(s.detail.every(m => !m.visible)).toBe(true);
+    const angle = radar.radar!.rotation.y;
+    const gun = s.combat.parts.findIndex(p => p.kind === 'turret');
+    for (let i = 0; i < 300; i++) sea.fireGun(s, gun, true);
+    sea.effects.update(.02); expect(sea.effects.mesh.count).toBeLessThanOrEqual(256); expect(sea.effects.mesh.count).toBeGreaterThan(0);
+    sea.update(1, true); expect(radar.radar!.rotation.y).toBeGreaterThan(angle); expect(s.combat.hp).toBe(s.combat.spec.hp);
+    sea.effects.update(7); expect(sea.effects.mesh.count).toBe(0); sea.clear(); expect(sea.effects.mesh.count).toBe(0);
+  });
+});

@@ -29,6 +29,7 @@ export function seaQa(engine: Engine, game: Game) {
     const size = Math.max(80, s.combat.spec.length);
     engine.camera.position.copy(target).add(new THREE.Vector3(size * 1.05 * distance * (s.combat.spec.shore ? -1 : 1), size * .65 * distance + 20, -size * 1.15 * distance));
     engine.camera.lookAt(target.clone().add(new THREE.Vector3(0, 5, 0))); engine.camera.updateMatrixWorld(true);
+    ops.sea.update(0, game.settings.quality === 'low', engine.camera.position);
     for (let i = 0; i < 12; i++) engine.render(1 / 60);
     game.ui.ctx.clearRect(0, 0, engine.width, engine.height);
     ops.drawOverlay(game.ui.ctx, engine.width, engine.height, engine.camera);

@@ -115,7 +115,7 @@ export class SeaOps {
     if (this.input?.hit('KeyR') || this.rocketQueued) this.launch('rocket');
     if (this.input?.hit('KeyN') || this.bombQueued) this.launch('bomb');
     this.rocketQueued = this.bombQueued = false;
-    this.sea.update(dt, this.low);
+    this.sea.update(dt, this.low, this.world.playerFighter?.pos);
     this.updateOrdnance(dt);
     let live = false, radar = false;
     for (const s of this.sea.ships) { if (!s.combat.resolved) live = true; if (s.kind === 'radar' && s.combat.alive) radar = true; }
@@ -162,6 +162,7 @@ export class SeaOps {
       if (p.y <= ground + .5 && !explode) {
         if (ground === 0 && o.kind === 'bomb' && canSkipBomb(o.vel.y, Math.hypot(o.vel.x, o.vel.z), o.skips)) {
           o.skips++; p.y = .8; o.vel.y = Math.max(9, -o.vel.y * .42); o.vel.multiplyScalar(.78); if (o.skips === 1) o.fuse = 3;
+          this.sea.effects.splash(p, 1.5);
           this.world.effects.flak(_p.copy(p).add(this.sea.root.position));
         } else explode = true;
       }
@@ -197,7 +198,11 @@ export class SeaOps {
       this.trace(this.gunA, this.gunB, 'gun');
       if (this.hitShip) { if (this.damage(this.hitShip, this.hitPart, damage, 'gun', player) > 0 && player) this.world.stats.hits++; return true; }
     }
-    return by <= this.sea.groundAt(bx, bz);
+    const ground = this.sea.groundAt(bx, bz);
+    if (by <= ground && ground === 0 && ay > 0 && this.world.playerFighter && _p.set(bx, 0, bz).distanceToSquared(this.world.playerFighter.pos) < 1200 * 1200) {
+      const t = ay / (ay - by); _p.set(ax + (bx - ax) * t - root.x, 1, az + (bz - az) * t - root.z); this.sea.effects.splash(_p, .45);
+    }
+    return by <= ground;
   };
   private gunA = new THREE.Vector3(); private gunB = new THREE.Vector3();
   damage(ship: SeaShip, part: number, amount: number, weapon: SeaWeapon, player = true) {
@@ -253,12 +258,14 @@ export class SeaOps {
       const mount = s.mounts[i]; if (mount) {
         const yaw = Math.atan2(Math.sin(Math.atan2(_d.x, _d.z) - s.heading), Math.cos(Math.atan2(_d.x, _d.z) - s.heading));
         mount.rotation.y = s.kind === 'battery' ? THREE.MathUtils.clamp(yaw, -.5, .5) : yaw;
+        const barrels = s.barrels[i]; if (barrels) barrels.rotation.x = -THREE.MathUtils.clamp(Math.atan2(_d.y, Math.hypot(_d.x, _d.z)), -.08, s.kind === 'battery' ? .12 : p.kind === 'flak' ? 1.35 : .62);
       }
       if (!firing || dist > 2600 || dist < 10) continue;
       _v.copy(pf.pos).addScaledVector(pf.vel, dist / 780).sub(_p);
       const error = (radar ? 8 : 36) * w.enemyAimMult;
       _v.x += Math.sin(this.sea.time * 2.8 + i * 7 + s.index) * error; _v.y += Math.cos(this.sea.time * 3.1 + i * 11) * error;
       _v.normalize().multiplyScalar(780); _v.y += 4.905 * dist / 780;
+      this.sea.fireGun(s, i);
       w.ballistics.fire(_p, _v, 'axis', 5 * Math.min(1.5, .85 + this.wave * .035), true, TRACER, null, true, false, 4);
     }
     if (turrets > 0 && (s.kind === 'battleship' || s.kind === 'battery')) {
@@ -268,7 +275,15 @@ export class SeaOps {
       }
       if (s.salvoT >= 0) {
         s.salvoT -= dt;
-        if (s.salvoT <= 0) { for (let i = 0; i < turrets; i++) { _p.copy(s.salvo).add(this.sea.root.position); _p.x += (i - (turrets - 1) / 2) * 36; w.flakBurst(_p); } s.salvoT = -1; }
+        if (s.salvoT <= 0) {
+          for (let i = 0; i < c.parts.length; i++) if (c.parts[i].kind === 'turret' && c.parts[i].hp > 0) this.sea.fireGun(s, i, true);
+          for (let i = 0; i < turrets; i++) {
+            _p.copy(s.salvo).add(this.sea.root.position); _p.x += (i - (turrets - 1) / 2) * 36; w.flakBurst(_p);
+            // Visual shell-fall columns below the warned airburst, using the same sea-local origin.
+            _p.sub(this.sea.root.position).setY(1); if (_p.x < 2820) this.sea.effects.splash(_p, 3);
+          }
+          s.salvoT = -1;
+        }
       }
     } else s.salvoT = -1;
   }
