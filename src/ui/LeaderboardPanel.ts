@@ -16,18 +16,22 @@ export function mountLeaderboard(host: HTMLElement, mode: string, title: string,
   const box = document.createElement('div');
   box.className = 'lb-panel';
   host.appendChild(box);
+  let sending = false;
+  const crew = mode === 'coop-gunner';
   const render = (rows: BoardRow[] | null, status = '', highlight?: number) => {
     box.innerHTML = `<div class="hud-label">${esc(tx(title))}</div>
-      ${entry && entry.score > 0 ? `<div class="lb-submit"><input maxlength="20" placeholder="${tx('Your name')}" value="${esc(savedName())}"/><button class="btn" data-lb>${tx('Submit score')}</button><span class="lb-status">${esc(tx(status))}</span></div>` : ''}
+      ${entry && entry.score > 0 ? `<div class="lb-submit">${crew ? `<span>${esc(entry.name)}</span>` : `<input maxlength="20" placeholder="${tx('Your name')}" value="${esc(savedName())}"/>`}<button class="btn" data-lb ${sending ? 'disabled' : ''}>${tx('Submit score')}</button><span class="lb-status">${esc(tx(status))}</span></div>` : ''}
       ${rows === null ? `<div class="lb-empty">${tx('Loading…')}</div>` : table(rows, highlight)}`;
     const btn = box.querySelector<HTMLButtonElement>('[data-lb]');
     btn?.addEventListener('click', async () => {
-      const input = box.querySelector('input')!;
-      const name = cleanName(input.value);
-      saveName(name);
+      if (sending || !entry) return;
+      sending = true;
+      const name = crew ? entry.name : cleanName(box.querySelector('input')!.value);
+      if (!crew) saveName(name);
       btn.disabled = true;
       render(rows, 'Sending…');
       const ok = await submitScore({ ...entry!, name });
+      sending = false;
       if (ok) { entry = undefined; render(await topScores(mode), '', undefined); }
       else render(rows, 'Could not submit (offline, or wait 20 s between scores)');
     });

@@ -387,7 +387,7 @@ export class Game {
     sound.ctx?.suspend();
     this.ui.pause({
       resume: () => this.resume(),
-      restart: () => { this.resume(); this.startMission(this.mission!); },
+      restart: () => { this.resume(); if (!this.coop.restart()) this.startMission(this.mission!); },
       settings: () => { this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => {}); this.mountCloud(); },
       quit: () => { this.ui.hidePause(); this.engine.paused = false; sound.ctx?.resume(); sound.stopSpeech(); this.startMenu(); },
     }, this.mission?.role ?? 'gunner', this.pauseInfo());

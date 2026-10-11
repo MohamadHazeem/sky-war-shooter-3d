@@ -123,7 +123,7 @@ export class MissionFlow {
     if (!this.prewarmed) { this.prewarmed = true; g.world.prewarm(() => g.engine.render(1 / 60), g.engine.camera); }
     g.state = 'playing';
     g.distantBattle.reset();
-    g.ui.hud(m.role);
+    g.ui.hud(m.role, g.coop.phase === 'mission');
     crewRoster.beginMission(g.world, g.ui, m.role);
     g.ui.fadeTo(1);
     setTimeout(() => g.ui.fade(false), 50);
@@ -157,7 +157,7 @@ export class MissionFlow {
     const last = Number.isFinite(m.rounds ?? 1) && g.roundIdx >= (m.rounds ?? 1) - 1;
     Chatter.onRoundEnd(last);
     if (last) { g.director.roundsComplete = true; return; }
-    const earned = Math.round((g.score - this.scoreBanked) * g.loadout.scoreMult);
+    const earned = g.coop.phase === 'mission' ? 0 : Math.round((g.score - this.scoreBanked) * g.loadout.scoreMult);
     g.prog.earn(earned);
     this.scoreBanked = g.score;
     const kills = w.stats.kills - this.roundKills0;
@@ -232,6 +232,7 @@ export class MissionFlow {
 
   showDebrief() {
     const g = this.g;
+    if (g.coop.showDebrief()) return;
     if (g.endResult?.success && g.bookends.landing(g.mission!, () => g.showDebrief())) return; // landing scene first
     const m = g.mission!;
     const w = g.world;
