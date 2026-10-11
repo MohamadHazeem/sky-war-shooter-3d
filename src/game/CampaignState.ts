@@ -39,7 +39,7 @@ export const REPLACEMENTS_PER_SORTIE = 2;
 
 export type GaugeId = 'luftwaffe' | 'squadron' | 'morale' | 'escort';
 
-export interface HistoryEntry { id: string; kind: 'story' | 'raid'; title: string; success: boolean; kills: number; lost: number }
+export interface HistoryEntry { id: string; kind: 'story' | 'raid'; title: string; success: boolean; kills: number; lost: number; ditched?: boolean }
 
 export interface ReportLine { gauge: GaugeId | 'merit' | 'note'; text: string; from?: number; to?: number }
 export interface IntelReport { title: string; success: boolean; lines: ReportLine[]; effect: boolean }
@@ -61,7 +61,7 @@ export interface CampaignData {
   complete: boolean;
 }
 
-export interface Outcome { success: boolean; kills: number; bombersLost: number; bombersTotal: number }
+export interface Outcome { success: boolean; kills: number; bombersLost: number; bombersTotal: number; ditched?: boolean }
 
 export interface Modifiers {
   enemy: number;         // fighters in the air x
@@ -266,7 +266,7 @@ export function applyOutcome(d0: CampaignData, op: OpInfo, o: Outcome): { data: 
   if (o.success) d.escortBonus = clamp(d.escortBonus + (tpl ? tpl.effects.escort : STORY_ESCORT[op.id] ?? 0), 0, ESCORT_BONUS_MAX);
 
   // Progress
-  d.history.push({ id: op.id, kind: op.kind, title: op.title, success: o.success, kills: Math.max(0, Math.round(o.kills || 0)), lost });
+  d.history.push({ id: op.id, kind: op.kind, title: op.title, success: o.success, kills: Math.max(0, Math.round(o.kills || 0)), lost, ...(o.ditched ? { ditched: true } : {}) });
   if (d.history.length > 80) d.history.splice(0, d.history.length - 80);
   if (op.kind === 'raid') d.raids.push({ gap: op.gap!, id: op.id, success: o.success });
   if (op.kind === 'story' && o.success) {
@@ -275,6 +275,7 @@ export function applyOutcome(d0: CampaignData, op: OpInfo, o: Outcome): { data: 
   }
 
   // Report
+  if (o.ditched) lines.push({ gauge: 'note', text: 'Ditched · bomber lost · crew rescued' });
   const after = { lw: d.luftwaffe, sq: d.squadron, mo: d.morale, esc: escortAvailability(d) };
   const dir = (a: number, b: number, up: string, down: string, same: string) => (b > a ? up : b < a ? down : same);
   lines.push({ gauge: 'luftwaffe', from: before.lw, to: after.lw, text: `Luftwaffe strength ${dir(before.lw, after.lw, 'up', 'down', 'holds')} ${before.lw === after.lw ? `at ${pct(after.lw)}` : `${pct(before.lw)} → ${pct(after.lw)}`}. ${lwReason || 'This target did not touch the fighter arm.'}` });
@@ -354,7 +355,7 @@ export function sanitize(raw: unknown): CampaignData | null {
   d.raids = (Array.isArray(o.raids) ? o.raids : []).filter((r: any) => r && typeof r.id === 'string' && isRaidId(r.id) && Number.isFinite(r.gap))
     .map((r: any) => ({ gap: Math.floor(r.gap), id: r.id, success: !!r.success }));
   d.history = (Array.isArray(o.history) ? o.history : []).filter((h: any) => h && typeof h.id === 'string').slice(-80)
-    .map((h: any) => ({ id: h.id, kind: h.kind === 'raid' ? 'raid' : 'story', title: String(h.title ?? h.id), success: !!h.success, kills: Math.max(0, num(h.kills, 0)), lost: Math.max(0, num(h.lost, 0)) }));
+    .map((h: any) => ({ id: h.id, kind: h.kind === 'raid' ? 'raid' : 'story', title: String(h.title ?? h.id), success: !!h.success, kills: Math.max(0, num(h.kills, 0)), lost: Math.max(0, num(h.lost, 0)), ...(h.ditched === true ? { ditched: true } : {}) }));
   const r = o.report;
   d.report = r && typeof r === 'object' && Array.isArray(r.lines) ? { title: String(r.title ?? ''), success: !!r.success, effect: !!r.effect, lines: r.lines.filter((l: any) => l && typeof l.text === 'string').map((l: any) => ({ gauge: l.gauge, text: l.text, from: l.from, to: l.to })) } : null;
   return d;

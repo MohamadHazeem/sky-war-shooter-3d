@@ -29,6 +29,7 @@ export interface AchievementDef { id: string; name: string; desc: string; rarity
 const kills = (t: string) => (c: CareerData) => c.killsByType[t] ?? 0;
 
 export const ACHIEVEMENTS: AchievementDef[] = [
+  { id: 'goldfishClub', name: 'Goldfish Club', desc: 'Survive ditching and be rescued from the sea.', rarity: 'rare' },
   { id: 'firstBlood', name: 'First Blood', desc: 'Confirm your first kill.', rarity: 'common' },
   { id: 'ace', name: 'Ace in a Day', desc: `Confirm ${ACE_KILLS} kills in a single mission.`, rarity: 'uncommon' },
   { id: 'untouchable', name: 'Untouchable', desc: 'Complete a mission without taking a single hit.', rarity: 'rare' },

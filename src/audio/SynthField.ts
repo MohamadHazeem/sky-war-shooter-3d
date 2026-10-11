@@ -325,10 +325,27 @@ export function ambulanceBell(seed = 620): PCM {
   return bellLoop(FIELD_SR, sec, f0, SMALL_BELL, bellStrikes(sec, 2 / 0.8, seed + 1, true), r);
 }
 
+// Sea wash and the broad low-frequency slap of a water landing (no concrete scrape).
+export function seaWash(seed = 630): PCM {
+  const r = rng(seed), sr = ENGINE_SR;
+  const filters = [new LP(lpA(1300, sr)), new LP(lpA(1100, sr))];
+  return render(sr, 4, (t, ch) => filters[ch].run(r() * 2 - 1) * (0.65 + 0.3 * Math.sin(TAU * t / 4 + ch * 0.2)), { loop: 0.15, peak: 0.9 });
+}
+export function waterImpact(seed = 640): PCM {
+  const r = rng(seed), sr = ENGINE_SR;
+  const filters = [new LP(lpA(2000, sr)), new LP(lpA(1800, sr))];
+  return render(sr, 3, (t, ch) => {
+    const attack = Math.min(1, t * 80);
+    return attack * (filters[ch].run(r() * 2 - 1) * Math.exp(-t * 1.6) * 2 + Math.sin(TAU * 42 * t) * Math.exp(-t * 8));
+  }, { peak: 0.9 });
+}
+
 // ---------------------------------------------------------------- catalogue
 // variants: seeds base, base+1, ...; Sound builds them lazily in this order (engines first: the
 // take-off needs them; the landing sounds come long after)
 export const FIELD = {
+  seaWash: { variants: 1, make: seaWash, seed: 630 },
+  waterImpact: { variants: 1, make: waterImpact, seed: 640 },
   eng_cycloneRoar: { variants: 1, make: cycloneRoar, seed: 51 },
   eng_cycloneIdle: { variants: 1, make: cycloneIdle, seed: 52 },
   tyreChirp: { variants: 3, make: tyreChirp, seed: 530 },
@@ -344,6 +361,6 @@ export const FIELD = {
 } as const;
 export type FieldName = keyof typeof FIELD;
 // Played as positional one-shots through sound.play(); the rest are loops for Sound.emitter()
-export const FIELD_SHOTS = ['tyreChirp', 'gearThump', 'flarePop', 'bellyImpact'] as const;
+export const FIELD_SHOTS = ['tyreChirp', 'gearThump', 'flarePop', 'bellyImpact', 'waterImpact'] as const;
 export type FieldShot = typeof FIELD_SHOTS[number];
 export type FieldLoop = Exclude<FieldName, FieldShot | 'eng_cycloneRoar' | 'eng_cycloneIdle'>;

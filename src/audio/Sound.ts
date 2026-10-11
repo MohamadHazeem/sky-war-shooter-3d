@@ -57,7 +57,7 @@ export type BufName =
   | 'm2thump' | 'm2mech'
   | 'bk5' | 'mg81' | 'flak20' | 'flak20burst' | 'flakTower'
   | 'blastCrack' | 'blastBoom' | 'thunder' | 'rumbleLong' | 'whump' | 'patter' | 'brassPile'
-  | 'tyreChirp' | 'gearThump' | 'flarePop' | 'bellyImpact';
+  | 'tyreChirp' | 'gearThump' | 'flarePop' | 'waterImpact' | 'bellyImpact';
 
 // at: extra start delay (s); lp: low-pass cutoff override (Hz); size: explosion size (explosions only)
 type ShotOpts = { gain?: number; rate?: number; delay?: boolean; ref?: number; reverb?: number; at?: number; lp?: number; size?: BlastSize };
