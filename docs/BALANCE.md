@@ -52,6 +52,8 @@ sws.balance.clear(); sws.balance.enqueue(sws.balance.suite('all')); sws.balance.
 node tools/balance_report.mjs /tmp/sws-balance-results.jsonl
 ```
 
+The raw runs (tags: `before`, `after`, `final`, `final2`, `post`, `post2`, `raid2`, `oldboss`; the boss knobs used are in each run's `tune`) are in `docs/balance/results-2026-10-11.jsonl`; `node tools/balance_report.mjs docs/balance/results-2026-10-11.jsonl` summarises them.
+
 All runs use Veteran difficulty and the default aim assist (high), unless a row says otherwise.
 A 15-minute mission takes ~40 s of real time.
 
