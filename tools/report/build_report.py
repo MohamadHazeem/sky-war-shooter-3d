@@ -25,6 +25,7 @@ PLAY_FIRST = [
     ('Luftwaffe Experten', 'Career → Experten: the named aces who come back with grudges.'),
     ('Crew room', 'After each story mission the crew talks it over in Hut 14 (voiced, reacting to what happened).'),
     ('Arabic', 'Settings → Language → العربية: the whole game in Arabic, right to left.'),
+    ('Field Manual', 'Title menu (or pause) → Field Manual: every system, enemy and control explained in one place.'),
 ]
 
 # Things the player should know or decide (short, honest)
