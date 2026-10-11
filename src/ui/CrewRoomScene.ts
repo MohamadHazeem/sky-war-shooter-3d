@@ -942,6 +942,7 @@ class Running {
     requestAnimationFrame(() => { fade.style.opacity = '0'; root.querySelector<HTMLElement>('.crm-cap')!.style.opacity = '1'; });
     this.loop();
     sound.stopSpeech();
+    sound.music.setCrewRoom(scene.emptyBunk);
     this.audio.startAmbience(v);
     const ready = this.audio.prepare(scene.lines);
     // a moment to take the room in, then the first line
@@ -1004,6 +1005,7 @@ class Running {
     this.ended = true;
     this.seq++;
     this.audio.stop();
+    sound.music.setCrewRoom(null);
     window.removeEventListener('keydown', this.onKey, true);
     window.removeEventListener('resize', this.onResize);
     const root = this.root;
