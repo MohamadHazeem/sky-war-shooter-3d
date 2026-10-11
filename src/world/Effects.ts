@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { disposeOwned, markOwned } from '../render/Dispose';
 import { ParticleSystem, type ParticleOpts } from '../render/Particles';
 import { chuteTexture } from '../render/ChuteTexture';
-import { VolumeFX, type Vol } from '../render/Explosions';
+import { VolumeFX, shockLight, type Vol } from '../render/Explosions';
 import { heatHaze } from '../render/HeatHaze';
 import { cloudLights } from '../render/CloudLights';
 import { weatherNow } from '../render/WeatherState';
@@ -19,7 +19,7 @@ export type ExplosionKind = 'small' | 'fighter' | 'heavy' | 'boss';
 
 interface Debris {
   mesh: THREE.Object3D; vel: THREE.Vector3; spin: THREE.Vector3; life: number; max: number;
-  smoke: boolean; fire: boolean; acc: number; active: boolean; pooled: boolean;
+  smoke: boolean; fire: boolean; acc: number; fAcc: number; active: boolean; pooled: boolean;
 }
 interface Chute { obj: THREE.Group; vel: THREE.Vector3; life: number; open: number; phase: number }
 interface LightSlot { light: THREE.PointLight; life: number; max: number; intensity: number }
@@ -42,6 +42,10 @@ const C_HALO: [number, number, number] = [2.4, 1.3, 0.5];
 const C_CLOUDGLOW: [number, number, number] = [0.5, 0.24, 0.07];
 const C_WISP0: [number, number, number] = [0.11, 0.07, 0.045];
 const C_WISP1: [number, number, number] = [0.085, 0.08, 0.075];
+const C_TFIRE1: [number, number, number] = [2, 0.4, 0.05];
+// scratch colours for jittered puffs (spawn copies them)
+const _f0: [number, number, number] = [0, 0, 0];
+const _f1: [number, number, number] = [0, 0, 0];
 
 // Visual effects layer: volumetric fireballs and smoke balls, shock rings, combat light,
 // smoke/fire/flash particles, burning debris, falling drop tanks, parachutes.
@@ -91,7 +95,7 @@ export class Effects {
       m.castShadow = true;
       m.visible = false;
       scene.add(m);
-      this.debris.push({ mesh: m, vel: new THREE.Vector3(), spin: new THREE.Vector3(), life: 0, max: 1, smoke: false, fire: false, acc: 0, active: false, pooled: true });
+      this.debris.push({ mesh: m, vel: new THREE.Vector3(), spin: new THREE.Vector3(), life: 0, max: 1, smoke: false, fire: false, acc: 0, fAcc: 0, active: false, pooled: true });
     }
     for (let i = 0; i < PENDING_MAX; i++) this.pending.push({ t: 0, pos: new THREE.Vector3(), vel: new THREE.Vector3(), k: 1, kind: 0, active: false });
     this.flares = new Flares(this.glow, (pos, intensity, range, color) => this.steadyLight(pos, intensity, range, color));
@@ -99,10 +103,10 @@ export class Effects {
 
   // Fill the shared options object for one particle
   private emit(sys: ParticleSystem, pos: THREE.Vector3, vel: THREE.Vector3 | undefined, life: number, s0: number, s1: number,
-    c0: [number, number, number], c1: [number, number, number] | undefined, a0: number, a1: number, frame: number, drag: number, rise: number, lit: boolean, rotVel?: number) {
+    c0: [number, number, number], c1: [number, number, number] | undefined, a0: number, a1: number, frame: number, drag: number, rise: number, lit: boolean, rotVel?: number, age = 0) {
     const o = this.o;
     o.pos = pos; o.vel = vel; o.life = life; o.size0 = s0; o.size1 = s1; o.color0 = c0; o.color1 = c1;
-    o.alpha0 = a0; o.alpha1 = a1; o.frame = frame; o.drag = drag; o.rise = rise; o.lit = lit; o.rotVel = rotVel;
+    o.alpha0 = a0; o.alpha1 = a1; o.frame = frame; o.drag = drag; o.rise = rise; o.lit = lit; o.rotVel = rotVel; o.age = age;
     sys.spawn(o);
   }
 
@@ -210,21 +214,55 @@ export class Effects {
     }
   }
 
-  // Continuous trail from a damaged engine: level 0..1 (white glycol -> gray -> black oil smoke), fire adds flames
-  trail(pos: THREE.Vector3, vel: THREE.Vector3, level: number, fire: boolean, scale = 1) {
+  // Continuous trail from a damaged engine: level 0..1 (white glycol -> gray -> black oil smoke), fire adds flames.
+  // Callers emit every ~0.05-0.07 s; span is the time since the last call. The puffs are spread back
+  // along the path flown since then (stratified jitter, varied size and brightness), each one already
+  // as old as it would be had it been emitted there, so a fast aircraft or wreck leaves a continuous
+  // ribbon of flame and smoke rather than a row of evenly spaced beads (dotted orange lines at night).
+  // from: where the emitter was at the last call, when the caller knows (a tumbling wreck's emitter
+  // swings round its centre, so its path is not a straight line along vel).
+  trail(pos: THREE.Vector3, vel: THREE.Vector3, level: number, fire: boolean, scale = 1, span = 0.06, from?: THREE.Vector3) {
+    const far = this.vol.hasCam ? pos.distanceTo(this.vol.camPos) : 0;
+    // the puffs drift with a quarter of the emitter's velocity: relative to them it moved 3/4 of it
+    let back = vel.length() * 0.75 * span;
+    // a from point that is far off the path (floating-origin shift, first call) is ignored
+    const seg = from ? pos.distanceTo(from) : 0;
+    if (from && seg > back * 3 + 20) from = undefined;
+    else if (from) back = Math.max(back, seg * 0.75);
     _v.copy(vel).multiplyScalar(0.25);
     if (fire) {
-      for (let i = 0; i < 2; i++) {
-        _p.copy(pos).addScaledVector(vel, -Math.random() * 0.03);
-        this.glow.spawn({ pos: _p, vel: _v, life: 0.35 + Math.random() * 0.25, size0: 1.9 * scale, size1: 0.7 * scale, color0: [10, 4, 0.9], color1: [2, 0.4, 0.05], alpha0: 1, alpha1: 0, frame: 2, rotVel: 3 });
+      const s0 = 1.9 * scale;
+      // flame puffs about a third of their size apart along that path (far away two do: sub-pixel
+      // gaps); the denser they are, the fainter each one, so the ribbon keeps its brightness
+      const n = far < 2500 ? Math.min(18, Math.max(2, Math.ceil(back / (s0 * 0.3)))) : 2;
+      const thin = Math.min(1, Math.max(0.55, back / n / (s0 * 0.5)));
+      for (let i = 0; i < n; i++) {
+        const t = ((i + Math.random()) / n) * span;
+        this.trailAt(pos, vel, t, span, from);
+        const k = 0.75 + Math.random() * 0.5, hot = 0.7 + Math.random() * 0.45;
+        _f0[0] = 10 * hot; _f0[1] = 4 * hot; _f0[2] = 0.9 * hot;
+        this.emit(this.glow, _p, _v, 0.35 + Math.random() * 0.25, s0 * k, 0.9 * scale * k, _f0, C_TFIRE1, (0.75 + Math.random() * 0.25) * thin, 0, 2, 0, 0, false, 3, t);
       }
     }
     const dark = Math.min(1, level * 1.3);
     const c = 0.75 - dark * 0.68;
-    this.smoke.spawn({
-      pos, vel: _v, life: 5 + level * 6, size0: (1.2 + level * 1.5) * scale, size1: (6 + level * 10) * scale,
-      color0: fire ? [0.07, 0.065, 0.06] : [c, c, c * 0.98], alpha0: 0.25 + level * 0.55, alpha1: 0, drag: 0.6, rise: 0.4, lit: true,
-    });
+    if (fire) { _f1[0] = 0.07; _f1[1] = 0.065; _f1[2] = 0.06; } else { _f1[0] = c; _f1[1] = c; _f1[2] = c * 0.98; }
+    // near the camera two smoke puffs per call, so the young (still small) trail head is continuous too
+    const ns = far < 900 && this.smoke.count < 6000 ? 2 : 1;
+    for (let i = 0; i < ns; i++) {
+      const t = ns > 1 ? ((i + Math.random()) / ns) * span : 0;
+      this.trailAt(pos, vel, t, span, from);
+      const k = 0.85 + Math.random() * 0.3;
+      this.emit(this.smoke, _p, _v, 5 + level * 6, (1.2 + level * 1.5) * scale * k, (6 + level * 10) * scale * k, _f1, undefined,
+        (0.25 + level * 0.55) * (ns > 1 ? 0.72 : 1) * (0.85 + Math.random() * 0.3), 0, 0, 0.6, 0.4, true, undefined, t);
+    }
+  }
+
+  // _p = where a trail puff emitted t s ago is now: on the emitter's path then (straight back along
+  // vel, or between from and pos), plus the quarter of vel it has drifted since
+  private trailAt(pos: THREE.Vector3, vel: THREE.Vector3, t: number, span: number, from?: THREE.Vector3) {
+    if (from) _p.lerpVectors(pos, from, Math.min(1, t / Math.max(span, 1e-4))).addScaledVector(vel, 0.25 * t);
+    else _p.copy(pos).addScaledVector(vel, -0.75 * t);
   }
 
   // Size of explosions relative to the aircraft (the enemies are drawn enlarged)
@@ -472,13 +510,14 @@ export class Effects {
       d.fire = burning && Math.random() < 0.35;
       d.smoke = d.fire || (burning && Math.random() < 0.45);
       d.acc = Math.random() * 0.04;
+      d.fAcc = 0;
     }
   }
 
   // Jettisoned drop tank (the yellow 300 l tanks the Fw 190s drop before attacking)
   dropTank(obj: THREE.Object3D, vel: THREE.Vector3) {
     this.scene.add(obj);
-    this.debris.push({ mesh: obj, vel: vel.clone().add(new THREE.Vector3(0, -3, 0)), spin: new THREE.Vector3(0.6, 0.1, 0.2), life: 14, max: 14, smoke: false, fire: false, acc: 0, active: true, pooled: false });
+    this.debris.push({ mesh: obj, vel: vel.clone().add(new THREE.Vector3(0, -3, 0)), spin: new THREE.Vector3(0.6, 0.1, 0.2), life: 14, max: 14, smoke: false, fire: false, acc: 0, fAcc: 0, active: true, pooled: false });
   }
 
   // scale > 1 draws the chute (and its jumper) larger, like the 4.2x enemy fighters, so a
@@ -556,17 +595,43 @@ export class Effects {
       d.mesh.position.addScaledVector(d.vel, dt);
       d.mesh.rotation.x += d.spin.x * dt; d.mesh.rotation.y += d.spin.y * dt; d.mesh.rotation.z += d.spin.z * dt;
       if (d.smoke) {
-        // burning pieces leave a continuous smoke trail, emitted at a fixed rate (thinner far away)
+        // Burning pieces leave a continuous trail. Each puff is placed where the piece was at its
+        // (jittered) emission time inside this frame, on the segment flown since the last frame,
+        // with varied size and density: emitted at the frame's end position, a fast fragment drew
+        // evenly spaced beads (dotted orange lines at night). Thinner far away.
         const far = seen ? d.mesh.position.distanceTo(cam) : 0;
         const tick = far > 1500 ? 0.1 : 0.04;
-        d.acc += dt;
         const burn = d.life / d.max;
+        const sc = d.mesh.scale.x;
+        const off = far > 3000 || this.smoke.count > SMOKE_HARD;
+        d.acc += dt;
         while (d.acc >= tick) {
-          d.acc -= tick;
-          if (far > 3000 || this.smoke.count > SMOKE_HARD) continue;
-          const sc = d.mesh.scale.x;
-          this.emit(this.smoke, d.mesh.position, undefined, 2.2 + burn * 1.6, 0.5 * sc, (2.2 + burn * 2.5) * sc, C_TRAIL, undefined, 0.35 + burn * 0.3, 0, 0, 0, 0.5, true);
-          if (d.fire && burn > 0.35) this.emit(this.glow, d.mesh.position, undefined, 0.22, 1.1 * sc, 0.35 * sc, C_FLAME0, C_FLAME1, 1, 0, 2, 0, 0, false, 4);
+          d.acc -= tick * (0.6 + Math.random() * 0.8);
+          if (off) continue;
+          // d.acc is now how long ago (within this frame) the puff was due
+          const ago = Math.min(Math.max(d.acc, 0), dt);
+          _p.copy(d.mesh.position).addScaledVector(d.vel, -ago);
+          const k = 0.8 + Math.random() * 0.4;
+          this.emit(this.smoke, _p, undefined, 2.2 + burn * 1.6, 0.5 * sc * k, (2.2 + burn * 2.5) * sc * k, C_TRAIL, undefined, (0.35 + burn * 0.3) * (0.8 + Math.random() * 0.4), 0, 0, 0, 0.5, true, undefined, ago);
+        }
+        if (d.fire && burn > 0.35 && !off) {
+          // flames: spaced by distance, about 0.3 of a flame's size apart along the segment
+          const size = 1.1 * sc;
+          const gap = size * 0.3;
+          const speed = d.vel.length();
+          const seg = speed * dt;
+          d.fAcc += seg;
+          let n = 0;
+          while (d.fAcc >= gap && n < 12) {
+            d.fAcc -= gap * (0.7 + Math.random() * 0.6);
+            n++;
+            // d.fAcc is now the distance back from the frame's end position
+            const ago = Math.min(seg, Math.max(0, d.fAcc)) / Math.max(1e-3, speed);
+            _p.copy(d.mesh.position).addScaledVector(d.vel, -ago);
+            const k = 0.75 + Math.random() * 0.5;
+            this.emit(this.glow, _p, undefined, 0.16 + Math.random() * 0.12, size * k, 0.35 * sc * k, C_FLAME0, C_FLAME1, 0.7 + Math.random() * 0.3, 0, 2, 0, 0, false, 4, ago);
+          }
+          if (n === 12) d.fAcc = 0;
         }
       }
       if (d.life <= 0) {
@@ -622,7 +687,7 @@ export class Effects {
     const k = scale * this.explosionScale;
     this.flashLight(pos, 900 * k, 0.45, 0xff8a3a);
     this.glow.spawn({ pos, vel, life: 0.11, size0: 7 * k, size1: 18 * k, color0: [16, 9, 3.2], alpha0: 1, alpha1: 0, frame: 1 });
-    this.glow.spawn({ pos, vel, life: 0.35, size0: 4 * k, size1: 40 * k, color0: [1.1, 0.9, 0.75], alpha0: 0.28, alpha1: 0, frame: 3, rotVel: 0 });
+    this.glow.spawn({ pos, vel, life: 0.35, size0: 4 * k, size1: 40 * k, color0: [1.1, 0.9, 0.75], alpha0: 0.28 * shockLight(), alpha1: 0, frame: 3, rotVel: 0 });
     this.glow.spawn({ pos, vel, life: 0.7, size0: 9 * k, size1: 14 * k, color0: [9, 3.6, 0.9], color1: [1.4, 0.3, 0.05], alpha0: 0.95, alpha1: 0, frame: 2, rotVel: 0.6 });
     for (let i = 0; i < 24 * scale; i++) {
       _v.set(R(), R(), R()).normalize().multiplyScalar((4 + Math.random() * 13) * k).add(vel);
@@ -679,7 +744,7 @@ export class Effects {
     this.flashLight(pos, 700 * scale, 0.15, 0xffaa66);
     if (core) this.glow.spawn({ pos, life: 0.12, size0: 6, size1: 14, color0: [40, 22, 8], alpha0: 1, alpha1: 0, frame: 1 });
     this.glow.spawn({ pos, life: 0.35, size0: 5 * scale, size1: 10 * scale, color0: [9, 3.5, 0.8], alpha0: 1, alpha1: 0, frame: 2, rotVel: 2 });
-    this.glow.spawn({ pos, life: 0.3, size0: 3 * scale, size1: 40 * scale, color0: [3, 2.6, 2.2], alpha0: 0.7, alpha1: 0, frame: 3, rotVel: 0 });
+    this.glow.spawn({ pos, life: 0.3, size0: 3 * scale, size1: 40 * scale, color0: [3, 2.6, 2.2], alpha0: 0.7 * shockLight(), alpha1: 0, frame: 3, rotVel: 0 });
     const nF = Math.round((8 + Math.random() * 7) * scale);
     for (let i = 0; i < nF; i++) {
       _v.set(R(), R(), R()).normalize().multiplyScalar((40 + Math.random() * 60) * scale);

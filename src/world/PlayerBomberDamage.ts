@@ -70,7 +70,9 @@ const HOLE_GEOS = [13, 29, 41, 59].map((s) => jaggedGeo(8, 0.42, s * 104729));
 const SCORCH_GEOS = [17, 31].map((s) => jaggedGeo(13, 0.5, s * 15485863));
 const decalMat = (color: number, rough: number, metal: number, off = -2) =>
   new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal, polygonOffset: true, polygonOffsetFactor: off, polygonOffsetUnits: off });
-const RIM_MAT = decalMat(0xa3a59c, 0.4, 0.75);
+// torn edge: sooty, scuffed bare metal. Bright polished metal (0xa3a59c, rough 0.4, metal 0.75)
+// mirrored the sunlit cloud sea and drew a white outline round every hole, like a sticker.
+const RIM_MAT = decalMat(0x4d4a44, 0.62, 0.5);
 const HOLE_MAT = decalMat(0x090807, 1, 0, -3);
 const SCORCH_MAT = decalMat(0x17130f, 0.95, 0.1, -1);
 const EMBER_MAT = decalMat(0x0b0a09, 1, 0, -3);

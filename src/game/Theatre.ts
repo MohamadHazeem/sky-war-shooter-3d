@@ -261,6 +261,7 @@ export class Theatre implements TheatreControl, TheatrePad {
   openLive(): boolean {
     if (this.active || this.rec.frames < 2) return false;
     this.fromLibrary = false;
+    this.game.bookends.yieldScene();   // the parked field behind the debrief steps aside (Bookends.ts)
     return this.open(this.rec.toClip(), true);
   }
 

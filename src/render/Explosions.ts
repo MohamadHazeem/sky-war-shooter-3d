@@ -122,6 +122,15 @@ function blank(): Vol {
 const _c = new THREE.Vector3();
 const _w = new THREE.Vector3();
 
+// Brightness of an explosion's shock ring for the light of the moment. The ring is a condensation
+// flash lit by the sky and the fireball, not a light of its own: at a fixed brightness it stood
+// as a white neon ring against a night or dusk sky for ~0.4 s. Scaled with the daylight (key +
+// fill): 1 on a clear day, ~0.4 at dusk, ~0.3 in a storm, a faint trace (~0.035) at night.
+export function shockLight(): number {
+  const day = Math.min(1, (Atmos.sunIntensity / 4.2) * 0.7 + (Atmos.cloudAmbient / 0.6) * 0.3);
+  return 0.03 + 0.97 * day * day;
+}
+
 export class VolumeFX {
   readonly mesh: THREE.Mesh;
   readonly camPos = new THREE.Vector3();
@@ -305,6 +314,7 @@ export class VolumeFX {
     u.uAmb.value.set(
       Atmos.horizon.r * 0.6 + Atmos.zenith.r * 0.4, Atmos.horizon.g * 0.6 + Atmos.zenith.g * 0.4, Atmos.horizon.b * 0.6 + Atmos.zenith.b * 0.4,
     ).multiplyScalar(0.9 + Atmos.cloudAmbient * 0.5);
+    const shockK = shockLight();
     let n = 0;
     for (let i = 0; i < this.max; i++) {
       const s = this.slots[i];
@@ -342,7 +352,7 @@ export class VolumeFX {
       A[m * 4] = _c.x; A[m * 4 + 1] = _c.y; A[m * 4 + 2] = _c.z; A[m * 4 + 3] = R;
       B[m * 4] = s.type; B[m * 4 + 1] = s.age; B[m * 4 + 2] = s.seed; B[m * 4 + 3] = fin * (1 - fo);
       if (s.type === 1) {
-        C[m * 4] = s.heat0 * (1 - t) * (1 - t); C[m * 4 + 1] = 0; C[m * 4 + 2] = 0; C[m * 4 + 3] = 0;
+        C[m * 4] = s.heat0 * shockK * (1 - t) * (1 - t); C[m * 4 + 1] = 0; C[m * 4 + 2] = 0; C[m * 4 + 3] = 0;
       } else {
         C[m * 4] = s.heat0 * Math.exp(-s.age / s.tau);
         C[m * 4 + 1] = s.grey;

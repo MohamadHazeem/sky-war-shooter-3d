@@ -35,6 +35,10 @@ import { tx } from '../i18n';
 // landing in a shower of sparks and dust, and the fire tender, crash truck and ambulances racing
 // out. The real player bomber is flown here (its holes, dead props and smoke), then put back.
 // A failed mission keeps the bail-out sequence (BailOutCinematic.ts).
+// After the landing the field stays behind the debrief ('hold'): the Sky Queen parked where she
+// stopped, engines off, a slow camera drift round her. It gives the world back when the debrief is
+// left (release() from Game.startMenu / showBriefing, a new mission, or any state change), and
+// steps aside while the best-moment replay or the replay theatre plays over the live world.
 //
 // Space / Esc / Enter / click / tap skips. Settings "Takeoff & landing scenes" (settings.bookends,
 // undefined = on). Only for missions started from the briefing (so dev tools, the autoplay
@@ -154,7 +158,7 @@ export class Bookends {
   private base: Airbase | null = null;
   private cast: Actor[] = [];
   private landGear: Gear | null = null;
-  private seq: 'none' | 'takeoff' | 'landing' = 'none';
+  private seq: 'none' | 'takeoff' | 'landing' | 'hold' = 'none';
   private t = 0;
   private st = 0;
   private shot = -1;
@@ -191,6 +195,13 @@ export class Bookends {
   private stopA = 0;
   private stopB = 0;
   private tgtSaved: { w: number; gap: THREE.Vector4; glow: THREE.Vector4 } | null = null;
+  // hold (behind the debrief): where she came to rest (base-local), the camera drift, and whether the
+  // scene has stepped aside for a replay over the live world
+  private restLocal = new THREE.Vector3();
+  private restQuat = new THREE.Quaternion();
+  private holdT0 = 0;
+  private holdA = 0;
+  private holdSusp = false;
   // DOM
   private root: HTMLElement | null = null;
   private els: Record<'tag' | 'cap' | 'hint' | 'sub' | 'fd', HTMLElement> | null = null;
@@ -200,7 +211,9 @@ export class Bookends {
 
   constructor(private engine: Engine, private ui: UI, private game: Game) {}
 
-  get active() { return this.seq !== 'none'; }
+  get active() { return this.seq !== 'none' && this.seq !== 'hold'; }
+  /** The parked scene is showing behind the debrief (dev / tests). */
+  get holding() { return this.seq === 'hold'; }
   get phase() { return this.seq; }
   get time() { return this.t; }
 
@@ -253,6 +266,7 @@ export class Bookends {
   /** Early in Game.frame: true while a bookend owns the frame. */
   frame(dt: number): boolean {
     if (this.seq === 'none') return false;
+    if (this.seq === 'hold') return this.holdFrame(dt);
     const g = this.game;
     if ((this.seq === 'takeoff' && g.state !== 'briefing') || (this.seq === 'landing' && g.state !== 'ending')) { this.abort(); return false; }
     const e = this.engine;
@@ -915,6 +929,130 @@ export class Bookends {
     this.field.flares(this.flares);   // each flare's hiss rides up with it
   }
 
+  // ---------------- hold: the field behind the debrief ----------------
+
+  private enterHold() {
+    const e = this.engine, pb = this.pb!, base = this.base!;
+    this.seq = 'hold';
+    this.holdT0 = this.t;
+    this.holdSusp = false;
+    removeEventListener('pointerdown', this.onSkip, true);
+    removeEventListener('keydown', this.onKey, true);
+    voice.stop();
+    if (this.mbSaved >= 0) { e.post.motionBlur = this.mbSaved; this.mbSaved = -1; }
+    // engines off, the crash crews and their bells quiet down
+    this.voices.length = 0;
+    sound.updateFighterVoices([]);
+    this.field.stopAll(1.2);
+    // only the fade layer of the letterbox overlay stays (it fades the parked shot in)
+    if (this.els) {
+      for (const k of ['tag', 'cap', 'hint', 'sub'] as const) this.els[k].style.visibility = 'hidden';
+      this.root!.querySelectorAll<HTMLElement>('.bar').forEach((b) => { b.style.visibility = 'hidden'; });
+    }
+    for (const a of this.cast) if (a.phase === 'air' || a.phase === 'roll') a.b.root.visible = false;
+    this.restLocal.copy(pb.root.position).sub(base.group.position);
+    this.restQuat.copy(pb.root.quaternion);
+    pb.vel.set(0, 0, 0);
+    this.sq.rpm = Math.min(this.sq.rpm, 0.4);
+    this.holdA = 0.55 + Math.random() * 0.5;
+    this.lookInit = false;
+    this.holdShot(0, true);
+    e.post.resetHistory();
+    this.note('hold');
+  }
+
+  // Calm parked shot: low on the grass off her nose quarter, drifting slowly round
+  private holdShot(dt: number, cut: boolean) {
+    const e = this.engine, cam = e.camera, pb = this.pb!;
+    this.holdA += dt * 0.035;
+    _p.copy(pb.root.position);
+    _w.copy(DIR).multiplyScalar(Math.cos(this.holdA)).addScaledVector(LEFT, Math.sin(this.holdA) * this.slewSide());
+    cam.position.copy(_p).addScaledVector(_w, 38);
+    cam.position.y = _p.y + 2.4;
+    this.aim(_q.copy(_p).addScaledVector(UP, 0.6), dt, 2, cut);
+    cineLens(e, 40);
+  }
+
+  private holdFrame(dt: number): boolean {
+    const g = this.game, e = this.engine;
+    if (g.state !== 'debrief') { this.release(); return false; }
+    // the best-moment replay plays over the live world: step aside until it is over
+    if (g.cine.replaying) { this.yieldScene(); return false; }
+    if (this.holdSusp) this.resumeHold();
+    const real = Math.min(0.05, e.timeScale > 0 ? dt / e.timeScale : dt);
+    this.t += real;
+    this.setFade(1 - (this.t - this.holdT0) / 1.2);
+    this.holdShot(real, false);
+    const sq = this.sq, pb = this.pb!;
+    sq.rpm = Math.max(0, sq.rpm - real * 0.25);
+    pb.updateProps(real, sq.rpm);
+    g.world.effects.update(real);
+    this.updateFlares(real);
+    this.base?.update(this.t);
+    sound.setListener(e.camera);
+    g.world.listener = e.camera.position;
+    g.cine.update(dt);   // the debrief's replay buttons (Cinematics.debrief)
+    return true;
+  }
+
+  /** The replay (Cinematics) or the replay theatre is about to play over the live world: give
+   *  it back for now (the hold comes back when the debrief shows again). */
+  yieldScene() {
+    if (this.seq !== 'hold' || this.holdSusp) return;
+    this.holdSusp = true;
+    const e = this.engine, pb = this.pb!;
+    for (const { o, v } of this.worldVis) o.visible = v;
+    this.worldVis = [];
+    this.base?.show(e.scene, false);
+    this.landGear?.group.removeFromParent();
+    this.reveal.restore();
+    this.hideUi(false);
+    this.setFade(0);
+    if (this.tgtSaved) {
+      targetUniforms.uTgt.value.w = this.tgtSaved.w;
+      cloudTargetUniforms.uGap.value.copy(this.tgtSaved.gap); cloudTargetUniforms.uGlow.value.copy(this.tgtSaved.glow);
+      this.tgtSaved = null;
+    }
+    pb.root.position.copy(this.pbPos); pb.root.quaternion.copy(this.pbQuat); pb.vel.copy(this.pbVel); pb.spin.copy(this.pbSpin);
+    pb.root.updateMatrixWorld(true);
+    this.game.world.effects.clear();
+    this.note('hold: yield');
+  }
+
+  private resumeHold() {
+    const e = this.engine, pb = this.pb!, base = this.base!;
+    this.holdSusp = false;
+    // the live ship flew on meanwhile (and the origin may have moved): remember her as she is now
+    this.pbPos.copy(pb.root.position); this.pbQuat.copy(pb.root.quaternion); this.pbVel.copy(pb.vel); this.pbSpin.copy(pb.spin);
+    this.hideWorld(pb);
+    this.game.world.effects.clear();
+    this.tgtSaved = { w: targetUniforms.uTgt.value.w, gap: cloudTargetUniforms.uGap.value.clone(), glow: cloudTargetUniforms.uGlow.value.clone() };
+    targetUniforms.uTgt.value.w = 0; cloudTargetUniforms.uGap.value.set(0, 0, 0, 0); cloudTargetUniforms.uGlow.value.set(0, 0, 1, 0);
+    base.group.position.set(Math.round(e.camera.position.x), 0, Math.round(e.camera.position.z));
+    base.show(e.scene, true);
+    pb.root.position.copy(base.group.position).add(this.restLocal);
+    pb.root.quaternion.copy(this.restQuat);
+    pb.vel.set(0, 0, 0);
+    pb.root.updateMatrixWorld(true);
+    pb.model.add(this.landGear!.group);
+    this.reveal.reveal(pb.model);
+    this.hideUi(true);
+    if (e.camera.parent !== e.scene) e.scene.attach(e.camera);
+    this.lookInit = false;
+    this.holdShot(0, true);
+    e.post.resetHistory();
+    this.note('hold: resume');
+  }
+
+  /** Leaving the debrief (Game.startMenu / showBriefing): put the world back now, before the
+   *  next screen sets up its own scene. */
+  release() {
+    if (this.seq !== 'hold') return;
+    if (this.holdSusp) this.pb = null;   // the live ship is already flying as the world left her
+    this.note('hold: release');
+    this.cleanup();
+  }
+
   // ---------------- shared ----------------
 
   private begin(seq: 'takeoff' | 'landing') {
@@ -940,6 +1078,14 @@ export class Bookends {
 
   private finish() {
     const seq = this.seq, m = this.mission, cb = this.onDone;
+    if (seq === 'landing' && this.pb && this.base) {
+      // she stays parked on the field behind the debrief (released when the debrief is left)
+      this.enterHold();
+      this.landedFor = m;
+      this.onDone = null;
+      cb?.();
+      return;
+    }
     this.cleanup();
     if (seq === 'takeoff') this.resumeFor = m;
     else if (seq === 'landing') this.landedFor = m;
@@ -957,6 +1103,11 @@ export class Bookends {
   private cleanup() {
     const seq = this.seq, e = this.engine, w = this.game.world;
     this.seq = 'none';
+    this.holdSusp = false;
+    if (this.els) {
+      for (const k of ['tag', 'cap', 'hint', 'sub'] as const) this.els[k].style.visibility = '';
+      this.root?.querySelectorAll<HTMLElement>('.bar').forEach((b) => { b.style.visibility = ''; });
+    }
     removeEventListener('pointerdown', this.onSkip, true);
     removeEventListener('keydown', this.onKey, true);
     this.overlay(false);
@@ -969,7 +1120,7 @@ export class Bookends {
     this.flares = [];
     this.voices.length = 0;
     sound.updateFighterVoices([]);
-    this.field.stopAll(seq === 'landing' ? 0.6 : 0.3);
+    this.field.stopAll(seq === 'landing' || seq === 'hold' ? 0.6 : 0.3);
     if (this.weatherSaved) { applyWeather(e, this.weatherSaved); this.weatherSaved = null; }
     if (this.tgtSaved) {
       targetUniforms.uTgt.value.w = this.tgtSaved.w;

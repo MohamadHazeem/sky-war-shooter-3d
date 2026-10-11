@@ -28,7 +28,7 @@ const FALL_EMIT = 8;     // s a shot-down (burning) fighter keeps the stage-4 co
 const HOLE_GEO = new THREE.CylinderGeometry(0.5, 0.5, 0.05, 7).rotateX(Math.PI / 2);
 const decalMat = (color: number, rough: number, metal: number) =>
   new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-const RIM_MAT = decalMat(0x9a9c94, 0.45, 0.7);
+const RIM_MAT = decalMat(0x4d4a44, 0.62, 0.5);   // sooty torn metal, not a bright outline (as PlayerBomberDamage)
 const HOLE_MAT = decalMat(0x0b0a09, 1, 0);
 const EMBER_MAT = decalMat(0x0b0a09, 1, 0);
 EMBER_MAT.emissive.setRGB(3.2, 0.9, 0.12); // linear HDR, blooms

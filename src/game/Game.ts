@@ -254,6 +254,7 @@ export class Game {
 
   // ---------------- Menu ----------------
   startMenu() {
+    this.bookends.release();   // the parked field behind a debrief gives the world back first
     this.photo.exit();
     this.state = 'menu';
     this.menuMode = true;
@@ -291,6 +292,7 @@ export class Game {
   }
 
   showBriefing(m: Mission) {
+    this.bookends.release();
     sound.init();
     this.state = 'briefing';
     prepareCampaignMission(m, this.progress); // campaign state modifiers (CampaignState.ts)
