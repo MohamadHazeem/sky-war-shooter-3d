@@ -1,16 +1,18 @@
 {
-  "_doc": "Source of truth for the recorded crew voices. Run tools/voice/generate.py after editing. `text` must match the game's subtitle text exactly (that is how World.callout lines find their clip). `roles` makes one clip per role (id__role), `vars` expands {key} in id/text (one clip per value, {i} = 1-based index), `say` overrides what is spoken, `rate` overrides words per minute, `urgent` speaks faster.",
+  "_doc": "Source of truth for the recorded crew voices. Run tools/voice/generate.py after editing. `text` must match the game's subtitle text exactly (that is how World.callout lines find their clip). `roles` makes one clip per role (id__role), `vars` expands {key} in id/text (one clip per value, {i} = 1-based index), `say` overrides what is spoken, `rate` overrides words per minute, `urgent` speaks faster. `exa`/`cfg` override Chatterbox emotion/guidance; `urgent` uses stronger emotion (or faster say rate).",
   "audio": {
     "sampleRate": 16000,
     "bitrate": 24000,
-    "urgentBoost": 22
+    "urgentBoost": 22,
+    "engine": "chatterbox"
   },
   "roles": {
     "pilot": {
       "speaker": "Pilot",
       "aliases": [],
       "voice": "Reed (English (US))",
-      "rate": 185
+      "rate": 185,
+      "ref": "refs/pilot.flac"
     },
     "copilot": {
       "speaker": "Co-Pilot",
@@ -19,13 +21,15 @@
         "Copilot"
       ],
       "voice": "Eddy (English (US))",
-      "rate": 192
+      "rate": 192,
+      "ref": "refs/copilot.flac"
     },
     "nav": {
       "speaker": "Navigator",
       "aliases": [],
       "voice": "Daniel (English (UK))",
-      "rate": 182
+      "rate": 182,
+      "ref": "refs/nav.flac"
     },
     "tail": {
       "speaker": "Tail",
@@ -33,7 +37,8 @@
         "Dawson"
       ],
       "voice": "Rocko (English (US))",
-      "rate": 200
+      "rate": 200,
+      "ref": "refs/tail.flac"
     },
     "top": {
       "speaker": "Top Turret",
@@ -42,7 +47,8 @@
         "Mendez"
       ],
       "voice": "Ralph",
-      "rate": 188
+      "rate": 188,
+      "ref": "refs/top.flac"
     },
     "ball": {
       "speaker": "Ball Turret",
@@ -51,13 +57,15 @@
         "Reilly"
       ],
       "voice": "Grandpa (English (US))",
-      "rate": 205
+      "rate": 205,
+      "ref": "refs/ball.flac"
     },
     "bombardier": {
       "speaker": "Bombardier",
       "aliases": [],
       "voice": "Rocko (English (UK))",
-      "rate": 190
+      "rate": 190,
+      "ref": "refs/bombardier.flac"
     },
     "radio": {
       "speaker": "Radio",
@@ -65,7 +73,8 @@
         "Gallo"
       ],
       "voice": "Fred",
-      "rate": 185
+      "rate": 185,
+      "ref": "refs/radio.flac"
     },
     "waist": {
       "speaker": "Waist",
@@ -74,37 +83,43 @@
         "Walsh"
       ],
       "voice": "Eddy (English (UK))",
-      "rate": 200
+      "rate": 200,
+      "ref": "refs/waist.flac"
     },
     "lead": {
       "speaker": "Lead",
       "aliases": [],
       "voice": "Reed (English (UK))",
-      "rate": 195
+      "rate": 195,
+      "ref": "refs/lead.flac"
     },
     "bigfriend": {
       "speaker": "Big Friend",
       "aliases": [],
       "voice": "Grandpa (English (UK))",
-      "rate": 182
+      "rate": 182,
+      "ref": "refs/bigfriend.flac"
     },
     "blue3": {
       "speaker": "Blue Three",
       "aliases": [],
       "voice": "Eddy (English (UK))",
-      "rate": 195
+      "rate": 195,
+      "ref": "refs/blue3.flac"
     },
     "blue2": {
       "speaker": "Blue Two",
       "aliases": [],
       "voice": "Rocko (English (UK))",
-      "rate": 198
+      "rate": 198,
+      "ref": "refs/blue2.flac"
     },
     "control": {
       "speaker": "Control",
       "aliases": [],
       "voice": "Sandy (English (UK))",
-      "rate": 180
+      "rate": 180,
+      "ref": "refs/control.flac"
     },
     "briefing": {
       "speaker": "Intelligence Officer",
@@ -113,19 +128,22 @@
       "rate": 168,
       "bitrate": 16000,
       "noTable": true,
-      "_doc": "Mission briefings, one clip per paragraph (brief_<mission>_<n>), read in the briefing room: played clean by src/audio/BriefingVoice.ts, not through the radio chain. Generated from src/game/Missions.ts by tools/voice/briefings.mjs."
+      "_doc": "Mission briefings, one clip per paragraph (brief_<mission>_<n>), read in the briefing room: played clean by src/audio/BriefingVoice.ts, not through the radio chain. Generated from src/game/Missions.ts by tools/voice/briefings.mjs.",
+      "ref": "refs/briefing.flac"
     },
     "blue4": {
       "speaker": "Blue Four",
       "aliases": [],
       "voice": "Reed (English (UK))",
-      "rate": 196
+      "rate": 196,
+      "ref": "refs/blue4.flac"
     },
     "tower": {
       "speaker": "Tower",
       "aliases": [],
       "voice": "Grandpa (English (US))",
-      "rate": 178
+      "rate": 178,
+      "ref": "refs/tower.flac"
     }
   },
   "clock": {
@@ -387,7 +405,8 @@
         "tail",
         "pilot",
         "top",
-        "nav"
+        "nav",
+        "blue3"
       ],
       "text": "Got him! He's going down!",
       "urgent": true
@@ -3225,9 +3244,21 @@
       "role": "blue4",
       "text": "Blue Four is down. Nice flying today, Two."
     },
-    {"id": "bombardier_offer", "role": "pilot", "text": "Bombardier, she's all yours."},
-    {"id": "bombardier_good", "role": "bombardier", "text": "Good pattern! The aiming point is covered."},
-    {"id": "bombardier_poor", "role": "bombardier", "text": "The pattern is wide. We will check the strike photograph."},
+    {
+      "id": "bombardier_offer",
+      "role": "pilot",
+      "text": "Bombardier, she's all yours."
+    },
+    {
+      "id": "bombardier_good",
+      "role": "bombardier",
+      "text": "Good pattern! The aiming point is covered."
+    },
+    {
+      "id": "bombardier_poor",
+      "role": "bombardier",
+      "text": "The pattern is wide. We will check the strike photograph."
+    },
     {
       "group": "ditching (Phase 6 goal 06)"
     },

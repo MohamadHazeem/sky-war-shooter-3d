@@ -1,0 +1,534 @@
+{
+  "pilot": {
+    "speaker": "p345",
+    "gender": "M",
+    "accent": "American",
+    "age": "22",
+    "region": "Florida",
+    "duration": 10.87,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 80501,
+        "file": "p345_353_mic2.flac",
+        "text": "It was a very big win for us."
+      },
+      {
+        "row": 80503,
+        "file": "p345_354_mic2.flac",
+        "text": "I've never felt affection for Emu."
+      },
+      {
+        "row": 80509,
+        "file": "p345_357_mic2.flac",
+        "text": "I was utterly hopeless at it, it must be said."
+      },
+      {
+        "row": 80511,
+        "file": "p345_358_mic2.flac",
+        "text": "This was a good performance."
+      },
+      {
+        "row": 80513,
+        "file": "p345_359_mic2.flac",
+        "text": "However, the snow was welcomed by some."
+      }
+    ]
+  },
+  "tower": {
+    "speaker": "p278",
+    "gender": "M",
+    "accent": "English",
+    "age": "22",
+    "region": "Cheshire",
+    "duration": 10.994,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 42003,
+        "file": "p278_295_mic2.flac",
+        "text": "It was never a free kick."
+      },
+      {
+        "row": 42005,
+        "file": "p278_296_mic2.flac",
+        "text": "They failed to reach agreement yesterday."
+      },
+      {
+        "row": 42011,
+        "file": "p278_299_mic2.flac",
+        "text": "You have to expect this type of thing."
+      },
+      {
+        "row": 42013,
+        "file": "p278_300_mic2.flac",
+        "text": "However, he will have his work cut out defending his title."
+      },
+      {
+        "row": 42015,
+        "file": "p278_301_mic2.flac",
+        "text": "So the Government will be damaged."
+      }
+    ]
+  },
+  "copilot": {
+    "speaker": "p316",
+    "gender": "M",
+    "accent": "Canadian",
+    "age": "20",
+    "region": "Alberta",
+    "duration": 11.529,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 67903,
+        "file": "p316_317_mic2.flac",
+        "text": "It's a real challenge."
+      },
+      {
+        "row": 67911,
+        "file": "p316_321_mic2.flac",
+        "text": "I read about it in the newspapers."
+      },
+      {
+        "row": 67913,
+        "file": "p316_322_mic2.flac",
+        "text": "What did they think of her voice?"
+      },
+      {
+        "row": 67915,
+        "file": "p316_323_mic2.flac",
+        "text": "Is that not uncanny?"
+      }
+    ]
+  },
+  "tail": {
+    "speaker": "p334",
+    "gender": "M",
+    "accent": "American",
+    "age": "18",
+    "region": "Chicago",
+    "duration": 11.003,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 74201,
+        "file": "p334_108_mic2.flac",
+        "text": "We are satisfied with this outcome."
+      },
+      {
+        "row": 74205,
+        "file": "p334_110_mic2.flac",
+        "text": "Sounds like The Sixth Sense?"
+      },
+      {
+        "row": 74207,
+        "file": "p334_111_mic2.flac",
+        "text": "There is an element of racism in Scotland."
+      },
+      {
+        "row": 74209,
+        "file": "p334_112_mic2.flac",
+        "text": "It didn't take long."
+      },
+      {
+        "row": 74215,
+        "file": "p334_115_mic2.flac",
+        "text": "I was very pleased with them today, though."
+      }
+    ]
+  },
+  "ball": {
+    "speaker": "p302",
+    "gender": "M",
+    "accent": "Canadian",
+    "age": "20",
+    "region": "Montreal",
+    "duration": 10.999,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 58103,
+        "file": "p302_221_mic2.flac",
+        "text": "They make it look very easy."
+      },
+      {
+        "row": 58105,
+        "file": "p302_222_mic2.flac",
+        "text": "It was a total surprise."
+      },
+      {
+        "row": 58107,
+        "file": "p302_223_mic2.flac",
+        "text": "I had enough on."
+      },
+      {
+        "row": 58109,
+        "file": "p302_224_mic2.flac",
+        "text": "And we're not there yet."
+      },
+      {
+        "row": 58115,
+        "file": "p302_227_mic2.flac",
+        "text": "plays in dark blue."
+      }
+    ]
+  },
+  "top": {
+    "speaker": "p360",
+    "gender": "M",
+    "accent": "American",
+    "age": "19",
+    "region": "New Jersey",
+    "duration": 10.956,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 82601,
+        "file": "p360_160_mic2.flac",
+        "text": "However, we will have to wait and see."
+      },
+      {
+        "row": 82609,
+        "file": "p360_164_mic2.flac",
+        "text": "It is a new company for Scotland."
+      },
+      {
+        "row": 82611,
+        "file": "p360_165_mic2.flac",
+        "text": "We're very unhappy about it."
+      },
+      {
+        "row": 82615,
+        "file": "p360_167_mic2.flac",
+        "text": "But the action is about to be restarted."
+      }
+    ]
+  },
+  "lead": {
+    "speaker": "p245",
+    "gender": "M",
+    "accent": "Irish",
+    "age": "25",
+    "region": "Dublin",
+    "duration": 11.006,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 14701,
+        "file": "p245_312_mic2.flac",
+        "text": "They wanted the club to make money."
+      },
+      {
+        "row": 14709,
+        "file": "p245_316_mic2.flac",
+        "text": "I am very happy to be here."
+      },
+      {
+        "row": 14713,
+        "file": "p245_318_mic2.flac",
+        "text": "There was no time scale."
+      },
+      {
+        "row": 14715,
+        "file": "p245_319_mic2.flac",
+        "text": "My view has now completely changed."
+      }
+    ]
+  },
+  "bombardier": {
+    "speaker": "p292",
+    "gender": "M",
+    "accent": "NorthernIrish",
+    "age": "23",
+    "region": "Belfast",
+    "duration": 10.696,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 50405,
+        "file": "p292_064_mic2.flac",
+        "text": "You can see how he made his money."
+      },
+      {
+        "row": 50407,
+        "file": "p292_065_mic2.flac",
+        "text": "It's really good, as long as we play well."
+      },
+      {
+        "row": 50409,
+        "file": "p292_066_mic2.flac",
+        "text": "We would certainly consider the proposals."
+      },
+      {
+        "row": 50415,
+        "file": "p292_069_mic2.flac",
+        "text": "Lose, and they would be ridiculed."
+      }
+    ]
+  },
+  "radio": {
+    "speaker": "p286",
+    "gender": "M",
+    "accent": "English",
+    "age": "23",
+    "region": "Newcastle",
+    "duration": 11.028,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 48307,
+        "file": "p286_306_mic2.flac",
+        "text": "We feel very comfortable in this international environment."
+      },
+      {
+        "row": 48309,
+        "file": "p286_307_mic2.flac",
+        "text": "It was simply no contest."
+      },
+      {
+        "row": 48313,
+        "file": "p286_309_mic2.flac",
+        "text": "Motherwell have no such good fortune."
+      },
+      {
+        "row": 48315,
+        "file": "p286_310_mic2.flac",
+        "text": "But it has been an amazing experience."
+      }
+    ]
+  },
+  "waist": {
+    "speaker": "p298",
+    "gender": "M",
+    "accent": "Irish",
+    "age": "19",
+    "region": "Tipperary",
+    "duration": 11.016,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 54601,
+        "file": "p298_086_mic2.flac",
+        "text": "In spite of recent advances, the language is still under threat."
+      },
+      {
+        "row": 54603,
+        "file": "p298_087_mic2.flac",
+        "text": "There were no passengers on board."
+      },
+      {
+        "row": 54607,
+        "file": "p298_089_mic2.flac",
+        "text": "It was his twenty-first birthday on Monday."
+      },
+      {
+        "row": 54609,
+        "file": "p298_090_mic2.flac",
+        "text": "Saddam Hussein has made the case against himself."
+      }
+    ]
+  },
+  "bigfriend": {
+    "speaker": "p311",
+    "gender": "M",
+    "accent": "American",
+    "age": "21",
+    "region": "Iowa",
+    "duration": 10.995,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 64405,
+        "file": "p311_250_mic2.flac",
+        "text": "It's time to say enough is enough."
+      },
+      {
+        "row": 64407,
+        "file": "p311_251_mic2.flac",
+        "text": "Mentally, you have to be tough."
+      },
+      {
+        "row": 64411,
+        "file": "p311_253_mic2.flac",
+        "text": "She has insisted she did nothing wrong."
+      },
+      {
+        "row": 64413,
+        "file": "p311_254_mic2.flac",
+        "text": "That's my daughter acting."
+      }
+    ]
+  },
+  "nav": {
+    "speaker": "p241",
+    "gender": "M",
+    "accent": "Scottish",
+    "age": "21",
+    "region": "Perth",
+    "duration": 10.987,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 11903,
+        "file": "p241_079_mic2.flac",
+        "text": "This is the way things should be handled."
+      },
+      {
+        "row": 11909,
+        "file": "p241_082_mic2.flac",
+        "text": "I first met him last summer."
+      },
+      {
+        "row": 11911,
+        "file": "p241_083_mic2.flac",
+        "text": "Nothing is yet confirmed."
+      },
+      {
+        "row": 11913,
+        "file": "p241_084_mic2.flac",
+        "text": "Otherwise, it will cost a lot of money."
+      },
+      {
+        "row": 11915,
+        "file": "p241_085_mic2.flac",
+        "text": "Someone who cares"
+      }
+    ]
+  },
+  "blue2": {
+    "speaker": "p226",
+    "gender": "M",
+    "accent": "English",
+    "age": "22",
+    "region": "Surrey",
+    "duration": 10.992,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 703,
+        "file": "p226_126_mic2.flac",
+        "text": "It is a delight on every level."
+      },
+      {
+        "row": 705,
+        "file": "p226_127_mic2.flac",
+        "text": "We recognise the important role of golf in attracting visitors."
+      },
+      {
+        "row": 707,
+        "file": "p226_128_mic2.flac",
+        "text": "I felt very strongly that England should have it."
+      }
+    ]
+  },
+  "blue3": {
+    "speaker": "p232",
+    "gender": "M",
+    "accent": "English",
+    "age": "23",
+    "region": "Southern England",
+    "duration": 11.001,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 5603,
+        "file": "p232_231_mic2.flac",
+        "text": "I'd never seen a play about me."
+      },
+      {
+        "row": 5605,
+        "file": "p232_232_mic2.flac",
+        "text": "It is perfectly evident that the time for an inquiry will come."
+      },
+      {
+        "row": 5613,
+        "file": "p232_236_mic2.flac",
+        "text": "We were awful."
+      },
+      {
+        "row": 5615,
+        "file": "p232_237_mic2.flac",
+        "text": "However, no further action was taken by police."
+      }
+    ]
+  },
+  "blue4": {
+    "speaker": "p271",
+    "gender": "M",
+    "accent": "Scottish",
+    "age": "19",
+    "region": "Fife",
+    "duration": 10.845,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 35703,
+        "file": "p271_244_mic2.flac",
+        "text": "On the ground, the West Bank was again the focus of violence."
+      },
+      {
+        "row": 35705,
+        "file": "p271_245_mic2.flac",
+        "text": "It would still have been a good film, but very different."
+      },
+      {
+        "row": 35711,
+        "file": "p271_248_mic2.flac",
+        "text": "He also launched a new strategy for the agency."
+      }
+    ]
+  },
+  "control": {
+    "speaker": "p281",
+    "gender": "M",
+    "accent": "Scottish",
+    "age": "29",
+    "region": "Edinburgh",
+    "duration": 10.997,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 44105,
+        "file": "p281_327_mic2.flac",
+        "text": "That decision will be made over the next couple of days."
+      },
+      {
+        "row": 44107,
+        "file": "p281_328_mic2.flac",
+        "text": "The actor has met with Mandela."
+      },
+      {
+        "row": 44113,
+        "file": "p281_331_mic2.flac",
+        "text": "It looks as though the issue with The Scotsman is too sensitive."
+      }
+    ]
+  },
+  "briefing": {
+    "speaker": "p227",
+    "gender": "M",
+    "accent": "English",
+    "age": "38",
+    "region": "Cumbria",
+    "duration": 10.986,
+    "sampleRate": 24000,
+    "sources": [
+      {
+        "row": 1401,
+        "file": "p227_116_mic2.flac",
+        "text": "It is just a tax on employment."
+      },
+      {
+        "row": 1413,
+        "file": "p227_122_mic2.flac",
+        "text": "So, did she meet him?"
+      },
+      {
+        "row": 1415,
+        "file": "p227_123_mic2.flac",
+        "text": "So what is the campaign about?"
+      }
+    ]
+  }
+}
