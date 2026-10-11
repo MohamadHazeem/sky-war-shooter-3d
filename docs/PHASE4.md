@@ -96,3 +96,4 @@ Player notes given at the start:
 - 04:30 regression: m1, m3, m4, m8, m5, m12 complete, m9 lost on bombers (balance pass handling); no errors; deploy #11 (weather fronts, night, set pieces, What's new, gallery, Game.ts split, visual QA, shader stutter fix).
 - 05:49 final regression: all 12 campaign missions complete, no console errors; clean bench (34 aircraft, 2.3 MP) Low 4.4 / Medium 5.5 / High 7.5–9 / Ultra 10.4 ms median, 1 spike in 600 frames; deploy #12 (balance, crew room, achievements, auto quality, visual polish).
 - 06:13 regression m1, m4, m5, m9, m12 complete, no errors; deploy #13 (balance follow-up).
+- 06:18 regression m1, m4, m7 complete, no errors; deploy #14 (P-51 take-off/landing).
