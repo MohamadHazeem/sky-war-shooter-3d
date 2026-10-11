@@ -29,7 +29,7 @@ export interface QualityPreset {
   particles: number;     // visual particle budget multiplier (0 = living sky off)
 }
 export const QUALITY: Record<Quality, QualityPreset> = {
-  low:    { pixels: 0.9e6, msaa: 0, shadows: 0,    shadowRange: 60, cloudScale: 0.33, cloudSteps: 36, cloudTemporal: false, haze: false, ao: 0,   particles: 0 },
+  low:    { pixels: 0.9e6, msaa: 0, shadows: 1024, shadowRange: 24, cloudScale: 0.33, cloudSteps: 36, cloudTemporal: false, haze: false, ao: 0,   particles: 0 },
   medium: { pixels: 1.5e6, msaa: 2, shadows: 2048, shadowRange: 48, cloudScale: 0.45, cloudSteps: 52, cloudTemporal: true,  haze: true,  ao: 0,   particles: 0.5 },
   high:   { pixels: 2.3e6, msaa: 4, shadows: 2048, shadowRange: 40, cloudScale: 0.5,  cloudSteps: 64, cloudTemporal: true,  haze: true,  ao: 0.6, particles: 1 },
   ultra:  { pixels: 3.7e6, msaa: 4, shadows: 4096, shadowRange: 40, cloudScale: 0.62, cloudSteps: 88, cloudTemporal: true,  haze: true,  ao: 0.7, particles: 1.6 },
@@ -220,6 +220,7 @@ export class Engine {
     sc.left = -p.shadowRange; sc.right = p.shadowRange; sc.top = p.shadowRange; sc.bottom = -p.shadowRange;
     sc.updateProjectionMatrix();
     this.post.ao = p.ao;
+    this.post.economy = q === 'low';
     this.heatHaze.enabled = p.haze;
     this.livingSky.setQuality(p.particles);
     // a new tier gets a fresh chance at the display's full refresh rate
@@ -380,7 +381,7 @@ export class Engine {
     cam.updateMatrixWorld();
     // Keep the shadow frustum centred on the camera, snapped to whole shadow-map texels in
     // light space so the edges of the (tight, sharp) shadows don't crawl as the camera moves
-    const cp = cam.getWorldPosition(new THREE.Vector3());
+    const cp = cam.getWorldPosition(_camPos);
     const p = this.preset;
     const texel = (2 * p.shadowRange) / Math.max(1, this.sun.shadow.mapSize.x);
     this.lightRot.lookAt(_origin, Atmos.sunDir, _up);
@@ -477,3 +478,5 @@ const _up = new THREE.Vector3(0, 1, 0);
 const _v = new THREE.Vector3();
 const _m = new THREE.Matrix4();
 const _px = new Uint8Array(4);
+
+const _camPos = new THREE.Vector3();

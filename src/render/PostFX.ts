@@ -116,7 +116,7 @@ class Bloom {
     }
   }
 
-  render(renderer: THREE.WebGLRenderer, src: THREE.Texture, srcW: number, srcH: number): THREE.Texture {
+  render(renderer: THREE.WebGLRenderer, src: THREE.Texture, srcW: number, srcH: number, levels = this.levels): THREE.Texture {
     this.prefilter.uniforms.tSrc.value = src;
     this.prefilter.uniforms.uTexel.value.set(1 / srcW, 1 / srcH);
     this.prefilter.uniforms.uThreshold.value = this.threshold;
@@ -124,15 +124,15 @@ class Bloom {
     renderer.setRenderTarget(this.down[0]);
     this.quad.render(renderer);
     this.quad.material = this.downMat;
-    for (let i = 1; i < this.levels; i++) {
+    for (let i = 1; i < levels; i++) {
       this.downMat.uniforms.tSrc.value = this.down[i - 1].texture;
       this.downMat.uniforms.uTexel.value.set(1 / this.down[i - 1].width, 1 / this.down[i - 1].height);
       renderer.setRenderTarget(this.down[i]);
       this.quad.render(renderer);
     }
     this.quad.material = this.upMat;
-    let prev = this.down[this.levels - 1];
-    for (let i = this.levels - 2; i >= 0; i--) {
+    let prev = this.down[levels - 1];
+    for (let i = levels - 2; i >= 0; i--) {
       this.upMat.uniforms.tSrc.value = prev.texture;
       this.upMat.uniforms.tBase.value = this.down[i].texture;
       this.upMat.uniforms.uTexel.value.set(1 / prev.width, 1 / prev.height);
@@ -333,12 +333,16 @@ void main() {
       if (dh > dist * 0.85) uv0 = vUv + hz;
     }
   }
-  const int MB = 10;
-  for (int i = 0; i < MB; i++) {
-    float t = (float(i) + noise) / float(MB) - 0.5;
-    col += sceneTap(uv0 - vel * t);
+  if (dot(vel, vel) < 1e-10) {
+    col = sceneTap(uv0);
+  } else {
+    const int MB = 10;
+    for (int i = 0; i < MB; i++) {
+      float t = (float(i) + noise) / float(MB) - 0.5;
+      col += sceneTap(uv0 - vel * t);
+    }
+    col /= float(MB);
   }
-  col /= float(MB);
 
   // Near-field depth of field (the gun receiver right in front of the eye is soft, like the film)
   float coc = clamp((uNearFocus - dist) / uNearFocus, 0.0, 1.0) * uDofStrength;
@@ -439,6 +443,7 @@ export class PostFX {
   shafts = 0.35;   // sun god-ray strength (0 disables)
   // Look development (Engine-owned; Game drives `exposure` per frame, this multiplies it)
   baseExposure = 1.06;
+  economy = false; // Low: compact bloom, no camera blur, DOF or sun shafts; same programs
   ao = 0.6;        // contact AO strength (quality preset)
   readonly grade = {
     shadowTint: new THREE.Vector3(0.96, 1.0, 1.02),
@@ -450,6 +455,9 @@ export class PostFX {
   cloudTex: THREE.Texture | null = null;
   hazeTex: THREE.Texture | null = null;   // heat-haze offsets of this frame (Engine), null = none
   private rotOnly = new THREE.Matrix4();
+  private curVP = new THREE.Matrix4();
+  private sunW = new THREE.Vector3();
+  private fwd = new THREE.Vector3();
 
   constructor(reversed: boolean) {
     this.finalMat = new THREE.ShaderMaterial({
@@ -487,7 +495,7 @@ export class PostFX {
 
   render(renderer: THREE.WebGLRenderer, camera: THREE.PerspectiveCamera, hdr: THREE.WebGLRenderTarget,
     depth: THREE.Texture, time: number, dt: number) {
-    const bloomTex = this.bloom.render(renderer, hdr.texture, hdr.width, hdr.height);
+    const bloomTex = this.bloom.render(renderer, hdr.texture, hdr.width, hdr.height, this.economy ? 3 : 6);
     const u = this.finalMat.uniforms;
     u.tColor.value = hdr.texture;
     u.tBloom.value = bloomTex;
@@ -497,10 +505,10 @@ export class PostFX {
     // Rotation-only view-projection: blur comes from the camera turning, not from it
     // travelling with the formation (which would smear everything attached to it).
     this.rotOnly.extractRotation(camera.matrixWorld).invert();
-    const curVP = new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, this.rotOnly);
+    const curVP = this.curVP.multiplyMatrices(camera.projectionMatrix, this.rotOnly);
     u.uPrevViewProj.value.copy(this.hasPrev ? this.prevViewProj : curVP);
     // Normalise blur to a 60 fps shutter so low frame rates don't smear excessively
-    u.uMotionBlur.value = this.motionBlur * Math.min(1.5, (1 / 60) / Math.max(dt, 1e-3));
+    u.uMotionBlur.value = (this.economy ? 0 : this.motionBlur) * Math.min(1.5, (1 / 60) / Math.max(dt, 1e-3));
     u.uExposure.value = this.exposure * this.baseExposure;
     u.uSat.value = this.grade.sat;
     u.uCurve.value = this.grade.curve;
@@ -508,7 +516,7 @@ export class PostFX {
     u.uProjY.value = camera.projectionMatrix.elements[5];
     u.uBloomStrength.value = this.bloomStrength;
     u.uNearFocus.value = this.nearFocus;
-    u.uDofStrength.value = this.dofStrength;
+    u.uDofStrength.value = this.economy ? 0 : this.dofStrength;
     u.uTime.value = time;
     u.uDamageFlash.value = this.damageFlash * access.flash;   // 'reduce flashes' setting
     u.uDesat.value = this.desat;
@@ -520,8 +528,8 @@ export class PostFX {
     u.uZoomPulse.value = this.zoomPulse * access.flash;
     u.uNoBlurDist.value = this.noBlurDist;
     // sun position on screen for the lens flare
-    const sunW = new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld).addScaledVector(Atmos.sunDir, 5000);
-    const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const sunW = this.sunW.setFromMatrixPosition(camera.matrixWorld).addScaledVector(Atmos.sunDir, 5000);
+    const fwd = this.fwd.set(0, 0, -1).applyQuaternion(camera.quaternion);
     const facing = fwd.dot(Atmos.sunDir);
     sunW.project(camera);
     u.uSunUV.value.set(sunW.x * 0.5 + 0.5, sunW.y * 0.5 + 0.5);
@@ -530,7 +538,7 @@ export class PostFX {
     u.uSunCol.value.set(Atmos.sunColor.r, Atmos.sunColor.g, Atmos.sunColor.b).multiplyScalar(Atmos.sunIntensity);
     u.tCloud.value = this.cloudTex;
     u.uAspect.value = camera.aspect;
-    u.uShafts.value = this.shafts;
+    u.uShafts.value = this.economy ? 0 : this.shafts;
     u.tHaze.value = this.hazeTex;
     u.uHazeOn.value = this.hazeTex ? 1 : 0;
     renderer.setRenderTarget(null);

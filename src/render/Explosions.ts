@@ -143,7 +143,11 @@ export class VolumeFX {
   private iC: THREE.InstancedBufferAttribute;
   private geo: THREE.InstancedBufferGeometry;
   private attrs: THREE.InstancedBufferAttribute[];
+  // Uniform loop bound: the program warmed by World.prewarm serves every tier.
+  setQuality(low: boolean) { this.uniforms.uSteps.value = low ? 4 : STEPS; }
+
   private uniforms = {
+    uSteps: { value: STEPS },
     tNoise: { value: null as THREE.Data3DTexture | null },
     uSunDir: { value: Atmos.sunDir },
     uSunCol: { value: new THREE.Vector3(1, 1, 1) },
@@ -189,6 +193,7 @@ export class VolumeFX {
       fragmentShader: /* glsl */ `
         precision highp sampler3D;
         uniform sampler3D tNoise;
+        uniform float uSteps;
         uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uAmb;
         varying vec3 vWorld; varying vec4 vA; varying vec4 vB; varying vec4 vC;
         float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
@@ -226,13 +231,14 @@ export class VolumeFX {
             return;
           }
           float heat = vC.x, grey = vC.y, dens = vC.z, billow = vC.w;
-          float stepLen = (t1 - t0) / float(${STEPS});
+          float stepLen = (t1 - t0) / uSteps;
           float tt = t0 + stepLen * hash12(gl_FragCoord.xy);
           vec3 drift = vec3(seed * 17.31, seed * 31.7 - age * 0.22, seed * 7.93);
           vec3 albedo = vec3(grey) * vec3(1.0, 0.94, 0.88);
           vec3 acc = vec3(0.0);
           float trans = 1.0;
           for (int i = 0; i < ${STEPS}; i++) {
+            if (float(i) >= uSteps) break;
             vec3 q = (ro + rd * tt - c) / R;
             float r = length(q);
             vec3 nq = q * 0.62 + drift;

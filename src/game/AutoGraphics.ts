@@ -12,7 +12,7 @@ import type { Game } from './Game';
 import type { Settings } from '../ui/UI';
 import { isTouchDevice } from '../core/Touch';
 import { isMissionReady } from '../core/Preload';
-import { deviceTiers, frameStats, pickQuality, type DeviceInfo, type FrameStats, type Tier } from '../render/QualityPick';
+import { deviceTiers, frameStats, pickQuality, needsRecoveryProbe, MIN_FRAMES, PICK_SCALE, type DeviceInfo, type FrameStats, type Tier } from '../render/QualityPick';
 import { toast } from './Share';
 import { t } from '../i18n';
 
@@ -36,12 +36,14 @@ export function firstRunGraphics(s: Settings) {
 export interface BenchOptions {
   sync?: boolean;       // run the frames back to back (dev / headless playtests: hidden tabs have no rAF)
 }
-export interface BenchResult { quality: Quality; from: Quality; start: FrameStats; upper?: FrameStats; refreshHz: number }
+export interface BenchResult { quality: Quality; from: Quality; start: FrameStats; recovered?: FrameStats; scale: number; upper?: FrameStats; refreshHz: number }
 
 // Frames per phase: a few warm-up frames (shader programs, render targets) are not timed;
-// a phase ends at `frames` timed frames or after `ms`, whichever comes first
+// After MIN_FRAMES valid samples, stop at `frames` or `ms`. Very slow devices must
+// not keep High just because the time budget expired before enough samples arrived.
 const WARM = 8;
 const START_PHASE = { frames: 90, ms: 1400 };
+const RECOVERY_PHASE = { frames: 48, ms: 900 };
 const UPPER_PHASE = { frames: 60, ms: 900 };
 const IDLE_MS = 1500;        // no input for this long before a first-launch run
 const ASSET_WAIT_MS = 8000;  // start without the background downloads after this long
@@ -113,14 +115,14 @@ export class AutoGraphics {
         };
       });
     };
-    const phase = async (tier: Tier, p: { frames: number; ms: number }): Promise<FrameStats | null> => {
+    const phase = async (tier: Tier, p: { frames: number; ms: number }, scale = 1): Promise<FrameStats | null> => {
       if (e.quality !== tier) e.setQuality(tier);
-      // measure at the preset's full pixel budget: dynamic resolution sits out the run
-      if (e.renderScale !== 1) { e.renderScale = 1; e.resize(); }
+      // Fixed scale: dynamic resolution sits out both full-budget and recovery samples.
+      if (e.renderScale !== scale) { e.renderScale = scale; e.resize(); }
       const ms: number[] = [];
       for (let i = 0; i < WARM; i++) if (Number.isNaN(await next())) return null;
       const t0 = performance.now();
-      while (ms.length < p.frames && performance.now() - t0 < p.ms) {
+      while (ms.length < p.frames && (ms.length < MIN_FRAMES || performance.now() - t0 < p.ms)) {
         const v = await next();
         if (Number.isNaN(v) || g.state !== state) return null;
         ms.push(v);
@@ -131,17 +133,24 @@ export class AutoGraphics {
       const start = await phase(dev.start, START_PHASE);
       if (!start) return this.restore(from, scaleBefore);
       const refreshHz = e.refreshHz;
-      let pick = pickQuality({ tier: dev.start, stats: start, refreshHz, cap: dev.cap });
+      let recovered: FrameStats | undefined;
+      if (needsRecoveryProbe(start, refreshHz)) {
+        const recovery = await phase(dev.start, RECOVERY_PHASE, PICK_SCALE);
+        if (!recovery) return this.restore(from, scaleBefore);
+        recovered = recovery;
+      }
+      let pick = pickQuality({ tier: dev.start, stats: start, refreshHz, cap: dev.cap, recovered });
       let upper: FrameStats | undefined;
       if (pick.tryUpper) {
         const up = await phase(upperOf(dev.start), UPPER_PHASE);
         if (!up) return this.restore(from, scaleBefore);
         upper = up;
-        pick = pickQuality({ tier: dev.start, stats: start, refreshHz, cap: dev.cap, upper });
+        pick = pickQuality({ tier: dev.start, stats: start, refreshHz, cap: dev.cap, upper, recovered });
       }
-      const res: BenchResult = { quality: pick.quality, from, start, upper, refreshHz };
+      const scale = recovered && pick.quality === dev.start ? PICK_SCALE : 1;
+      const res: BenchResult = { quality: pick.quality, from, start, upper, recovered, scale, refreshHz };
       this.last = res;
-      this.apply(pick.quality);
+      this.apply(pick.quality, scale);
       return res;
     } finally {
       this.running = false;
@@ -158,11 +167,11 @@ export class AutoGraphics {
   }
 
   // Save the pick (a fresh start for dynamic resolution) and say so
-  private apply(q: Quality) {
+  private apply(q: Quality, scale: number) {
     const s = this.game.settings;
     s.quality = q;
     delete s.gfxAuto;
-    this.engine.renderScale = 1;
+    this.engine.renderScale = scale;
     this.game.applySettings();   // applies the preset (if the run ended on another), saves
     this.engine.resize();
     const name = t(`settings.q.${q}`);

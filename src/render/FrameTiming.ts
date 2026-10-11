@@ -56,4 +56,8 @@ export const DRS_PIXEL_SHARE = 0.7;
 
 // How many times slower than the target a full-resolution frame can be and still come in on
 // time once dynamic resolution has dropped the render scale to `scale`
-export const drsAbsorb = (scale: number) => 1 / (1 - DRS_PIXEL_SHARE + DRS_PIXEL_SHARE * scale * scale);
+export const drsAbsorb = (scale: number, pixelShare = DRS_PIXEL_SHARE) => 1 / (1 - pixelShare + pixelShare * scale * scale);
+
+// A whole-tier fallback is a last resort: first exhaust high-refresh fallback and DRS.
+export const qualityFallbackReady = (fps: number, scale: number, targetMs: number) =>
+  targetMs >= 1000 / 65 && scale <= drsFloor(targetMs) + 0.01 && fps < 40;
