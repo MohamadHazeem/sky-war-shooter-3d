@@ -13,6 +13,7 @@ import type { Mission } from './Missions';
 import type { PilotController } from './PilotController';
 import type { Wingman, WingmanPilot } from './Wingman';
 import { registerMode, type ModeDef } from './Modes';
+import { achievements } from './Achievements';
 
 // "Train Busting" — the P-51 goes down on the deck (Phase 5 goal 18). A Special operation on the
 // Survival screen (P-51 only, leaderboard 'strafe-pilot'), flown at 50-600 m over the Normandy
@@ -683,6 +684,7 @@ export class StrafeOps {
       w.callout('strafe_wingkill', STRAFE_RADIO.wingKill[0], STRAFE_RADIO.wingKill[1], 15, 2);
     }
     if (t.kind === 'loco') w.callout('strafe_loco', STRAFE_RADIO.loco[0], STRAFE_RADIO.loco[1], 0, 3);
+    if (t.kind === 'loco' && by === 'player') achievements.unlock('trainBuster'); // achievement hook (FeatWatch.ts)
     if (this.wingTarget === t) this.wingTarget = null;
   }
 

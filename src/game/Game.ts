@@ -47,6 +47,7 @@ import { GameHud } from './GameHud';
 import { MenuScene } from './MenuScene';
 import { WorldEvents } from './WorldEvents';
 import { TitleExtras } from './TitleExtras';
+import { FeatWatch } from './FeatWatch';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -91,6 +92,7 @@ export class Game {
   readonly menuScene: MenuScene;  // menu camera shots (MenuScene.ts)
   readonly worldEvents: WorldEvents; // world.events handlers: kill scoring, radio (WorldEvents.ts)
   readonly extras: TitleExtras;   // What's new bulletin + aircraft recognition gallery (TitleExtras.ts)
+  readonly feats: FeatWatch;      // Phase 5 achievements: mission watcher + kill / frame hooks (FeatWatch.ts)
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -181,6 +183,7 @@ export class Game {
     this.skills = new SkillRuntime(this, ui);
     this.coop = new CoopSession(this, engine, ui);
     this.extras = new TitleExtras(this, engine);
+    this.feats = new FeatWatch(this); // after worldEvents.wire / service: chains world.events.kill
   }
 
   // Compile shaders for objects that only appear mid-mission (debris, chutes, bombs,

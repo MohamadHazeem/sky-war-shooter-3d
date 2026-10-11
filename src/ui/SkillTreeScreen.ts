@@ -10,6 +10,8 @@ import {
   BRANCHES, SKILLS, TREE_COST, nextPointAt, skillDef, skillPointsFor, careerXp, type SkillDef, type SkillId, type NodeState,
 } from '../game/Skills';
 import { esc, onBackKey, showLayer } from './serviceCommon';
+import { achievements } from '../game/Achievements';
+import { BRANCH_SIZE, fullestBranch } from '../game/Feats';
 import { tx, isAr, num } from '../i18n';
 import './skills.css';
 
@@ -110,6 +112,7 @@ export function renderTree(host: HTMLElement, ctx: TreeCtx, compact = false) {
         if (armed !== id) { armed = id; draw(); focusNode(id); return; }
         armed = null;
         book.buy(id, xp);
+        if (fullestBranch(book.owned) >= BRANCH_SIZE) achievements.unlock('specialist'); // achievement hook (Feats.ts)
         hideTip();
         draw();
         host.querySelector(`.sk-node[data-id="${id}"]`)?.classList.add('just');

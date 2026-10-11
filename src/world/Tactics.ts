@@ -953,6 +953,9 @@ export class Tactics {
     for (const c of radarCues) if (c.on && time > c.until) freeCue(c);
   }
 
+  /** An Me 410 lining up its BK 5 right now (achievements: Big Gun Spotter). */
+  liningUp(f: Fighter) { return this.lining.has(f); }
+
   memberOf(f: Fighter): Member | null {
     const p = this.world.enemyPilot(f);
     return p && p.override instanceof Member ? p.override : null;

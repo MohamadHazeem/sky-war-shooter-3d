@@ -14,6 +14,7 @@ import {
   MAX_ENT, GUN_SLOTS, F_ALIVE, F_FIRE, stageOf, EV_KILL, EV_EXPLOSION, EV_FLAK, MK_KILL,
 } from './Recorder';
 import { tx } from '../i18n';
+import { achievements } from './Achievements';
 import { TheatreScreen, SPEEDS, MODE_ORDER, type CamMode, type PhotoSettings, type TheatreControl, type TimelineMark, type AircraftItem, type MomentItem } from '../ui/TheatreScreen';
 import type { TheatreAxes, TheatrePad } from '../core/Gamepad';
 
@@ -612,6 +613,7 @@ export class Theatre implements TheatreControl, TheatrePad {
       const m: SavedMoment = { title: `${label} · ${c.title || 'Mission'}`, created: Date.now(), duration: clip.t[clip.frames - 1] - clip.t[0], thumb: th.url, clip };
       const key = await this.store.add(m);
       if (key === null) return `${MAX_SAVED}/${MAX_SAVED} saved: delete one first`;
+      achievements.unlock('directorsCut'); // achievement hook (FeatWatch.ts)
       return `Moment saved (${n + 1}/${MAX_SAVED})`;
     } catch (err) {
       console.warn('Theatre: save failed', err);
