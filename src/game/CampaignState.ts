@@ -22,6 +22,7 @@
 // Everything here is pure data and maths plus guarded localStorage (unit-tested in Node).
 // Game hooks: prepareCampaignMission (briefing / mission start), campaignMeritMult (debrief
 // merit) and recordCampaignOutcome (debrief, via ui/CampaignMap.ts mountCampaignReport).
+import { isSecondTourId, secondTourMission, secondTourKind, SECOND_TOUR_LENGTH, SECOND_TOUR_MEDAL } from './SecondTour';
 import { CAMPAIGN, type Mission } from './Missions';
 import { isRaidId, sideRaidById, sideRaidsFor, templateFor, type RaidKind, type SideRaid } from './SideRaids';
 
@@ -39,7 +40,7 @@ export const REPLACEMENTS_PER_SORTIE = 2;
 
 export type GaugeId = 'luftwaffe' | 'squadron' | 'morale' | 'escort';
 
-export interface HistoryEntry { id: string; kind: 'story' | 'raid'; title: string; success: boolean; kills: number; lost: number }
+export interface HistoryEntry { id: string; kind: 'story' | 'raid' | 'generated'; title: string; success: boolean; kills: number; lost: number }
 
 export interface ReportLine { gauge: GaugeId | 'merit' | 'note'; text: string; from?: number; to?: number }
 export interface IntelReport { title: string; success: boolean; lines: ReportLine[]; effect: boolean }
@@ -48,6 +49,7 @@ export interface RaidRecord { gap: number; id: string; success: boolean }
 
 export interface CampaignData {
   v: 2;
+  secondTour?: { completed: number; score: number; medal: boolean };
   tour: number;          // 1 = the profile's first tour (kept in step with progress.unlocked)
   seed: number;          // side-raid generation
   luftwaffe: number;
@@ -61,7 +63,7 @@ export interface CampaignData {
   complete: boolean;
 }
 
-export interface Outcome { success: boolean; kills: number; bombersLost: number; bombersTotal: number }
+export interface Outcome { success: boolean; kills: number; bombersLost: number; bombersTotal: number; score?: number }
 
 export interface Modifiers {
   enemy: number;         // fighters in the air x
@@ -88,10 +90,10 @@ export function defaultCampaign(seed = newSeed(), tour = 1): CampaignData {
 // ---------------- derived values ----------------
 
 export const storyIndex = (id: string) => CAMPAIGN.findIndex((m) => m.id === id);
-export const currentIndex = (d: CampaignData) => (d.complete ? -1 : Math.min(d.storyDone.length, CAMPAIGN.length - 1));
-export const currentStory = (d: CampaignData): Mission | null => (d.complete ? null : CAMPAIGN[currentIndex(d)] ?? null);
+export const currentIndex = (d: CampaignData) => (d.secondTour ? d.secondTour.completed : d.complete ? -1 : Math.min(d.storyDone.length, CAMPAIGN.length - 1));
+export const currentStory = (d: CampaignData): Mission | null => (d.secondTour ? secondTourMission(d.seed, d.secondTour.completed) : d.complete ? null : CAMPAIGN[currentIndex(d)] ?? null);
 // side raids are offered in the gap before the current story mission (none before the first)
-export const currentGap = (d: CampaignData) => (d.complete ? -1 : d.storyDone.length);
+export const currentGap = (d: CampaignData) => (d.secondTour || d.complete ? -1 : d.storyDone.length);
 export const raidInGap = (d: CampaignData, gap: number) => d.raids.find((r) => r.gap === gap) ?? null;
 export function offeredRaids(d: CampaignData): SideRaid[] {
   const g = currentGap(d);
@@ -113,7 +115,7 @@ export function escortBaseline(date: string): number {
   if (t < parseDate('6 March 1944')) return 70;
   return 90;
 }
-export const escortAvailability = (d: CampaignData, date = campaignDate(d)) => clamp(Math.round(escortBaseline(date) + d.escortBonus), 0, 100);
+export const escortAvailability = (d: CampaignData, date = campaignDate(d)) => clamp(Math.round((d.secondTour ? Math.min(100, 90 + d.secondTour.completed * 0.4) : escortBaseline(date)) + d.escortBonus), 0, 100);
 export const enemyMult = (lw: number) => clamp(1 + (lw - 100) / 250, 0.8, 1.2);
 export const formationFactor = (sq: number) => clamp(sq / FORMATION_FULL_AT, 2 / 3, 1);
 export const meritMult = (morale: number) => 0.9 + 0.2 * clamp(morale, 0, 100) / 100;
@@ -206,9 +208,13 @@ const LW_REASON: Record<RaidKind, string> = {
   factory: 'A month of fighter production has gone up in smoke.',
 };
 
-export interface OpInfo { id: string; kind: 'story' | 'raid'; title: string; target: string; raidKind?: RaidKind; gap?: number }
+export interface OpInfo { id: string; kind: 'story' | 'raid' | 'generated'; title: string; target: string; raidKind?: RaidKind; gap?: number }
 
 export function opInfo(d: CampaignData, m: Mission): OpInfo | null {
+  if (isSecondTourId(m.id)) {
+    const kind = secondTourKind(d.seed, m.number - 1);
+    return { id: m.id, kind: 'generated', title: m.title, target: m.target, raidKind: kind === 'city' ? undefined : kind };
+  }
   if (isRaidId(m.id)) {
     const r = sideRaidById(d.seed, m.id);
     return r ? { id: m.id, kind: 'raid', title: m.title, target: m.target, raidKind: r.template.kind, gap: r.gap } : null;
@@ -228,7 +234,7 @@ const placeName = (target: string) => (target.replace(/^(Escort|Return leg) — 
 export function applyOutcome(d0: CampaignData, op: OpInfo, o: Outcome): { data: CampaignData; report: IntelReport } {
   const d: CampaignData = { ...d0, storyDone: [...d0.storyDone], raids: [...d0.raids], history: [...d0.history] };
   const title = `${o.success ? 'Mission complete' : 'Mission failed'} · ${op.title}`;
-  const current = op.kind === 'story' ? currentStory(d0)?.id === op.id : (op.gap === currentGap(d0) && !raidInGap(d0, op.gap!));
+  const current = op.kind !== 'raid' ? currentStory(d0)?.id === op.id : (op.gap === currentGap(d0) && !raidInGap(d0, op.gap!));
   if (d0.complete || !current) {
     const report: IntelReport = { title, success: o.success, effect: false, lines: [{ gauge: 'note', text: 'A replay of a finished operation. The strategic picture is unchanged.' }] };
     return { data: d0, report };
@@ -241,7 +247,7 @@ export function applyOutcome(d0: CampaignData, op: OpInfo, o: Outcome): { data: 
   // Luftwaffe
   let lwReason = '';
   if (o.success) {
-    if (op.kind === 'story') { d.luftwaffe += STORY_LW[op.id] ?? -3; lwReason = `Losses over ${placeName(op.target)} are thinning the Jagdgruppen.`; }
+    if (op.kind === 'story' || (op.kind === 'generated' && !tpl)) { d.luftwaffe += STORY_LW[op.id] ?? -3; lwReason = `Losses over ${placeName(op.target)} are thinning the Jagdgruppen.`; }
     else if (tpl && tpl.effects.luftwaffe) { d.luftwaffe += tpl.effects.luftwaffe; lwReason = LW_REASON[tpl.kind]; }
   } else {
     d.luftwaffe += op.kind === 'story' ? 3 : 2;
@@ -264,6 +270,13 @@ export function applyOutcome(d0: CampaignData, op: OpInfo, o: Outcome): { data: 
 
   // Escort
   if (o.success) d.escortBonus = clamp(d.escortBonus + (tpl ? tpl.effects.escort : STORY_ESCORT[op.id] ?? 0), 0, ESCORT_BONUS_MAX);
+
+  // Generated operations advance only on success; retries and replays cannot double-book score.
+  if (op.kind === 'generated' && d.secondTour && o.success) {
+    const completed = d.secondTour.completed + 1;
+    d.secondTour = { completed, score: d.secondTour.score + Math.max(0, Math.round(o.score ?? 0)), medal: completed >= SECOND_TOUR_LENGTH };
+    if (completed === SECOND_TOUR_LENGTH) lines.push({ gauge: 'note', text: SECOND_TOUR_MEDAL });
+  }
 
   // Progress
   d.history.push({ id: op.id, kind: op.kind, title: op.title, success: o.success, kills: Math.max(0, Math.round(o.kills || 0)), lost });
@@ -328,7 +341,7 @@ export function migrateFromProgress(p: ProgressLike | null | undefined, seed = n
 // Bring the state in step with the old progress (tour 1 only): missions finished elsewhere
 // (another device, an older save) are caught up; a progress that went backwards rebuilds it.
 export function reconcile(d: CampaignData, p: ProgressLike | null | undefined, upTo?: number): CampaignData {
-  if (d.tour !== 1 || !p) return d;
+  if (d.secondTour || d.tour !== 1 || !p) return d;
   const exp = expectedDone(p);
   if (d.storyDone.length > exp) return migrateFromProgress(p, d.seed);
   const target = upTo === undefined ? exp : Math.min(exp, upTo);
@@ -351,10 +364,16 @@ export function sanitize(raw: unknown): CampaignData | null {
   while (n < done.length && n < ids.length && done[n] === ids[n]) n++;
   d.storyDone = ids.slice(0, n);
   d.complete = n >= ids.length;
+  if (o.secondTour && typeof o.secondTour === 'object' && !Array.isArray(o.secondTour)) {
+    const completed = clamp(Math.floor(num(o.secondTour.completed, 0)), 0, Number.MAX_SAFE_INTEGER - SECOND_TOUR_LENGTH);
+    d.secondTour = { completed, score: Math.max(0, num(o.secondTour.score, 0)), medal: completed >= SECOND_TOUR_LENGTH };
+    d.tour = Math.max(2, d.tour);
+    d.complete = false;
+  }
   d.raids = (Array.isArray(o.raids) ? o.raids : []).filter((r: any) => r && typeof r.id === 'string' && isRaidId(r.id) && Number.isFinite(r.gap))
     .map((r: any) => ({ gap: Math.floor(r.gap), id: r.id, success: !!r.success }));
   d.history = (Array.isArray(o.history) ? o.history : []).filter((h: any) => h && typeof h.id === 'string').slice(-80)
-    .map((h: any) => ({ id: h.id, kind: h.kind === 'raid' ? 'raid' : 'story', title: String(h.title ?? h.id), success: !!h.success, kills: Math.max(0, num(h.kills, 0)), lost: Math.max(0, num(h.lost, 0)) }));
+    .map((h: any) => ({ id: h.id, kind: h.kind === 'generated' ? 'generated' : h.kind === 'raid' ? 'raid' : 'story', title: String(h.title ?? h.id), success: !!h.success, kills: Math.max(0, num(h.kills, 0)), lost: Math.max(0, num(h.lost, 0)) }));
   const r = o.report;
   d.report = r && typeof r === 'object' && Array.isArray(r.lines) ? { title: String(r.title ?? ''), success: !!r.success, effect: !!r.effect, lines: r.lines.filter((l: any) => l && typeof l.text === 'string').map((l: any) => ({ gauge: l.gauge, text: l.text, from: l.from, to: l.to })) } : null;
   return d;
@@ -386,9 +405,31 @@ export function startNewTour(prev: CampaignData): CampaignData {
   return d;
 }
 
+/** Carry the strategic situation forward; Experten live in their own save and are untouched. */
+export function startSecondTour(prev: CampaignData): CampaignData {
+  if (!prev.complete || prev.secondTour) return prev;
+  const d: CampaignData = { ...prev, tour: prev.tour + 1, complete: false, history: [], raids: [], report: null,
+    secondTour: { completed: 0, score: 0, medal: false } };
+  saveCampaign(d);
+  return d;
+}
+
+/** A bounded map window, even after thousands of operations. */
+export function campaignOperations(d: CampaignData): Mission[] {
+  if (!d.secondTour) return CAMPAIGN;
+  const start = Math.max(0, d.secondTour.completed - 12);
+  return Array.from({ length: SECOND_TOUR_LENGTH }, (_, i) => secondTourMission(d.seed, start + i));
+}
+
+export function secondTourMedal(m: Mission, success: boolean): string[] {
+  if (!success || !isSecondTourId(m.id)) return [];
+  const d = loadCampaign(null, { noReconcile: true });
+  return d.secondTour?.completed === SECOND_TOUR_LENGTH - 1 && isCurrentOp(d, m) ? [SECOND_TOUR_MEDAL] : [];
+}
+
 // ---------------- Game hooks ----------------
 
-function isCampaignMission(m: Mission) { return storyIndex(m.id) >= 0 || isRaidId(m.id); }
+function isCampaignMission(m: Mission) { return storyIndex(m.id) >= 0 || isRaidId(m.id) || isSecondTourId(m.id); }
 
 /** Briefing / mission start: apply the strategic modifiers to a current operation (in place). */
 export function prepareCampaignMission(m: Mission, progress?: ProgressLike | null): Mission {

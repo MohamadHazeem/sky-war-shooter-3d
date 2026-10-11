@@ -1,3 +1,4 @@
+import { isSecondTourId, SECOND_TOUR_LENGTH } from '../game/SecondTour';
 import { CAMPAIGN, type Mission } from '../game/Missions';
 import { briefingVoice } from '../audio/BriefingVoice';
 import { tx } from '../i18n';
@@ -87,8 +88,8 @@ export function decorateBriefing(root: HTMLElement, m: Mission) {
   ensureStyle();
   const sheet = root.querySelector<HTMLElement>('.sheet');
   if (!sheet) return;
-  const inCampaign = m.number > 0 && CAMPAIGN.includes(m);
-  const total = CAMPAIGN.length;
+  const inCampaign = m.number > 0 && (CAMPAIGN.includes(m) || isSecondTourId(m.id));
+  const total = isSecondTourId(m.id) ? SECOND_TOUR_LENGTH : CAMPAIGN.length;
 
   // Mission badge + facts
   const kicker = sheet.querySelector<HTMLElement>('.kicker');
@@ -96,9 +97,9 @@ export function decorateBriefing(root: HTMLElement, m: Mission) {
     const badge = document.createElement('div');
     badge.className = 'bx-badge';
     badge.setAttribute('aria-hidden', 'true');
-    badge.innerHTML = `<span>${tx('MISSION')}</span><b>${String(m.number).padStart(2, '0')}</b><span>${tx('OF {total}', { total })}</span>`;
+    badge.innerHTML = `<span>${tx('MISSION')}</span><b>${String(m.number).padStart(2, '0')}</b><span>${tx('OF {total}', { total: isSecondTourId(m.id) && m.number > total ? '∞' : total })}</span>`;
     kicker.before(badge);
-    kicker.textContent = tx('MISSION No. {n} OF {total}', { n: m.number, total }) + (m.number === total ? tx(' · FINAL MISSION') : '');
+    kicker.textContent = isSecondTourId(m.id) && m.number > total ? tx('Extended operation {n}', { n: m.number }) : tx('MISSION No. {n} OF {total}', { n: m.number, total }) + (m.number === total && !isSecondTourId(m.id) ? tx(' · FINAL MISSION') : '');
   }
   const target = sheet.querySelector<HTMLElement>('.target');
   if (target) {
@@ -111,7 +112,7 @@ export function decorateBriefing(root: HTMLElement, m: Mission) {
 
   // Recorded briefing
   const text = sheet.querySelector<HTMLElement>('.brief-text');
-  if (!inCampaign || !text) return;
+  if (!inCampaign || isSecondTourId(m.id) || !text) return;
   const paras = Array.from(text.querySelectorAll<HTMLParagraphElement>(':scope > p'));
   const count = Math.min(paras.length, m.briefing.length);
   if (!count) return;

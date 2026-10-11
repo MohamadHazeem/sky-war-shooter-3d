@@ -65,6 +65,19 @@ async function boot() {
   (window as any).sws.assetsReady = () => isMissionReady();
   if (import.meta.env.DEV) {
     const { autoplay } = await import('./dev/autoplay');
+    const campaignDev = await import('./game/CampaignState');
+    (window as any).sws.secondTour = {
+      // Dev-only: finish the story through its migration path, then use the real summary UI.
+      finishStory: () => {
+        game.progress.unlocked = CAMPAIGN.length - 1;
+        game.progress.medals[CAMPAIGN.at(-1)!.id] = ['Air Medal'];
+        game.saveProgress();
+        campaignDev.saveCampaign(campaignDev.migrateFromProgress(game.progress, 7));
+        game.showCampaign();
+      },
+      current: () => campaignDev.currentStory(campaignDev.loadCampaign(game.progress)),
+      state: () => campaignDev.loadCampaign(game.progress),
+    };
     const { tutorialAutoplay } = await import('./dev/tutorialAutoplay');
     (window as any).sws.tutorialAutoplay = (o?: any) => tutorialAutoplay(engine, game, o);
     Object.assign((window as any).sws, { game, engine });

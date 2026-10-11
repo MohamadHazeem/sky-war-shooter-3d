@@ -34,7 +34,9 @@ English and Arabic (right-to-left) under Settings → Language.
   briefings, played on a **strategic campaign map**. Between story missions you can fly optional
   side raids (rail yards, airfields, oil, U-boat pens, factories) that change Luftwaffe strength,
   squadron size, crew morale and escort availability. Missions m5, m7 and m12 end in a **boss
-  battle** against a group of giant flying warships.
+  battle** against a group of giant flying warships. After the story, volunteer for a **second tour**:
+  25 generated operations earn a medal, then operations continue indefinitely, with both flight roles,
+  late-war fighters, changing weather and a battle group every fifth operation.
 * **Survival**: endless rounds as a B-17 gunner or P-51 pilot, with a hangar between rounds
   (aircraft, weapons, upgrades), weather that changes per round and a boss group every third round.
 * **Ace Hunt, Time Attack, Daily Run, Weekly Challenge**: online leaderboards (Firebase).

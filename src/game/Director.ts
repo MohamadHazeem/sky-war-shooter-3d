@@ -1,3 +1,4 @@
+import { isSecondTourId } from './SecondTour';
 import * as THREE from 'three';
 import type { Game } from './Game';
 import { Mission, Round, roundDef, SpawnFrom, Wave } from './Missions';
@@ -152,6 +153,7 @@ export class Director {
       if (!attack) attack = (['headon', 'stern', 'beam', 'high'] as AttackType[])[Math.floor(Math.random() * 4)];
       const tier = g.roundIdx + (g.mission && g.mission.number > 0 ? Math.floor((g.mission.number - 1) / 2) : 0);
       const type = g.modes.enemyType(g.mission, tier) ?? randomEnemyType(tier);
+      if (g.mission && isSecondTourId(g.mission.id) && g.mission.number >= 7 && type === 'fw190') attack = 'stern';
       const f = world.spawnEnemy(p, attack, w.skill, true, Math.random() < (w.rockets ?? 0), type);
       g.modes.onSpawn(f);
       // first sighting of a new type: the crew calls out what it is
