@@ -10,7 +10,7 @@ Repo rules for Codex: `AGENTS.md`.
 | 1 | P-51 dogfight feel: bandits that stay and fight instead of extending 2 km between passes, so escort missions end on kills | Done (Codex) — engaged bandits turn and fight; compact bomber set-ups near the escort; jets extend ≤5.5 s then reverse. Headless sims: time <600 m up 10–40 s per type, Me 262 kills 1/5 → 3/5; bomber threat kept |
 | 2 | Weak-laptop pass: simulated low-end GPU, tuned first-launch quality thresholds, a Low preset that looks good | Codex working |
 | 3 | Cloud-top shimmer: the speckle just above the cloud deck (end of the take-off climb) | Done (Codex) — footprint-selected noise mip levels + fading jitter for grazing rays above the deck: banding gone, flicker −55–58 %, no frame-time cost, views from below/inside unchanged |
-| 4 | Co-op v2: shared score + guest debrief; TURN relay (needs a Cloudflare TURN key from the player) | Codex working (TURN relay ready but switched on only once the owner sets a key) |
+| 4 | Co-op v2: shared score + guest debrief; TURN relay (needs a Cloudflare TURN key from the player) | Done (Codex) — host-authoritative crew score on both HUDs, partner kills credited, personal debrief + merit/XP for the guest, back to the lobby, coop-gunner board with both callsigns; /api/turn Worker mints Cloudflare TURN credentials once the owner sets TURN_KEY_ID / TURN_KEY_API_TOKEN (STUN fallback until then) |
 
 ## Tier G — new gameplay
 | # | Goal | Status |
@@ -19,7 +19,7 @@ Repo rules for Codex: `AGENTS.md`.
 | 6 | Ditching in the Channel: ditch a badly damaged Sky Queen, dinghy + air-sea rescue | Codex revising — 31 s ditching + RAF rescue launch works; impact spray (flat white discs) and uniform foam streaks sent back |
 | 7 | Second tour: endless generated campaign after mission 12 | Done (Codex) — "Volunteer for a second tour": 25 generated operations (targets, weather, fronts, alternating roles, jets/Sturmböcke later, battle group every 5th) then endless; Experten and strategy carry over; Second Tour Medal |
 | 8 | Crew that matters: assign crewmen to positions, skills change accuracy / repairs / spotting | Done (Codex) — five XP-growing stats + traits per man; assigned gunnery drives AI accuracy (rookie 44 % vs veteran 57 % hits), lookouts give earlier warnings, engineer repairs/fires, radio man first aid, pilots jinks/formation; hospital stays, rare deaths, memorial; recommended layout |
-| 9 | Squadron leaderboards: share a squadron code for a private board | Codex working |
+| 9 | Squadron leaderboards: share a squadron code for a private board | Codex fixing — merged and rules deployed; live check found squadron creation denied, sent back with permission to deploy Firestore rules |
 
 ## Tier C — graphics and immersion
 | # | Goal | Status |
@@ -37,3 +37,4 @@ Repo rules for Codex: `AGENTS.md`.
 - Goal 10 merged after one revision (450 tests). Started goal 9.
 - Goal 12 merged (457 tests).
 - Goals 8 and 5 merged (486 tests); goal 5 voice clips rendered by Claude (sandbox).
+- Goal 9 merged + rules deployed; live create failed → Codex fixing live. Goal 4 merged (524 tests); its rules change ships with the goal 9 fix.
