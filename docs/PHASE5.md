@@ -86,3 +86,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 05:40 balance pass merged; all agents finished. Final bench, regression, deploy and report.
 - 06:10 balance follow-up merged.
 - 06:16 P-51 bookends merged.
+- 06:39 Field Manual merged (414 tests).
