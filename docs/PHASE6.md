@@ -19,12 +19,12 @@ Repo rules for Codex: `AGENTS.md`.
 | 6 | Ditching in the Channel: ditch a badly damaged Sky Queen, dinghy + air-sea rescue | Codex revising — 31 s ditching + RAF rescue launch works; impact spray (flat white discs) and uniform foam streaks sent back |
 | 7 | Second tour: endless generated campaign after mission 12 | Done (Codex) — "Volunteer for a second tour": 25 generated operations (targets, weather, fronts, alternating roles, jets/Sturmböcke later, battle group every 5th) then endless; Experten and strategy carry over; Second Tour Medal |
 | 8 | Crew that matters: assign crewmen to positions, skills change accuracy / repairs / spotting | Codex working |
-| 9 | Squadron leaderboards: share a squadron code for a private board | |
+| 9 | Squadron leaderboards: share a squadron code for a private board | Codex working |
 
 ## Tier C — graphics and immersion
 | # | Goal | Status |
 |---|---|---|
-| 10 | Europe below the clouds: terrain, rivers, cities, burning targets through cloud gaps | Codex revising — first pass works (coast, rivers, burning target with smoke through the clouds, cloud shadows, ≤0.3 ms) but fields looked like a regular checkerboard; sent back for irregular parcels, muted palette, real town shapes |
+| 10 | Europe below the clouds: terrain, rivers, cities, burning targets through cloud gaps | Done (Codex, 1 revision) — irregular seasonal field parcels, woods, rivers with floodplains, towns along roads, route-aware North Sea coast, dense burning target with smoke through the deck, cloud shadows; +0.13–0.19 ms on High |
 | 11 | Ball and tail turret interiors at the waist's "living interior" standard | Done (Codex) — ball: twin breeches, feed chutes, knees on pedals, reflector sight, hatch, hydraulic hum, brass falling outside; tail: twin M2s with running belts, ring-and-bead, saddle, ribbed cone, view forward to the waist; free look in both |
 | 12 | Music: adaptive tracks for night, raids, Train Busting and the crew room | Codex working |
 
@@ -34,3 +34,4 @@ Repo rules for Codex: `AGENTS.md`.
 - Goal 3 merged (reviewed before/after crops). Started goal 7 in its slot.
 - Goal 7 merged (435 tests). Goal 6 first pass committed (voice clips rendered by Claude; the sandbox blocked `say`), sent back for spray/foam.
 - Goal 11 merged (442 tests). Started goals 8 and 12.
+- Goal 10 merged after one revision (450 tests). Started goal 9.
