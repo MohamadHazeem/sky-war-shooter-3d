@@ -1,0 +1,93 @@
+<!doctype html><meta charset="utf-8"><title>Mode score verification</title>
+<style>body{background:#17212b;color:#e6edf3;font:15px monospace;margin:18px}button{padding:12px;margin:5px}iframe{width:960px;height:540px;border:0}pre{white-space:pre-wrap}</style>
+<h1>Mode score verification (development only)</h1>
+<button id="audio">Render OfflineAudioContext measurements</button><button id="game">Verify game hooks on Low</button><button id="save">Save results</button>
+<pre id="log">Ready</pre><iframe id="frame" src="/"></iframe>
+<script type="module">
+import { Music } from '/src/audio/Music.ts';
+const results = { audio: [], game: [], errors: [], shots: {} }, log = document.querySelector('#log');
+const show = text => { log.textContent = text; document.title = text.split('\n')[0]; };
+const assert = (ok, why) => { if (!ok) throw Error(why); };
+const wait = ms => new Promise(r => setTimeout(r, ms));
+window.addEventListener('unhandledrejection', e => { results.errors.push(String(e.reason)); show(String(e.reason)); });
+const manifest = (await (await fetch('/audio/manifest.json')).json()).music;
+const names = ['night','field','train','boss','crew','crewLoss','breakup'];
+const decode = new OfflineAudioContext(1, 1, 32000), buffers = {};
+for (const name of names) buffers[name] = await decode.decodeAudioData(await (await fetch('/audio/' + manifest[name].file)).arrayBuffer());
+function measure(buf) {
+  let peak = 0, energy = 0, bad = 0, clipped = 0;
+  for (let c=0;c<buf.numberOfChannels;c++) for (const v of buf.getChannelData(c)) { if (!Number.isFinite(v)) bad++; peak=Math.max(peak,Math.abs(v)); energy+=v*v; if(Math.abs(v)>=1)clipped++; }
+  return { peakDb: peak ? 20*Math.log10(peak) : null, rmsDb: energy ? 10*Math.log10(energy/(buf.length*buf.numberOfChannels)) : null, bad, clipped };
+}
+async function render(name, threat, reduced=false, volume=1, transitions=false) {
+  const duration = transitions ? 28 : manifest[name].loopEnd - manifest[name].loopStart + 5;
+  const ctx = new OfflineAudioContext(1, Math.ceil(duration*32000),32000);
+  const bus=ctx.createGain();bus.gain.value=volume;bus.connect(ctx.destination);
+  // Conservative wet-path bound: full dry duplicate of the score's 0.9 send.
+  // This measures both volume-controlled paths without relying on a particular room IR.
+  const wet=ctx.createGain();wet.gain.value=volume;wet.connect(ctx.destination);
+  const m=new Music();m.init(ctx,bus,wet);m.setDetail(reduced);
+  for(const key of name==='breakup'?['breakup']:names)m.addTrack(key,buffers[key],manifest[key]);
+  const select = key => { m.setCrewRoom(key.startsWith('crew') ? key==='crewLoss' : null); m.setContext(key==='night'?'night-pilot':key==='field'?'raid-pilot':key==='train'?'strafe-pilot':'m5',key==='boss'); };
+  select(name);m.setScene('mission');clearInterval(m.timer);m.timer=null;
+  if(name==='breakup') { m.stop();m.out.gain.cancelScheduledValues(0);m.out.gain.value=1;m.breakup(); }
+  let last='';
+  const pump=(async()=>{
+    for(let t=.25;t<duration-.1;t+=.25){
+      await ctx.suspend(t);
+      if(transitions){const key=names[Math.min(5,Math.floor(t/4))];if(key!==last){select(key);last=key;}if(t===14)m.breakup();}
+      if(name!=='breakup'){m.setThreat(threat);m.schedule();}
+      await ctx.resume();
+    }
+  })();
+  const rendered=await ctx.startRendering();await pump;
+  const row={name:transitions?'all cross-fades + breakup':name,threat,reduced,volume,seconds:duration,...measure(rendered)};
+  assert(!row.bad&&!row.clipped,'Invalid samples/clipping: '+name);if(volume===0)assert(row.peakDb===null,'Music volume leak');
+  return row;
+}
+document.querySelector('#audio').onclick=async()=>{
+  try{
+    results.audio=[];
+    for(const name of names){show('Rendering '+name);results.audio.push(await render(name,.9));}
+    results.audio.push(await render('night',.05),await render('boss',.9,true),await render('boss',.9,false,0),await render('night',.9,false,1,true));
+    show('Audio PASS\n'+JSON.stringify(results.audio,null,2));
+  }catch(e){results.errors.push(String(e));show(String(e));}
+};
+document.querySelector('#game').onclick=async()=>{
+ try{
+  const w=document.querySelector('#frame').contentWindow;
+  assert(w.sws?.assetsReady(),'Wait for the game assets');
+  w.addEventListener('error',e=>results.errors.push(e.message));
+  const sound=w.swsSound; // Use the live game singleton, including after Vite HMR.
+  const raid=await w.eval("import('/src/game/RaidDefence.ts')"), strafe=await w.eval("import('/src/game/StrafeOps.ts')");
+  const g=w.sws.game;g.bookends.auto=true;g.settings.quality='low';g.applySettings();
+  sound.init();sound.setMusic(true);sound.setMusicVolume(1);sound.setDetail('normal');
+  for(const name of names)sound.music.addTrack(name,buffers[name],manifest[name]);
+  for(const [name,mission]of [['night',raid.nightMission()],['field',raid.raidMission()],['train',strafe.strafeMission()]]){
+    show('Game: '+name);g.startMission(mission);g.input.locked=true;g.state='playing';g.engine.paused=false;w.sws.step(180,1/60);await wait(1100);w.sws.step(1);sound.music.updateTracks();
+    assert(sound.music.playing===name,'Wrong track: '+name+' '+sound.music.playing+' '+JSON.stringify({state:g.state,mode:sound.music.mode,scene:sound.music.scene,menu:g.menuMode,mission:g.mission?.id}));
+    results.game.push({mode:name,playing:sound.music.playing,state:g.state,quality:w.sws.engine.quality});
+    results.shots[name]=w.sws.shot(.55);
+  }
+  g.startMission(w.sws.survivalMission('pilot'));w.sws.boss('pilot');w.sws.step(3);await wait(1100);w.sws.step(1);sound.music.updateTracks();assert(sound.music.playing==='boss','Boss hook');
+  const ship=g.boss.ships.find(s=>s.ship.alive);assert(ship,'No ship');g.boss.startDeath(ship);assert(sound.music.breakupAt>=0,'Breakup hook');
+  results.game.push({mode:'boss',playing:sound.music.playing,breakup:true});results.shots.boss=w.sws.shot(.55);
+  g.startMenu();w.swsCrewRoom('m8',{lost:4});await wait(1200);assert(sound.music.playing==='crewLoss','Crew losses hook');
+  results.game.push({mode:'crewLoss',playing:sound.music.playing});w.swsCrewRoom.scene.skip();await wait(1800);
+  w.swsCrewRoom('m1',{lost:0});await wait(1100);assert(sound.music.playing==='crew','Crew hook');results.game.push({mode:'crew',playing:sound.music.playing});
+  w.swsCrewRoom.scene.skip();await wait(1800);assert(sound.music.playing==='menu','Menu restore');results.game.push({mode:'menu',playing:sound.music.playing});
+  sound.setDetail('reduced');assert(sound.music.reduced,'Detail hook');sound.setMusicVolume(0);assert(sound.musicVolume===0,'Volume hook');sound.setMusic(false);
+  show('Game PASS\n'+JSON.stringify(results.game,null,2));
+ }catch(e){results.errors.push(String(e));show(String(e)+'\n'+e.stack);}
+};
+document.querySelector('#save').onclick=()=>{
+ const a=document.createElement('a');a.download='sws12-browser-results.json';a.href=URL.createObjectURL(new Blob([JSON.stringify(results,null,2)],{type:'application/json'}));a.click();
+};
+if (location.search.includes('auto')) {
+  await document.querySelector('#audio').onclick();
+  for (let i=0;i<120&&!document.querySelector('#frame').contentWindow.sws?.assetsReady();i++) await wait(500);
+  await document.querySelector('#game').onclick();
+  if (new URLSearchParams(location.search).get('report') === '5262') await fetch('http://127.0.0.1:5262', { method: 'POST', body: JSON.stringify(results) });
+  else document.querySelector('#save').onclick();
+}
+</script>

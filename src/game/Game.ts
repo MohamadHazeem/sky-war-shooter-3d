@@ -484,6 +484,7 @@ export class Game {
     w.listener = this.engine.camera.position;
     sound.updateFighterVoices(w.fighterSoundInfo());
     // adaptive score (src/audio/Threat.ts -> Music.setThreat) and airframe strain (wind, creaks)
+    sound.music.setContext(this.menuMode ? undefined : this.mission?.id, !this.menuMode && this.boss.active, this.pilotOps.raid.lights.coned.size);
     sound.music.setThreat(computeThreat({ active: this.state === 'playing' && !this.menuMode, enemies: w.activeEnemies(), listener: w.player?.pos ?? this.engine.camera.position, integrity: w.player?.integrity ?? 1, onFire: this.combo.onFire, finalWave: finalStretch(this.mission, this.roundIdx, w.time - this.roundT0, this.director.waveIdx) }));
     sound.setManeuver(this.menuMode ? 0 : w.maneuverLevel);
     this.boss.update(dt);

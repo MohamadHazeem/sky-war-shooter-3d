@@ -1110,6 +1110,7 @@ export class Sound {
     const k: AudioDetail = d === 'reduced' ? 'reduced' : 'normal';
     if (k === this.detail) return;
     this.detail = k; this.caps = DETAIL[k];
+    this.music.setDetail(k === 'reduced');
     this.oneShots = new Budget(this.caps.voices);
     this.hrtfShots = new Budget(this.caps.hrtf);
     for (const v of this.voices) this.seat(v);   // drops / restores the second loops
