@@ -153,7 +153,14 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
                 inout vec3 col, inout float T, inout float firstHit, inout vec2 dw) {
   if (t.x < 0.0) return;
   float t0 = t.x;
-  float t1 = min(t.y, min(maxDist, 90000.0));
+  // Camera inside this layer (climbing through the deck in the take-off scene, a dive): a
+  // grazing ray runs tens of km through the slab, the steps end up ~1 km apart and the cloud
+  // ahead turned into step noise the temporal accumulation could not settle (static horizontal
+  // banding). Inside, the march stops 8 km out (murk), relaxed over the last 500 m before the
+  // layer's top or base so the far cloud sea fades back in as the camera leaves it. (A cap from
+  // above the layer would cut the cumulus sea: grazing rays reach the dense part km past entry.)
+  float inK = smoothstep(0.0, 500.0, min(ro.y - L.x, L.y - ro.y));
+  float t1 = min(t.y, min(maxDist, mix(90000.0, 8000.0, inK)));
   if (t1 <= t0) return;
   float len = t1 - t0;
   float dt = max(len / float(steps), 30.0);

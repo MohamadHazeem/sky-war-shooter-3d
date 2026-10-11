@@ -68,14 +68,25 @@ export function retargetEnvMaps(scene: THREE.Object3D, old: THREE.Texture | null
   if (!next) return;
   for (const m of tracked) m.envMap = next;
   if (!old) return;
+  pastEnvs.add(old);
   scene.traverse((o) => {
     const mm = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
     if (!mm) return;
     for (const m of Array.isArray(mm) ? mm : [mm]) {
       const s = m as THREE.MeshStandardMaterial;
-      if (s.envMap === old) s.envMap = next;
+      if (s.envMap && pastEnvs.has(s.envMap)) s.envMap = next;
     }
   });
+}
+
+// Every sky env map that has been replaced. Something out of the scene during a weather change
+// (the turret / tail interiors of the stations not manned, a cockpit) kept an older map, which
+// is disposed one change later: the day sky mirrored in the tail glass at night, or a dead
+// texture. Engine.sortLayers passes every material through here each frame.
+const pastEnvs = new WeakSet<THREE.Texture>();
+export function freshEnv(m: THREE.Material) {
+  const s = m as THREE.MeshStandardMaterial;
+  if (s.envMap && envRef.tex && pastEnvs.has(s.envMap)) s.envMap = envRef.tex;
 }
 
 // The caller disposes the old env map right after retargeting; anything detached from the

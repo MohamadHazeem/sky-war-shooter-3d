@@ -26,7 +26,12 @@ createServer((req, res) => {
     const out = join(ROOT, file);
     mkdirSync(dirname(out), { recursive: true });
     // the browser's PNG encoder is fast, not small: recompress losslessly (about 1/3 the size)
-    sharp(Buffer.from(m[2], 'base64')).png({ compressionLevel: 9, effort: 10, adaptiveFiltering: true }).toBuffer().then((buf) => {
+    // .jpg targets (visual-qa/): a small JPEG, max 800 px wide
+    const img = sharp(Buffer.from(m[2], 'base64'));
+    const enc = /\.jpg$/i.test(file)
+      ? img.resize({ width: 800, withoutEnlargement: true }).jpeg({ quality: 74, mozjpeg: true })
+      : img.png({ compressionLevel: 9, effort: 10, adaptiveFiltering: true });
+    enc.toBuffer().then((buf) => {
       writeFileSync(out, buf);
       res.end(`${file} ${buf.length} bytes`);
     }, (e) => { res.statusCode = 500; res.end(String(e)); });

@@ -29,7 +29,7 @@ PLAY_FIRST = [
 # Things the player should know or decide (short, honest)
 NOTES = [
     'Boss fights are long: the near-perfect autoplay bot needs about 100 s per warship. The balance pass (Phase 5 goal 26) estimates human-level times; see docs/BALANCE.md once it lands.',
-    'The first Bf 109 / Fw 190 that loses a wing or blows up still compiles one to three shader variants (a short stutter, once per session). Two warm-up fixes were tried and reverted.',
+    'First-kill shader stutters are fixed (the warm-up was discarding its compiled shaders); one shadow variant for an exploding Fw 190 still compiles once per session.',
     'The Me 410 uses the Bf 110 airframe with its own guns: no open-licence Me 410 model exists. He 219 and Ta 152 are not available either.',
     'Co-op is a beta: peer-to-peer with no relay server, so some strict networks cannot connect; the guest\'s score stays local.',
     'Phone portrait shows "rotate your phone" by design; landscape phones and tablets are supported.',

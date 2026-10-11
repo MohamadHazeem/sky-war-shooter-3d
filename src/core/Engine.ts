@@ -6,7 +6,7 @@ import { PostFX } from '../render/PostFX';
 import { buildEnvironment, SkyDome } from '../render/Sky';
 import { envRef } from '../render/EnvRef';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
-import { installAircraftLook, retargetEnvMaps, retireEnv, syncAircraftLook } from '../render/AircraftLook';
+import { freshEnv, installAircraftLook, retargetEnvMaps, retireEnv, syncAircraftLook } from '../render/AircraftLook';
 import { LivingSky } from '../render/LivingSky';
 import { FpsCounter } from '../render/FpsCounter';
 import { drsFloor, drsTargetMs, fasterRefreshFrom, refreshFromTimestamps } from '../render/FrameTiming';
@@ -75,6 +75,9 @@ export class Engine {
   // Runs just before onFrame, and keeps running when a screen takes over onFrame (the replay
   // theatre does): touch / gamepad input (DeviceControls)
   beforeFrame?: (dt: number) => void;
+  // A screen with a scene of its own (the aircraft gallery, game/AircraftGallery.ts) draws it
+  // here instead of the world: see renderStudio()
+  renderOverride?: (dt: number) => void;
   fps = 60;
   // Dynamic resolution: the render scale drops when frames run long and creeps back up
   // when there is headroom; a scale that proved too slow becomes a ceiling for a while.
@@ -303,7 +306,7 @@ export class Engine {
     this.heatHaze.update(dt);
     // after the game moved the formation, so the distant boxes stay locked to it
     this.livingSky.update(this.camera, this.time, this.height * this.pixelRatio);
-    if (render) this.render(realDt);
+    if (render) { if (this.renderOverride) this.renderOverride(realDt); else this.render(realDt); }
     if (fixedDt === undefined) {
       this.dynamicResolution(realDt);
       this.fpsCounter?.update(realDt, this);
@@ -404,12 +407,34 @@ export class Engine {
     this.post.render(r, cam, this.sceneRT, this.sceneRT.depthTexture!, this.time, dt);
   }
 
+  // Another scene (own camera and lights, no sky or clouds) through the same MSAA target and
+  // post stack as the world, so its materials keep the world's shader programs (same output
+  // target; the caller mirrors the world's light counts) and it gets the game's grade.
+  renderStudio(scene: THREE.Scene, cam: THREE.PerspectiveCamera, dt: number) {
+    const r = this.renderer;
+    cam.updateMatrixWorld();
+    r.setRenderTarget(this.sceneRT);
+    r.render(scene, cam);
+    this.post.render(r, cam, this.sceneRT, this.sceneRT.depthTexture!, this.time, dt);
+  }
+
+  // Compile a studio scene's programs in the background (KHR_parallel_shader_compile), for
+  // the same render target renderStudio draws into
+  compileStudio(scene: THREE.Scene, cam: THREE.PerspectiveCamera): Promise<unknown> {
+    const r = this.renderer, prev = r.getRenderTarget();
+    r.setRenderTarget(this.sceneRT);
+    const p = r.compileAsync(scene, cam);
+    r.setRenderTarget(prev);
+    return p;
+  }
+
   // Transparent materials go to layer 1 (drawn after the clouds), everything else layer 0
   private sortLayers() {
     this.scene.traverse((o) => {
       if ((o as THREE.Light).isLight) { o.layers.enableAll(); return; }
       const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
       if (!m) return;
+      if (Array.isArray(m)) m.forEach(freshEnv); else freshEnv(m);   // back from outside the scene: the current sky
       const transparent = Array.isArray(m) ? m.some((x) => x.transparent) : m.transparent;
       o.layers.set(transparent && o !== this.sky.mesh ? 1 : 0);
     });

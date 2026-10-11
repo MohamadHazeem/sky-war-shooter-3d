@@ -420,3 +420,8 @@ body.ab-overdrive #hHeatM div { width: 100% !important; background: linear-gradi
 #title .menu.grouped > button.sec::before { display: none; }
 #title .menu.grouped > button.sec:hover, #title .menu.grouped > button.sec:focus-visible { padding-left: 4px; }
 #title .menu.grouped::after { content: ''; order: 9; grid-column: 1 / -1; height: 1px; margin: 12px 0 8px; background: linear-gradient(90deg, rgba(200,185,140,0.45), rgba(200,185,140,0)); }
+/* 11 secondary entries: three columns on desktop screens, so the menu still fits a 720-760 px tall window */
+@media (min-width: 900px) and (min-height: 521px) {
+  #title .wrap { max-width: 580px; }
+  #title .menu.grouped { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 24px; }
+}

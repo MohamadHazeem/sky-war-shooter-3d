@@ -11,7 +11,9 @@ import { tx } from '../i18n';
 //   Engine fire      X  hold or mash the extinguisher, otherwise the fire spreads (gunner)
 //   Jammed gun       R  tap fast or hold to clear (the jam stays with that gun position)
 //   Oxygen failure   O  the picture greys and swims until the spare bottle is opened (10 s)
-//   Straggler        —  a crippled B-17 falls out of formation and fighters swarm it
+//   Straggler        —  a crippled B-17 (the one best placed in the gun's view) feathers two engines,
+//                       falls out of formation and fighters swarm it; her crew calls for help, a
+//                       drama shot shows her dropping back (also started by SetPieces.ts)
 export const KEY_EXTINGUISH = 'KeyX';
 export const KEY_CLEAR_JAM = 'KeyR';
 export const KEY_OXYGEN = 'KeyO';
@@ -255,6 +257,7 @@ class Straggler extends RandomEvent {
   readonly id = 'straggler';
   private attackers: Fighter[] = [];
   private downed = 0;
+  private prev = 0;
   constructor(private b: Bomber) { super(); this.limit = 35; }
 
   start(c: MidRound) {
@@ -267,11 +270,20 @@ class Straggler extends RandomEvent {
     b.straggling = true;
     this.attackers = c.spawnAttackers(b, 3 + Math.min(2, c.round), { from: 'any', dist: 2000 });
     c.radio('straggler', b.name, `${b.name} to anybody — two engines out, we're falling behind and they're all over us! We need cover!`);
+    c.dramaCam((out) => { if (b.remove) return false; out.copy(b.pos); return true; }, 2.8, tx('STRAGGLER'), tx('{name} is dropping out of formation', { name: b.name }));
   }
 
   update(_dt: number, c: MidRound) {
-    if (!this.b.alive) { this.state = 'lost'; return; }
+    const prev = this.prev;
+    this.prev = this.t;
+    if (!this.b.alive) {
+      this.state = 'lost';
+      c.world.callout('sp_strag_lost', 'Pilot', 'She\'s going down… we couldn\'t do a thing for her.', 0, 3);
+      return;
+    }
     const left = this.attackers.filter((f) => f.alive && !f.remove).length;
+    if (prev < 3.5 && this.t >= 3.5) c.world.callout('sp_strag_feather', 'Top Turret', 'She\'s feathered two engines — she can\'t keep up! She\'s dropping out!', 0, 3);
+    if (prev < 13 && this.t >= 13 && left >= 2) c.world.callout('sp_strag_plea', this.b.name, 'They\'re chewing us to pieces back here! For God\'s sake, somebody help us!', 0, 3);
     // every attacker on her shot down: she's safe early
     if (left === 0 && this.t > 4) { this.save(c); return; }
     c.hud.showPrompt({
@@ -318,6 +330,6 @@ export const EVENTS: Record<EventId, EventDef> = {
   oxygen: { eligible: () => true, create: () => new OxygenFailure() },
   straggler: {
     eligible: (c) => c.roundLeft >= 30 && c.aliveBombers().filter((b) => !b.straggling).length >= 3,
-    create: (c) => new Straggler(c.nearbyBomber()!),
+    create: (c) => new Straggler(c.bomberInView() ?? c.nearbyBomber()!),
   },
 };
