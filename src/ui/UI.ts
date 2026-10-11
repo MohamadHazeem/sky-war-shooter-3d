@@ -93,7 +93,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 // after title() builds it, so the grouping is applied by CSS order + a class, re-run whenever
 // entries change. Play modes stay large at the top; everything else is a compact 2-column grid.
 const MENU_PRIMARY = ['campaign', 'survival', 'coop'];
-const MENU_SECONDARY = ['training', 'daily', 'skills', 'career', 'trophies', 'armory', 'theatre', 'aircraft', 'whatsnew', 'settings', 'credits'];
+const MENU_SECONDARY = ['training', 'daily', 'skills', 'career', 'trophies', 'armory', 'theatre', 'aircraft', 'whatsnew', 'manual', 'settings', 'credits'];
 function organizeMenu(menu: HTMLElement) {
   const apply = () => {
     menu.classList.add('grouped');

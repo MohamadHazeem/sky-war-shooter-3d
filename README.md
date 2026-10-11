@@ -54,7 +54,9 @@ A roster of named Luftwaffe **Experten** remembers you: aces come back with scar
 promoted, and carry bounties (Career → Experten). Campaign missions open with a dawn take-off from
 Deenethorpe and end with a landing (a belly landing when the Sky Queen is badly damaged); weather
 fronts roll in mid-mission. The **replay theatre** saves your best moments (scrub, free camera,
-photo mode), and the **aircraft gallery** shows every type in 3D with a recognition quiz.
+photo mode), and the **aircraft gallery** shows every type in 3D with a recognition quiz. The
+**Field Manual** (title menu, pause menu, Settings, or "Full manual" on the H card) explains every
+system in nine short illustrated chapters, with a controls reference that follows your key bindings.
 
 ### Controls
 

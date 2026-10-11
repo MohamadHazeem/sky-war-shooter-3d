@@ -2,6 +2,7 @@ import { STATION_ORDER, STATIONS } from '../world/B17Layout';
 import { keyMap, ActionId } from '../core/KeyMap';
 import { tx } from '../i18n';
 import { padConnected } from '../core/Gamepad';
+import { openFieldManual } from './FieldManualScreen';
 
 // key bound to an action (Settings > Key bindings)
 const b = (id: ActionId) => keyMap.label(id);
@@ -114,6 +115,15 @@ const PILOT_TIPS = [
   'A bandit on your six: turn hard — don\'t fly straight.',
 ];
 
+export type ControlsDevice = 'keyboard' | 'pad' | 'touch';
+
+/** The card's rows for a role and a device (also the Field Manual's controls chapter). */
+export function controlRows(role: Role, device: ControlsDevice): [string, string][] {
+  if (device === 'pad') return role === 'gunner' ? PAD_GUNNER() : PAD_PILOT();
+  if (device === 'touch') return role === 'gunner' ? TOUCH_GUNNER() : TOUCH_PILOT();
+  return role === 'gunner' ? GUNNER() : PILOT();
+}
+
 export class ControlsCard {
   readonly el: HTMLElement;
   open = false;
@@ -130,16 +140,22 @@ export class ControlsCard {
     // a connected gamepad wins (it is what the player picked up), then touch, then the keyboard
     const pad = padConnected();
     const touch = document.body.classList.contains('touch');
-    const rows = pad ? (role === 'gunner' ? PAD_GUNNER() : PAD_PILOT())
-      : role === 'gunner' ? (touch ? TOUCH_GUNNER() : GUNNER()) : touch ? TOUCH_PILOT() : PILOT();
+    const rows = controlRows(role, pad ? 'pad' : touch ? 'touch' : 'keyboard');
     const tips = role === 'gunner' ? GUNNER_TIPS : PILOT_TIPS;
     const key = pad ? 'View' : b('help');
     this.el.innerHTML = `<div class="cc-box">
       <div class="cc-k">${tx('CONTROLS')} · ${tx(role === 'gunner' ? 'B-17 GUNNER' : 'P-51 PILOT')}${pad ? ` · ${tx('GAMEPAD')}` : ''}</div>
       <div class="cc-grid">${rows.map(([key, what]) => `<div class="cc-key">${key}</div><div class="cc-what">${what}</div>`).join('')}</div>
       <div class="cc-tips">${tips.map((t) => `<div>${tx(t)}</div>`).join('')}</div>
-      <div class="cc-foot">${tx('Game paused · press {key} or tap to continue', { key: `<kbd>${key}</kbd>` })}</div>
+      <div class="cc-foot">${tx('Game paused · press {key} or tap to continue', { key: `<kbd>${key}</kbd>` })}
+        <button class="cc-manual" data-manual>${tx('Full manual')} ›</button></div>
     </div>`;
+    // "Full manual": the Field Manual's controls chapter; closing it brings the card back
+    this.el.querySelector('[data-manual]')!.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.hide();
+      openFieldManual({ chapter: 'controls', onClose: () => this.show(role) });
+    });
     this.el.classList.add('show');
     this.open = true;
   }
