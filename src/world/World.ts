@@ -34,6 +34,10 @@ import { updateWeather, weatherRestart, weatherEvents, frontState, FRONT_EVENT }
 import { access } from '../core/Accessibility';
 
 export const ENEMY_SCALE = 6.0;      // Fw 190s are drawn (and hit) larger so they read clearly on screen
+// Player gunner wounds (4 = the mission is over; Director.ts) — docs/BALANCE.md
+const DRESSING = 85;        // s without a new wound before a crewmate patches one up (was 100)
+const DRESSING_BOSS = 65;   // ... during a battle-group fight
+const BOSS_WOUND = 0.5;     // wound chance x this during a battle-group fight
 export const ENEMY_STRUCTURE = 460; // ~40 hits from a .50 to wear one down
 export const ENEMY_ZONE_HP = 2.2;   // vital zones (cockpit, engine, wings) toughened to match
 const FORMATION_SPREAD = 1.8;       // spacing between B-17s, so friends never crowd the sight picture
@@ -92,6 +96,9 @@ export class World implements WorldView {
   private nextJink = 12;
   private lurch = 0;
   playerExecute = 1;          // perk: damage multiplier vs fighters below half structure   // perk: player hits can set enemy engines alight
+  // Can the player see this enemy (HUD brackets, radar, padlock, lead pip, the autoplay bot)?
+  // Always, except at night: RaidDefence (Night Fighter) narrows it to coned / close / firing ones
+  spotted: (a: Aircraft) => boolean = () => true;
   formationCenter = new THREE.Vector3(0, ALTITUDE, 0);
   formationForward = new THREE.Vector3(0, 0, 1);
   player: Aircraft | null = null;
@@ -121,6 +128,7 @@ export class World implements WorldView {
   stats = { kills: 0, shots: 0, hits: 0, damage: 0, bombersLost: 0, scriptedLost: 0, assists: 0, enemiesSpawned: 0 };
   private warmKeep: THREE.Material[] = [];   // warm-up wreck materials kept alive so their shaders stay compiled
   crewWounded = 0;
+  bossFight = false;          // a battle group is up (BossBattle): gentler crew wounds, quicker field dressing
   private lastWound = -99;
   readonly crew = new Crew();   // crew positions and who is wounded (gunner missions)
   private lastCrewWound = -99;
@@ -554,7 +562,8 @@ export class World implements WorldView {
       if (t === this.playerBomber && this.playerStation) {
         // Rounds hitting the section of fuselage you are standing in can wound you
         const near = e.point.distanceTo(t.localToWorld(this.playerStation.pivot, _v)) < 2.2;
-        if (near && this.time - this.lastWound > 18 && Math.random() < (heavy ? 0.05 : 0.006) * this.crewWoundMult) {
+        // (halved in a battle-group fight: the turrets' heavy rounds hit for minutes on end)
+        if (near && this.time - this.lastWound > 18 && Math.random() < (heavy ? 0.05 : 0.006) * this.crewWoundMult * (this.bossFight ? BOSS_WOUND : 1)) {
           this.lastWound = this.time;
           this.crewWounded++;
           this.crew.wound(STATION_CREW[this.playerStation.id]);
@@ -692,8 +701,9 @@ export class World implements WorldView {
     if (dt <= 0) return;
     this.time += dt;
     this.radioCooldown -= dt;
-    // field dressing: a crewmate patches the gunner up after a quiet spell (one wound per 100 s)
-    if (this.crewWounded > 0 && this.playerStation && this.time - this.lastWound > 100) {
+    // field dressing: a crewmate patches the gunner up after a quiet spell (one wound per DRESSING s;
+    // sooner in a battle-group fight, which never goes quiet)
+    if (this.crewWounded > 0 && this.playerStation && this.time - this.lastWound > (this.bossFight ? DRESSING_BOSS : DRESSING)) {
       this.crewWounded--;
       this.lastWound = this.time - 18;
       this.callout('dressing', 'Radio', 'Hold still — I\'ve patched you up. Back on that gun.', 0, 2);

@@ -138,7 +138,9 @@ const UP = new THREE.Vector3(0, 1, 0);
 const PF_RANGE = 4800;        // m to go: the pathfinders mark the field when a wave is this close
 const PF_FLARES = 6;
 const PF_AGAIN = 75;          // s before a later wave's pathfinders mark it again
-const AA_CONED = 1.1;         // AA bursts per second around each coned raider
+const AA_CONED = 1.1;
+const SPOT_NEAR = 1200;       // m: night, an unlit raider shows on the HUD inside this
+const SPOT_FLASH = 6;         // s a bandit stays marked after firing at / being hit by the Mustang         // AA bursts per second around each coned raider
 const AA_LOOSE = 0.3;         // ... and unaimed bursts per second around the stream
 const MARKER: [number, number, number][] = [[1.2, 7.5, 1.6], [1.2, 7.5, 1.6], [8.5, 1.4, 0.8]];   // green, green, red
 const _d = new THREE.Vector3();
@@ -350,6 +352,9 @@ export class RaidDefence {
     this.through = this.shotDown = this.jettisoned = 0;
     this.roundIdx = -1;
     this.log = [];
+    this.flash = new WeakMap();
+    const night = !!this.def?.night;
+    this.world.spotted = night ? (a) => this.spotted(a as Fighter) : () => true;
     if (!this.def) return;
     const w = this.world;
     // the field lies under the formation point the Mustang starts at; the raid comes from ahead
@@ -607,6 +612,20 @@ export class RaidDefence {
     }
   }
 
+  // Night: which enemies the player can make out (HUD brackets, radar, padlock, lead pip and the
+  // autoplay bot all ask World.spotted). A raider held in the searchlights, anything within
+  // SPOT_NEAR, anything whose guns flashed at the Mustang or that the Mustang hit in the last
+  // SPOT_FLASH s. The rest is dark: exhaust flames in the 3D view, nothing on the HUD.
+  private flash = new WeakMap<Fighter, number>();
+  spotted(f: Fighter): boolean {
+    const w = this.world, pf = w.playerFighter;
+    if (!this.night || f.team !== 'axis') return true;
+    if (this.lights.coned.has(f)) return true;
+    if (pf && f.pos.distanceTo(pf.pos) < SPOT_NEAR) return true;
+    if (w.time - f.lastPlayerHit < SPOT_FLASH) return true;
+    return w.time - (this.flash.get(f) ?? -99) < SPOT_FLASH;
+  }
+
   // Searchlights, coned raiders lit up, exhaust flames
   private coneCall = -99;
   private nightFx(dt: number) {
@@ -622,6 +641,9 @@ export class RaidDefence {
         w.callout('raid_coned', who, text, 30, 2);
       }
     }
+    // muzzle flashes aimed at the Mustang give a bandit away
+    const pf = w.playerFighter;
+    if (pf) for (const f of w.fighters('axis')) if (f.alive && f.trigger && w.enemyPilot(f)?.target === pf) this.flash.set(f, w.time);
     const flames = w.fighters('axis').concat(w.fighters('allied').filter((a) => !a.isPlayer));
     updateNightExhaust(flames, w.effects.glow, 1);
     this.pathfinders(inbound);
@@ -748,8 +770,7 @@ export class RaidDefence {
     for (const r of this.raiders) {
       if (!r.f.alive || !r.p.inbound) continue;
       const coned = this.lights.coned.has(r.f);
-      const d = pf ? r.f.pos.distanceTo(pf.pos) : Infinity;
-      if (def.night && !coned && d > 1200) continue;
+      if (def.night && !this.spotted(r.f)) continue;
       const s = _t.copy(r.f.pos).project(cam);
       if (s.z > 1 || Math.abs(s.x) > 1 || Math.abs(s.y) > 1) continue;
       const x = (s.x * 0.5 + 0.5) * W, y = (-s.y * 0.5 + 0.5) * H;

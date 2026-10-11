@@ -77,7 +77,7 @@ const INTRO_OFF = new THREE.Vector3(0, 240, 2300);
 // the fight went on the escort fighters, so their cadence and cap are knobs too.
 export const BOSS_TUNING = {
   hp: { gunner: 0.16, pilot: 0.4 },       // was 0.5 / 0.85
-  dmg: { gunner: 0.85, pilot: 0.45 },     // the P-51 is the turrets' first choice (was 1 / 1)
+  dmg: { gunner: 0.75, pilot: 0.45 },     // the P-51 is the turrets' first choice (was 1 / 1; gunner 0.85 until the m12 pass)
   diffHp: 0.3,                            // hp x (1 - diffHp + diffHp x difficulty): Recruit 0.94, Ace 1.06 (was 0.15)
   tierHp: 0, tierDmg: 0.03,               // per tier (were 0.12 / 0.06) (campaign: m7 1, m12 2; survival: every 3rd round)
   escortEvery: [40, 12] as [number, number],  // s between launches: base + random (was 28 + 10)
@@ -184,6 +184,7 @@ export class BossBattle {
     for (const s of this.shells) s.live = false;
     for (const p of this.popups) p.live = false;
     this.active = false; this.cleared = false; this.bossRound = -1;
+    this.world.bossFight = false;
     this.victoryT = -1; this.flash.t = 0; this.objective = '';
     this.drone.stop();
     this.mission = null;
@@ -197,6 +198,7 @@ export class BossBattle {
     this.mission = m;
     this.role = m.role;
     this.active = true; this.cleared = false; this.bossRound = roundIdx; this.victoryT = -1;
+    w.bossFight = true;
     this.time = 0; this.introT = 0; this.heavyCd = 16; this.escortCd = 16; this.escortsLaunched = 0;
     const survival = !Number.isFinite(m.rounds ?? 1);
     const count = forced || (survival ? roundIdx >= 5 : m.id !== 'm5') ? 4 : 3;
@@ -321,7 +323,7 @@ export class BossBattle {
     if (this.victoryT >= 0) {
       this.victoryT += dt;
       if (this.victoryT - dt < 4.2 && this.victoryT >= 4.2) this.victory();
-      if (!this.cleared && this.victoryT > 10 && (w.activeEnemies().length === 0 || this.victoryT > 35)) { this.cleared = true; this.active = false; }
+      if (!this.cleared && this.victoryT > 10 && (w.activeEnemies().length === 0 || this.victoryT > 35)) { this.cleared = true; this.active = false; w.bossFight = false; }
     }
     this.drone.update(this.ships, this.active);
     // ships fully gone: drop them from our list

@@ -132,7 +132,7 @@ export class GameHud {
     const muzzle = g.loadout.leadVel || (pilot ? 880 : 870);
     let best: Fighter | null = null, bestAng = THREE.MathUtils.degToRad(pilot ? 18 : 25);
     for (const f of w.fighters('axis')) {
-      if (!f.alive) continue;
+      if (!f.alive || !w.spotted(f)) continue;
       const to = f.pos.clone().sub(origin);
       const d = to.length();
       if (d > 1300) continue;
@@ -175,6 +175,7 @@ export class GameHud {
         const enemy = a.team === 'axis';
         const d = a.pos.distanceTo(cam.position);
         if (d > (enemy ? 2800 : 1800)) continue;
+        if (enemy && !w.spotted(a)) continue;   // Night Fighter: only coned / close / firing raiders
         const p = a.pos.clone().project(cam);
         const col = access.markerColor(enemy);
         if (!enemy) {
