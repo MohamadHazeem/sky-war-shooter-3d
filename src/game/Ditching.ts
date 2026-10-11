@@ -124,7 +124,7 @@ export class Ditching {
 
   private pose() {
     const g = this.g, sea = g.world.ditchingSea, t = this.time, b = this.b!;
-    sea.update(t, g.mission?.weather?.mood === 'night');
+    sea.update(t, g.mission?.weather?.mood === 'night', g.settings.quality === 'low');
     const cam = sea.camera; cam.aspect = g.engine.camera.aspect; cam.updateProjectionMatrix();
     const shot = t < 5 ? 0 : t < 9 ? 1 : t < 16 ? 2 : t < 22 ? 3 : 4;
     if (shot !== this.shot) {

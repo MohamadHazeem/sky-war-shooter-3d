@@ -1,0 +1,40 @@
+{
+  "name": "revision-verification",
+  "errors": [],
+  "high": {
+    "before": 103,
+    "effectiveQuality": "high",
+    "impactCalls": 293,
+    "impactFrameMs": 6.56,
+    "impactParticles": 121,
+    "after": 103,
+    "newPrograms": [],
+    "state": "debrief",
+    "lost": 1,
+    "particlesAfter": 0
+  },
+  "low": {
+    "before": 82,
+    "effectiveQuality": "low",
+    "impactParticles": 61,
+    "impactCalls": 293,
+    "impactFrameMs": 3.4,
+    "after": 82,
+    "newPrograms": [],
+    "state": "debrief",
+    "lost": 1,
+    "particlesAfter": 0
+  },
+  "high-night": {
+    "before": 103,
+    "effectiveQuality": "high",
+    "impactCalls": 293,
+    "impactFrameMs": 5.5,
+    "impactParticles": 121,
+    "after": 103,
+    "newPrograms": [],
+    "state": "debrief",
+    "lost": 1,
+    "particlesAfter": 0
+  }
+}

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { DitchingSpray } from './DitchingSpray';
 
 const box = new THREE.BoxGeometry(1, 1, 1);
 const sphere = new THREE.SphereGeometry(1, 8, 6);
@@ -21,7 +22,7 @@ function man() {
   return g;
 }
 
-/** Fixed pools, a single analytic ocean shader, no textures or reflection render targets. */
+/** Fixed pools, a single analytic ocean shader, no new textures or reflection targets. */
 export class DitchingSea {
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.PerspectiveCamera(48, 1, 0.1, 6000);
@@ -31,11 +32,7 @@ export class DitchingSea {
   readonly brace = new THREE.Group();
   readonly launch = new THREE.Group();
   readonly flare = new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xff6633 }));
-  readonly spray: THREE.Mesh[] = [];
-  private sprayMotion = Array.from({ length: 64 }, (_, i) => {
-    const h = (n: number) => { const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); };
-    return { delay: h(i + 1) * 0.85, vx: 3 + h(i + 71) * 9, vy: 5 + h(i + 141) * 6, z: h(i + 211) * 21 - 9 };
-  });
+  readonly spray: DitchingSpray;
   private sun: THREE.DirectionalLight;
   private hemi: THREE.HemisphereLight;
   constructor() {
@@ -49,13 +46,40 @@ export class DitchingSea {
         void main(){ vec3 v=position; v.z+=sin(v.x*.09+time*1.4)*.32+sin(v.y*.13-time)*.18;
           vec4 w=modelMatrix*vec4(v,1.); p=w.xyz; gl_Position=projectionMatrix*viewMatrix*w; }`,
       fragmentShader: `varying vec3 p; uniform float time; uniform float night;
-        void main(){ float a=p.x*.09+time*1.4, b=-p.z*.13-time;
+        float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+        float noise(vec2 p){vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
+          return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1)),f.x),f.y);}
+        float caps(vec2 q){
+          vec2 id=floor(q), f=fract(q); float h=hash(id);
+          float center=.25+.5*hash(id+19.);
+          float width=.035+.09*hash(id+7.);
+          float across=abs(f.y-center+.035*sin(f.x*11.+h*30.));
+          float ends=smoothstep(.05,.2,f.x)*(1.-smoothstep(.35+h*.58,.95,f.x));
+          return (1.-smoothstep(width*.25,width,across))*ends*smoothstep(.38,.85,h);
+        }
+        void main(){ float a=p.x*.09+time*1.4+noise(p.xz*.025)*4., b=-p.z*.13-time+noise(p.zx*.018)*5.;
           vec3 n=normalize(vec3(-.14*cos(a),1.,.11*cos(b)));
           vec3 v=normalize(cameraPosition-p); float f=pow(1.-max(dot(n,v),0.),3.);
-          float streak=pow(max(0.,sin(p.x*.7+sin(p.z*.018+time)*2.)),24.);
-          streak*=smoothstep(.6,.99,sin(p.z*.15-time*1.8)+sin(p.x*.13)*.2);
+          float distance=length(cameraPosition-p);
+          // Two offset wind-aligned scales, random occupancy, width, length and brightness.
+          vec2 wind=vec2(p.x*.94+p.z*.34,-p.x*.34+p.z*.94);
+          wind.x-=time*1.8;
+          float streak=caps(wind/vec2(19.,8.))+caps((wind+vec2(43.,17.))/vec2(31.,13.))*.55;
+          streak*=mix(.18,1.,noise(wind*.075))* (1.-smoothstep(80.,650.,distance));
+          float impact=max(0.,time-11.); float travel=min(35.,impact*8.);
+          vec2 q=p.xz-vec2(0.,12.);
+          float broken=.45+.55*noise(p.xz*.6+time*.15);
+          float radius=length(q*vec2(1.,.7));
+          float ring=exp(-pow((radius-(3.+impact*3.8))/(1.1+impact*.22),2.));
+          ring*=exp(-impact*.22);
+          float tail=travel+10.-p.z;
+          float wakeWidth=3.+max(0.,tail)*.25;
+          float wake=exp(-pow((abs(p.x)-wakeWidth)/1.6,2.));
+          wake*=smoothstep(-2.,4.,tail)*(1.-smoothstep(32.,55.,tail));
+          wake+=exp(-pow(p.x/5.,2.))*smoothstep(0.,4.,tail)*(1.-smoothstep(14.,38.,tail))*.4;
+          float foam=(ring+wake*.65)*broken*smoothstep(0.,.4,impact)*exp(-max(0.,impact-5.)*.09);
           float glint=pow(max(0.,dot(reflect(-normalize(vec3(-.4,.6,.6)),n),v)),110.);
-          vec3 c=mix(vec3(.065,.13,.16),vec3(.29,.38,.4),f)+streak*.13+glint*vec3(.7,.72,.62);
+          vec3 c=mix(vec3(.065,.13,.16),vec3(.29,.38,.4),f)+streak*.11+foam*vec3(.22,.27,.28)+glint*vec3(.7,.72,.62);
           c*=.85+.1*(sin(a)+sin(b)*.45); c*=mix(1.,.38,night); c=mix(c,mix(vec3(.19,.24,.27),vec3(.035,.055,.085),night),smoothstep(150.,1800.,length(cameraPosition-p)));
           gl_FragColor=vec4(c,1.);
           #include <tonemapping_fragment>
@@ -96,8 +120,7 @@ export class DitchingSea {
       this.launch.add(r);
     }
     this.scene.add(this.launch, this.flare); this.flare.scale.setScalar(0.35);
-    const foam = new THREE.MeshBasicMaterial({ color: 0xc5d8dc, transparent: true, opacity: 0.55, depthWrite: false });
-    for (let i = 0; i < 64; i++) this.spray.push(mesh(this.scene, sphere, foam, 0, 0, 0, 1, 1, 1));
+    this.spray = new DitchingSpray(this.scene);
   }
   /** Called by World.prewarm with all materials visible, before play. */
   warm(render: (scene?: THREE.Scene) => void, bomber: THREE.Object3D) {
@@ -106,12 +129,14 @@ export class DitchingSea {
     bomber.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
     this.scene.add(bomber); bomber.position.set(0, 2, 0);
     this.camera.position.set(50, 30, 70); this.camera.lookAt(0, 0, 0); this.camera.layers.enableAll();
+    this.spray.update(11.6, false);
     try { render(this.scene); } finally {
+      this.spray.update(0, false);
       if (parent) parent.add(bomber); else bomber.removeFromParent();
       bomber.position.copy(pos); for (const o of hidden) o.visible = false;
     }
   }
-  update(t: number, night: boolean) {
+  update(t: number, night: boolean, low = false) {
     this.sun.intensity = night ? 0.7 : 2.5; this.hemi.intensity = night ? 0.65 : 2;
     this.sea.material.uniforms.time.value = t; this.sea.material.uniforms.night.value = night ? 1 : 0;
     (this.scene.background as THREE.Color).setHex(night ? 0x303e51 : 0x77868c);
@@ -135,13 +160,6 @@ export class DitchingSea {
     this.launch.rotation.z = Math.sin(t) * 0.025;
     this.flare.visible = t >= 21 && t < 27;
     this.flare.position.set(10, 2 + Math.max(0, t - 21) * 8, 9);
-    for (let i = 0; i < 64; i++) {
-      const s = this.spray[i], m = this.sprayMotion[i], u = t - 11 - m.delay;
-      const y = 0.15 + u * m.vy - u * u * 5;
-      s.visible = u > 0 && u < 2.2 && y > 0.1;
-      s.position.set((i % 2 ? -1 : 1) * (2 + u * m.vx), y, m.z + u * 5);
-      s.scale.set(0.15 + Math.max(0, u) * 0.3, 0.25 + Math.max(0, u) * 0.55, 0.18 + Math.max(0, u) * 0.3);
-      s.rotation.z = (i % 2 ? -1 : 1) * 0.55;
-    }
+    this.spray.update(t, night, low);
   }
 }

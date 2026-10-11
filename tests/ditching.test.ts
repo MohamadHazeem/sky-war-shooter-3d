@@ -9,6 +9,11 @@ import { CrewRoster } from '../src/game/CrewRoster';
 import { Crew } from '../src/world/Crew';
 import { stubStorage } from './helpers';
 vi.hoisted(() => { vi.stubGlobal('window', {}); });
+function seaScene() {
+  const context = { createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, beginPath() {}, arc() {}, fill() {}, save() {}, rect() {}, clip() {}, restore() {} };
+  vi.stubGlobal('document', { createElement: () => ({ getContext: () => context }) });
+  return new DitchingSea();
+}
 const state: DitchState = { campaign: true, gunner: true, coop: false, controllable: true, enginesOut: 0, integrity: 1, leaking: false, progress: 0.8, coastKm: 48, ending: true };
 afterEach(() => vi.restoreAllMocks());
 
@@ -61,12 +66,21 @@ describe('rescue outcome and content', () => {
     for (const s of [...Object.values(DITCH_TEXT), ...DITCH_RADIO.map(l => l[1])]) expect(hasPhrase(s), s).toBe(true);
   });
   it('keeps ten crew, launches two dinghies, signals and brings the rescue launch alongside', () => {
-    const s = new DitchingSea();
+    const s = seaScene();
     s.update(6, false); expect(s.brace.visible).toBe(true); expect(s.crew.every(c => c.parent === s.brace)).toBe(true);
-    s.update(12, false); expect(s.spray.some(p => p.visible)).toBe(true);
+    s.update(12, false); expect(s.spray.particles.count).toBeGreaterThan(0); expect(s.spray.sheet.visible).toBe(true);
     s.update(18, false); expect(s.rafts.every(r => r.visible)).toBe(true); expect(s.crew.every(c => s.rafts.includes(c.parent as any))).toBe(true);
     s.update(23, true); expect(s.flare.visible).toBe(true); expect(s.launch.visible).toBe(true);
     s.update(31, true); expect(s.launch.position.z).toBe(0); expect(s.flare.visible).toBe(false);
+  });
+  it('bounds spray, clears it after settling and resets correctly for replay and Low', () => {
+    const s = seaScene();
+    s.update(12.3, false); const full = s.spray.particles.count;
+    expect(full).toBeGreaterThan(100); expect(full).toBeLessThanOrEqual(320);
+    s.update(17, false); expect(s.spray.particles.count).toBe(0); expect(s.spray.sheet.visible).toBe(false);
+    s.update(0, false, true); s.update(12.3, false, true);
+    expect(s.spray.particles.count).toBeGreaterThan(0); expect(s.spray.particles.count).toBeLessThan(full);
+    s.update(31, true, true); expect(s.spray.particles.count).toBe(0);
   });
   it('water sounds are finite, audible and bounded', () => {
     for (const make of [seaWash, waterImpact]) {
