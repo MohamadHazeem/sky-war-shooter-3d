@@ -1,0 +1,68 @@
+{
+  "crew": {
+    "kills": 3,
+    "hits": 3,
+    "shots": 10,
+    "score": 2117
+  },
+  "host": {
+    "success": true,
+    "title": "Co-op Survival — Gunners",
+    "reason": "The formation fought its way through. Good shooting, gunner.",
+    "kills": 1,
+    "accuracy": 1,
+    "bombersLost": 0,
+    "bombersTotal": 12,
+    "time": 30.485833333332884,
+    "score": 2117,
+    "medals": [],
+    "survival": true,
+    "waves": 2,
+    "nextAvailable": false,
+    "coop": true,
+    "personalScore": 1007,
+    "rounds": 1,
+    "hits": 1,
+    "merit": 1007,
+    "bestStreak": 1,
+    "closestKill": 138.9202162379737,
+    "killsByGun": [
+      {
+        "label": "Left Waist",
+        "kills": 1
+      }
+    ],
+    "points": 1237
+  },
+  "guest": {
+    "success": true,
+    "title": "Co-op Survival — Gunners",
+    "reason": "The formation fought its way through. Good shooting, gunner.",
+    "kills": 2,
+    "accuracy": 0.2222222222222222,
+    "bombersLost": 0,
+    "bombersTotal": 12,
+    "time": 30.485833333332884,
+    "score": 2117,
+    "medals": [],
+    "survival": true,
+    "waves": 2,
+    "nextAvailable": false,
+    "coop": true,
+    "personalScore": 1110,
+    "rounds": 9,
+    "hits": 2,
+    "merit": 1110,
+    "bestStreak": 2,
+    "closestKill": 164.3653293185216,
+    "killsByGun": [
+      {
+        "label": "Right Waist",
+        "kills": 2
+      }
+    ]
+  },
+  "hostCareerKills": 1,
+  "guestCareerKills": 2,
+  "errors": []
+}

@@ -239,7 +239,13 @@ describe('co-op and canvas HUD resolve to Arabic', () => {
     const signal = shownLiterals('net/Signal.ts', /new RoomError\(/);
     expect(session.length).toBeGreaterThan(20);
     expect(signal.length).toBe(4);
-    for (const s of [...session, ...signal]) arabicFor(s);
+    for (const s of [...session, ...signal]) {
+      if (s.includes('{name}')) {
+        const translated = tx(s, { name: 'ولش', target: tx('Fw 190') });
+        expect(translated).toMatch(arabic);
+        expect(translated.replace(KEEP, '')).not.toMatch(/[A-Za-z]{2,}/);
+      } else arabicFor(s);
+    }
     // runtime-built lines
     expect(arabicFor('Joining 7K2P9Q…')).toContain('7K2P9Q');
     for (const s of ['Mission over — The mission is over.', 'Mission over — Too many bombers lost — 6 Fortresses went down.',

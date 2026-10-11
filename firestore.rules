@@ -218,9 +218,9 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['uid', 'name', 'mode', 'score', 'kills', 'rounds', 'createdAt', 'v', 'squadron'])
         && squadScore(request.resource.data)
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 20
+        && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= (request.resource.data.mode == 'coop-gunner' ? 43 : 20)
         && request.resource.data.mode is string && request.resource.data.mode.size() <= 40
-        && request.resource.data.mode.matches('^(survival-(gunner|pilot)|campaign-m[0-9]{1,2}|daily-(gunner|pilot)-[0-9]{8}|weekly-(gunner|pilot)-[0-9]{6}|(acehunt|timeattack|raid|night|strafe)-(gunner|pilot))$')
+        && request.resource.data.mode.matches('^(coop-gunner|survival-(gunner|pilot)|campaign-m[0-9]{1,2}|daily-(gunner|pilot)-[0-9]{8}|weekly-(gunner|pilot)-[0-9]{6}|(acehunt|timeattack|raid|night|strafe)-(gunner|pilot))$')
         && request.resource.data.score is int && request.resource.data.score >= 0 && request.resource.data.score <= 5000000
         && request.resource.data.kills is int && request.resource.data.kills >= 0 && request.resource.data.kills <= 5000
         && request.resource.data.rounds is int && request.resource.data.rounds >= 0 && request.resource.data.rounds <= 500

@@ -19,9 +19,11 @@ export function mountLeaderboard(host: HTMLElement, mode: string, title: string,
   host.appendChild(box);
   let scope: 'global' | 'squadron' = 'global', revision = 0, sending = false;
   let name = cachedSquadron()?.callsign ?? savedName();
+  const crew = mode === 'coop-gunner';          // co-op crew entries carry both callsigns, fixed
+  if (crew && entry) name = entry.name;
   const render = () => {
     box.innerHTML = `<div class="hud-label">${esc(tx(title))}</div><div class="lb-tabs">${(['global', 'squadron'] as const).map(s => `<button class="btn ghost" data-scope="${s}" aria-pressed="${s === scope}">${tx(s === 'global' ? 'Global' : 'Squadron')}</button>`).join('')}<button class="btn ghost" data-refresh>${tx('Refresh')}</button></div>
-      ${entry && entry.score > 0 ? `<form class="lb-submit"><input aria-label="${tx('Your name')}" maxlength="20" placeholder="${tx('Your name')}" value="${esc(name)}" ${cachedSquadron() ? 'readonly' : ''}/><button class="btn" data-lb ${sending ? 'disabled' : ''}>${tx('Submit score')}</button></form>` : ''}<span class="lb-status" role="status"></span><div data-rows>${tx('Loading…')}</div>`;
+      ${entry && entry.score > 0 ? `<form class="lb-submit"><input aria-label="${tx('Your name')}" maxlength="${crew ? 43 : 20}" placeholder="${tx('Your name')}" value="${esc(name)}" ${cachedSquadron() || crew ? 'readonly' : ''}/><button class="btn" data-lb ${sending ? 'disabled' : ''}>${tx('Submit score')}</button></form>` : ''}<span class="lb-status" role="status"></span><div data-rows>${tx('Loading…')}</div>`;
     box.querySelectorAll<HTMLButtonElement>('[data-scope]').forEach(b => b.addEventListener('click', () => { scope = b.dataset.scope as typeof scope; render(); void load(); }));
     box.querySelector('[data-refresh]')!.addEventListener('click', () => { render(); void load(); });
     box.querySelector('input')?.addEventListener('input', e => { name = (e.target as HTMLInputElement).value; });
@@ -29,7 +31,7 @@ export function mountLeaderboard(host: HTMLElement, mode: string, title: string,
       e.preventDefault();
       if (sending || !entry) return;
       sending = true;
-      name = cleanName(name); saveName(name);
+      if (!crew) { name = cleanName(name); saveName(name); }
       render(); void load();
       box.querySelector('.lb-status')!.textContent = tx('Sending…');
       const ok = await submitScore({ ...entry, name });

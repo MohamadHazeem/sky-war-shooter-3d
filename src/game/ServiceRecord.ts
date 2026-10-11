@@ -241,7 +241,7 @@ export class ServiceRecord {
       });
     }
     // ---- XP and promotions ----
-    const gained = xpForMission({ score: d.score, kills: d.kills, success: d.success, medals: medals.length });
+    const gained = xpForMission({ score: d.personalScore ?? d.score, kills: d.kills, success: d.success, medals: medals.length });
     c.xp += gained;
     const before = rankFor(b.xpStart), after = rankFor(c.xp);
     const promotions: RewardLine[] = [];

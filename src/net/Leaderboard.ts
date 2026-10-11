@@ -34,6 +34,14 @@ export function cleanName(n: string) {
   return n.replace(/[^\p{L}\p{N} ._'-]/gu, '').trim().slice(0, 20) || 'Gunner';
 }
 
+// Keep both full callsigns, within the co-op-only 43-character rules limit.
+export function crewName(host: string, guest: string) { return `${cleanName(host)} + ${cleanName(guest)}`; }
+export function cleanScoreName(name: string, mode: string) {
+  if (mode !== 'coop-gunner') return cleanName(name);
+  const [host = '', guest = ''] = name.split(' + ');
+  return crewName(host, guest);
+}
+
 type Fb = {
   db: import('firebase/firestore').Firestore;
   uid: string;
@@ -88,7 +96,7 @@ export async function submitScore(e: ScoreEntry): Promise<boolean> {
     const batch = fs.writeBatch(db);
     batch.set(fs.doc(db, 'limits', uid), { last: fs.serverTimestamp() });
     batch.set(fs.doc(fs.collection(db, 'scores')), {
-      uid, name: cleanName(e.name), mode: e.mode,
+      uid, name: cleanScoreName(e.name, e.mode), mode: e.mode,
       score: Math.max(0, Math.round(e.score)), kills: Math.max(0, Math.round(e.kills)), rounds: Math.max(0, Math.round(e.rounds)),
       createdAt: fs.serverTimestamp(), v: 1,
     });

@@ -16,6 +16,15 @@ const patterns: Pattern[] = [
 
 const table: PhraseTable = {
   phrases: {
+    'Your callsign': 'نداءك',
+    'Crew score': 'نقاط الطاقم',
+    'CREW LEADERBOARD': 'لوحة ترتيب الطواقم',
+    'Return to co-op lobby': 'العودة إلى ردهة اللعب التعاوني',
+    'Waiting for your partner to return…': 'في انتظار عودة زميلك…',
+    'Shared crew score and personal rewards. Relay support is used when available.': 'نقاط مشتركة للطاقم ومكافآت شخصية. يُستخدم خادم الترحيل عند توفره.',
+    'Could not connect to the host. Try another network or try again.': 'تعذّر الاتصال بالمضيف. جرّب شبكة أخرى أو حاول مجدداً.',
+    '{name} (partner) destroyed {target}': '{name} (زميلك) أسقط {target}',
+
     // ---- title menu and the host / join menu ----
     'Co-op (beta)': 'اللعب التعاوني (تجريبي)',
     'two gunners, one B-17 · online': 'راميان في B-17 واحدة · عبر الإنترنت',

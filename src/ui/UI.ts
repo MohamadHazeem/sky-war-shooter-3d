@@ -50,6 +50,8 @@ export interface Progress { unlocked: number; medals: Record<string, string[]>; 
 
 export interface DebriefData {
   bombing?: BombingResult;
+  coop?: boolean;
+  personalScore?: number;
   success: boolean;
   title: string;
   reason: string;
@@ -268,7 +270,7 @@ export class UI {
   }
 
   // ---------------- HUD ----------------
-  hud(role: 'gunner' | 'pilot') {
+  hud(role: 'gunner' | 'pilot', coop = false) {
     const h = $('#hud');
     h.innerHTML = `
       <div class="hud-tl hud-text">
@@ -277,7 +279,7 @@ export class UI {
       </div>
       <div class="hud-tr hud-text">
         <div class="hud-label">${t('hud.kills')}</div><div class="hud-big" id="hKills">0</div>
-        <div class="hud-label" style="margin-top:6px">${t('common.score')}</div><div class="mono" id="hScore" style="font-size:18px">0</div>
+        <div class="hud-label" style="margin-top:6px">${coop ? tx('Crew score') : t('common.score')}</div><div class="mono" id="hScore" style="font-size:18px">0</div>
         <div class="hud-label" style="margin-top:6px">${t('hud.formation')}</div><div class="mono" id="hFormation" style="font-size:16px"></div>
         <div class="combo" id="hCombo">
           <div class="hud-label">${t('hud.multiplier')}</div><div class="combo-val" id="hComboVal">x1.0</div>
@@ -661,7 +663,7 @@ export class UI {
         <div class="stat"><div class="hud-label">${t('common.accuracy')}</div><div class="v">${Math.round(d.accuracy * 100)}%</div></div>
         <div class="stat"><div class="hud-label">${t('debrief.bombersLost')}</div><div class="v">${d.bombersLost}/${d.bombersTotal}</div></div>
         <div class="stat"><div class="hud-label">${t('debrief.time')}</div><div class="v">${mm}:${String(ss).padStart(2, '0')}</div></div>
-        <div class="stat"><div class="hud-label">${t('common.score')}</div><div class="v">${d.score}</div></div>
+        <div class="stat"><div class="hud-label">${d.coop ? tx('Crew score') : t('common.score')}</div><div class="v">${d.score}</div></div>
         ${d.merit !== undefined ? `<div class="stat"><div class="hud-label">${t('debrief.merit')}</div><div class="v" style="color:var(--khaki)">+${d.merit}</div></div>` : ''}
         ${extra.join('')}
       </div>
@@ -669,7 +671,7 @@ export class UI {
       <div>${d.medals.map((m, i) => `<span class="medal pop" style="animation-delay:${medalDelay(i)}s">✦ ${esc(tx(m))}</span>`).join('')}</div>
       <div class="row" style="margin-top:22px">
         ${d.nextAvailable ? `<button class="btn" data-a="next">${t('debrief.next')}</button>` : ''}
-        <button class="btn ${d.nextAvailable ? 'ghost' : ''}" data-a="retry">${d.survival ? t('debrief.flyAgain') : t('debrief.retry')}</button>
+        <button class="btn ${d.nextAvailable ? 'ghost' : ''}" data-a="retry">${d.coop ? tx('Return to co-op lobby') : d.survival ? t('debrief.flyAgain') : t('debrief.retry')}</button>
         <button class="btn ghost" data-a="armory">${t('common.armory')}${d.points !== undefined ? t('debrief.pts', { n: d.points }) : ''}</button>
         <button class="btn ghost" data-a="menu">${t('debrief.menu')}</button>
       </div>
