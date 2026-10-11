@@ -18,5 +18,5 @@ fi
 cd "$WT"
 codex exec --dangerously-bypass-approvals-and-sandbox -C . -o "/tmp/codex-$TASK-final.txt" \
   "You are implementing Phase 6 goal $NN in this repository. Follow AGENTS.md strictly. Your task file is $SPEC — read it and do the work end to end: implement, add tests, run npm run check until it passes, verify in your browser with your own dev server on the port named in the task file (save the screenshots you rely on under docs/phase6/shots/$NN/), commit on the current branch (phase6/$TASK), and write the report to docs/phase6/reports/$NN.md (commit it too). Do not push or deploy." \
-  > "/tmp/codex-$TASK.log" 2>&1
+  < /dev/null > "/tmp/codex-$TASK.log" 2>&1
 echo "codex $TASK exit $?"
