@@ -44,7 +44,7 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 | 28 | "What's new" screen with Try-it buttons + aircraft recognition gallery (3D viewer, spec cards, quiz) | Done — cork-board bulletin shown once per version with 12 feature cards and Try-it shortcuts; hangar 3D viewer for all 11 aircraft + the fictional Luftkreuzer with spec cards, career kills and a 10-round silhouette quiz; menu, phone and Arabic |
 | 29 | Visual QA sweep: every mode, view, mood and quality preset scanned for artifacts in combination (NaN, blobs, ghosting, sorting), fixes with before/after | Done — ~300 frames scanned (no NaN/Inf), 6 artifacts fixed: tail-view sight dots, stale sky reflections after weather changes, white night tail-window streaks, P-51 canopy veil, banding inside cloud layers, boss bar overlap; recommendations in tools/gallery/visual-qa/README.md |
 | 30 | Crew-room interludes: voiced barracks scenes after each story mission, reacting to wounds, losses, aces and the campaign state | In progress |
-| 31 | Visual polish from the QA recommendations (night readability, shock ring, debris trails, gunsight glass, hole rims, searchlight starts, debrief after landing) | In progress |
+| 31 | Visual polish from the QA recommendations (night readability, shock ring, debris trails, gunsight glass, hole rims, searchlight starts, debrief after landing) | Done — night fill 34 % of day with near-camera rim/fill (own aircraft readable), shock ring scaled by light, continuous jittered debris/ember trails, additive K-14 glass, sooty hole rims, searchlights start at the lamp below ~250 m, parked Sky Queen behind the debrief; cloud-top stipple still open |
 | 20 | Code health: split Game.ts into focused modules, README for the v1.0 feature set | Done — Game.ts 1469 → 536 lines + Director, MissionFlow, WorldEvents, GameHud, MenuScene; docs/ARCHITECTURE.md (loop order, where to hook features); README layout; A/B regression of all 12 missions (no behaviour change) |
 
 ## Log
@@ -74,3 +74,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 03:26 drama set pieces merged (362 tests).
 - 03:27 first-kill shader stutter fixed: warm-up wreck materials kept alive (only one Fw 190 blow-up shadow variant left).
 - 04:26 visual QA merged; follow-up polish for its recommendations started.
+- 05:04 visual polish merged.
