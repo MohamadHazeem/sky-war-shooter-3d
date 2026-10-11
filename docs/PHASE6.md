@@ -40,3 +40,4 @@ Repo rules for Codex: `AGENTS.md`.
 - Goal 9 merged + rules deployed; live create failed → Codex fixing live. Goal 4 merged (524 tests); its rules change ships with the goal 9 fix.
 - Codex runs hung ~3 h waiting on stdin (launcher fixed with </dev/null). Goal 9 live fix and goal 6 revision merged (536 tests).
 - Goal 2 merged — all 12 Phase 6 goals done (545 tests). Final regression + deploy next.
+- Ditching fix for crippled-start missions (m6/m10 failed at 75 %); full regression clean; deployed (first deploy with the /api/turn Worker; site and assets OK, TURN returns 503 until the key is set).
