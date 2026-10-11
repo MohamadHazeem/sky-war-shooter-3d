@@ -69,3 +69,4 @@ graphics and gameplay. Same process as Phase 4: helper agents in worktrees, gate
 - 02:21 Game.ts split merged; Phase 4 complete (42/42).
 - 02:57 What's new + aircraft gallery merged (356 tests).
 - 03:26 drama set pieces merged (362 tests).
+- 03:27 first-kill shader stutter fixed: warm-up wreck materials kept alive (only one Fw 190 blow-up shadow variant left).
