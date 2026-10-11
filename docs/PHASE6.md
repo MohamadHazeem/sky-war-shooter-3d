@@ -8,7 +8,7 @@ Repo rules for Codex: `AGENTS.md`.
 | # | Goal | Status |
 |---|---|---|
 | 1 | P-51 dogfight feel: bandits that stay and fight instead of extending 2 km between passes, so escort missions end on kills | Done (Codex) — engaged bandits turn and fight; compact bomber set-ups near the escort; jets extend ≤5.5 s then reverse. Headless sims: time <600 m up 10–40 s per type, Me 262 kills 1/5 → 3/5; bomber threat kept |
-| 2 | Weak-laptop pass: simulated low-end GPU, tuned first-launch quality thresholds, a Low preset that looks good | |
+| 2 | Weak-laptop pass: simulated low-end GPU, tuned first-launch quality thresholds, a Low preset that looks good | Codex working |
 | 3 | Cloud-top shimmer: the speckle just above the cloud deck (end of the take-off climb) | Done (Codex) — footprint-selected noise mip levels + fading jitter for grazing rays above the deck: banding gone, flicker −55–58 %, no frame-time cost, views from below/inside unchanged |
 | 4 | Co-op v2: shared score + guest debrief; TURN relay (needs a Cloudflare TURN key from the player) | Codex working (TURN relay ready but switched on only once the owner sets a key) |
 
