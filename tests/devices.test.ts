@@ -108,6 +108,10 @@ function rig(host: Partial<GamepadHost>) {
 }
 
 describe('gamepad bindings', () => {
+  it('Y opens the gunner bombsight while pilot Y keeps the cockpit view', () => {
+    const gunner = rig({ role: () => 'gunner' }); gunner.tap(B.Y); expect(gunner.log).toContain('KeyN');
+    const pilot = rig({ role: () => 'pilot' }); pilot.tap(B.Y); expect(pilot.log).toContain('KeyV');
+  });
   afterEach(() => { vi.unstubAllGlobals(); });
 
   it('View: a tap opens the controls card, View + Y photo mode, View + X the P-51 flight mode', () => {

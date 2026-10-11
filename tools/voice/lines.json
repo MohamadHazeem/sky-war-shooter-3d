@@ -3225,6 +3225,9 @@
       "role": "blue4",
       "text": "Blue Four is down. Nice flying today, Two."
     },
+    {"id": "bombardier_offer", "role": "pilot", "text": "Bombardier, she's all yours."},
+    {"id": "bombardier_good", "role": "bombardier", "text": "Good pattern! The aiming point is covered."},
+    {"id": "bombardier_poor", "role": "bombardier", "text": "The pattern is wide. We will check the strike photograph."},
     {
       "group": "briefings (tools/voice/briefings.mjs)"
     },

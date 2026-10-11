@@ -1,3 +1,5 @@
+import { bombingReport } from './BombingReport';
+import type { BombingResult } from '../game/Bombardier';
 import type { Mission } from '../game/Missions';
 import { achievementsHtml } from '../game/Achievements';
 import { STATION_ORDER, STATIONS, StationId } from '../world/B17Layout';
@@ -47,6 +49,7 @@ export interface Settings {
 export interface Progress { unlocked: number; medals: Record<string, string[]>; best: Record<string, number>; survival: { name: string; score: number; waves: number; role: string; date: string }[] }
 
 export interface DebriefData {
+  bombing?: BombingResult;
   success: boolean;
   title: string;
   reason: string;
@@ -662,6 +665,7 @@ export class UI {
         ${d.merit !== undefined ? `<div class="stat"><div class="hud-label">${t('debrief.merit')}</div><div class="v" style="color:var(--khaki)">+${d.merit}</div></div>` : ''}
         ${extra.join('')}
       </div>
+      ${bombingReport(d.bombing)}
       <div>${d.medals.map((m, i) => `<span class="medal pop" style="animation-delay:${medalDelay(i)}s">✦ ${esc(tx(m))}</span>`).join('')}</div>
       <div class="row" style="margin-top:22px">
         ${d.nextAvailable ? `<button class="btn" data-a="next">${t('debrief.next')}</button>` : ''}

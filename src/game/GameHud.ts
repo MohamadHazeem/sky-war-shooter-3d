@@ -166,6 +166,7 @@ export class GameHud {
     const W = innerWidth, H = innerHeight;
     ctx.clearRect(0, 0, W, H);
     if (g.menuMode || !(g.state === 'playing' || g.state === 'ending' || g.state === 'paused')) return;
+    if (g.bombardier.active) { g.bombardier.draw(ctx, W, H); return; }
     const cam = g.engine.camera;
     const w = g.world;
     const pl = w.player;

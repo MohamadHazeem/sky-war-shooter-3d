@@ -72,6 +72,9 @@ system in nine short illustrated chapters, with a controls reference that follow
 | Right button / B | Look down the sight (zoom) |
 | 1–5 | Left waist, right waist, top turret, ball turret, tail gun |
 | R | Reload |
+| N / gamepad Y | Take the bombsight during a bomb run; press again to return |
+| Arrows / stick (bombsight) | Left/right correct course; up/down adjust the tracking rate |
+| Space / RT, B / LT (bombsight) | Release manually; hold release to wait for a cloud gap |
 | Q / E / G | Abilities: call the Mustangs, Overdrive, Focus |
 | X / O | Random events: fire extinguisher, oxygen check |
 | Tab | Big radar map (shows where the next wave will come from) |

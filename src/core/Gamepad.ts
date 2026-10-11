@@ -225,6 +225,7 @@ export class GamepadInput {
       if (edge(B.LS)) inp.tap(keys[2]);
     }
     if (role === 'gunner') {
+      if (edge(B.Y) && !back) inp.tap('KeyN');
       if (edge(B.LB)) this.host.cycleSeat(-1);
       if (edge(B.RB)) this.host.cycleSeat(1);
       if (edge(B.X) && !prompt && !back) inp.tap('KeyR');

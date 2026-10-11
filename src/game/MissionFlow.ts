@@ -194,6 +194,7 @@ export class MissionFlow {
   }
 
   finish(success: boolean, reason: string, bailOut = false) {
+    this.g.bombardier.leave();
     const g = this.g;
     if (g.endResult) return;
     g.endResult = { success, reason };
@@ -279,7 +280,7 @@ export class MissionFlow {
       rounds: w.stats.shots, hits: w.stats.hits, bestStreak: g.tally.bestStreak,
       closestKill: g.tally.closestKill === Infinity ? null : g.tally.closestKill,
       killsByGun: m.role === 'gunner' ? g.tally.killsByGun() : undefined,
-      merit, points: g.prog.points,
+      merit, points: g.prog.points, bombing: g.bombardier.result ?? undefined,
     };
     // the crew-room scene first after a story mission (CrewRoomScene.ts); `then` runs once the map is up
     const toMap = (then?: unknown) => crewRoomScene.play(m, () => { g.showCampaign(); if (typeof then === 'function') then(); });
