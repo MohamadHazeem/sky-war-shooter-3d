@@ -15,10 +15,10 @@ Repo rules for Codex: `AGENTS.md`.
 ## Tier G — new gameplay
 | # | Goal | Status |
 |---|---|---|
-| 5 | Bombardier seat: the Norden bombsight on the bomb run, accuracy scores the mission | Codex working |
+| 5 | Bombardier seat: the Norden bombsight on the bomb run, accuracy scores the mission | Done (Codex) — offered 30 s before release (N / Y / touch): stabilised magnified Norden view with course and rate cross-hairs over the real target, clouds and flak; release by sighting angle or by hand; deterministic impact pattern, % within 1,000 ft, strike photo in the debrief, score + career stat + achievement. Close-up city texture is blocky on Low (polish later) |
 | 6 | Ditching in the Channel: ditch a badly damaged Sky Queen, dinghy + air-sea rescue | Codex revising — 31 s ditching + RAF rescue launch works; impact spray (flat white discs) and uniform foam streaks sent back |
 | 7 | Second tour: endless generated campaign after mission 12 | Done (Codex) — "Volunteer for a second tour": 25 generated operations (targets, weather, fronts, alternating roles, jets/Sturmböcke later, battle group every 5th) then endless; Experten and strategy carry over; Second Tour Medal |
-| 8 | Crew that matters: assign crewmen to positions, skills change accuracy / repairs / spotting | Codex working |
+| 8 | Crew that matters: assign crewmen to positions, skills change accuracy / repairs / spotting | Done (Codex) — five XP-growing stats + traits per man; assigned gunnery drives AI accuracy (rookie 44 % vs veteran 57 % hits), lookouts give earlier warnings, engineer repairs/fires, radio man first aid, pilots jinks/formation; hospital stays, rare deaths, memorial; recommended layout |
 | 9 | Squadron leaderboards: share a squadron code for a private board | Codex working |
 
 ## Tier C — graphics and immersion
@@ -36,3 +36,4 @@ Repo rules for Codex: `AGENTS.md`.
 - Goal 11 merged (442 tests). Started goals 8 and 12.
 - Goal 10 merged after one revision (450 tests). Started goal 9.
 - Goal 12 merged (457 tests).
+- Goals 8 and 5 merged (486 tests); goal 5 voice clips rendered by Claude (sandbox).
