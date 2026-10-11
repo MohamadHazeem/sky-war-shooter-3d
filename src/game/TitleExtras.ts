@@ -1,3 +1,4 @@
+import { showSquadronScreen } from '../ui/SquadronScreen';
 import type { Engine } from '../core/Engine';
 import type { Game } from './Game';
 import { tx, getLang, setLang } from '../i18n';
@@ -52,6 +53,7 @@ export class TitleExtras {
       b.addEventListener('click', onClick);
       menu.insertBefore(b, menu.querySelector('[data-a="settings"]'));
     };
+    add('squadron', tx('Squadron'), () => showSquadronScreen(() => this.game.startMenu()));
     add('aircraft', `${tx('Aircraft')} <small>${tx('recognition · quiz')}</small>`, () => this.openGallery());
     add('whatsnew', `${tx("What's new")} <small>${tx('bulletin · version {v}', { v: WHATS_NEW_VERSION })}</small>`, () => this.openWhatsNew());
     this.manual.onTitle(menu);

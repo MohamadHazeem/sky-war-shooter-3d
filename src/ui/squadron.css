@@ -1,0 +1,17 @@
+.squadron-sheet.panel { padding: 28px 32px; background: rgba(18, 24, 18, 0.96); width: min(920px, 94vw); text-align: start; max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
+.squadron-sheet h2 { margin-block: 8px 20px; }
+.squadron-sheet h3 { color: var(--khaki); margin-block: 22px 10px; }
+.squadron-sheet p { line-height: 1.6; color: var(--ink-dim); }
+.squadron-sheet label { display: inline-flex; flex-direction: column; gap: 6px; margin: 8px; }
+.squadron-sheet input, .squadron-sheet select { font: inherit; color: var(--ink); background: #202620; border: 1px solid var(--line); padding: 10px; max-width: 100%; box-sizing: border-box; }
+.squadron-sheet form { padding-block: 8px; border-bottom: 1px solid var(--line); }
+.sq-code { letter-spacing: 4px; color: var(--khaki); font-size: 24px; user-select: all; }
+.sq-members { display: flex; flex-wrap: wrap; gap: 8px; }
+.sq-members span { padding: 6px 12px; border: 1px solid var(--line); }
+.sq-week { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.sq-activity { padding-inline-start: 22px; line-height: 1.8; }
+.sq-status { min-height: 1.6em; }
+.lb-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 10px; }
+.lb-tabs button[aria-pressed=true] { border-color: var(--khaki); color: var(--khaki); }
+.lb-panel .lb-status { display: block; }
+@media (max-width: 650px) { .sq-week { grid-template-columns: 1fr; } .squadron-sheet.panel { padding: 18px; } .squadron-sheet .leader { font-size: 12px; } }

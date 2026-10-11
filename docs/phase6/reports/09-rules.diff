@@ -1,0 +1,95 @@
+diff --git a/firestore.rules b/firestore.rules
+index 1038f32..6b38423 100644
+--- a/firestore.rules
++++ b/firestore.rules
+@@ -127,0 +128,86 @@ service cloud.firestore {
++    // Public scores use an opaque boardId, never the six-character invitation code.
++    // Phase 6: private squadrons. The profile is the authority; localStorage is only a mirror.
++    function squadCode(code) { return code is string && code.matches('^[A-HJ-NP-Z2-9]{6}$'); }
++    function squadMember(code) {
++      return request.auth != null && exists(/databases/$(database)/documents/squadrons/$(code)/members/$(request.auth.uid));
++    }
++    function profileAfter() { return getAfter(/databases/$(database)/documents/squadronProfiles/$(request.auth.uid)).data; }
++    function squadScore(d) {
++      return !('squadron' in d) || (d.squadron is string && d.squadron.matches('^[a-f0-9]{32}$')
++        && squadMember(get(/databases/$(database)/documents/squadronProfiles/$(request.auth.uid)).data.code)
++        && get(/databases/$(database)/documents/squadrons/$(get(/databases/$(database)/documents/squadronProfiles/$(request.auth.uid)).data.code)).data.boardId == d.squadron
++        && d.name == get(/databases/$(database)/documents/squadronProfiles/$(request.auth.uid)).data.callsign);
++    }
++    match /squadronProfiles/{uid} {
++      allow read: if request.auth != null && request.auth.uid == uid;
++      allow create: if request.auth != null && request.auth.uid == uid
++        && request.resource.data.keys().hasOnly(['callsign', 'code'])
++        && request.resource.data.callsign is string && request.resource.data.callsign.size() >= 2 && request.resource.data.callsign.size() <= 16
++        && request.resource.data.callsign.matches("^[\\p{L}\\p{N} .'-]{2,16}$")
++        && request.resource.data.code == '';
++      allow update: if request.auth != null && request.auth.uid == uid
++        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['code'])
++        && ((resource.data.code == '' && squadCode(request.resource.data.code)
++          && existsAfter(/databases/$(database)/documents/squadrons/$(request.resource.data.code)/members/$(uid)))
++          || (request.resource.data.code == '' && squadCode(resource.data.code)
++          && !existsAfter(/databases/$(database)/documents/squadrons/$(resource.data.code)/members/$(uid))));
++      allow delete: if false;
++    }
++    match /squadrons/{code} {
++      function memberPath() { return /databases/$(database)/documents/squadrons/$(code)/members/$(request.auth.uid); }
++      function joining() { return !exists(memberPath()) && existsAfter(memberPath()) && profileAfter().code == code; }
++      function leaving() { return exists(memberPath()) && !existsAfter(memberPath()) && profileAfter().code == ''; }
++      // A code grants a metadata lookup and the right to join, never directory enumeration.
++      allow get: if request.auth != null && squadCode(code);
++      allow list, delete: if false;
++      allow create: if request.auth != null && squadCode(code)
++        && request.resource.data.keys().hasOnly(['name', 'boardId', 'createdAt', 'memberCount'])
++        && request.resource.data.boardId is string && request.resource.data.boardId.matches('^[a-f0-9]{32}$')
++        && request.resource.data.name is string && request.resource.data.name.size() <= 24
++        && request.resource.data.name.matches('^(Silver|Golden|Brave|Flying|Desert|Midnight) (Falcons|Eagles|Hawks|Wings|Stars|Owls)$')
++        && request.resource.data.createdAt == request.time && request.resource.data.memberCount == 1 && joining();
++      allow update: if request.auth != null
++        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount'])
++        && intIn(request.resource.data.memberCount, 0, 64)
++        && ((joining() && request.resource.data.memberCount == resource.data.memberCount + 1)
++          || (leaving() && request.resource.data.memberCount == resource.data.memberCount - 1));
++      match /members/{uid} {
++        allow read: if squadMember(code);
++        allow create: if request.auth != null && request.auth.uid == uid
++          && request.resource.data.keys().hasOnly(['callsign', 'joinedAt'])
++          && request.resource.data.callsign == profileAfter().callsign && profileAfter().code == code
++          && get(/databases/$(database)/documents/squadronProfiles/$(uid)).data.code == ''
++          && request.resource.data.joinedAt == request.time
++          && getAfter(/databases/$(database)/documents/squadrons/$(code)).data.memberCount ==
++            (exists(/databases/$(database)/documents/squadrons/$(code)) ? get(/databases/$(database)/documents/squadrons/$(code)).data.memberCount + 1 : 1);
++        allow update: if false;
++        allow delete: if request.auth != null && request.auth.uid == uid && profileAfter().code == ''
++          && getAfter(/databases/$(database)/documents/squadrons/$(code)).data.memberCount == get(/databases/$(database)/documents/squadrons/$(code)).data.memberCount - 1;
++      }
++      match /bests/{id} {
++        allow read: if squadMember(code);
++        allow create, update: if squadMember(code)
++          && request.resource.data.keys().hasOnly(['uid', 'name', 'mode', 'score', 'kills', 'rounds', 'createdAt', 'v', 'squadron', 'scoreId'])
++          && request.resource.data.scoreId is string && request.resource.data.scoreId.size() <= 40
++          && request.resource.data.uid == request.auth.uid
++          && request.resource.data.squadron == get(/databases/$(database)/documents/squadrons/$(code)).data.boardId
++          && id == request.auth.uid + '_' + request.resource.data.mode
++          && request.resource.data.createdAt == request.time
++          && request.resource.data.diff(getAfter(/databases/$(database)/documents/scores/$(request.resource.data.scoreId)).data).affectedKeys().hasOnly(['scoreId'])
++          && (resource == null || request.resource.data.score > resource.data.score);
++        allow delete: if false;
++      }
++      match /activity/{uid} {
++        allow read: if squadMember(code);
++        allow create, update: if request.auth != null && request.auth.uid == uid
++          && existsAfter(/databases/$(database)/documents/squadrons/$(code)/members/$(uid))
++          && profileAfter().code == code
++          && request.resource.data.keys().hasOnly(['name', 'kind', 'createdAt'])
++          && request.resource.data.name == profileAfter().callsign && request.resource.data.createdAt == request.time
++          && ((request.resource.data.kind == 'joined' && !exists(/databases/$(database)/documents/squadrons/$(code)/members/$(uid)))
++            || (request.resource.data.kind == 'experte' && squadMember(code)
++              && (resource == null || resource.data.createdAt < request.time - duration.value(20, 's'))));
++        allow delete: if false;
++      }
++    }
++
+@@ -132 +218,2 @@ service cloud.firestore {
+-        && request.resource.data.keys().hasOnly(['uid', 'name', 'mode', 'score', 'kills', 'rounds', 'createdAt', 'v'])
++        && request.resource.data.keys().hasOnly(['uid', 'name', 'mode', 'score', 'kills', 'rounds', 'createdAt', 'v', 'squadron'])
++        && squadScore(request.resource.data)

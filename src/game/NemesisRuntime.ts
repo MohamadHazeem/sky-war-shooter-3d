@@ -1,3 +1,4 @@
+import { recordSquadronExperte } from '../net/Squadrons';
 import { isSecondTourId } from './SecondTour';
 import * as THREE from 'three';
 import type { SpecialEvents } from './SpecialEvents';
@@ -311,6 +312,7 @@ export class NemesisRuntime {
       sp.bonusMerit += pay;
       sp.addScore(2500);
       this.missionKills++;
+      void recordSquadronExperte();
       sound.confirm('kill_confirm');
       this.ui.feed(tx('{name} shot down — +{n} merit bounty', { name: aceName(a), n: num(pay) }), 'mine');
       this.ui.banner(`${fullRankNameUpper(a)} · ${tx('{n} VICTORIES', { n: a.victories })}`, res.wasMostWanted ? tx('Most wanted — down') : tx('Experte down'), 4200);
