@@ -78,6 +78,7 @@ export interface ParticleOpts {
   rise?: number; // upward accel (m/s^2), negative = gravity
   rotVel?: number;
   lit?: boolean; // shade with sun/ambient (smoke)
+  age?: number;  // s already lived: a puff back-dated along a trail starts part-way through its life
 }
 
 const tmpC = new THREE.Color();
@@ -158,7 +159,7 @@ export class ParticleSystem {
     this.pos[i * 3] = o.pos.x; this.pos[i * 3 + 1] = o.pos.y; this.pos[i * 3 + 2] = o.pos.z;
     const v = o.vel;
     this.vel[i * 3] = v ? v.x : 0; this.vel[i * 3 + 1] = v ? v.y : 0; this.vel[i * 3 + 2] = v ? v.z : 0;
-    this.life[i] = o.life; this.age[i] = 0;
+    this.life[i] = o.life; this.age[i] = o.age ? Math.min(o.age, o.life * 0.9) : 0;
     this.s0[i] = o.size0; this.s1[i] = o.size1;
     const setC = (arr: Float32Array, c: THREE.Color | [number, number, number]) => {
       if (Array.isArray(c)) { arr[i * 3] = c[0]; arr[i * 3 + 1] = c[1]; arr[i * 3 + 2] = c[2]; }

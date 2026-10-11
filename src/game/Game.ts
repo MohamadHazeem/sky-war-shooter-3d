@@ -47,6 +47,8 @@ import { GameHud } from './GameHud';
 import { MenuScene } from './MenuScene';
 import { WorldEvents } from './WorldEvents';
 import { TitleExtras } from './TitleExtras';
+import { FeatWatch } from './FeatWatch';
+import { firstRunGraphics } from './AutoGraphics';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -91,6 +93,7 @@ export class Game {
   readonly menuScene: MenuScene;  // menu camera shots (MenuScene.ts)
   readonly worldEvents: WorldEvents; // world.events handlers: kill scoring, radio (WorldEvents.ts)
   readonly extras: TitleExtras;   // What's new bulletin + aircraft recognition gallery (TitleExtras.ts)
+  readonly feats: FeatWatch;      // Phase 5 achievements: mission watcher + kill / frame hooks (FeatWatch.ts)
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -148,6 +151,8 @@ export class Game {
     if (raw && !raw.includes('aimAssist')) { this.settings.aimAssist = 'high'; this.settings.leadPip = 'always'; if (this.settings.fov === 62) this.settings.fov = 65; }
     // wider view by default (enemies were enlarged to match): move old 55/62 defaults to 65
     if (raw && !raw.includes('"fovV"')) { if (this.settings.fov === 55 || this.settings.fov === 62) this.settings.fov = 65; (this.settings as any).fovV = 2; }
+    // first launch: a device-class guess now, the menu benchmark picks the preset (AutoGraphics.ts)
+    if (!raw.includes('"quality"')) firstRunGraphics(this.settings);
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
     this.worldEvents.wire();
@@ -181,6 +186,7 @@ export class Game {
     this.skills = new SkillRuntime(this, ui);
     this.coop = new CoopSession(this, engine, ui);
     this.extras = new TitleExtras(this, engine);
+    this.feats = new FeatWatch(this); // after worldEvents.wire / service: chains world.events.kill
   }
 
   // Compile shaders for objects that only appear mid-mission (debris, chutes, bombs,
@@ -254,6 +260,7 @@ export class Game {
 
   // ---------------- Menu ----------------
   startMenu() {
+    this.bookends.release();   // the parked field behind a debrief gives the world back first
     this.photo.exit();
     this.state = 'menu';
     this.menuMode = true;
@@ -291,6 +298,7 @@ export class Game {
   }
 
   showBriefing(m: Mission) {
+    this.bookends.release();
     sound.init();
     this.state = 'briefing';
     prepareCampaignMission(m, this.progress); // campaign state modifiers (CampaignState.ts)

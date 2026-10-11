@@ -43,3 +43,17 @@ export function drsTargetMs(refreshHz: number, gaveUpHighRefresh: boolean): numb
 // The lowest render scale dynamic resolution may use for a target: on the high-refresh tier it
 // won't trade more than ~28 % of the resolution for the extra frames (it drops to 60 fps instead)
 export const drsFloor = (targetMs: number) => (targetMs < 1000 / 65 ? 0.72 : 0.55);
+
+// Dynamic resolution thresholds, as multiples of the target frame time: slower than SLOW scales
+// the resolution down (by a bigger step past HARD), faster than FAST leaves room to scale up
+export const DRS_SLOW = 1.14;
+export const DRS_FAST = 1.054;
+export const DRS_HARD = 1.68;
+
+// Share of a frame that scales with the render resolution (clouds, post, fill); the rest
+// (scene submission, shadows, game logic) does not
+export const DRS_PIXEL_SHARE = 0.7;
+
+// How many times slower than the target a full-resolution frame can be and still come in on
+// time once dynamic resolution has dropped the render scale to `scale`
+export const drsAbsorb = (scale: number) => 1 / (1 - DRS_PIXEL_SHARE + DRS_PIXEL_SHARE * scale * scale);

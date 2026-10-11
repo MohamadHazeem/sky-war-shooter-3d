@@ -6,6 +6,7 @@ import { essentialsRequested, loadEssentials, loadInBackground, isMissionReady }
 import { CAMPAIGN, survivalMission } from './game/Missions';
 import { DeviceControls } from './game/DeviceControls';
 import { installShare } from './game/Share';
+import { AutoGraphics } from './game/AutoGraphics';
 import { analytics } from './net/Analytics';
 import './style.css';
 
@@ -46,6 +47,8 @@ async function boot() {
   performance.mark('menu'); // time to menu (tools/serve_throttled.mjs measurements)
   setTimeout(() => document.getElementById('loading')!.classList.remove('show'), 250);
   loadInBackground();
+  // First launch: benchmark the idle menu and pick the graphics preset (Settings → Detect re-runs it)
+  const autoGfx = new AutoGraphics(engine, game);
   (window as any).game = game;
   (window as any).engine = engine;
   // Debug hooks used by automated playtests (tools/playtest)
@@ -54,6 +57,10 @@ async function boot() {
     // Step the simulation manually (headless playtests): n frames of dt seconds
     step: (n: number, dt = 1 / 60, render = false) => { for (let i = 0; i < n; i++) engine.frame(dt, render || i === n - 1); },
     shot: (q = 0.85) => { engine.render(1 / 60); return engine.renderer.domElement.toDataURL('image/jpeg', q); },
+    // Graphics auto-pick: sws.detectGraphics({ sync: true }) runs the benchmark now (frames back to
+    // back, so it works in hidden tabs); sws.autoGfx.last holds the last run's frame stats
+    autoGfx,
+    detectGraphics: (o?: { sync?: boolean }) => autoGfx.run(o),
   };
   (window as any).sws.assetsReady = () => isMissionReady();
   if (import.meta.env.DEV) {
@@ -87,11 +94,11 @@ async function boot() {
     };
     // Frame-time benchmark: n rendered frames, GPU synced with a 1-pixel readback each frame
     (window as any).sws.bench = (n = 120, render = true) => {
-      const gl = engine.renderer.getContext(), px = new Uint8Array(4), t: number[] = [];
+      const t: number[] = [];
       for (let i = 0; i < n; i++) {
+        if (render) { t.push(engine.timedFrame(1 / 60)); continue; }
         const t0 = performance.now();
-        engine.frame(1 / 60, render);
-        if (render) gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+        engine.frame(1 / 60, false);
         t.push(performance.now() - t0);
       }
       t.sort((a, b) => a - b);

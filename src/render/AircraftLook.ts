@@ -13,17 +13,35 @@ import { installSurfaceDetail, prepareSurface } from './SurfaceDetail';
 // The rim colour is the hemisphere light's sky colour (synced from the atmosphere below),
 // and it fades in beyond a few metres so the cockpit, guns and interior right at the
 // camera never get it.
+//
+// Night: the fill (hemisphere light) drops to about a third of the day's (syncAircraftLook), and
+// the rim with it, so aircraft read as night rather than grey-blue. What is close to the camera
+// keeps some light back: the shader sees how far the fill is below the dusk level (DIM_REF, from
+// the sky colour it is given: no extra uniform, no extra program) and, within a few tens of
+// metres, restores the rim (a moonlit back light on the player's own P-51 in the chase view, the
+// player's B-17 from the gun positions) and, right at the camera, part of the fill (cockpit and
+// fuselage interiors stay readable). Enemies further out stay dark: their exhaust flames, the
+// searchlights and the flares find them, as designed.
 export const RIM_STRENGTH = 0.75;
+export const HEMI_DAY = 0.35;          // hemisphere intensity on a clear day
+const DIM_REF = HEMI_DAY * 0.7 * 0.9;  // brightest sky channel of the fill at dusk (no boost above it)
 const RIM_GLSL = /* glsl */ `
 #define SWS_RIM ${RIM_STRENGTH.toFixed(3)}
+#define SWS_DIM_REF ${DIM_REF.toFixed(4)}
 #if defined( STANDARD ) && NUM_HEMI_LIGHTS > 0
 {
   float rimNoV = saturate( dot( normal, geometryViewDir ) );
-  float rimDist = smoothstep( 3.5, 9.0, length( vViewPosition ) );
+  float rimView = length( vViewPosition );
+  float rimDist = smoothstep( 3.5, 9.0, rimView );
   float rimF = pow( 1.0 - rimNoV, 5.0 ) * rimDist;
   // stronger where the surface faces up into the sky than toward the cloud sea
   float rimUp = 0.5 + 0.5 * saturate( dot( normal, hemisphereLights[ 0 ].direction ) * 0.5 + 0.5 );
-  reflectedLight.indirectSpecular += hemisphereLights[ 0 ].skyColor * ( rimF * rimUp * SWS_RIM );
+  // how far the fill is below dusk (1 by day, ~2.2 at night), and what is near the camera
+  vec3 rimSky = hemisphereLights[ 0 ].skyColor;
+  float rimDim = clamp( SWS_DIM_REF / max( max( rimSky.r, max( rimSky.g, rimSky.b ) ), 1e-4 ), 1.0, 3.0 );
+  float rimNear = 1.0 - smoothstep( 25.0, 60.0, rimView );
+  reflectedLight.indirectSpecular += rimSky * ( rimF * rimUp * SWS_RIM * mix( 1.0, rimDim * 0.9, rimNear ) );
+  reflectedLight.indirectDiffuse *= mix( 1.0, sqrt( rimDim ), 1.0 - smoothstep( 3.0, 9.0, rimView ) );
 }
 #endif
 `;
@@ -39,7 +57,11 @@ export function installAircraftLook() {
 
 // Hemisphere light from the current sky: sky colour from the horizon/zenith blend, ground
 // colour from the sunlit cloud sea. Feeds both the ambient fill and the rim above, so a
-// dusk mission gets a warm rim and a clear day a cool blue one.
+// dusk mission gets a warm rim and a clear day a cool blue one. The colour is normalised, so
+// the darkness comes from the intensity: floored at 70 % of the day's down to dusk / storm
+// light, then falling to about a third of the day's at night (the night sky is ~1/50 of the
+// day's; at 80 % aircraft and cockpits read grey-blue). The rim GLSL above keeps what is near
+// the camera readable.
 const _c = new THREE.Color();
 export function syncAircraftLook(hemi: THREE.HemisphereLight) {
   _c.copy(Atmos.horizon).lerp(Atmos.zenith, 0.4);
@@ -48,7 +70,8 @@ export function syncAircraftLook(hemi: THREE.HemisphereLight) {
   _c.setRGB(1, 1, 1).lerp(Atmos.sunColor, 0.45);
   const g = Math.max(_c.r, _c.g, _c.b, 1e-3);
   hemi.groundColor.copy(_c.multiplyScalar(0.86 / g));
-  hemi.intensity = 0.35 * THREE.MathUtils.clamp(Atmos.cloudAmbient / 0.6, 0.7, 1.25);
+  const k = Atmos.cloudAmbient / 0.6;
+  hemi.intensity = HEMI_DAY * (k >= 0.7 ? Math.min(k, 1.25) : 0.3 + (0.4 * Math.max(0, k)) / 0.7);
 }
 
 // --- Environment map with per-material intensity ------------------------------------

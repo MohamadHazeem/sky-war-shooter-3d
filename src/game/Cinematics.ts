@@ -67,6 +67,8 @@ export class Cinematics {
   readonly replay: Replay;
   readonly theatre: Theatre;       // replay theatre: 90 s recorder + playback screen (Theatre.ts)
   private mode: Mode = 'none';
+  /** The best-moment replay is playing over the live world (Bookends steps its parked scene aside). */
+  get replaying() { return this.mode === 'replay'; }
   private overlay = new CineOverlay();
   private snap = new CamSnapshot();
   private reveal = new ModelReveal();

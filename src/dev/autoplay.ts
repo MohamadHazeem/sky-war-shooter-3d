@@ -8,6 +8,7 @@ import { DogfightAI } from '../world/DogfightAI';
 import type { Fighter } from '../world/Aircraft';
 import { StrafeRun, pullOutHeight } from '../game/StrafeOps';
 import type { GroundTarget } from '../world/GroundTargets';
+import { crewRoomScene } from '../ui/CrewRoomScene';
 
 // Development-only scripted player used for automated playtests in headless browsers
 // (where requestAnimationFrame never fires). Usage from the console / Playwright:
@@ -97,6 +98,7 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
   const inp = (game as any).input;
   const ids: StationId[] = ['waistL', 'waistR', 'top', 'ball', 'tail'];
   game.bookends.auto = true;   // no take-off / landing scenes in automated runs
+  crewRoomScene.auto = true;   // nor crew-room scenes
   game.startMission(mission);
   const log: string[] = [];
   let perks = 0;

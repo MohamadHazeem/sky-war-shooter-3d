@@ -7,6 +7,7 @@ import { startBomberDeath } from '../world/BomberDeath';
 import { EVENTS } from './RandomEvents';
 import { sound } from '../audio/Sound';
 import { tx } from '../i18n';
+import { achievements } from './Achievements';
 
 // Formation set pieces (Phase 5 goal 27): rare, scripted-but-dynamic moments that make the bomber
 // stream feel alive and dangerous. Gunner missions only, staged in the player's field of view:
@@ -342,6 +343,7 @@ class Collision extends VictimPiece {
     if (f.playerDamage >= f.damageTaken * 0.2 && f.playerDamage > 0) {
       this.w.callout('sp_ram_saved', 'Top Turret', 'Got him before he hit her! That was too close!', 0, 3);
       this.sp.c.reward(75, tx('Collision averted'));
+      achievements.unlock('gotHimFirst'); // achievement hook (FeatWatch.ts)
     }
     this.done = true;
   }
