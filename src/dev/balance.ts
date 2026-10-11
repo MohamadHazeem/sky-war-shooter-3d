@@ -5,6 +5,7 @@ import { ACE_HUNT } from '../game/Modes';
 import { raidMission, nightMission } from '../game/RaidDefence';
 import { strafeMission } from '../game/StrafeOps';
 import { weeklyMission } from '../game/Weekly';
+import { BOSS_TUNING } from '../game/BossBattle';
 import { autoplay, lastMetrics, HUMAN, type AutoplayMetrics } from './autoplay';
 
 // Balance harness (dev build only, docs/BALANCE.md). Runs autoplay over a queue of jobs, one
@@ -29,10 +30,12 @@ export interface Job {
   rounds?: number;                     // survival: stop after this many rounds
   steps?: number;                      // autoplay step cap (0.05 s each)
   tag?: string;                        // free label (before / after)
+  boss?: Partial<typeof BOSS_TUNING>;  // boss knobs for this run only (e.g. the old values, to compare)
 }
-export interface JobResult extends AutoplayMetrics { job: Job; log: string; realMs: number }
+export interface JobResult extends AutoplayMetrics { job: Job; log: string; realMs: number; tune: string }   // tune: the boss knobs the run was made with
 
 const QKEY = 'swsbal.queue', RKEY = 'swsbal.results';
+const SINK = 'http://127.0.0.1:4176/';   // tools/balance_sink.mjs
 const read = <T>(k: string, d: T): T => { try { return JSON.parse(localStorage.getItem(k) ?? '') as T; } catch { return d; } };
 const write = (k: string, v: unknown) => localStorage.setItem(k, JSON.stringify(v));
 
@@ -62,7 +65,9 @@ function cleanProfile() {
 
 export function runJob(engine: Engine, game: Game, j: Job): JobResult {
   const g = game as any;
-  const prevDiff = g.settings.difficulty, prevAssist = g.settings.aimAssist;
+  const prevDiff = g.settings.difficulty, prevAssist = g.settings.aimAssist, prevBoss = { ...BOSS_TUNING };
+  if (j.boss) Object.assign(BOSS_TUNING, j.boss);
+  const tune = JSON.stringify(BOSS_TUNING);
   g.settings.difficulty = j.diff ?? 'veteran';
   g.settings.aimAssist = 'high';            // the default setting
   const t0 = performance.now();
@@ -71,9 +76,10 @@ export function runJob(engine: Engine, game: Game, j: Job): JobResult {
     log = autoplay(engine, game, missionFor(j), j.steps ?? 60000, { skill: j.skill, stopAfterRounds: j.rounds });
   } finally {
     g.settings.difficulty = prevDiff; g.settings.aimAssist = prevAssist;
+    Object.assign(BOSS_TUNING, prevBoss);
   }
   const m = lastMetrics!;
-  return { ...m, job: j, log: log.split('\n').slice(-14).join('\n'), realMs: Math.round(performance.now() - t0) };
+  return { ...m, job: j, log: log.split('\n').slice(-14).join('\n'), realMs: Math.round(performance.now() - t0), tune };
 }
 
 // Named job lists
@@ -116,7 +122,7 @@ export function table(results: JobResult[] = read<JobResult[]>(RKEY, [])) {
 
 export function installBalance(engine: Engine, game: Game) {
   const api = {
-    suite, table, missionFor, jobName, HUMAN,   // HUMAN: the human-level aim model, editable live for calibration
+    suite, table, missionFor, jobName, HUMAN, BOSS_TUNING,   // both editable live: the human aim model, the boss knobs
     run: (j: Job) => runJob(engine, game, j),
     enqueue: (jobs: Job[]) => { write(QKEY, [...read<Job[]>(QKEY, []), ...jobs]); return read<Job[]>(QKEY, []).length; },
     queue: () => read<Job[]>(QKEY, []),
@@ -139,6 +145,8 @@ export function installBalance(engine: Engine, game: Game) {
     let res: JobResult | { job: Job; error: string };
     try { res = runJob(engine, game, j); } catch (e) { res = { job: j, error: String((e as Error)?.stack ?? e) }; }
     write(RKEY, [...read<unknown[]>(RKEY, []), res]);
+    // and to the shell, when tools/balance_sink.mjs is listening (nothing happens otherwise)
+    try { navigator.sendBeacon(SINK, new Blob([JSON.stringify(res)], { type: 'text/plain' })); } catch { /* no sink */ }
     cleanProfile();
     if (read<Job[]>(QKEY, []).length) location.reload();
     else (window as any).__balRunning = 'done';

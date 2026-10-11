@@ -71,7 +71,7 @@ export const RAID_RADIO = {
 const R = RAID_RADIO;
 export const RAIDS: Record<string, RaidDef> = {
   'raid-pilot': {
-    night: false, allowThrough: 6, alt: 6500, speed: 92,
+    night: false, allowThrough: 6, alt: 6500, speed: 98,   // was 92 (docs/BALANCE.md)
     rounds: [
       {
         title: 'Junkers inbound with fighter cover', maxTime: 210,
@@ -98,13 +98,13 @@ export const RAIDS: Record<string, RaidDef> = {
     ],
   },
   'night-pilot': {
-    night: true, allowThrough: 4, alt: 6000, speed: 88,
+    night: true, allowThrough: 4, alt: 6000, speed: 96,   // was 88 (docs/BALANCE.md: nobody lost the night)
     rounds: [
       {
         title: 'Raiders in the dark — find them by their exhausts', maxTime: 220,
         groups: [
           { at: 4, bombers: ['ju88', 'ju88'], from: 'front', skill: 0.85, radio: [...R.n1] },
-          { at: 30, bombers: ['ju88', 'ju88'], from: 'left', skill: 0.9 },
+          { at: 30, bombers: ['ju88', 'ju88', 'ju88'], from: 'left', skill: 0.9 },
           { at: 6, afterClear: true, bombers: ['ju88', 'ju88'], from: 'right', skill: 0.9 },
         ],
       },
@@ -112,14 +112,14 @@ export const RAIDS: Record<string, RaidDef> = {
         title: 'More raiders — and night fighters hunting you', maxTime: 230,
         groups: [
           { at: 4, bombers: ['ju88', 'ju88', 'ju88'], escorts: ['bf110'], from: 'front', skill: 0.95, radio: [...R.n2] },
-          { at: 40, bombers: ['ju88', 'ju88'], escorts: ['bf110'], from: 'right', skill: 1.0 },
+          { at: 40, bombers: ['ju88', 'ju88', 'ju88'], escorts: ['bf110'], from: 'right', skill: 1.0 },
         ],
       },
       {
         title: 'The main bomber stream', maxTime: 260,
         groups: [
-          { at: 4, bombers: ['ju88', 'ju88', 'ju88'], escorts: ['bf110'], from: 'front', skill: 1.0, radio: [...R.n3] },
-          { at: 45, bombers: ['ju88', 'ju88'], from: 'left', skill: 1.05 },
+          { at: 4, bombers: ['ju88', 'ju88', 'ju88', 'ju88'], escorts: ['bf110'], from: 'front', skill: 1.0, radio: [...R.n3] },
+          { at: 35, bombers: ['ju88', 'ju88', 'ju88'], from: 'left', skill: 1.05 },
           { at: 6, afterClear: true, bombers: ['ju88', 'ju88', 'ju88'], escorts: ['bf110'], from: 'front', skill: 1.05 },
         ],
       },
@@ -130,7 +130,7 @@ export const RAIDS: Record<string, RaidDef> = {
 const SPAWN_DIST = 8000;      // m from the field, horizontally
 const RELEASE = 700;          // m short of the field the bombs go
 const ESCORT_FIGHT = 30;      // s an escort dogfights before he goes back to covering his bombers
-const RAIDER_STRUCTURE = 0.6;  // x the variant's structure
+const RAIDER_STRUCTURE = 0.8;  // x the variant's structure (was 0.6: a human-level pilot let ~1 through of 6 allowed)
 const SCORE_SHORT = 150;      // a bomber downed before it bombed
 const SCORE_CLEAN = 250;      // a round with nothing through
 const BEARING: Record<RaidFrom, number> = { front: 0, left: 0.65, right: -0.65 };

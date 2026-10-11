@@ -30,10 +30,11 @@ export interface AutoplayMetrics {
   mission: string; role: 'gunner' | 'pilot'; skill: number; difficulty: number;
   result: string; success: boolean | null; failCause: string | null; stopped: boolean; timeout: boolean;
   t: number;                                   // mission time (s) at the end
-  rounds: { idx: number; t: number; boss: boolean; kills: number; complete: boolean }[];
+  rounds: { idx: number; t: number; boss: boolean; kills: number; lost: number; complete: boolean }[];
   boss: { round: number; t: number | null; ships: { name: string; t: number | null; breach: number | null }[] }[];
   dmgTaken: number; hitsTaken: number; minHp: number; endHp: number; wounds: number;
   bombersLost: number; kills: number; kpm: number; accuracy: number; shots: number; hits: number; perks: number;
+  extra: Record<string, unknown>;              // mode specifics: raid bombers through, strafe objectives and round ends
 }
 export let lastMetrics: AutoplayMetrics | null = null;
 
@@ -108,7 +109,7 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
   const g = game as any;
   const rounds: AutoplayMetrics['rounds'] = [];
   const bosses: AutoplayMetrics['boss'] = [];
-  let rIdx = g.roundIdx ?? 0, rT0 = w.time, rK0 = 0, rBoss = false, minHp = 1, wounds = 0, stopped = false;
+  let rIdx = g.roundIdx ?? 0, rT0 = w.time, rK0 = 0, rL0 = 0, rBoss = false, minHp = 1, wounds = 0, stopped = false;
   let bossRec: AutoplayMetrics['boss'][number] | null = null, bossT0 = 0;
   const modes: Record<string, number> = {};
   let fired = 0;
@@ -138,6 +139,18 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
         for (const t of game.boss.targets()) {
           const d = t.pos.distanceTo(pb.pos);
           if (d < bd) { bd = d; best = pb.root; boss = true; tv.copy(t.vel); tp0.copy(t.pos); }
+        }
+      }
+      // a telegraphed heavy attack (the weapon glows, the crew calls it) comes first, fighters or not
+      if (game.boss.active) {
+        let cd = 1400;
+        for (const s of game.boss.ships) {
+          if (s.deathT >= 0) continue;
+          for (const p of s.ship.parts) {
+            if (!p.alive || p.charge <= 0) continue;
+            const pp = s.ship.partPos(p, new THREE.Vector3()), d = pp.distanceTo(pb.pos);
+            if (d < cd) { cd = d; bd = d; best = pb.root; boss = true; tv.copy(s.ship.vel); tp0.copy(pp); }
+          }
         }
       }
       aimer.step(DT, boss ? 'boss' : best);
@@ -271,7 +284,7 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
       + (w.playerFighter ? ` hp ${(w.playerFighter.integrity * 100).toFixed(0)}% score ${(game as any).score} | ${document.getElementById('hObjective')?.textContent ?? ''}` : ''));
     // ---- metrics ----
     const ri = g.roundIdx ?? 0;
-    if (ri !== rIdx) { rounds.push({ idx: rIdx, t: w.time - rT0, boss: rBoss, kills: w.stats.kills - rK0, complete: true }); rIdx = ri; rT0 = w.time; rK0 = w.stats.kills; rBoss = false; }
+    if (ri !== rIdx) { rounds.push({ idx: rIdx, t: w.time - rT0, boss: rBoss, kills: w.stats.kills - rK0, lost: w.stats.bombersLost - rL0, complete: true }); rIdx = ri; rT0 = w.time; rK0 = w.stats.kills; rL0 = w.stats.bombersLost; rBoss = false; }
     if (game.boss.active) {
       rBoss = true;
       if (!bossRec) { bossRec = { round: ri, t: null, ships: game.boss.ships.map((x) => ({ name: x.ship.def.name, t: null as number | null, breach: null as number | null })) }; bosses.push(bossRec); bossT0 = w.time; }
@@ -287,7 +300,7 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
   const res = game.state === 'debrief' ? document.querySelector('#debrief .result')?.textContent ?? game.state : stopped ? `STOPPED after ${opts.stopAfterRounds} rounds` : `TIMEOUT (${game.state})`;
   w.events.playerHitFrom = prevHit;
   const end = g.endResult as { success: boolean; reason: string } | null;
-  if (!stopped) rounds.push({ idx: rIdx, t: w.time - rT0, boss: rBoss, kills: w.stats.kills - rK0, complete: game.state === 'debrief' && !!end?.success });
+  if (!stopped) rounds.push({ idx: rIdx, t: w.time - rT0, boss: rBoss, kills: w.stats.kills - rK0, lost: w.stats.bombersLost - rL0, complete: game.state === 'debrief' && !!end?.success });
   lastMetrics = {
     mission: mission.id, role: mission.role, skill, difficulty: w.difficulty,
     result: res, success: game.state === 'debrief' && end ? end.success : null, failCause: end && !end.success ? end.reason : null,
@@ -296,6 +309,8 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
     dmgTaken: Math.round(dmg), hitsTaken: hitsOnMe, minHp: +minHp.toFixed(2), endHp: +(w.player?.integrity ?? 0).toFixed(2), wounds,
     bombersLost: w.stats.bombersLost, kills: w.stats.kills, kpm: +(w.stats.kills / Math.max(1, w.time / 60)).toFixed(2),
     accuracy: +(w.stats.hits / Math.max(1, w.stats.shots)).toFixed(3), shots: w.stats.shots, hits: w.stats.hits, perks,
+    extra: game.pilotOps.raid.active ? { through: game.pilotOps.raid.through, allow: game.pilotOps.raid.def?.allowThrough, down: game.pilotOps.raid.shotDown, jettisoned: game.pilotOps.raid.jettisoned }
+      : game.pilotOps.strafe.active || passes ? { objectives: game.pilotOps.strafe.objectives.slice(), passes, ends: game.pilotOps.strafe.log.filter((l) => l.includes('over') || l.includes('scramble')) } : {},
   };
   if (trace.length && !w.playerFighter?.alive) log.push('last frames: ' + trace.join(' / '));
   if (game.pilotOps.strafe.active || passes) log.push(`strafe: passes ${passes} · destroyed ${JSON.stringify(game.pilotOps.strafe.destroyed)} · objectives ${game.pilotOps.strafe.objectives.join('/')} · ${game.pilotOps.strafe.log.slice(-12).join(' | ')}`);
@@ -312,7 +327,7 @@ export function duel(engine: Engine, game: Game, type: string, start: 'ahead' | 
   const g = game as any, w = game.world;
   g.startMission(CAMPAIGN.find((m) => m.id === 'm4'));
   game.pilotOps.start({ role: 'pilot', id: 'duel' } as Mission); // passive: rear gunners and calls, no scripted rounds
-  const director = g.director; g.director = () => {};
+  g.director.direct = () => {};   // own property over Director.direct: no waves, rounds or end conditions
   const pf = w.playerFighter!;
   for (const a of w.fighters('allied')) if (a !== pf) a.remove = true;
   game.pilot.assist = attack ? 1 : 0;
@@ -349,7 +364,7 @@ export function duel(engine: Engine, game: Game, type: string, start: 'ahead' | 
     if (!pf.alive) break;
   }
   w.events.playerHitFrom = prev;
-  g.director = director;
+  delete g.director.direct;       // back to Director.prototype.direct
   return { type, start, attack, hitsOnPlayer: hits, enemyFiring: fire, minD: Math.round(minD), playerHp: Math.round(pf.integrity * 100), playerAlive: pf.alive, killT, playerHits: w.stats.hits - h0, state: p.state, modes };
 }
 // Freeze-frame for screenshots of the P-51 views: m4 started, a bandit placed `dist` m ahead
