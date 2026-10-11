@@ -1,3 +1,4 @@
+import { isSecondTourId } from './SecondTour';
 import * as THREE from 'three';
 import type { SpecialEvents } from './SpecialEvents';
 import type { Mission } from './Missions';
@@ -129,7 +130,7 @@ export class NemesisRuntime {
     this.log.push(`mission ${this.st.missions}: ${m.id} forced rounds [${[...this.forced].join(',')}]${back.length ? ` · back from hospital: ${back.map((a) => a.last).join(', ')}` : ''}`);
   }
 
-  private campaign(m: Mission) { return CAMPAIGN.includes(m) || isRaidId(m.id); }
+  private campaign(m: Mission) { return CAMPAIGN.includes(m) || isRaidId(m.id) || isSecondTourId(m.id); }
 
   // SpecialEvents.newRound: should this round get an Experte (on top of the normal specials)?
   wantsRound(idx: number): boolean {

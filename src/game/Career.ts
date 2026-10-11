@@ -63,6 +63,7 @@ export interface MedalDef {
 const stripes = (...c: string[]) => `linear-gradient(90deg, ${c.map((x, i) => `${x} ${(i / c.length) * 100}% ${((i + 1) / c.length) * 100}%`).join(', ')})`;
 
 export const MEDALS: MedalDef[] = [
+  { name: 'Second Tour Medal', desc: 'Complete twenty-five second-tour operations.', ribbon: stripes('#1d3f8f', '#e8a317', '#fff', '#e8a317', '#1d3f8f'), first: { kind: 'merit', amount: 2500 }, repeat: 0 },
   { name: 'Air Medal', desc: 'Complete a campaign mission.', ribbon: stripes('#e8a317', '#1d3f8f', '#1d3f8f', '#e8a317', '#1d3f8f', '#1d3f8f', '#e8a317'), first: { kind: 'merit', amount: 300 }, repeat: 150 },
   { name: 'Distinguished Flying Cross', desc: 'Five kills in a B-17 gunner mission.', ribbon: stripes('#b3321f', '#f2efe6', '#1d3f8f', '#1d3f8f', '#1d3f8f', '#f2efe6', '#b3321f'), first: { kind: 'unlock', id: 'stinger', label: 'Stinger twin-feed .50', fallback: 300 }, repeat: 300 },
   { name: 'Silver Star', desc: 'Eight kills with at most one bomber lost.', ribbon: stripes('#1d3f8f', '#f2efe6', '#1d3f8f', '#f2efe6', '#b3321f', '#f2efe6', '#1d3f8f', '#f2efe6', '#1d3f8f'), first: { kind: 'unlock', id: 'hispano', label: 'Hispano 20 mm cannon', fallback: 500 }, repeat: 500 },

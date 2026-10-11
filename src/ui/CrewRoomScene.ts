@@ -1,3 +1,4 @@
+import { isSecondTourId } from '../game/SecondTour';
 // Crew-room interlude: the scene played after a successful story mission, between the debrief and
 // the campaign map (Phase 5 goal 30). Content and selection: game/CrewRoom.ts.
 //
@@ -825,7 +826,7 @@ export class CrewRoomScene {
   /** End of MissionFlow.showDebrief: remember this mission's outcome for the scene. */
   capture(g: Game, m: Mission, d: DebriefData) {
     this.pending = null;
-    if (!d.success || d.survival || !CAMPAIGN.includes(m) || !vignetteFor(m.id)) return;
+    if (!d.success || d.survival || (!CAMPAIGN.includes(m) && !isSecondTourId(m.id)) || !vignetteFor(m.id)) return;
     try {
       const role = m.role;
       const wounded = role === 'gunner' && base ? MEN.filter((x) => crewRoster.men[x.id].wounds > (base!.wounds[x.id] ?? Infinity)).map((x) => x.id as Speaker) : [];

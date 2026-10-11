@@ -1,3 +1,5 @@
+import { secondTourMedal } from './CampaignState';
+import { isSecondTourId } from './SecondTour';
 import * as THREE from 'three';
 import type { Game } from './Game';
 import type { DebriefData } from '../ui/UI';
@@ -246,7 +248,7 @@ export class MissionFlow {
     const survival = m.duration === Infinity;
     if (r.success) g.score += 500 + survivors * 50 + Math.round(acc * 300);
     g.score = g.modes.finalScore(m, g.score);
-    const medals: string[] = [];
+    const medals: string[] = secondTourMedal(m, r.success);
     if (r.success && !survival) medals.push('Air Medal');
     if (w.stats.kills >= 5) medals.push(m.role === 'pilot' ? 'Ace in a Day' : 'Distinguished Flying Cross');
     if (w.stats.kills >= 8 && w.combatLosses <= 1) medals.push('Silver Star');   // set-piece losses left out
@@ -292,11 +294,11 @@ export class MissionFlow {
     // online leaderboard: survival per role, campaign per mission
     const host = document.querySelector<HTMLElement>('#debrief .box');
     const board = leaderboardMode(m) ?? (survival ? `survival-${m.role}` : `campaign-${m.id}`);
-    if (host) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: g.score, kills: w.stats.kills, rounds: g.roundIdx + 1 });
+    if (host && !isSecondTourId(m.id)) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: g.score, kills: w.stats.kills, rounds: g.roundIdx + 1 });
     mountShare(host, g.engine, () => shareStamp(g), () => ({ title: m.title, kills: d.kills, score: d.score, success: d.success, survival, waves: d.waves, role: m.role }));
     analytics.missionEnd(m, d);
     g.service.onDebrief(m, d, medals);
-    mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers }, g.prog, g.progress, toMap);
+    mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers, score: g.score }, g.prog, g.progress, toMap);
     g.specials.nemesis.onDebrief(m); // named Experten: this mission's ace outcomes (NemesisRuntime.ts)
     crewRoomScene.capture(g, m, d); // the outcome the crew-room scene talks about
   }

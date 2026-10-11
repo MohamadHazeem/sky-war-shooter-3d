@@ -1,3 +1,4 @@
+import { isSecondTourId } from './SecondTour';
 // Crew-room interludes (Phase 5 goal 30): after a successful story mission, before the campaign
 // map, a short scene in the Nissen hut or at the club where the Sky Queen's crew talks the
 // mission over. This file is the content and the selection logic only: pure data and maths with
@@ -324,7 +325,7 @@ export const VIGNETTES: Vignette[] = [
   ]),
 ];
 
-export const vignetteFor = (missionId: string): Vignette | null => VIGNETTES.find((v) => v.id === missionId) ?? null;
+export const vignetteFor = (missionId: string): Vignette | null => isSecondTourId(missionId) ? { ...VIGNETTES[0], id: missionId, open: [], close: [], absent: [], skip: [], finale: false } : VIGNETTES.find((v) => v.id === missionId) ?? null;
 
 // Every line that has (or can have) a recorded clip, with the voice roles it is recorded in
 export function recordedLines(): { def: LineDef; roles: string[] }[] {
@@ -446,7 +447,7 @@ export function buildScene(missionId: string, c: CrewRoomCtx): Scene | null {
   if (v.finale && c.tour) add('tour', 9, say(POOL.tour, { vars: { kills: c.tour.kills, lost: c.tour.lost } }));
 
   // keep the block short: drop the least important picks until it fits
-  const cap = v.finale ? DYN_CAP_FINALE : DYN_CAP;
+  const cap = isSecondTourId(missionId) ? 3 : v.finale ? DYN_CAP_FINALE : DYN_CAP;
   const kept = [...picks];
   const count = () => kept.reduce((n, p) => n + p.lines.length, 0);
   while (count() > cap && kept.length > 1) {

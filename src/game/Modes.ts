@@ -1,3 +1,4 @@
+import { secondTourSturmbock } from './SecondTour';
 // Game modes on the Survival screen: Survival (endless rounds), Ace Hunt and Time Attack.
 // Each mode is a ModeDef in MODES: it builds its Mission, names its online leaderboard
 // (modes allowed by firestore.rules), and may customise the round pacing (Pacing.ts), the
@@ -219,6 +220,7 @@ export class ModeRunner {
   }
 
   onSpawn(f: Fighter) {
+    secondTourSturmbock(this.mission, f);
     this.def?.onSpawn?.(f, this);
   }
 
