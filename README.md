@@ -4,7 +4,7 @@ A WWII air-combat game for the browser. Man the .50-calibre guns of a B-17G Flyi
 in a combat box at 25,000 ft, or fly a P-51D Mustang as close escort, against the Luftwaffe:
 Fw 190s, Bf 109s, Bf 110s, Ju 88s, Me 262 jets, Me 163 rockets and battle groups of giant warships.
 
-![Left waist gunner](docs/screenshots/waist-gunner.jpg)
+![Boss battle group](docs/overnight/boss-battle-group.jpg)
 
 The look is modelled on the waist-gunner shot (0:54–0:58) of Yarnhub's animated short
 *When a B-17 Pilot Attacked the Copilot*: the gunner's view down a Browning M2 with a ring-and-post
@@ -13,8 +13,9 @@ the bomber formation above a sea of cumulus. Reference frames are in `reference/
 
 | | |
 |---|---|
-| ![Formation](docs/screenshots/formation.jpg) | ![P-51 cockpit](docs/screenshots/p51-cockpit.jpg) |
-| ![Top turret](docs/screenshots/top-turret.jpg) | |
+| ![Dawn take-off at Deenethorpe](docs/overnight/takeoff-runway.jpg) | ![Campaign map](docs/overnight/campaign-map.jpg) |
+| ![Free look: the other waist gunner](docs/overnight/interior-other-gunner.jpg) | ![Train Busting](docs/overnight/train-busting.jpg) |
+| ![Crew room](docs/overnight/crew-room.jpg) | ![Night flares over the clouds](docs/overnight/night-flares-cloud.jpg) |
 
 ## Play
 
