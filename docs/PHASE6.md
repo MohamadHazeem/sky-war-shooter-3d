@@ -7,7 +7,7 @@ Repo rules for Codex: `AGENTS.md`.
 ## Tier A — finish the overnight loose ends
 | # | Goal | Status |
 |---|---|---|
-| 1 | P-51 dogfight feel: bandits that stay and fight instead of extending 2 km between passes, so escort missions end on kills | Codex working |
+| 1 | P-51 dogfight feel: bandits that stay and fight instead of extending 2 km between passes, so escort missions end on kills | Done (Codex) — engaged bandits turn and fight; compact bomber set-ups near the escort; jets extend ≤5.5 s then reverse. Headless sims: time <600 m up 10–40 s per type, Me 262 kills 1/5 → 3/5; bomber threat kept |
 | 2 | Weak-laptop pass: simulated low-end GPU, tuned first-launch quality thresholds, a Low preset that looks good | |
 | 3 | Cloud-top shimmer: the speckle just above the cloud deck (end of the take-off climb) | Codex working |
 | 4 | Co-op v2: shared score + guest debrief; TURN relay (needs a Cloudflare TURN key from the player) | |
@@ -30,3 +30,4 @@ Repo rules for Codex: `AGENTS.md`.
 
 ## Log
 - Codex signed in as the Pro account; trial widened to a first wave: goals 1, 3, 5, 6, 10 running in parallel worktrees (tools/codex_task.sh). Goal 2 (performance) waits for a quiet GPU.
+- Goal 1 merged (428 tests). Codex couldn't commit or open a browser in its sandbox; launcher now runs it unsandboxed.
