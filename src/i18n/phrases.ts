@@ -29,9 +29,10 @@ import setpieces from './ar/setpieces';
 import crewroom from './ar/crewroom';
 import bombardier from './ar/bombardier';
 import manual from './ar/manual';
+import ditching from './ar/ditching';
 
 // manual first: its generic words (Low, Close, Zoom...) never override another screen's wording
-const TABLES: PhraseTable[] = [squadron, secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles, bombardier];
+const TABLES: PhraseTable[] = [ditching, squadron, secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles, bombardier];
 
 export const PHRASES: Record<string, string> = Object.assign({}, ...TABLES.map((t) => t.phrases));
 export const PATTERNS: Pattern[] = TABLES.flatMap((t) => t.patterns ?? []);

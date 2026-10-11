@@ -331,6 +331,7 @@ export class PlayerBomberDamage {
   private nextDecal = 0;
   private eng: Eng[] = [];
   private leaks: Leak[] = [];
+  get fuelLeaking(): boolean { return this.leaks.length > 0; }
   private acc = 0;
   private lightT = 0;
   private lastDecalT = -1;

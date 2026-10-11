@@ -82,6 +82,19 @@ async function boot() {
     (window as any).sws.tutorialAutoplay = (o?: any) => tutorialAutoplay(engine, game, o);
     Object.assign((window as any).sws, { game, engine });
     Object.assign((window as any).sws, { event: (n: any) => game.midRound.devEvent(n), objective: (n: any) => game.midRound.devObjective(n) });
+    // Force a survivable ditch after loading a gunner campaign mission; no setting overrides.
+    (window as any).sws.ditch = (bombsDropped = true) => {
+      if (!isMissionReady()) return 'Wait for sws.assetsReady()';
+      if (game.state !== 'playing' || game.mission?.role !== 'gunner' || !game.mission.number) {
+        const auto = game.bookends.auto; game.bookends.auto = true;
+        game.startMission(CAMPAIGN[0]); game.bookends.auto = auto;
+      }
+      const b = game.world.playerBomber!;
+      for (let i = 0; i < 3; i++) { b.engineDead[i] = true; b.zone(`engine${i + 1}`)!.hp = 0; }
+      game.director.bombsDropped = bombsDropped;
+      game.finish(bombsDropped, '');
+      return { active: game.ditching.active, result: game.endResult };
+    };
     // Formation set piece now (gunner mission in progress): sws.drama('flakHit' | 'collision' | 'bombBay' | 'straggler' | 'littleFriends'); sws.drama() lists them
     (window as any).sws.drama = (n?: any) => (n ? game.midRound.devDrama(n) : 'flakHit, collision, bombBay, straggler, littleFriends');
     // Sharing / trailer / social card tools (docs/TRAILER.md): sws.trailer(), sws.ogCard(), sws.analytics.last

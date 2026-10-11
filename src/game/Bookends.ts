@@ -133,20 +133,20 @@ const C_FLARE1: [number, number, number] = [4, 0.2, 0.1];
 const C_FSMOKE: [number, number, number] = [0.8, 0.55, 0.55];
 
 const CSS = `
-#bkCine { position: fixed; inset: 0; pointer-events: none; z-index: 12; }
-#bkCine .bar { position: absolute; left: 0; right: 0; height: 10.5vh; background: #000; }
-#bkCine .bar.t { top: 0; } #bkCine .bar.b { bottom: 0; }
-#bkCine .tag, #bkCine .cap, #bkCine .hint { position: absolute; white-space: nowrap; opacity: 0; transition: opacity .6s; }
-#bkCine .tag { left: 4vw; top: 3.6vh; font: 600 11px/1 "IBM Plex Mono", "IBM Plex Sans Arabic", monospace; letter-spacing: 3px; color: #d9573f; }
-#bkCine .cap { left: 4vw; bottom: 3.4vh; font: 600 17px/1 Oswald, "Arial Narrow", "Noto Kufi Arabic", sans-serif; letter-spacing: 4px; color: #f1e6c8; }
-#bkCine .hint { right: 4vw; bottom: 3.6vh; font: 11px/1 "IBM Plex Mono", "IBM Plex Sans Arabic", monospace; letter-spacing: 2px; color: rgba(255,255,255,.55); opacity: 1; }
-#bkCine .show { opacity: 1; }
-#bkCine .sub { position: absolute; left: 50%; bottom: 12.5vh; transform: translateX(-50%); text-align: center; max-width: 64vw; }
-#bkCine .sub .line { display: inline-block; background: rgba(0,0,0,0.55); color: #fff; font-family: 'Oswald', sans-serif; font-size: clamp(14px, 1.25vw, 19px); padding: 3px 12px; letter-spacing: 0.3px; }
-#bkCine .sub .who { color: #c8b98a; margin-right: 8px; font-size: 0.75em; letter-spacing: 2px; text-transform: uppercase; }
-#bkCine .fd { position: absolute; inset: 0; background: #000; opacity: 1; }
-html[dir=rtl] #bkCine .tag, html[dir=rtl] #bkCine .cap, html[dir=rtl] #bkCine .hint { letter-spacing: 0; }
-html[dir=rtl] #bkCine .sub .who { margin-right: 0; margin-left: 8px; }
+:is(#bkCine, #ditchCine) { position: fixed; inset: 0; pointer-events: none; z-index: 12; }
+:is(#bkCine, #ditchCine) .bar { position: absolute; left: 0; right: 0; height: 10.5vh; background: #000; }
+:is(#bkCine, #ditchCine) .bar.t { top: 0; } :is(#bkCine, #ditchCine) .bar.b { bottom: 0; }
+:is(#bkCine, #ditchCine) .tag, :is(#bkCine, #ditchCine) .cap, :is(#bkCine, #ditchCine) .hint { position: absolute; white-space: nowrap; opacity: 0; transition: opacity .6s; }
+:is(#bkCine, #ditchCine) .tag { left: 4vw; top: 3.6vh; font: 600 11px/1 "IBM Plex Mono", "IBM Plex Sans Arabic", monospace; letter-spacing: 3px; color: #d9573f; }
+:is(#bkCine, #ditchCine) .cap { left: 4vw; bottom: 3.4vh; font: 600 17px/1 Oswald, "Arial Narrow", "Noto Kufi Arabic", sans-serif; letter-spacing: 4px; color: #f1e6c8; }
+:is(#bkCine, #ditchCine) .hint { right: 4vw; bottom: 3.6vh; font: 11px/1 "IBM Plex Mono", "IBM Plex Sans Arabic", monospace; letter-spacing: 2px; color: rgba(255,255,255,.55); opacity: 1; }
+:is(#bkCine, #ditchCine) .show { opacity: 1; }
+:is(#bkCine, #ditchCine) .sub { position: absolute; left: 50%; bottom: 12.5vh; transform: translateX(-50%); text-align: center; max-width: 64vw; }
+:is(#bkCine, #ditchCine) .sub .line { display: inline-block; background: rgba(0,0,0,0.55); color: #fff; font-family: 'Oswald', sans-serif; font-size: clamp(14px, 1.25vw, 19px); padding: 3px 12px; letter-spacing: 0.3px; }
+:is(#bkCine, #ditchCine) .sub .who { color: #c8b98a; margin-right: 8px; font-size: 0.75em; letter-spacing: 2px; text-transform: uppercase; }
+:is(#bkCine, #ditchCine) .fd { position: absolute; inset: 0; background: #000; opacity: 1; }
+html[dir=rtl] :is(#bkCine, #ditchCine) .tag, html[dir=rtl] :is(#bkCine, #ditchCine) .cap, html[dir=rtl] :is(#bkCine, #ditchCine) .hint { letter-spacing: 0; }
+html[dir=rtl] :is(#bkCine, #ditchCine) .sub .who { margin-right: 0; margin-left: 8px; }
 `;
 
 export class Bookends {

@@ -44,6 +44,7 @@ export class MissionFlow {
     // Models and gameplay sounds stream in behind the menu: wait for them (loading screen)
     if (!isMissionReady()) { whenMissionReady(g.ui, () => g.startMission(m)); return; }
     if (g.bookends.takeoff(m, () => g.startMission(m))) return; // take-off scene first (Bookends.ts)
+    g.ditching.reset();
     prepareCampaignMission(m, g.progress); // campaign state: formation size, enemy count/skill, P-51 escort
     sound.init();
     g.photo.exit();
@@ -120,7 +121,7 @@ export class MissionFlow {
     g.baseDamageScale = g.world.playerDamageScale;
     g.berserkT = 0;
     g.applyLoadout(true);
-    if (!this.prewarmed) { this.prewarmed = true; g.world.prewarm(() => g.engine.render(1 / 60), g.engine.camera); }
+    if (!this.prewarmed) { this.prewarmed = true; g.world.prewarm(scene => scene ? g.engine.renderStudio(scene, g.world.ditchingSea.camera, 1 / 60) : g.engine.render(1 / 60), g.engine.camera); }
     g.state = 'playing';
     g.distantBattle.reset();
     g.ui.hud(m.role, g.coop.phase === 'mission');
@@ -197,6 +198,7 @@ export class MissionFlow {
     this.g.bombardier.leave();
     const g = this.g;
     if (g.endResult) return;
+    if (g.ditching.begin(success, () => g.showDebrief())) return;
     g.endResult = { success, reason };
     this.endTimer = success ? 3.5 : bailOut ? BAIL_SEQ_TIME : 5;
     g.state = 'ending';
@@ -233,8 +235,9 @@ export class MissionFlow {
 
   showDebrief() {
     const g = this.g;
+    if (g.state === 'debrief') return; // outcome/merit must be paid only once
     if (g.coop.showDebrief()) return;
-    if (g.endResult?.success && g.bookends.landing(g.mission!, () => g.showDebrief())) return; // landing scene first
+    if (!g.ditching.ditched && g.endResult?.success && g.bookends.landing(g.mission!, () => g.showDebrief())) return; // landing scene first
     const m = g.mission!;
     const w = g.world;
     const r = g.endResult!;
@@ -281,7 +284,7 @@ export class MissionFlow {
       rounds: w.stats.shots, hits: w.stats.hits, bestStreak: g.tally.bestStreak,
       closestKill: g.tally.closestKill === Infinity ? null : g.tally.closestKill,
       killsByGun: m.role === 'gunner' ? g.tally.killsByGun() : undefined,
-      merit, points: g.prog.points, bombing: g.bombardier.result ?? undefined,
+      merit, ditched: g.ditching.ditched, points: g.prog.points, bombing: g.bombardier.result ?? undefined,
     };
     // the crew-room scene first after a story mission (CrewRoomScene.ts); `then` runs once the map is up
     const toMap = (then?: unknown) => crewRoomScene.play(m, () => { g.showCampaign(); if (typeof then === 'function') then(); });
@@ -300,7 +303,7 @@ export class MissionFlow {
     mountShare(host, g.engine, () => shareStamp(g), () => ({ title: m.title, kills: d.kills, score: d.score, success: d.success, survival, waves: d.waves, role: m.role }));
     analytics.missionEnd(m, d);
     g.service.onDebrief(m, d, medals);
-    mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers, score: g.score }, g.prog, g.progress, toMap);
+    mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers, score: g.score, ditched: g.ditching.ditched }, g.prog, g.progress, toMap);
     g.specials.nemesis.onDebrief(m); // named Experten: this mission's ace outcomes (NemesisRuntime.ts)
     crewRoomScene.capture(g, m, d); // the outcome the crew-room scene talks about
   }

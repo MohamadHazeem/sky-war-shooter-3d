@@ -30,6 +30,7 @@ import { BossBattle } from './BossBattle';
 import { access } from '../core/Accessibility';
 import { TargetArea } from '../world/TargetArea';
 import { Cinematics } from './Cinematics';
+import { Ditching } from './Ditching';
 import { Bookends } from './Bookends';
 import { ServiceRecord } from './ServiceRecord';
 import { SkillRuntime } from './SkillRuntime';
@@ -119,6 +120,7 @@ export class Game {
   readonly feel: GameFeel;          // kill juice, streak meter / ON FIRE (GameFeel.ts)
   readonly combat: CombatFeedback;  // damage arcs, lining-up warning (CombatFeedback.ts)
   readonly cine: Cinematics;       // kill cam, mission fly-by, best-moment replay (Cinematics.ts)
+  readonly ditching: Ditching;
   readonly bookends: Bookends;     // take-off / landing scenes at Deenethorpe (Bookends.ts)
   readonly distantBattle = new DistantBattle();
   readonly bombardier: Bombardier;
@@ -146,6 +148,7 @@ export class Game {
     this.feel = new GameFeel(engine, this.world, ui, this.combo); this.combat = new CombatFeedback(engine, this.world);
     this.cine = new Cinematics(engine, input, ui, this);
     this.bookends = new Bookends(engine, ui, this);
+    this.ditching = new Ditching(this);
     this.abilities = new Abilities(engine, input, ui, this);
     this.boss = new BossBattle(this.world, ui, { score: (n) => { this.score += n; }, slowmo: (s) => { this.slowmo = Math.max(this.slowmo, s); }, perk: (l) => this.awardPerk(l), merit: (n) => this.prog.earn(n) });
     this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: true, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 65 });
@@ -263,6 +266,7 @@ export class Game {
 
   // ---------------- Menu ----------------
   startMenu() {
+    this.ditching.release();
     this.bookends.release();   // the parked field behind a debrief gives the world back first
     this.photo.exit();
     this.state = 'menu';
@@ -301,6 +305,7 @@ export class Game {
   }
 
   showBriefing(m: Mission) {
+    this.ditching.release();
     this.bookends.release();
     sound.init();
     this.state = 'briefing';
@@ -450,6 +455,7 @@ export class Game {
       this.input.endFrame();
       return;
     }
+    if (this.ditching.frame(dt)) { this.input.endFrame(); return; }
     if (this.bookends.frame(dt)) { this.input.endFrame(); return; } // take-off / landing scene owns the frame
     if (this.state === 'paused') { this.hud.drawOverlay(); this.input.endFrame(); return; }
     w.update(dt);
@@ -460,6 +466,7 @@ export class Game {
       this.menuScene.update(dt);
     } else if (this.state === 'playing' || this.state === 'ending' || this.state === 'debrief') {
       if (this.state !== 'debrief') this.director.direct(dt);
+      if (this.ditching.active) { this.input.endFrame(); return; }
       if (this.mission?.role === 'gunner') { if (!this.bombardier.active) this.gunner.update(dt); }
       else this.pilot.update(dt);
       if (this.state === 'ending') this.flow.updateEnding(dt);   // count down to the debrief (bail-out / fly-by)

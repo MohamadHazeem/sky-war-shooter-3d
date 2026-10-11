@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { DitchingSea } from './DitchingSea';
 import { warmTargetSmoke } from '../render/TargetSmoke';
 import { Engine } from '../core/Engine';
 import { Aircraft, Bomber, Fighter, makeGun } from './Aircraft';
@@ -267,7 +268,9 @@ export class World implements WorldView {
   // Compile every shader variant a kill can need (clipped wreck materials, shadow casters,
   // fire, chutes) before play, so the first kill doesn't freeze the game for half a second.
   // Pieces are put in front of the camera, rendered once (behind the mission fade) and cleared.
-  prewarm(render: () => void, camera: THREE.Camera) {
+  readonly ditchingSea = new DitchingSea();
+
+  prewarm(render: (scene?: THREE.Scene) => void, camera: THREE.Camera) {
     const fwd = camera.getWorldDirection(new THREE.Vector3());
     const kinds: BreakKind[] = ['wingL', 'tail', 'blowup'];
     const dummies: Fighter[] = [];
@@ -300,6 +303,7 @@ export class World implements WorldView {
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     const unwarmTargetSmoke = warmTargetSmoke(this.scene);
     render();
+    this.ditchingSea.warm(render, this.playerBomber?.root ?? b17.root);
     unwarmTargetSmoke();
     this.wrecks.keepWarm(b17Pieces);   // B-17 wreck programs stay compiled for the set pieces
     unwarm();

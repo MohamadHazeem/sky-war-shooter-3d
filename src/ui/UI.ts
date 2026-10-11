@@ -71,6 +71,7 @@ export interface DebriefData {
   bestStreak?: number;             // longest run of confirmed kills in quick succession
   closestKill?: number | null;     // metres from the player's aircraft; null when no kills
   killsByGun?: { label: string; kills: number }[]; // gunner missions: kills per gun position
+  ditched?: boolean;
   merit?: number;    // points earned for the Armory
   points?: number;   // Armory balance after this mission
 }
@@ -664,7 +665,7 @@ export class UI {
         <div class="stat"><div class="hud-label">${t('debrief.bombersLost')}</div><div class="v">${d.bombersLost}/${d.bombersTotal}</div></div>
         <div class="stat"><div class="hud-label">${t('debrief.time')}</div><div class="v">${mm}:${String(ss).padStart(2, '0')}</div></div>
         <div class="stat"><div class="hud-label">${d.coop ? tx('Crew score') : t('common.score')}</div><div class="v">${d.score}</div></div>
-        ${d.merit !== undefined ? `<div class="stat"><div class="hud-label">${t('debrief.merit')}</div><div class="v" style="color:var(--khaki)">+${d.merit}</div></div>` : ''}
+        ${d.merit !== undefined ? `<div class="stat"><div class="hud-label">${t('debrief.merit')}${d.ditched ? `<br><small>${esc(tx('Ditched · bomber lost · crew rescued'))}</small>` : ''}</div><div class="v" style="color:var(--khaki)">+${d.merit}</div></div>` : ''}
         ${extra.join('')}
       </div>
       ${bombingReport(d.bombing)}

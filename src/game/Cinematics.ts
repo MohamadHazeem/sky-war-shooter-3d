@@ -579,6 +579,8 @@ export class Cinematics {
 
   // ---------------- shared ----------------
 
+  interrupt() { this.end(true); this.overlay.setFade(0); this.fadeIn = 0; }
+
   /** Leave whatever sequence is running and give everything back. */
   private end(skipped = false) {
     const mode = this.mode;

@@ -3229,6 +3229,34 @@
     {"id": "bombardier_good", "role": "bombardier", "text": "Good pattern! The aiming point is covered."},
     {"id": "bombardier_poor", "role": "bombardier", "text": "The pattern is wide. We will check the strike photograph."},
     {
+      "group": "ditching (Phase 6 goal 06)"
+    },
+    {
+      "id": "ditch_1",
+      "role": "pilot",
+      "text": "We're not going to make it — prepare for ditching."
+    },
+    {
+      "id": "ditch_2",
+      "role": "copilot",
+      "text": "Crew in ditching positions. Brace! Brace!"
+    },
+    {
+      "id": "ditch_3",
+      "role": "pilot",
+      "text": "Everybody out! Launch the dinghies and stay together."
+    },
+    {
+      "id": "ditch_4",
+      "role": "radio",
+      "text": "Rescue launch in sight! Firing a flare."
+    },
+    {
+      "id": "ditch_5",
+      "role": "copilot",
+      "text": "All ten accounted for. Picked up by the RAF Air-Sea Rescue."
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {
