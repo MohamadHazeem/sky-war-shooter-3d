@@ -1,0 +1,703 @@
+{
+  "errors": [],
+  "checks": [
+    {
+      "name": "launch HVAR",
+      "ok": true
+    },
+    {
+      "name": "HVAR hit moving merchant",
+      "ok": true,
+      "detail": {
+        "before": 500,
+        "after": 0,
+        "rockets": 7
+      }
+    },
+    {
+      "name": "destroyer sinking",
+      "ok": true,
+      "detail": "breaking"
+    },
+    {
+      "name": "U-boat dives on hit",
+      "ok": true,
+      "detail": {
+        "dive": "diving",
+        "depth": 3.449999999999993
+      }
+    },
+    {
+      "name": "overcast renders without invalid pixels",
+      "ok": true,
+      "detail": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "dusk renders without invalid pixels",
+      "ok": true,
+      "detail": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "wave opens hangar",
+      "ok": true,
+      "detail": "paused"
+    },
+    {
+      "name": "hangar rearms wave two",
+      "ok": true,
+      "detail": {
+        "active": true,
+        "wave": 2,
+        "rockets": 8,
+        "bombs": 2,
+        "ships": [
+          {
+            "kind": "merchant",
+            "hp": 500,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "merchant",
+            "hp": 500,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "merchant",
+            "hp": 500,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "trawler",
+            "hp": 300,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "flakship",
+            "hp": 520,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          }
+        ],
+        "state": "playing",
+        "score": 550,
+        "kills": 3
+      }
+    },
+    {
+      "name": "finite sea mission completes",
+      "ok": true,
+      "detail": {
+        "state": "ending",
+        "result": {
+          "success": true,
+          "reason": "The sea lanes are clear."
+        }
+      }
+    },
+    {
+      "name": "menu clears sea and collision hook",
+      "ok": true,
+      "detail": {
+        "active": false,
+        "floor": 250
+      }
+    }
+  ],
+  "shots": [
+    {
+      "name": "convoy-attack",
+      "state": {
+        "active": true,
+        "wave": 2,
+        "rockets": 7,
+        "bombs": 2,
+        "ships": [
+          {
+            "kind": "merchant",
+            "hp": 0,
+            "sink": "listing",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "merchant",
+            "hp": 500,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "merchant",
+            "hp": 500,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "trawler",
+            "hp": 300,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "flakship",
+            "hp": 520,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          }
+        ],
+        "state": "playing",
+        "score": 400,
+        "kills": 1
+      },
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    },
+    {
+      "name": "destroyer-sinking",
+      "state": {
+        "active": true,
+        "wave": 3,
+        "rockets": 8,
+        "bombs": 2,
+        "ships": [
+          {
+            "kind": "destroyer",
+            "hp": 0,
+            "sink": "breaking",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "destroyer",
+            "hp": 850,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "uboat",
+            "hp": 360,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "eboat",
+            "hp": 170,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          }
+        ],
+        "state": "playing",
+        "score": 700,
+        "kills": 1
+      },
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    },
+    {
+      "name": "uboat-diving",
+      "state": {
+        "active": true,
+        "wave": 3,
+        "rockets": 8,
+        "bombs": 2,
+        "ships": [
+          {
+            "kind": "destroyer",
+            "hp": 850,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "destroyer",
+            "hp": 850,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "uboat",
+            "hp": 359,
+            "sink": "afloat",
+            "dive": "diving",
+            "depth": 3.449999999999993,
+            "armourOpen": true
+          },
+          {
+            "kind": "eboat",
+            "hp": 170,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          }
+        ],
+        "state": "playing",
+        "score": 0,
+        "kills": 0
+      },
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    },
+    {
+      "name": "shore-battery",
+      "state": {
+        "active": true,
+        "wave": 4,
+        "rockets": 8,
+        "bombs": 2,
+        "ships": [
+          {
+            "kind": "battery",
+            "hp": 650,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "battery",
+            "hp": 650,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "flak88",
+            "hp": 220,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "tower",
+            "hp": 650,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "radar",
+            "hp": 170,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "searchlight",
+            "hp": 100,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "cruiser",
+            "hp": 1400,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          }
+        ],
+        "state": "playing",
+        "score": 0,
+        "kills": 0
+      },
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    },
+    {
+      "name": "battleship-day",
+      "state": {
+        "active": true,
+        "wave": 5,
+        "rockets": 8,
+        "bombs": 2,
+        "ships": [
+          {
+            "kind": "battleship",
+            "hp": 2400,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": false
+          },
+          {
+            "kind": "destroyer",
+            "hp": 850,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "flakship",
+            "hp": 520,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "uboat",
+            "hp": 360,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          }
+        ],
+        "state": "playing",
+        "score": 0,
+        "kills": 0
+      },
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    },
+    {
+      "name": "battleship-storm",
+      "state": {
+        "active": true,
+        "wave": 5,
+        "rockets": 8,
+        "bombs": 2,
+        "ships": [
+          {
+            "kind": "battleship",
+            "hp": 2400,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": false
+          },
+          {
+            "kind": "destroyer",
+            "hp": 850,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "flakship",
+            "hp": 520,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "uboat",
+            "hp": 360,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          }
+        ],
+        "state": "playing",
+        "score": 0,
+        "kills": 0
+      },
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    },
+    {
+      "name": "shore-night",
+      "state": {
+        "active": true,
+        "wave": 4,
+        "rockets": 8,
+        "bombs": 2,
+        "ships": [
+          {
+            "kind": "battery",
+            "hp": 650,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "battery",
+            "hp": 650,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "flak88",
+            "hp": 220,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "tower",
+            "hp": 650,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "radar",
+            "hp": 170,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "searchlight",
+            "hp": 100,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "cruiser",
+            "hp": 1400,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          }
+        ],
+        "state": "playing",
+        "score": 0,
+        "kills": 0
+      },
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    },
+    {
+      "name": "battleship-low",
+      "state": {
+        "active": true,
+        "wave": 5,
+        "rockets": 8,
+        "bombs": 2,
+        "ships": [
+          {
+            "kind": "battleship",
+            "hp": 2400,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": false
+          },
+          {
+            "kind": "destroyer",
+            "hp": 850,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "flakship",
+            "hp": 520,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          },
+          {
+            "kind": "uboat",
+            "hp": 360,
+            "sink": "afloat",
+            "dive": "surfaced",
+            "depth": 0,
+            "armourOpen": true
+          }
+        ],
+        "state": "playing",
+        "score": 0,
+        "kills": 0
+      },
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    }
+  ],
+  "bench": {
+    "high": {
+      "avg": 9.41,
+      "p50": 8.8,
+      "p95": 12,
+      "max": 30.7,
+      "calls": 1,
+      "tris": 1,
+      "programs": 98,
+      "w": 2063,
+      "h": 1114
+    },
+    "low": {
+      "avg": 5.11,
+      "p50": 4.9,
+      "p95": 6.6,
+      "max": 9.4,
+      "calls": 1,
+      "tris": 1,
+      "programs": 98,
+      "w": 1291,
+      "h": 697
+    }
+  },
+  "complete": true
+}

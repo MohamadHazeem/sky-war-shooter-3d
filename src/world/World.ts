@@ -26,6 +26,7 @@ import { setup as setupDamageLook, update as updateDamageLook } from './DamageLo
 import { update as updateDamageStages, stageOf, damageStage } from './DamageStages';
 import { Crew, STATION_CREW } from './Crew';
 import { prewarmBoss } from './BossShip';
+import { prewarmSea } from './SeaWorld';
 import { warmGlassFx } from '../game/GlassFx';
 import { bomberName, dressPlayerBomber } from '../game/Customize';
 import { aiGunnerSkill, crewRoster } from '../game/CrewRoster';
@@ -296,6 +297,7 @@ export class World implements WorldView {
     const at = camera.position.clone().addScaledVector(fwd, 80);
     this.effects.explosion(at, new THREE.Vector3(), 1);
     this.effects.parachute(at, new THREE.Vector3());
+    const unwarmSea = prewarmSea(this.scene, at);
     const unwarmBoss = prewarmBoss(this.scene, camera.position, fwd);
     const unwarm = this.bomberDamage.warmup(this.scene, at);
     const unwarmCrew = warmLivingInterior(this.scene, at); // gunner interior: crew, brass, shafts, frost, breath
@@ -311,6 +313,7 @@ export class World implements WorldView {
     unwarmTurrets();
     unwarmGlass();
     unwarmBoss();
+    unwarmSea();
     for (const f of dummies) this.scene.remove(f.root);
     this.warmKeep.push(...this.wrecks.clearKeepMaterials()); // keep the compiled wreck programs (Wrecks.clearKeepMaterials)
     this.effects.clear();

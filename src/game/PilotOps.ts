@@ -12,6 +12,7 @@ import { RearGunners } from './RearGunners';
 import { Wingman } from './Wingman';
 import { RaidDefence } from './RaidDefence';
 import { StrafeOps } from './StrafeOps';
+import { SeaOps } from './SeaOps';
 import type { Input } from '../core/Input';
 import type { PilotController } from './PilotController';
 import { tx, isAr, CANVAS_MONO } from '../i18n';
@@ -72,17 +73,19 @@ export class PilotOps {
   readonly rear = new RearGunners();
   readonly wing: Wingman;        // Blue Two
   readonly raid: RaidDefence;    // role-reversal missions
+  readonly sea: SeaOps;
   readonly strafe: StrafeOps;    // ground attack (Train Busting)
 
   constructor(private world: World, private ui: UI, input: Input | null = null, private lead: PilotController | null = null) {
     this.wing = new Wingman(world, ui, input, lead);
     this.raid = new RaidDefence(world, ui);
     this.strafe = new StrafeOps(world, ui, lead);
+    this.sea = new SeaOps(world, ui, input, lead);
     DogfightAI.onCall = (call, ai, side) => this.onCall(call, ai.me, side);
     this.rear.onOpenFire = (f) => this.world.callout('rear', 'Lead', `Careful, Blue two — that ${f.label} has a rear gunner. Come at him from below!`, 25, 2);
   }
 
-  get scripted() { return !!this.rounds || this.raid.active || this.strafe.active; }
+  get scripted() { return !!this.rounds || this.raid.active || this.strafe.active || this.sea.active; }
 
   start(m: Mission) {
     this.mission = m.role === 'pilot' ? m : null;
@@ -96,10 +99,12 @@ export class PilotOps {
     this.pending = 0;
     this.padTip = false;
     this.incomingOff = null;
+    this.sea.stop();
     this.raid.start(m);
     this.strafe.start(m, this.wing); // before Blue Two joins: it moves the Mustang down to the deck
+    this.sea.start(m, this.wing);
     this.wing.raidTargets = this.raid.active ? () => this.raid.inbound() : null;
-    this.wing.callsign = this.raid.active || this.strafe.active ? 'Blue Two' : 'Blue Four'; // escort missions: the player is Lead's Blue Two
+    this.wing.callsign = this.raid.active || this.strafe.active || this.sea.active ? 'Blue Two' : 'Blue Four'; // escort missions: the player is Lead's Blue Two
     this.wing.start(!!this.mission && !!this.world.playerFighter && m.id !== 'duel'); // no wingman on the dev duel bench
     // raid missions: Blue Two starts out on the bombers
     if (this.raid.active) this.wing.command('bombers');
@@ -138,9 +143,14 @@ export class PilotOps {
     }
     // a round changed (Game handles the hangar break between them)
     if (roundIdx !== this.roundIdx) {
-      if (this.roundIdx >= 0 && !this.rounds && !this.raid.active && !this.strafe.active) res.score += this.roundBonus();
+      if (this.roundIdx >= 0 && !this.rounds && !this.raid.active && !this.strafe.active && !this.sea.active) res.score += this.roundBonus();
       if (this.roundIdx >= 0) this.wing.onRound();
       this.beginRound(roundIdx);
+    }
+    if (this.sea.active) {
+      const r = this.sea.direct(dt, roundIdx);
+      res.score += r.score; res.roundOver = r.roundOver; res.fail = r.fail;
+      return res;
     }
     if (this.strafe.active) {
       const r = this.strafe.direct(dt, roundIdx, roundT);
@@ -351,6 +361,7 @@ export class PilotOps {
 
   // HUD objective line (null: leave Game's own)
   objective(roundIdx: number, rounds: number): string | null {
+    if (this.sea.active) return this.sea.objective();
     if (this.raid.active) return this.raid.objective(roundIdx, rounds);
     if (this.strafe.active) return this.strafe.objective(roundIdx, rounds);
     if (!this.rounds) return null;
@@ -373,6 +384,7 @@ export class PilotOps {
     this.wing.drawOverlay(ctx, W, H, cam);
     this.raid.drawOverlay(ctx, W, H, cam);
     this.strafe.drawOverlay(ctx, W, H, cam);
+    this.sea.drawOverlay(ctx, W, H, cam);
     const under = new Map<Bomber, number>();
     for (const [f, t] of this.tracked) {
       if (!f.alive || !t.nearBomber) continue;

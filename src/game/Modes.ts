@@ -64,7 +64,7 @@ export const SURVIVAL_MODE: ModeDef = {
   id: 'survival', title: 'Survival',
   blurb: 'Endless rounds of fighters, each one larger and more aggressive than the last, with a final wave to close every round. Bombers lost are not replaced.',
   mission: (role) => survivalMission(role),
-  matches: (m) => m.id.startsWith('survival-'),
+  matches: (m) => m.id === 'survival-gunner' || m.id === 'survival-pilot',
   board: (role) => `survival-${role}`,
 };
 

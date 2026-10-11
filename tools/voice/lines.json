@@ -3288,6 +3288,34 @@
       "text": "All ten accounted for. Picked up by the RAF Air-Sea Rescue."
     },
     {
+      "group": "Sea Strike (SeaOps.ts)"
+    },
+    {
+      "id": "sea_start",
+      "role": "control",
+      "text": "Blue flight, ships ahead. Rockets for the escorts; save your bombs for the waterline."
+    },
+    {
+      "id": "sea_dive",
+      "role": "control",
+      "text": "U-boat crash-diving! Put a bomb alongside before she gets deep!"
+    },
+    {
+      "id": "sea_boss",
+      "role": "control",
+      "text": "Battleship ahead! Silence her guns, then hit the magazines at the waterline."
+    },
+    {
+      "id": "sea_salvo",
+      "role": "control",
+      "text": "Main guns tracking us! Break away from the marked area!"
+    },
+    {
+      "id": "sea_radar",
+      "role": "control",
+      "text": "Radar is down. Their flak crews are aiming by eye now."
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {
