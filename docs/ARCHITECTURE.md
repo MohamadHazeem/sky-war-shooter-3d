@@ -77,6 +77,13 @@ Most features need one line in one of these places:
 | Add something to the title screen | `Game.startMenu()`, next to `coop/onboarding/service/skills.onTitle`. |
 | Change the menu background camera | `MenuScene.update()`. |
 
+Formation set pieces (`SetPieces.ts`: a neighbouring B-17 downed by flak, a mid-air collision, a
+bomb-bay explosion, the straggler, P-51s diving past) are owned by `MidRound` and scheduled from its
+`update`, in the round's breather (`pacing.phase`); `Pacing.hushUntil` holds new groups back while one
+plays and `Cinematics.drama()` gives them a short drama shot. Their losses go through
+`World.scriptedLoss` and are left out of `world.combatLosses`, which the mission's loss limit uses.
+Trigger one with `sws.drama('flakHit')` (or `collision`, `bombBay`, `straggler`, `littleFriends`).
+
 A bigger system belongs in its own class that takes the `Game` (or a small host interface) in its
 constructor, like `MidRound`, `SpecialEvents`, `SkillRuntime` or `CoopSession`. Create it in the
 `Game` constructor and call it from one of the places above.

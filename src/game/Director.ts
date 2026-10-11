@@ -307,7 +307,7 @@ export class Director {
       g.flow.finish(false, 'You were seriously wounded and could no longer man your gun.');
       return;
     }
-    if (m.maxBombersLost !== undefined && w.stats.bombersLost > m.maxBombersLost) {
+    if (m.maxBombersLost !== undefined && w.combatLosses > m.maxBombersLost) {   // set-piece losses don't count (SetPieces.ts)
       g.flow.finish(false, `Too many bombers lost — ${w.stats.bombersLost} Fortresses went down.`);
       return;
     }

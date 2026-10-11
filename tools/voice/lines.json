@@ -1983,6 +1983,149 @@
       "text": "Blue Leader, you are leaving the target area. Come back round."
     },
     {
+      "group": "Phase 5 formation set pieces (SetPieces.ts / RandomEvents.ts straggler)"
+    },
+    {
+      "id": "sp_flak_hit",
+      "role": "top",
+      "text": "Direct hit on the ship next to us! Her wing's folding up!",
+      "urgent": true
+    },
+    {
+      "id": "sp_debris",
+      "role": "pilot",
+      "text": "Debris coming through! Hang on!",
+      "urgent": true
+    },
+    {
+      "id": "sp_flak_spin",
+      "role": "pilot",
+      "text": "She's rolling over… she's going into a flat spin. Get out, fellas — get out of there!"
+    },
+    {
+      "id": "sp_chute1",
+      "role": "waist",
+      "text": "Chute! I see a chute!",
+      "urgent": true
+    },
+    {
+      "id": "sp_count_{i}",
+      "role": "tail",
+      "text": "I count {pair}…",
+      "vars": {
+        "pair": [
+          "two chutes… three",
+          "three chutes… four",
+          "four chutes… five",
+          "five chutes… six"
+        ]
+      }
+    },
+    {
+      "id": "sp_chutes_few",
+      "role": "pilot",
+      "text": "That's all. Ten men on that ship… God help the rest of them.",
+      "rate": 160
+    },
+    {
+      "id": "sp_chutes_many",
+      "role": "tail",
+      "text": "That's all I see. Come on… come on… that's all of them.",
+      "rate": 175
+    },
+    {
+      "id": "sp_ram_warn",
+      "role": "top",
+      "text": "That one-ninety's on fire — he's not pulling out! He's going to ram her!",
+      "urgent": true
+    },
+    {
+      "id": "sp_ram_hit",
+      "role": "top",
+      "text": "He hit her! Oh God, they're locked together!",
+      "urgent": true
+    },
+    {
+      "id": "sp_ram_down",
+      "role": "pilot",
+      "text": "They're going down together… I don't see anybody getting out.",
+      "rate": 165
+    },
+    {
+      "id": "sp_ram_chute",
+      "role": "waist",
+      "text": "One chute! One man got out!",
+      "urgent": true
+    },
+    {
+      "id": "sp_ram_saved",
+      "role": "top",
+      "text": "Got him before he hit her! That was too close!",
+      "urgent": true
+    },
+    {
+      "id": "sp_bay_fire",
+      "role": "ball",
+      "text": "She's hit in the bomb bay — she's burning! She's going to blow!",
+      "urgent": true
+    },
+    {
+      "id": "sp_bay_wing",
+      "role": "waist",
+      "text": "Wing section coming past the window — look out!",
+      "urgent": true
+    },
+    {
+      "id": "sp_bay_gone",
+      "role": "pilot",
+      "text": "She's gone. The whole ship… just gone.",
+      "rate": 150
+    },
+    {
+      "id": "sp_bay_check",
+      "role": "pilot",
+      "text": "Crew, check in! Is anybody hurt back there?"
+    },
+    {
+      "id": "sp_bay_tail",
+      "role": "tail",
+      "text": "Tail's okay. Just… shook up.",
+      "rate": 170
+    },
+    {
+      "id": "sp_strag_feather",
+      "role": "top",
+      "text": "She's feathered two engines — she can't keep up! She's dropping out!"
+    },
+    {
+      "id": "sp_strag_plea",
+      "role": "radio",
+      "text": "They're chewing us to pieces back here! For God's sake, somebody help us!",
+      "urgent": true
+    },
+    {
+      "id": "sp_strag_lost",
+      "role": "pilot",
+      "text": "She's going down… we couldn't do a thing for her.",
+      "rate": 160
+    },
+    {
+      "id": "sp_lf_lead",
+      "role": "lead",
+      "text": "Big friends, hold your fire — Mustangs coming through!"
+    },
+    {
+      "id": "sp_lf_pass",
+      "role": "waist",
+      "text": "Little friends! Right past the window — they're all over him!",
+      "urgent": true
+    },
+    {
+      "id": "sp_lf_kill",
+      "role": "pilot",
+      "text": "They got him! God bless those little friends!"
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {

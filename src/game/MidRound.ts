@@ -13,6 +13,7 @@ import { ObjectiveHud, TagView } from '../ui/ObjectiveCard';
 import { Objective, OBJECTIVES, ObjectiveId } from './Objectives';
 import { RandomEvent, EVENTS, EventId } from './RandomEvents';
 import { tx } from '../i18n';
+import { SetPieces, SetPieceId } from './SetPieces';
 
 // Mid-round extras: pop-up bonus objectives (1–2 per round) and random in-flight events
 // (every 60–120 s). This file is the scheduler and the shared toolbox; the objectives live in
@@ -23,6 +24,7 @@ import { tx } from '../i18n';
 // where unavoidable, the World's private pilot/fire tables (see pin() and RandomEvents).
 // Nothing fires during a boss fight ((a as any).boss on a live aircraft) or during the first
 // 20 s of a round, and every event times out by itself, so the autoplay never gets stuck.
+// It also runs the formation set pieces (SetPieces.ts): objectives and events wait while one plays.
 
 const R = () => Math.random() * 2 - 1;
 const _p = new THREE.Vector3();
@@ -49,8 +51,10 @@ export class MidRound {
   private pins = new Map<Fighter, Aircraft>();
   roundT = 0;
   roundLeft = 0;
+  readonly setPieces: SetPieces;      // formation drama set pieces (SetPieces.ts)
 
   constructor(readonly game: Game, readonly engine: Engine, readonly input: Input, readonly ui: UI) {
+    this.setPieces = new SetPieces(this);
     this.hookKills();
   }
 
@@ -65,7 +69,8 @@ export class MidRound {
     if (m !== this.mission || w.time < this.lastTime - 1e-6) this.resetMission(m);
     this.lastTime = w.time;
     const live = g.state === 'playing' && !!m && !!w.player && w.player.alive && m.midRound !== false;
-    if (!live) { this.stopAll(); return; }
+    // a pause, perk card or hangar break freezes a formation set piece; it carries on afterwards
+    if (!live) { this.stopAll(g.state === 'paused' && m === this.mission && !!w.player?.alive); return; }
     if (roundIdx !== this.roundIdx || roundT0 !== this.roundT0) this.newRound(roundIdx, roundT0);
     const r = m!.round ? roundDef(m!, roundIdx) : { duration: Number.isFinite(m!.duration) ? m!.duration : 120, start: 7 };
     this.roundT = w.time - roundT0;
@@ -89,7 +94,7 @@ export class MidRound {
     } else if (this.objSlots.length && this.roundT >= this.objSlots[0]) {
       // a slot comes due: needs 25 s of the round left, no boss and a gap after an event
       if (this.roundLeft < 25) this.objSlots.length = 0;
-      else if (!boss && w.time - this.eventStartedAt > 6 && w.time - this.objEndedAt > 8) { this.objSlots.shift(); this.startObjective(); }
+      else if (!boss && !this.setPieces.busy && w.time - this.eventStartedAt > 6 && w.time - this.objEndedAt > 8) { this.objSlots.shift(); this.startObjective(); }
     }
 
     // ---- random events ----
@@ -103,11 +108,13 @@ export class MidRound {
       if (e.state !== 'active') this.finishEvent(e);
     } else {
       this.eventCd -= dt;
-      if (this.eventCd <= 0 && this.roundT >= EVENT_QUIET_START && this.roundLeft > 15 && !boss && w.time - this.objStartedAt > 6) {
+      if (this.eventCd <= 0 && this.roundT >= EVENT_QUIET_START && this.roundLeft > 15 && !boss && !this.setPieces.busy && w.time - this.objStartedAt > 6) {
         if (this.startEvent()) this.eventCd = EVENT_GAP[0] + Math.random() * (EVENT_GAP[1] - EVENT_GAP[0]);
         else this.eventCd = 5;
       }
     }
+    // ---- formation set pieces (lulls only; never on top of an objective or event) ----
+    this.setPieces.update(dt, boss, !!this.event);
     if (!this.event) this.hud.hidePrompt();
     this.drawTags();
   }
@@ -123,6 +130,7 @@ export class MidRound {
     this.objStartedAt = this.eventStartedAt = this.objEndedAt = -99;
     // the first event comes a little sooner than the 60-120 s gap, so round 1 gets one
     this.eventCd = 40 + Math.random() * 35;
+    this.setPieces.reset();
     this.hookKills();
   }
 
@@ -200,10 +208,11 @@ export class MidRound {
   }
 
   // Mission over / quit / restart: wind everything down without rewards
-  private stopAll() {
+  private stopAll(keepSetPiece = false) {
     if (this.objective) { this.objective.cancel(this); this.objective.end(this); this.objective = null; }
     if (this.event) { this.event.cancel(this); this.event.end(this); this.event = null; }
     this.pins.clear();
+    if (!keepSetPiece) this.setPieces.stop();
     this.hud.hideAll();
   }
 
@@ -225,6 +234,29 @@ export class MidRound {
   // Fighters the player can count kills on (both roles)
   aliveBombers(includePlayer = false): Bomber[] {
     return this.world.bombers().filter((b) => b.alive && (includePlayer || !b.isPlayer));
+  }
+
+  // The friendly bomber best placed in the player's gun view (ahead of distance), for events
+  // that should play where the player can see them
+  bomberInView(filter: (b: Bomber) => boolean = () => true): Bomber | null {
+    const w = this.world, arc = w.playerArc(), gun = w.playerGunPos();
+    if (!arc || !gun) return this.nearbyBomber(filter);
+    let best: Bomber | null = null, score = -Infinity;
+    for (const b of this.aliveBombers()) {
+      if (b.straggling || !filter(b)) continue;
+      const d = _p.copy(b.pos).sub(gun).length();
+      const s = _p.divideScalar(Math.max(1, d)).dot(arc) - d / 900;
+      if (s > score) { score = s; best = b; }
+    }
+    return best;
+  }
+
+  /** Aircraft an objective or event has marked (a set piece leaves them alone) */
+  markedAircraft() { return [...(this.objective?.tags() ?? []), ...(this.event?.tags() ?? [])].map((m) => m.a); }
+
+  /** Short drama shot (Cinematics.drama: kill-cam setting and rules). False: not now. */
+  dramaCam(focus: (out: THREE.Vector3) => boolean, dur: number, title: string, sub: string): boolean {
+    return this.game.cine.drama(focus, dur, title, sub);
   }
 
   // A friendly bomber near the player's own position (visible from the guns)
@@ -338,6 +370,13 @@ export class MidRound {
     if (this.roundIdx < 0) this.newRound(0, this.world.time);
     const o = this.startObjective(id);
     return o ? `objective ${id}: ${o.title}` : `objective ${id} not available now`;
+  }
+
+  devDrama(id: SetPieceId) {
+    if (this.game.state !== 'playing') return 'not playing';
+    if (this.role !== 'gunner') return 'set pieces are staged for the gunner';
+    if (this.event) { this.event.cancel(this); this.finishEvent(this.event); }
+    return this.setPieces.dev(id);
   }
 
   devEvent(id: EventId) {

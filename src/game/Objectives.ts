@@ -217,14 +217,14 @@ class NoLoss extends Objective {
     this.limit = Math.max(20, c.roundLeft - 1); this.merit = 200;
   }
   start(c: MidRound) {
-    this.lost0 = c.world.stats.bombersLost;
+    this.lost0 = c.world.combatLosses;   // formation set pieces (SetPieces.ts) don't count
     c.radio('noloss', c.role === 'gunner' ? 'Pilot' : 'Big Friend', c.role === 'gunner' ? 'Group lead says hold it together — nobody drops out of this box!' : 'Little friends, stay close. We can\'t afford to lose another ship.');
   }
   update(_dt: number, c: MidRound) {
-    if (c.world.stats.bombersLost > this.lost0) this.lose(tx('a B-17 went down'));
+    if (c.world.combatLosses > this.lost0) this.lose(tx('a B-17 went down'));
   }
   timeout(c: MidRound) {
-    if (c.world.stats.bombersLost > this.lost0) this.lose(tx('a B-17 went down')); else this.win();
+    if (c.world.combatLosses > this.lost0) this.lose(tx('a B-17 went down')); else this.win();
   }
   protected frac() { return 1 - this.timeLeft / this.limit; }
   protected progressText() { return tx('{n} s to go', { n: Math.max(0, Math.ceil(this.timeLeft)) }); }

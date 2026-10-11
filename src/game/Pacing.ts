@@ -137,6 +137,7 @@ export class Pacing {
   private beatenT = -1;          // round time the final wave was beaten
   private lullDone = false;
   private music: number | null = null;   // intensity override for this frame (applied in frame())
+  hushUntil = -1;                // world time: no new groups before it (a formation set piece is playing, SetPieces.ts)
 
   constructor(private world: World, private ui: UI, private engine: Engine, private modes: ModeRunner, private hooks: PacingHooks) {}
 
@@ -168,6 +169,9 @@ export class Pacing {
       }
       this.music = 0.12;
     }
+
+    // ---- formation set piece: hold the next group back while it plays (never the final wave) ----
+    if (w.time < this.hushUntil && this.finalT < 0) out.hold = true;
 
     // ---- final wave ----
     if (prof.final && t >= paceMarks(r, prof).final && this.finalT < 0 && t < r.duration) this.startFinal(m, r, t, enemies, last);
@@ -204,7 +208,7 @@ export class Pacing {
 
   private newRound(m: Mission, roundIdx: number) {
     this.mission = m; this.roundIdx = roundIdx;
-    this.finalT = -1; this.beatenT = -1; this.queue = []; this.lullDone = false; this.finalCount = 0;
+    this.finalT = -1; this.beatenT = -1; this.queue = []; this.lullDone = false; this.finalCount = 0; this.hushUntil = -1;
     this.phase = 'wait';
     if (roundIdx === 0) this.log = [];
   }
