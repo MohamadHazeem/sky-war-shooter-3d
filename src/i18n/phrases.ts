@@ -1,3 +1,4 @@
+import crewRoles from './ar/crewRoles';
 import secondTour from './ar/secondTour';
 // Arabic phrase tables, keyed by the exact English text shown by the game.
 // One file per area under ./ar/ so they can be maintained independently.
@@ -28,7 +29,7 @@ import crewroom from './ar/crewroom';
 import manual from './ar/manual';
 
 // manual first: its generic words (Low, Close, Zoom...) never override another screen's wording
-const TABLES: PhraseTable[] = [secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom];
+const TABLES: PhraseTable[] = [secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles];
 
 export const PHRASES: Record<string, string> = Object.assign({}, ...TABLES.map((t) => t.phrases));
 export const PATTERNS: Pattern[] = TABLES.flatMap((t) => t.patterns ?? []);

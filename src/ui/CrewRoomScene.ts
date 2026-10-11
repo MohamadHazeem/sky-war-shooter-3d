@@ -65,6 +65,7 @@ function ensureStyle() {
   st.textContent = `
 #crewRoom { position: fixed; inset: 0; z-index: 60; background: #0a0806; overflow: hidden; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 #crewRoom canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#crewRoom .crm-memorial { position: absolute; top: 82px; left: 22px; right: 22px; color: #e0c896; font-family: "Oswald", sans-serif; font-size: 16px; z-index: 2; }
 #crewRoom .crm-cast { position: absolute; inset: 0; pointer-events: none; }
 #crewRoom .crm-man { position: absolute; width: var(--ps); transform: translate(-50%, -50%) scale(0.94); transition: transform .35s ease, opacity .35s ease, filter .35s ease; opacity: 0.62; filter: saturate(0.55) brightness(0.72); text-align: center; }
 #crewRoom .crm-man img { display: block; width: var(--ps); height: var(--ps); border-radius: 50%; box-shadow: 0 6px 18px rgba(0,0,0,0.65), 0 0 0 2px rgba(20,16,10,0.9), 0 0 0 3px rgba(185,167,111,0.35); }
@@ -830,8 +831,9 @@ export class CrewRoomScene {
     try {
       const role = m.role;
       const wounded = role === 'gunner' && base ? MEN.filter((x) => crewRoster.men[x.id].wounds > (base!.wounds[x.id] ?? Infinity)).map((x) => x.id as Speaker) : [];
-      const hospital = wounded.filter((id) => crewRoster.men[id].rest > 0);
-      const patched = wounded.filter((id) => !hospital.includes(id));
+      const memorial = MEN.filter((x) => crewRoster.men[x.id].dead).map((x) => x.id);
+      const hospital = MEN.filter((x) => crewRoster.men[x.id].rest > 0 && !crewRoster.men[x.id].dead).map((x) => x.id);
+      const patched = wounded.filter((id) => !hospital.includes(id) && !memorial.includes(id));
       const nem = g.specials?.nemesis?.st;
       const last = nem?.last;
       const aces = last && last.n === nem!.missions && last.mission === m.title ? last.items.map((it) => ({ last: it.ace.last, fate: it.enc.fate, byPlayer: it.enc.byPlayer })) : [];
@@ -840,7 +842,7 @@ export class CrewRoomScene {
       const tt = finale ? totals(camp) : null;
       const ctx: CrewRoomCtx = {
         mission: m.id, role, kills: d.kills, shots: d.rounds ?? 0, hits: d.hits ?? 0,
-        lost: d.bombersLost, total: d.bombersTotal, hospital, patched,
+        lost: d.bombersLost, total: d.bombersTotal, hospital, patched, memorial,
         rookies: role === 'gunner' ? base?.rookies ?? [] : [],
         aces, luftwaffe: camp.luftwaffe,
         tour: tt ? { kills: tt.kills, lost: tt.lost } : undefined,
@@ -914,6 +916,7 @@ class Running {
     root.setAttribute('aria-label', tx('Crew room'));
     const touch = document.body.classList.contains('touch');
     root.innerHTML = `<div class="crm-cast"></div>
+      ${scene.memorial.length ? `<div class="crm-memorial">${scene.memorial.map((id) => esc(tx('In memory of {who}', { who: tx(manDef(id).call) }))).join('<br>')}</div>` : ''}
       <div class="crm-cap"><b>${esc(tx(v.place))}</b><span>${esc(tx(m.date))} · ${esc(tx(v.time))}</span></div>
       <button class="crm-skip" type="button">${esc(tx('Skip scene'))} ›</button>
       <div class="crm-sub fade" aria-live="polite"><span class="who"></span><span class="txt"></span></div>

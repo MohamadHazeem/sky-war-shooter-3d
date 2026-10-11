@@ -1,0 +1,38 @@
+{
+  "result": [
+    {
+      "crew": "Replacement Fisher",
+      "seconds": 300,
+      "range": 400,
+      "shots": 1347,
+      "hits": 591,
+      "hitRate": "43.88%",
+      "skill": {
+        "spread": 1.13,
+        "leadC": 0.9,
+        "leadW": 0.7909999999999999,
+        "react": 1.13,
+        "burst": 1.13,
+        "engage": 0.87
+      }
+    },
+    {
+      "crew": "Level 10 Dawson",
+      "seconds": 300,
+      "range": 400,
+      "shots": 1934,
+      "hits": 1095,
+      "hitRate": "56.62%",
+      "skill": {
+        "spread": 0.75,
+        "leadC": 0.9,
+        "leadW": 0.5249999999999999,
+        "react": 0.75,
+        "burst": 0.76,
+        "engage": 1.24
+      }
+    }
+  ],
+  "quality": "low",
+  "errors": []
+}

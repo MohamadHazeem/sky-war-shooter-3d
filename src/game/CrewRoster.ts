@@ -1,12 +1,13 @@
 // Crew with personalities: ten named crewmen with portraits, voices, gun skills, levels,
 // wounds and seat assignments. Persisted in localStorage (sws3d.crew.v1).
 //
-// - Skills (accuracy, traverse, burst discipline) drive the AI gunners on the player's own
-//   B-17 (aiGunnerSkill, read by World.bomberGunners) and give the player a small bonus at
-//   the seat the crewman mans (crewSeatLoadout, wrapped around the GunnerController loadout).
+// - Gunnery drives aim/reaction; legacy discipline controls bursts on the player's own
+//   B-17 (aiGunnerSkill, read by World.bomberGunners). Personal seat bonuses still wrap
+//   the GunnerController loadout through crewSeatLoadout.
 // - XP from kills made at his station, by the player or by the AI gunner, levels 1-10.
-// - A crewman wounded in a round sits out the next round; wounded in the last round he
-//   misses the next mission. A replacement rookie (low skill) takes his gun meanwhile.
+// - A lightly wounded crewman sits out a round; serious wounds require two hospital
+//   missions. A rare wounded veteran loss on a destroyed ship is permanent. Men wounded
+//   late miss the next mission. A replacement rookie (low skill) takes the seat meanwhile.
 //   The Crew Chief perk, a flesh wound, the flight surgeon or merit points can heal him.
 // - The hangar roster (ui/CrewPanel.ts) assigns gunners to the five gun stations; the
 //   sixth enlisted man works the radio. A specialist in his own seat gets a skill bonus.
@@ -19,6 +20,7 @@ import type { Loadout } from './Upgrades';
 import type { World } from '../world/World';
 import { VOICE_LINES } from '../audio/voiceLines';
 import { tx } from '../i18n';
+import { roleStat, roleMultiplier, roleEffects, NEUTRAL_EFFECTS, POSITION_WEIGHTS, ROLE_STATS, type RoleStat, type CrewEffects } from './CrewRoles';
 
 export type ManId = 'brenner' | 'doyle' | 'stern' | 'kessler' | 'mendez' | 'gallo' | 'reilly' | 'price' | 'walsh' | 'dawson';
 export type Post = StationId | 'radio';                        // the six enlisted positions
@@ -105,7 +107,7 @@ export const ROOKIES: Record<CrewId, Rookie> = {
   waistR: { call: 'Sgt. Novak', last: 'Novak', look: rookieLook('#efc2a0', '#c2a466', '#555', 'cap') },
   tail: { call: 'Sgt. Fisher', last: 'Fisher', look: rookieLook('#ebbc98', '#3b2a1c', '#555', 'helmet') },
 };
-const ROOKIE_SKILL = 24;
+export const ROOKIE_SKILL = 24;
 
 // ---------- levels ----------
 export const MAX_CREW_LEVEL = 10;
@@ -130,12 +132,12 @@ export interface AISkill {
 }
 export const DEFAULT_SKILL: Readonly<AISkill> = Object.freeze({ spread: 1, leadC: 0.9, leadW: 0.7, react: 1, burst: 1, engage: 1 });
 
-interface ManState { xp: number; kills: number; missions: number; rest: number; wounds: number; seen: number }
+interface ManState { xp: number; kills: number; missions: number; rest: number; wounds: number; seen: number; dead: boolean }
 interface Saved { v: 1; men: Partial<Record<ManId, Partial<ManState>>>; seats: Partial<Record<Post, ManId>> }
 
 const KEY = 'sws3d.crew.v1';
 const DEFAULT_SEATS: Record<Post, ManId> = { top: 'mendez', radio: 'gallo', ball: 'reilly', waistL: 'price', waistR: 'walsh', tail: 'dawson' };
-const fresh = (): ManState => ({ xp: 0, kills: 0, missions: 0, rest: 0, wounds: 0, seen: 1 });
+const fresh = (): ManState => ({ xp: 0, kills: 0, missions: 0, rest: 0, wounds: 0, seen: 1, dead: false });
 const num = (v: unknown, d: number) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
 
 // What the game hands the roster (structural, so this file needs no UI import)
@@ -164,6 +166,8 @@ export class CrewRoster {
   readonly resting = new Set<ManId>();   // sitting out this whole mission
   private flew = new Set<ManId>();
   notes: string[] = [];                 // latest roster news for the hangar (heals, level-ups)
+  private effectCache: CrewEffects | null = null;
+  readonly serious = new Set<ManId>();
   private skillCache: Partial<Record<StationId, AISkill>> = {};
   private listeners: ((e: RosterEvent, who?: ManId) => void)[] = [];
   private aiHits = new WeakMap<object, number>();   // fighter -> world time our AI gunners last hit it
@@ -178,8 +182,9 @@ export class CrewRoster {
           const v = s.men?.[m.id];
           if (!v) continue;
           const st = this.men[m.id];
+          st.dead = v.dead === true;
           st.xp = Math.max(0, num(v.xp, 0)); st.kills = Math.max(0, num(v.kills, 0)); st.missions = Math.max(0, num(v.missions, 0));
-          st.rest = Math.max(0, Math.min(1, num(v.rest, 0))); st.wounds = Math.max(0, num(v.wounds, 0)); st.seen = num(v.seen, levelOf(st.xp));
+          st.rest = Math.max(0, Math.min(2, Math.floor(num(v.rest, 0)))); st.wounds = Math.max(0, num(v.wounds, 0)); st.seen = num(v.seen, levelOf(st.xp));
         }
         // seats: six distinct gunners, else fall back to the default crew positions
         const seats = { ...DEFAULT_SEATS, ...(s.seats ?? {}) } as Record<Post, ManId>;
@@ -195,14 +200,39 @@ export class CrewRoster {
   }
 
   on(f: (e: RosterEvent, who?: ManId) => void) { this.listeners.push(f); }
-  private emit(e: RosterEvent, who?: ManId) { this.skillCache = {}; for (const f of this.listeners) f(e, who); }
+  private emit(e: RosterEvent, who?: ManId) { this.skillCache = {}; this.effectCache = null; for (const f of this.listeners) f(e, who); }
 
   // ---------- queries ----------
   level(id: ManId) { return levelOf(this.men[id].xp); }
   stat(id: ManId, s: Stat) { return Math.min(100, manDef(id).base[s] + STAT_PER_LEVEL * (this.level(id) - 1)); }
+  roleStat(id: ManId, stat: RoleStat) { return roleStat(id, stat, this.level(id)); }
+  effects(): Readonly<CrewEffects> {
+    if (!this.active) return NEUTRAL_EFFECTS;
+    return this.effectCache ??= roleEffects((p, s) => {
+      const id = this.occ[p];
+      return id ? this.roleStat(id, s) * (this.wounded.has(id) ? 0.7 : 1) : ROOKIE_SKILL;
+    });
+  }
+  recommend() {
+    // Six men: exhaustively score 720 layouts; UI-only, stable tie breaking.
+    let best = -Infinity, layout = { ...this.seats };
+    const visit = (i: number, remaining: ManId[], score: number, seats: Record<Post, ManId>) => {
+      if (i === POSTS.length) { if (score > best) { best = score; layout = { ...seats }; } return; }
+      const p = POSTS[i];
+      for (const id of remaining) {
+        let fit = 0;
+        for (const s of ROLE_STATS) fit += (POSITION_WEIGHTS[p][s] ?? 0) * (this.isOut(id) ? ROOKIE_SKILL : this.roleStat(id, s));
+        if (!this.isOut(id) && manDef(id).specialty === p) fit += 3;
+        seats[p] = id;
+        visit(i + 1, remaining.filter((m) => m !== id), score + fit, seats);
+      }
+    };
+    visit(0, GUNNERS.map((m) => m.id), 0, { ...this.seats });
+    this.seats = layout; this.save(); if (!this.active) this.placeAll(); this.emit('change');
+  }
   postOf(id: ManId): Post | null { return POSTS.find((p) => this.seats[p] === id) ?? null; }
   // out now, or (wounded this round) out from the next round
-  isOut(id: ManId) { return this.resting.has(id) || this.benched.has(id) || this.wounded.has(id) || (!this.active && this.men[id].rest > 0); }
+  isOut(id: ManId) { return this.men[id].dead || this.resting.has(id) || this.benched.has(id) || this.wounded.has(id) || (!this.active && this.men[id].rest > 0); }
   // who is at a crew position right now (null = rookie replacement)
   occupant(c: CrewId): ManId | null { return this.occ[c] ?? null; }
   rookie(c: CrewId): Rookie { return ROOKIES[c]; }
@@ -243,9 +273,10 @@ export class CrewRoster {
     if (k) return k;
     const id = this.occ[POST_CREW[station]];
     const n = (s: Stat) => Math.max(0.05, Math.min(1, this.effSkill(station, s, id) / 100));
-    const a = n('acc'), t = n('trav'), d = n('disc');
+    const a = id ? Math.min(100, this.roleStat(id, 'gunnery') + (manDef(id).specialty === station ? 6 : 0)) * (this.wounded.has(id) ? 0.7 : 1) : ROOKIE_SKILL;
+    const gun = roleMultiplier(a), d = n('disc');
     // skill 50 reproduces the old AI gunner exactly
-    k = { spread: 1.45 - 0.9 * a, leadC: 0.9 + 0.2 * (a - 0.5), leadW: 0.7 * (1.4 - 0.8 * a), react: 1.4 - 0.8 * t, burst: 1.3 - 0.6 * d, engage: 0.7 + 0.6 * d };
+    k = { spread: 2 - gun, leadC: 0.9, leadW: 0.7 * (2 - gun), react: 2 - gun, burst: 1.25 - 0.5 * d, engage: 0.75 + 0.5 * d };
     this.skillCache[station] = k;
     return k;
   }
@@ -261,6 +292,8 @@ export class CrewRoster {
 
   // Flight surgeon (merit points): back on duty straight away
   heal(id: ManId, why = 'Flight surgeon') {
+    if (this.men[id].dead) return;
+    this.serious.delete(id);
     this.men[id].rest = 0;
     this.resting.delete(id); this.wounded.delete(id); this.benched.delete(id);
     this.note(tx('{why}: {who} is fit for duty', { why: tx(why), who: tx(manDef(id).call) }));
@@ -277,7 +310,7 @@ export class CrewRoster {
   beginMission(world: World, ui: RosterUI, role: 'gunner' | 'pilot') {
     if (this.world === world) void this.active;   // close out an abandoned mission first
     this.world = world; this.ui = ui;
-    this.wounded.clear(); this.benched.clear(); this.resting.clear(); this.flew.clear();
+    this.wounded.clear(); this.benched.clear(); this.resting.clear(); this.flew.clear(); this.serious.clear();
     this.live = role === 'gunner';
     this.missionBomber = world.playerBomber;
     world.crew.onWound = this.live ? (c) => this.onWound(c) : null;
@@ -291,11 +324,11 @@ export class CrewRoster {
       };
     }
     if (!this.live) { this.placeAll(); this.emit('mission'); return; }
-    for (const m of MEN) if (this.men[m.id].rest > 0) this.resting.add(m.id);
+    for (const m of MEN) if (this.men[m.id].rest > 0 || this.men[m.id].dead) this.resting.add(m.id);
     this.place();
     for (const m of MEN) if (this.resting.has(m.id)) {
       const pos = m.gunner ? POST_CREW[this.postOf(m.id)!] : m.home;
-      ui.feed(tx('{who} is resting — {rookie} (rookie) takes his place', { who: tx(m.call), rookie: tx(ROOKIES[pos].call) }), 'loss');
+      ui.feed(tx(this.men[m.id].dead ? '{who} is remembered — {rookie} (rookie) takes his place' : '{who} is resting — {rookie} (rookie) takes his place', { who: tx(m.call), rookie: tx(ROOKIES[pos].call) }), 'loss');
     }
     this.emit('mission');
   }
@@ -333,16 +366,19 @@ export class CrewRoster {
     if (!this.active) return;
     const ui = this.ui;
     if (perks.includes('medic') && this.wounded.size) {
-      const id = [...this.wounded][0];
-      this.wounded.delete(id);
-      ui?.feed(tx('Crew Chief patched up {who} — back on his gun', { who: tx(manDef(id).call) }), 'mine');
+      const id = [...this.wounded].find((m) => !this.serious.has(m));
+      if (id) {
+        this.wounded.delete(id);
+        ui?.feed(tx('Crew Chief patched up {who} — back on his gun', { who: tx(manDef(id).call) }), 'mine');
+      }
     }
-    for (const id of [...this.wounded]) if (Math.random() < 0.2) {
+    for (const id of [...this.wounded]) if (!this.serious.has(id) && Math.random() < 0.2) {
       this.wounded.delete(id);
       ui?.feed(tx('{who}: just a scratch — staying on his gun', { who: tx(manDef(id).call) }), 'mine');
     }
     this.benched.clear();
     for (const id of this.wounded) this.benched.add(id);
+    for (const id of this.serious) this.benched.add(id);
     this.wounded.clear();
     this.place();
     // every position now has a fit man (or a fresh rookie) in it
@@ -359,19 +395,30 @@ export class CrewRoster {
   endMission(success: boolean) { if (this.active) this.finish(success, true); }
 
   private finish(success: boolean, completed: boolean) {
+    // At most one fatal casualty: only a wounded veteran actually aboard a lost ship,
+    // with at least three combat losses. Scripted losses never trigger this roll.
+    if (completed && this.world?.playerBomber?.alive === false && this.world.combatLosses >= 3) {
+      const candidates = [...this.wounded].filter((id) => !this.men[id].dead && this.level(id) >= 3 && !this.resting.has(id) && !this.benched.has(id));
+      if (candidates.length && Math.random() < 0.03 * this.effects().seriousWound) {
+        const id = candidates[Math.floor(Math.random() * candidates.length)];
+        this.men[id].dead = true;
+        this.note(tx('In memory of {who}', { who: tx(manDef(id).call) }));
+      }
+    }
     this.live = false;
     for (const m of MEN) {
       const st = this.men[m.id];
+      if (st.dead) continue;
       if (this.resting.has(m.id)) { if (completed) st.rest = Math.max(0, st.rest - 1); continue; }
       if (this.flew.has(m.id) && completed) { st.missions++; this.award(m.id, success ? XP_MISSION_OK : XP_MISSION_FAIL, false); }
-      if (this.wounded.has(m.id)) {
-        st.rest = 1;
-        if (success && Math.random() < 0.3) { st.rest = 0; this.note(tx('Flight surgeon: {who}\'s wound was light, fit for the next mission', { who: tx(m.call) })); }
-        else this.note(tx('{who} is wounded and misses the next mission', { who: tx(m.call) }));
+      if (this.wounded.has(m.id) || this.benched.has(m.id) || this.serious.has(m.id)) {
+        st.rest = this.serious.has(m.id) ? 2 : 1;
+        if (!this.serious.has(m.id) && success && Math.random() < 0.3) { st.rest = 0; this.note(tx('Flight surgeon: {who}\'s wound was light, fit for the next mission', { who: tx(m.call) })); }
+        else this.note(tx(st.rest > 1 ? '{who} is hospitalized for two missions' : '{who} is wounded and misses the next mission', { who: tx(m.call) }));
       }
     }
     if (this.world) this.world.crew.onWound = null;
-    this.wounded.clear(); this.benched.clear(); this.resting.clear(); this.flew.clear();
+    this.wounded.clear(); this.benched.clear(); this.resting.clear(); this.flew.clear(); this.serious.clear();
     this.save();
     this.placeAll();
     this.emit('change');
@@ -382,6 +429,7 @@ export class CrewRoster {
   private onWound(c: CrewId) {
     const id = this.occ[c];
     if (id) {
+      if (Math.random() < 0.25 * this.effects().seriousWound) this.serious.add(id);
       this.wounded.add(id);
       this.men[id].wounds++;
       this.save();
@@ -410,22 +458,22 @@ export class CrewRoster {
   private place() {
     for (const p of POSTS) {
       const id = this.seats[p];
-      this.occ[POST_CREW[p]] = this.resting.has(id) || this.benched.has(id) ? null : id;
+      this.occ[POST_CREW[p]] = this.men[id].dead || this.resting.has(id) || this.benched.has(id) ? null : id;
     }
-    for (const m of MEN) if (!m.gunner) this.occ[m.home] = this.resting.has(m.id) || this.benched.has(m.id) ? null : m.id;
+    for (const m of MEN) if (!m.gunner) this.occ[m.home] = this.men[m.id].dead || this.resting.has(m.id) || this.benched.has(m.id) ? null : m.id;
     for (const c of CREW) {
       const id = this.occ[c.id];
       if (id) this.flew.add(id);
       // radio calls ("Sgt. Dawson is hit at the left waist gun!") name whoever is there now
       crewMember(c.id).name = id ? manDef(id).call : ROOKIES[c.id].call;
     }
-    this.skillCache = {};
+    this.skillCache = {}; this.effectCache = null;
   }
 
   // Out of a mission (menu / hangar): everyone at his seat, resting men replaced
   private placeAll() {
-    for (const p of POSTS) { const id = this.seats[p]; this.occ[POST_CREW[p]] = this.men[id].rest > 0 ? null : id; }
-    for (const m of MEN) if (!m.gunner) this.occ[m.home] = this.men[m.id].rest > 0 ? null : m.id;
+    for (const p of POSTS) { const id = this.seats[p]; this.occ[POST_CREW[p]] = this.men[id].dead || this.men[id].rest > 0 ? null : id; }
+    for (const m of MEN) if (!m.gunner) this.occ[m.home] = this.men[m.id].dead || this.men[m.id].rest > 0 ? null : m.id;
     this.flew.clear();
     for (const c of CREW) { const id = this.occ[c.id]; crewMember(c.id).name = id ? manDef(id).call : ROOKIES[c.id].call; }
   }
@@ -449,4 +497,4 @@ export function crewSeatLoadout(l: Loadout, station: () => StationId): Loadout {
   return o;
 }
 
-if (import.meta.env.DEV) (window as any).swsCrew = crewRoster;
+if (import.meta.env.DEV && typeof window !== 'undefined') (window as any).swsCrew = crewRoster;

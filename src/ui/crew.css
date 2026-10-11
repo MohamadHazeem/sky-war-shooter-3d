@@ -17,7 +17,7 @@
 }
 
 /* ---- hangar roster ---- */
-.crewroster .cr-hint { color: var(--ink-dim); font-size: 12px; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; }
+.crewroster .cr-hint { opacity: 1; letter-spacing: 0; color: var(--ink-dim); font-size: 12px; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; }
 .crewroster .cr-notes { border-left: 3px solid var(--khaki); padding: 4px 10px; margin-bottom: 8px; font-size: 12px; color: var(--ink); background: rgba(185, 167, 111, 0.08); }
 .crewroster .cr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; }
 .crewroster .cr-seat { border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); padding: 8px 10px 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s; text-align: left; }
@@ -50,3 +50,12 @@
 .crewroster .cr-heal:disabled { opacity: 0.45; cursor: not-allowed; }
 .crewroster .cr-rookie { margin-top: 6px; font-size: 11px; color: var(--warn); font-family: 'IBM Plex Mono', monospace; }
 .crewroster .cr-grid.off .cr-face { width: 52px; height: 52px; }
+
+.crewroster .cr-role { font-size: 12px; line-height: 1.5; color: var(--ink-dim); margin-bottom: 8px; }
+.crewroster .cr-recommend { margin-bottom: 10px; }
+.crewroster .cr-seat:focus-visible { outline: 2px solid var(--warn); outline-offset: 2px; }
+.crewroster .cr-memorial { margin-top: 16px; border-top: 1px solid var(--khaki); color: var(--khaki); }
+html[dir=rtl] .crewroster .cr-seat { text-align: right; }
+html[dir=rtl] .crewroster .cr-stats div { grid-template-columns: 90px 1fr 24px; }
+html[dir=rtl] .crewroster .cr-post, html[dir=rtl] .crewroster .cr-spec { letter-spacing: 0; }
+@media (max-width: 420px) { .crewroster .cr-grid { grid-template-columns: minmax(0, 1fr); } .crewroster .cr-face { width: 44px; height: 44px; } }
