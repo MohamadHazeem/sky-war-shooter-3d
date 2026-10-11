@@ -4,6 +4,7 @@ import { Atmos } from '../render/Atmosphere';
 import { gunTextures, interiorTextures } from '../render/Textures';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { addWaistProps } from './InteriorProps';
+import { buildBallDetails, buildTailDetails } from './TurretInteriors';
 import { turretGlassDome } from './TurretGlass';
 
 // Procedural first-person geometry for the B-17 gun positions: fuselage interior,
@@ -60,6 +61,12 @@ export class AmmoBelt {
   private length: number;
   phase = 0;
   visibleRounds: number;
+  private tan = new THREE.Vector3();
+  private pos = new THREE.Vector3();
+  private x = new THREE.Vector3();
+  private y = new THREE.Vector3();
+  private ahead = new THREE.Vector3();
+  private behind = new THREE.Vector3();
   private m = new THREE.Matrix4();
   private q = new THREE.Quaternion();
   private s = new THREE.Vector3(1, 1, 1);
@@ -103,9 +110,7 @@ export class AmmoBelt {
   }
 
   update() {
-    const tan = new THREE.Vector3();
-    const pos = new THREE.Vector3();
-    const x = new THREE.Vector3(), y = new THREE.Vector3();
+    const { tan, pos, x, y } = this;
     const z = this.roundDir;
     const frac = this.phase - Math.floor(this.phase);
     const shift = Math.floor(this.phase) % 4;
@@ -118,9 +123,12 @@ export class AmmoBelt {
       // rounds slide toward the feed tray (u = 0) as the phase grows
       const u = Math.min(1, Math.max(0, ((i + 1 - frac) * this.pitch) / this.length));
       this.curve.getPointAt(u, pos);
-      this.curve.getTangentAt(u, tan);
+      this.curve.getPointAt(Math.min(1, u + 0.0001), this.ahead);
+      this.curve.getPointAt(Math.max(0, u - 0.0001), this.behind);
+      tan.subVectors(this.ahead, this.behind).normalize();
       // basis: z = round axis (parallel to bore), x = along belt (projected), y = z cross x
       x.copy(tan).addScaledVector(z, -tan.dot(z)).normalize();
+      if (x.lengthSq() < 0.001) x.set(1, 0, 0);
       y.crossVectors(z, x).normalize();
       this.m.makeBasis(x, y, z);
       this.q.setFromRotationMatrix(this.m);
@@ -139,7 +147,7 @@ function lathe(points: [number, number][], segs = 24) {
 }
 
 // Browning AN/M2 .50 caliber, flexible mount version with spade grips.
-export function buildM2(opts: { ringSight: boolean; belt: boolean; beltSide: 1 | -1 }): GunModel {
+export function buildM2(opts: { ringSight: boolean; belt: boolean; beltSide: 1 | -1; beltPoints?: THREE.Vector3[] }): GunModel {
   const g = new THREE.Group();
   const metal = gunMetal(), park = gunParkerized();
   const recoilGroup = new THREE.Group();
@@ -242,7 +250,7 @@ export function buildM2(opts: { ringSight: boolean; belt: boolean; beltSide: 1 |
   let belt: AmmoBelt | undefined;
   if (opts.belt) {
     const s = opts.beltSide;
-    const pts = [
+    const pts = opts.beltPoints ?? [
       new THREE.Vector3(0.0, 0.035, -0.02),
       new THREE.Vector3(s * 0.12, 0.03, -0.02),
       new THREE.Vector3(s * 0.26, -0.02, -0.06),
@@ -460,13 +468,15 @@ export function buildTurret(kind: 'top' | 'ball'): { group: THREE.Group; guns: G
   const g = new THREE.Group();
   const fmat = frameMat();
   const guns: GunModel[] = [];
-  // a single gun, centred below the eye line (the player prefers one barrel to the twin mount)
-  {
-    const m = buildM2({ ringSight: false, belt: true, beltSide: 1 });
-    m.group.position.set(0, kind === 'ball' ? -0.22 : -0.19, kind === 'ball' ? 0.1 : -0.05);
+  // Ball: paired breeches flank the curled-up gunner. Top retains its existing view.
+  for (const side of (kind === 'ball' ? [-1, 1] : [0])) {
+    const m = buildM2({ ringSight: false, belt: true, beltSide: side < 0 ? -1 : 1,
+      beltPoints: kind === 'ball' ? [new THREE.Vector3(0, 0.035, -0.02), new THREE.Vector3(side * 0.10, 0.10, -0.06), new THREE.Vector3(side * 0.10, 0.10, -0.42)] : undefined });
+    m.group.position.set(side * 0.36, kind === 'ball' ? -0.22 : -0.19, kind === 'ball' ? 0.1 : -0.05);
     g.add(m.group);
     guns.push(m);
   }
+  if (kind === 'ball') g.add(buildBallDetails());
   // Reflector sight: glass with an illuminated reticle
   const c = document.createElement('canvas');
   c.width = c.height = 256;
@@ -520,20 +530,21 @@ export function buildTailInterior(): THREE.Group {
   const g = new THREE.Group();
   const fmat = frameMat();
   const mat = interiorMat();
-  // A box-ish cocoon around the gunner, with a window opening facing +Z (gun frame forward)
+  g.add(buildTailDetails());
   const mk = (w: number, h: number, d: number, x: number, y: number, z: number, m = mat) => {
     const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
     b.position.set(x, y, z); b.castShadow = true; b.receiveShadow = true; g.add(b);
   };
-  mk(0.08, 0.9, 1.4, 0.48, 0.05, -0.2);
-  mk(0.08, 0.9, 1.4, -0.48, 0.05, -0.2);
-  mk(1.0, 0.08, 1.4, 0, 0.5, -0.2);
-  mk(1.0, 0.08, 1.4, 0, -0.4, -0.2);
   // window frame (forward)
   mk(0.035, 0.62, 0.04, 0.34, 0.14, 0.5, fmat);
   mk(0.035, 0.62, 0.04, -0.34, 0.14, 0.5, fmat);
   mk(0.72, 0.035, 0.04, 0, 0.46, 0.5, fmat);
   mk(0.72, 0.05, 0.05, 0, -0.17, 0.5, fmat);
+
+  // Sheet skin between the glazed aperture and the cone; no floating frame in open sky.
+  mk(0.20, 1.02, 0.035, 0.44, 0.09, 0.52);
+  mk(0.20, 1.02, 0.035, -0.44, 0.09, 0.52);
+  mk(0.72, 0.20, 0.035, 0, 0.56, 0.52);
 
   // Armour plate bolted to the sill below the window, with a rivet row top and bottom
   const armour = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.07, 0.075, 0.06), roughness: 0.45, metalness: 0.6, envMap: envRef.tex, envMapIntensity: 0.15 });
@@ -547,49 +558,6 @@ export function buildTailInterior(): THREE.Group {
     r.position.set(-0.3 + i * 0.12, yy, 0.547);
     g.add(r);
   }
-
-  // Ammunition feed: sheet-metal troughs running back from each gun to an ammo can
-  // beside the seat. Gun pivots sit at x = +/-0.15 and the receiver ends at z = -0.45.
-  const feedMat = linkMat();
-  const canMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.1, 0.11, 0.06), roughness: 0.7, metalness: 0.35 });
-  const mkSolid = (d: [number, number, number], x: number, y: number, z: number, m: THREE.Material) => {
-    const b = new THREE.Mesh(new THREE.BoxGeometry(d[0], d[1], d[2]), m);
-    b.position.set(x, y, z); b.castShadow = true; b.receiveShadow = true; g.add(b);
-  };
-  // U-shaped trough: two side walls and a floor, built along x or z
-  const trough = (x: number, y: number, z: number, len: number, axis: 'x' | 'z') => {
-    const w = 0.035, h = 0.03, t = 0.004;
-    const off = (w - t) / 2;
-    const sideDims: [number, number, number] = axis === 'z' ? [t, h, len] : [len, h, t];
-    const floorDims: [number, number, number] = axis === 'z' ? [w, t, len] : [len, t, w];
-    const ox = axis === 'z' ? off : 0, oz = axis === 'z' ? 0 : off;
-    mkSolid(sideDims, x - ox, y, z - oz, feedMat);
-    mkSolid(sideDims, x + ox, y, z + oz, feedMat);
-    mkSolid(floorDims, x, y - (h - t) / 2, z, feedMat);
-  };
-  for (const s of [1, -1]) {
-    trough(s * 0.15, -0.085, -0.26, 0.4, 'z');        // runs back under the gun
-    trough(s * 0.24, -0.085, -0.46, 0.18, 'x');       // turns outward at the back
-    mkSolid([0.1, 0.2, 0.26], s * 0.36, -0.2, -0.5, canMat); // ammo can
-  }
-
-  // Padded seat back and cushion: the gunner's back rests on the front face at z = -0.56
-  const padMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.16, 0.1, 0.06), roughness: 0.85, metalness: 0.0 });
-  const back = new THREE.Mesh(new RoundedBoxGeometry(0.44, 0.44, 0.12, 4, 0.05), padMat);
-  back.position.set(0, -0.08, -0.62);
-  back.castShadow = true; back.receiveShadow = true;
-  g.add(back);
-  const buttonGeo = new THREE.SphereGeometry(0.008, 6, 4);
-  const buttonMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.04, 0.025, 0.015), roughness: 0.6 });
-  for (const bx of [-0.13, 0, 0.13]) for (const by of [-0.22, -0.08, 0.06]) {
-    const btn = new THREE.Mesh(buttonGeo, buttonMat);
-    btn.position.set(bx, by, -0.553);
-    g.add(btn);
-  }
-  const cushion = new THREE.Mesh(new RoundedBoxGeometry(0.44, 0.06, 0.34, 3, 0.02), padMat);
-  cushion.position.set(0, -0.33, -0.42);
-  cushion.castShadow = true; cushion.receiveShadow = true;
-  g.add(cushion);
 
   // Thin perspex pane filling the window opening (about x +/-0.32, y -0.145..0.44).
   // Transparent materials are routed to the post-cloud pass automatically.
@@ -629,4 +597,25 @@ export function buildTailInterior(): THREE.Group {
   };
   g.add(refl);
   return g;
+}
+
+// Keep warm-up materials alive so Three retains the shader programs after geometry cleanup.
+const warmedStationMaterials = new Set<THREE.Material>();
+export function warmTurretViewmodels(scene: THREE.Scene, at: THREE.Vector3) {
+  const groups = [buildTurret('ball').group, buildTurret('top').group, buildTailInterior()];
+  for (const g of groups) {
+    g.position.copy(at);
+    g.traverse(o => {
+      o.frustumCulled = false;
+      const m = o as THREE.Mesh;
+      if (m.isMesh) for (const material of Array.isArray(m.material) ? m.material : [m.material]) warmedStationMaterials.add(material);
+    });
+    scene.add(g);
+  }
+  return () => {
+    for (const g of groups) {
+      g.removeFromParent();
+      g.traverse(o => { const m = o as THREE.Mesh; if (m.isMesh) m.geometry.dispose(); if ((o as THREE.InstancedMesh).isInstancedMesh) (o as THREE.InstancedMesh).dispose(); });
+    }
+  };
 }

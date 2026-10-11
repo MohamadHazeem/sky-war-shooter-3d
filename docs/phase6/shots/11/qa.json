@@ -1,0 +1,102 @@
+{
+  "ball-ads": {
+    "ldr": {
+      "black": 0,
+      "white": 0,
+      "blackClusters": [],
+      "whiteClusters": []
+    },
+    "hdr": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    }
+  },
+  "ball-free-look-lock": {
+    "yawHeld": true,
+    "pitchHeld": true,
+    "headYaw": -0.43199999999999994,
+    "headPitch": -0.38399999999999995
+  },
+  "ball-brass": {
+    "pile": 0,
+    "flying": 0,
+    "shots": 40
+  },
+  "ball-low": {
+    "ldr": {
+      "black": 0,
+      "white": 0,
+      "blackClusters": [],
+      "whiteClusters": []
+    },
+    "hdr": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    }
+  },
+  "tail-ads": {
+    "ldr": {
+      "black": 0,
+      "white": 0,
+      "blackClusters": [],
+      "whiteClusters": []
+    },
+    "hdr": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    }
+  },
+  "tail-free-look-lock": {
+    "yawHeld": true,
+    "pitchHeld": true,
+    "headYaw": -0.43199999999999994,
+    "headPitch": -0.38399999999999995
+  },
+  "tail-brass": {
+    "pile": 40,
+    "flying": 0,
+    "shots": 40
+  },
+  "tail-low": {
+    "ldr": {
+      "black": 0,
+      "white": 0,
+      "blackClusters": [],
+      "whiteClusters": []
+    },
+    "hdr": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    }
+  },
+  "switchPrograms": [
+    {
+      "station": "ball",
+      "programs": 100
+    },
+    {
+      "station": "tail",
+      "programs": 100
+    },
+    {
+      "station": "ball",
+      "programs": 100
+    },
+    {
+      "station": "tail",
+      "programs": 100
+    }
+  ]
+}

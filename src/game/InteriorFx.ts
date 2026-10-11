@@ -51,14 +51,18 @@ export class SunShafts {
   readonly group = new THREE.Group();
   private shafts: { mesh: THREE.Mesh; pos: THREE.BufferAttribute; corners: THREE.Vector3[]; out: THREE.Vector3; mat: THREE.ShaderMaterial }[] = [];
 
-  constructor(leftZ: number, rightZ: number) {
+  constructor(leftZ: number, rightZ: number, apertures?: { corners: THREE.Vector3[]; out: THREE.Vector3 }[]) {
     const xAt = (y: number) => A * Math.sqrt(1 - (y / B) ** 2);
-    for (const [side, wz] of [[1, leftZ], [-1, rightZ]] as [number, number][]) {
+    const windows = apertures ?? ([1, -1] as const).map((side) => {
+      const wz = side === 1 ? leftZ : rightZ;
       const y0 = WIN_Y0 + 0.01, y1 = WIN_Y1 - 0.01;
       const corners = [
         new THREE.Vector3(side * xAt(y0), YC + y0, wz - WIN_W / 2), new THREE.Vector3(side * xAt(y1), YC + y1, wz - WIN_W / 2),
         new THREE.Vector3(side * xAt(y1), YC + y1, wz + WIN_W / 2), new THREE.Vector3(side * xAt(y0), YC + y0, wz + WIN_W / 2),
       ];
+      return { corners, out: new THREE.Vector3(side, 0.25, 0).normalize() };
+    });
+    for (const { corners, out } of windows) {
       // 4 side quads of a prism (flat-shaded, 4 vertices each): window edge (t = 0) to the far end (t = 1)
       const geo = new THREE.BufferGeometry();
       const pos = new THREE.BufferAttribute(new Float32Array(16 * 3), 3).setUsage(THREE.DynamicDrawUsage);
@@ -69,13 +73,13 @@ export class SunShafts {
       geo.setAttribute('aT', new THREE.BufferAttribute(new Float32Array(at), 1));
       geo.setAttribute('aU', new THREE.BufferAttribute(new Float32Array(au), 1));
       geo.setIndex(idx);
-      geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, YC, wz), 4);
+      geo.boundingSphere = new THREE.Sphere(corners[0].clone(), 4);
       const mat = shaftMaterial().clone();
       const mesh = new THREE.Mesh(geo, mat);
       mesh.renderOrder = 2;
       mesh.name = 'sunShaft';
       this.group.add(mesh);
-      this.shafts.push({ mesh, pos, corners, out: new THREE.Vector3(side, 0.25, 0).normalize(), mat });
+      this.shafts.push({ mesh, pos, corners, out, mat });
     }
   }
 

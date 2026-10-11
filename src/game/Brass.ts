@@ -3,11 +3,11 @@ import { sound } from '../audio/Sound';
 
 // Spent .50 cal brass, all instanced. Casings fly from the ejection port, tumble, bounce
 // and roll off the curved skin onto the waist walkway, where they settle into a pile that
-// grows through a long fight (capped: the oldest casings are recycled). At the turrets and
-// the tail they simply drop away out of sight. No allocation per shot or per frame.
+// grows through a long fight (capped: the oldest casings are recycled). Ball casings fall
+// into the slipstream; tail casings collect on its kneeling floor. No allocation per shot/frame.
 //
 // Coordinates are bomber-local (the flying pool sits on the bomber root, the pile on the
-// waist interior, which is at the bomber origin).
+// waist interior, which is at the bomber origin); the tail uses its fixed compartment frame.
 
 const FLY_CAP = 96;
 export const PILE_CAP = 900;
@@ -44,8 +44,8 @@ export class Brass {
   private nx: number; private nz: number; private z0: number;
   private clink = 0;
 
-  // zMin/zMax: walkway extent of the waist section
-  constructor(zMin: number, zMax: number) {
+  // zMin/zMax: collection extent; defaults preserve the waist walkway.
+  constructor(zMin: number, zMax: number, private floorTop = FLOOR_TOP, private halfWidth = WALK, private curvedSkin = true) {
     this.flying = new THREE.InstancedMesh(brassGeometry(), brassMaterial(), FLY_CAP);
     this.flying.count = 0;
     this.flying.frustumCulled = false;
@@ -58,7 +58,7 @@ export class Brass {
     this.pile.receiveShadow = true;
     this.pile.name = 'brassPile';
     this.z0 = zMin;
-    this.nx = Math.ceil((2 * WALK) / CELL);
+    this.nx = Math.ceil((2 * this.halfWidth) / CELL);
     this.nz = Math.ceil((zMax - zMin) / CELL);
     this.heights = new Uint8Array(this.nx * this.nz);
   }
@@ -94,21 +94,20 @@ export class Brass {
         // walkway planks, or the curved skin beside them (casings roll back toward the middle)
         const ax = Math.min(Math.abs(x), A * 0.98);
         const skin = YC - B * Math.sqrt(1 - (ax / A) ** 2) + R;
-        const floor = Math.abs(x) <= WALK ? FLOOR_TOP + R : Math.max(FLOOR_TOP + R, skin);
-        if (Math.abs(x) > WALK) V[k] -= Math.sign(x) * 3 * dt;
-        if (Math.abs(x) > A * 0.95) { P[k] = Math.sign(x) * A * 0.95; V[k] *= -0.3; }
+        const floor = Math.abs(x) <= this.halfWidth ? this.floorTop + R : this.curvedSkin ? Math.max(this.floorTop + R, skin) : this.floorTop + R;
+        if (Math.abs(x) > this.halfWidth) V[k] -= Math.sign(x) * 3 * dt;
+        if (Math.abs(x) > (this.curvedSkin ? A * 0.95 : this.halfWidth)) { P[k] = Math.sign(x) * (this.curvedSkin ? A * 0.95 : this.halfWidth - 0.015); V[k] *= -0.3; }
         if (P[k + 1] < floor) {
           P[k + 1] = floor;
           if (V[k + 1] < -0.4) {
             V[k + 1] *= -0.28; V[k] *= 0.55; V[k + 2] *= 0.55;
             this.bounces[i]++;
-            if (this.clink <= 0 && Math.random() < 0.25) { this.clink = 0.05; sound.brass(Math.abs(x) <= WALK); }   // on the walkway heap: a duller chink
+            if (this.clink <= 0 && Math.random() < 0.25) { this.clink = 0.05; sound.brass(Math.abs(x) <= this.halfWidth); }   // on the walkway heap: a duller chink
           } else { V[k + 1] = 0; V[k] *= 1 - Math.min(1, 6 * dt); V[k + 2] *= 1 - Math.min(1, 6 * dt); }
-          if (Math.abs(x) <= WALK && (this.bounces[i] >= 3 || Math.hypot(V[k], V[k + 1], V[k + 2]) < 0.15)) { this.settle(i); continue; }
+          if (Math.abs(x) <= this.halfWidth && (this.bounces[i] >= 3 || Math.hypot(V[k], V[k + 1], V[k + 2]) < 0.15)) { this.settle(i); continue; }
         }
         if (this.life[i] <= 0) { this.settle(i); continue; }
       } else {
-        if (P[k + 1] < -0.85) { P[k + 1] = -0.85; V[k + 1] *= -0.3; V[k] *= 0.5; V[k + 2] *= 0.5; if (Math.random() < 0.2) sound.brass(false, 1.1); }
         if (this.life[i] <= 0) { this.kill(i); continue; }
       }
       _e.set(this.rot[k], this.rot[k + 1], this.rot[k + 2]);
@@ -133,7 +132,7 @@ export class Brass {
   private settle(i: number) {
     const k = i * 3;
     if (!this.toPile[i]) { this.kill(i); return; }
-    let ix = Math.floor((THREE.MathUtils.clamp(this.pos[k], -WALK + 0.01, WALK - 0.01) + WALK) / CELL);
+    let ix = Math.floor((THREE.MathUtils.clamp(this.pos[k], -this.halfWidth + 0.01, this.halfWidth - 0.01) + this.halfWidth) / CELL);
     let iz = Math.floor((this.pos[k + 2] - this.z0) / CELL);
     if (iz < 0 || iz >= this.nz) { this.kill(i); return; }
     ix = THREE.MathUtils.clamp(ix, 0, this.nx - 1);
@@ -158,11 +157,11 @@ export class Brass {
     if (this.heights[c] < 255) this.heights[c]++;
     this.pileCell[slot] = c;
     // lying on its side, random heading; higher layers sit tilted on the ones below
-    const x = -WALK + (ix + 0.2 + Math.random() * 0.6) * CELL;
+    const x = Math.min(this.halfWidth - R, -this.halfWidth + (ix + 0.2 + Math.random() * 0.6) * CELL);
     const z = this.z0 + (iz + 0.2 + Math.random() * 0.6) * CELL;
     const tilt = layer ? (Math.random() * 2 - 1) * 0.35 : (Math.random() * 2 - 1) * 0.05;
     _e.set(tilt, Math.random() * Math.PI * 2, Math.PI / 2, 'YXZ');
-    _m.compose(_p.set(x, FLOOR_TOP + R + layer * R * 1.5, z), _q.setFromEuler(_e), _s.setScalar(1));
+    _m.compose(_p.set(x, this.floorTop + R + layer * R * 1.5, z), _q.setFromEuler(_e), _s.setScalar(1));
     this.pile.setMatrixAt(slot, _m);
     this.pile.count = this.pileN;
     this.pile.instanceMatrix.needsUpdate = true;
