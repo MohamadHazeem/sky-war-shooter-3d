@@ -6,6 +6,7 @@ import { segSphere } from '../world/Ballistics';
 import { Searchlights } from '../render/Searchlights';
 import { updateNightExhaust } from '../render/NightExhaust';
 import { weatherNow } from '../render/Weather';
+import { access } from '../core/Accessibility';
 import { sound } from '../audio/Sound';
 import { tx, CANVAS_MONO } from '../i18n';
 import { AA_MODE } from './AADefenceMode';
@@ -49,6 +50,9 @@ export class AADefence {
   private hudTime = 0;
   private burnTime = 0;
   private recoil = 0;
+  private blastShake = 0;
+  private smokeTime = 0;
+  private savedCirrus = 1;
   private hits = 0;
   private incomingText = '';
   private hitT = 0;
@@ -57,6 +61,10 @@ export class AADefence {
   private status: HTMLElement | null = null;
   private health: HTMLMeterElement | null = null;
   private assetText: HTMLElement | null = null;
+  private assetBars: HTMLMeterElement[] = [];
+  private ammoBar: HTMLMeterElement | null = null;
+  private heatBar: HTMLMeterElement | null = null;
+  private ammoText: HTMLElement | null = null;
   private gunText: HTMLElement | null = null;
   private choices: HTMLElement | null = null;
   private fromEye = new THREE.Vector3();
@@ -74,6 +82,9 @@ export class AADefence {
   }
   start() {
     this.active = true;
+    // The sky dome's stretched cirrus plane fans into dark radial lines from ground level.
+    // Keep volumetric weather clouds; suppress only this decorative high-altitude layer.
+    this.savedCirrus = this.g.engine.sky.cirrus.value; this.g.engine.sky.cirrus.value = 0;
     this.field = new AABattlefield(this.g.engine.quality);
     this.field.show(this.g.engine.scene);
     this.mounts = [aaMount(0), aaMount(1), aaMount(0)];
@@ -84,7 +95,7 @@ export class AADefence {
     }
     this.raiders.length = this.targets.length = 0;
     this.wave = 1; this.selected = 0; this.unlocked = 2; this.choosing = false;
-    this.traverse = this.ammoMult = 1; this.transition = this.recoil = this.hudTime = this.burnTime = this.hits = 0;
+    this.traverse = this.ammoMult = 1; this.blastShake = this.smokeTime = this.transition = this.recoil = this.hudTime = this.burnTime = this.hits = 0;
     this.g.world.playerIncendiary = this.g.world.playerExplosive = this.g.world.playerSplash = 0;
     this.g.world.playerWingDmg = this.g.world.playerExecute = 1;
     this.g.world.ballistics.playerHitScale = 1;
@@ -114,8 +125,26 @@ export class AADefence {
     const label = document.createElement('label'); label.textContent = tx('Base integrity');
     this.health = document.createElement('meter'); this.health.min = 0; this.health.max = 1; label.append(this.health); panel.append(label);
     this.assetText = document.createElement('div'); this.assetText.className = 'aa-assets'; panel.append(this.assetText);
+    this.assetBars.length = 0;
+    const icons = { tower: '▥', hangar: '⌂', bomber: '✈', fuel: '▰', pit: '⊕' };
+    const counts = { tower: 0, hangar: 0, bomber: 0, fuel: 0, pit: 0 };
+    for (const asset of this.field!.assets) {
+      const row = document.createElement('label'); row.className = 'aa-asset';
+      const icon = document.createElement('span'); icon.textContent = icons[asset.kind]; icon.setAttribute('aria-hidden', 'true');
+      const label = document.createElement('span'); label.textContent = tx(asset.label) + ' ' + (++counts[asset.kind]);
+      const bar = document.createElement('meter'); bar.min = 0; bar.max = 1; bar.setAttribute('aria-label', label.textContent);
+      row.append(icon, label, bar); this.assetText.append(row); this.assetBars.push(bar);
+    }
     const bottom = document.createElement('div'); bottom.className = 'aa-gun'; panel.append(bottom);
-    this.gunText = document.createElement('div'); bottom.append(this.gunText);
+    this.gunText = document.createElement('div'); this.gunText.className = 'aa-gun-title'; bottom.append(this.gunText);
+    const gauges = document.createElement('div'); gauges.className = 'aa-gauges'; bottom.append(gauges);
+    for (const name of ['Ammunition', 'Heat']) {
+      const label = document.createElement('label'); label.append(tx(name));
+      const meter = document.createElement('meter'); meter.min = 0; meter.max = 1; meter.setAttribute('aria-label', tx(name)); label.append(meter);
+      if (name === 'Ammunition') { this.ammoBar = meter; this.ammoText = document.createElement('span'); label.append(this.ammoText); }
+      else this.heatBar = meter;
+      gauges.append(label);
+    }
     for (let i = 0; i < 3; i++) {
       const b = document.createElement('button'); b.textContent = (i + 1) + ' · ' + tx(AA_GUNS[i === 1 ? 1 : 0].name);
       b.onclick = () => this.switchPit(i); bottom.append(b);
@@ -134,6 +163,7 @@ export class AADefence {
   release() {
     if (!this.active) return;
     this.active = false; this.choosing = false;
+    this.g.engine.sky.cirrus.value = this.savedCirrus;
     this.field?.dispose(); this.field = null; this.lights.clear();
     this.panel?.remove(); this.panel = null; document.body.classList.remove('aa-mode');
     this.raiders.length = this.targets.length = 0;
@@ -143,6 +173,7 @@ export class AADefence {
   }
   switchPit(i: number) {
     if (this.choosing || i < 0 || i >= this.unlocked || i === this.selected || this.g.state !== 'playing') return;
+    this.field!.rigs[this.selected].barrel.position.z = 0;
     this.fromEye.copy(this.g.engine.camera.position); this.selected = i; this.transition = 0.65; this.recoil = 0;
   }
   reload() {
@@ -160,7 +191,7 @@ export class AADefence {
       a.hp = Math.min(a.maxHp, a.hp + a.maxHp * 0.4); a.repair = 0; a.object.scale.y = a.originalY;
     }
     if (i === 3) { this.unlocked = 3; const pit = this.field!.pits[2]; pit.hp = pit.maxHp; pit.repair = 0; }
-    for (let j = 0; j < 3; j++) { const m = this.mounts[j]; m.ammo = Math.round(AA_GUNS[j === 1 ? 1 : 0].ammo * this.ammoMult); m.heat = m.reload = 0; m.locked = false; }
+    for (let j = 0; j < 3; j++) { const m = this.mounts[j]; m.ammo = Math.round(AA_GUNS[j === 1 ? 1 : 0].ammo * this.ammoMult); m.heat = m.reload = m.clipReload = 0; m.clip = 4; m.locked = false; }
     this.choosing = false; if (this.choices) this.choices.hidden = true;
     this.wave++; this.g.roundIdx = this.wave - 1; this.g.roundT0 = this.g.world.time;
     this.beginWave(); this.g.input.lock();
@@ -207,6 +238,7 @@ export class AADefence {
     if (g.photo.active) { g.photo.update(); g.ui.ctx.clearRect(0, 0, innerWidth, innerHeight); sound.setListener(g.engine.camera); g.input.endFrame(); return; }
     if (g.state === 'paused') { g.input.endFrame(); return; }
     this.field.base.update(w.time);
+    this.field.detail.update(g.engine.camera, w.time, this.targets.length > 0);
     if (this.choosing) {
       for (let i = 0; i < 4; i++) if (g.input.hit('Digit' + (i + 1))) { this.choose(i); break; }
       this.draw(); g.input.endFrame(); return;
@@ -241,6 +273,17 @@ export class AADefence {
     this.lights.group.visible = weatherNow.night > 0.5;
     if (weatherNow.night > 0.5) { this.lights.update(dt, this.targets); updateNightExhaust(this.targets, w.effects.glow); }
     this.camera(dt);
+    this.smokeTime += dt;
+    for (let i = 0; i < this.mounts.length; i++) {
+      const mount = this.mounts[i], rig = this.field.rigs[i];
+      rig.heat.emissiveIntensity = Math.max(0, mount.heat - 0.45) * 0.9;
+      rig.clip.visible = i !== 1 || (!mount.clipReload && !mount.reload);
+      if (mount.heat > 0.5 && this.smokeTime >= 0.14) {
+        this.p.set(i === 1 ? 0 : 0.32, -0.24, i === 1 ? 2.6 : 1.6); rig.barrel.localToWorld(this.p);
+        w.effects.gunSmoke(this.p, ZERO);
+      }
+    }
+    if (this.smokeTime >= 0.14) this.smokeTime = 0;
     g.combo.update(dt); this.hitT = Math.max(0, this.hitT - dt);
     sound.setListener(g.engine.camera); w.listener = g.engine.camera.position;
     w.ballistics.listener.copy(g.engine.camera.position);
@@ -304,6 +347,11 @@ export class AADefence {
     this.p.copy(cam.position).add(this.dir); cam.up.set(0, 1, 0); cam.lookAt(this.p);
     const fov = this.g.input.mouse(2) ? 42 : 68;
     if (cam.fov !== fov) { cam.fov = fov; cam.updateProjectionMatrix(); }
+    this.blastShake *= Math.exp(-dt * 4.5);
+    const shake = this.blastShake * this.blastShake * access.shake;
+    cam.rotateX(Math.sin(this.g.world.time * 63) * shake * 0.024);
+    cam.rotateZ(Math.sin(this.g.world.time * 49) * shake * 0.017);
+    cam.position.y += Math.sin(this.g.world.time * 71) * shake * 0.04;
     cam.updateMatrixWorld();
   }
   private fire(kind: number) {
@@ -311,7 +359,7 @@ export class AADefence {
     this.p.set(0, -0.24, 2.7).applyQuaternion(this.aimQuat).add(field.pits[this.selected].pos); this.p.y += 1.5;
     if (!kind) {
       for (let i = 0; i < 4; i++) {
-        this.p.set((i % 2 ? 1 : -1) * 0.32, -0.17 - Math.floor(i / 2) * 0.27, 2).applyQuaternion(this.aimQuat).add(field.pits[this.selected].pos); this.p.y += 1.5;
+        this.p.set((i % 2 ? 1 : -1) * 0.32, -0.17 - Math.floor(i / 2) * 0.27, 1.68).applyQuaternion(this.aimQuat).add(field.pits[this.selected].pos); this.p.y += 1.5;
         this.v.copy(this.dir); this.v.x += (Math.random() - 0.5) * 0.008; this.v.y += (Math.random() - 0.5) * 0.008;
         this.v.normalize().multiplyScalar(AA_GUNS[0].speed);
         w.ballistics.fire(this.p, this.v, 'allied', 16, true, TRACER, null, false, true, 3);
@@ -331,9 +379,14 @@ export class AADefence {
     this.recoil = kind ? 0.22 : 0.1;
     if (kind) w.effects.playerMuzzle(this.p, this.dir, ZERO);
     sound.playerGun(true, !!kind, true);
+    let emitted = 0;
     for (const c of field.cases) if (c.ttl <= 0) {
-      c.ttl = 1.4; c.mesh.visible = true; c.mesh.position.copy(this.eye);
-      c.vel.set(3, 3, 0).applyQuaternion(this.aimQuat); break;
+      c.ttl = 2.4; c.mesh.visible = true;
+      c.mesh.scale.set(kind ? 0.045 : 0.024, kind ? 0.045 : 0.024, kind ? 0.28 : 0.12);
+      this.p.set(kind ? 0.22 : (emitted % 2 ? -0.5 : 0.5), -0.22, 0.05).applyQuaternion(this.aimQuat).add(field.pits[this.selected].pos); this.p.y += 1.5;
+      c.mesh.position.copy(this.p);
+      c.vel.set((emitted % 2 ? -1 : 1) * (1.6 + Math.random()), 1 + Math.random(), -1.2).applyQuaternion(this.aimQuat);
+      if (++emitted >= (kind ? 1 : 4)) break;
     }
   }
   private attacks(dt: number) {
@@ -392,7 +445,9 @@ export class AADefence {
       s.mesh.visible = s.ttl > 0;
     }
     for (const c of this.field!.cases) if (c.ttl > 0) {
-      c.ttl -= dt; c.vel.y -= 9.81 * dt; c.mesh.position.addScaledVector(c.vel, dt); c.mesh.rotation.x += dt * 9; c.mesh.visible = c.ttl > 0 && c.mesh.position.y > 0;
+      c.ttl -= dt; c.vel.y -= 9.81 * dt; c.mesh.position.addScaledVector(c.vel, dt); c.mesh.rotation.x += dt * 9;
+      if (c.mesh.position.y < 0.19) { c.mesh.position.y = 0.19; c.vel.y = Math.abs(c.vel.y) * 0.25; c.vel.x *= 0.65; c.vel.z *= 0.65; }
+      c.mesh.visible = c.ttl > 0;
     }
   }
   private airburst(pos: THREE.Vector3, damage: number) {
@@ -414,7 +469,14 @@ export class AADefence {
       const d = pos.distanceTo(a.pos);
       if (d < radius + a.radius) this.damageAsset(a, damage * Math.max(0.15, 1 - Math.max(0, d - a.radius) / radius));
     }
-    if (pos.distanceTo(this.eye) < 90) this.g.engine.post.damageFlash = 0.12;
+    const near = Math.max(0, 1 - pos.distanceTo(this.eye) / 100);
+    if (near > 0) {
+      this.blastShake = Math.min(1, this.blastShake + near);
+      this.g.engine.post.damageFlash = 0.12 * near * access.flash;
+      for (let i = 0; i < 10; i++) {
+        w.effects.groundDust(pos);
+      }
+    }
   }
   damageAsset(a: AAAsset, damage: number) {
     if (!damageAAAsset(a, damage)) return;
@@ -454,8 +516,16 @@ export class AADefence {
     this.incomingText = next ? tx('Incoming raid · {seconds}s', { seconds: Math.max(0, Math.ceil(next.at - this.waveTime)) }) : '';
     this.status.textContent = tx('Wave {n}', { n: this.wave }) + '   ·   ' + tx('Score') + ' ' + this.g.score + '   ·   ' + tx('Kills') + ' ' + this.g.world.stats.kills + '   ×' + this.g.combo.scoreMult.toFixed(1);
     this.health!.value = aaIntegrity(this.field.assets);
-    this.assetText!.textContent = this.field.assets.filter(a => a.kind !== 'pit').map(a => tx(a.label) + ' ' + Math.ceil(a.hp / a.maxHp * 100) + '%').join(' · ');
-    this.gunText!.textContent = tx(gun.name) + ' · ' + tx('Gun integrity') + ' ' + Math.ceil(a.hp / a.maxHp * 100) + '%   ' + m.ammo + ' / ' + Math.round(gun.ammo * this.ammoMult) + '   ·   ' + tx('Heat') + ' ' + Math.round(m.heat * 100) + '%   ' + (a.repair > 0 ? tx('Gun crew wounded — repairing') + ' ' + Math.ceil(a.repair) : m.reload ? tx('Reloading') + ' ' + m.reload.toFixed(1) : m.locked ? tx('Barrel overheated') : '');
+    for (let i = 0; i < this.field.assets.length; i++) {
+      const asset = this.field.assets[i], bar = this.assetBars[i]; bar.value = asset.hp / asset.maxHp;
+      bar.parentElement!.classList.toggle('lost', asset.hp <= 0);
+      bar.parentElement!.classList.toggle('locked', asset.kind === 'pit' && this.field.pits.indexOf(asset) >= this.unlocked);
+    }
+    this.ammoBar!.value = m.ammo / Math.round(gun.ammo * this.ammoMult);
+    this.heatBar!.value = m.heat; this.heatBar!.classList.toggle('hot', m.heat > 0.75);
+    this.ammoText!.textContent = m.ammo + ' / ' + Math.round(gun.ammo * this.ammoMult);
+    this.gunText!.textContent = tx(gun.name) + ' · ' + tx('Gun integrity') + ' ' + Math.ceil(a.hp / a.maxHp * 100) + '% · ' +
+      (a.repair > 0 ? tx('Gun crew wounded — repairing') + ' ' + Math.ceil(a.repair) : m.reload ? tx('Reloading') + ' ' + m.reload.toFixed(1) : m.clipReload ? tx('Loading clip') : m.locked ? tx('Barrel overheated') : this.selected === 1 ? tx('Clip {n}/4', { n: m.clip }) : '');
     const buttons = this.panel!.querySelectorAll<HTMLButtonElement>('.aa-gun > button');
     for (let i = 0; i < 3; i++) { buttons[i].disabled = i >= this.unlocked; buttons[i].classList.toggle('selected', i === this.selected); }
   }

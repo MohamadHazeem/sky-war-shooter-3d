@@ -51,9 +51,9 @@ export const AA_GUNS = [
   { name: 'Quad .50', yawRate: 1.35, pitchRate: 0.95, ammo: 480, rate: 12, reload: 4, heat: 0.038, cool: 0.17, speed: 880 },
   { name: '40 mm Bofors', yawRate: 0.65, pitchRate: 0.5, ammo: 24, rate: 2, reload: 3.2, heat: 0.13, cool: 0.14, speed: 850 },
 ] as const;
-export interface AAMount { yaw: number; pitch: number; wantYaw: number; wantPitch: number; heat: number; ammo: number; reload: number; locked: boolean; cooldown: number }
+export interface AAMount { yaw: number; pitch: number; wantYaw: number; wantPitch: number; heat: number; ammo: number; reload: number; locked: boolean; cooldown: number; clip: number; clipReload: number }
 export function aaMount(kind: number): AAMount {
-  return { yaw: 0, pitch: 0.2, wantYaw: 0, wantPitch: 0.2, heat: 0, ammo: AA_GUNS[kind].ammo, reload: 0, locked: false, cooldown: 0 };
+  return { yaw: 0, pitch: 0.2, wantYaw: 0, wantPitch: 0.2, heat: 0, ammo: AA_GUNS[kind].ammo, reload: 0, locked: false, cooldown: 0, clip: 4, clipReload: 0 };
 }
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 export function traverseAA(m: AAMount, kind: number, dt: number, upgrade = 1) {
@@ -69,14 +69,16 @@ export function tickAAGun(m: AAMount, kind: number, dt: number, ammoMult = 1) {
   m.heat = Math.max(0, m.heat - AA_GUNS[kind].cool * dt);
   if (m.locked && m.heat < 0.3) m.locked = false;
   m.cooldown = Math.max(0, m.cooldown - dt);
-  if (m.reload > 0) { m.reload = Math.max(0, m.reload - dt); if (!m.reload) m.ammo = Math.round(AA_GUNS[kind].ammo * ammoMult); }
+  if (m.clipReload > 0) { m.clipReload = Math.max(0, m.clipReload - dt); if (!m.clipReload) m.clip = Math.min(4, m.ammo); }
+  if (m.reload > 0) { m.reload = Math.max(0, m.reload - dt); if (!m.reload) { m.ammo = Math.round(AA_GUNS[kind].ammo * ammoMult); m.clip = 4; m.clipReload = 0; } }
 }
 export function fireAAGun(m: AAMount, kind: number): boolean {
   const g = AA_GUNS[kind];
-  if (m.reload || m.locked || m.cooldown > 0) return false;
+  if (m.reload || m.clipReload || m.locked || m.cooldown > 0) return false;
   if (m.ammo <= 0) { m.reload = g.reload; return false; }
   m.ammo--; m.heat = Math.min(1, m.heat + g.heat); m.locked = m.heat >= 1;
   m.cooldown = 1 / g.rate;
+  if (kind === 1) { m.clip--; if (m.clip <= 0 && m.ammo > 0) m.clipReload = 0.9; }
   if (!m.ammo) m.reload = g.reload;
   return true;
 }

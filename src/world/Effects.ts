@@ -40,6 +40,8 @@ const C_EMBER1: [number, number, number] = [6, 1.4, 0.2];
 const C_FLASH: [number, number, number] = [32, 24, 13];
 const C_HALO: [number, number, number] = [2.4, 1.3, 0.5];
 const C_CLOUDGLOW: [number, number, number] = [0.5, 0.24, 0.07];
+const C_DUST: [number, number, number] = [0.48, 0.41, 0.29];
+const C_GUN_SMOKE: [number, number, number] = [0.55, 0.55, 0.55];
 const C_WISP0: [number, number, number] = [0.11, 0.07, 0.045];
 const C_WISP1: [number, number, number] = [0.085, 0.08, 0.075];
 const C_TFIRE1: [number, number, number] = [2, 0.4, 0.05];
@@ -196,7 +198,12 @@ export class Effects {
   }
 
   gunSmoke(pos: THREE.Vector3, vel: THREE.Vector3) {
-    this.smoke.spawn({ pos, vel, life: 0.9, size0: 0.3, size1: 1.6, color0: [0.55, 0.55, 0.55], alpha0: 0.16, alpha1: 0, drag: 2.5, lit: true });
+    this.emit(this.smoke, pos, vel, 0.9, 0.3, 1.6, C_GUN_SMOKE, undefined, 0.16, 0, 0, 2.5, 0, true);
+  }
+
+  groundDust(pos: THREE.Vector3) {
+    _v.set(R() * 3, 0.6, R() * 3); _p.copy(pos); _p.x += R() * 9; _p.z += R() * 9; _p.y = 0.3;
+    this.emit(this.smoke, _p, _v, 2.8, 1.2, 7, C_DUST, undefined, 0.42, 0, 0, 1.3, 0.2, true);
   }
 
   sparks(pos: THREE.Vector3, vel: THREE.Vector3, heavy = false) {

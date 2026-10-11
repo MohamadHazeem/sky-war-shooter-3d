@@ -9,12 +9,12 @@ const page = await context.newPage(), errors = [];
 page.on('pageerror', e => errors.push(e.stack));
 page.on('console', m => { if (m.type() === 'error' && /THREE|WebGL|shader/i.test(m.text())) errors.push(m.text()); });
 // Local verification must never send gameplay analytics, cloud saves or scores.
-await context.route(/https:\/\/.*(googleapis|firebaseio|firestore|identitytoolkit|securetoken).*/, route => route.abort());
+await context.route(/https:\/\/(?!(?:fonts\.googleapis\.com|fonts\.gstatic\.com)\/).*(googleapis|firebaseio|firestore|identitytoolkit|securetoken).*/, route => route.abort());
 await context.addInitScript(() => {
   localStorage.setItem('sws3d.seenVersion', '1.0');
   localStorage.setItem('sws3d.onboarding.v1', JSON.stringify({ promptDismissed: true }));
 });
-const shots = 'docs/phase7/shots/01';
+const shots = process.env.AA_SHOTS ?? 'docs/phase7/shots/01';
 await fs.mkdir(shots, { recursive: true });
 const result = {};
 const shot = async (name, frames = 2) => {
@@ -37,6 +37,7 @@ try {
   await page.locator('#briefing [data-go]').click();
   await page.waitForFunction(() => sws.game.aa.active);
   await page.evaluate(() => sws.step(480, 1 / 60));
+  await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(4000);
   await shot('day');
   result.initial = await page.evaluate(() => ({ wave: sws.game.aa.wave, aircraft: sws.game.aa.raiders.length, assets: sws.game.aa.field.assets.length }));
@@ -111,6 +112,8 @@ try {
   result.destroyed = await page.evaluate(() => sws.game.aa.field.assets.filter(a => a.kind === 'hangar').map(a => a.hp));
   assert.equal(result.destroyed[0], 0);
 
+  if (process.env.AA_POLISH) result.polish = await (await import('./aa_polish_views.mjs')).verifyPolish(page, shots);
+
   await page.evaluate(async () => {
     const { aaMission } = await import('/src/game/AADefenceMode.ts');
     sws.game.startMission(aaMission('night')); sws.step(850);
@@ -129,8 +132,8 @@ try {
   result.benchAA = await page.evaluate(() => { sws.step(60, 1 / 60, true); const programsBefore = sws.engine.renderer.info.programs.length; return { programsBefore, ...sws.bench(120) }; });
   assert.equal(result.benchAA.programs, result.benchAA.programsBefore);
   await page.evaluate(() => { sws.game.startMission(sws.CAMPAIGN[0]); sws.step(600); });
-  result.cleanup = await page.evaluate(() => ({ active: sws.game.aa.active, ground: sws.game.world.ballistics.ground !== null, field: !!sws.engine.scene.getObjectByName('aa-defence'), floor: sws.game.world.floorY }));
-  assert.deepEqual(result.cleanup, { active: false, ground: false, field: false, floor: 250 });
+  result.cleanup = await page.evaluate(() => ({ active: sws.game.aa.active, ground: sws.game.world.ballistics.ground !== null, field: !!sws.engine.scene.getObjectByName('aa-defence'), floor: sws.game.world.floorY, cirrus: sws.engine.sky.cirrus.value }));
+  assert.deepEqual(result.cleanup, { active: false, ground: false, field: false, floor: 250, cirrus: 1 });
   result.benchNormal = await page.evaluate(() => { sws.step(60, 1 / 60, true); return sws.bench(120); });
   // Original airfield defence still starts with a flying P-51 and its raid director.
   result.raid = await page.evaluate(async () => {

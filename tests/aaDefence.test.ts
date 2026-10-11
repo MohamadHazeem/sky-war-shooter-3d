@@ -86,6 +86,17 @@ describe('AA mounts and ammunition', () => {
     m.wantPitch = -5; traverseAA(m, 0, 5); expect(m.pitch).toBe(-0.06);
     m.yaw = 0; m.wantYaw = 2; traverseAA(m, 0, 0.1, 1.2); expect(m.yaw).toBeCloseTo(0.162);
   });
+  it('feeds Bofors four-round clips with a short pause, without replenishing reserve ammo', () => {
+    const m = aaMount(1);
+    for (let i = 0; i < 4; i++) { expect(fireAAGun(m, 1)).toBe(true); tickAAGun(m, 1, 0.5); }
+    expect(m.ammo).toBe(20); expect(m.clip).toBe(0);
+    expect(fireAAGun(m, 1)).toBe(false);
+    tickAAGun(m, 1, 0.4); expect(m.clip).toBe(4); expect(m.ammo).toBe(20);
+    expect(fireAAGun(m, 1)).toBe(true); expect(m.ammo).toBe(19); expect(m.clip).toBe(3);
+    const quad = aaMount(0);
+    for (let i = 0; i < 5; i++) { expect(fireAAGun(quad, 0)).toBe(true); tickAAGun(quad, 0, 0.1); }
+    expect(quad.clipReload).toBe(0);
+  });
   it('blocks during cooldown/reload/overheat and refills upgraded ammunition', () => {
     const m = aaMount(1); m.ammo = 1;
     expect(fireAAGun(m, 1)).toBe(true); expect(m.ammo).toBe(0); expect(m.reload).toBe(3.2);
