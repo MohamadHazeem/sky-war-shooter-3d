@@ -1,0 +1,265 @@
+{
+  "decoded": [
+    {
+      "id": "tanks",
+      "duration": 1.6140625,
+      "sampleRate": 16000
+    },
+    {
+      "id": "eng_hit_1",
+      "duration": 2.6844375,
+      "sampleRate": 16000
+    },
+    {
+      "id": "eng_hit_2",
+      "duration": 2.29875,
+      "sampleRate": 16000
+    },
+    {
+      "id": "strag_2",
+      "duration": 1.8758125,
+      "sampleRate": 16000
+    },
+    {
+      "id": "strag_3",
+      "duration": 2.53725,
+      "sampleRate": 16000
+    },
+    {
+      "id": "fire_1",
+      "duration": 1.84425,
+      "sampleRate": 16000
+    },
+    {
+      "id": "fire_2",
+      "duration": 1.5763125,
+      "sampleRate": 16000
+    },
+    {
+      "id": "kill_going_down__nav",
+      "duration": 1.2514375,
+      "sampleRate": 16000
+    },
+    {
+      "id": "kill_going_down__blue3",
+      "duration": 1.163125,
+      "sampleRate": 16000
+    },
+    {
+      "id": "start_pilot",
+      "duration": 3.785125,
+      "sampleRate": 16000
+    },
+    {
+      "id": "bombs",
+      "duration": 1.890875,
+      "sampleRate": 16000
+    },
+    {
+      "id": "escort",
+      "duration": 3.036875,
+      "sampleRate": 16000
+    },
+    {
+      "id": "chat_ball_clear",
+      "duration": 3.17475,
+      "sampleRate": 16000
+    },
+    {
+      "id": "chat_radio_group",
+      "duration": 3.4654375,
+      "sampleRate": 16000
+    },
+    {
+      "id": "chat_bombardier_sun",
+      "duration": 3.172625,
+      "sampleRate": 16000
+    },
+    {
+      "id": "chat_lead_fuel",
+      "duration": 2.7865,
+      "sampleRate": 16000
+    },
+    {
+      "id": "chat_bigfriend_thanks",
+      "duration": 3.3863125,
+      "sampleRate": 16000
+    },
+    {
+      "id": "chat_blue3_temps",
+      "duration": 3.089875,
+      "sampleRate": 16000
+    },
+    {
+      "id": "m_more_left",
+      "duration": 2.1186875,
+      "sampleRate": 16000
+    },
+    {
+      "id": "m_three_level",
+      "duration": 3.0136875,
+      "sampleRate": 16000
+    },
+    {
+      "id": "m_bigfriend_six",
+      "duration": 4.778875,
+      "sampleRate": 16000
+    },
+    {
+      "id": "m_escort_sixty",
+      "duration": 2.5453125,
+      "sampleRate": 16000
+    },
+    {
+      "id": "m_bigfriend_everywhere",
+      "duration": 1.7095625,
+      "sampleRate": 16000
+    },
+    {
+      "id": "rc_threat_ball",
+      "duration": 2.101375,
+      "sampleRate": 16000
+    },
+    {
+      "id": "rc_threat_waist_left",
+      "duration": 2.2940625,
+      "sampleRate": 16000
+    },
+    {
+      "id": "rc_threat_waist_right",
+      "duration": 1.6565,
+      "sampleRate": 16000
+    },
+    {
+      "id": "rc_blue3_splash",
+      "duration": 1.5105625,
+      "sampleRate": 16000
+    },
+    {
+      "id": "crew_levelup_1__waist",
+      "duration": 2.1170625,
+      "sampleRate": 16000
+    },
+    {
+      "id": "crew_levelup_2__waist",
+      "duration": 1.833875,
+      "sampleRate": 16000
+    },
+    {
+      "id": "wing_attack",
+      "duration": 1.637,
+      "sampleRate": 16000
+    },
+    {
+      "id": "wing_notarget",
+      "duration": 2.3380625,
+      "sampleRate": 16000
+    },
+    {
+      "id": "wing_cover",
+      "duration": 1.712375,
+      "sampleRate": 16000
+    },
+    {
+      "id": "raid_r1",
+      "duration": 3.775875,
+      "sampleRate": 16000
+    },
+    {
+      "id": "raid_r2",
+      "duration": 3.616,
+      "sampleRate": 16000
+    },
+    {
+      "id": "raid_r3",
+      "duration": 3.989125,
+      "sampleRate": 16000
+    },
+    {
+      "id": "wing4_0",
+      "duration": 1.5509375,
+      "sampleRate": 16000
+    },
+    {
+      "id": "wing4_1",
+      "duration": 3.128375,
+      "sampleRate": 16000
+    },
+    {
+      "id": "wing4_2",
+      "duration": 1.56475,
+      "sampleRate": 16000
+    },
+    {
+      "id": "bk_clear",
+      "duration": 3.1244375,
+      "sampleRate": 16000
+    },
+    {
+      "id": "bk_land",
+      "duration": 2.9965,
+      "sampleRate": 16000
+    },
+    {
+      "id": "bk_crash_crew",
+      "duration": 2.4314375,
+      "sampleRate": 16000
+    },
+    {
+      "id": "brief_m1_1",
+      "duration": 11.617,
+      "sampleRate": 16000
+    },
+    {
+      "id": "brief_m1_2",
+      "duration": 12.42625,
+      "sampleRate": 16000
+    },
+    {
+      "id": "brief_m1_3",
+      "duration": 10.9220625,
+      "sampleRate": 16000
+    },
+    {
+      "id": "clock_12_high__pilot",
+      "duration": 1.4295,
+      "sampleRate": 16000
+    },
+    {
+      "id": "clock_12_high__nav",
+      "duration": 0.87125,
+      "sampleRate": 16000
+    },
+    {
+      "id": "clock_12_high__tail",
+      "duration": 0.964125,
+      "sampleRate": 16000
+    },
+    {
+      "id": "clock_12_high__top",
+      "duration": 1.24325,
+      "sampleRate": 16000
+    },
+    {
+      "id": "clock_12_high__ball",
+      "duration": 0.7193125,
+      "sampleRate": 16000
+    },
+    {
+      "id": "clock_12_high__bombardier",
+      "duration": 1.1538125,
+      "sampleRate": 16000
+    },
+    {
+      "id": "clock_12_high__lead",
+      "duration": 1.11675,
+      "sampleRate": 16000
+    }
+  ],
+  "queued": true,
+  "duplicateRejected": true,
+  "radioText": "Number 1 engine is hit! Feathering number 1!",
+  "manifestClips": 1168,
+  "quality": "low",
+  "errors": []
+}

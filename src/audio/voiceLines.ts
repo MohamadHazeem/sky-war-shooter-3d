@@ -57,7 +57,7 @@ export const VOICE_LINES = {
   flak: { speakers: ["Navigator"], text: "Flak ahead. Initial point in two minutes — here it comes." },
   hot: { speakers: ["Pilot"], text: "Short bursts! You'll burn out that barrel!" },
   kill_focke_wulf: { speakers: ["Tail", "Pilot", "Top Turret", "Navigator"], text: "Scratch one Focke-Wulf!" },
-  kill_going_down: { speakers: ["Tail", "Pilot", "Top Turret", "Navigator"], text: "Got him! He's going down!" },
+  kill_going_down: { speakers: ["Tail", "Pilot", "Top Turret", "Navigator", "Blue Three"], text: "Got him! He's going down!" },
   kill_messerschmitt: { speakers: ["Tail", "Pilot", "Top Turret", "Navigator"], text: "Scratch one Messerschmitt!" },
   kill_nice_shooting: { speakers: ["Tail", "Pilot", "Top Turret", "Navigator"], text: "You got him! Nice shooting!" },
   kill_smoking: { speakers: ["Tail", "Pilot", "Top Turret", "Navigator"], text: "He's smoking — he's finished!" },
