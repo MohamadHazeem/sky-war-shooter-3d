@@ -56,7 +56,7 @@ export class WorldEvents {
           const repair = g.loadout.killRepair + (g.loadout.vampire && this.killCount % 3 === 0 ? 0.1 : 0);
           if (repair) {
             const pl = w.player;
-            if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * repair);
+            if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * repair * crewRoster.effects().repair);
             if (g.mission?.role === 'gunner') g.gunner.coolBarrel();
           }
           g.feel.onKill(victim, pts);

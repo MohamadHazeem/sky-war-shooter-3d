@@ -1,3 +1,4 @@
+import { crewRoster } from './CrewRoster';
 // SkillRuntime: wires the skill tree (Skills.ts) into a running game. Most nodes are plain
 // loadout multipliers that Progression.loadout() already folds in (damage taken, heat, rate,
 // spread, hit radius, aim assist, kill repairs). This file carries the rest:
@@ -88,7 +89,7 @@ export class SkillRuntime {
   // Game.startNextRound (after its patch-up): Damage Control's extra repairs, Fortress re-armed
   onRoundStart() {
     this.fortressUsed = false;
-    const extra = ROUND_PATCH * (this.L.repairMult - 1);
+    const extra = ROUND_PATCH * (this.L.repairMult - 1) * crewRoster.effects().repair;
     const pl = this.game.world.player;
     if (extra > 0 && pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * extra);
     if (pl) this.lastInteg = pl.integrity;
@@ -111,7 +112,7 @@ export class SkillRuntime {
         w.callout('sk_wind', g.mission.role === 'gunner' ? 'Engineer' : 'Lead', g.mission.role === 'gunner' ? 'Patched the worst of it, skipper! She\'ll hold!' : 'You\'re streaming smoke but still flying, Blue two. Stay in it!', 0, 3);
       }
       // Damage Control: steady in-flight patching once the shooting stops
-      if (this.L.regen > 0 && this.quietT > REGEN_QUIET) this.patch(pl, this.L.regen * dt);
+      if (this.L.regen > 0 && this.quietT > REGEN_QUIET) this.patch(pl, this.L.regen * dt * crewRoster.effects().repair);
       this.lastInteg = pl.integrity;
     }
     if (this.L.bossBreach) this.tuneBosses();

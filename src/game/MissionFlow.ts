@@ -180,15 +180,15 @@ export class MissionFlow {
     g.roundT0 = w.time;
     g.director.beginRound();
     this.roundKills0 = w.stats.kills;
+    crewRoster.onRoundStart(g.prog.perks); // apply next-round assignments before the engineer repairs
     // ground crew patch-up between rounds
     const pl = w.player;
-    if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * 0.3);
+    if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * 0.3 * crewRoster.effects().repair);
     g.applyLoadout(true);
     g.skills.onRoundStart();
     g.state = 'playing';
     g.engine.paused = false;
     g.input.lock();
-    crewRoster.onRoundStart(g.prog.perks);
     g.ui.banner(`ROUND ${g.roundIdx + 1}`, g.roundIdx >= 3 ? 'They\'re sending everything they have' : 'More fighters inbound', 2800);
     Chatter.onRoundStart();
   }

@@ -590,7 +590,7 @@ export class UI {
       mountHangarExtras(el, prog, role, render);
       foldHangar(el);   // phones: collapsible sections (HangarFold.ts)
     };
-    const key = (e: KeyboardEvent) => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); launch(); } };
+    const key = (e: KeyboardEvent) => { if ((e.target as HTMLElement)?.closest('.crewroster')) return; if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); launch(); } };
     const launch = () => { removeEventListener('keydown', key, true); el.classList.remove('show'); onLaunch(); };
     addEventListener('keydown', key, true);
     render();

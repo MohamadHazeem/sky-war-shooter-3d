@@ -1,3 +1,4 @@
+import { crewRoster } from './CrewRoster';
 import { isSecondTourId } from './SecondTour';
 import * as THREE from 'three';
 import type { Game } from './Game';
@@ -136,7 +137,7 @@ export class Director {
 
   // Track the next wave for the radar: fix its arrival point once it is < 25 s out
   private updateIncoming(eta: number | null, w: Wave | null, count = w?.count ?? 0) {
-    if (eta === null || !w || eta > 25) { this.incoming = null; if (eta === null) this.incomingOff = null; return; }
+    if (eta === null || !w || eta > 25 * crewRoster.effects().warning) { this.incoming = null; if (eta === null) this.incomingOff = null; return; }
     if (!this.incomingOff) this.incomingOff = this.predictWave(w);
     this.incoming = { pos: this.g.world.formationCenter.clone().add(this.incomingOff), eta, count };
   }

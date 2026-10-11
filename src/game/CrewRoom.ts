@@ -35,6 +35,7 @@ export interface CrewRoomCtx {
   lost: number;            // bombers lost from the formation
   total: number;           // bombers in the formation
   hospital: Speaker[];     // wounded this mission and out for the next one
+  memorial?: Speaker[];   // permanent casualties; absent from every later scene
   patched: Speaker[];      // wounded this mission, fit again
   rookies: { rookie: string; for: Speaker }[];   // replacements who flew for a resting man
   aces: { last: string; fate: Fate; byPlayer: boolean }[];
@@ -82,7 +83,7 @@ export interface SceneLine {
   cue?: Cue;
 }
 
-export interface Scene { v: Vignette; lines: SceneLine[]; present: Speaker[]; emptyBunk: boolean }
+export interface Scene { v: Vignette; lines: SceneLine[]; present: Speaker[]; emptyBunk: boolean; memorial: Speaker[] }
 
 // ---------------- voices ----------------
 
@@ -352,7 +353,7 @@ export const DYN_CAP = 6, DYN_CAP_FINALE = 9;
 
 /** Who is in the room: everyone but the men in the hospital and the ones the story sends away. */
 export function presentMen(v: Vignette, c: CrewRoomCtx): Speaker[] {
-  return ALL_MEN.filter((m) => !c.hospital.includes(m) && !(v.absent ?? []).includes(m));
+  return ALL_MEN.filter((m) => !c.hospital.includes(m) && !(c.memorial ?? []).includes(m) && !(v.absent ?? []).includes(m));
 }
 
 function speakerFor(d: LineDef, here: ReadonlySet<Speaker>): Speaker | null {
@@ -468,7 +469,7 @@ export function buildScene(missionId: string, c: CrewRoomCtx): Scene | null {
   // the room: everyone who speaks, then the rest of the men present (up to eight portraits)
   const speakers = [...new Set(lines.map((l) => l.who))];
   const cast = [...speakers, ...present.filter((m) => !speakers.includes(m))].slice(0, Math.max(8, speakers.length));
-  return { v, lines, present: cast, emptyBunk: !!v.emptyBunk || heavy };
+  return { v, lines, present: cast, emptyBunk: !!v.emptyBunk || heavy || !!c.memorial?.length, memorial: c.memorial ?? [] };
 }
 
 const LAST: Record<Speaker, string> = {
