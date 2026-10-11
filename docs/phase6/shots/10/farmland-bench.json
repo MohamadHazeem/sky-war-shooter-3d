@@ -1,0 +1,94 @@
+{
+  "revision": true,
+  "scan": {
+    "ldr": {
+      "black": 0,
+      "white": 0,
+      "blackClusters": [],
+      "whiteClusters": []
+    },
+    "hdr": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    }
+  },
+  "rows": [
+    {
+      "detail": 0,
+      "avg": 3.33,
+      "p50": 3.3,
+      "p95": 3.6,
+      "max": 3.7,
+      "calls": 1,
+      "tris": 1,
+      "programs": 78,
+      "w": 2055,
+      "h": 1118
+    },
+    {
+      "detail": 2,
+      "avg": 3.51,
+      "p50": 3.5,
+      "p95": 3.7,
+      "max": 4.3,
+      "calls": 1,
+      "tris": 1,
+      "programs": 78,
+      "w": 2055,
+      "h": 1118
+    },
+    {
+      "detail": 2,
+      "avg": 3.48,
+      "p50": 3.5,
+      "p95": 3.7,
+      "max": 4.2,
+      "calls": 1,
+      "tris": 1,
+      "programs": 78,
+      "w": 2055,
+      "h": 1118
+    },
+    {
+      "detail": 0,
+      "avg": 3.3,
+      "p50": 3.3,
+      "p95": 3.5,
+      "max": 3.7,
+      "calls": 1,
+      "tris": 1,
+      "programs": 78,
+      "w": 2055,
+      "h": 1118
+    },
+    {
+      "detail": 0,
+      "avg": 3.3,
+      "p50": 3.3,
+      "p95": 3.5,
+      "max": 3.8,
+      "calls": 1,
+      "tris": 1,
+      "programs": 78,
+      "w": 2055,
+      "h": 1118
+    },
+    {
+      "detail": 2,
+      "avg": 3.51,
+      "p50": 3.5,
+      "p95": 3.7,
+      "max": 4,
+      "calls": 1,
+      "tris": 1,
+      "programs": 78,
+      "w": 2055,
+      "h": 1118
+    }
+  ],
+  "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+  "errors": []
+}

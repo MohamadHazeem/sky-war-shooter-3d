@@ -520,6 +520,8 @@ export class CloudRenderer {
   scale = 0.5;
   steps = 56;
   temporal = false;
+  get groundShadowTexture() { return this.shadowRT.texture; }
+  get groundShadowBox() { return this.uniforms.uShadowBox.value as THREE.Vector3; }
   shadows = false;
   forceLegacy = false;    // dev A/B: the Low path at the current tier's buffer size
   alpha = 0.3;            // history blend: weight of a texel's fresh sample (one frame in four)

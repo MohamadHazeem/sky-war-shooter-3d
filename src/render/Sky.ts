@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Atmos, atmosUniforms, skyGLSL } from './Atmosphere';
+import { FAR_TERRAIN_GLSL, farTerrainUniforms } from './FarTerrain';
 import { TARGET_GLSL, targetUniforms } from './TargetGround';
 
 // Ground haze distance (m) for the dome's far terrain. Low-level operations (Countryside.ts) shorten
@@ -14,7 +15,7 @@ export class SkyDome {
   constructor() {
     const geo = new THREE.SphereGeometry(1, 64, 32);
     const mat = new THREE.ShaderMaterial({
-      uniforms: { ...atmosUniforms, ...targetUniforms, ...skyGround, uGroundXZ: { value: new THREE.Vector2() } },
+      uniforms: { ...atmosUniforms, ...targetUniforms, ...farTerrainUniforms, ...skyGround, uGroundXZ: { value: new THREE.Vector2() } },
       vertexShader: /* glsl */ `
         varying vec3 vDir;
         void main() {
@@ -26,6 +27,7 @@ export class SkyDome {
         ${skyGLSL}
         uniform vec2 uGroundXZ;
         uniform float uGroundHaze;
+        uniform float uHaze;
         varying vec3 vDir;
 
         float h2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -47,28 +49,7 @@ export class SkyDome {
           return smoothstep(0.5, 0.8, n / 0.875);
         }
 
-        // Patchwork farmland, woods, towns, rivers and the sea, seen from 7 km
-        vec3 terrain(vec2 xz, float dist) {
-          vec2 p = xz / 1000.0;
-          float land = fbm(p * 0.035 + 3.0);
-          // the bombing target always stands on dry land
-          if (uTgt.w > 0.0) land += 0.4 * (1.0 - smoothstep(uTgt.z * 1.2, uTgt.z * 2.6, length(xz - uTgt.xy)));
-          if (land < 0.4) return mix(vec3(0.025, 0.05, 0.075), vec3(0.04, 0.07, 0.09), fbm(p * 0.6)); // sea
-          // field grid with varied crops
-          vec2 cell = floor(p * vec2(3.1, 2.3) + vec2(fbm(p * 0.3) * 2.0));
-          float crop = h2(cell);
-          vec3 fields = crop < 0.3 ? vec3(0.09, 0.11, 0.05) : crop < 0.55 ? vec3(0.13, 0.12, 0.07) : crop < 0.8 ? vec3(0.07, 0.09, 0.045) : vec3(0.15, 0.13, 0.09);
-          float edge = smoothstep(0.0, 0.06, min(fract(p.x * 3.1 + fbm(p * 0.3) * 2.0), fract(p.y * 2.3 + fbm(p * 0.3) * 2.0)));
-          fields *= mix(0.75, 1.0, edge);
-          float wood = smoothstep(0.55, 0.62, fbm(p * 0.45 + 9.0));
-          vec3 c = mix(fields, vec3(0.03, 0.05, 0.03), wood);
-          float town = smoothstep(0.78, 0.82, fbm(p * 0.9 + 21.0));
-          c = mix(c, vec3(0.13, 0.12, 0.12), town * 0.8);
-          float river = 1.0 - smoothstep(0.0, 0.012, abs(fbm(p * 0.12 + 40.0) - 0.5));
-          c = mix(c, vec3(0.04, 0.07, 0.09), river * 0.9);
-          float coast = smoothstep(0.4, 0.43, land);
-          return mix(vec3(0.05, 0.06, 0.06), c, coast) * 1.35;
-        }
+        ${FAR_TERRAIN_GLSL}
 
         void main() {
           vec3 d = normalize(vDir);
@@ -87,8 +68,13 @@ export class SkyDome {
             if (uTgt.w > 0.0) g = targetGround(relG, alb, fw, light, uGroundXZ - uTgt.xy, d);
             else g = alb * light;
             // 7 km of air: strong blue haze, heavier toward the horizon
-            float haze = 1.0 - exp(-t / max(uGroundHaze, 1.0));
-            col = mix(g + uHorizon * 0.22, col, haze);
+            float haze = 1.0 - exp(-t / max(uGroundHaze * uHaze, 1.0));
+            // Desaturated blue-grey air between the camera and the countryside;
+            // preserve the low-level ground match, with stronger veiling at cruise.
+            float veil = (1.0 - exp(-t / 18500.0)) * smoothstep(800.0, 6500.0, uCamAlt);
+            vec3 air = mix(uHorizon, vec3(dot(uHorizon, vec3(0.2126, 0.7152, 0.0722))), 0.62) * vec3(0.82, 0.89, 1.0);
+            g = mix(g, air * 0.38, veil * 0.5);
+            col = mix(g + uHorizon * mix(0.22, 0.18, smoothstep(800.0, 6500.0, uCamAlt)), col, haze);
           }
           // Faint cirrus above the horizon, fading toward the horizon and the zenith. Skipped
           // when the camera is already above the layer (it would sit behind the viewer).
@@ -122,8 +108,14 @@ export class SkyDome {
 export function buildEnvironment(renderer: THREE.WebGLRenderer, sky: SkyDome): THREE.Texture {
   const scene = new THREE.Scene();
   const dome = sky.mesh.clone();
-  dome.material = (sky.mesh.material as THREE.ShaderMaterial).clone();
-  (dome.material as THREE.ShaderMaterial).uniforms = { ...atmosUniforms, uGroundHaze: { value: 24000 } };
+  const source = sky.mesh.material as THREE.ShaderMaterial;
+  // Share texture references, not cloneUniforms (cloud shadows are render-target textures).
+  dome.material = new THREE.ShaderMaterial({
+    vertexShader: source.vertexShader, fragmentShader: source.fragmentShader,
+    side: source.side, depthWrite: false, depthTest: false,
+    uniforms: { ...source.uniforms, ...atmosUniforms, uFarMapped: { value: 0 },
+      uFarQuality: { value: 0 }, uTgt: { value: new THREE.Vector4() }, uGroundHaze: { value: 24000 } },
+  });
   scene.add(dome);
   // Cloud-sea floor so the lower hemisphere reflects bright white like the real thing.
   const floor = new THREE.Mesh(
@@ -136,5 +128,8 @@ export function buildEnvironment(renderer: THREE.WebGLRenderer, sky: SkyDome): T
   const pmrem = new THREE.PMREMGenerator(renderer);
   const rt = pmrem.fromScene(scene, 0, 0.1, 20000);
   pmrem.dispose();
+  dome.material.dispose();
+  floor.geometry.dispose();
+  (floor.material as THREE.Material).dispose();
   return rt.texture;
 }
