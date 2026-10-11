@@ -119,6 +119,7 @@ export class World implements WorldView {
   private lastCallout = new Map<string, number>();
   events: Partial<WorldEvents> = {};
   stats = { kills: 0, shots: 0, hits: 0, damage: 0, bombersLost: 0, scriptedLost: 0, assists: 0, enemiesSpawned: 0 };
+  private warmKeep: THREE.Material[] = [];   // warm-up wreck materials kept alive so their shaders stay compiled
   crewWounded = 0;
   private lastWound = -99;
   readonly crew = new Crew();   // crew positions and who is wounded (gunner missions)
@@ -293,7 +294,7 @@ export class World implements WorldView {
     unwarmGlass();
     unwarmBoss();
     for (const f of dummies) this.scene.remove(f.root);
-    this.wrecks.clear();
+    this.warmKeep.push(...this.wrecks.clearKeepMaterials()); // keep the compiled wreck programs (Wrecks.clearKeepMaterials)
     this.effects.clear();
   }
 

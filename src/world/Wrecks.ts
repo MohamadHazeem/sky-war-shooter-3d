@@ -276,4 +276,14 @@ export class Wrecks {
     for (const p of this.pieces) { p.root.removeFromParent(); for (const m of p.mats) m.dispose(); }
     this.pieces = [];
   }
+
+  // Shader warm-up: drop the pieces but keep their materials alive. three.js releases a compiled
+  // program as soon as no material uses it any more, so disposing the warm-up wrecks threw the
+  // freshly compiled wreck shaders away and the first real kill compiled them again.
+  clearKeepMaterials(): THREE.Material[] {
+    const keep: THREE.Material[] = [];
+    for (const p of this.pieces) { p.root.removeFromParent(); keep.push(...p.mats); }
+    this.pieces = [];
+    return keep;
+  }
 }
