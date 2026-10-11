@@ -65,6 +65,11 @@ test('non-atomic leave denied', memberPath, 'delete', undefined, joined, joined,
 test('cannot delete other member', memberPath, 'delete', undefined, joined, left, false, 'pilot-b');
 test('valid squad score', 'scores/score-a', 'create', score, joined, scoreAfter);
 test('legacy global score unchanged', 'scores/score-a', 'create', Object.fromEntries(Object.entries(score).filter(([k]) => k !== 'squadron')), joined, scoreAfter);
+test('co-op squadron score', 'scores/score-a', 'create', { ...score, mode: 'coop-gunner' }, joined, scoreAfter);
+const crewScore = { ...score, name: 'A'.repeat(20) + ' + ' + 'B'.repeat(20), mode: 'coop-gunner' };
+delete crewScore.squadron;
+test('full co-op crew name', 'scores/score-a', 'create', crewScore, joined, scoreAfter);
+test('oversized co-op crew name denied', 'scores/score-a', 'create', { ...crewScore, name: crewScore.name + 'x' }, joined, scoreAfter, false);
 test('forged squad score denied', 'scores/score-a', 'create', score, created, scoreAfter, false, 'pilot-b');
 test('wrong squad denied', 'scores/score-a', 'create', { ...score, squadron: 'f'.repeat(32) }, joined, scoreAfter, false);
 test('score name impersonation denied', 'scores/score-a', 'create', { ...score, name: 'Parker' }, joined, scoreAfter, false);
