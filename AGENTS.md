@@ -14,9 +14,14 @@ Sky War Shooter 3D: a WWII browser game (Three.js r186 + TypeScript + Vite). Rea
   test results, anything not done) — this is how your work gets reviewed.
 
 ## Hard constraints
-- Do NOT use any browser, browser plugin, computer-use or GUI automation tool, and do not start
-  Playwright, Chrome, Edge, Firefox or Safari. Verification here is code + unit tests + `npm run
-  check`; visual and in-game checks are done separately by the reviewer.
+- Visual checks: you MAY use your browser tool (preferred) to verify your work in the running game.
+  Start your own dev server from your worktree on the port given in your task
+  (`npx vite --port <port> --strictPort`, in the background) and stop it when done. Hidden or
+  background tabs do not run requestAnimationFrame: drive frames with `window.sws.step(n, dt, render)`
+  and inspect with `sws.game`, `sws.autoplay(mission, steps)`, `sws.bench(n)`, `sws.vqa` (see
+  `docs/ARCHITECTURE.md` and `src/main.ts`). Use computer-use (real mouse/screen) only if nothing else
+  works, since it takes over the player's desktop. Save screenshots you rely on (small JPEGs) under
+  `docs/phase6/shots/<task>/` and reference them in your report.
 - No network installs of new dependencies unless the task says so.
 - Every new player-visible string needs Arabic: add it to a table in `src/i18n/ar/*.ts` (register new
   tables in `src/i18n/phrases.ts`). `tests/i18n.test.ts` enforces coverage of mission texts and
