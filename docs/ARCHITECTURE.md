@@ -101,3 +101,38 @@ not bit-for-bit repeatable, even with `Math.random` seeded, because some state d
 wall-clock time, such as the menu frames that run before the mission and the audio and voice cooldowns. To check a refactor, compare a campaign run before the change with
 one after it. Look at completions, console errors, and the spread of kills, bombers lost and mission
 times. Don't diff the logs.
+
+## Weather conditions (Phase 7)
+
+Modes use `game.setWeather('lightRain' | 'heavyRain' | 'snow' | 'fog' | 'thunderstorm' | 'clear')`.
+The string API retains the mission's sun elevation, azimuth and night/dusk mood and removes its old
+front. For explicit time, cover, or wind, pass a `Weather` object:
+
+```ts
+game.setWeather({
+  sunEl: 14, sunAz: 250, low: .8, high: .9, preset: 'lightRain',
+  wind: { speed: 10, direction: 90 }, // m/s; clockwise from world +Z (90 = +X), capped at 12
+  front: { at: 60, to: 'overcast', preset: 'snow', duration: 45 },
+});
+```
+
+Read `game.weatherNow` or import `weatherNow` from `render/WeatherState`. Its identity is stable;
+`rain`, `snow`, `fog` (extinction per metre), `windX/Z`, `spotting`, `aimError`, `traverse`,
+`turbulence`, `wetness`, `swell`, and `lightning` blend continuously through fronts. `preset` changes
+at the midpoint; use the numeric fields for effects. `WeatherPresets.ts` owns the data and pure
+visibility/wind math. Omitted presets retain legacy skies; legacy `storm` means `thunderstorm`.
+`presetWeather(preset, base)` builds a full Weather object without changing night/dusk or sun angles.
+
+`Engine.precipitation` draws one instanced camera-centred volume in the existing transparent pass
+(160 flakes/streaks on Low, 960 on High), with pooled rare lightning strokes. `World.prewarm` warms
+both materials. Fog uses the existing cloud composite, including on Low; no extra render targets
+or passes. Canopy/turret glass reuses `GlassFx`, and Airbase reuses its ground shaders for wet sheen.
+`DitchingSea` consumes `weatherNow.swell`; Sea Strike can use the same scalar for its ocean.
+
+`Game.storm` owns overhead lightning and distance-delayed thunder; `Weather` owns distant storm-wall
+flashes. `Sound.updateWind` mixes a synthesised rain bed and storm gusts on the ambience bus. Fog/rain
+reduce marker and acquisition ranges by at most 20%; AI firing range and aim are also affected.
+Snow slows traverse 10%. Both sides' bullets drift with wind, and Bombardier scoring, sight drift,
+and TargetArea's falling bombs use the same wind. Gameplay modifiers follow this shared state.
+The Settings “Weather effects” switch removes precipitation, glass weather, wet sheen and lightning
+visuals while retaining fog, spotting and other gameplay rules. Glass overlays remain off on Low.

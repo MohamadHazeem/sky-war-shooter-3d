@@ -1,3 +1,4 @@
+import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import type { Input } from '../core/Input';
 import type { Engine } from '../core/Engine';
@@ -453,7 +454,7 @@ export class GunnerController {
     if (def.yaw[1] - def.yaw[0] < Math.PI * 1.99) s.tYaw = THREE.MathUtils.clamp(s.tYaw, def.yaw[0], def.yaw[1]);
     else s.tYaw = wrapAngle(s.tYaw);
     s.tPitch = THREE.MathUtils.clamp(s.tPitch, def.pitch[0] - def.rest.pitch, def.pitch[1] - def.rest.pitch);
-    const tv = this.loadout.traverse;
+    const tv = this.loadout.traverse * weatherNow.traverse;
     const k = (def.type === 'waist' ? 190 : 260) * tv * tv, damp = (def.type === 'waist' ? 22 : 28) * tv;
     let dy = s.tYaw - s.yaw;
     if (def.yaw[1] - def.yaw[0] >= Math.PI * 1.99) dy = wrapAngle(dy);

@@ -1,3 +1,4 @@
+import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import type { FlightModel } from './FlightModel';
 import type { Aircraft, Bomber, Fighter } from './Aircraft';
@@ -185,7 +186,7 @@ export class EnemyPilot {
   private beginAttack(w: WorldView) {
     this.state = 'attack'; this.timer = 0; this.calloutDone = false;
     // every firing pass has its own aiming error; better pilots are tighter
-    this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((this.fromArc ? 9 + Math.random() * 16 : 4 + Math.random() * 10) / this.skill * w.enemyAimMult);
+    this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((this.fromArc ? 9 + Math.random() * 16 : 4 + Math.random() * 10) / this.skill * w.enemyAimMult * weatherNow.aimError);
     this.passOffset.set(Math.random() - 0.5, 0.4 + Math.random() * 0.4, Math.random() - 0.5).normalize().multiplyScalar(30 + Math.random() * 25);
   }
 
@@ -311,7 +312,7 @@ export class EnemyPilot {
         }
         // a slower, steadier run when coming at the player's gun: more time in the sight
         fm.throttle = this.fromArc ? 0.5 : this.attack === 'headon' ? 0.85 : 1;
-        const range = 700 + 150 * this.skill;
+        const range = (700 + 150 * this.skill) * weatherNow.spotting;
         const window = gunPos0 ? me.pos.distanceTo(gunPos0) : dist;
         if (dist < range && window > (gunPos0 ? 220 : 0) && err < 0.05 + (1 - this.skill) * 0.03) me.trigger = true;
         if (me.rockets > 0 && dist < 1250 && dist > 800 && err < 0.06) me.fireRockets = true;
@@ -392,13 +393,13 @@ export class EnemyPilot {
           break;
         }
         if (!t || !t.alive || this.timer > 40) { this.state = 'approach'; this.target = null; this.timer = 0; break; }
-        if (Math.floor(this.timer / 3) !== Math.floor((this.timer - dt) / 3)) this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((6 + Math.random() * 12) / this.skill * w.enemyAimMult);
+        if (Math.floor(this.timer / 3) !== Math.floor((this.timer - dt) / 3)) this.aimOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar((6 + Math.random() * 12) / this.skill * w.enemyAimMult * weatherNow.aimError);
         leadPoint(me.pos, me.vel, t, 760, this.aim).add(this.aimOffset);
         const dir = _d.copy(this.aim).sub(me.pos);
         const dist = dir.length();
         const err = steerTo(fm, dir, 1.3, 1);
         fm.throttle = 1;
-        if (dist < 550 && err < 0.04 * this.skill + 0.02) me.trigger = true;
+        if (dist < 550 * weatherNow.spotting && err < 0.04 * this.skill + 0.02) me.trigger = true;
         break;
       }
       case 'withdraw': {

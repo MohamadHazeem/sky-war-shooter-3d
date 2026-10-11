@@ -1,3 +1,4 @@
+import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import { leadPoint, steerTo, type WorldView } from './AI';
 import type { Fighter } from './Aircraft';
@@ -374,7 +375,7 @@ export class DogfightAI {
     const attacking = this.mode === 'pursue' || this.mode === 'headon' || this.mode === 'engage' || this.mode === 'scissors';
     // snap shots too, not only perfect solutions: close in, a deflection burst as the nose swings through
     const cone = 0.045 + 0.03 * THREE.MathUtils.clamp(1.4 - this.skill, 0, 1) + (dist < 420 ? 0.05 * this.skill : 0);
-    const range = this.mode === 'headon' ? (dist < 760 && dist > 200) : dist < this.def.fireRange;
+    const range = this.mode === 'headon' ? (dist < 760 * weatherNow.spotting && dist > 200) : dist < this.def.fireRange * weatherNow.spotting;
     if (this.burstT < 0) { this.burstT = Math.min(0, this.burstT + dt); return; }
     if (this.burstT > 0) {
       this.burstT -= dt;
@@ -386,7 +387,7 @@ export class DogfightAI {
       this.burstT = 0.45 + Math.random() * 0.6 * this.skill;
       // angular aim error: a good pilot puts a fair share of a burst into the Mustang
       this.aimErr.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize()
-        .multiplyScalar(dist * (0.001 + Math.random() * 0.007) / this.skill * w.enemyAimMult);
+        .multiplyScalar(dist * (0.001 + Math.random() * 0.007) / this.skill * w.enemyAimMult * weatherNow.aimError);
       me.trigger = true;
       this.layGuns();
     }

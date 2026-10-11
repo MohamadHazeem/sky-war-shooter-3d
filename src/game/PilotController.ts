@@ -1,3 +1,4 @@
+import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import type { Input } from '../core/Input';
 import type { Engine } from '../core/Engine';
@@ -233,7 +234,7 @@ export class PilotController {
       if (!e.alive || !this.world.spotted(e)) continue;
       const to = _v.copy(e.pos).sub(cam.position);
       const d = to.length();
-      if (d > 3500) continue;
+      if (d > 3500 * weatherNow.spotting) continue;
       const s = THREE.MathUtils.radToDeg(to.divideScalar(d).angleTo(look)) + d / 120;
       if (s < bs) { bs = s; best = e; }
     }

@@ -801,7 +801,7 @@ export function raidMission(): Mission {
       'Take Blue Two with you. Keys one to four give him his orders: attack my target, cover me, go for the bombers, form up. Watch the rear gunners on the Junkers — come in from below.',
     ],
     objectives: RAID_OBJECTIVES(def),
-    bombers: 0, escorts: 0, waves: [], weather: { sunEl: 38, sunAz: 200, low: 0.35, high: 0.35, contrails: true, mood: 'clear' },
+    bombers: 0, escorts: 0, waves: [], weather: { preset: 'lightRain', sunEl: 38, sunAz: 200, low: 0.35, high: 0.35, contrails: true, mood: 'clear' },
     round: { duration: 540, start: 4, min: 2, max: 6, skill: [0.9, 1.1] }, rounds: 3, duration: 540,
     success: 'The raid is broken. The field is still ours — the ground crews are already filling in the craters. Outstanding work, Blue Leader.',
   };

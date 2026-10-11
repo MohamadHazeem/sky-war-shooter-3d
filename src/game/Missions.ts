@@ -82,7 +82,7 @@ export const CAMPAIGN: Mission[] = [
     bombsAway: 85, duration: 120, maxBombersLost: 3,
   },
   {
-    id: 'm2', weather: { sunEl: 34, sunAz: 165, low: 0.82, high: 0.35 }, success: "The head-on attacks broke against a wall of fifty-calibre fire. Bremen's docks are burning.", number: 2, title: 'Twelve O\'Clock High', target: 'Port facilities, Bremen', date: '8 October 1943', role: 'gunner', station: 'top',
+    id: 'm2', weather: { preset: 'lightRain', sunEl: 34, sunAz: 165, low: 0.82, high: 0.35 }, success: "The head-on attacks broke against a wall of fifty-calibre fire. Bremen's docks are burning.", number: 2, title: 'Twelve O\'Clock High', target: 'Port facilities, Bremen', date: '8 October 1943', role: 'gunner', station: 'top',
     briefing: [
       'The Luftwaffe has learned that the nose of a Fortress is its weak spot. Their fighters are making head-on passes at closing speeds of six hundred miles an hour.',
       'You are flying the top turret today. Twin fifties, three hundred and sixty degrees of traverse. When they come in from twelve o\'clock high you are the man who has to stop them.',
@@ -99,7 +99,7 @@ export const CAMPAIGN: Mission[] = [
   },
   {
     // overcast on the way in, breaking up over the Rhine before the bomb run (Weather.ts front)
-    id: 'm3', weather: { sunEl: 15, sunAz: 205, low: 0.9, high: 0.9, contrails: false, mood: 'overcast', front: { at: 55, to: 'clear', duration: 50, low: 0.56, high: 0.4 } }, success: "Bombs on target through the worst flak of the war. The chemical works at Ludwigshafen are in flames.", number: 3, title: 'Flak Alley', target: 'Chemical works, Ludwigshafen', date: '30 December 1943', role: 'gunner', station: 'waistR',
+    id: 'm3', weather: { preset: 'fog', sunEl: 15, sunAz: 205, low: 0.9, high: 0.9, contrails: false, mood: 'overcast', front: { at: 55, to: 'clear', duration: 50, low: 0.56, high: 0.4 } }, success: "Bombs on target through the worst flak of the war. The chemical works at Ludwigshafen are in flames.", number: 3, title: 'Flak Alley', target: 'Chemical works, Ludwigshafen', date: '30 December 1943', role: 'gunner', station: 'waistR',
     briefing: [
       'The I.G. Farben works at Ludwigshafen is ringed by more than two hundred heavy flak guns. There is nothing you can do about flak but pray — and keep the fighters off us. The forecast has the overcast breaking up short of the target, so the gunners down there will have a clear view of us.',
       'You are right waist gunner. Fighters will hit us on the way in, then pull off when we reach the flak belt. Once bombs are away, they will be back for the cripples.',
@@ -115,7 +115,7 @@ export const CAMPAIGN: Mission[] = [
     flak: { start: 75, end: 140, intensity: 1.6 }, bombsAway: 112, duration: 200, maxBombersLost: 5,
   },
   {
-    id: 'm4', weather: { sunEl: 30, sunAz: 150, low: 0.75, high: 0.6 }, success: "The Big Friends made it to Leipzig and back. Outstanding work, Blue Leader.", number: 4, title: 'Little Friends', target: 'Escort — Leipzig', date: '20 February 1944', role: 'pilot',
+    id: 'm4', weather: { preset: 'snow', sunEl: 30, sunAz: 150, low: 0.75, high: 0.6 }, success: "The Big Friends made it to Leipzig and back. Outstanding work, Blue Leader.", number: 4, title: 'Little Friends', target: 'Escort — Leipzig', date: '20 February 1944', role: 'pilot',
     briefing: [
       'Big Week. The whole Eighth Air Force is going after the German aircraft industry, and this time the bombers will not go alone.',
       'You are flying a P-51D Mustang on close escort for a box of twelve Fortresses. First the Focke-Wulfs and Zerstörers will go for the bombers — intercept them before they reach the box. Then expect a fighter sweep of 109s hunting the escort, flying in pairs: watch for the wingman. And if a Fortress falls out of formation, the wolves will go for her. Do not let them.',

@@ -1,3 +1,5 @@
+import { spottingAlpha } from '../render/WeatherPresets';
+import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import type { Game } from './Game';
 import { roundDef } from './Missions';
@@ -135,7 +137,7 @@ export class GameHud {
       if (!f.alive || !w.spotted(f)) continue;
       const to = f.pos.clone().sub(origin);
       const d = to.length();
-      if (d > 1300) continue;
+      if (d > 1300 * weatherNow.spotting) continue;
       const ang = to.normalize().angleTo(aim);
       if (ang < bestAng) { bestAng = ang; best = f; }
     }
@@ -172,10 +174,12 @@ export class GameHud {
     const pl = w.player;
     if (g.settings.markers && pl) {
       for (const a of w.aircraft) {
+        ctx.globalAlpha = 1;
         if (a === pl || !a.alive) continue;
         const enemy = a.team === 'axis';
         const d = a.pos.distanceTo(cam.position);
-        if (d > (enemy ? 2800 : 1800)) continue;
+        const visibility = spottingAlpha(d, enemy ? 2800 : 1800, weatherNow.spotting);
+        if (visibility <= 0) continue;
         if (enemy && !w.spotted(a)) continue;   // Night Fighter: only coned / close / firing raiders
         const p = a.pos.clone().project(cam);
         const col = access.markerColor(enemy);
@@ -193,6 +197,7 @@ export class GameHud {
           }
           continue;
         }
+        ctx.globalAlpha = visibility;
         if (p.z < 1 && Math.abs(p.x) < 1 && Math.abs(p.y) < 1) {
           const x = (p.x * 0.5 + 0.5) * W, y = (-p.y * 0.5 + 0.5) * H;
           const s = THREE.MathUtils.clamp(3200 / d, 9, 34);
@@ -221,12 +226,14 @@ export class GameHud {
         }
       }
     }
+    ctx.globalAlpha = 1;
     // Health bars on enemies the player has been hitting
     for (const f of w.fighters('axis')) {
       if (!f.alive || w.time - f.lastPlayerHit > 6) continue;
       const p = f.pos.clone().project(cam);
       if (p.z > 1 || Math.abs(p.x) > 1 || Math.abs(p.y) > 1) continue;
       const d = f.pos.distanceTo(cam.position);
+      ctx.globalAlpha = spottingAlpha(d, 2800, weatherNow.spotting);
       const x = (p.x * 0.5 + 0.5) * W, y = (-p.y * 0.5 + 0.5) * H;
       const s = THREE.MathUtils.clamp(2400 / d, 9, 30);
       const bw = 46, frac = f.structureFrac;
@@ -234,6 +241,7 @@ export class GameHud {
       ctx.fillStyle = frac > 0.5 ? 'rgba(230,200,90,0.95)' : frac > 0.25 ? 'rgba(240,140,50,0.95)' : 'rgba(235,70,50,0.95)';
       ctx.fillRect(x - bw / 2, y - s - 12, bw * frac, 4);
     }
+    ctx.globalAlpha = 1;
     // Score pop-ups
     for (const pop of this.popups) {
       const p = pop.pos.clone().project(cam);

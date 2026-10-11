@@ -1,0 +1,106 @@
+{
+  "errors": [],
+  "bench": [
+    {
+      "quality": "high",
+      "preset": "clear",
+      "avg": 16.26,
+      "p50": 15,
+      "p95": 24,
+      "max": 30,
+      "calls": 1,
+      "tris": 1,
+      "programs": 107,
+      "w": 2058,
+      "h": 1117
+    },
+    {
+      "quality": "high",
+      "preset": "heavyRain",
+      "avg": 15.35,
+      "p50": 15,
+      "p95": 18,
+      "max": 21,
+      "calls": 1,
+      "tris": 1,
+      "programs": 103,
+      "w": 2058,
+      "h": 1117
+    },
+    {
+      "quality": "high",
+      "preset": "thunderstorm",
+      "avg": 16.15,
+      "p50": 15,
+      "p95": 23,
+      "max": 81,
+      "calls": 1,
+      "tris": 1,
+      "programs": 103,
+      "w": 2058,
+      "h": 1117
+    },
+    {
+      "quality": "low",
+      "preset": "clear",
+      "avg": 9.01,
+      "p50": 8,
+      "p95": 15,
+      "max": 35,
+      "calls": 1,
+      "tris": 1,
+      "programs": 105,
+      "w": 1287,
+      "h": 698
+    },
+    {
+      "quality": "low",
+      "preset": "heavyRain",
+      "avg": 9.74,
+      "p50": 10,
+      "p95": 14,
+      "max": 18,
+      "calls": 1,
+      "tris": 1,
+      "programs": 105,
+      "w": 1287,
+      "h": 698
+    },
+    {
+      "quality": "low",
+      "preset": "thunderstorm",
+      "avg": 9.6,
+      "p50": 8,
+      "p95": 16,
+      "max": 60,
+      "calls": 1,
+      "tris": 1,
+      "programs": 105,
+      "w": 1287,
+      "h": 698
+    }
+  ],
+  "weatherCompiles": 0,
+  "extra": [
+    {
+      "test": "rare-stroke",
+      "visible": true,
+      "vertices": 12
+    },
+    {
+      "test": "audio",
+      "state": "running",
+      "rainGain": 0.15998844802379608
+    },
+    {
+      "test": "settings-control",
+      "enabled": false,
+      "value": false
+    },
+    {
+      "test": "arabic-setting",
+      "label": "مؤثرات الطقس تشغيلإيقاف"
+    }
+  ],
+  "done": true
+}

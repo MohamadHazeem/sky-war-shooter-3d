@@ -1,3 +1,4 @@
+import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import { Music } from './Music';
 import { AirframeCreaks } from './Creaks';
@@ -220,6 +221,7 @@ export class Sound {
   private revOutSend!: GainNode;
   private bufs = new Map<BufName, AudioBuffer[]>();
   private gainMap = new Map<BufName, number>();
+  private rainGain: GainNode | null = null;
   private windSrc: AudioBufferSourceNode | null = null;
   samplesLoaded = false;
   private engineBufs: Record<'cyclone' | 'bmw' | 'merlin', AudioBuffer> = {} as any;
@@ -453,7 +455,7 @@ export class Sound {
     this.interphone?.cancel(); this.interphone = null;
     this.whizbyFx = null;
     this.voices = [];
-    this.b17 = null; this.wind = null; this.gust = null; this.windSrc = null; this.whistle = null;
+    this.b17 = null; this.wind = null; this.gust = null; this.windSrc = null; this.rainGain = null; this.whistle = null;
     this.playerEngine = null; this.radioBed = null;
     this.b17Sputter = null; this.b17Depth = null; this.b17Sampled = false;
     this.scope = null;
@@ -969,6 +971,15 @@ export class Sound {
 
   private startAmbience() {
     const ctx = this.ctx!;
+    // A filtered noise bed plus sparse baked impacts: rain on aluminium / perspex.
+    const rb = this.noiseLoop(5, 'pink');
+    const rd = rb.getChannelData(0);
+    for (let i = 0; i < rd.length; i += 1 + Math.floor(Math.random() * 900)) {
+      for (let j = 0; j < 100 && i + j < rd.length; j++) rd[i + j] += Math.sin(j * .9) * Math.exp(-j / 16) * .45;
+    }
+    const rs = this.loopSrc(rb), rf = ctx.createBiquadFilter(), rainLevel = ctx.createGain();
+    rf.type = 'bandpass'; rf.frequency.value = 2600; rf.Q.value = .6; rainLevel.gain.value = 0;
+    rs.connect(rf).connect(rainLevel).connect(this.amb); this.rainGain = rainLevel;
     // Slipstream wind with gusts (louder through the open waist windows)
     const ws = this.loopSrc(this.noiseLoop(5, 'pink'));
     const wf = ctx.createBiquadFilter(); wf.type = 'lowpass'; wf.frequency.value = 900; wf.Q.value = 0.5;
@@ -1174,11 +1185,12 @@ export class Sound {
   // airspeed in the P-51 and stays subtle inside the bomber.
   updateWind(dt: number) {
     if (!this.ctx || !this.gust) return;
+    if (this.rainGain) towards(this.rainGain.gain, this.mode === 'menu' ? 0 : weatherNow.rain * .16, GAIN, this.ctx.currentTime, .5);
     const h = Math.min(dt, 0.1); // clamp so a stalled tab cannot jump the walks
     if (!(h >= 0)) return;     // a NaN dt would poison the walks for good
     const fighter = this.mode === 'fighter';
     const speedN = fighter ? THREE.MathUtils.clamp((this.windSpeed - 60) / 90, 0, 1) : 0;
-    const s = fighter ? 0.35 + 0.65 * speedN : 0.3;
+    const s = Math.min(1, (fighter ? 0.35 + 0.65 * speedN : 0.3) + weatherNow.turbulence * .4);
     const g = this.gust;
     const sig = (0.45 + 0.35 * s) * Math.sqrt(3 * h); // uniform rand() has variance 1/3
     g.walkG = fin(THREE.MathUtils.clamp(g.walkG - 0.35 * g.walkG * h + rand() * sig, -1, 1), 0);

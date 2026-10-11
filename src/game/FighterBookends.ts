@@ -380,7 +380,7 @@ export class FighterBookends {
     w.contrails.clear();
     this.weatherSaved = this.currentWeather();
     const mood = this.mission?.weather?.mood;
-    applyWeather(e, mood === 'night' || mood === 'dusk' ? DUSK : MORNING);
+    applyWeather(e, { ...(mood === 'night' || mood === 'dusk' ? DUSK : MORNING), preset: this.mission?.weather?.preset, wind: this.mission?.weather?.wind });
     base.group.position.set(0, 0, 0);
     base.show(e.scene, true);
     base.resetVehicles();

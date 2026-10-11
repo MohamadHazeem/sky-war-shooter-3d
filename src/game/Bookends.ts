@@ -366,7 +366,7 @@ export class Bookends {
     w.contrails.clear();
     this.weatherSaved = this.currentWeather();
     const mood = this.mission?.weather?.mood;
-    applyWeather(e, mood === 'night' || mood === 'dusk' ? DUSK : DAWN);
+    applyWeather(e, { ...(mood === 'night' || mood === 'dusk' ? DUSK : DAWN), preset: this.mission?.weather?.preset, wind: this.mission?.weather?.wind });
     base.group.position.set(0, 0, 0);
     base.show(e.scene, true);
     base.resetVehicles();

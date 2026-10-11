@@ -1,3 +1,4 @@
+import { Precipitation } from '../render/Precipitation';
 import * as THREE from 'three';
 import { Atmos, atmosUniforms, syncAtmosUniforms } from '../render/Atmosphere';
 import { farTerrainUniforms } from '../render/FarTerrain';
@@ -45,6 +46,7 @@ export interface Updatable { update(dt: number, time: number): void }
 export class Engine {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
+  readonly precipitation = new Precipitation(this.scene);
   readonly camera: THREE.PerspectiveCamera;
   readonly sky = new SkyDome();
   readonly sun: THREE.DirectionalLight;
@@ -321,6 +323,7 @@ export class Engine {
     this.beforeFrame?.(dt);
     this.onFrame?.(dt, this.time);
     this.heatHaze.update(dt);
+    this.precipitation.update(dt, this.time, this.quality);
     // after the game moved the formation, so the distant boxes stay locked to it
     this.livingSky.update(this.camera, this.time, this.height * this.pixelRatio);
     if (render) { if (this.renderOverride) this.renderOverride(realDt); else this.render(realDt); }

@@ -833,7 +833,7 @@ export function strafeMission(): Mission {
       'Everything down there shoots back. The 20 mm flak hoses tracer at anything low — keep moving and do not make two passes from the same direction. Watch your height in the dive: the ground does not forgive. Blue Two goes down on your target when you press one.',
     ],
     objectives: ['Stop the train before it reaches the tunnel', 'Shoot up the truck convoy', 'Strafe the aircraft on the airfield', 'Command your wingman: 1 attack my target · 2 cover me'],
-    bombers: 0, escorts: 0, waves: [], weather: { sunEl: 44, sunAz: 215, low: 0.32, high: 0.25, contrails: false, mood: 'clear' },
+    bombers: 0, escorts: 0, waves: [], weather: { sunEl: 44, sunAz: 215, low: 0.32, high: 0.25, contrails: false, mood: 'clear', front: { at: 75, to: 'overcast', preset: 'lightRain', duration: 40 } },
     round: { duration: 360, start: 4, min: 0, max: 0, skill: [1, 1] }, rounds: 3, duration: 360,
     specials: false, boss: false, midRound: false,
     success: 'The rail line is blocked, the convoy is burning and the airfield will not be flying tomorrow. That was flying, Blue Leader.',

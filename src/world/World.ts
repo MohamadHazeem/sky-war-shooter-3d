@@ -302,7 +302,7 @@ export class World implements WorldView {
     const unwarmTurrets = warmTurretViewmodels(this.scene, at);
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     const unwarmTargetSmoke = warmTargetSmoke(this.scene);
-    render();
+    this.engine.precipitation.warm(render);
     this.ditchingSea.warm(render, this.playerBomber?.root ?? b17.root);
     unwarmTargetSmoke();
     this.wrecks.keepWarm(b17Pieces);   // B-17 wreck programs stay compiled for the set pieces
@@ -968,7 +968,7 @@ export class World implements WorldView {
       if (gunner) this.callout('wx_clear', 'Pilot', 'We\'re breaking out of the cloud — clear sky ahead. They\'ll see us coming now.', 30, 2);
       else this.callout('wx_clear', 'Lead', 'Blue flight, the cloud\'s breaking up. Clear sky ahead — keep your eyes open.', 30, 2);
     } else if (ev === FRONT_EVENT.done && fs) {
-      this.contrails.enabled = fs.to === 'clear' || fs.to === 'dusk';
+      this.contrails.enabled = (!fs.preset || fs.preset === 'clear') && (fs.to === 'clear' || fs.to === 'dusk');
     }
   }
 

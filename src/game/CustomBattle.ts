@@ -1,3 +1,5 @@
+import { presetWeather, type Mood as SkyMood } from '../render/Weather';
+import type { WeatherPreset } from '../render/WeatherPresets';
 // Custom Battle: the player sets up a battle on the Survival screen (CustomBattleScreen.ts) and
 // this module turns the configuration into an ordinary round Mission, so the existing round
 // system flies it: Missions.roundDef (flatRounds), BossBattle (Mission.boss), SpecialEvents
@@ -13,7 +15,7 @@ import { type ModeDef, type Role, registerMode } from './Modes';
 import type { PaceProfile } from './Pacing';
 
 export type Skill = 'recruit' | 'veteran' | 'ace' | 'insane';
-export type Mood = 'clear' | 'overcast' | 'storm' | 'dusk';
+export type Mood = Exclude<SkyMood, 'night'> | WeatherPreset;
 
 export interface CustomConfig {
   role: Role;
@@ -36,7 +38,7 @@ export interface CustomConfig {
 
 export const ALL_ENEMIES: EnemyType[] = ['fw190', 'bf109', 'bf110', 'ju88', 'me262', 'me163', 'me410', 'do335', 'he111'];
 export const SEATS: StationId[] = ['waistL', 'waistR', 'top', 'ball', 'tail'];
-export const MOODS: Mood[] = ['clear', 'overcast', 'storm', 'dusk'];
+export const MOODS: Mood[] = ['clear', 'overcast', 'storm', 'dusk', 'lightRain', 'heavyRain', 'snow', 'fog', 'thunderstorm'];
 export const SKILLS: Skill[] = ['recruit', 'veteran', 'ace', 'insane'];
 
 export const LIMITS = {
@@ -54,10 +56,10 @@ export const SKILL_DEF: Record<Skill, { label: string; skill: [number, number]; 
   insane: { label: 'Insane', skill: [1.4, 1.65], armor: 1.45, rockets: 0.35 },
 };
 
-export const MOOD_LABEL: Record<Mood, string> = { clear: 'Clear', overcast: 'Overcast', storm: 'Storm', dusk: 'Red dusk' };
+export const MOOD_LABEL: Record<Mood, string> = { clear: 'Clear', overcast: 'Overcast', storm: 'Storm', dusk: 'Red dusk', lightRain: 'Light rain', heavyRain: 'Heavy rain', snow: 'Snow', fog: 'Fog / low cloud', thunderstorm: 'Thunderstorm' };
 
 // Cloud cover for each mood (the sets Survival cycles through, Weather.ROUND_WEATHER)
-const MOOD_SKY: Record<Mood, { low: number; high: number; contrails: boolean }> = {
+const MOOD_SKY: Record<Exclude<SkyMood, 'night'>, { low: number; high: number; contrails: boolean }> = {
   clear: { low: 0.7, high: 0.55, contrails: true },
   overcast: { low: 0.9, high: 0.95, contrails: false },
   storm: { low: 0.97, high: 0.98, contrails: false },
@@ -65,7 +67,7 @@ const MOOD_SKY: Record<Mood, { low: number; high: number; contrails: boolean }> 
 };
 
 // What a weather front turns each mood into (a storm clears; anything else runs into a storm)
-export const FRONT_TO: Record<Mood, 'clear' | 'storm'> = { clear: 'storm', overcast: 'storm', storm: 'clear', dusk: 'storm' };
+export const FRONT_TO: Record<Mood, 'clear' | 'storm'> = { clear: 'storm', overcast: 'storm', storm: 'clear', dusk: 'storm', lightRain: 'storm', heavyRain: 'storm', snow: 'clear', fog: 'clear', thunderstorm: 'clear' };
 
 export const DUSK_MAX_SUN = 8;            // the red-dusk mood keeps the sun on the horizon
 export const ENDLESS_DURATION = 1e9;      // finite on purpose: an endless custom battle is not Survival
@@ -116,8 +118,11 @@ export function sanitizeConfig(raw: unknown): CustomConfig {
 // the battle a weather front arrives (FRONT_TO), none if unset.
 export function customWeather(mood: Mood, sunEl: number, frontAt?: number): Weather {
   const el = mood === 'dusk' ? Math.min(sunEl, DUSK_MAX_SUN) : sunEl;
-  const sky = MOOD_SKY[mood];
-  const w: Weather = { sunEl: el, sunAz: el < 20 ? 250 : 200, low: sky.low, high: sky.high, contrails: sky.contrails, mood };
+  const condition = !Object.hasOwn(MOOD_SKY, mood);
+  const skyMood = (condition ? 'overcast' : mood) as Exclude<SkyMood, 'night'>;
+  const sky = MOOD_SKY[skyMood];
+  const w: Weather = { sunEl: el, sunAz: el < 20 ? 250 : 200, low: sky.low, high: sky.high, contrails: sky.contrails, mood: skyMood };
+  if (condition) Object.assign(w, presetWeather(mood as WeatherPreset, w));
   if (frontAt !== undefined) w.front = { at: frontAt, to: FRONT_TO[mood], duration: 50 };
   return w;
 }
