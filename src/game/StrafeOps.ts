@@ -59,6 +59,8 @@ const CONVOY_SPEED = 12;
 const CAR_GAP = 13.6;             // m between wagon centres
 const TRUCK_GAP = 19;
 const FW_SCALE = 2.5;             // the enemy fighters are normally drawn 6x: smaller at low level
+const FW_STRUCTURE = 0.55;        // ... and their hit zones shrink with them (to ~40%): structure scaled to match (docs/BALANCE.md)
+const FW_WAVES = [[60, 2], [150, 2]] as const;   // airfield round: s into the round, Fw 190s scrambling (was 45 s / 115 s)
 const UP = new THREE.Vector3(0, 1, 0);
 const _v = new THREE.Vector3();
 const _w = new THREE.Vector3();
@@ -386,7 +388,8 @@ export class StrafeOps {
     const gt = this.gt!;
     const c = Math.cos(AIRFIELD.ang), s = Math.sin(AIRFIELD.ang);
     const at = (a: number, b: number) => [AIRFIELD.u + a * c - b * s, AIRFIELD.v + a * s + b * c] as const;
-    const types: ModelKind[] = ['fw190', 'fw190', 'bf109', 'fw190', 'ju88', 'bf109', 'fw190', 'ju88', 'bf109', 'fw190'];
+    // eight parked aircraft (was ten: the airfield round ran to its time limit, docs/BALANCE.md)
+    const types: ModelKind[] = ['fw190', 'fw190', 'bf109', 'fw190', 'ju88', 'bf109', 'fw190', 'ju88'];
     types.forEach((m, i) => {
       const side = i % 2 ? 1 : -1;
       const a = -600 + Math.floor(i / 2) * 260 + (side > 0 ? 90 : 0);
@@ -397,7 +400,7 @@ export class StrafeOps {
     });
     for (const [a, b] of [[-820, -420], [820, -420], [-820, 420], [820, 420]] as const) { const [u, v] = at(a, b); this.flakAt(u, v, 'airfield'); }
     { const [u, v] = at(150, AIRFIELD.wid / 2 + 90); this.flakAt(u, v, 'airfield', true); }
-    this.fwWaves = [{ at: 45, n: 2, done: false }, { at: 115, n: 2, done: false }];
+    this.fwWaves = FW_WAVES.map(([at, n]) => ({ at, n, done: false }));
   }
 
   // Train / convoy: advance along the path; a wreck stops everything behind it
@@ -587,6 +590,7 @@ export class StrafeOps {
           for (const z of f.zones) { z.offset.multiplyScalar(k); z.radius *= k; }
           for (const g of f.guns) g.offset.multiplyScalar(k);
           f.radius *= k;
+          f.structure *= FW_STRUCTURE; f.maxStructure *= FW_STRUCTURE;
           const pilot = new LowFighterPilot(f, (0.9 + this.roundIdx * 0.05) * w.difficulty, this.groundAt, () => cs.toLocal(AIRFIELD.u, AIRFIELD.v, new THREE.Vector3()));
           f.ai = pilot;
           w.setPilot(f, pilot);

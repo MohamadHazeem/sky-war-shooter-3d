@@ -269,7 +269,7 @@ const STORY_MISSIONS: (Mission & { after: string })[] = [
       { at: 0, afterClear: true, count: 8, from: 'mixed', skill: 1.2, rockets: 0.4 },
       { at: 0, afterClear: true, count: 10, from: 'mixed', skill: 1.25 },
     ],
-    flak: { start: 150, end: 200, intensity: 1.4 }, bombsAway: 185, duration: 320, maxBombersLost: 6, rounds: 4,
+    flak: { start: 150, end: 200, intensity: 1.4 }, bombsAway: 185, duration: 320, maxBombersLost: 7, rounds: 4,
   },
 ];
 
@@ -320,19 +320,19 @@ try {
 
 // Rounds of 3-5 minutes; the flak and bombing times sit inside them
 const ROUNDS: Record<string, Round> = {
-  m1: { duration: 180, start: 7, min: 4, max: 7, skill: [0.8, 1.0] },
-  m2: { duration: 210, start: 6, min: 5, max: 9, skill: [0.9, 1.1] },
+  m1: { duration: 210, start: 7, min: 4, max: 7, skill: [0.8, 1.0] },
+  m2: { duration: 240, start: 6, min: 5, max: 9, skill: [0.9, 1.1] },
   m3: { duration: 240, start: 6, min: 5, max: 9, skill: [0.95, 1.15], rockets: 0.15 },
   m4: { duration: 240, start: 8, min: 6, max: 11, skill: [0.95, 1.15] },
-  m5: { duration: 270, start: 6, min: 6, max: 12, skill: [1.0, 1.25], rockets: 0.35 },
+  m5: { duration: 230, start: 6, min: 6, max: 12, skill: [1.0, 1.25], rockets: 0.35 },
   m6: { duration: 240, start: 6, min: 5, max: 10, skill: [1.0, 1.2] },
   m7: { duration: 300, start: 8, min: 7, max: 14, skill: [1.05, 1.3], rockets: 0.3 },
   // story-arc missions
   m8: { duration: 270, start: 6, min: 8, max: 14, skill: [0.95, 1.2], rockets: 0.45 },   // Black Thursday: the mass attack
-  m9: { duration: 240, start: 8, min: 6, max: 11, skill: [0.95, 1.15] },                  // P-51 through the storm front
+  m9: { duration: 240, start: 8, min: 6, max: 9, skill: [0.95, 1.1] },                    // P-51 through the storm front
   m10: { duration: 240, start: 6, min: 4, max: 9, skill: [1.0, 1.2] },                    // crippled, alone over the Channel
   m11: { duration: 270, start: 6, min: 5, max: 11, skill: [1.0, 1.25], rockets: 0.2 },    // flak on the bomb run
-  m12: { duration: 320, start: 8, min: 8, max: 15, skill: [1.1, 1.35], rockets: 0.35 },   // the finale, four rounds
+  m12: { duration: 320, start: 8, min: 8, max: 15, skill: [1.05, 1.3], rockets: 0.35 },   // the finale, four rounds
 };
 for (const m of CAMPAIGN) {
   const r = ROUNDS[m.id];
@@ -373,7 +373,7 @@ export function roundDef(m: Mission, i: number): Round {
   }
   if (!Number.isFinite(n)) {
     return {
-      duration: 100, start: 5, min: Math.min(14, 3 + i), max: Math.min(20, 5 + 2 * i),
+      duration: 125, start: 5, min: Math.min(14, 3 + i), max: Math.min(20, 5 + 2 * i),
       skill: [Math.min(1.5, 0.8 + 0.06 * i), Math.min(1.65, 0.9 + 0.07 * i)], rockets: i >= 2 ? Math.min(0.4, 0.1 * i) : 0,
     };
   }

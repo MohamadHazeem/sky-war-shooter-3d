@@ -70,6 +70,19 @@ const PATTERNS: [number, number, number][][] = [
 ];
 const PATTERN_TIME = 42;
 const INTRO_OFF = new THREE.Vector3(0, 240, 2300);
+
+// Balance knobs (docs/BALANCE.md; measured with src/dev/balance.ts). Ship health is
+// PART_HP / CORE_HP (BossShip.ts) x hp[role] x the difficulty term x (1 + tierHp x tier); the
+// guns' damage is the difficulty x dmg[role] x (1 + tierDmg x tier). Most of a human's time in
+// the fight went on the escort fighters, so their cadence and cap are knobs too.
+export const BOSS_TUNING = {
+  hp: { gunner: 0.16, pilot: 0.4 },       // was 0.5 / 0.85
+  dmg: { gunner: 0.85, pilot: 0.45 },     // the P-51 is the turrets' first choice (was 1 / 1)
+  diffHp: 0.3,                            // hp x (1 - diffHp + diffHp x difficulty): Recruit 0.94, Ace 1.06 (was 0.15)
+  tierHp: 0, tierDmg: 0.03,               // per tier (were 0.12 / 0.06) (campaign: m7 1, m12 2; survival: every 3rd round)
+  escortEvery: [40, 12] as [number, number],  // s between launches: base + random (was 28 + 10)
+  escortCap: 2,                           // fighters in the air before no more launch (+1 per 3 rounds, +1 last stand, +1 Ace; was 3)
+};
 const MUZZLE = 820;
 const G = 9.81;
 const TRACER: [number, number, number] = [12, 3.6, 1.6];
@@ -188,8 +201,9 @@ export class BossBattle {
     const survival = !Number.isFinite(m.rounds ?? 1);
     const count = forced || (survival ? roundIdx >= 5 : m.id !== 'm5') ? 4 : 3;
     const tier = survival ? Math.floor(roundIdx / 3) : m.id === 'm12' ? 2 : m.id === 'm7' ? 1 : 0;
-    this.hpScale = (m.role === 'gunner' ? 0.5 : 0.85) * (0.85 + 0.15 * w.difficulty) * (1 + 0.12 * tier);
-    this.dmgScale = w.difficulty * (1 + 0.06 * tier);
+    const T = BOSS_TUNING;
+    this.hpScale = T.hp[m.role] * (1 - T.diffHp + T.diffHp * w.difficulty) * (1 + T.tierHp * tier);
+    this.dmgScale = w.difficulty * T.dmg[m.role] * (1 + T.tierDmg * tier);
     const base = ENEMY_SCALE * ENEMY_VARIANTS.ju88.scale;
     this.ships = [];
     for (let i = 0; i < count; i++) {
@@ -335,6 +349,16 @@ export class BossBattle {
     sh.station.set(st[0], st[1] - dead * 30, st[2] - dead * 85);
     // changing sides: climb over the bomber box instead of flying through it
     if (Math.abs(st[0]) > 200 && (sh.off.x * st[0] < 0 || Math.abs(sh.off.x) < 200) && Math.abs(sh.off.z) < 1000) sh.station.y = Math.max(sh.station.y, 330 + s.slot * 45);
+    // the player's B-17 has dropped out of the box (two engines out, World.straggling): the group
+    // keeps its stations around her, not the formation she can no longer keep up with (before,
+    // she fell kilometres behind and the battle could no longer be won: docs/BALANCE.md)
+    const pb = this.role === 'gunner' ? this.world.playerBomber : null;
+    if (pb?.alive && pb.straggling) {
+      const w = this.world;
+      _left.crossVectors(UP, w.formationForward).normalize();
+      _v.copy(pb.pos).sub(w.formationCenter);
+      sh.station.x += _v.dot(_left); sh.station.y += _v.y; sh.station.z += _v.dot(w.formationForward);
+    }
     if (!s.arrived) {
       if (sh.off.distanceTo(sh.station) < 260) s.arrived = true;
     }
@@ -718,10 +742,10 @@ export class BossBattle {
     if (this.introT < 12) return;
     this.escortCd -= dt;
     if (this.escortCd > 0) return;
-    this.escortCd = 28 + Math.random() * 10;
+    this.escortCd = BOSS_TUNING.escortEvery[0] + Math.random() * BOSS_TUNING.escortEvery[1];
     const live = this.ships.filter((s) => s.deathT < 0);
     if (!live.length) return;
-    const cap = 3 + Math.floor(this.roundIdx / 3) + (this.alive <= 1 ? 1 : 0);
+    const cap = BOSS_TUNING.escortCap + Math.floor(this.roundIdx / 3) + (this.alive <= 1 ? 1 : 0) + (this.world.difficulty > 1.1 ? 1 : 0);
     if (this.world.activeEnemies().length >= cap) return;
     this.launchEscorts(live[Math.floor(Math.random() * live.length)], 2 + (Math.random() < 0.4 ? 1 : 0));
   }
