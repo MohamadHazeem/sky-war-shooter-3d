@@ -18,18 +18,19 @@ Repo rules for Codex: `AGENTS.md`.
 | 5 | Bombardier seat: the Norden bombsight on the bomb run, accuracy scores the mission | Codex working |
 | 6 | Ditching in the Channel: ditch a badly damaged Sky Queen, dinghy + air-sea rescue | Codex revising — 31 s ditching + RAF rescue launch works; impact spray (flat white discs) and uniform foam streaks sent back |
 | 7 | Second tour: endless generated campaign after mission 12 | Done (Codex) — "Volunteer for a second tour": 25 generated operations (targets, weather, fronts, alternating roles, jets/Sturmböcke later, battle group every 5th) then endless; Experten and strategy carry over; Second Tour Medal |
-| 8 | Crew that matters: assign crewmen to positions, skills change accuracy / repairs / spotting | |
+| 8 | Crew that matters: assign crewmen to positions, skills change accuracy / repairs / spotting | Codex working |
 | 9 | Squadron leaderboards: share a squadron code for a private board | |
 
 ## Tier C — graphics and immersion
 | # | Goal | Status |
 |---|---|---|
 | 10 | Europe below the clouds: terrain, rivers, cities, burning targets through cloud gaps | Codex revising — first pass works (coast, rivers, burning target with smoke through the clouds, cloud shadows, ≤0.3 ms) but fields looked like a regular checkerboard; sent back for irregular parcels, muted palette, real town shapes |
-| 11 | Ball and tail turret interiors at the waist's "living interior" standard | |
-| 12 | Music: adaptive tracks for night, raids, Train Busting and the crew room | |
+| 11 | Ball and tail turret interiors at the waist's "living interior" standard | Done (Codex) — ball: twin breeches, feed chutes, knees on pedals, reflector sight, hatch, hydraulic hum, brass falling outside; tail: twin M2s with running belts, ring-and-bead, saddle, ribbed cone, view forward to the waist; free look in both |
+| 12 | Music: adaptive tracks for night, raids, Train Busting and the crew room | Codex working |
 
 ## Log
 - Codex signed in as the Pro account; trial widened to a first wave: goals 1, 3, 5, 6, 10 running in parallel worktrees (tools/codex_task.sh). Goal 2 (performance) waits for a quiet GPU.
 - Goal 1 merged (428 tests). Codex couldn't commit or open a browser in its sandbox; launcher now runs it unsandboxed.
 - Goal 3 merged (reviewed before/after crops). Started goal 7 in its slot.
 - Goal 7 merged (435 tests). Goal 6 first pass committed (voice clips rendered by Claude; the sandbox blocked `say`), sent back for spray/foam.
+- Goal 11 merged (442 tests). Started goals 8 and 12.
