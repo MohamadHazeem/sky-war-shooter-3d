@@ -108,6 +108,9 @@ async function boot() {
     // Cloud path A/B render times on the gallery cameras (src/dev/cloudBench.ts)
     const { cloudBench } = await import('./dev/cloudBench');
     (window as any).sws.cloudBench = cloudBench(engine, (window as any).sws.gallery);
+    // Visual QA sweep: NaN / black / blown-white detector and view helpers (src/dev/visualQa.ts)
+    const { visualQa } = await import('./dev/visualQa');
+    (window as any).sws.vqa = visualQa(engine, game);
   }
 }
 

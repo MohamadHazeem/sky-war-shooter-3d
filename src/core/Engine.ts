@@ -6,7 +6,7 @@ import { PostFX } from '../render/PostFX';
 import { buildEnvironment, SkyDome } from '../render/Sky';
 import { envRef } from '../render/EnvRef';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
-import { installAircraftLook, retargetEnvMaps, retireEnv, syncAircraftLook } from '../render/AircraftLook';
+import { freshEnv, installAircraftLook, retargetEnvMaps, retireEnv, syncAircraftLook } from '../render/AircraftLook';
 import { LivingSky } from '../render/LivingSky';
 import { FpsCounter } from '../render/FpsCounter';
 import { drsFloor, drsTargetMs, fasterRefreshFrom, refreshFromTimestamps } from '../render/FrameTiming';
@@ -434,6 +434,7 @@ export class Engine {
       if ((o as THREE.Light).isLight) { o.layers.enableAll(); return; }
       const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
       if (!m) return;
+      if (Array.isArray(m)) m.forEach(freshEnv); else freshEnv(m);   // back from outside the scene: the current sky
       const transparent = Array.isArray(m) ? m.some((x) => x.transparent) : m.transparent;
       o.layers.set(transparent && o !== this.sky.mesh ? 1 : 0);
     });

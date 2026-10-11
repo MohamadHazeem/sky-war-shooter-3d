@@ -277,6 +277,5 @@ export function gallery(engine: Engine, game: Game) {
     return out;
   }
 
-  return { setup, png, save, capture, surface, captureSurface, SHOTS, SHOTS_AFTER, SURFACE_SHOTS };
-  return { setup, png, save, capture, SHOTS, SHOTS_AFTER, SHOTS_CLOUDS };
+  return { setup, png, save, capture, surface, captureSurface, SHOTS, SHOTS_AFTER, SURFACE_SHOTS, SHOTS_CLOUDS };
 }

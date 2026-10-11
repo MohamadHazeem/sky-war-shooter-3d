@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { envRef } from '../render/EnvRef';
+import { Atmos } from '../render/Atmosphere';
 import { gunTextures, interiorTextures } from '../render/Textures';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { addWaistProps } from './InteriorProps';
@@ -620,6 +621,12 @@ export function buildTailInterior(): THREE.Group {
     map: reflTex, transparent: true, opacity: 0.12, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
   }));
   refl.position.set(0, 0.14875, 0.496);
+  // the streaks reflect the sky's light: unlit white they stood as two bright cones in the
+  // window at night (the sky there is ~1/50 of the day's)
+  refl.onBeforeRender = () => {
+    const h = Atmos.horizon, c = (refl.material as THREE.MeshBasicMaterial).color;
+    c.setRGB(Math.min(1, h.r / 0.6), Math.min(1, h.g / 0.6), Math.min(1, h.b / 0.6));
+  };
   g.add(refl);
   return g;
 }
