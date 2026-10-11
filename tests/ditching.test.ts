@@ -79,7 +79,7 @@ describe('rescue outcome and content', () => {
     stubStorage(); const roster = new CrewRoster(), crew = new Crew();
     const world = { playerBomber: {}, crew, events: {}, ballistics: {}, playerStation: 'waistL' } as any;
     roster.beginMission(world, { banner() {}, feed() {} }, 'gunner');
-    crew.wound('radio'); vi.spyOn(Math, 'random').mockReturnValue(0.9);
+    vi.spyOn(Math, 'random').mockReturnValue(0.9); crew.wound('radio');
     roster.endMission(true);
     expect(roster.men.gallo.rest).toBe(1); expect(roster.men.gallo.wounds).toBe(1);
     expect(new CrewRoster().men.gallo.rest).toBe(1); expect(Object.keys(roster.men)).toHaveLength(10);

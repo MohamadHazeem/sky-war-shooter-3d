@@ -1,0 +1,235 @@
+{
+  "audio": [
+    {
+      "name": "night",
+      "threat": 0.9,
+      "reduced": false,
+      "volume": 1,
+      "seconds": 31.66665625,
+      "peakDb": -5.792843990318253,
+      "rmsDb": -20.874676714192056,
+      "bad": 0,
+      "clipped": 0
+    },
+    {
+      "name": "field",
+      "threat": 0.9,
+      "reduced": false,
+      "volume": 1,
+      "seconds": 22.14284375,
+      "peakDb": -4.876480465347845,
+      "rmsDb": -20.396656856368523,
+      "bad": 0,
+      "clipped": 0
+    },
+    {
+      "name": "train",
+      "threat": 0.9,
+      "reduced": false,
+      "volume": 1,
+      "seconds": 20,
+      "peakDb": -5.190091939058657,
+      "rmsDb": -20.91561094223794,
+      "bad": 0,
+      "clipped": 0
+    },
+    {
+      "name": "boss",
+      "threat": 0.9,
+      "reduced": false,
+      "volume": 1,
+      "seconds": 29,
+      "peakDb": -4.599719707815678,
+      "rmsDb": -19.38298064128578,
+      "bad": 0,
+      "clipped": 0
+    },
+    {
+      "name": "crew",
+      "threat": 0.9,
+      "reduced": false,
+      "volume": 1,
+      "seconds": 35,
+      "peakDb": -17.48294495012277,
+      "rmsDb": -30.534474668221442,
+      "bad": 0,
+      "clipped": 0
+    },
+    {
+      "name": "crewLoss",
+      "threat": 0.9,
+      "reduced": false,
+      "volume": 1,
+      "seconds": 39.28571875,
+      "peakDb": -17.47450407465601,
+      "rmsDb": -33.12011633890489,
+      "bad": 0,
+      "clipped": 0
+    },
+    {
+      "name": "breakup",
+      "threat": 0.9,
+      "reduced": false,
+      "volume": 1,
+      "seconds": 9.5,
+      "peakDb": -9.44593773139567,
+      "rmsDb": -25.0936515592317,
+      "bad": 0,
+      "clipped": 0
+    },
+    {
+      "name": "night",
+      "threat": 0.05,
+      "reduced": false,
+      "volume": 1,
+      "seconds": 31.66665625,
+      "peakDb": -9.417921007320302,
+      "rmsDb": -21.383780751297593,
+      "bad": 0,
+      "clipped": 0
+    },
+    {
+      "name": "boss",
+      "threat": 0.9,
+      "reduced": true,
+      "volume": 1,
+      "seconds": 29,
+      "peakDb": -9.496446680875636,
+      "rmsDb": -21.41865531349268,
+      "bad": 0,
+      "clipped": 0
+    },
+    {
+      "name": "boss",
+      "threat": 0.9,
+      "reduced": false,
+      "volume": 0,
+      "seconds": 29,
+      "peakDb": null,
+      "rmsDb": null,
+      "bad": 0,
+      "clipped": 0
+    },
+    {
+      "name": "all cross-fades + breakup",
+      "threat": 0.9,
+      "reduced": false,
+      "volume": 1,
+      "seconds": 28,
+      "peakDb": -5.207720069759572,
+      "rmsDb": -21.811187359321977,
+      "bad": 0,
+      "clipped": 0
+    }
+  ],
+  "game": [
+    {
+      "mode": "night",
+      "playing": "night",
+      "state": "playing",
+      "quality": "low"
+    },
+    {
+      "mode": "field",
+      "playing": "field",
+      "state": "playing",
+      "quality": "low"
+    },
+    {
+      "mode": "train",
+      "playing": "train",
+      "state": "playing",
+      "quality": "low"
+    },
+    {
+      "mode": "boss",
+      "playing": "boss",
+      "breakup": true
+    },
+    {
+      "mode": "crewLoss",
+      "playing": "crewLoss"
+    },
+    {
+      "mode": "crew",
+      "playing": "crew"
+    },
+    {
+      "mode": "menu",
+      "playing": "menu"
+    }
+  ],
+  "errors": [],
+  "encodedFiles": [
+    {
+      "name": "night",
+      "seconds": 27.66665625,
+      "bytes": 137558,
+      "peakDb": -7.535523568874353,
+      "rmsDb": -19.204683131918216,
+      "lufsI": -20.697753517096203,
+      "lufsM": -16.378564491287616,
+      "lufsS": -19.61093255686056
+    },
+    {
+      "name": "field",
+      "seconds": 18.14284375,
+      "bytes": 146270,
+      "peakDb": -7.69481627060136,
+      "rmsDb": -21.572338374891142,
+      "lufsI": -23.607693241155605,
+      "lufsM": -21.34381830957888,
+      "lufsS": -22.818745500653147
+    },
+    {
+      "name": "train",
+      "seconds": 16,
+      "bytes": 126679,
+      "peakDb": -7.443981952267555,
+      "rmsDb": -22.580041273105245,
+      "lufsI": -24.77397784455533,
+      "lufsM": -22.904249565573622,
+      "lufsS": -23.99036897018765
+    },
+    {
+      "name": "boss",
+      "seconds": 25,
+      "bytes": 183309,
+      "peakDb": -7.536505499753472,
+      "rmsDb": -19.16853271949191,
+      "lufsI": -21.241549685499937,
+      "lufsM": -17.320511097994245,
+      "lufsS": -20.373654216269948
+    },
+    {
+      "name": "crew",
+      "seconds": 31,
+      "bytes": 142905,
+      "peakDb": -13.152728440831215,
+      "rmsDb": -26.00718412817227,
+      "lufsI": -27.025178327031835,
+      "lufsM": -21.73679797954186,
+      "lufsS": -25.262581292145672
+    },
+    {
+      "name": "crewLoss",
+      "seconds": 35.28571875,
+      "bytes": 153152,
+      "peakDb": -13.152576047207546,
+      "rmsDb": -28.611591019857407,
+      "lufsI": -29.819080830263335,
+      "lufsM": -23.62743381890129,
+      "lufsS": -28.332085696425054
+    },
+    {
+      "name": "breakup",
+      "seconds": 4.5,
+      "bytes": 11669,
+      "peakDb": -7.485996813322585,
+      "rmsDb": -19.888598063072155,
+      "lufsI": -19.53966581315642,
+      "lufsM": -18.573307989205635,
+      "lufsS": -20.257850767137743
+    }
+  ]
+}

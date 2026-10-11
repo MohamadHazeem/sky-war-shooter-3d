@@ -1,3 +1,5 @@
+import { secondTourMedal } from './CampaignState';
+import { isSecondTourId } from './SecondTour';
 import * as THREE from 'three';
 import type { Game } from './Game';
 import type { DebriefData } from '../ui/UI';
@@ -122,7 +124,7 @@ export class MissionFlow {
     if (!this.prewarmed) { this.prewarmed = true; g.world.prewarm(scene => scene ? g.engine.renderStudio(scene, g.world.ditchingSea.camera, 1 / 60) : g.engine.render(1 / 60), g.engine.camera); }
     g.state = 'playing';
     g.distantBattle.reset();
-    g.ui.hud(m.role);
+    g.ui.hud(m.role, g.coop.phase === 'mission');
     crewRoster.beginMission(g.world, g.ui, m.role);
     g.ui.fadeTo(1);
     setTimeout(() => g.ui.fade(false), 50);
@@ -156,7 +158,7 @@ export class MissionFlow {
     const last = Number.isFinite(m.rounds ?? 1) && g.roundIdx >= (m.rounds ?? 1) - 1;
     Chatter.onRoundEnd(last);
     if (last) { g.director.roundsComplete = true; return; }
-    const earned = Math.round((g.score - this.scoreBanked) * g.loadout.scoreMult);
+    const earned = g.coop.phase === 'mission' ? 0 : Math.round((g.score - this.scoreBanked) * g.loadout.scoreMult);
     g.prog.earn(earned);
     this.scoreBanked = g.score;
     const kills = w.stats.kills - this.roundKills0;
@@ -179,20 +181,21 @@ export class MissionFlow {
     g.roundT0 = w.time;
     g.director.beginRound();
     this.roundKills0 = w.stats.kills;
+    crewRoster.onRoundStart(g.prog.perks); // apply next-round assignments before the engineer repairs
     // ground crew patch-up between rounds
     const pl = w.player;
-    if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * 0.3);
+    if (pl) for (const z of pl.zones) if (z.hp > 0) z.hp = Math.min(z.maxHp, z.hp + z.maxHp * 0.3 * crewRoster.effects().repair);
     g.applyLoadout(true);
     g.skills.onRoundStart();
     g.state = 'playing';
     g.engine.paused = false;
     g.input.lock();
-    crewRoster.onRoundStart(g.prog.perks);
     g.ui.banner(`ROUND ${g.roundIdx + 1}`, g.roundIdx >= 3 ? 'They\'re sending everything they have' : 'More fighters inbound', 2800);
     Chatter.onRoundStart();
   }
 
   finish(success: boolean, reason: string, bailOut = false) {
+    this.g.bombardier.leave();
     const g = this.g;
     if (g.endResult) return;
     if (g.ditching.begin(success, () => g.showDebrief())) return;
@@ -233,6 +236,7 @@ export class MissionFlow {
   showDebrief() {
     const g = this.g;
     if (g.state === 'debrief') return; // outcome/merit must be paid only once
+    if (g.coop.showDebrief()) return;
     if (!g.ditching.ditched && g.endResult?.success && g.bookends.landing(g.mission!, () => g.showDebrief())) return; // landing scene first
     const m = g.mission!;
     const w = g.world;
@@ -249,7 +253,7 @@ export class MissionFlow {
     const survival = m.duration === Infinity;
     if (r.success) g.score += 500 + survivors * 50 + Math.round(acc * 300);
     g.score = g.modes.finalScore(m, g.score);
-    const medals: string[] = [];
+    const medals: string[] = secondTourMedal(m, r.success);
     if (r.success && !survival) medals.push('Air Medal');
     if (w.stats.kills >= 5) medals.push(m.role === 'pilot' ? 'Ace in a Day' : 'Distinguished Flying Cross');
     if (w.stats.kills >= 8 && w.combatLosses <= 1) medals.push('Silver Star');   // set-piece losses left out
@@ -280,7 +284,7 @@ export class MissionFlow {
       rounds: w.stats.shots, hits: w.stats.hits, bestStreak: g.tally.bestStreak,
       closestKill: g.tally.closestKill === Infinity ? null : g.tally.closestKill,
       killsByGun: m.role === 'gunner' ? g.tally.killsByGun() : undefined,
-      merit, points: g.prog.points, ditched: g.ditching.ditched,
+      merit, ditched: g.ditching.ditched, points: g.prog.points, bombing: g.bombardier.result ?? undefined,
     };
     // the crew-room scene first after a story mission (CrewRoomScene.ts); `then` runs once the map is up
     const toMap = (then?: unknown) => crewRoomScene.play(m, () => { g.showCampaign(); if (typeof then === 'function') then(); });
@@ -295,11 +299,11 @@ export class MissionFlow {
     // online leaderboard: survival per role, campaign per mission
     const host = document.querySelector<HTMLElement>('#debrief .box');
     const board = leaderboardMode(m) ?? (survival ? `survival-${m.role}` : `campaign-${m.id}`);
-    if (host) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: g.score, kills: w.stats.kills, rounds: g.roundIdx + 1 });
+    if (host && !isSecondTourId(m.id)) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: g.score, kills: w.stats.kills, rounds: g.roundIdx + 1 });
     mountShare(host, g.engine, () => shareStamp(g), () => ({ title: m.title, kills: d.kills, score: d.score, success: d.success, survival, waves: d.waves, role: m.role }));
     analytics.missionEnd(m, d);
     g.service.onDebrief(m, d, medals);
-    mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers, ditched: g.ditching.ditched }, g.prog, g.progress, toMap);
+    mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers, score: g.score, ditched: g.ditching.ditched }, g.prog, g.progress, toMap);
     g.specials.nemesis.onDebrief(m); // named Experten: this mission's ace outcomes (NemesisRuntime.ts)
     crewRoomScene.capture(g, m, d); // the outcome the crew-room scene talks about
   }

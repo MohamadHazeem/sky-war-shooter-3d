@@ -63,6 +63,7 @@ export interface MedalDef {
 const stripes = (...c: string[]) => `linear-gradient(90deg, ${c.map((x, i) => `${x} ${(i / c.length) * 100}% ${((i + 1) / c.length) * 100}%`).join(', ')})`;
 
 export const MEDALS: MedalDef[] = [
+  { name: 'Second Tour Medal', desc: 'Complete twenty-five second-tour operations.', ribbon: stripes('#1d3f8f', '#e8a317', '#fff', '#e8a317', '#1d3f8f'), first: { kind: 'merit', amount: 2500 }, repeat: 0 },
   { name: 'Air Medal', desc: 'Complete a campaign mission.', ribbon: stripes('#e8a317', '#1d3f8f', '#1d3f8f', '#e8a317', '#1d3f8f', '#1d3f8f', '#e8a317'), first: { kind: 'merit', amount: 300 }, repeat: 150 },
   { name: 'Distinguished Flying Cross', desc: 'Five kills in a B-17 gunner mission.', ribbon: stripes('#b3321f', '#f2efe6', '#1d3f8f', '#1d3f8f', '#1d3f8f', '#f2efe6', '#b3321f'), first: { kind: 'unlock', id: 'stinger', label: 'Stinger twin-feed .50', fallback: 300 }, repeat: 300 },
   { name: 'Silver Star', desc: 'Eight kills with at most one bomber lost.', ribbon: stripes('#1d3f8f', '#f2efe6', '#1d3f8f', '#f2efe6', '#b3321f', '#f2efe6', '#1d3f8f', '#f2efe6', '#1d3f8f'), first: { kind: 'unlock', id: 'hispano', label: 'Hispano 20 mm cannon', fallback: 500 }, repeat: 500 },
@@ -126,6 +127,7 @@ export interface CareerData {
   shots: number;
   hits: number;
   seconds: number;         // time in the air
+  bestBombing: number;
   bestStreak: number;
   bosses: number;
   bombersSaved: number;    // bombers brought home on successful missions
@@ -152,7 +154,7 @@ export function emptyCareer(): CareerData {
   return {
     v: 1, serial: newSerial(), enlisted: Date.now(), xp: 0, missions: 0, wins: 0, deaths: 0, kills: 0,
     killsByType: {}, killsByRole: { gunner: 0, pilot: 0 }, killsByStation: {}, shots: 0, hits: 0, seconds: 0,
-    bestStreak: 0, bosses: 0, bombersSaved: 0, bombersLost: 0, medals: {}, cosmetics: [], overdrives: 0,
+    bestBombing: 0, bestStreak: 0, bosses: 0, bombersSaved: 0, bombersLost: 0, medals: {}, cosmetics: [], overdrives: 0,
     campaignWins: [], bestSurvivalRound: 0, dailyDone: 0, dailyPerfectDays: 0, dailyRuns: 0, dailyBest: {},
   };
 }

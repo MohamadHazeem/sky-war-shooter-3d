@@ -80,7 +80,7 @@ export class GameHud {
     const mm = Math.floor(w.time / 60), ss = Math.floor(w.time % 60);
     g.ui.updateCommon({
       mission: `${m.title.toUpperCase()} · ${mm}:${String(ss).padStart(2, '0')}`,
-      objective, kills: w.stats.kills, score: g.score, formation: `${alive}/${m.bombers} B-17s`,
+      objective, kills: g.coop.phase === 'mission' ? g.coop.crewKills : w.stats.kills, score: g.score, formation: `${alive}/${m.bombers} B-17s`,
     });
     g.ui.updateCombo(g.combo.mult, g.combo.fraction);
     if (m.role === 'gunner') {
@@ -166,6 +166,7 @@ export class GameHud {
     const W = innerWidth, H = innerHeight;
     ctx.clearRect(0, 0, W, H);
     if (g.menuMode || !(g.state === 'playing' || g.state === 'ending' || g.state === 'paused')) return;
+    if (g.bombardier.active) { g.bombardier.draw(ctx, W, H); return; }
     const cam = g.engine.camera;
     const w = g.world;
     const pl = w.player;

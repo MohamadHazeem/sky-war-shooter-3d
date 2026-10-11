@@ -5,6 +5,7 @@
 // PARTNER tag is CSS content, fed from the --coop-partner custom property.
 import { STATION_ORDER, STATIONS, StationId } from '../world/B17Layout';
 import { tx } from '../i18n';
+import { savedName, saveName } from '../net/Leaderboard';
 
 export interface CoopScreenHandlers {
   host(): void;
@@ -127,17 +128,19 @@ export class CoopScreen {
     this.root.innerHTML = `<div class="screen-center"><div class="box panel">
       <div class="kicker">${tx('ONLINE · PEER TO PEER')}</div><h2 class="h2">${tx('Co-op (beta)')}</h2>
       <p class="note" style="margin-top:4px">${tx('Two gunners crew the same Fortress in Survival. One player hosts and runs the battle; the other joins with a code.')}</p>
+      <label class="hud-label">${tx('Your callsign')} <input data-name maxlength="20" value="${esc(savedName())}" placeholder="${tx('Your name')}" /></label>
       <div class="row" style="margin:18px 0 4px"><button class="btn" data-host>${tx('Host a game')}</button></div>
       <hr class="sep" />
       <div class="hud-label">${tx('Join a game')}</div>
       <div class="joinrow"><input maxlength="7" placeholder="${esc(tx('CODE'))}" autocomplete="off" spellcheck="false" value="${esc(code)}" aria-label="${esc(tx('Join code'))}" /><button class="btn" data-join>${tx('Join')}</button></div>
       <div class="err" role="alert">${esc(tx(error))}</div>
-      <p class="note">${tx('Prototype. Peer-to-peer with no relay server, so some networks (strict firewalls, some corporate, campus and mobile networks) cannot connect.')}</p>
+      <p class="note">${tx('Shared crew score and personal rewards. Relay support is used when available.')}</p>
       <div class="row" style="margin-top:18px"><button class="btn ghost" data-back>${tx('Back')}</button></div>
     </div></div>`;
-    const input = this.root.querySelector('input')!;
-    const join = () => this.h.join(input.value);
-    this.root.querySelector('[data-host]')!.addEventListener('click', () => this.h.host());
+    const input = this.root.querySelector<HTMLInputElement>('.joinrow input')!;
+    const name = this.root.querySelector<HTMLInputElement>('[data-name]')!;
+    const join = () => { saveName(name.value); this.h.join(input.value); };
+    this.root.querySelector('[data-host]')!.addEventListener('click', () => { saveName(name.value); this.h.host(); });
     this.root.querySelector('[data-join]')!.addEventListener('click', join);
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') join(); });
     this.root.querySelector('[data-back]')!.addEventListener('click', () => this.h.back());

@@ -13,7 +13,7 @@
 // key may be held by one gunner action and one pilot action at the same time.
 import { tx } from '../i18n';
 
-export type ActionId = 'fire' | 'zoom' | 'reload' | 'map' | 'seat1' | 'seat2' | 'seat3' | 'seat4' | 'seat5' | 'wing1' | 'wing2' | 'wing3' | 'wing4' | 'pause' | 'help';
+export type ActionId = 'bombsight' | 'fire' | 'zoom' | 'reload' | 'map' | 'seat1' | 'seat2' | 'seat3' | 'seat4' | 'seat5' | 'wing1' | 'wing2' | 'wing3' | 'wing4' | 'pause' | 'help';
 
 export type ActionScope = 'gunner' | 'pilot';
 
@@ -21,6 +21,7 @@ export interface ActionDef { id: ActionId; label: string; def: string; scope?: A
 
 // def = the code the game listens for (and the default binding)
 export const ACTIONS: readonly ActionDef[] = [
+  { id: 'bombsight', label: 'Take bombsight', def: 'KeyN', scope: 'gunner' },
   { id: 'fire', label: 'Fire (alternative to the left button)', def: 'Space' },
   { id: 'zoom', label: 'Zoom / look down the sight (alternative to the right button)', def: 'KeyB' },
   { id: 'reload', label: 'Reload', def: 'KeyR' },

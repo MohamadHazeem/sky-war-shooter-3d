@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { DitchingSea } from './DitchingSea';
+import { warmTargetSmoke } from '../render/TargetSmoke';
 import { Engine } from '../core/Engine';
 import { Aircraft, Bomber, Fighter, makeGun } from './Aircraft';
 import { hasModel, ModelKind } from './Models';
@@ -27,7 +28,8 @@ import { Crew, STATION_CREW } from './Crew';
 import { prewarmBoss } from './BossShip';
 import { warmGlassFx } from '../game/GlassFx';
 import { bomberName, dressPlayerBomber } from '../game/Customize';
-import { aiGunnerSkill } from '../game/CrewRoster';
+import { aiGunnerSkill, crewRoster } from '../game/CrewRoster';
+import { warmTurretViewmodels } from '../game/Viewmodels';
 import { warmLivingInterior } from '../game/LivingInterior';
 import { PlayerBomberDamage } from './PlayerBomberDamage';
 import { dressEnemy } from './EnemyDress';
@@ -297,12 +299,16 @@ export class World implements WorldView {
     const unwarmBoss = prewarmBoss(this.scene, camera.position, fwd);
     const unwarm = this.bomberDamage.warmup(this.scene, at);
     const unwarmCrew = warmLivingInterior(this.scene, at); // gunner interior: crew, brass, shafts, frost, breath
+    const unwarmTurrets = warmTurretViewmodels(this.scene, at);
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
+    const unwarmTargetSmoke = warmTargetSmoke(this.scene);
     render();
     this.ditchingSea.warm(render, this.playerBomber?.root ?? b17.root);
+    unwarmTargetSmoke();
     this.wrecks.keepWarm(b17Pieces);   // B-17 wreck programs stay compiled for the set pieces
     unwarm();
     unwarmCrew();
+    unwarmTurrets();
     unwarmGlass();
     unwarmBoss();
     for (const f of dummies) this.scene.remove(f.root);
@@ -354,7 +360,7 @@ export class World implements WorldView {
     if (!pb || !pb.alive) return;
     let near = 0;
     for (const f of this.fighters('axis')) if (f.alive && f.pos.distanceTo(pb.pos) < 900) near++;
-    this.nextJink -= dt * (near >= 3 ? 1.8 : near >= 1 ? 1.2 : 0.6);
+    this.nextJink -= dt * crewRoster.effects().jink * (near >= 3 ? 1.8 : near >= 1 ? 1.2 : 0.6);
     if (this.jinkT >= this.jinkDur && this.nextJink <= 0) {
       this.jinkT = 0; this.jinkDur = 4 + Math.random() * 2.5; this.jinkSide = Math.random() < 0.5 ? -1 : 1;
       this.nextJink = 9 + Math.random() * 9;
@@ -376,6 +382,7 @@ export class World implements WorldView {
       b.slot.z -= dt * 3.5 * Math.max(1, b.enginesOut);
       b.slot.y -= dt * 2.0 * b.enginesOut;
     }
+    if (b.isPlayer) wob.multiplyScalar(crewRoster.effects().formation);
     wob.add(this.formOff);
     // player's ship: jink sideways and down, banking into it (sin^2 profile, bank leads the slide)
     let jinkRoll = 0, jinkPitch = 0, turb = 0;
@@ -396,7 +403,7 @@ export class World implements WorldView {
     // Roll: a counter-bank against the drift plus a weak pull back toward the slot (positive roll tilts the lift toward -x)
     const roll = latRate * 0.045 + (wob.x - this.formOff.x) * 0.004 + (b.straggling ? 0.05 * b.enginesOut : 0) + this.formRoll + jinkRoll + (b.isPlayer ? this.lurch + turb : 0);
     // Yaw: slight heading wander that follows the lateral drift, plus a slow independent wander
-    const yaw = latRate * 0.02 + Math.sin(this.time * 0.07 + ph.yaw) * 0.008;
+    const yaw = Math.atan2(this.formationForward.x, this.formationForward.z) + latRate * 0.02 + Math.sin(this.time * 0.07 + ph.yaw) * 0.008;
     const pitch = Math.cos(t * 0.47) * 0.012 * b.wobbleAmp + Math.cos(this.time * 0.09 + 1) * 35 * 0.09 / CRUISE + jinkPitch + turb * 0.6;
     b.root.quaternion.setFromEuler(new THREE.Euler(-pitch, yaw, roll, 'YXZ'));
   }
@@ -707,7 +714,7 @@ export class World implements WorldView {
     this.radioCooldown -= dt;
     // field dressing: a crewmate patches the gunner up after a quiet spell (one wound per DRESSING s;
     // sooner in a battle-group fight, which never goes quiet)
-    if (this.crewWounded > 0 && this.playerStation && this.time - this.lastWound > (this.bossFight ? DRESSING_BOSS : DRESSING)) {
+    if (this.crewWounded > 0 && this.playerStation && this.time - this.lastWound > (this.bossFight ? DRESSING_BOSS : DRESSING) * crewRoster.effects().dressing) {
       this.crewWounded--;
       this.lastWound = this.time - 18;
       this.callout('dressing', 'Radio', 'Hold still — I\'ve patched you up. Back on that gun.', 0, 2);
@@ -835,9 +842,9 @@ export class World implements WorldView {
         const t = (this.fireTimers.get(key) ?? 0) + dt;
         this.fireTimers.set(key, t);
         if (t > 0.1 && t - dt <= 0.1) this.callout('fire' + key, 'Top Turret', `Fire in number ${z.engine + 1} engine!`, 1, 3);
-        if (t > 4.5) {
+        if (t > 4.5 * crewRoster.effects().fireDelay) {
           const bottles = this.extinguishers.get(key) ?? this.extinguisherBottles;
-          this.fireTimers.set(key, -6); // next attempt (if any) later
+          this.fireTimers.set(key, -6 * crewRoster.effects().fireDelay); // next attempt (if any) later
           if (bottles > 0) {
             this.extinguishers.set(key, bottles - 1);
             if (Math.random() < this.extinguishChance) { z.burning = false; this.fireTimers.delete(key); this.callout('fireout' + key, 'Pilot', `Extinguisher's in. Fire's out on number ${z.engine + 1}.`, 1, 3); }

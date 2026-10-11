@@ -804,6 +804,7 @@ export class BossBattle {
   private startDeath(s: ShipState) {
     const sh = s.ship, w = this.world;
     s.deathT = 0; s.blastT = 0; s.blasts = 0;
+    sound.music.breakup();
     if (s.heavy) this.endHeavy(s);
     sh.dying = true; sh.alive = false; sh.core = 0;
     for (const p of sh.parts) p.charge = 0;

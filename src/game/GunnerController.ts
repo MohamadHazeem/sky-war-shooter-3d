@@ -16,6 +16,8 @@ import { access } from '../core/Accessibility';
 import { heatHaze } from '../render/HeatHaze';
 import { crewSeatLoadout } from './CrewRoster';
 import { LivingInterior } from './LivingInterior';
+import { Brass } from './Brass';
+import { TAIL_FLOOR, TAIL_HALF_WIDTH, FREE_LOOK_YAW, FREE_LOOK_UP, stationShafts, disposeStationDetails } from './TurretInteriors';
 import { GunnerGlass } from './GlassFx';
 
 interface StationState {
@@ -45,7 +47,7 @@ const _ventX = new THREE.Vector3();
 const _cq = new THREE.Quaternion();
 const _ce = new THREE.Euler();
 const _flip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
-const LOOK_YAW: Record<StationDef['type'], number> = { waist: 2.7, turret: 1.2, tail: 1.1 };
+const LOOK_YAW = FREE_LOOK_YAW;
 export class GunnerController {
   station: StationId = 'waistL';
   private states = new Map<StationId, StationState>();
@@ -60,6 +62,10 @@ export class GunnerController {
   private crewLight = new THREE.PointLight(0xffb060, 0, 5, 2);   // the other waist gunner's muzzle flash
   // living interior: the other waist gunner, crew glimpses, brass pile, shafts, frost, breath
   private living: LivingInterior;
+  private tailBrass: Brass | null = null;
+  private ballShafts = stationShafts('ball');
+  private tailShafts = stationShafts('tail');
+  private shaftSun = new THREE.Vector3();
   readonly glassFx: GunnerGlass;   // rain, glints, oil, frost and cracks on the turret / tail glass (GlassFx.ts)
   cold = 0.5;      // 0..1 how cold the mission is (frost on the windows; set by Game per mission)
   // free look (hold C): the head turns away from the gun to look around the compartment
@@ -154,12 +160,17 @@ export class GunnerController {
     const ball = buildTurret('ball');
     this.guns.ball = ball.guns;
     this.interiors.ball = ball.group;
+    ball.group.add(this.ballShafts.group);
     const tail = buildTailInterior();
     this.interiors.tail = tail;
+    tail.add(this.tailShafts.group);
     const tg: GunModel[] = [];
-    {
-      const m = buildM2({ ringSight: false, belt: true, beltSide: 1 });
-      m.group.position.set(0, -0.04, 0);
+    for (const side of [-1, 1] as const) {
+      const m = buildM2({ ringSight: false, belt: true, beltSide: side, beltPoints: [
+        new THREE.Vector3(0, 0.035, -0.02), new THREE.Vector3(side * 0.16, 0.01, -0.23),
+        new THREE.Vector3(side * 0.18, -0.04, -0.75), new THREE.Vector3(side * 0.20, -0.04, -1.80),
+      ] });
+      m.group.position.set(side * 0.18, -0.04, 0);
       tg.push(m);
     }
     // ring-and-post sight on a bracket above the guns, on the gunner's eye line
@@ -173,7 +184,19 @@ export class GunnerController {
       if (!(type.startsWith('Torus') || (type === 'SphereGeometry' && m.position.z > 0.9))) o.visible = false;
     });
     sightGun.group.position.set(0, 0.12, 0.25);
-    this.interiors.tail.add(sightGun.group);
+    // Sight follows the gun, while the cone, seat and glass stay on the airframe.
+    tg[0].group.add(sightGun.group);
+    sightGun.group.position.x = 0.18;
+    sightGun.group.position.y = 0.16;
+    const sightBracket = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.196, 0.018),
+      (tail.getObjectByName('tailConeSeatWheelWellAndCables') as THREE.Mesh).material);
+    // The shared material is vertex-coloured, so the bracket supplies its colour too.
+    sightBracket.geometry.setAttribute('color', new THREE.BufferAttribute(
+      new Float32Array(sightBracket.geometry.getAttribute('position').count * 3).fill(0.04), 3));
+    sightBracket.position.set(0.18, 0.118, 0.30);
+    tg[0].group.add(sightBracket);
+    this.tailBrass = new Brass(-1.3, 0.4, TAIL_FLOOR, TAIL_HALF_WIDTH, false);
+    tail.add(this.tailBrass.flying, this.tailBrass.pile);
     this.guns.tail = tg;
     this.glassFx.attach(bomber, { top: top.group, ball: ball.group, tail });
     this.living.build(bomber, this.waistInterior, (wl.z + wr.z) / 2, wl.z, wr.z, this.guns.waistL[0], this.guns.waistR[0]);
@@ -191,6 +214,13 @@ export class GunnerController {
     this.rig.children.filter((c) => c !== this.gunPivot).forEach((c) => this.rig.remove(c));
     this.muzzleLight.intensity = 0;
     this.living.detach();
+    for (const id of ['ball', 'tail'] as const) {
+      const detail = this.interiors[id]?.getObjectByName(id + 'LivingInterior');
+      if (detail) { disposeStationDetails(detail); detail.removeFromParent(); }
+    }
+    this.ballShafts.group.removeFromParent(); this.tailShafts.group.removeFromParent();
+    this.tailBrass?.dispose(); this.tailBrass = null;
+    sound.setTurretTraverse(0);
     this.glassFx.detach();
     this.burstT = 0;
     this.clatterClock = 0;
@@ -319,11 +349,13 @@ export class GunnerController {
       const o = this.interiors[k];
       if (o) o.removeFromParent();
     }
-    if (this.waistInterior) this.waistInterior.visible = def.type === 'waist';
+    if (this.waistInterior) this.waistInterior.visible = def.type === 'waist' || id === 'tail';
     const guns = this.guns[id]!;
     for (const g of guns) this.gunPivot.add(g.group);
     if (def.type === 'turret') this.gunPivot.add(this.interiors[id]!);
-    if (def.type === 'tail') this.gunPivot.add(this.interiors.tail!);
+    if (def.type === 'tail') { this.interiors.tail!.rotation.y = Math.PI; this.rig.add(this.interiors.tail!); }
+    this.lookYaw = this.lookPitch = this.look = 0;
+    sound.setTurretTraverse(0);
     this.living.setStation(id); // the other waist gun goes to its crewman
     const s = this.states.get(id)!;
     if (immediate) { s.yaw = s.tYaw = 0; s.pitch = s.tPitch = 0; }
@@ -396,7 +428,7 @@ export class GunnerController {
       const ls = 0.0024 * inp.sensitivity;
       const ly = LOOK_YAW[def.type];
       this.lookYaw = THREE.MathUtils.clamp(this.lookYaw - mdx * ls, -ly, ly);
-      this.lookPitch = THREE.MathUtils.clamp(this.lookPitch - mdy * ls * (inp.invertY ? -1 : 1), -1.0, 0.8);
+      this.lookPitch = THREE.MathUtils.clamp(this.lookPitch - mdy * ls * (inp.invertY ? -1 : 1), -1.25, def.id === 'ball' ? FREE_LOOK_UP : 1.15);
       mdx = mdy = 0;
     } else {
       const back = Math.min(1, adt * 7);
@@ -409,10 +441,9 @@ export class GunnerController {
     // keyboard traverse (arrows / I-J-K-L) moves the same target, slower when sighting
     this.keyAim.update(inp, adt);
     const kr = KEY_AIM_RATE * (this.zoom ? 0.55 : 1) * adt;
-    s.tYaw -= this.keyAim.x * kr;
-    s.tPitch += this.keyAim.y * kr * (inp.invertY ? -1 : 1);
+    if (!looking) { s.tYaw -= this.keyAim.x * kr; s.tPitch += this.keyAim.y * kr * (inp.invertY ? -1 : 1); }
     // aim magnetism: draw the sight onto the lead point of the fighter nearest the crosshair
-    if (lock > 0 && this.assist > 0) {
+    if (!looking && lock > 0 && this.assist > 0) {
       const pull = Math.min(1, adt * (2.5 + 5 * lock) * this.assist);
       let ey = this.assistYaw - s.tYaw;
       if (def.yaw[1] - def.yaw[0] >= Math.PI * 1.99) ey = wrapAngle(ey);
@@ -485,8 +516,10 @@ export class GunnerController {
     // Apply gun orientation
     const yaw = def.rest.yaw + s.yaw, pitch = def.rest.pitch + s.pitch;
     this.gunPivot.rotation.set(0, 0, 0);
-    this.gunPivot.quaternion.setFromEuler(new THREE.Euler(-pitch, yaw, 0, 'YXZ'));
+    this.gunPivot.quaternion.setFromEuler(_ce.set(-pitch, yaw, 0, 'YXZ'));
 
+    sound.setTurretTraverse(def.id === 'ball' ? Math.hypot(s.vYaw, s.vPitch) : 0);
+    this.tailBrass?.update(dt);
     for (const g of guns) g.belt?.tick(dt);
     this.updateOverdriveFx(guns);
     // dust motes only matter while the waist interior is on screen
@@ -498,6 +531,11 @@ export class GunnerController {
     this.world.playerAimDir.copy(this.aimDirection());
     this.updateLiving(dt);
     this.glassFx.update(dt, this.station, this.adsK, this.cold);
+    if (this.station === 'ball' || this.station === 'tail') {
+      this.interiors[this.station]!.getWorldQuaternion(_q).invert();
+      this.shaftSun.copy(Atmos.sunDir).applyQuaternion(_q);
+      (this.station === 'ball' ? this.ballShafts : this.tailShafts).update(this.shaftSun);
+    }
   }
 
   // Living interior: crew, brass, sun shafts, frost and the gunner's own breath
@@ -512,8 +550,13 @@ export class GunnerController {
     _vent.set(0, 0.12, 1).applyQuaternion(this.gunPivot.quaternion);
     _ventX.set(0.3, 0, 0).applyQuaternion(this.gunPivot.quaternion);
     const effort = Math.min(1, this.burstT * 0.5 + this.shake);
-    // breath and the cabin effects belong to the waist (in a turret the puffs would sit on the sight)
-    const eyeIn = this.def.type === 'waist' ? this.ads : 0;
+    // Closed stations vent down and sideways: a faint edge puff, below the sight.
+    if (this.def.type !== 'waist') {
+      _mouth.y -= 0.10;
+      _vent.set(0, -0.55, 0.65).applyQuaternion(this.gunPivot.quaternion);
+      _ventX.set(0.5, 0, 0).applyQuaternion(this.gunPivot.quaternion);
+    }
+    const eyeIn = this.def.type === 'waist' ? this.ads : this.ads * 0.45;
     this.living.update(dt, this.station, this.sunLocal, eyeIn, this.cold, _mouth, _vent, _ventX, 0.27 + 0.28 * effort, this.engine.renderer.domElement.height);
   }
 
@@ -607,24 +650,25 @@ export class GunnerController {
     const s = this.state;
     s.vYaw += R() * 0.09 * this.loadout.recoil;
     s.vPitch += (0.05 + Math.random() * 0.07) * this.loadout.recoil;
-    sound.playerGun(false, !!W.cannon);
+    sound.playerGun(this.station === 'ball' || this.station === 'tail', !!W.cannon, this.station === 'ball');
     g.belt?.advance(1);
     if (g.belt && s.ammo < 60) { g.belt.visibleRounds = Math.max(0, Math.floor(s.ammo * 0.8)); }
     this.ejectCasing(g);
   }
 
   private ejectCasing(g: GunModel) {
-    const br = this.living.brass;
+    const br = this.station === 'tail' ? this.tailBrass : this.living.brass;
     if (!br || !this.bomber) return;
     g.ejectPort.getWorldPosition(_pa);
-    this.bomber.root.worldToLocal(_pa);
-    br.eject(_pa, _pb.set(R() * 0.4, -1.2 - Math.random(), R() * 0.4), this.def.type === 'waist');
+    if (this.station === 'tail') this.interiors.tail!.worldToLocal(_pa);
+    else this.bomber.root.worldToLocal(_pa);
+    br.eject(_pa, _pb.set(R() * 0.4, -1.2 - Math.random(), R() * 0.4), this.def.type === 'waist' || this.station === 'tail');
   }
 
   // Long bursts: spent brass rattles across the bomber floor. Tinkles come faster and
   // louder the longer the trigger is held; random pitch and timing keep it from looping.
   private brassClatter(dt: number, firing: boolean) {
-    if (!firing) { this.burstT = 0; this.clatterClock = 0; return; }
+    if (!firing || this.station === 'ball') { this.burstT = 0; this.clatterClock = 0; return; }
     if (this.burstT === 0) this.clatterClock = 0.25; // brief lag so the first shots lead in
     this.burstT += dt;
     this.clatterClock -= dt;

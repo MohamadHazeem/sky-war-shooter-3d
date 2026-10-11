@@ -1,3 +1,5 @@
+import { recordSquadronExperte } from '../net/Squadrons';
+import { isSecondTourId } from './SecondTour';
 import * as THREE from 'three';
 import type { SpecialEvents } from './SpecialEvents';
 import type { Mission } from './Missions';
@@ -129,7 +131,7 @@ export class NemesisRuntime {
     this.log.push(`mission ${this.st.missions}: ${m.id} forced rounds [${[...this.forced].join(',')}]${back.length ? ` · back from hospital: ${back.map((a) => a.last).join(', ')}` : ''}`);
   }
 
-  private campaign(m: Mission) { return CAMPAIGN.includes(m) || isRaidId(m.id); }
+  private campaign(m: Mission) { return CAMPAIGN.includes(m) || isRaidId(m.id) || isSecondTourId(m.id); }
 
   // SpecialEvents.newRound: should this round get an Experte (on top of the normal specials)?
   wantsRound(idx: number): boolean {
@@ -310,6 +312,7 @@ export class NemesisRuntime {
       sp.bonusMerit += pay;
       sp.addScore(2500);
       this.missionKills++;
+      void recordSquadronExperte();
       sound.confirm('kill_confirm');
       this.ui.feed(tx('{name} shot down — +{n} merit bounty', { name: aceName(a), n: num(pay) }), 'mine');
       this.ui.banner(`${fullRankNameUpper(a)} · ${tx('{n} VICTORIES', { n: a.victories })}`, res.wasMostWanted ? tx('Most wanted — down') : tx('Experte down'), 4200);

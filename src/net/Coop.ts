@@ -2,13 +2,13 @@
 //   'state'  unordered, no retransmits: snapshots (host -> guest) and gun input (guest -> host),
 //            where only the newest message matters and a late one is worse than a lost one;
 //   'events' ordered and reliable: lobby, start, kills, hits, pings, goodbye.
-// STUN only (no TURN relay): peers behind symmetric NATs or strict firewalls (some corporate,
-// campus and mobile networks) cannot connect. That is a known limit of the prototype.
+// Optional TURN credentials are fetched before connecting; unavailable relay falls back to STUN.
 // Signalling (offer/answer/ICE) lives in Signal.ts.
 
 import * as THREE from 'three';
 
-export const ICE_SERVERS: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }];
+import { ICE_SERVERS } from './Ice';
+export { ICE_SERVERS } from './Ice';
 
 export type LinkStatus = 'connecting' | 'open' | 'closed';
 
@@ -33,8 +33,8 @@ export class CoopLink {
   private lastRx = performance.now();
   private lostAt = 0;
 
-  constructor(readonly role: 'host' | 'guest') {
-    this.pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+  constructor(readonly role: 'host' | 'guest', iceServers = ICE_SERVERS) {
+    this.pc = new RTCPeerConnection({ iceServers });
     if (role === 'host') {
       this.wire(this.pc.createDataChannel('state', { ordered: false, maxRetransmits: 0 }));
       this.wire(this.pc.createDataChannel('events', { ordered: true }));

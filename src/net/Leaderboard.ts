@@ -1,3 +1,4 @@
+import { cachedSquadron } from './SquadronProfile';
 // Online leaderboard on Firebase (Firestore + anonymous auth). The SDK is loaded on demand
 // so the game's first load stays small. The web config below is public by design: access is
 // controlled by firestore.rules (validated, rate-limited, append-only entries).
@@ -33,6 +34,14 @@ export function cleanName(n: string) {
   return n.replace(/[^\p{L}\p{N} ._'-]/gu, '').trim().slice(0, 20) || 'Gunner';
 }
 
+// Keep both full callsigns, within the co-op-only 43-character rules limit.
+export function crewName(host: string, guest: string) { return `${cleanName(host)} + ${cleanName(guest)}`; }
+export function cleanScoreName(name: string, mode: string) {
+  if (mode !== 'coop-gunner') return cleanName(name);
+  const [host = '', guest = ''] = name.split(' + ');
+  return crewName(host, guest);
+}
+
 type Fb = {
   db: import('firebase/firestore').Firestore;
   uid: string;
@@ -62,10 +71,32 @@ export async function submitScore(e: ScoreEntry): Promise<boolean> {
   if (!e.mode) return false;   // a mode that never posts (custom battles)
   try {
     const { db, uid, fs } = await fb();
+    const cached = cachedSquadron();
+    if (cached) {
+      const { squadronProfile } = await import('./Squadrons');
+      const profile = await squadronProfile();
+      if (profile) e = { ...e, name: profile.callsign };
+      if (profile?.code) {
+        const scoreRef = fs.doc(fs.collection(db, 'scores'));
+        const bestRef = fs.doc(db, 'squadrons', profile.code, 'bests', `${uid}_${e.mode}`);
+        await fs.runTransaction(db, async t => {
+          const [best, squad] = await Promise.all([t.get(bestRef), t.get(fs.doc(db, 'squadrons', profile.code))]);
+          const data = {
+            uid, name: profile.callsign, mode: e.mode, squadron: squad.data()!.boardId,
+            score: Math.max(0, Math.round(e.score)), kills: Math.max(0, Math.round(e.kills)), rounds: Math.max(0, Math.round(e.rounds)),
+            createdAt: fs.serverTimestamp(), v: 1,
+          };
+          t.set(fs.doc(db, 'limits', uid), { last: fs.serverTimestamp() });
+          t.set(scoreRef, data);
+          if (!best.exists() || data.score > best.data().score) t.set(bestRef, { ...data, scoreId: scoreRef.id });
+        });
+        return true;
+      }
+    }
     const batch = fs.writeBatch(db);
     batch.set(fs.doc(db, 'limits', uid), { last: fs.serverTimestamp() });
     batch.set(fs.doc(fs.collection(db, 'scores')), {
-      uid, name: cleanName(e.name), mode: e.mode,
+      uid, name: cleanScoreName(e.name, e.mode), mode: e.mode,
       score: Math.max(0, Math.round(e.score)), kills: Math.max(0, Math.round(e.kills)), rounds: Math.max(0, Math.round(e.rounds)),
       createdAt: fs.serverTimestamp(), v: 1,
     });

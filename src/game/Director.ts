@@ -1,3 +1,5 @@
+import { crewRoster } from './CrewRoster';
+import { isSecondTourId } from './SecondTour';
 import * as THREE from 'three';
 import type { Game } from './Game';
 import { Mission, Round, roundDef, SpawnFrom, Wave } from './Missions';
@@ -135,7 +137,7 @@ export class Director {
 
   // Track the next wave for the radar: fix its arrival point once it is < 25 s out
   private updateIncoming(eta: number | null, w: Wave | null, count = w?.count ?? 0) {
-    if (eta === null || !w || eta > 25) { this.incoming = null; if (eta === null) this.incomingOff = null; return; }
+    if (eta === null || !w || eta > 25 * crewRoster.effects().warning) { this.incoming = null; if (eta === null) this.incomingOff = null; return; }
     if (!this.incomingOff) this.incomingOff = this.predictWave(w);
     this.incoming = { pos: this.g.world.formationCenter.clone().add(this.incomingOff), eta, count };
   }
@@ -152,6 +154,7 @@ export class Director {
       if (!attack) attack = (['headon', 'stern', 'beam', 'high'] as AttackType[])[Math.floor(Math.random() * 4)];
       const tier = g.roundIdx + (g.mission && g.mission.number > 0 ? Math.floor((g.mission.number - 1) / 2) : 0);
       const type = g.modes.enemyType(g.mission, tier) ?? randomEnemyType(tier);
+      if (g.mission && isSecondTourId(g.mission.id) && g.mission.number >= 7 && type === 'fw190') attack = 'stern';
       const f = world.spawnEnemy(p, attack, w.skill, true, Math.random() < (w.rockets ?? 0), type);
       g.modes.onSpawn(f);
       // first sighting of a new type: the crew calls out what it is
@@ -253,7 +256,7 @@ export class Director {
       w.flakIntensity = inFlak ? m.flak.intensity : 0;
       if (inFlak && t - dt < m.flak.start) w.callout('flak', 'Navigator', 'Flak ahead. Initial point in two minutes — here it comes.', 0, 3);
     }
-    if (m.bombsAway && !this.bombsDropped && t >= m.bombsAway) {
+    if (m.bombsAway && !this.bombsDropped && !g.target.playerControlled && t >= m.bombsAway) {
       this.bombsDropped = true;
       g.dropBombs();
       w.callout('bombs', 'Bombardier', 'Bombs away! Let\'s get out of here!', 0, 3);
@@ -314,7 +317,7 @@ export class Director {
     }
     const roundDone = m.round ? this.roundsComplete : false;
     if (roundDone || (!m.round && m.waves.length && this.waveIdx >= m.waves.length && enemies === 0 && t >= Math.min(m.duration, (m.flak?.end ?? 0) + 5))) {
-      if (!m.bombsAway || this.bombsDropped) {
+      if ((!m.bombsAway || this.bombsDropped) && !g.bombardier.awaitingImpact) {
         if (!m.escortArrive || this.escortsSpawned) g.flow.finish(true, m.success ?? (m.role === 'gunner' ? 'The formation fought its way through. Good shooting, gunner.' : 'The bombers made it through. Outstanding work, Blue Leader.'));
       }
     }

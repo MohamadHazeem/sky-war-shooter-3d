@@ -1,0 +1,278 @@
+[
+  {
+    "label": "before",
+    "view": "low",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0,
+    "p50": 4.900000035762787,
+    "avg": 5.08750000782311,
+    "programs": 51
+  },
+  {
+    "label": "after",
+    "view": "low",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0,
+    "p50": 4.5,
+    "avg": 4.868750000372529,
+    "programs": 52
+  },
+  {
+    "label": "before",
+    "view": "medium",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0.09914741543458781,
+    "p50": 4,
+    "avg": 4.324999999254942,
+    "programs": 55
+  },
+  {
+    "label": "after",
+    "view": "medium",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0.044305765568996416,
+    "p50": 3.699999988079071,
+    "avg": 4.181250000372529,
+    "programs": 56
+  },
+  {
+    "label": "before",
+    "view": "high",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0.09087869623655914,
+    "p50": 4.300000011920929,
+    "avg": 4.837499996647239,
+    "programs": 56
+  },
+  {
+    "label": "after",
+    "view": "high",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0.0378351814516129,
+    "p50": 6,
+    "avg": 6.240624999627471,
+    "programs": 56
+  },
+  {
+    "label": "before",
+    "view": "ultra",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0.0687278085797491,
+    "p50": 4.399999976158142,
+    "avg": 5.265624998137355,
+    "programs": 56
+  },
+  {
+    "label": "after",
+    "view": "ultra",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0.02981966845878136,
+    "p50": 6.399999976158142,
+    "avg": 6.412500008940697,
+    "programs": 56
+  },
+  {
+    "label": "before",
+    "view": "inside",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0.042535562275985664,
+    "p50": 3.600000023841858,
+    "avg": 4.1968750059604645,
+    "programs": 56
+  },
+  {
+    "label": "after",
+    "view": "inside",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0.042535562275985664,
+    "p50": 4.600000023841858,
+    "avg": 5.137499995529652,
+    "programs": 56
+  },
+  {
+    "label": "before",
+    "view": "below",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0.22561078909050178,
+    "p50": 5.899999976158142,
+    "avg": 6.224999999627471,
+    "programs": 56
+  },
+  {
+    "label": "after",
+    "view": "below",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0.22561078909050178,
+    "p50": 4.300000011920929,
+    "avg": 4.628125000745058,
+    "programs": 56
+  }
+]

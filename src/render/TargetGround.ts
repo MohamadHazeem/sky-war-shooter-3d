@@ -53,7 +53,8 @@ vec3 tCity(vec2 rel, vec3 base, float fw) {
   vec2 uv = vec2(dot(rel, uTgtRot), dot(rel, vec2(-uTgtRot.y, uTgtRot.x)));
   float u = uv.x, v = uv.y;
   float vr = v - tRiver(u);
-  float rn = length(rel) / R + (vnoise(rel / 700.0) * 0.65 + vnoise(rel / 260.0) * 0.35 - 0.5) * 0.45;
+  float rn = length(uv * vec2(0.83, 1.18)) / R + (vnoise(rel / 700.0) * 0.65 + vnoise(rel / 260.0) * 0.35 - 0.5) * 0.45;
+  rn = min(rn, length((uv - vec2(1450.0, 800.0)) * vec2(1.2, 1.8)) / R + 0.38);
   float city = 1.0 - smoothstep(0.7, 1.05, rn);
   float suburb = 1.0 - smoothstep(1.0, 1.45, rn);
   vec3 c = base;
@@ -61,7 +62,7 @@ vec3 tCity(vec2 rel, vec3 base, float fw) {
   // residential blocks: tiled roofs around dark courtyards, sparser toward the edge
   float st = tStreets(uv + vec2(0.0, 37.0), vec2(118.0, 92.0), 7.0, fw, cell, f);
   float hb = h2(cell);
-  vec3 roof = (hb < 0.45 ? vec3(0.24, 0.12, 0.085) : hb < 0.75 ? vec3(0.15, 0.15, 0.16) : vec3(0.26, 0.245, 0.22)) * (0.85 + 0.3 * h2(cell + 2.1));
+  vec3 roof = (hb < 0.45 ? vec3(0.165, 0.15, 0.13) : hb < 0.75 ? vec3(0.15, 0.15, 0.16) : vec3(0.225, 0.22, 0.205)) * (0.85 + 0.3 * h2(cell + 2.1));
   vec2 cq = abs(f / vec2(118.0, 92.0) - 0.5);
   float ys = 0.08 + 0.2 * h2(cell + 9.4);
   float yard = (1.0 - smoothstep(ys, ys + 0.04, max(cq.x, cq.y))) * (1.0 - smoothstep(10.0, 40.0, fw)) * step(0.25, h2(cell + 4.4));
@@ -76,7 +77,7 @@ vec3 tCity(vec2 rel, vec3 base, float fw) {
   if (works > 0.0) {
     float ws = tStreets(uv + vec2(400.0, 0.0), vec2(260.0, 170.0), 9.0, fw, cell, f);
     float hw = h2(cell + 11.0);
-    vec3 shed = hw < 0.3 ? vec3(0.22, 0.22, 0.21) : hw < 0.5 ? vec3(0.08, 0.085, 0.09) : vec3(0.16, 0.115, 0.085);
+    vec3 shed = hw < 0.3 ? vec3(0.22, 0.22, 0.21) : hw < 0.5 ? vec3(0.08, 0.085, 0.09) : vec3(0.145, 0.14, 0.125);
     // sawtooth roofs read as faint stripes
     shed *= mix(1.0, 0.82 + 0.18 * step(0.5, fract(f.x / 18.0)), 1.0 - smoothstep(6.0, 18.0, fw));
     if (hw > 0.62 && hw < 0.84) {
@@ -202,9 +203,9 @@ vec3 targetGround(vec2 rel, vec3 alb, float fw, vec3 light, vec2 camRel, vec3 d)
   g = mix(g, pallC, pall) + emis * (1.0 - pall * 0.55);
   // rising smoke columns, leaning downwind: each column is a stack of vertically stretched
   // gaussian puffs whose line integral along the view ray is analytic. Only for rays whose
-  // stretch below 3 km passes within reach of the city.
+  // stretch below 7.5 km passes within reach of the city.
   float dy = max(-d.y, 1e-3);
-  vec2 ra = camRel + d.xz * ((uCamAlt - 3000.0) / dy), rb = rel;
+  vec2 ra = camRel + d.xz * ((uCamAlt - 7500.0) / dy), rb = rel;
   vec2 ab = rb - ra;
   vec2 cl = ra + ab * clamp(-dot(ra, ab) / max(dot(ab, ab), 1e-3), 0.0, 1.0);
   if (uTgtClock > 0.0 && dot(cl, cl) < (R * 1.6 + 2500.0) * (R * 1.6 + 2500.0)) {
@@ -216,18 +217,18 @@ vec3 targetGround(vec2 rel, vec3 alb, float fw, vec3 light, vec2 camRel, vec3 d)
       if (P.w <= 0.0) continue;
       float age = uTgtClock - P.z;
       if (age <= 0.0) continue;
-      float top = 3000.0 * (1.0 - exp(-age / 45.0)) + 80.0;
+      float top = 7400.0 * (1.0 - exp(-age / 45.0)) + 80.0;
       // skip columns the ray's lower stretch never comes near
       vec2 pa = camRel + d.xz * ((uCamAlt - top) / dy) - P.xy;
       vec2 pab = rel - P.xy - pa;
       vec2 pcl = pa + pab * clamp(-dot(pa, pab) / max(dot(pab, pab), 1e-3), 0.0, 1.0);
-      float reach = 3.0 * (70.0 + top * 0.32 + min(age, 300.0) * 0.35) + length(uTgtWind) * min(top / 16.0, age);
+      float reach = 3.0 * (70.0 + top * 0.14 + min(age, 300.0) * 0.35) + length(uTgtWind) * min(top / 16.0, age);
       if (dot(pcl, pcl) > reach * reach) continue;
       float fade = P.w * (0.45 + 0.55 * exp(-age / 600.0)) * smoothstep(0.0, 3.0, age);
       for (int j = 0; j < 4; j++) {
         float fj = (float(j) + 0.5) / 4.0;
         float yb = top * fj;
-        float w = 70.0 + yb * 0.32 + min(age, 300.0) * 0.35;
+        float w = 70.0 + yb * 0.14 + min(age, 300.0) * 0.35;
         float hgt = max(top * 0.2, w);                   // vertical half-size: puffs overlap into a column
         vec2 cxz = P.xy + uTgtWind * min(yb / 16.0, age);
         // squash y so the puff is a sphere of radius w, integrate, undo the stretch

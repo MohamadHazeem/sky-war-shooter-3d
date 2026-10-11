@@ -96,7 +96,7 @@ float hg(float mu, float g) {
   return (1.0 - g2) / (4.0 * 3.14159 * pow(1.0 + g2 - 2.0 * g * mu, 1.5));
 }
 
-float density(vec3 p, vec4 L, float layerSel, bool cheap) {
+float filteredDensity(vec3 p, vec4 L, float layerSel, bool cheap, vec2 noiseLod) {
   float h = clamp((p.y - L.x) / (L.y - L.x), 0.0, 1.0);
   vec3 q = p + uWind;
   vec4 wm = texture2D(tWeather, q.xz / mix(uWeatherScale, 26000.0, layerSel) + vec2(layerSel * 0.37));
@@ -113,26 +113,31 @@ float density(vec3 p, vec4 L, float layerSel, bool cheap) {
   float prof = smoothstep(0.0, 0.08, h) * (1.0 - smoothstep(topH * 0.25, topH, h));
   float scale = mix(5600.0, 3800.0, layerSel);
   // Shape drifts against the weather field, so cells deform and churn instead of only sliding with the wind
-  vec4 n = texture(tShape, q / scale + uShapeDrift);
+  // Explicit level zero keeps the original density for below/inside views and shadows.
+  vec4 n = textureLod(tShape, q / scale + uShapeDrift, noiseLod.x);
   float fbm = n.g * 0.625 + n.b * 0.25 + n.a * 0.125;
   float base = remap(n.r, -(1.0 - fbm), 1.0, 0.0, 1.0);
   base = remap(base * prof, 1.0 - cov * 0.85, 1.0, 0.0, 1.0);
   if (base <= 0.0) return 0.0;
   if (!cheap) {
-    float dn = texture(tDetail, q / (scale * 0.14) + vec3(0.0, uTime * 0.002, 0.0) + uDetailDrift).r;
+    float dn = textureLod(tDetail, q / (scale * 0.14) + vec3(0.0, uTime * 0.002, 0.0) + uDetailDrift, noiseLod.y).r;
     float dmod = mix(dn, 1.0 - dn, clamp(h * 4.0, 0.0, 1.0));
     base = remap(base, dmod * 0.42, 1.0, 0.0, 1.0);
   }
   return clamp(base, 0.0, 1.0) * L.w;
 }
 
-float lightMarch(vec3 p, vec4 L, float sel, float jl) {
+float density(vec3 p, vec4 L, float layerSel, bool cheap) {
+  return filteredDensity(p, L, layerSel, cheap, vec2(0.0));
+}
+
+float lightMarch(vec3 p, vec4 L, float sel, float jl, vec2 noiseLod) {
   float sum = 0.0;
   float st = 45.0 * jl;
   for (int i = 0; i < 6; i++) {
     p += uSunDir * st;
     if (p.y > L.y) break;
-    sum += density(p, L, sel, i > 2) * st;
+    sum += filteredDensity(p, L, sel, i > 2, noiseLod) * st;
     st *= 1.7;
   }
   return sum;
@@ -164,6 +169,15 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
   if (t1 <= t0) return;
   float len = t1 - t0;
   float dt = max(len / float(steps), 30.0);
+  // Above the deck, coarse grazing steps must integrate noise at their own scale.
+  // Keep the full cloud sea; filter both extinction and its lighting, not the history.
+  // Fade in over 100 m above the top so crossing it does not switch density abruptly.
+  float footprint = dt * smoothstep(0.0, 100.0, ro.y - L.y);
+  float noiseScale = mix(5600.0, 3800.0, sel);
+  vec2 noiseLod = log2(max(vec2(1.0), footprint * vec2(64.0, 32.0 / 0.14) / noiseScale));
+  // Once erosion is filtered over several texels, a centred sample is stable without
+  // the large per-frame offsets that otherwise survive the temporal history clamp.
+  jitter = mix(jitter, 0.5, smoothstep(1.0, 3.0, noiseLod.y));
   float mu = dot(rd, uSunDir);
   float phase = mix(hg(mu, 0.62), hg(mu, -0.25), 0.35) * 4.0 * 3.14159;
   phase = max(phase, 0.55);
@@ -190,11 +204,11 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
   for (int i = 0; i < 96; i++) {
     if (i >= steps || tt > t1 || T < 0.02) break;
     vec3 p = ro + rd * tt;
-    float dens = density(p, L, sel, false);
+    float dens = filteredDensity(p, L, sel, false, noiseLod);
     if (dens > 0.001) {
       if (firstHit < 0.0) firstHit = tt;
       float h = clamp((p.y - L.x) / (L.y - L.x), 0.0, 1.0);
-      float ls = lightMarch(p, L, sel, jl) * sigma;
+      float ls = lightMarch(p, L, sel, jl, noiseLod) * sigma;
       // Multiple-scattering approximation (sum of attenuated octaves)
       float beer = exp(-ls) + 0.3 * exp(-ls * 0.25) + 0.12 * exp(-ls * 0.06);
       float powder = 1.0 - exp(-dens * 2.0 * dt * sigma * 2.0);
@@ -506,6 +520,8 @@ export class CloudRenderer {
   scale = 0.5;
   steps = 56;
   temporal = false;
+  get groundShadowTexture() { return this.shadowRT.texture; }
+  get groundShadowBox() { return this.uniforms.uShadowBox.value as THREE.Vector3; }
   shadows = false;
   forceLegacy = false;    // dev A/B: the Low path at the current tier's buffer size
   alpha = 0.3;            // history blend: weight of a texel's fresh sample (one frame in four)
@@ -540,10 +556,16 @@ export class CloudRenderer {
       uLow: { value: new THREE.Vector4() },
       uHigh: { value: new THREE.Vector4() },
     };
+    // Startup-only mip chains: coarse grazing steps use a prefiltered noise footprint.
+    const shape = createShapeNoise(64), detail = createDetailNoise(32);
+    for (const tex of [shape, detail]) {
+      tex.generateMipmaps = true;
+      tex.minFilter = THREE.LinearMipmapLinearFilter;
+    }
     this.uniforms = {
       ...shared,
-      tShape: { value: createShapeNoise(64) },
-      tDetail: { value: createDetailNoise(32) },
+      tShape: { value: shape },
+      tDetail: { value: detail },
       tWeather: { value: createWeatherMap(256) },
       uWind: { value: Atmos.windOffset },
       uTime: { value: 0 },

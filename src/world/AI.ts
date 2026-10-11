@@ -161,12 +161,18 @@ export class EnemyPilot {
     }
     const right = _r.set(0, 1, 0).cross(fwd).normalize().negate();
     const side = Math.random() < 0.5 ? 1 : -1;
+    // A nearby player escort keeps the bomber pass compact. Gunner arcs and distant
+    // interceptions retain their old setup; jets still get room for a slashing pass.
+    const escorted = w.playerFighter?.alive && w.playerFighter.pos.distanceToSquared(t.pos) < 3500 * 3500;
+    const slasher = this.me.enemyType === 'me262' || this.me.enemyType === 'me163';
+    const scale = escorted ? (slasher ? 0.65 : 0.45) : 1;
     switch (this.attack) {
       case 'headon': p.addScaledVector(fwd, 2300).addScaledVector(right, side * (150 + Math.random() * 300)).y += 250 + Math.random() * 250; break;
       case 'stern': p.addScaledVector(fwd, -1500).addScaledVector(right, side * 200).y += 150 + Math.random() * 200; break;
       case 'beam': p.addScaledVector(right, side * 1600).addScaledVector(fwd, 500).y += 400; break;
       case 'high': p.addScaledVector(fwd, -300).addScaledVector(right, side * 600).y += 1500; break;
     }
+    p.sub(t.pos).multiplyScalar(scale).add(t.pos);
   }
 
   // Send the pilot at a target now (tactics hand-back): a fresh set-up for the run
@@ -227,8 +233,17 @@ export class EnemyPilot {
         if (!a.alive) continue;
         const toMe = _d.copy(me.pos).sub(a.pos);
         const dist = toMe.length();
-        if (dist < 600 && a.forward(_t).dot(toMe.normalize()) > 0.92 && Math.random() < 0.02) {
-          this.state = Math.random() < 0.5 * this.skill ? 'dogfight' : 'evade';
+        const bearing = a.forward(_t).dot(toMe.divideScalar(Math.max(1, dist)));
+        const player = a === w.playerFighter;
+        const onTail = dist < 1200 && bearing > 0.92 && me.forward(_t).dot(toMe) > 0.25;
+        const underFire = (dist < 1400 && a.trigger && bearing > 0.97)
+          || (dist < 1600 && w.time - me.lastPlayerHit < 2);
+        // Time-based detection: shooting draws attention even across the nose. The
+        // selected bandit fights back; merely flying near the box doesn't distract it.
+        const jumped = player ? (onTail || underFire) && Math.random() < 1 - Math.exp(-dt * this.skill * (underFire ? 4 : 1.6))
+          : dist < 600 && bearing > 0.92 && Math.random() < 0.02;
+        if (jumped) {
+          this.state = player || Math.random() < 0.5 * this.skill ? 'dogfight' : 'evade';
           this.target = a; this.timer = 0;
           this.breakDir.set(Math.random() - 0.5, -0.3, Math.random() - 0.5).normalize();
           break;

@@ -31,3 +31,19 @@ Node tools (no numpy needed; decoding uses ffmpeg, or `afconvert` on macOS, whic
 - `build.py` holds every decision: source sound id, cut points, filters, fades, loop crossfades, per-group loudness balancing.
 - `fs_search.py "query" [pages] [maxdur]` lists CC0/CC BY Freesound results; `fs_get.py outdir id...` downloads a sound's HQ preview and records its licence.
 - Manifest gains are set in `gen_meta.py`.
+
+### Original mode scores (Phase 6)
+
+`node tools/audio/mode_music_build.mjs` synthesizes seven original mono AAC cues at 32 kHz,
+using the existing afconvert/ffmpeg encoder. It writes `mode_music_meta.json`, updates the
+manifest, and prints decoded peak/RMS/BS.1770 loudness. Loops have half-second wrapped padding;
+all new music totals 901,542 bytes in the committed build. `gen_meta.py` preserves these entries.
+
+With Vite running, open `/tools/audio/mode_music_check.html`. The audio button renders the
+production Music graph in OfflineAudioContext (normal/reduced layers, volume zero, cross-fades
+and the breakup overlay). Both volume buses are summed, including the full 0.9 wet send as a
+conservative coherent-gain stress case; this is not a measurement of the game's room impulse.
+The game button checks the special modes, boss death and crew-room hooks on Low graphics,
+using `sws.step`, and captures JPEGs. Save results exports the JSON with embedded screenshots.
+`?auto` runs both checks; the optional `&report=5262` POSTs JSON to a local QA receiver instead
+of opening a Save dialog. This diagnostic is a development page, outside the production bundle.

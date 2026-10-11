@@ -15,8 +15,9 @@ import { ENEMY_MIX } from '../game/Modes';
 import {
   CampaignData, ESCORT_THRESHOLD, FORMATION_FULL_AT, FULL_SQUADRON, IntelReport, Outcome, baseOf, campaignDate, currentGap,
   currentIndex, enemyMult, escortAvailability, formationFactor, isCurrentOp, loadCampaign, meritMult, modifiersFor, offeredRaids,
-  prepareCampaignMission, raidInGap, recordCampaignOutcome, startNewTour, totals,
+  campaignOperations, currentStory, startSecondTour, prepareCampaignMission, raidInGap, recordCampaignOutcome, startNewTour, totals,
 } from '../game/CampaignState';
+import { isSecondTourId, SECOND_TOUR_LENGTH } from '../game/SecondTour';
 import { isRaidId, raidEnemyType, sideRaidById, type SideRaid } from '../game/SideRaids';
 import { tx, isAr } from '../i18n';
 import { loadNemesis, mostWanted, reportLines, aceName, bounty, MOST_WANTED_MULT } from '../game/Nemesis';
@@ -253,7 +254,7 @@ function chartSvg(d: CampaignData, ops: ChartOp[]): string {
     label(bx - 9, by + 17, esc(tx('DEENETHORPE · 401ST BG')), 'middle', 10.5);
   const legend = `<g transform="translate(14 ${H - 92})" font-family="${chartFont()}" font-size="10" fill="${INK}">
     <rect width="186" height="74" fill="${PAPER}" fill-opacity=".85" stroke="${COAST}" stroke-width=".7"/>
-    <circle cx="14" cy="14" r="6" fill="${ROUTE}" stroke="${INK}"/><text x="26" y="17">${esc(tx('Next story operation'))}</text>
+    <circle cx="14" cy="14" r="6" fill="${ROUTE}" stroke="${INK}"/><text x="26" y="17">${esc(tx(d.secondTour ? 'Next operation' : 'Next story operation'))}</text>
     <circle cx="14" cy="30" r="6" fill="${INK}"/><text x="26" y="33">${esc(tx('Flown · ○ to come'))}</text>
     <rect x="9" y="41" width="10" height="10" transform="rotate(45 14 46)" fill="${PAPER}" stroke="${RAID}" stroke-width="1.4"/><text x="26" y="49">${esc(tx('Side raid on offer'))}</text>
     <line x1="6" x2="22" y1="62" y2="62" stroke="${RAID}" stroke-dasharray="5 3" stroke-width="1.4"/><text x="26" y="65">${esc(tx('Escort radius / raid route'))}</text></g>`;
@@ -281,7 +282,7 @@ function chartSvg(d: CampaignData, ops: ChartOp[]): string {
     <rect width="${W}" height="${H}" fill="url(#cm-vig)" pointer-events="none"/>
     <rect x="3" y="3" width="${W - 6}" height="${H - 6}" fill="none" stroke="${COAST}" stroke-width="2.6"/>
     <rect x="8" y="8" width="${W - 16}" height="${H - 16}" fill="none" stroke="${COAST}" stroke-width=".6"/>
-    ${label(W - 18, H - 20, esc(tx('NORTH SEA & NORTHWEST EUROPE · 1943–44')), 'end', 12)}
+    ${label(W - 18, H - 20, esc(tx(d.secondTour ? 'NORTH SEA & NORTHWEST EUROPE · 1944–45' : 'NORTH SEA & NORTHWEST EUROPE · 1943–44')), 'end', 12)}
   </svg>`;
 }
 
@@ -335,7 +336,7 @@ function moodLabel(m: Mission) {
   const w = m.weather;
   if (!w) return tx('Fair');
   if (w.front) return tx(w.front.to === 'storm' ? 'Storm front' : 'Clearing');
-  return tx(w.mood === 'dusk' ? 'Dusk' : w.mood === 'overcast' ? 'Overcast' : w.mood === 'storm' ? 'Storm front' : w.sunEl < 16 ? 'Low sun' : 'Clear');
+  return tx(w.mood === 'night' ? 'Night' : w.mood === 'dusk' ? 'Dusk' : w.mood === 'overcast' ? 'Overcast' : w.mood === 'storm' ? 'Storm front' : w.sunEl < 16 ? 'Low sun' : 'Clear');
 }
 
 function modChips(d: CampaignData, m: Mission): string {
@@ -366,13 +367,16 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
   if (!root) return;
   const d = loadCampaign(progress);
   const cur = currentIndex(d), gap = currentGap(d);
+  const missions = campaignOperations(d);
+  const total = d.secondTour ? SECOND_TOUR_LENGTH : CAMPAIGN.length;
+  const done = d.secondTour?.completed ?? d.storyDone.length;
   const raids = offeredRaids(d);
   const flown = gap > 0 ? raidInGap(d, gap) : null;
 
   // the chart's operations: every story mission and this gap's raids, plus raids flown earlier
-  const ops: ChartOp[] = CAMPAIGN.map((m, i) => ({
+  const ops: ChartOp[] = missions.map((m) => ({
     key: m.id, m, kind: 'story' as const,
-    state: d.complete || i < cur ? 'done' as const : i === cur ? 'current' as const : 'locked' as const,
+    state: d.complete || m.number - 1 < cur ? 'done' as const : m.number - 1 === cur ? 'current' as const : 'locked' as const,
   }));
   raids.forEach((r, k) => ops.push({ key: r.mission.id, m: r.mission, kind: 'raid', state: flown ? (flown.id === r.mission.id ? 'flown' : 'locked') : 'offer', letter: 'ABC'[k], success: flown?.success }));
   for (const r of d.raids) {
@@ -383,15 +387,15 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
   const pickable = new Map<string, Mission>();
   for (const o of ops) if (o.state === 'done' || o.state === 'current' || o.state === 'offer') pickable.set(o.key, o.m);
 
-  const next = d.complete ? null : CAMPAIGN[cur];
+  const next = currentStory(d);
   // a replay picked last time (an operation already flown) gives way to the next operation,
   // so after a debrief the "Next operation" card is the highlighted one
-  const flownStory = !!selected && selected !== next?.id && CAMPAIGN.some((m) => m.id === selected);
+  const flownStory = !!selected && selected !== next?.id && missions.some((m) => m.id === selected);
   if (!selected || !pickable.has(selected) || flownStory) selected = next?.id ?? null;
 
   const nextCard = next ? `<div class="cm-op-card ${selected === next.id ? 'sel' : ''}" data-card="${next.id}">
       <span class="tag">${roleLabel(next)}</span>
-      <div class="num">${tx('MISSION {n} OF {total}', { n: pad2(next.number), total: CAMPAIGN.length })} · ${esc(tx(next.date))}</div>
+      <div class="num">${d.secondTour && next.number > total ? tx('Extended operation {n}', { n: next.number }) : tx('MISSION {n} OF {total}', { n: pad2(next.number), total })} · ${esc(tx(next.date))}</div>
       <div class="t">${esc(tx(next.title))}</div>
       <div class="tg">${esc(tx(next.target))}</div>
       ${modChips(d, next)}
@@ -401,7 +405,7 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
       <div class="num">${esc(tx(CAMPAIGN[CAMPAIGN.length - 1].date))}</div>
       <div class="t">${tx('Twenty-five missions')}</div>
       <div class="tg">${esc(tx("The Sky Queen's crew is going home."))}</div>
-      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-summary>${tx('Campaign summary')}</button><button class="btn ghost" data-newtour style="margin-top:8px">${tx('Begin a new tour')}</button></div>
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-summary>${tx('Campaign summary')}</button><button class="btn ghost" data-newtour style="margin-top:8px">${tx('Begin a new tour')}</button><button class="btn" data-secondtour>${tx('Volunteer for a second tour')}</button></div>
     </div>`;
 
   const raidCard = (r: SideRaid, k: number) => {
@@ -417,26 +421,27 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
       ${flown ? '' : `<button class="btn ghost" data-go="${m.id}">${tx('Fly this raid')}</button>`}
     </div>`;
   };
-  const raidsBlock = d.complete ? `<p class="cm-note">${tx('The tour is over. Side raids are closed.')}</p>`
+  const raidsBlock = d.secondTour ? `<p class="cm-note">${tx('Twenty-five victories earn the Second Tour Medal; operations continue afterwards.')}</p><p>${tx(d.secondTour.medal ? 'Second Tour Medal' : 'Second tour')}${d.secondTour.medal ? ' ◆' : ''}</p><p>${tx('Tour score: {n}', { n: d.secondTour.score })}</p>` : d.complete ? `<p class="cm-note">${tx('The tour is over. Side raids are closed.')}</p>`
     : gap <= 0 ? `<p class="cm-note">${tx('Side raids open after your first mission. Fly Mission 1 to begin the tour.')}</p>`
     : `<div class="cm-raids">${raids.map(raidCard).join('')}</div>
        <p class="cm-note">${flown ? tx('One raid per lull between operations.') : tx('Optional: fly one raid before Mission {n}, or go straight on. What you hit changes the odds on the next big one.', { n: next?.number ?? '' })}</p>`;
 
   const raidMark = new Map<number, string>();
   for (const r of d.raids) { const s = sideRaidById(d.seed, r.id); if (s) raidMark.set(r.gap, `${r.success ? '◆' : '◇'} ${tx(s.template.label)}`); }
-  const timeline = CAMPAIGN.map((m, i) => {
+  const timeline = missions.map((m) => {
+    const i = m.number - 1;
     const st = d.complete || i < cur ? 'done' : i === cur ? 'cur' : '';
     const can = st !== '';
     const med = (progress.medals[m.id] ?? []).length;
     return `<button class="${st}" ${can ? `data-go="${m.id}"` : 'disabled'} title="${esc(`${tx(m.title)} — ${tx(m.target)}`)}">
-      <div class="n">${pad2(m.number)} · ${esc(tx(m.date).replace(/ 19(4\d)$/, " '$1"))}</div><div class="tt">${esc(tx(m.title))}</div>
+      <div class="n">${pad2(m.number)} · ${esc(tx(m.date).replace(/ 19(4\d)$/, " '$1"))}</div><div class="tt">${esc(tx(d.secondTour ? m.target.split(', ').at(-1)! : m.title))}</div>
       <span class="rd">${raidMark.get(i + 1) ? esc(raidMark.get(i + 1)!) : med ? (med > 1 ? tx('{n} medals', { n: med }) : tx('1 medal')) : ''}</span></button>`;
   }).join('');
 
   root.innerHTML = `<div class="cm">
     <div class="cm-head">
-      <div><div class="kicker">${tx('401ST BOMB SQUADRON · OPERATIONS ROOM')}${d.tour > 1 ? tx(' · TOUR {n}', { n: d.tour }) : ''}</div><h2>${tx('Campaign')}</h2></div>
-      <div class="cm-date">${tx('Campaign date')}<b>${esc(tx(campaignDate(d)))}</b>${tx('{done}/{total} operations', { done: d.storyDone.length, total: CAMPAIGN.length })} · ${(d.raids.length === 1 ? tx('1 side raid') : tx('{n} side raids', { n: d.raids.length }))}</div>
+      <div><div class="kicker">${tx('401ST BOMB SQUADRON · OPERATIONS ROOM')}${d.tour > 1 ? tx(' · TOUR {n}', { n: d.tour }) : ''}</div><h2>${tx(d.secondTour ? 'Second tour' : 'Campaign')}</h2></div>
+      <div class="cm-date">${tx('Campaign date')}<b>${esc(tx(campaignDate(d)))}</b>${d.secondTour && done >= total ? tx('{n} operations completed', { n: done }) : tx('{done}/{total} operations', { done, total })}${d.secondTour ? '' : ` · ${d.raids.length === 1 ? tx('1 side raid') : tx('{n} side raids', { n: d.raids.length })}`}</div>
     </div>
     <div class="cm-grid">
       <div class="cm-chart">${chartSvg(d, ops)}</div>
@@ -444,14 +449,14 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
     </div>
     <div class="cm-ops">
       <div class="cm-card"><h3>${tx(next ? 'Next operation' : 'Tour of duty')}</h3>${nextCard}</div>
-      <div class="cm-card cm-raids-wrap"><h3>${tx('Side raids')}${gap > 0 && next && !d.complete ? ` <span>${tx('· before Mission {n}', { n: next.number })}</span>` : ''}</h3>${raidsBlock}</div>
+      <div class="cm-card cm-raids-wrap"><h3>${tx(d.secondTour ? 'Extended service' : 'Side raids')}${gap > 0 && next && !d.complete ? ` <span>${tx('· before Mission {n}', { n: next.number })}</span>` : ''}</h3>${raidsBlock}</div>
     </div>
     <div class="cm-tl" aria-label="${tx('Tour timeline')}">${timeline}</div>
     <div class="cm-foot"><button class="btn ghost" data-back>${tx('Back')}</button>${d.complete ? `<button class="btn ghost" data-summary>${tx('Campaign summary')}</button>` : ''}</div>
   </div>`;
 
   const go = (id: string) => {
-    const m = pickable.get(id) ?? CAMPAIGN.find((c) => c.id === id);
+    const m = pickable.get(id);
     if (!m) return;
     prepareCampaignMission(m, progress);
     onPick(m);
@@ -485,6 +490,7 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
     selected = null;
     showCampaignMap(progress, onPick, onBack);
   });
+  root.querySelector('[data-secondtour]')?.addEventListener('click', () => { startSecondTour(d); selected = null; showCampaignMap(progress, onPick, onBack); });
   showLayer();
 }
 
@@ -527,10 +533,12 @@ export function showCampaignSummary(progress: ProgressLike, onPick: (m: Mission)
     </div>
     <div class="hud-label">${tx('Operations log')}</div>
     <ol>${d.history.map((h) => `<li><span class="${h.success ? 'ok' : 'fail'}">${h.success ? '✓' : '✗'}</span> ${h.kind === 'raid' ? '◆ ' : ''}${esc(tx(h.title))} · ${tx(`${h.kills} kills`)}${h.lost ? ` · ${tx(`${h.lost} lost`)}` : ''}</li>`).join('') || `<li>${tx('No sorties recorded.')}</li>`}</ol>
-    <div class="cm-foot"><button class="btn" data-map>${tx('Campaign map')}</button><button class="btn ghost" data-back>${tx('Main menu')}</button></div>
+    <div class="cm-foot"><button class="btn" data-map>${tx('Campaign map')}</button><button class="btn ghost" data-back>${tx('Main menu')}</button>${d.complete ? `<button class="btn" data-secondtour>${tx('Volunteer for a second tour')}</button><button class="btn ghost" data-newtour>${tx('Begin a new tour')}</button>` : ''}</div>
   </div></div>`;
   root.querySelector('[data-map]')!.addEventListener('click', () => showCampaignMap(progress, onPick, onBack));
   root.querySelector('[data-back]')!.addEventListener('click', onBack);
+  root.querySelector('[data-secondtour]')?.addEventListener('click', () => { startSecondTour(d); selected = null; showCampaignMap(progress, onPick, onBack); });
+  root.querySelector('[data-newtour]')?.addEventListener('click', () => { showCampaignMap(progress, onPick, onBack); root.querySelector<HTMLElement>('[data-newtour]')?.click(); });
   showLayer();
 }
 
@@ -550,7 +558,7 @@ export function mountCampaignReport(m: Mission, o: Outcome, prog: Merit, progres
   const host = document.querySelector<HTMLElement>('#debrief .box');
   if (!host) return;
   // side raids have no online board (firestore.rules only knows the story missions)
-  if (res.op.kind === 'raid') host.querySelector('.lb-panel')?.remove();
+  if (res.op.kind !== 'story') host.querySelector('.lb-panel')?.remove();
   const r = res.report;
   const box = document.createElement('div');
   box.className = 'cm-report cm-intel';
@@ -573,7 +581,7 @@ export function mountCampaignReport(m: Mission, o: Outcome, prog: Merit, progres
 /** BriefingExtras.decorateBriefing: the campaign's line on the sheet (side raid kicker, modifiers). */
 export function decorateCampaignBriefing(sheet: HTMLElement, m: Mission) {
   const raid = isRaidId(m.id);
-  if (!raid && !CAMPAIGN.includes(m)) return;
+  if (!raid && !isSecondTourId(m.id) && !CAMPAIGN.includes(m)) return;
   let d: CampaignData;
   try { d = loadCampaign(null, { noReconcile: true }); } catch { return; }
   const s = raid ? sideRaidById(d.seed, m.id) : null;

@@ -1,11 +1,14 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { createTargetSmoke, syncTargetSmoke } from '../render/TargetSmoke';
+import { setFarTerrain } from '../render/FarTerrain';
 import { Atmos } from '../render/Atmosphere';
 import { targetUniforms, TGT_IMPACTS, TGT_PLUMES } from '../render/TargetGround';
 import { cloudTargetUniforms } from '../render/Clouds';
 import { sound } from '../audio/Sound';
 import type { Engine } from '../core/Engine';
 import type { Mission } from '../game/Missions';
+import type { BombImpact } from '../game/BombingMath';
 import { CRUISE, type World } from './World';
 
 // The bombing run's payoff on missions with `bombsAway`:
@@ -56,6 +59,9 @@ export class TargetArea {
   private lastTime = 0;
   private active = false;
   private aim = new THREE.Vector2();       // absolute ground x, z of the aim point
+  playerControlled = false;
+  private pattern: readonly BombImpact[] | null = null;
+  get aimPoint() { return this.aim; }
   private released = false;
   private releaseT = 0;
   private pending: Pending[] = [];
@@ -73,12 +79,13 @@ export class TargetArea {
     this.mesh.count = 0;
     this.mesh.frustumCulled = false;
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    engine.scene.add(this.mesh);
+    engine.scene.add(this.mesh, createTargetSmoke());
     this.disable();
   }
 
   // Mission start / quit: drop all state (the next update() re-arms from the mission)
   clear() {
+    this.playerControlled = false; this.pattern = null;
     this.pending = [];
     this.bombs = [];
     this.impacts = [];
@@ -90,12 +97,14 @@ export class TargetArea {
     this.said.clear();
     this.mesh.count = 0;
     this.disable();
+    setFarTerrain(null, this.world, CRUISE, FALL * DRAG_LAG);
   }
 
   // Bomb release: every bomber in the formation salvos its stick, the lead ship first
-  bombsAway() {
+  bombsAway(pattern: readonly BombImpact[] | null = null) {
     if (this.released) return;
     this.released = true;
+    this.pattern = pattern;
     const w = this.world;
     this.releaseT = w.time;
     const bombers = w.bombers().filter((b) => b.alive);
@@ -113,6 +122,7 @@ export class TargetArea {
     if (mission !== this.mission || w.time < this.lastTime - 0.5) {
       this.clear();
       this.mission = mission;
+      setFarTerrain(mission, w, CRUISE, FALL * DRAG_LAG);
       if (mission?.bombsAway) this.arm(mission);
     }
     this.lastTime = w.time;
@@ -123,7 +133,7 @@ export class TargetArea {
     }
     if (!this.active || !mission?.bombsAway) return;
     const t = w.time;
-    if (!this.released && t >= mission.bombsAway) this.bombsAway(); // in case the game did not call it
+    if (!this.released && !this.playerControlled && t >= mission.bombsAway) this.bombsAway(); // in case the game did not call it
     const clock = this.released ? t - this.releaseT : t - mission.bombsAway;
     if (dt > 0) {
       this.releaseDue(t);
@@ -180,8 +190,8 @@ export class TargetArea {
       const rel = _v.copy(pos).sub(center);
       const lat = rel.dot(side) * 2.6 + R() * 70;
       const along = rel.dot(fwd) * 1.6 + (p.i - STICK / 2) * 55 + R() * 60 + CRUISE * FALL * DRAG_LAG;
-      const x = center.x + Atmos.originOffset.x - this.aim.x + side.x * lat + fwd.x * along;
-      const z = center.z + Atmos.originOffset.z - this.aim.y + side.z * lat + fwd.z * along;
+      const x = this.pattern?.[p.slot]?.x ?? center.x + Atmos.originOffset.x - this.aim.x + side.x * lat + fwd.x * along;
+      const z = this.pattern?.[p.slot]?.z ?? center.z + Atmos.originOffset.z - this.aim.y + side.z * lat + fwd.z * along;
       if (p.slot < TGT_IMPACTS - SECONDARY) {
         const imp = this.impacts[p.slot];
         if (!imp) {
@@ -247,8 +257,8 @@ export class TargetArea {
     if (!this.released) return;
     const first = Math.min(...this.impacts.filter((x): x is Impact => !!x).map((x) => x.t));
     if (!Number.isFinite(first)) return;
-    if (clock > first + 1.2) this.say('hit', gunner ? 'Ball Turret' : 'Big Friend', gunner ? 'Look at that… we hit it square!' : 'Bombs on target! Look at it burn!', 3);
-    if (clock > first + 9 && gunner) this.say('burn', 'Tail', 'Smoke all the way to the river. The whole works is burning!', 2);
+    if (!this.pattern && clock > first + 1.2) this.say('hit', gunner ? 'Ball Turret' : 'Big Friend', gunner ? 'Look at that… we hit it square!' : 'Bombs on target! Look at it burn!', 3);
+    if (!this.pattern && clock > first + 9 && gunner) this.say('burn', 'Tail', 'Smoke all the way to the river. The whole works is burning!', 2);
   }
 
   // Instance matrices: aligned with the fall, scaled up with range so a bomb stays ~1.5 px
@@ -269,6 +279,7 @@ export class TargetArea {
   }
 
   private sync(clock: number, dt: number, m: Mission) {
+    syncTargetSmoke();
     const u = targetUniforms;
     u.uTgt.value.set(this.aim.x, this.aim.y, CITY_R, 1);
     u.uTgtClock.value = clock;
@@ -304,7 +315,7 @@ export class TargetArea {
     }
     // the deck parts over the target; fires light it from below
     const lx = this.aim.x - Atmos.originOffset.x, lz = this.aim.y - Atmos.originOffset.z;
-    cloudTargetUniforms.uGap.value.set(lx, lz, 4800, 0.85);
+    cloudTargetUniforms.uGap.value.set(lx, lz, 4800, this.playerControlled ? 0.5 + 0.35 * Math.sin(this.world.time * 0.3) : 0.85);
     cloudTargetUniforms.uGlow.value.set(lx, lz, 3200, Math.min(1.5, glow * 0.25));
   }
 }

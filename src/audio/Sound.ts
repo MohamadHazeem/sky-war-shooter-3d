@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Music } from './Music';
 import { AirframeCreaks } from './Creaks';
+import { TurretDrive } from './TurretDrive';
 import { Breathing } from './Breathing';
 import { Whizby } from './Whizby';
 import { Interphone } from './Interphone';
@@ -238,6 +239,8 @@ export class Sound {
   readonly music = new Music();
   private creaks: AirframeCreaks | null = null;
   private breathing: Breathing | null = null;
+  private turretDrive: TurretDrive | null = null;
+  setTurretTraverse(speed: number) { this.turretDrive?.update(this.mode === 'bomber' ? speed : 0); }
   private whizbyFx: Whizby | null = null;
   volume = 0.8;
   // Per-bus levels (0..1) from the Settings sliders
@@ -337,6 +340,7 @@ export class Sound {
     if (first) this.buildBuffers();
     this.startAmbience();
     this.breathing = new Breathing(ctx, this.amb);
+    this.turretDrive = new TurretDrive(ctx, this.amb);
     for (let i = 0; i < 6; i++) this.voices.push(this.makeVoice());
     this.whizbyFx = new Whizby(ctx, this.fx, (when, dur) => this.room(when, dur, 1), (when, dur) => this.hrtfShots.take(ctx.currentTime, when, dur));
     this.music.init(ctx, this.musicBus, this.musicWet);
@@ -442,6 +446,7 @@ export class Sound {
   // Stop timers and drop every reference into the old graph
   private teardown() {
     this.breathing?.stop(); this.breathing = null;
+    this.turretDrive?.dispose(); this.turretDrive = null;
     this.creaks?.setActive(false); this.creaks = null;
     this.cabin?.stopSources(); this.cabin = null;
     this.preScope = null;
@@ -1070,6 +1075,7 @@ export class Sound {
   }
 
   setMode(mode: 'bomber' | 'fighter' | 'menu') {
+    this.turretDrive?.update(0);
     this.mode = mode;
     if (mode !== 'menu') this.onMission?.();
     if (!this.ctx) return;
@@ -1104,6 +1110,7 @@ export class Sound {
     const k: AudioDetail = d === 'reduced' ? 'reduced' : 'normal';
     if (k === this.detail) return;
     this.detail = k; this.caps = DETAIL[k];
+    this.music.setDetail(k === 'reduced');
     this.oneShots = new Budget(this.caps.voices);
     this.hrtfShots = new Budget(this.caps.hrtf);
     for (const v of this.voices) this.seat(v);   // drops / restores the second loops
@@ -1611,7 +1618,7 @@ export class Sound {
   whizby(pos: THREE.Vector3, gain: number) { this.whizbyFx?.play(pos, gain); }
 
   // Player's own guns: un-positioned, close, with the fuselage ringing around them
-  playerGun(twin: boolean, cannon = false) {
+  playerGun(twin: boolean, cannon = false, ejectOutside = false) {
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
     if (now - this.lastShot < 0.028) return;
@@ -1637,7 +1644,7 @@ export class Sound {
     // the guns drown out everything else for an instant
     this.duckFor(0.09, 0.5);
     // spent brass rings on the turret floor; a Mustang's casings fall out of the wing chutes unheard
-    if (this.mode !== 'fighter' && Math.random() < 0.35) setTimeout(() => this.play('casing', null, { gain: 0.07, rate: 0.9 + Math.random() * 0.4, reverb: 0.3 }), 150 + Math.random() * 250);
+    if (!ejectOutside && this.mode !== 'fighter' && Math.random() < 0.35) setTimeout(() => this.play('casing', null, { gain: 0.07, rate: 0.9 + Math.random() * 0.4, reverb: 0.3 }), 150 + Math.random() * 250);
   }
 
   // Shrapnel / rounds hitting our own aircraft

@@ -1,3 +1,4 @@
+import { isSecondTourId } from './SecondTour';
 // Crew-room interludes (Phase 5 goal 30): after a successful story mission, before the campaign
 // map, a short scene in the Nissen hut or at the club where the Sky Queen's crew talks the
 // mission over. This file is the content and the selection logic only: pure data and maths with
@@ -34,6 +35,7 @@ export interface CrewRoomCtx {
   lost: number;            // bombers lost from the formation
   total: number;           // bombers in the formation
   hospital: Speaker[];     // wounded this mission and out for the next one
+  memorial?: Speaker[];   // permanent casualties; absent from every later scene
   patched: Speaker[];      // wounded this mission, fit again
   rookies: { rookie: string; for: Speaker }[];   // replacements who flew for a resting man
   aces: { last: string; fate: Fate; byPlayer: boolean }[];
@@ -81,7 +83,7 @@ export interface SceneLine {
   cue?: Cue;
 }
 
-export interface Scene { v: Vignette; lines: SceneLine[]; present: Speaker[]; emptyBunk: boolean }
+export interface Scene { v: Vignette; lines: SceneLine[]; present: Speaker[]; emptyBunk: boolean; memorial: Speaker[] }
 
 // ---------------- voices ----------------
 
@@ -324,7 +326,7 @@ export const VIGNETTES: Vignette[] = [
   ]),
 ];
 
-export const vignetteFor = (missionId: string): Vignette | null => VIGNETTES.find((v) => v.id === missionId) ?? null;
+export const vignetteFor = (missionId: string): Vignette | null => isSecondTourId(missionId) ? { ...VIGNETTES[0], id: missionId, open: [], close: [], absent: [], skip: [], finale: false } : VIGNETTES.find((v) => v.id === missionId) ?? null;
 
 // Every line that has (or can have) a recorded clip, with the voice roles it is recorded in
 export function recordedLines(): { def: LineDef; roles: string[] }[] {
@@ -351,7 +353,7 @@ export const DYN_CAP = 6, DYN_CAP_FINALE = 9;
 
 /** Who is in the room: everyone but the men in the hospital and the ones the story sends away. */
 export function presentMen(v: Vignette, c: CrewRoomCtx): Speaker[] {
-  return ALL_MEN.filter((m) => !c.hospital.includes(m) && !(v.absent ?? []).includes(m));
+  return ALL_MEN.filter((m) => !c.hospital.includes(m) && !(c.memorial ?? []).includes(m) && !(v.absent ?? []).includes(m));
 }
 
 function speakerFor(d: LineDef, here: ReadonlySet<Speaker>): Speaker | null {
@@ -446,7 +448,7 @@ export function buildScene(missionId: string, c: CrewRoomCtx): Scene | null {
   if (v.finale && c.tour) add('tour', 9, say(POOL.tour, { vars: { kills: c.tour.kills, lost: c.tour.lost } }));
 
   // keep the block short: drop the least important picks until it fits
-  const cap = v.finale ? DYN_CAP_FINALE : DYN_CAP;
+  const cap = isSecondTourId(missionId) ? 3 : v.finale ? DYN_CAP_FINALE : DYN_CAP;
   const kept = [...picks];
   const count = () => kept.reduce((n, p) => n + p.lines.length, 0);
   while (count() > cap && kept.length > 1) {
@@ -467,7 +469,7 @@ export function buildScene(missionId: string, c: CrewRoomCtx): Scene | null {
   // the room: everyone who speaks, then the rest of the men present (up to eight portraits)
   const speakers = [...new Set(lines.map((l) => l.who))];
   const cast = [...speakers, ...present.filter((m) => !speakers.includes(m))].slice(0, Math.max(8, speakers.length));
-  return { v, lines, present: cast, emptyBunk: !!v.emptyBunk || heavy };
+  return { v, lines, present: cast, emptyBunk: !!v.emptyBunk || heavy || !!c.memorial?.length, memorial: c.memorial ?? [] };
 }
 
 const LAST: Record<Speaker, string> = {

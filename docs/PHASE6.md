@@ -7,25 +7,34 @@ Repo rules for Codex: `AGENTS.md`.
 ## Tier A — finish the overnight loose ends
 | # | Goal | Status |
 |---|---|---|
-| 1 | P-51 dogfight feel: bandits that stay and fight instead of extending 2 km between passes, so escort missions end on kills | |
-| 2 | Weak-laptop pass: simulated low-end GPU, tuned first-launch quality thresholds, a Low preset that looks good | |
-| 3 | Cloud-top shimmer: the speckle just above the cloud deck (end of the take-off climb) | Trial task for Codex |
-| 4 | Co-op v2: shared score + guest debrief; TURN relay (needs a Cloudflare TURN key from the player) | |
+| 1 | P-51 dogfight feel: bandits that stay and fight instead of extending 2 km between passes, so escort missions end on kills | Done (Codex) — engaged bandits turn and fight; compact bomber set-ups near the escort; jets extend ≤5.5 s then reverse. Headless sims: time <600 m up 10–40 s per type, Me 262 kills 1/5 → 3/5; bomber threat kept |
+| 2 | Weak-laptop pass: simulated low-end GPU, tuned first-launch quality thresholds, a Low preset that looks good | Codex working |
+| 3 | Cloud-top shimmer: the speckle just above the cloud deck (end of the take-off climb) | Done (Codex) — footprint-selected noise mip levels + fading jitter for grazing rays above the deck: banding gone, flicker −55–58 %, no frame-time cost, views from below/inside unchanged |
+| 4 | Co-op v2: shared score + guest debrief; TURN relay (needs a Cloudflare TURN key from the player) | Done (Codex) — host-authoritative crew score on both HUDs, partner kills credited, personal debrief + merit/XP for the guest, back to the lobby, coop-gunner board with both callsigns; /api/turn Worker mints Cloudflare TURN credentials once the owner sets TURN_KEY_ID / TURN_KEY_API_TOKEN (STUN fallback until then) |
 
 ## Tier G — new gameplay
 | # | Goal | Status |
 |---|---|---|
-| 5 | Bombardier seat: the Norden bombsight on the bomb run, accuracy scores the mission | |
-| 6 | Ditching in the Channel: ditch a badly damaged Sky Queen, dinghy + air-sea rescue | |
-| 7 | Second tour: endless generated campaign after mission 12 | |
-| 8 | Crew that matters: assign crewmen to positions, skills change accuracy / repairs / spotting | |
-| 9 | Squadron leaderboards: share a squadron code for a private board | |
+| 5 | Bombardier seat: the Norden bombsight on the bomb run, accuracy scores the mission | Done (Codex) — offered 30 s before release (N / Y / touch): stabilised magnified Norden view with course and rate cross-hairs over the real target, clouds and flak; release by sighting angle or by hand; deterministic impact pattern, % within 1,000 ft, strike photo in the debrief, score + career stat + achievement. Close-up city texture is blocky on Low (polish later) |
+| 6 | Ditching in the Channel: ditch a badly damaged Sky Queen, dinghy + air-sea rescue | Codex revising — 31 s ditching + RAF rescue launch works; impact spray (flat white discs) and uniform foam streaks sent back |
+| 7 | Second tour: endless generated campaign after mission 12 | Done (Codex) — "Volunteer for a second tour": 25 generated operations (targets, weather, fronts, alternating roles, jets/Sturmböcke later, battle group every 5th) then endless; Experten and strategy carry over; Second Tour Medal |
+| 8 | Crew that matters: assign crewmen to positions, skills change accuracy / repairs / spotting | Done (Codex) — five XP-growing stats + traits per man; assigned gunnery drives AI accuracy (rookie 44 % vs veteran 57 % hits), lookouts give earlier warnings, engineer repairs/fires, radio man first aid, pilots jinks/formation; hospital stays, rare deaths, memorial; recommended layout |
+| 9 | Squadron leaderboards: share a squadron code for a private board | Codex fixing — merged and rules deployed; live check found squadron creation denied, sent back with permission to deploy Firestore rules |
 
 ## Tier C — graphics and immersion
 | # | Goal | Status |
 |---|---|---|
-| 10 | Europe below the clouds: terrain, rivers, cities, burning targets through cloud gaps | |
-| 11 | Ball and tail turret interiors at the waist's "living interior" standard | |
-| 12 | Music: adaptive tracks for night, raids, Train Busting and the crew room | |
+| 10 | Europe below the clouds: terrain, rivers, cities, burning targets through cloud gaps | Done (Codex, 1 revision) — irregular seasonal field parcels, woods, rivers with floodplains, towns along roads, route-aware North Sea coast, dense burning target with smoke through the deck, cloud shadows; +0.13–0.19 ms on High |
+| 11 | Ball and tail turret interiors at the waist's "living interior" standard | Done (Codex) — ball: twin breeches, feed chutes, knees on pedals, reflector sight, hatch, hydraulic hum, brass falling outside; tail: twin M2s with running belts, ring-and-bead, saddle, ribbed cone, view forward to the waist; free look in both |
+| 12 | Music: adaptive tracks for night, raids, Train Busting and the crew room | Done (Codex) — 7 original cues (0.86 MB, generated by tools/audio/mode_music_build.mjs): Night Fighter, Defend the Field, Train Busting, boss battle group + break-apart stinger, crew room (normal / sombre); threat layers, cross-fades, peak −4.6 dBFS — needs your ears |
 
 ## Log
+- Codex signed in as the Pro account; trial widened to a first wave: goals 1, 3, 5, 6, 10 running in parallel worktrees (tools/codex_task.sh). Goal 2 (performance) waits for a quiet GPU.
+- Goal 1 merged (428 tests). Codex couldn't commit or open a browser in its sandbox; launcher now runs it unsandboxed.
+- Goal 3 merged (reviewed before/after crops). Started goal 7 in its slot.
+- Goal 7 merged (435 tests). Goal 6 first pass committed (voice clips rendered by Claude; the sandbox blocked `say`), sent back for spray/foam.
+- Goal 11 merged (442 tests). Started goals 8 and 12.
+- Goal 10 merged after one revision (450 tests). Started goal 9.
+- Goal 12 merged (457 tests).
+- Goals 8 and 5 merged (486 tests); goal 5 voice clips rendered by Claude (sandbox).
+- Goal 9 merged + rules deployed; live create failed → Codex fixing live. Goal 4 merged (524 tests); its rules change ships with the goal 9 fix.

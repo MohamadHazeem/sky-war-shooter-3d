@@ -1,0 +1,48 @@
+[
+  {
+    "label": "before",
+    "view": "moving",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0.09050221214157705,
+    "p50": 3.800000011920929,
+    "avg": 4.21875000372529,
+    "programs": 52
+  },
+  {
+    "label": "after",
+    "view": "moving",
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "mad": 0.037409554211469534,
+    "p50": 4,
+    "avg": 4.368750002235174,
+    "programs": 53
+  }
+]
