@@ -270,7 +270,7 @@ export class Director {
 
     // Crew intercom during lulls in the fighting
     this.chatterT += dt;
-    if (enemies === 0 && this.chatterT > 32 && t > 12) {
+    if (!m.naval && enemies === 0 && this.chatterT > 32 && t > 12) {
       this.chatterT = Math.random() * 8;
       const gunner: [string, string][] = [
         ['Pilot', 'Pilot to crew, oxygen check. Sound off.'],
