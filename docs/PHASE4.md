@@ -93,3 +93,4 @@ Player notes given at the start:
 - 00:17 regression (m1, m3, m4, m9, m11, m12) all complete; deploy #8 (explosions, interior, surface detail, clouds/haze, new aircraft, wingman + raids, Arabic catch-up, hole fix).
 - 01:11 regression 8/8 + smoke; deploy #9 (nemesis aces, Train Busting ground attack, audio pass 3, glass effects, Arabic everywhere).
 - 02:13 regression (m1, m3, m4, m6, m9, m12) all complete; deploy #10 (QA sweep, take-off/landing + sounds, theatre/gamepad, night fixes).
+- 04:30 regression: m1, m3, m4, m8, m5, m12 complete, m9 lost on bombers (balance pass handling); no errors; deploy #11 (weather fronts, night, set pieces, What's new, gallery, Game.ts split, visual QA, shader stutter fix).
