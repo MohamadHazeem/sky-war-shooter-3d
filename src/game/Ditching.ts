@@ -40,6 +40,7 @@ export class Ditching {
     if (this.time > 0.6) { this.skip = true; e.preventDefault(); e.stopImmediatePropagation(); }
   };
   private rulesBomber: Bomber | null = null;
+  private startIntegrity = 1;
   private controls: { hp: number }[] = [];
   private rules: DitchState = { campaign: false, gunner: false, coop: false, controllable: false, enginesOut: 0,
     integrity: 1, leaking: false, progress: 0, coastKm: 0, ending: false };
@@ -54,12 +55,15 @@ export class Ditching {
     r.controllable = !b.remove && b.alive;
     if (this.rulesBomber !== b) {
       this.rulesBomber = b; this.controls.length = 0;
+      // scripted pre-damage (Last Light) sets the baseline; otherwise the ship started whole
+      this.startIntegrity = m.playerDamaged ? b.integrity : 1;
       for (const n of CONTROL_ZONES) { const z = b.zone(n); if (z) this.controls.push(z); }
     }
     for (const z of this.controls) if (z.hp <= 0) r.controllable = false;
     r.campaign = !!m.number && !m.tutorial && Number.isFinite(m.duration); r.gunner = m.role === 'gunner';
     r.coop = !!g.coop.role; r.enginesOut = 0; for (const dead of b.engineDead) if (dead) r.enginesOut++; r.integrity = b.integrity;
     r.initialEnginesOut = m.playerDamaged ? 2 : 0;
+    r.initialIntegrity = this.startIntegrity;
     r.leaking = g.world.bomberDamage.fuelLeaking; r.progress = progress; r.coastKm = coastDistanceKm(progress); r.ending = ending;
     return shouldDitch(r);
   }

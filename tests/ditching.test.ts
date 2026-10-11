@@ -99,3 +99,13 @@ describe('rescue outcome and content', () => {
     expect(new CrewRoster().men.gallo.rest).toBe(1); expect(Object.keys(roster.men)).toHaveLength(10);
   });
 });
+
+import { shouldDitch as _sd } from '../src/game/DitchingRules';
+describe('scripted pre-damage', () => {
+  it('Last Light: starting below 50 % integrity on two engines does not force a mid-mission ditching', () => {
+    const base = { campaign: true, gunner: true, coop: false, controllable: true, enginesOut: 2, initialEnginesOut: 2,
+      integrity: 0.42, initialIntegrity: 0.45, leaking: false, progress: 0.8, coastKm: 48, ending: false };
+    expect(_sd(base)).toBe(false);
+    expect(_sd({ ...base, integrity: 0.25 })).toBe(true);   // fell well below where it started
+  });
+});

@@ -6,6 +6,8 @@ export interface DitchState {
   campaign: boolean; gunner: boolean; coop: boolean; controllable: boolean;
   enginesOut: number; integrity: number; leaking: boolean;
   initialEnginesOut?: number;
+  /** structural integrity at mission start (Last Light starts already damaged) */
+  initialIntegrity?: number;
   progress: number; coastKm: number; ending: boolean;
 }
 export function shouldDitch(s: DitchState): boolean {
@@ -13,7 +15,8 @@ export function shouldDitch(s: DitchState): boolean {
   // Two engines alone still permit a belly landing when close to England.
   const beyondLanding = s.enginesOut >= 3 || s.integrity < 0.22 || (s.leaking && s.enginesOut >= 2);
   // Last Light starts on two engines: its authored handicap alone must not force failure.
-  const deteriorated = s.enginesOut > (s.initialEnginesOut ?? 0) || s.integrity < 0.5 || s.leaking;
+  // Integrity counts only once it has fallen well below where the mission started.
+  const deteriorated = s.enginesOut > (s.initialEnginesOut ?? 0) || s.integrity < Math.min(0.5, (s.initialIntegrity ?? 1) - 0.15) || s.leaking;
   return s.ending ? beyondLanding : deteriorated && s.progress >= 0.75 && s.coastKm > 25 && (s.enginesOut >= 2 || beyondLanding);
 }
 export function ditchSuccess(bombsRequired: boolean, bombsDropped: boolean, success: boolean): boolean {
