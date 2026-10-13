@@ -41,6 +41,7 @@ export class WorldEvents {
       }, INTERPHONE_LEAD_S * 1000);
     };
     w.events.kill = (victim, byPlayer, cause) => {
+      if (g.aa?.active) { g.aa.onKill(victim, byPlayer); return; }
       crewRoster.onKill(victim, byPlayer);
       if (victim.team === 'axis') {
         if (byPlayer) {

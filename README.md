@@ -39,6 +39,7 @@ English and Arabic (right-to-left) under Settings → Language.
   late-war fighters, changing weather and a battle group every fifth operation.
 * **Survival**: endless rounds as a B-17 gunner or P-51 pilot, with a hangar between rounds
   (aircraft, weapons, upgrades), weather that changes per round and a boss group every third round.
+* **Hold the Field** (under Survival): man a quad .50 or 40 mm Bofors in a ground gun pit. Protect the control tower and parked B-17s from endless raids; keys 1–3 switch pits, R reloads. Choose a repair or upgrade between waves, in clear, overcast, storm, dusk or night weather.
 * **Ace Hunt, Time Attack, Daily Run, Weekly Challenge**: online leaderboards (Firebase).
 * **Special operations (P-51)**: *Defend the Field* (role reversal: Ju 88 raids on your airfield),
   *Night Fighter* (searchlights, flares, exhaust flames) and *Train Busting* (low-level strafing of
@@ -46,7 +47,7 @@ English and Arabic (right-to-left) under Settings → Language.
   You lead a wingman with orders on keys 1–4.
 * **Custom Battle**: pick role, seat, enemy types, numbers, skill, rounds, weather, time of day,
   weather fronts, boss round, special events, flak and escorts.
-* **Co-op (beta)**: two players crew one B-17 over the internet (6-character room code).
+* **Co-op (beta)**: two players crew one B-17 or fly two P-51 escorts over the internet (6-character room code). P-51 co-op supports Survival, campaign escort sorties and saved Custom Battle escort settings.
 * **Training**: a 2-minute gunnery course.
 
 ### Progression

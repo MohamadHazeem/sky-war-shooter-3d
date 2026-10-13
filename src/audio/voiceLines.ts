@@ -3,6 +3,9 @@
 // A clip for each exists in public/audio/voice/ (id, or id__role for multi-speaker lines).
 
 export const VOICE_LINES = {
+  aa_inbound: { speakers: ["Control"], text: "Control to gun crews: raiders inbound. Protect the tower and the parked Fortresses!" },
+  aa_major: { speakers: ["Control"], text: "Control: major raid approaching. All gun pits, open fire!" },
+  aa_repair: { speakers: ["Control"], text: "Control: raid broken up. Repair crews, move out!" },
   ace: { speakers: ["Pilot"], text: "That's five! You're an ace, gunner — drinks are on me tonight!" },
   bk5_down: { speakers: ["Top Turret", "Big Friend"], text: "Got the Me 410 before he could fire!" },
   bk5_fire: { speakers: ["Pilot", "Big Friend"], text: "He's firing the big gun! Kill him before he reloads!" },
@@ -218,6 +221,11 @@ export const VOICE_LINES = {
   rc_threat_waist_right: { speakers: ["Co-Pilot"], text: "Right waist, fighters at three o'clock!" },
   rflak: { speakers: ["Navigator"], text: "Flak coming up — heavy guns below us. Hold steady." },
   rockets: { speakers: ["Tail"], text: "Rockets! They're firing rockets into the formation!" },
+  sea_boss: { speakers: ["Control"], text: "Battleship ahead! Silence her guns, then hit the magazines at the waterline." },
+  sea_dive: { speakers: ["Control"], text: "U-boat crash-diving! Put a bomb alongside before she gets deep!" },
+  sea_radar: { speakers: ["Control"], text: "Radar is down. Their flak crews are aiming by eye now." },
+  sea_salvo: { speakers: ["Control"], text: "Main guns tracking us! Break away from the marked area!" },
+  sea_start: { speakers: ["Control"], text: "Blue flight, ships ahead. Rockets for the escorts; save your bombs for the waterline." },
   sfx_get_him: { speakers: ["Pilot", "Navigator", "Tail", "Top Turret", "Ball Turret", "Bombardier"], text: "Get him!" },
   sk_fortress: { speakers: ["Pilot", "Lead"], text: "That one bounced right off the armour plate!" },
   sp_acewings: { speakers: ["Navigator"], text: "The yellow noses are breaking off — they've lost their leader!" },

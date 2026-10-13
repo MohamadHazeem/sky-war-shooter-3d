@@ -1,3 +1,5 @@
+import type { CoopMode } from '../net/CoopPilot';
+import { CAMPAIGN } from '../game/Missions';
 // Co-op (beta) screens: the title-menu entry, host / join menu, lobby with seat picking, the
 // text-free connection-quality indicator, the PARTNER tag on the gunner HUD's station bar and
 // short notices. All DOM lives here (own layer and styles), driven by CoopSession.
@@ -9,6 +11,7 @@ import { savedName, saveName } from '../net/Leaderboard';
 
 export interface CoopScreenHandlers {
   host(): void;
+  mode(mode: CoopMode, scenario: string): void;
   join(code: string): void;
   seat(s: StationId): void;
   start(): void;
@@ -17,6 +20,8 @@ export interface CoopScreenHandlers {
 }
 
 export interface LobbyView {
+  mode: CoopMode;
+  scenario: string;
   role: 'host' | 'guest';
   code: string;
   status: string;
@@ -29,6 +34,8 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 
 const CSS = `
 #coop .box { width: min(560px, 100%); padding: 28px 30px; max-height: 92vh; overflow: auto; }
+#coop select { max-width:100%; padding:6px 8px; background:#252a28; color:var(--ink); border:1px solid var(--line); font:inherit; }
+#coop select:disabled { opacity:1; color:var(--ink-dim); }
 #coop p.note { color: var(--ink-dim); font-size: 13px; line-height: 1.5; margin: 16px 0 0; }
 #coop .err { color: #f08a6c; min-height: 20px; font-size: 14px; margin-top: 10px; }
 #coop .code { font-family: 'IBM Plex Mono', monospace; font-size: 44px; letter-spacing: 10px; color: var(--khaki); margin: 6px 0 2px; user-select: all; }
@@ -62,7 +69,9 @@ html[lang=ar] #coop .joinrow input:placeholder-shown { direction: rtl; }
 html[lang=ar] #coop .seats button { font-size: 12.5px; padding: 9px 3px; line-height: 1.35; }
 html[lang=ar] #coop .seats button.partner::after { font-size: 10.5px; top: -10px; line-height: 15px; white-space: nowrap; }
 html[lang=ar] #hStations span.partner::after { font-size: 10px; top: -12px; line-height: 14px; }
-html[lang=ar] #coop .status, html[lang=ar] #coop .err, html[lang=ar] #coop p.note { line-height: 1.7; }
+html[lang=ar] #coop .status, html[lang=ar] #coop .err, html[lang=ar] #coop select { max-width:100%; padding:6px 8px; background:#252a28; color:var(--ink); border:1px solid var(--line); font:inherit; }
+#coop select:disabled { opacity:1; color:var(--ink-dim); }
+#coop p.note { line-height: 1.7; }
 html[lang=ar] #coopToast, html[lang=ar] #coopWait { line-height: 1.6; }
 #coopToast { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 60; background: rgba(12,12,8,0.88); border: 1px solid rgba(185,167,111,0.6); color: var(--ink); padding: 12px 20px; font-size: 16px; letter-spacing: 1px; text-align: center; max-width: min(560px, 90vw); opacity: 0; transition: opacity 0.4s; pointer-events: none; }
 #coopToast.show { opacity: 1; }
@@ -73,6 +82,7 @@ html[lang=ar] #coopToast, html[lang=ar] #coopWait { line-height: 1.6; }
 export class CoopScreen {
   private root: HTMLElement;
   private ping: HTMLElement;
+  private exitButton: HTMLButtonElement;
   private toastEl: HTMLElement;
   private waitEl: HTMLElement;
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
@@ -85,6 +95,9 @@ export class CoopScreen {
       document.head.appendChild(st);
     }
     this.root = this.make('div', 'coop', 'layer');
+    this.exitButton = this.make('button', 'coopExit', 'btn ghost') as HTMLButtonElement;
+    this.exitButton.style.cssText = 'position:fixed;top:45%;right:12px;z-index:60;display:none;font-size:11px';
+    this.exitButton.onclick = () => this.h.back();
     this.ping = this.make('div', 'coopPing', '');
     this.ping.innerHTML = '<i></i><i></i><i></i><i></i>';
     this.toastEl = this.make('div', 'coopToast', '');
@@ -104,7 +117,7 @@ export class CoopScreen {
     if (!menu || menu.querySelector('[data-a="coop"]')) return;
     const b = document.createElement('button');
     b.dataset.a = 'coop';
-    b.innerHTML = `${tx('Co-op (beta)')} <small>${tx('two gunners, one B-17 · online')}</small>`;
+    b.innerHTML = `${tx('Co-op (beta)')} <small>${tx('B-17 crew or P-51 escort · online')}</small>`;
     b.addEventListener('click', onClick);
     const after = menu.querySelector('[data-a="survival"]');
     if (after?.nextSibling) menu.insertBefore(b, after.nextSibling); else menu.appendChild(b);
@@ -127,8 +140,9 @@ export class CoopScreen {
   menu(error = '', code = '') {
     this.root.innerHTML = `<div class="screen-center"><div class="box panel">
       <div class="kicker">${tx('ONLINE · PEER TO PEER')}</div><h2 class="h2">${tx('Co-op (beta)')}</h2>
-      <p class="note" style="margin-top:4px">${tx('Two gunners crew the same Fortress in Survival. One player hosts and runs the battle; the other joins with a code.')}</p>
+      <p class="note" style="margin-top:4px">${tx('Crew a B-17 or fly two Mustangs. The host picks the mission; your partner joins with a code.')}</p>
       <label class="hud-label">${tx('Your callsign')} <input data-name maxlength="20" value="${esc(savedName())}" placeholder="${tx('Your name')}" /></label>
+      ${this.modeChoice('gunner', 'survival', false)}
       <div class="row" style="margin:18px 0 4px"><button class="btn" data-host>${tx('Host a game')}</button></div>
       <hr class="sep" />
       <div class="hud-label">${tx('Join a game')}</div>
@@ -140,11 +154,29 @@ export class CoopScreen {
     const input = this.root.querySelector<HTMLInputElement>('.joinrow input')!;
     const name = this.root.querySelector<HTMLInputElement>('[data-name]')!;
     const join = () => { saveName(name.value); this.h.join(input.value); };
-    this.root.querySelector('[data-host]')!.addEventListener('click', () => { saveName(name.value); this.h.host(); });
+    this.root.querySelector('[data-host]')!.addEventListener('click', () => { saveName(name.value); this.h.mode(this.root.querySelector<HTMLSelectElement>('[data-mode]')!.value as CoopMode, this.root.querySelector<HTMLSelectElement>('[data-scenario]')!.value); this.h.host(); });
     this.root.querySelector('[data-join]')!.addEventListener('click', join);
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') join(); });
     this.root.querySelector('[data-back]')!.addEventListener('click', () => this.h.back());
+    this.wireMode();
     this.show();
+  }
+
+  private modeChoice(mode: CoopMode, scenario: string, guest: boolean) {
+    return `<p><label>${tx('Co-op mode')} <select data-mode ${guest ? 'disabled' : ''}>${(['gunner', 'pilot'] as const).map(m => `<option value="${m}" ${m === mode ? 'selected' : ''}>${tx(m === 'pilot' ? 'P-51 escort (pilots)' : 'B-17 crew (gunners)')}</option>`).join('')}</select></label></p>
+      <p data-scenario-row ${mode === 'gunner' ? 'hidden' : ''}><label>${tx('Mission')} <select data-scenario ${guest ? 'disabled' : ''}>
+      ${[['survival', 'Survival'], ...CAMPAIGN.filter(m => m.role === 'pilot' && m.bombers > 0 && !m.naval).map(m => [m.id, m.title]), ['custom', 'Custom Battle — saved escort settings']].map(([id, title]) => `<option value="${id}" ${id === scenario ? 'selected' : ''}>${esc(tx(title))}</option>`).join('')}</select></label></p>`;
+  }
+
+  private wireMode() {
+    const mode = this.root.querySelector<HTMLSelectElement>('[data-mode]');
+    const scenario = this.root.querySelector<HTMLSelectElement>('[data-scenario]');
+    const change = () => {
+      const m = mode?.value === 'pilot' ? 'pilot' : 'gunner';
+      this.root.querySelector<HTMLElement>('[data-scenario-row]')!.hidden = m !== 'pilot';
+      this.h.mode(m, scenario?.value ?? 'survival');
+    };
+    mode?.addEventListener('change', change); scenario?.addEventListener('change', change);
   }
 
   busy(text: string) {
@@ -159,15 +191,18 @@ export class CoopScreen {
 
   lobby(v: LobbyView) {
     this.root.innerHTML = `<div class="screen-center"><div class="box panel">
-      <div class="kicker">${tx('CO-OP (BETA) · SURVIVAL · B-17 GUNNERS')}</div>
+      <div class="kicker">${tx(v.mode === 'pilot' ? 'P-51 escort (pilots)' : 'CO-OP (BETA) · SURVIVAL · B-17 GUNNERS')}</div>
       <div class="hud-label" style="margin-top:12px">${tx(v.role === 'host' ? 'Join code — give it to your partner' : 'Joined game')}</div>
       <div class="code">${esc(v.code)}</div>
       <div class="status ${v.connected ? 'ok' : ''}" data-status>${esc(tx(v.status))}</div>
-      <div class="hud-label">${tx('Your gun position')}</div>
-      <div class="seats">${STATION_ORDER.map((s) => `<button data-s="${s}" class="${s === v.mine ? 'mine' : s === v.partner ? 'partner' : ''}" ${s === v.partner ? 'disabled' : ''}>${tx(STATIONS[s].label)}</button>`).join('')}</div>
+      ${this.modeChoice(v.mode, v.scenario, v.role === 'guest')}
+      ${v.mode === 'pilot' ? `<p>${tx(v.role === 'host' ? 'Blue One' : 'Blue Two')} · ${tx('PARTNER')}: ${tx(v.role === 'host' ? 'Blue Two' : 'Blue One')}</p>` : ''}
+      <div ${v.mode === 'pilot' ? 'hidden' : ''}><div class="hud-label">${tx('Your gun position')}</div>
+      <div class="seats">${STATION_ORDER.map((s) => `<button data-s="${s}" class="${s === v.mine ? 'mine' : s === v.partner ? 'partner' : ''}" ${s === v.partner ? 'disabled' : ''}>${tx(STATIONS[s].label)}</button>`).join('')}</div></div>
       <div class="row">${v.role === 'host' ? `<button class="btn" data-start ${v.connected ? '' : 'disabled'}>${tx('Start mission')}</button>` : ''}<button class="btn ghost" data-leave>${tx('Leave')}</button></div>
       <p class="note">${tx(v.role === 'host' ? 'You run the battle: if your partner drops out you carry on alone.' : 'The host starts the mission. If the host leaves, the game ends.')}</p>
     </div></div>`;
+    this.wireMode();
     this.root.querySelectorAll<HTMLButtonElement>('[data-s]').forEach((b) => b.addEventListener('click', () => this.h.seat(b.dataset.s as StationId)));
     this.root.querySelector('[data-start]')?.addEventListener('click', () => this.h.start());
     this.root.querySelector('[data-leave]')!.addEventListener('click', () => this.h.leave());
@@ -175,7 +210,10 @@ export class CoopScreen {
   }
 
   // connection quality from the round-trip time: 4 bars (good) .. 1 bar (poor), blinking = no reply
-  setPing(rtt: number, visible: boolean) {
+  setPing(rtt: number, visible: boolean, inMission = false) {
+    const exitText = tx('Leave co-op'), display = visible && inMission ? 'block' : 'none';
+    if (this.exitButton.textContent !== exitText) this.exitButton.textContent = exitText;
+    if (this.exitButton.style.display !== display) this.exitButton.style.display = display;
     const q = !visible ? -1 : rtt < 0 ? 0 : rtt < 90 ? 4 : rtt < 160 ? 3 : rtt < 280 ? 2 : 1;
     const cls = q < 0 ? '' : `show q${q}`;
     if (this.ping.className !== cls) this.ping.className = cls;

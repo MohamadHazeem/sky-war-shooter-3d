@@ -3288,6 +3288,53 @@
       "text": "All ten accounted for. Picked up by the RAF Air-Sea Rescue."
     },
     {
+      "group": "Sea Strike (SeaOps.ts)"
+    },
+    {
+      "id": "sea_start",
+      "role": "control",
+      "text": "Blue flight, ships ahead. Rockets for the escorts; save your bombs for the waterline."
+    },
+    {
+      "id": "sea_dive",
+      "role": "control",
+      "text": "U-boat crash-diving! Put a bomb alongside before she gets deep!"
+    },
+    {
+      "id": "sea_boss",
+      "role": "control",
+      "text": "Battleship ahead! Silence her guns, then hit the magazines at the waterline."
+    },
+    {
+      "id": "sea_salvo",
+      "role": "control",
+      "text": "Main guns tracking us! Break away from the marked area!"
+    },
+    {
+      "id": "sea_radar",
+      "role": "control",
+      "text": "Radar is down. Their flak crews are aiming by eye now."
+    },
+    {
+      "group": "fixed AA airfield defence"
+    },
+    {
+      "id": "aa_inbound",
+      "role": "control",
+      "text": "Control to gun crews: raiders inbound. Protect the tower and the parked Fortresses!"
+    },
+    {
+      "id": "aa_major",
+      "role": "control",
+      "text": "Control: major raid approaching. All gun pits, open fire!",
+      "urgent": true
+    },
+    {
+      "id": "aa_repair",
+      "role": "control",
+      "text": "Control: raid broken up. Repair crews, move out!"
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {

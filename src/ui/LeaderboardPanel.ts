@@ -19,7 +19,7 @@ export function mountLeaderboard(host: HTMLElement, mode: string, title: string,
   host.appendChild(box);
   let scope: 'global' | 'squadron' = 'global', revision = 0, sending = false;
   let name = cachedSquadron()?.callsign ?? savedName();
-  const crew = mode === 'coop-gunner';          // co-op crew entries carry both callsigns, fixed
+  const crew = mode === 'coop-gunner' || mode === 'coop-pilot';          // co-op crew entries carry both callsigns, fixed
   if (crew && entry) name = entry.name;
   const render = () => {
     box.innerHTML = `<div class="hud-label">${esc(tx(title))}</div><div class="lb-tabs">${(['global', 'squadron'] as const).map(s => `<button class="btn ghost" data-scope="${s}" aria-pressed="${s === scope}">${tx(s === 'global' ? 'Global' : 'Squadron')}</button>`).join('')}<button class="btn ghost" data-refresh>${tx('Refresh')}</button></div>

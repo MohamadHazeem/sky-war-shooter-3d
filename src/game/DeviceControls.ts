@@ -41,6 +41,7 @@ export class DeviceControls {
       flying: () => this.flying(),
       role: () => (this.game.mission ? this.game.mission.role : null),
       cycleSeat: (dir) => {
+        if (this.game.aa.active) { this.game.aa.switchPit((this.game.aa.selected + dir + this.game.aa.unlocked) % this.game.aa.unlocked); return; }
         const g = this.game.gunner;
         const i = STATION_ORDER.indexOf(g.station);
         g.requestStation(STATION_ORDER[(i + dir + STATION_ORDER.length) % STATION_ORDER.length]);

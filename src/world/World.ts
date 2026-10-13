@@ -1,3 +1,4 @@
+import { warmAAGuns } from '../game/AADefenceScene';
 import * as THREE from 'three';
 import { DitchingSea } from './DitchingSea';
 import { warmTargetSmoke } from '../render/TargetSmoke';
@@ -26,6 +27,7 @@ import { setup as setupDamageLook, update as updateDamageLook } from './DamageLo
 import { update as updateDamageStages, stageOf, damageStage } from './DamageStages';
 import { Crew, STATION_CREW } from './Crew';
 import { prewarmBoss } from './BossShip';
+import { prewarmSea } from './SeaWorld';
 import { warmGlassFx } from '../game/GlassFx';
 import { bomberName, dressPlayerBomber } from '../game/Customize';
 import { aiGunnerSkill, crewRoster } from '../game/CrewRoster';
@@ -107,6 +109,7 @@ export class World implements WorldView {
   player: Aircraft | null = null;
   playerBomber: Bomber | null = null;
   playerFighter: Fighter | null = null;
+  remoteFighter: Fighter | null = null; // co-op partner: local flight, host damage
   playerStation: StationDef | null = null;
   remoteStations = new Set<string>(); // co-op: gun positions on the player's ship manned by the remote partner (CoopSession); their AI crewmen stand down
   time = 0;
@@ -249,7 +252,7 @@ export class World implements WorldView {
     this.rockets = [];
     this.extinguishers.clear();
     this.fireTimers.clear();
-    this.player = this.playerBomber = this.playerFighter = null;
+    this.player = this.playerBomber = this.playerFighter = this.remoteFighter = null;
     this.formationCenter.set(0, ALTITUDE, 0);
     this.formationForward.set(0, 0, 1);
     this.time = 0;
@@ -296,10 +299,12 @@ export class World implements WorldView {
     const at = camera.position.clone().addScaledVector(fwd, 80);
     this.effects.explosion(at, new THREE.Vector3(), 1);
     this.effects.parachute(at, new THREE.Vector3());
+    const unwarmSea = prewarmSea(this.scene, at);
     const unwarmBoss = prewarmBoss(this.scene, camera.position, fwd);
     const unwarm = this.bomberDamage.warmup(this.scene, at);
     const unwarmCrew = warmLivingInterior(this.scene, at); // gunner interior: crew, brass, shafts, frost, breath
     const unwarmTurrets = warmTurretViewmodels(this.scene, at);
+    const unwarmAA = warmAAGuns(this.scene, at);
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     const unwarmTargetSmoke = warmTargetSmoke(this.scene);
     this.engine.precipitation.warm(render);
@@ -310,7 +315,9 @@ export class World implements WorldView {
     unwarmCrew();
     unwarmTurrets();
     unwarmGlass();
+    unwarmAA();
     unwarmBoss();
+    unwarmSea();
     for (const f of dummies) this.scene.remove(f.root);
     this.warmKeep.push(...this.wrecks.clearKeepMaterials()); // keep the compiled wreck programs (Wrecks.clearKeepMaterials)
     this.effects.clear();
@@ -530,7 +537,7 @@ export class World implements WorldView {
     if (t.remove) return;
     const z = e.zone;
     const wasAlive = t.alive;
-    if (t === this.player) {
+    if (t === this.player || t === this.remoteFighter) {
       if (this.playerLucky && Math.random() < this.playerLucky) { this.effects.sparks(e.point, t.vel, false); return; }
       e.damage *= this.playerDamageScale;
     }
@@ -741,7 +748,7 @@ export class World implements WorldView {
       }
       if (a instanceof Fighter && a.alive) {
         if (a.pos.y < this.floorY) { a.alive = false; a.remove = !a.isPlayer; if (a.isPlayer) { a.falling = false; } }
-        else if (!a.isPlayer && a.pos.distanceTo(this.formationCenter) > ((this.pilots.get(a) as EnemyPilot | undefined)?.state === 'withdraw' ? 4500 : 9000)) a.remove = true; // left the battle
+        else if (!a.isPlayer && a !== this.remoteFighter && a.pos.distanceTo(this.formationCenter) > ((this.pilots.get(a) as EnemyPilot | undefined)?.state === 'withdraw' ? 4500 : 9000)) a.remove = true; // left the battle
       }
       this.fireGuns(a, dt);
       this.damageEffects(a, dt);
@@ -855,7 +862,7 @@ export class World implements WorldView {
     }
   }
 
-  private fireGuns(a: Aircraft, dt: number) {
+  fireGuns(a: Aircraft, dt: number) {
     if (!(a instanceof Fighter) || !a.alive) return;
     if (a.fireRockets) this.launchRockets(a);
     for (const g of a.guns) {

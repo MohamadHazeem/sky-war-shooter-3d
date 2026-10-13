@@ -270,7 +270,7 @@ export class Director {
 
     // Crew intercom during lulls in the fighting
     this.chatterT += dt;
-    if (enemies === 0 && this.chatterT > 32 && t > 12) {
+    if (!m.naval && enemies === 0 && this.chatterT > 32 && t > 12) {
       this.chatterT = Math.random() * 8;
       const gunner: [string, string][] = [
         ['Pilot', 'Pilot to crew, oxygen check. Sound off.'],
@@ -297,7 +297,7 @@ export class Director {
     if (g.endResult) return;
     if (g.ditching.checkReturn()) return;
     const pl = w.player;
-    if (pl && !pl.alive) {
+    if (pl && !pl.alive && !g.coop.partnerSurvives) {
       const cause = w.lastKillCause;
       const why = cause === 'cockpit' ? 'Both pilots were hit and the Sky Queen fell out of control.'
         : cause === 'tail' ? 'The tail was shot away.'

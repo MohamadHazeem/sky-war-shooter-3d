@@ -1,6 +1,7 @@
 import { Atmos } from '../render/Atmosphere';
 import { weatherNow } from '../render/WeatherState';
 import type { WeatherPreset } from '../render/WeatherPresets';
+import { AADefence } from './AADefence';
 import { Bombardier } from './Bombardier';
 import * as THREE from 'three';
 import { Engine, lowerQuality } from '../core/Engine';
@@ -81,6 +82,7 @@ export class Game {
   readonly world: World;
   readonly gunner: GunnerController;
   readonly pilot: PilotController;
+  readonly aa: AADefence;
   readonly pilotOps: PilotOps;   // P-51 missions: scripted rounds, bomber-protection score (PilotOps.ts)
   readonly photo: PhotoMode;
   readonly onboarding: Onboarding;
@@ -174,7 +176,7 @@ export class Game {
     // Esc releases pointer lock -> pause. If the browser never granted the lock the game
     // simply runs in free-cursor mode (no pause loop).
     input.onLockChange = (locked) => {
-      if (this.state === 'playing' && !locked && this.input.everLocked) this.pause();
+      if (this.state === 'playing' && !locked && this.input.everLocked && !this.aa?.choosing) this.pause();
       this.ui.showLockHint(false);
     };
     engine.renderer.domElement.addEventListener('click', () => {
@@ -183,7 +185,7 @@ export class Game {
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Escape' && this.state === 'playing' && !this.input.locked) this.pause();
       if (e.code === 'KeyP' && this.state === 'playing') this.pause();
-      if (e.code === 'KeyF' && !e.repeat && this.state === 'playing') this.photo.toggle();
+      if (e.code === 'KeyF' && !e.repeat && this.state === 'playing' && !this.coop.role) this.photo.toggle();
       if (e.code === 'Tab' && !e.repeat && (this.state === 'playing' || this.state === 'ending')) { e.preventDefault(); this.hud.toggleMap(); }
     });
     engine.onFrame = (dt) => this.frame(dt);
@@ -196,6 +198,7 @@ export class Game {
     this.skills = new SkillRuntime(this, ui);
     this.coop = new CoopSession(this, engine, ui);
     this.extras = new TitleExtras(this, engine);
+    this.aa = new AADefence(this);
     this.feats = new FeatWatch(this); // after worldEvents.wire / service: chains world.events.kill
   }
 
@@ -273,6 +276,8 @@ export class Game {
 
   // ---------------- Menu ----------------
   startMenu() {
+    this.pilotOps.sea.stop();
+    this.aa.release();
     this.ditching.release();
     this.bookends.release();   // the parked field behind a debrief gives the world back first
     this.photo.exit();
@@ -312,6 +317,7 @@ export class Game {
   }
 
   showBriefing(m: Mission) {
+    this.aa.release();
     this.ditching.release();
     this.bookends.release();
     sound.init();
@@ -395,6 +401,7 @@ export class Game {
 
   pause() {
     if (this.state !== 'playing') return;
+    if (this.coop.phase === 'mission' && this.coop.partnerSeat !== null || this.coop.flying) { this.ui.tip('Pause is disabled in co-op', 2200); return; }
     this.photo.exit();   // restore the camera before the pause menu takes over
     this.state = 'paused';
     this.engine.paused = true;
@@ -437,6 +444,7 @@ export class Game {
     const w = this.world;
     this.engine.precipitation.velocity.copy(w.player?.vel ?? Atmos.wind);
     this.world.effects.vol.setQuality(this.engine.quality === 'low');
+    this.pilotOps.sea.setQuality(this.engine.quality === 'low');
     syncSurfaceDetail(this.engine.quality);   // follows auto-quality drops (no-op unless the tier changed)
     const playing = !this.menuMode && (this.state === 'playing' || this.state === 'ending');
     this.input.active = playing;
@@ -445,15 +453,18 @@ export class Game {
     const cur = playing ? 'crosshair' : 'default';
     if (canvas.style.cursor !== cur) canvas.style.cursor = cur;
     this.storm(dt);
+    if (this.aa.active) { this.aa.frame(dt); return; }
     this.berserkT = Math.max(0, this.berserkT - dt);
     this.gunner.rateBoost = this.berserkT > 0 ? 1.4 : 1;
     // Brief slow-motion beat on a confirmed kill
+    if (this.coop.flying) { this.slowmo = 0; this.engine.timeScale = 1; }
     if (this.slowmo > 0) {
       this.slowmo -= dt / Math.max(0.05, this.engine.timeScale);
       this.engine.timeScale = this.slowmo > 0 ? 0.35 : 1;
     }
     this.cine.preFrame(dt);
     this.abilities.update(dt);
+    if (this.coop.flying) this.engine.timeScale = 1; // both pilots keep the same real-time flight clock
     this.skills.update(dt);
     // Photo mode: the mission is frozen (engine.paused) and only the free camera moves
     if (this.photo.active) {
@@ -467,6 +478,7 @@ export class Game {
     if (this.ditching.frame(dt)) { this.input.endFrame(); return; }
     if (this.bookends.frame(dt)) { this.input.endFrame(); return; } // take-off / landing scene owns the frame
     if (this.state === 'paused') { this.hud.drawOverlay(); this.input.endFrame(); return; }
+    this.coop.beforeWorld(dt);
     w.update(dt);
     this.coop.update(dt);
     this.bombardier.update(dt);
@@ -477,7 +489,7 @@ export class Game {
       if (this.state !== 'debrief') this.director.direct(dt);
       if (this.ditching.active) { this.input.endFrame(); return; }
       if (this.mission?.role === 'gunner') { if (!this.bombardier.active) this.gunner.update(dt); }
-      else this.pilot.update(dt);
+      else { this.pilot.update(dt); this.coop.afterPilot(); }
       if (this.state === 'ending') this.flow.updateEnding(dt);   // count down to the debrief (bail-out / fly-by)
     }
     if (playing && weatherNow.turbulence > 0) {

@@ -44,8 +44,9 @@ export class MissionFlow {
     // Models and gameplay sounds stream in behind the menu: wait for them (loading screen)
     if (!isMissionReady()) { whenMissionReady(g.ui, () => g.startMission(m)); return; }
     if (g.bookends.takeoff(m, () => g.startMission(m))) return; // take-off scene first (Bookends.ts)
+    g.aa.release();
     g.ditching.reset();
-    prepareCampaignMission(m, g.progress); // campaign state: formation size, enemy count/skill, P-51 escort
+    if (!g.coop.role) prepareCampaignMission(m, g.progress); // campaign state: formation size, enemy count/skill, P-51 escort
     sound.init();
     g.photo.exit();
     g.mission = m;
@@ -87,7 +88,9 @@ export class MissionFlow {
     g.world.spawnFormation(m.bombers, 1);
     const pb = g.world.playerBomber!;
     if (m.role === 'pilot') for (const b of g.world.bombers()) for (const z of b.zones) { z.hp *= 2.2; z.maxHp *= 2.2; }
-    if (m.role === 'gunner') {
+    const aa = m.id === 'survival-aa';
+    if (aa) { /* ground controller starts after the shared mission reset */ }
+    else if (m.role === 'gunner') {
       g.gunner.resetAmmo();
       g.gunner.attach(pb, m.station ?? 'waistL');
       g.gunner.cold = missionCold(m); // frost on the waist windows (LivingInterior)
@@ -116,15 +119,18 @@ export class MissionFlow {
     }
     g.prog.role = m.role;
     g.pilotOps.start(m);
-    Chatter.attachRadioChatter(g.world, m.role);
+    if (aa) Chatter.detachRadioChatter(); else Chatter.attachRadioChatter(g.world, m.role);
     g.abilities.reset(m.role);
     g.baseDamageScale = g.world.playerDamageScale;
     g.berserkT = 0;
     g.applyLoadout(true);
+    g.coop.onMissionStart();
+    if (aa) g.aa.start();
     if (!this.prewarmed) { this.prewarmed = true; g.world.prewarm(scene => scene ? g.engine.renderStudio(scene, g.world.ditchingSea.camera, 1 / 60) : g.engine.render(1 / 60), g.engine.camera); }
     g.state = 'playing';
     g.distantBattle.reset();
     g.ui.hud(m.role, g.coop.phase === 'mission');
+    if (aa) g.aa.mountHud();
     crewRoster.beginMission(g.world, g.ui, m.role);
     g.ui.fadeTo(1);
     setTimeout(() => g.ui.fade(false), 50);
@@ -132,7 +138,7 @@ export class MissionFlow {
     g.ui.banner(m.number ? `MISSION ${m.number} · ${m.target.toUpperCase()}` : m.date.toUpperCase(), m.title, 3800);
     // opening tips (touch controls get their own wording); Gunnery School teaches with its own cards
     const touch = document.body.classList.contains('touch');
-    const tips = m.tutorial ? [] : m.role === 'gunner'
+    const tips = m.tutorial || aa ? [] : m.role === 'gunner'
       ? touch
         ? ['<kbd>Drag</kbd> to swing the gun · <kbd>Hold FIRE</kbd> to shoot', 'Lead the fighters — aim where they will be · <kbd>ZOOM</kbd> for the ring sight', 'Short bursts keep the barrel cool · tap a gun position to change seats']
         : ['<kbd>Move the mouse</kbd> to swing the gun · <kbd>Hold left button</kbd> to fire', 'Lead the fighters — aim where they will be · <kbd>Right button</kbd> to zoom', 'Short bursts keep the barrel cool · <kbd>1–5</kbd> change gun position']
@@ -141,7 +147,7 @@ export class MissionFlow {
         : ['<kbd>Move the mouse</kbd> to fly where you look · <kbd>Left button</kbd> fires', 'Put the K-14 sight ahead of the bandit and fire · <kbd>W/S</kbd> throttle', 'Fw 190s will come for you — keep turning · <kbd>V</kbd> chase view'];
     tips.forEach((t, i) => setTimeout(() => { if (g.state === 'playing' && g.mission === m) g.ui.tip(t, 4200); }, 4200 + i * 4600));
     setTimeout(() => {
-      if (g.state !== 'playing') return;
+      if (g.state !== 'playing' || aa || g.mission !== m) return;
       if (m.role === 'gunner') g.world.callout('start', 'Pilot', `Pilot to crew: we're at altitude. Test fire your guns, and keep your eyes open.`, 0, 3);
       else if (m.bombers > 0) g.world.callout('start', 'Lead', 'Blue flight, form up on the bombers. Keep your eyes peeled for bandits.', 0, 3); // raid/night/strafe ops have no bombers
     }, 2500);
@@ -158,6 +164,7 @@ export class MissionFlow {
     const last = Number.isFinite(m.rounds ?? 1) && g.roundIdx >= (m.rounds ?? 1) - 1;
     Chatter.onRoundEnd(last);
     if (last) { g.director.roundsComplete = true; return; }
+    if (g.coop.flying) { this.startNextRound(); return; }
     const earned = g.coop.phase === 'mission' ? 0 : Math.round((g.score - this.scoreBanked) * g.loadout.scoreMult);
     g.prog.earn(earned);
     this.scoreBanked = g.score;
@@ -177,6 +184,7 @@ export class MissionFlow {
     const g = this.g, w = g.world;
     // survival: every round brings different weather and light
     if (g.mission && g.mission.duration === Infinity) g.setWeather(ROUND_WEATHER[Math.floor(Math.random() * ROUND_WEATHER.length)]);
+    g.coop.onRound();
     g.roundIdx++;
     g.roundT0 = w.time;
     g.director.beginRound();
@@ -203,6 +211,7 @@ export class MissionFlow {
     this.endTimer = success ? 3.5 : bailOut ? BAIL_SEQ_TIME : 5;
     g.state = 'ending';
     if (bailOut) this.startBailOut();
+    else if (g.aa.active) g.ui.banner('Airfield lost', reason, 3500);
     else g.ui.banner(success ? 'ALL GUNS SECURE' : 'MISSION FAILED', success ? 'Mission complete' : 'Shot down', 3500);
     if (success) this.endTimer = g.cine.queueFlyby(this.endTimer, () => { this.endTimer = 0; });
   }

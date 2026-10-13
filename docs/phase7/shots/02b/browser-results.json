@@ -1,0 +1,653 @@
+{
+  "errors": [],
+  "shots": [
+    {
+      "name": "battleship-day",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "battleship-close",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "battleship-p51-scale",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "destroyer-close",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "uboat-close",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "uboat-diving",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "destroyer-sinking",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "convoy-attack",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "shore-battery",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "battery-close",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "battery-front",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "tower-close",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "radar-close",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "coast-harbour",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "coast-cliffs",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "flak88-close",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "eboat-close",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "shore-night",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "battleship-storm",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "battleship-golden",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "battleship-overcast",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "battleship-dusk",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "battleship-low",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "battleship-salvo",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "battleship-smoke",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "shell-splashes",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    {
+      "name": "flak-streams",
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    }
+  ],
+  "bench": {
+    "high": {
+      "avg": 5.87,
+      "p50": 5.5,
+      "p95": 9.1,
+      "max": 9.4,
+      "calls": 1,
+      "tris": 1,
+      "programs": 102,
+      "w": 2063,
+      "h": 1114,
+      "state": "playing",
+      "wave": 5,
+      "fleet": 4
+    },
+    "low": {
+      "avg": 3.07,
+      "p50": 2.9,
+      "p95": 4.8,
+      "max": 5.9,
+      "calls": 1,
+      "tris": 1,
+      "programs": 102,
+      "w": 1291,
+      "h": 697,
+      "state": "playing",
+      "wave": 5,
+      "fleet": 4
+    }
+  },
+  "checks": [
+    {
+      "name": "player model scale",
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "gun elevation",
+      "pass": true
+    },
+    {
+      "name": "Low omits fine detail",
+      "pass": true
+    },
+    {
+      "name": "destroyed-mount material already warm",
+      "before": 102,
+      "after": 102,
+      "pass": true
+    },
+    {
+      "name": "HDR finite, nonnegative and below hot threshold",
+      "pass": true
+    }
+  ],
+  "programs": [
+    {
+      "name": "battleship-day",
+      "count": 100
+    },
+    {
+      "name": "battleship-close",
+      "count": 100
+    },
+    {
+      "name": "battleship-p51-scale",
+      "count": 100
+    },
+    {
+      "name": "destroyer-close",
+      "count": 100
+    },
+    {
+      "name": "uboat-close",
+      "count": 100
+    },
+    {
+      "name": "uboat-diving",
+      "count": 100
+    },
+    {
+      "name": "destroyer-sinking",
+      "count": 100
+    },
+    {
+      "name": "convoy-attack",
+      "count": 100
+    },
+    {
+      "name": "shore-battery",
+      "count": 100
+    },
+    {
+      "name": "battery-close",
+      "count": 100
+    },
+    {
+      "name": "battery-front",
+      "count": 100
+    },
+    {
+      "name": "tower-close",
+      "count": 100
+    },
+    {
+      "name": "radar-close",
+      "count": 100
+    },
+    {
+      "name": "coast-harbour",
+      "count": 100
+    },
+    {
+      "name": "coast-cliffs",
+      "count": 100
+    },
+    {
+      "name": "flak88-close",
+      "count": 100
+    },
+    {
+      "name": "eboat-close",
+      "count": 100
+    },
+    {
+      "name": "shore-night",
+      "count": 100
+    },
+    {
+      "name": "battleship-storm",
+      "count": 100
+    },
+    {
+      "name": "battleship-golden",
+      "count": 100
+    },
+    {
+      "name": "battleship-overcast",
+      "count": 100
+    },
+    {
+      "name": "battleship-dusk",
+      "count": 100
+    },
+    {
+      "name": "battleship-low",
+      "count": 102
+    },
+    {
+      "name": "battleship-salvo",
+      "count": 102
+    },
+    {
+      "name": "battleship-smoke",
+      "count": 102
+    },
+    {
+      "name": "shell-splashes",
+      "count": 102
+    },
+    {
+      "name": "flak-streams",
+      "count": 102
+    }
+  ],
+  "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "sceneTotals": {
+    "calls": 89,
+    "triangles": 306359
+  },
+  "final": {
+    "active": true,
+    "wave": 5,
+    "rockets": 8,
+    "bombs": 2,
+    "ships": [
+      {
+        "kind": "battleship",
+        "hp": 2400,
+        "sink": "afloat",
+        "dive": "surfaced",
+        "depth": 0,
+        "armourOpen": false
+      },
+      {
+        "kind": "destroyer",
+        "hp": 850,
+        "sink": "afloat",
+        "dive": "surfaced",
+        "depth": 0,
+        "armourOpen": true
+      },
+      {
+        "kind": "flakship",
+        "hp": 520,
+        "sink": "afloat",
+        "dive": "surfaced",
+        "depth": 0,
+        "armourOpen": true
+      },
+      {
+        "kind": "uboat",
+        "hp": 360,
+        "sink": "afloat",
+        "dive": "surfaced",
+        "depth": 0,
+        "armourOpen": true
+      }
+    ],
+    "state": "playing",
+    "score": 0,
+    "kills": 0
+  }
+}

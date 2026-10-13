@@ -20,6 +20,9 @@ const MAX_BUFFERED = 256 * 1024;   // skip unreliable sends while the channel is
 export class CoopLink {
   readonly pc: RTCPeerConnection;
   status: LinkStatus = 'connecting';
+  bytesSent = 0;
+  bytesReceived = 0;
+  stateBytesSent = 0;
   rtt = -1;                 // ms, smoothed; -1 until the first pong
   onOpen?: () => void;
   onClose?: (reason: 'left' | 'lost' | 'local') => void;
@@ -64,6 +67,7 @@ export class CoopLink {
     ch.onclose = () => { if (this.status === 'open') this.close('lost', false); };
     ch.onmessage = (e) => {
       this.lastRx = performance.now();
+      this.bytesReceived += new TextEncoder().encode(e.data).length;
       let m: any;
       try { m = JSON.parse(e.data); } catch { return; }
       if (!m || typeof m.t !== 'string') return;
@@ -89,13 +93,13 @@ export class CoopLink {
   sendState(m: unknown) {
     const ch = this.state;
     if (this.status !== 'open' || !ch || ch.readyState !== 'open' || ch.bufferedAmount > MAX_BUFFERED) return false;
-    try { ch.send(JSON.stringify(m)); return true; } catch { return false; }
+    try { const data = JSON.stringify(m); ch.send(data); const n = new TextEncoder().encode(data).length; this.bytesSent += n; if (ch === this.state) this.stateBytesSent += n; return true; } catch { return false; }
   }
 
   sendEvent(m: unknown) {
     const ch = this.events;
     if (!ch || ch.readyState !== 'open') return false;
-    try { ch.send(JSON.stringify(m)); return true; } catch { return false; }
+    try { const data = JSON.stringify(m); ch.send(data); const n = new TextEncoder().encode(data).length; this.bytesSent += n; if (ch === this.state) this.stateBytesSent += n; return true; } catch { return false; }
   }
 
   // notify = tell the partner we are leaving on purpose

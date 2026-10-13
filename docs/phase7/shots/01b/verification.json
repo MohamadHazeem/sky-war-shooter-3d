@@ -1,0 +1,224 @@
+{
+  "initial": {
+    "wave": 1,
+    "aircraft": 3,
+    "assets": 11
+  },
+  "pause": true,
+  "play": {
+    "frames": 9363,
+    "waves": [
+      {
+        "wave": 1,
+        "kills": 3,
+        "score": 480
+      },
+      {
+        "wave": 2,
+        "kills": 6,
+        "score": 976
+      },
+      {
+        "wave": 3,
+        "kills": 10,
+        "score": 1740
+      }
+    ],
+    "wave": 4,
+    "state": "playing",
+    "score": 1740,
+    "shots": 115,
+    "hits": 64,
+    "kills": 10,
+    "health": [
+      [
+        "tower",
+        558
+      ],
+      [
+        "hangar",
+        450
+      ],
+      [
+        "hangar",
+        450
+      ],
+      [
+        "bomber",
+        260
+      ],
+      [
+        "bomber",
+        260
+      ],
+      [
+        "bomber",
+        260
+      ],
+      [
+        "bomber",
+        260
+      ],
+      [
+        "fuel",
+        350
+      ],
+      [
+        "pit",
+        180
+      ],
+      [
+        "pit",
+        180
+      ],
+      [
+        "pit",
+        180
+      ]
+    ]
+  },
+  "dive": [
+    {
+      "height": 744.8533333333374,
+      "vy": -118.27692307691677,
+      "screamed": true,
+      "payload": 3
+    }
+  ],
+  "destroyed": [
+    0,
+    450
+  ],
+  "polish": {
+    "scene": {
+      "cirrus": 0,
+      "instancedBags": 136,
+      "assets": 11,
+      "shaderPrograms": 96,
+      "crew": 9
+    },
+    "feedback": {
+      "hot": true,
+      "cases": 36,
+      "smoke": 2,
+      "shake": 0.811225081484126,
+      "dust": true
+    },
+    "clip": {
+      "ammo": 20,
+      "clip": 0,
+      "loading": true,
+      "hiddenClip": true
+    },
+    "boforsClearance": true,
+    "restoredClip": true,
+    "programs": [
+      {
+        "quality": "low",
+        "before": 98,
+        "after": 98,
+        "added": []
+      },
+      {
+        "quality": "high",
+        "before": 98,
+        "after": 98,
+        "added": []
+      }
+    ]
+  },
+  "night": {
+    "lights": 6,
+    "bullets": 44
+  },
+  "benchAA": {
+    "programsBefore": 98,
+    "avg": 4.95,
+    "p50": 4.2,
+    "p95": 5.8,
+    "max": 74.3,
+    "calls": 1,
+    "tris": 1,
+    "programs": 98,
+    "w": 1200,
+    "h": 750
+  },
+  "cleanup": {
+    "active": false,
+    "ground": false,
+    "field": false,
+    "floor": 250,
+    "cirrus": 1
+  },
+  "benchNormal": {
+    "avg": 4.46,
+    "p50": 4.3,
+    "p95": 5.7,
+    "max": 6.2,
+    "calls": 1,
+    "tris": 1,
+    "programs": 87,
+    "w": 1200,
+    "h": 750
+  },
+  "raid": {
+    "active": true,
+    "pilot": true,
+    "aa": false
+  },
+  "lifecycle": {
+    "blocked": true,
+    "repaired": true,
+    "offered": true,
+    "third": true,
+    "tower": true,
+    "bombers": true
+  },
+  "quad": {
+    "hits": 18,
+    "kills": 1,
+    "ammo": 450
+  },
+  "late": {
+    "major": true,
+    "types": [
+      "fw190",
+      "ju88",
+      "he111",
+      "bf110",
+      "me262",
+      "me163"
+    ],
+    "rockets": [
+      0,
+      0,
+      0
+    ],
+    "finite": true
+  },
+  "touchArabic": {
+    "selected": 1,
+    "rtl": "rtl",
+    "text": true,
+    "touch": true,
+    "noOverflow": true
+  },
+  "voice": [
+    {
+      "id": "aa_inbound",
+      "duration": 4.0030625,
+      "channels": 1
+    },
+    {
+      "id": "aa_major",
+      "duration": 3.5239375,
+      "channels": 1
+    },
+    {
+      "id": "aa_repair",
+      "duration": 3.7169375,
+      "channels": 1
+    }
+  ],
+  "errors": []
+}

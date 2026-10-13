@@ -42,7 +42,7 @@ export class Ballistics {
   n = 0;
   private px: Float32Array; private py: Float32Array; private pz: Float32Array;
   private vx: Float32Array; private vy: Float32Array; private vz: Float32Array;
-  private ttl: Float32Array; private dmg: Float32Array;
+  private age: Float32Array; private ttl: Float32Array; private dmg: Float32Array;
   private team: Uint8Array; private tracer: Uint8Array; private cannon: Uint8Array; private player: Uint8Array;
   private col: Float32Array;
   private owner: (Aircraft | null)[];
@@ -60,7 +60,7 @@ export class Ballistics {
     this.max = max;
     const F = () => new Float32Array(max);
     this.px = F(); this.py = F(); this.pz = F(); this.vx = F(); this.vy = F(); this.vz = F();
-    this.ttl = F(); this.dmg = F();
+    this.age = F(); this.ttl = F(); this.dmg = F();
     this.team = new Uint8Array(max); this.tracer = new Uint8Array(max); this.cannon = new Uint8Array(max);
     this.player = new Uint8Array(max);
     this.col = new Float32Array(max * 3);
@@ -74,7 +74,7 @@ export class Ballistics {
     const i = this.n++;
     this.px[i] = pos.x; this.py[i] = pos.y; this.pz[i] = pos.z;
     this.vx[i] = vel.x; this.vy[i] = vel.y; this.vz[i] = vel.z;
-    this.ttl[i] = ttl; this.dmg[i] = damage;
+    this.age[i] = 0; this.ttl[i] = ttl; this.dmg[i] = damage;
     this.team[i] = team === 'allied' ? 0 : 1;
     this.tracer[i] = tracer ? 1 : 0;
     this.cannon[i] = cannon ? 1 : 0;
@@ -88,7 +88,7 @@ export class Ballistics {
     if (i === j) { this.owner[j] = null; return; }
     this.px[i] = this.px[j]; this.py[i] = this.py[j]; this.pz[i] = this.pz[j];
     this.vx[i] = this.vx[j]; this.vy[i] = this.vy[j]; this.vz[i] = this.vz[j];
-    this.ttl[i] = this.ttl[j]; this.dmg[i] = this.dmg[j]; this.team[i] = this.team[j];
+    this.age[i] = this.age[j]; this.ttl[i] = this.ttl[j]; this.dmg[i] = this.dmg[j]; this.team[i] = this.team[j];
     this.tracer[i] = this.tracer[j]; this.cannon[i] = this.cannon[j]; this.player[i] = this.player[j];
     this.col[i * 3] = this.col[j * 3]; this.col[i * 3 + 1] = this.col[j * 3 + 1]; this.col[i * 3 + 2] = this.col[j * 3 + 2];
     this.owner[i] = this.owner[j]; this.owner[j] = null;
@@ -109,6 +109,7 @@ export class Ballistics {
     const driftX = windDrift(weatherNow.windX, dt), driftZ = windDrift(weatherNow.windZ, dt);
     let i = 0;
     while (i < this.n) {
+      this.age[i] += dt;
       this.ttl[i] -= dt;
       if (this.ttl[i] <= 0) { this.kill(i); continue; }
       const ax = this.px[i], ay = this.py[i], az = this.pz[i];
@@ -172,7 +173,9 @@ export class Ballistics {
       const pl = this.player[i] === 1;
       // ground flak (axis rounds with no aircraft behind them, GroundTargets.ts): long, bright streaks
       const gf = this.team[i] === 1 && this.owner[i] === null;
-      const len = gf ? 0.065 : (this.cannon[i] ? 0.03 : pl ? 0.045 : 0.034) * (pl ? hl : 1);
+      // A new round has not travelled a full streak yet. Extending its tail behind
+      // the muzzle can cross the eye plane and fill a fixed-gun view with a white quad.
+      const len = Math.min(this.age[i], gf ? 0.065 : (this.cannon[i] ? 0.03 : pl ? 0.045 : 0.034) * (pl ? hl : 1));
       const x = this.px[i], y = this.py[i], z = this.pz[i];
       // fade slightly as the tracer compound burns out
       // everyone else's tracers a little dimmer than the player's own
