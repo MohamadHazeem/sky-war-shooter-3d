@@ -297,7 +297,7 @@ export class Director {
     if (g.endResult) return;
     if (g.ditching.checkReturn()) return;
     const pl = w.player;
-    if (pl && !pl.alive) {
+    if (pl && !pl.alive && !g.coop.partnerSurvives) {
       const cause = w.lastKillCause;
       const why = cause === 'cockpit' ? 'Both pilots were hit and the Sky Queen fell out of control.'
         : cause === 'tail' ? 'The tail was shot away.'

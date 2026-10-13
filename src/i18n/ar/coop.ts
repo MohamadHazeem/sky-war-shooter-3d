@@ -16,6 +16,22 @@ const patterns: Pattern[] = [
 
 const table: PhraseTable = {
   phrases: {
+    'Blue One': 'الأزرق واحد',
+    'Leave co-op': 'مغادرة التعاون',
+    'B-17 crew or P-51 escort · online': 'طاقم بي-١٧ أو مرافقة بي-٥١ · عبر الإنترنت',
+    'Crew a B-17 or fly two Mustangs. The host picks the mission; your partner joins with a code.': 'شكّلا طاقم بي-١٧ أو قودا طائرتي موستانغ. يختار المضيف المهمة وينضم زميلك برمز.',
+    'Co-op mode': 'نمط التعاون',
+    'B-17 crew (gunners)': 'طاقم بي-١٧ (رماة)',
+    'P-51 escort (pilots)': 'مرافقة بي-٥١ (طياران)',
+    'Custom Battle — saved escort settings': 'معركة مخصصة — إعدادات المرافقة المحفوظة',
+    'Partner connected — ready to fly': 'اتصل زميلك — جاهزان للطيران',
+    'Co-op Survival — Pilots': 'البقاء التعاوني — الطيارون',
+    'Pause is disabled in co-op': 'الإيقاف المؤقت غير متاح في التعاون',
+    'You are down — spectating your partner until the next round': 'سقطت طائرتك — تتابع زميلك حتى الجولة التالية',
+    'Form up on your partner': 'انضم إلى تشكيل زميلك',
+    '{name} destroyed {target}': '{name} أسقط {target}',
+    'm': 'م',
+
     'Your callsign': 'نداءك',
     'Crew score': 'نقاط الطاقم',
     'CREW LEADERBOARD': 'لوحة ترتيب الطواقم',

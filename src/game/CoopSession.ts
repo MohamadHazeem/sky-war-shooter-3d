@@ -1,4 +1,5 @@
-// Online co-op (beta): two players crew the same B-17 in Survival, each on a different gun.
+// Online co-op: two B-17 gunners or two locally flown P-51s with host-authoritative combat.
+// Pilot flight/damage/respawns live in CoopPilot.ts; transport, proxies and results are shared.
 //
 // Host-authoritative. The host runs the whole battle (AI, ballistics, damage, director) exactly
 // as in single player. The guest's gun is a "remote gunner" on the host: the guest sends its
@@ -57,6 +58,9 @@ import { mountLeaderboard } from '../ui/LeaderboardPanel';
 import { achievements } from './Achievements';
 import { crewRoster } from './CrewRoster';
 import { tx } from '../i18n';
+import { CoopPilot } from './CoopPilot';
+import { coopBoard, packAircraft, unpackAircraft, type CoopMode } from '../net/CoopPilot';
+import { buildCustomMission, loadConfig } from './CustomBattle';
 import { CombatTally } from './CombatTally';
 
 
@@ -95,6 +99,17 @@ export function kindOf(a: Aircraft): string | null {
 const REMOTE: Aircraft = Object.freeze({ remoteGunner: true }) as unknown as Aircraft;
 
 export class CoopSession {
+  mode: CoopMode = 'gunner';
+  scenario = 'survival';
+  readonly pilots: CoopPilot;
+  get flying() { return this.mode === 'pilot' && this.phase === 'mission' && this.connected; }
+  get partnerPlane(): Fighter | null { return this.role === 'host' ? this.pilots.remote : this.proxies.get(this.pilots.hostId) as Fighter ?? null; }
+  beforeWorld(dt: number) { if (this.flying && this.role === 'host') this.pilots.beforeWorld(dt); }
+  afterPilot() { if (this.flying) this.pilots.spectate(this.partnerPlane); }
+  onMissionStart() { if (this.flying) this.pilots.start(this.role === 'host'); }
+  onRound() { if (this.flying && this.role === 'host') this.pilots.reviveHost(); }
+  draw(ctx: CanvasRenderingContext2D, W: number, H: number) { if (this.flying) this.pilots.draw(ctx, W, H, this.partnerPlane); }
+  get partnerSurvives() { return this.flying && !!this.partnerPlane?.alive; }
   role: 'host' | 'guest' | null = null;
   phase: 'idle' | 'lobby' | 'mission' | 'debrief' = 'idle';
   hostSeat: StationId = 'waistL';
@@ -162,7 +177,9 @@ export class CoopSession {
   private hostState = 'playing';
 
   constructor(private game: Game, private engine: Engine, private ui: UI) {
+    this.pilots = new CoopPilot(game, m => this.link?.sendEvent({ ...m, run: this.run }), this.origin);
     this.screen = new CoopScreen({
+      mode: (mode, scenario) => { if (this.role === 'guest') return; this.mode = mode; this.scenario = mode === 'gunner' ? 'survival' : scenario; this.sendLobby(); this.renderLobby(this.lobbyStatus); },
       host: () => { void this.host(); },
       join: (c) => { void this.join(c); },
       seat: (s) => this.pickSeat(s),
@@ -186,14 +203,14 @@ export class CoopSession {
   // Game.frame(), right after world.update(dt)
   update(dt: number) {
     const link = this.link;
-    this.screen.setPing(link?.rtt ?? -1, !!link && link.status === 'open');
+    this.screen.setPing(link?.rtt ?? -1, !!link && link.status === 'open', this.phase === 'mission');
     if (this.phase !== 'mission' || !link) return;
     if (this.role === 'host') this.hostTick(dt);
     else this.guestTick(dt);
   }
 
   get partnerSeat(): StationId | null {
-    if (!this.connected) return null;
+    if (!this.connected || this.mode === 'pilot') return null;
     return this.role === 'host' ? this.guestSeat : this.role === 'guest' ? this.hostSeat : null;
   }
 
@@ -269,7 +286,7 @@ export class CoopSession {
     // connected: the room has done its job (the host deletes it, freeing the code)
     void this.signal?.close();
     this.signal = null;
-    if (this.role === 'host') { this.sendLobby(); this.renderLobby('Partner connected — pick your guns and start'); sound.confirm('kill_confirm'); }
+    if (this.role === 'host') { this.sendLobby(); this.renderLobby(this.mode === 'pilot' ? 'Partner connected — ready to fly' : 'Partner connected — pick your guns and start'); sound.confirm('kill_confirm'); }
     else { link.sendEvent({ t: 'hello', name: this.myName }); this.renderLobby('Connected — waiting for the host to start'); }
   }
 
@@ -311,6 +328,7 @@ export class CoopSession {
       if (phase === 'mission') {
         // the battle goes on: the AI crewman takes the gun back
         this.teardownHost();
+        if (this.mode === 'pilot') this.pilots.fallback();
         this.link = null; this.connected = false;
         void this.signal?.close(); this.signal = null;
         if (!ended) { this.ui.tip(why === 'left' ? 'Your partner left — carrying on alone' : 'Lost your partner — carrying on alone', 4000); this.ui.feed('Partner disconnected', 'loss'); }
@@ -330,6 +348,7 @@ export class CoopSession {
     if (!this.role || this.phase !== 'lobby') return;
     this.lobbyStatus = status;
     this.screen.lobby({
+      mode: this.mode, scenario: this.scenario,
       role: this.role, code: this.code, status, connected: this.connected && this.partnerReady,
       mine: this.role === 'host' ? this.hostSeat : this.guestSeat,
       partner: this.partnerSeat,
@@ -337,7 +356,7 @@ export class CoopSession {
   }
   private lobbyStatus = '';
 
-  private sendLobby() { this.link?.sendEvent({ t: 'lobby', hs: this.hostSeat, gs: this.guestSeat, name: this.myName }); }
+  private sendLobby() { this.link?.sendEvent({ t: 'lobby', mode: this.mode, scenario: this.scenario, hs: this.hostSeat, gs: this.guestSeat, name: this.myName }); }
 
   private pickSeat(s: StationId) {
     if (this.phase !== 'lobby' || !(s in STATIONS)) return;
@@ -355,12 +374,14 @@ export class CoopSession {
 
   private onEvent(m: any) {
     switch (m.t) {
+      case 'pd': if (this.flying && this.role === 'guest' && m.run === this.run) this.pilots.guestDamage(m.d); break;
+      case 'revive': if (this.flying && this.role === 'guest' && m.run === this.run) { this.pilots.reviveGuest(m); if (this.game.world.playerFighter) this.bind(this.pilots.guestId, this.game.world.playerFighter); } break;
       // ---- to the host ----
       case 'hello':
         if (this.role === 'host') { this.partnerName = cleanName(String(m.name ?? 'Walsh')); this.sendLobby(); }
         break;
       case 'ready':
-        if (this.role === 'host' && m.run === this.run) { this.partnerReady = true; this.renderLobby('Partner connected — pick your guns and start'); }
+        if (this.role === 'host' && m.run === this.run) { this.partnerReady = true; this.renderLobby(this.mode === 'pilot' ? 'Partner connected — ready to fly' : 'Partner connected — pick your guns and start'); }
         break;
       case 'debrief':
         if (this.role === 'guest' && this.phase === 'mission' && m.run === this.run && isCoopDebrief(m)) this.presentDebrief(m);
@@ -372,13 +393,15 @@ export class CoopSession {
       // ---- to the guest ----
       case 'lobby':
         if (this.role !== 'guest') break;
+        this.mode = m.mode === 'pilot' ? 'pilot' : 'gunner';
+        this.scenario = typeof m.scenario === 'string' ? m.scenario : 'survival';
         this.partnerName = cleanName(String(m.name ?? 'Gunner'));
         if (m.hs in STATIONS) this.hostSeat = m.hs;
         if (m.gs in STATIONS) this.guestSeat = m.gs;
         this.renderLobby(this.lobbyStatus);
         break;
       case 'start': if (this.role === 'guest' && (this.phase === 'lobby' || this.phase === 'mission')) this.startGuestMission(m); break;
-      case 'k': if (this.role === 'guest' && this.phase === 'mission' && m.run === this.run) this.onKill(Number(m.id), m.g === 1); break;
+      case 'k': if (this.role === 'guest' && this.phase === 'mission' && m.run === this.run) this.onKill(Number(m.id), m.g === 1, m.h === 1); break;
       case 'h': if (this.role === 'guest' && this.phase === 'mission' && m.run === this.run && Array.isArray(m.l)) this.onHits(m.l); break;
       case 'bump':
         if (this.role === 'guest' && m.s in STATIONS) {
@@ -438,9 +461,9 @@ export class CoopSession {
     const result = buildCoopDebrief(this.run, {
       success: r.success, title: this.mission.title, reason: r.reason, kills: 0, accuracy: 0,
       bombersLost: w.stats.bombersLost, bombersTotal: this.mission.bombers, time: w.time,
-      score: g.score, medals: [], survival: true, waves: g.roundIdx + (r.success ? 1 : 0), nextAvailable: false,
+      score: g.score, medals: [], survival: this.mission.duration === Infinity, waves: g.roundIdx + (r.success ? 1 : 0), nextAvailable: false,
     }, host, this.guestScore, w.combatLosses, w.crewWounded > 0);
-    const tally = (t: CombatTally) => ({ bestStreak: t.bestStreak, closestKill: Number.isFinite(t.closestKill) ? t.closestKill : null, killsByGun: t.killsByGun() });
+    const tally = (t: CombatTally) => ({ bestStreak: t.bestStreak, closestKill: Number.isFinite(t.closestKill) ? t.closestKill : null, killsByGun: this.mode === 'gunner' ? t.killsByGun() : undefined });
     Object.assign(result.host, tally(g.tally)); Object.assign(result.guest, tally(this.guestTally));
     this.link?.sendEvent(result);
     this.presentDebrief(result);
@@ -467,8 +490,8 @@ export class CoopSession {
     g.ui.debrief(d, h);
     g.service.onDebrief(this.mission, d, d.medals);
     const box = document.querySelector<HTMLElement>('#debrief .box');
-    if (box) mountLeaderboard(box, 'coop-gunner', 'CREW LEADERBOARD', this.role === 'host' ? {
-      name: crewName(this.myName, this.partnerName), mode: 'coop-gunner', score: result.crew.score,
+    if (box && this.scenario !== 'custom') mountLeaderboard(box, coopBoard(this.mode), 'CREW LEADERBOARD', this.role === 'host' ? {
+      name: this.mode === 'pilot' ? crewName('Blue One', 'Blue Two') : crewName(this.myName, this.partnerName), mode: coopBoard(this.mode), score: result.crew.score,
       kills: result.crew.kills, rounds: d.waves ?? 0,
     } : undefined);
   }
@@ -479,13 +502,16 @@ export class CoopSession {
     this.phase = 'lobby'; this.mission = null;
     this.game.state = 'paused'; this.engine.paused = true;
     if (this.role === 'guest') this.link.sendEvent({ t: 'ready', run: this.run });
-    this.renderLobby(this.role === 'host' && !this.partnerReady ? 'Waiting for your partner to return…' : this.role === 'host' ? 'Partner connected — pick your guns and start' : 'Connected — waiting for the host to start');
+    this.renderLobby(this.role === 'host' && !this.partnerReady ? 'Waiting for your partner to return…' : this.role === 'host' ? (this.mode === 'pilot' ? 'Partner connected — ready to fly' : 'Partner connected — pick your guns and start') : 'Connected — waiting for the host to start');
   }
 
   // ---------------- mission start ----------------
 
   private coopMission(station: StationId, weather?: Weather): Mission {
-    return { ...survivalMission('gunner'), station, weather, title: 'Co-op Survival — Gunners' };
+    if (this.mode === 'gunner') return { ...survivalMission('gunner'), station, weather, title: 'Co-op Survival — Gunners' };
+    const campaign = CAMPAIGN.find(m => m.id === this.scenario && m.role === 'pilot' && m.bombers > 0 && !m.naval);
+    const base = this.scenario === 'custom' ? buildCustomMission({ ...loadConfig(), role: 'pilot' }) : campaign ?? survivalMission('pilot');
+    return { ...base, escorts: 0, specials: false, midRound: false, boss: false, weather: base.weather ?? weather, title: campaign?.title ?? (this.scenario === 'custom' ? base.title : 'Co-op Survival — Pilots') };
   }
 
   private startHostMission() {
@@ -497,7 +523,7 @@ export class CoopSession {
     this.mission = m;
     this.phase = 'mission';
     this.screen.hide();
-    this.link.sendEvent({ t: 'start', run: this.run, w: weather, hs: this.hostSeat, gs: this.guestSeat });
+    this.link.sendEvent({ t: 'start', run: this.run, mode: this.mode, scenario: this.scenario, custom: this.scenario === 'custom' ? loadConfig() : undefined, w: m.weather, hs: this.hostSeat, gs: this.guestSeat });
     this.installHost();
     this.engine.paused = false;
     this.game.startMission(m);
@@ -507,9 +533,12 @@ export class CoopSession {
     if (!Number.isSafeInteger(msg.run) || msg.run <= this.run) return;
     this.teardownGuest();
     this.beginRun(msg.run);
+    this.mode = msg.mode === 'pilot' ? 'pilot' : 'gunner';
+    this.scenario = typeof msg.scenario === 'string' ? msg.scenario : 'survival';
     if (msg.hs in STATIONS) this.hostSeat = msg.hs;
     if (msg.gs in STATIONS) this.guestSeat = msg.gs;
-    const m = this.coopMission(this.guestSeat, msg.w && typeof msg.w === 'object' ? msg.w as Weather : undefined);
+    let m = this.coopMission(this.guestSeat, msg.w && typeof msg.w === 'object' ? msg.w as Weather : undefined);
+    if (this.mode === 'pilot' && this.scenario === 'custom') m = { ...buildCustomMission({ ...msg.custom, role: 'pilot' }), escorts: 0, specials: false, midRound: false, boss: false };
     this.mission = m;
     this.phase = 'mission';
     this.screen.hide();
@@ -546,7 +575,7 @@ export class CoopSession {
     const w = this.game.world, bal = w.ballistics;
     this.wrapCommon();
     w.remoteStations.clear();
-    w.remoteStations.add(this.guestSeat);
+    if (this.mode === 'gunner') w.remoteStations.add(this.guestSeat);
     this.inp = null; this.inAge = 99; this.gunCd = 0; this.snapAcc = 0;
     this.tracers = []; this.tracerSeen = 0; this.hits = []; this.pbHits = [];
     this.tracked.clear(); this.guestKills.clear(); this.lastT = 0; this.endSent = false; this.sentWx = '';
@@ -562,8 +591,8 @@ export class CoopSession {
         this.game.killsSincePerk++;
         this.guestStreak = w.time - this.guestLastKill < 9 ? this.guestStreak + 1 : 1;
         this.guestLastKill = w.time;
-        this.guestTally.recordKill(this.guestStreak, victim.pos.distanceTo(w.playerBomber!.pos), STATIONS[this.guestSeat]);
-        this.ui.feed(tx('{name} (partner) destroyed {target}', { name: this.partnerName, target: tx(victim.label) }), 'mine');
+        this.guestTally.recordKill(this.guestStreak, victim.pos.distanceTo(this.mode === 'pilot' && this.pilots.remote ? this.pilots.remote.pos : w.playerBomber!.pos), this.mode === 'pilot' ? null : STATIONS[this.guestSeat]);
+        this.ui.feed(tx(this.mode === 'pilot' ? '{name} destroyed {target}' : '{name} (partner) destroyed {target}', { name: this.mode === 'pilot' ? tx('Blue Two') : this.partnerName, target: tx(victim.label) }), 'mine');
         return;
       }
       const before = this.game.score;
@@ -573,6 +602,7 @@ export class CoopSession {
     // tracers for the guest (a sample of every gun's tracer rounds except the guest's own)
     const fire0 = Object.getPrototypeOf(bal).fire as typeof bal.fire;
     (bal as any).fire = (pos: THREE.Vector3, vel: THREE.Vector3, team: 'allied' | 'axis', damage: number, tracer: boolean, color: [number, number, number], owner: Aircraft | null, cannon = false, player = false, ttl = 2.6) => {
+      if (this.flying && owner === this.pilots.remote) { owner = REMOTE; player = false; this.stats.guestRounds++; this.guestScore.shots++; }
       if (tracer && owner !== REMOTE) this.captureTracer(pos, vel, team, color, cannon);
       return fire0.call(bal, pos, vel, team, damage, tracer, color, owner, cannon, player, ttl);
     };
@@ -616,11 +646,13 @@ export class CoopSession {
       r2(color[0]), r2(color[1]), r2(color[2]), (cannon ? 1 : 0) | (team === 'axis' ? 2 : 0)];
     // reservoir sample: an even spread of everything fired since the last snapshot
     this.tracerSeen++;
-    if (this.tracers.length < TRACERS_PER_SNAP) this.tracers.push(rec);
-    else { const j = Math.floor(Math.random() * this.tracerSeen); if (j < TRACERS_PER_SNAP) this.tracers[j] = rec; }
+    const max = this.mode === 'pilot' ? 4 : TRACERS_PER_SNAP;
+    if (this.tracers.length < max) this.tracers.push(rec);
+    else { const j = Math.floor(Math.random() * this.tracerSeen); if (j < max) this.tracers[j] = rec; }
   }
 
   private onInput(m: any) {
+    if (this.flying && this.role === 'host' && m.run === this.run && m.t === 'pi') { if (this.pilots.input(m.d)) this.stats.inputsRecv++; return; }
     if (this.role !== 'host' || this.phase !== 'mission' || m.run !== this.run || m.t !== 'i' || !(m.s in STATIONS) || !Number.isFinite(m.y) || !Number.isFinite(m.p)) return;
     this.stats.inputsRecv++;
     const s = m.s as StationId;
@@ -651,11 +683,11 @@ export class CoopSession {
     if (w.time < this.lastT) { this.tracked.clear(); this.guestKills.clear(); this.endSent = false; } // mission restarted
     this.lastT = w.time;
     this.hostSeat = g.gunner.station;
-    this.screen.markPartner(this.connected ? this.guestSeat : null);
-    this.remoteGun(dt);
+    this.screen.markPartner(this.connected && this.mode === 'gunner' ? this.guestSeat : null);
+    if (this.flying) this.pilots.hostTick(dt); else this.remoteGun(dt);
     // kills: anything alive last frame that is not now
     for (const [id, a] of this.tracked) {
-      if (!a.alive) { link.sendEvent({ t: 'k', run: this.run, id, g: this.guestKills.has(id) ? 1 : 0 }); this.tracked.delete(id); this.guestKills.delete(id); }
+      if (!a.alive) { link.sendEvent({ t: 'k', run: this.run, id, g: this.guestKills.has(id) ? 1 : 0, h: a.lastAttacker === w.playerFighter ? 1 : 0 }); this.tracked.delete(id); this.guestKills.delete(id); }
       else if (a.remove) this.tracked.delete(id);
     }
     for (const a of w.aircraft) if (a.alive && !a.remove && !this.tracked.has(a.id) && kindOf(a)) this.tracked.set(a.id, a);
@@ -739,7 +771,9 @@ export class CoopSession {
       z: pb ? pb.zones.map((z) => r2(Math.max(0, z.hp) / z.maxHp)) : [],
       ph: this.pbHits, tr: this.tracers.flat(),
     };
-    if (JSON.stringify(msg).length > MAX_SNAP_CHARS) msg.tr = [];
+    if (this.mode === 'pilot') { msg.a = packAircraft(a); msg.pi = [this.pilots.hostId, this.pilots.guestId]; delete msg.ha; delete msg.hs; delete msg.ph; delete msg.z; }
+    const budget = this.mode === 'pilot' ? 1400 : MAX_SNAP_CHARS;
+    while (msg.tr.length && JSON.stringify(msg).length > budget) msg.tr.splice(-10);
     return msg;
   }
 
@@ -777,6 +811,7 @@ export class CoopSession {
   }
 
   private onSnap(m: any) {
+    if (this.mode === 'pilot' && typeof m.a === 'string') { const rows = unpackAircraft(m.a); if (!rows) return; m.a = rows; }
     if (this.role !== 'guest' || this.phase !== 'mission' || m.run !== this.run || m.t !== 's' || typeof m.tm !== 'number' || !Array.isArray(m.a)) return;
     if (m.tm <= this.latestTm) return; // same-run late or duplicate unreliable packet
     if (m.host && m.guest && Number.isFinite(m.score)) {
@@ -788,6 +823,10 @@ export class CoopSession {
       if (Array.isArray(m.perks) && (m.perks.length !== this.game.prog.perks.length || m.perks.some((p: string, i: number) => p !== this.game.prog.perks[i]))) {
         this.game.prog.perks = m.perks; this.game.applyLoadout();
       }
+    }
+    if (this.mode === 'pilot' && Array.isArray(m.pi)) {
+      this.pilots.hostId = m.pi[0]; this.pilots.guestId = m.pi[1];
+      const own = this.game.world.playerFighter; if (own) this.bind(this.pilots.guestId, own);
     }
     this.stats.snapsRecv++;
     this.latestTm = m.tm;
@@ -819,6 +858,16 @@ export class CoopSession {
   private guestTick(dt: number) {
     const g = this.game, gun = g.gunner, link = this.link!;
     if (g.mission !== this.mission) return;
+    if (this.flying) {
+      this.pilots.notices(dt, this.partnerPlane);
+      this.inAcc += dt;
+      const f = g.world.playerFighter;
+      if (this.inAcc >= 1 / INPUT_HZ && f) {
+        this.inAcc %= 1 / INPUT_HZ;
+        if (link.sendState({ t: 'pi', run: this.run, d: this.pilots.packet((f.trigger || this.devFire) && f.alive && g.state === 'playing' && !this.endWhy) })) this.stats.inputsSent++;
+      }
+      return;
+    }
     this.screen.markPartner(this.hostSeat);
     this.screen.waiting(this.hostState === 'paused' ? 'Waiting for the host…' : null);
     // our gun, to the host
@@ -845,10 +894,19 @@ export class CoopSession {
       this.applyMeta();
       this.spawnTracers();
     } else w.time += dt;
+    if (this.flying) this.pilots.guestWorld(dt);
     this.trailAcc += dt;
     const emit = this.trailAcc >= 0.05;
     if (emit) this.trailAcc = 0;
     for (const a of w.aircraft) {
+      if (this.flying && a instanceof Fighter && a === w.playerFighter) {
+        updateDamageLook(a, w.time); updateDamageStages(a, dt, w.time, w.effects, w.listener);
+        if (emit) {
+          const eng = a.zone('engine');
+          if (eng && (eng.burning || eng.hp < eng.maxHp * .65)) w.effects.trail(a.pos, a.vel, .7, !!eng.burning, .8);
+        }
+        continue;
+      }
       if (a.alive) { if (a instanceof Bomber) a.update(dt); else a.updateProps(dt, 1.2); }
       else a.update(dt, w.time);
       if (a instanceof Fighter) { updateDamageLook(a, w.time); updateDamageStages(a, dt, w.time, w.effects, w.listener); }
@@ -864,7 +922,7 @@ export class CoopSession {
     w.contrails.update(w.time);
     w.bomberDamage.update(dt);
     // anything the local game spawned on its own (abilities, events) is not part of the host's battle
-    if (this.mapped) for (const a of w.aircraft) if (!this.known.has(a)) a.remove = true;
+    if (this.mapped) for (const a of w.aircraft) if (!this.known.has(a) && !(this.flying && a === w.playerFighter)) a.remove = true;
     let removed = false;
     for (const a of w.aircraft) if (a.remove && a !== w.playerBomber) { w.scene.remove(a.root); disposeOwned(a.root); removed = true; }
     if (removed) {
@@ -885,6 +943,7 @@ export class CoopSession {
       else { const b = localB.shift(); if (b) this.bind(e[0], b); }
     }
     for (const b of localB) b.remove = true;
+    if (this.flying && w.playerFighter && this.pilots.guestId >= 0) this.bind(this.pilots.guestId, w.playerFighter);
     this.known.add(pb);
     this.mapped = true;
     // kills that arrived before the first frame of the mission
@@ -928,6 +987,8 @@ export class CoopSession {
       if (this.dead.has(id)) continue;
       let a = this.proxies.get(id);
       if (!a) { if (!this.mapped) continue; a = this.createProxy(id, tr) ?? undefined; if (!a) continue; }
+      if (this.flying && a === w.playerFighter) continue; // own flight is never overwritten by snapshots
+      if (this.flying && id === this.pilots.hostId) a.label = 'Blue One';
       if (!a.alive) continue;   // the local death animation owns it now
       sampleTrack(tr.s, rt, a.root.position, a.root.quaternion, a.vel);
       a.root.position.sub(this.origin);
@@ -988,7 +1049,7 @@ export class CoopSession {
     }
   }
 
-  private onKill(id: number, byGuest: boolean) {
+  private onKill(id: number, byGuest: boolean, byHost = false) {
     this.stats.killsRecv++;
     this.pendingDeath.delete(id);
     const a = this.proxies.get(id);
@@ -998,6 +1059,7 @@ export class CoopSession {
     const g = this.game, score = g.score, kills = g.world.stats.kills;
     if (!byGuest) a.playerDamage = -1; // proxy has no damage ledger; 0 >= 0 is not an assist
     g.world.killAircraft(a, byGuest, '');
+    if (this.flying && a.team === 'axis' && byHost) this.ui.feed(tx('{name} destroyed {target}', { name: tx('Blue One'), target: tx(a.label) }), 'mine');
     g.score = score; g.world.stats.kills = kills; // authoritative totals come from the host
 
   }

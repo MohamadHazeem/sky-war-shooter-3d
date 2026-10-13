@@ -46,7 +46,7 @@ export class MissionFlow {
     if (g.bookends.takeoff(m, () => g.startMission(m))) return; // take-off scene first (Bookends.ts)
     g.aa.release();
     g.ditching.reset();
-    prepareCampaignMission(m, g.progress); // campaign state: formation size, enemy count/skill, P-51 escort
+    if (!g.coop.role) prepareCampaignMission(m, g.progress); // campaign state: formation size, enemy count/skill, P-51 escort
     sound.init();
     g.photo.exit();
     g.mission = m;
@@ -124,6 +124,7 @@ export class MissionFlow {
     g.baseDamageScale = g.world.playerDamageScale;
     g.berserkT = 0;
     g.applyLoadout(true);
+    g.coop.onMissionStart();
     if (aa) g.aa.start();
     if (!this.prewarmed) { this.prewarmed = true; g.world.prewarm(scene => scene ? g.engine.renderStudio(scene, g.world.ditchingSea.camera, 1 / 60) : g.engine.render(1 / 60), g.engine.camera); }
     g.state = 'playing';
@@ -163,6 +164,7 @@ export class MissionFlow {
     const last = Number.isFinite(m.rounds ?? 1) && g.roundIdx >= (m.rounds ?? 1) - 1;
     Chatter.onRoundEnd(last);
     if (last) { g.director.roundsComplete = true; return; }
+    if (g.coop.flying) { this.startNextRound(); return; }
     const earned = g.coop.phase === 'mission' ? 0 : Math.round((g.score - this.scoreBanked) * g.loadout.scoreMult);
     g.prog.earn(earned);
     this.scoreBanked = g.score;
@@ -182,6 +184,7 @@ export class MissionFlow {
     const g = this.g, w = g.world;
     // survival: every round brings different weather and light
     if (g.mission && g.mission.duration === Infinity) g.setWeather(ROUND_WEATHER[Math.floor(Math.random() * ROUND_WEATHER.length)]);
+    g.coop.onRound();
     g.roundIdx++;
     g.roundT0 = w.time;
     g.director.beginRound();

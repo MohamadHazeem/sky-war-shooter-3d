@@ -297,6 +297,7 @@ export class GameHud {
         ctx.restore();
       }
     }
+    g.coop.draw(ctx, W, H);
     if (g.mission?.role === 'pilot') { g.pilot.drawOverlay(ctx, W, H); g.pilotOps.drawOverlay(ctx, W, H, cam); } // K-14 reflector sight, padlock, bombers under attack
     // Hit / kill markers at the aim point
     let hx = W / 2, hy = H / 2;

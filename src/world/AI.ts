@@ -69,6 +69,7 @@ export interface WorldView {
   formationCenter: THREE.Vector3;
   player: Aircraft | null;
   playerFighter: Fighter | null;
+  remoteFighter?: Fighter | null;
   time: number;
   dropTank(f: Fighter): void;
   difficulty: number; // 0.5 .. 1.5
@@ -235,7 +236,7 @@ export class EnemyPilot {
         const toMe = _d.copy(me.pos).sub(a.pos);
         const dist = toMe.length();
         const bearing = a.forward(_t).dot(toMe.divideScalar(Math.max(1, dist)));
-        const player = a === w.playerFighter;
+        const player = a === w.playerFighter || a === w.remoteFighter;
         const onTail = dist < 1200 && bearing > 0.92 && me.forward(_t).dot(toMe) > 0.25;
         const underFire = (dist < 1400 && a.trigger && bearing > 0.97)
           || (dist < 1600 && w.time - me.lastPlayerHit < 2);
@@ -256,8 +257,8 @@ export class EnemyPilot {
     if (!flown) switch (this.state) {
       case 'approach': {
         // escort missions: a share of the Fw 190s come for the player's Mustang
-        if (!this.target && w.playerFighter?.alive && Math.random() < this.dogfightChance) {
-          this.target = w.playerFighter; this.state = 'dogfight'; this.timer = 0; break;
+        if (!this.target && (w.playerFighter?.alive || w.remoteFighter?.alive) && Math.random() < this.dogfightChance) {
+          this.target = w.remoteFighter?.alive && (!w.playerFighter?.alive || Math.random() < .5) ? w.remoteFighter : w.playerFighter; this.state = 'dogfight'; this.timer = 0; break;
         }
         if (!this.target || !this.target.alive || this.target.team !== 'allied' || !(this.target as any).zones) { this.target = this.pickTarget(w); if (!this.target) return; this.computeSetup(w); }
         const d = me.pos.distanceTo(w.formationCenter);
@@ -382,7 +383,7 @@ export class EnemyPilot {
       case 'dogfight': {
         const t = this.target;
         // against the player's Mustang: real BFM (DogfightAI); done -> back to the bombers
-        if (t && t === w.playerFighter && t.alive) {
+        if (t && (t === w.playerFighter || t === w.remoteFighter) && t.alive) {
           this.bfm ??= new DogfightAI(me, this.skill);
           if (!this.bfm.update(dt, w, t as Fighter)) {
             this.bfm.end(); this.bfm = null;
