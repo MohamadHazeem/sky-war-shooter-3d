@@ -336,7 +336,7 @@ export class PilotOps {
       const goal = g.goal === 'mixed' ? (type === 'bf109' || type === 'me262' ? 'player' : 'bombers') : g.goal;
       this.tracked.set(f, { goal, attacking: false, nearBomber: false, onStraggler: false });
       if (goal === 'player' && pf?.alive) {
-        p.target = pf; p.state = 'dogfight'; p.timer = 0;
+        p.target = w.remoteFighter?.alive && i % 2 ? w.remoteFighter : pf; p.state = 'dogfight'; p.timer = 0;
         if (g.pairs) {
           p.bfm = new DogfightAI(f, p.skill);
           if (lead) { DogfightAI.pair(lead, p.bfm); lead = null; } else lead = p.bfm;

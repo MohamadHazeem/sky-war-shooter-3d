@@ -38,7 +38,7 @@ export function cleanName(n: string) {
 // Keep both full callsigns, within the co-op-only 43-character rules limit.
 export function crewName(host: string, guest: string) { return `${cleanName(host)} + ${cleanName(guest)}`; }
 export function cleanScoreName(name: string, mode: string) {
-  if (mode !== 'coop-gunner') return cleanName(name);
+  if (mode !== 'coop-gunner' && mode !== 'coop-pilot') return cleanName(name);
   const [host = '', guest = ''] = name.split(' + ');
   return crewName(host, guest);
 }
@@ -73,7 +73,7 @@ export async function submitScore(e: ScoreEntry): Promise<boolean> {
   try {
     const { db, uid, fs } = await fb();
     const cached = cachedSquadron();
-    if (cached) {
+    if (cached && !e.mode.startsWith('coop-')) {
       const { squadronProfile } = await import('./Squadrons');
       const profile = await squadronProfile();
       if (profile) e = { ...e, name: profile.callsign };
