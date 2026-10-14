@@ -14,6 +14,7 @@ import { Objective, OBJECTIVES, ObjectiveId } from './Objectives';
 import { RandomEvent, EVENTS, EventId } from './RandomEvents';
 import { tx } from '../i18n';
 import { SetPieces, SetPieceId } from './SetPieces';
+import { projectMarker } from '../ui/MarkerProjection';
 
 // Mid-round extras: pop-up bonus objectives (1–2 per round) and random in-flight events
 // (every 60–120 s). This file is the scheduler and the shared toolbox; the objectives live in
@@ -348,9 +349,9 @@ export class MidRound {
       for (const mk of marks) {
         if (!mk.a.alive || mk.a.remove) continue;
         const d = mk.a.pos.distanceTo(cam.position);
-        const p = _p.copy(mk.a.pos).project(cam);
+        const p = projectMarker(mk.a.pos, cam);   // camera-space depth: NDC z misses behind-camera points with reversed depth
         let x = p.x, y = p.y, edge = false;
-        if (p.z > 1) { x = -x; y = -y; edge = true; }
+        if (!p.front) { x = -x; y = -y; edge = true; }
         if (Math.abs(x) > 0.92 || Math.abs(y) > 0.86) {
           edge = true;
           const k = Math.max(Math.abs(x) / 0.92, Math.abs(y) / 0.86);

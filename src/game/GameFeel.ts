@@ -10,6 +10,7 @@ import { sound } from '../audio/Sound';
 import { playCue } from '../audio/FeedbackCues';
 import { access } from '../core/Accessibility';
 import { tx, CANVAS_MONO } from '../i18n';
+import { projectMarker } from '../ui/MarkerProjection';
 
 // Game feel ("juice") for kills and hits, plus the streak meter / ON FIRE presentation.
 //
@@ -311,8 +312,9 @@ export class GameFeel {
     ctx.lineJoin = 'round';
     for (const p of this.popups) {
       if (!p.active) continue;
-      _p.copy(cam.position).add(p.rel).project(cam);
-      if (_p.z > 1) continue;
+      const mp = projectMarker(_p.copy(cam.position).add(p.rel), cam);
+      if (!mp.front) continue;
+      _p.x = mp.x; _p.y = mp.y;
       const x = (_p.x * 0.5 + 0.5) * W;
       // scale-in with an overshoot (0.3 -> ~1.2 -> 1) over 0.2 s, then float up and fade out
       const t = p.age;

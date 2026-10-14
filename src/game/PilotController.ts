@@ -509,8 +509,8 @@ export class PilotController {
     this.gunsight.leadMil = Math.min(0.12, w * tof) * 1000;
     // mouse-aim marker
     if (this.mode === 'mouseAim') {
-      const ap = _v.copy(p.pos).addScaledVector(this.aimDir(_v3), 500).project(cam);
-      this.gunsight.aimVisible = ap.z < 1;
+      const ap = projectMarker(_v.copy(p.pos).addScaledVector(this.aimDir(_v3), 500), cam);
+      this.gunsight.aimVisible = ap.front;
       this.gunsight.aimX = ap.x; this.gunsight.aimY = ap.y;
     } else this.gunsight.aimVisible = false;
   }
