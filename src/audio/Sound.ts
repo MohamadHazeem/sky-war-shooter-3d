@@ -59,7 +59,7 @@ export type BufName =
   | 'crack' | 'casing' | 'click' | 'glass' | 'whoosh' | 'static' | 'squelch' | 'rattle' | 'rocket' | 'debris' | 'beltTick'
   | 'm2thump' | 'm2mech' | 'm2inside' | 'skin'
   | 'bk5' | 'mg81' | 'flak20' | 'flak20burst' | 'flakTower'
-  | 'blastCrack' | 'blastBoom' | 'thunder' | 'rumbleLong' | 'whump' | 'patter' | 'brassPile'
+  | 'blastCrack' | 'blastBoom' | 'thunder' | 'rumbleLong' | 'whump' | 'patter' | 'brassPile' | 'tear'
   | 'tyreChirp' | 'gearThump' | 'flarePop' | 'waterImpact' | 'bellyImpact';
 
 // at: extra start delay (s); lp: low-pass cutoff override (Hz); size: explosion size (explosions only)
@@ -70,7 +70,7 @@ export type PlayOpts = ShotOpts;
 // sound.play(name, pos) gets
 const SYNTH_GAIN: Partial<Record<BufName, number>> = {
   bk5: 1.0, mg81: 0.55, flak20: 0.75, flak20burst: 0.8, flakTower: 1.0, blastCrack: 0.9, blastBoom: 0.85, thunder: 1.0,
-  rumbleLong: 1.0, whump: 0.9, patter: 0.5, brassPile: 1,
+  rumbleLong: 1.0, whump: 0.9, patter: 0.5, brassPile: 1, tear: 0.9,
   tyreChirp: 0.8, gearThump: 0.9, flarePop: 0.8, bellyImpact: 1.0,
 };
 const NAME_DEFAULTS: Partial<Record<BufName, ShotOpts>> = {
@@ -82,6 +82,7 @@ const NAME_DEFAULTS: Partial<Record<BufName, ShotOpts>> = {
 const STAND_IN: Partial<Record<BufName, [BufName, number, number]>> = {
   bk5: ['cannon', 0.55, 2.2], mg81: ['mg131', 1.25, 0.8], flak20: ['cannon', 1.35, 0.6], flak20burst: ['flak', 1.7, 0.35], flakTower: ['flak', 0.6, 1.1],
   gearThump: ['hitHeavy', 0.7, 0.5], flarePop: ['crack', 1.5, 0.9], bellyImpact: ['hitHeavy', 0.55, 1.2],
+  tear: ['hitHeavy', 0.6, 1.1],
 };
 
 const rand = () => Math.random() * 2 - 1;

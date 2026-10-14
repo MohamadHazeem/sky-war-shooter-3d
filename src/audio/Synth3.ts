@@ -341,6 +341,30 @@ export function patter(seed = 36): PCM {
   }, { peak: 0.9 });
 }
 
+// Structure giving way (a wing or tail torn off, destruction/Destruction.ts): a sharp crack, rivets
+// popping in an accelerating run, the skin shrieking as it rips, a low groan of the spar
+export function tear(seed = 37): PCM {
+  const sr = FULL_SR, r = rng(seed);
+  const pops: { t: number; f: number; a: number; ch: number }[] = [];
+  for (let t = 0.05, gap = 0.07; t < 0.75 && pops.length < 40; t += gap * (0.6 + r() * 0.8), gap = Math.max(0.012, gap * 0.86)) pops.push({ t, f: 1400 + r() * 2600, a: 0.4 + r() * 0.6, ch: r() });
+  const st = [0, 1].map(() => ({ sh: new BP(900, 6, sr), sh2: new BP(1700, 5, sr), lo: new LP(lpA(160, sr)), cr: new LP(lpA(2500, sr)), ph: 0 }));
+  return render(sr, 1.5, (t, ch) => {
+    const s = st[ch], n = r() * 2 - 1;
+    // the crack
+    let v = s.cr.run(n) * Math.exp(-t * 40) * 2.2;
+    // the shriek: a resonance sliding down as the tear runs, roughened
+    const rough = 0.55 + 0.45 * Math.sin(TAU * 31 * t + ch) * Math.sin(TAU * 7.3 * t);
+    const env = Math.min(1, t * 12) * Math.exp(-Math.max(0, t - 0.25) * 3.2);
+    v += (s.sh.run(n) * 7 + s.sh2.run(n) * 4) * env * rough * 1.2;
+    // the spar groaning
+    s.ph += TAU * (85 - 35 * Math.min(1, t)) / sr;
+    v += (Math.sin(s.ph) + 0.4 * Math.sin(2.02 * s.ph)) * Math.min(1, t * 8) * Math.exp(-t * 2.2) * 0.9 + s.lo.run(n) * Math.exp(-t * 3) * 2;
+    // rivets letting go
+    for (const p of pops) { const dt = t - p.t; if (dt < 0 || dt > 0.04) continue; const w = ch ? p.ch : 1 - p.ch; v += Math.sin(TAU * p.f * dt) * Math.exp(-dt * 160) * p.a * (0.5 + w); }
+    return v;
+  }, { peak: 0.9, drive: 1.2 });
+}
+
 // ---------------------------------------------------------------- cabin
 export function windowRoar(seed = 41): PCM {
   const sr = ENGINE_SR, r = rng(seed);
@@ -400,6 +424,7 @@ export const SYNTH3 = {
   thunder: { variants: 2, make: thunder, seed: 330 },
   whump: { variants: 2, make: whump, seed: 350 },
   patter: { variants: 3, make: patter, seed: 360 },
+  tear: { variants: 2, make: tear, seed: 370 },
   bk5: { variants: 2, make: bk5, seed: 210 },
   mg81: { variants: 3, make: mg81, seed: 220 },
   flak20: { variants: 3, make: flak20, seed: 230 },
