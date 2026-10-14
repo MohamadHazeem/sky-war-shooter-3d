@@ -1,3 +1,4 @@
+import { registerMode } from './Modes';
 // ServiceRecord: wires the career, medals-with-rewards, daily orders, the Daily Run and the
 // expanded achievements into the game with as few Game.ts hooks as possible.
 //
@@ -75,6 +76,11 @@ export function dailyRunMission(role: 'gunner' | 'pilot', key = dayKey()): Missi
   };
 }
 
+registerMode({
+  id: 'daily', title: 'Daily Run', blurb: 'The same skies and enemy schedule for every crew today.',
+  mission: dailyRunMission, matches: m => m.id.startsWith('daily-'), board: role => dailyMode(role),
+});
+
 export class ServiceRecord {
   readonly career: CareerData;
   readonly daily = new DailyTracker();
@@ -132,23 +138,6 @@ export class ServiceRecord {
   onTitle() {
     this.runSeed = null;
     this.buf = null;
-    const menu = document.querySelector<HTMLElement>('#title .menu');
-    if (!menu) return;
-    const before = menu.querySelector('[data-a="armory"]');
-    const add = (a: string, html: string, onClick: () => void) => {
-      menu.querySelector(`[data-a="${a}"]`)?.remove();
-      const b = document.createElement('button');
-      b.dataset.a = a;
-      b.innerHTML = html;
-      b.addEventListener('click', onClick);
-      menu.insertBefore(b, before);
-    };
-    const done = this.daily.doneCount();
-    const r = rankFor(this.career.xp);
-    add('daily', `${tx('Daily Orders')} <small>${tx('{done}/3 done · Daily Run', { done })}</small>${done < 3 ? `<i class="svc-dot" aria-label="${tx('orders waiting')}"></i>` : ''}`, () => this.openDaily());
-    add('career', `${tx('Career')} <small>${tx(r.rank.name)} · ${tx('{n} XP', { n: num(this.career.xp) })}</small>`, () => this.openCareer());
-    add('trophies', `${tx('Trophies')} <small>${tx('{n} unlocked', { n: achievements.count() })}</small>`, () => this.openTrophies());
-    menu.classList.add('svc-long');
   }
 
   // Game.startMission(), at the end
@@ -295,18 +284,19 @@ export class ServiceRecord {
   }
 
   // ---------------- screens ----------------
-  private openDaily() {
+  openDaily(back = () => this.game.startMenu()) {
     showDailyScreen({
       tracker: this.daily, career: this.career,
-      fly: (role) => { const m = dailyRunMission(role); this.pendingDailyKey = dayKey(); this.host.showBriefing(m); },
-      back: () => this.game.startMenu(),
+      more: () => this.game.menus.survival('daily', () => this.openDaily(back)),
+      fly: (role) => { const m = dailyRunMission(role); this.pendingDailyKey = dayKey(); this.game.showBriefing(m, () => this.openDaily(back)); },
+      back,
     });
   }
-  private openCareer() {
-    showCareerScreen(this.career, { back: () => this.game.startMenu(), trophies: () => this.openTrophies() });
+  openCareer(back = () => this.game.startMenu()) {
+    showCareerScreen(this.career, { back, trophies: () => this.openTrophies(() => this.openCareer(back)) });
   }
-  private openTrophies() {
-    showTrophyScreen(this.career, { back: () => this.game.startMenu(), career: () => this.openCareer() });
+  openTrophies(back = () => this.game.startMenu()) {
+    showTrophyScreen(this.career, { back, career: () => this.openCareer(() => this.openTrophies(back)) });
   }
 
   // ---------------- debrief ----------------

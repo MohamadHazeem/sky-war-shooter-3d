@@ -1,3 +1,4 @@
+import { groupBattleSetup } from './MenuSections';
 // Survival screen extras: the Custom Battle set-up screen, the Custom Battle tab and the Weekly
 // Challenge card (tab + strip above the mode tabs, with the countdown to next Monday).
 // Importing this module registers both modes (CustomBattle.ts, Weekly.ts) and their panels.
@@ -196,6 +197,7 @@ export function showCustomBattleScreen(o: CustomScreenOpts) {
   q('[data-reset]').addEventListener('click', () => { c = sanitizeConfig(null); sync(); });
   q('[data-back]').addEventListener('click', o.back);
   q('[data-start]').addEventListener('click', () => { saveConfig(c); o.start(buildCustomMission(c)); });
+  groupBattleSetup(el.querySelector<HTMLElement>('.cb-grid')!);
   onBackKey(el, o.back);
   sync();
 }
@@ -231,7 +233,7 @@ function tickCountdown(el: HTMLElement, sel: string) {
   }, 20000);
 }
 
-WEEKLY_MODE.panel = (body, onPick) => {
+WEEKLY_MODE.panel = (body, onPick, options) => {
   injectCss();
   const key = weekKey(), s = weeklyScenario(key), c = s.config;
   const prog = Progression.current;
@@ -258,8 +260,8 @@ WEEKLY_MODE.panel = (body, onPick) => {
     <div data-boards></div>`;
   body.querySelectorAll<HTMLButtonElement>('[data-wk-role]').forEach((b) => b.addEventListener('click', () => onPick(weeklyMission(b.dataset.wkRole as 'gunner' | 'pilot', key))));
   const boards = body.querySelector<HTMLElement>('[data-boards]')!;
-  mountLeaderboard(boards, weeklyMode('gunner', key), tx(`WEEK ${s.week} · B-17 GUNNER · TOP 10`));
-  mountLeaderboard(boards, weeklyMode('pilot', key), tx(`WEEK ${s.week} · P-51 ESCORT · TOP 10`));
+  if (options?.boards !== false) mountLeaderboard(boards, weeklyMode('gunner', key), tx(`WEEK ${s.week} · B-17 GUNNER · TOP 10`));
+  if (options?.boards !== false) mountLeaderboard(boards, weeklyMode('pilot', key), tx(`WEEK ${s.week} · P-51 ESCORT · TOP 10`));
   tickCountdown(body, '[data-wk-cd]');
 };
 

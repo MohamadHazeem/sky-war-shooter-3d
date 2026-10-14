@@ -1,3 +1,4 @@
+import { SimpleMenu } from './SimpleMenu';
 import { Atmos } from '../render/Atmosphere';
 import { weatherNow } from '../render/WeatherState';
 import type { WeatherPreset } from '../render/WeatherPresets';
@@ -13,7 +14,7 @@ import { GunnerController } from './GunnerController';
 import { PilotController } from './PilotController';
 import { PilotOps } from './PilotOps';
 import { PhotoMode } from './PhotoMode';
-import { Mission, survivalMission } from './Missions';
+import { Mission } from './Missions';
 import { STATIONS } from '../world/B17Layout';
 import { sound } from '../audio/Sound';
 import { DistantBattle } from '../audio/DistantBattle';
@@ -39,7 +40,7 @@ import { Bookends } from './Bookends';
 import { ServiceRecord } from './ServiceRecord';
 import { SkillRuntime } from './SkillRuntime';
 import { Pacing } from './Pacing';
-import { ModeRunner, mountModePanel } from './Modes';
+import { ModeRunner } from './Modes';
 import { SpecialEvents } from './SpecialEvents';
 import { mountShare, shareStamp } from './Share';
 import { mountStatsToggle } from '../net/Analytics';
@@ -275,6 +276,8 @@ export class Game {
   }
 
   // ---------------- Menu ----------------
+  readonly menus = new SimpleMenu(this);
+
   startMenu() {
     this.pilotOps.sea.stop();
     this.aa.release();
@@ -293,37 +296,25 @@ export class Game {
     for (let i = 0; i < 3; i++) this.world.spawnEscort(new THREE.Vector3(R() * 300, ALTITUDE + 300 + i * 40, -200 + i * 80), new THREE.Vector3(200 * (i - 1), 350, 200));
     this.menuScene.reset();
     sound.setMode('menu');
-    this.ui.title({
-      campaign: () => this.showCampaign(),
-      survival: () => {
-        this.ui.survivalMenu(this.progress, (r) => this.showBriefing(survivalMission(r)), () => this.startMenu());
-        const host = document.querySelector<HTMLElement>('#survival .box');
-        if (host) mountModePanel(host, (mm) => this.showBriefing(mm));
-      },
-      armory: () => this.ui.hangar(this.prog, 'gunner', { title: 'ARMORY', sub: 'B-17 gunner loadout (P-51 loadout: between rounds)', next: 'Back' }, () => this.startMenu()),
-      settings: () => { this.ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, () => this.startMenu()); this.mountCloud(); this.extras.onSettings(); },
-      credits: () => this.ui.credits(() => this.startMenu()),
-    });
     this.coop.onTitle();
-    this.onboarding.onTitle();
     this.service.onTitle();
-    this.skills.onTitle();
-    this.extras.onTitle();
+    this.menus.title();
+    this.onboarding.onTitle();
     this.ui.fade(false);
   }
 
-  showCampaign() {
-    showCampaignMap(this.progress, (m) => this.showBriefing(m), () => this.startMenu()); // campaign map (CampaignMap.ts) replaces ui.campaign
+  showCampaign(back = () => this.startMenu()) {
+    showCampaignMap(this.progress, (m) => this.showBriefing(m, () => this.showCampaign(back)), back); // campaign map (CampaignMap.ts) replaces ui.campaign
   }
 
-  showBriefing(m: Mission) {
+  showBriefing(m: Mission, back = () => (m.number || isSideRaid(m) ? this.showCampaign() : this.startMenu())) {
     this.aa.release();
     this.ditching.release();
     this.bookends.release();
     sound.init();
     this.state = 'briefing';
     prepareCampaignMission(m, this.progress); // campaign state modifiers (CampaignState.ts)
-    this.ui.briefing(m, () => this.startMission(m), () => (m.number || isSideRaid(m) ? this.showCampaign() : this.startMenu()));
+    this.ui.briefing(m, () => this.startMission(m), () => { this.bookends.release(); this.state = 'menu'; back(); });
     this.bookends.prepare(m); // take-off scene: build the base behind the sheet, prewarm its shaders
   }
 
@@ -373,7 +364,7 @@ export class Game {
     this.world.ballistics.playerHitScale = (1 + 0.4 * a) * this.loadout.hitScale;
   }
 
-  private mountCloud() {
+  mountCloud() {
     const host = document.querySelector<HTMLElement>('#settings .box');
     if (host) mountCloudSave(host);
     mountStatsToggle(host);

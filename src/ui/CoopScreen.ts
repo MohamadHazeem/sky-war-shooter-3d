@@ -1,3 +1,4 @@
+import { onBackKey } from './serviceCommon';
 import type { CoopMode } from '../net/CoopPilot';
 import { CAMPAIGN } from '../game/Missions';
 // Co-op (beta) screens: the title-menu entry, host / join menu, lobby with seat picking, the
@@ -111,18 +112,6 @@ export class CoopScreen {
     return e as HTMLElement;
   }
 
-  // "Co-op (beta)" entry under Survival on the title menu (rebuilt with every title screen)
-  titleButton(onClick: () => void) {
-    const menu = document.querySelector<HTMLElement>('#title .menu');
-    if (!menu || menu.querySelector('[data-a="coop"]')) return;
-    const b = document.createElement('button');
-    b.dataset.a = 'coop';
-    b.innerHTML = `${tx('Co-op (beta)')} <small>${tx('B-17 crew or P-51 escort · online')}</small>`;
-    b.addEventListener('click', onClick);
-    const after = menu.querySelector('[data-a="survival"]');
-    if (after?.nextSibling) menu.insertBefore(b, after.nextSibling); else menu.appendChild(b);
-  }
-
   // the PARTNER tag's text (CSS content), in the current language
   private tagText() {
     const v = JSON.stringify(tx('PARTNER'));
@@ -137,7 +126,7 @@ export class CoopScreen {
 
   hide() { this.root.classList.remove('show'); }
 
-  menu(error = '', code = '') {
+  menu(error = '', code = '', back = () => this.h.back()) {
     this.root.innerHTML = `<div class="screen-center"><div class="box panel">
       <div class="kicker">${tx('ONLINE · PEER TO PEER')}</div><h2 class="h2">${tx('Co-op (beta)')}</h2>
       <p class="note" style="margin-top:4px">${tx('Crew a B-17 or fly two Mustangs. The host picks the mission; your partner joins with a code.')}</p>
@@ -146,7 +135,7 @@ export class CoopScreen {
       <div class="row" style="margin:18px 0 4px"><button class="btn" data-host>${tx('Host a game')}</button></div>
       <hr class="sep" />
       <div class="hud-label">${tx('Join a game')}</div>
-      <div class="joinrow"><input maxlength="7" placeholder="${esc(tx('CODE'))}" autocomplete="off" spellcheck="false" value="${esc(code)}" aria-label="${esc(tx('Join code'))}" /><button class="btn" data-join>${tx('Join')}</button></div>
+      <div class="joinrow"><input maxlength="7" placeholder="${esc(tx('CODE'))}" autocomplete="off" spellcheck="false" value="${esc(code)}" aria-label="${esc(tx('Join code'))}" /><button class="btn ghost" data-join>${tx('Join')}</button></div>
       <div class="err" role="alert">${esc(tx(error))}</div>
       <p class="note">${tx('Shared crew score and personal rewards. Relay support is used when available.')}</p>
       <div class="row" style="margin-top:18px"><button class="btn ghost" data-back>${tx('Back')}</button></div>
@@ -157,9 +146,10 @@ export class CoopScreen {
     this.root.querySelector('[data-host]')!.addEventListener('click', () => { saveName(name.value); this.h.mode(this.root.querySelector<HTMLSelectElement>('[data-mode]')!.value as CoopMode, this.root.querySelector<HTMLSelectElement>('[data-scenario]')!.value); this.h.host(); });
     this.root.querySelector('[data-join]')!.addEventListener('click', join);
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') join(); });
-    this.root.querySelector('[data-back]')!.addEventListener('click', () => this.h.back());
+    this.root.querySelector('[data-back]')!.addEventListener('click', back);
     this.wireMode();
     this.show();
+    onBackKey(this.root, () => this.root.querySelector<HTMLButtonElement>('[data-back], [data-leave]')?.click());
   }
 
   private modeChoice(mode: CoopMode, scenario: string, guest: boolean) {
@@ -187,6 +177,7 @@ export class CoopScreen {
     </div></div>`;
     this.root.querySelector('[data-leave]')!.addEventListener('click', () => this.h.leave());
     this.show();
+    onBackKey(this.root, () => this.root.querySelector<HTMLButtonElement>('[data-back], [data-leave]')?.click());
   }
 
   lobby(v: LobbyView) {
@@ -207,6 +198,7 @@ export class CoopScreen {
     this.root.querySelector('[data-start]')?.addEventListener('click', () => this.h.start());
     this.root.querySelector('[data-leave]')!.addEventListener('click', () => this.h.leave());
     this.show();
+    onBackKey(this.root, () => this.root.querySelector<HTMLButtonElement>('[data-back], [data-leave]')?.click());
   }
 
   // connection quality from the round-trip time: 4 bars (good) .. 1 bar (poor), blinking = no reply

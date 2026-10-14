@@ -118,24 +118,8 @@ export class SkillRuntime {
     if (this.L.bossBreach) this.tuneBosses();
   }
 
-  // Game.startMenu, after the ServiceRecord entries: "Skills" on the title menu
-  onTitle() {
-    const menu = document.querySelector<HTMLElement>('#title .menu');
-    if (!menu) return;
-    menu.querySelector('[data-a="skills"]')?.remove();
-    const book = this.game.prog.skills;
-    const n = book.available(this.xp());
-    const b = document.createElement('button');
-    b.dataset.a = 'skills';
-    const sub = n ? (n > 1 ? tx('{n} points to spend', { n }) : tx('1 point to spend')) : tx('{n}/{total} qualified', { n: book.owned.size, total: SKILLS.length });
-    b.innerHTML = `${tx('Skills')} <small>${sub}</small>${n ? `<i class="svc-dot" aria-label="${tx('skill points waiting')}"></i>` : ''}`;
-    b.addEventListener('click', () => this.open());
-    const armory = menu.querySelector('[data-a="armory"]');
-    menu.insertBefore(b, armory ? armory.nextSibling : null);
-  }
-
-  open() {
-    showSkillTree({ prog: this.game.prog, xp: () => this.xp(), back: () => this.game.startMenu() });
+  open(back = () => this.game.startMenu()) {
+    showSkillTree({ prog: this.game.prog, xp: () => this.xp(), back });
   }
 
   private xp() { return this.game.service?.career.xp ?? 0; }

@@ -20,14 +20,19 @@ export function aaMission(mood: Mood = AA_MOODS[Math.floor(Math.random() * AA_MO
 export const AA_MODE: ModeDef = {
   id: AA_LEADERBOARD, title: 'Hold the Field', blurb: 'Fixed AA guns. Endless raids. Defend your airfield from the ground.', roles: ['gunner'],
   mission: () => aaMission(), matches: m => m.id === AA_LEADERBOARD, board: () => AA_LEADERBOARD,
-  panel(body, onPick) {
+  panel(body, onPick, options) {
     const p = document.createElement('p'); p.textContent = tx(AA_MODE.blurb); body.append(p);
-    const row = document.createElement('div'); row.className = 'row'; body.append(row);
+    const label = document.createElement('label'); label.className = 'mode-picker'; label.textContent = tx('Weather');
+    const weather = document.createElement('select'); weather.dataset.aaWeather = '1';
     for (const mood of AA_MOODS) {
-      const b = document.createElement('button'); b.className = 'btn'; b.textContent = tx(mood[0].toUpperCase() + mood.slice(1));
-      b.onclick = () => onPick(aaMission(mood)); row.append(b);
+      const option = document.createElement('option'); option.value = mood; option.textContent = tx(mood[0].toUpperCase() + mood.slice(1)); weather.append(option);
     }
-    mountLeaderboard(body, AA_LEADERBOARD, tx('Airfield defenders'));
+    label.append(weather); body.append(label);
+    const row = document.createElement('div'); row.className = 'row'; body.append(row);
+    const launch = document.createElement('button'); launch.className = 'btn'; launch.dataset.aaStart = '1'; launch.textContent = tx('Hold the Field');
+    launch.onclick = () => onPick(aaMission(weather.value as Mood)); row.append(launch);
+    if (options?.boards !== false) mountLeaderboard(body, AA_LEADERBOARD, tx('Airfield defenders'));
+
   },
 };
 registerMode(AA_MODE, 1);

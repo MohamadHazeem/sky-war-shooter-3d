@@ -1,3 +1,4 @@
+import { HANGAR_TABS } from '../src/game/MenuModel';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { stubStorage } from './helpers';
 import { setLang, tx } from '../src/i18n';
@@ -101,11 +102,10 @@ describe("what's new", () => {
     for (const id of ids) { expect(hub, id).toContain(`case '${id}'`); expect(board, id).toMatch(new RegExp(`\\n  ${id}: \\(\\) =>`)); }
   });
 
-  it('both entries are in the grouped title menu', () => {
-    const ui = source('ui/UI.ts');
-    const sec = ui.match(/const MENU_SECONDARY = \[([^\]]*)\]/)![1];
-    expect(sec).toContain("'aircraft'");
-    expect(sec).toContain("'whatsnew'");
+  it('keeps the gallery and bulletin in Hangar', () => {
+    expect(HANGAR_TABS.find(t => t.id === 'aircraft')!.entries.map(e => e[0])).toContain('aircraft');
+    expect(HANGAR_TABS.find(t => t.id === 'more')!.entries.map(e => e[0])).toContain('whatsnew');
+    expect(source('game/TitleExtras.ts')).not.toContain('openSoon');
   });
 });
 

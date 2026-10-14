@@ -19,12 +19,19 @@ export function showLayer(id: string): HTMLElement {
 
 // Esc / Backspace close a screen (removed once the layer is hidden or replaced)
 export function onBackKey(layer: HTMLElement, back: () => void) {
+  // Menu children share the same leading-edge Back position, above their content.
+  if (['briefing', 'credits', 'svc-career', 'svc-trophies', 'svc-daily', 'svc-nemesis', 'sk-screen', 'cb-screen', 'squadron', 'coop', 'theatreLib'].includes(layer.id)) {
+    const button = layer.querySelector<HTMLElement>('[data-back], [data-a="back"]');
+    const sheet = layer.querySelector<HTMLElement>('.box, .sheet, .svc-sheet, .sk-sheet');
+    if (button && sheet) { button.classList.add('menu-back'); sheet.prepend(button); }
+  }
+
   const prev = (layer as any)._svcBackKey as ((e: KeyboardEvent) => void) | undefined;
   if (prev) removeEventListener('keydown', prev);
   const key = (e: KeyboardEvent) => {
     if (!layer.classList.contains('show')) { removeEventListener('keydown', key); return; }
-    if ((e.target as HTMLElement | null)?.closest?.('input, textarea')) return;
-    if (e.code === 'Escape' || e.code === 'Backspace') { e.preventDefault(); removeEventListener('keydown', key); back(); }
+    if (e.code !== 'Escape' && (e.target as HTMLElement | null)?.closest?.('input, textarea')) return;
+    if (e.code === 'Escape' || e.code === 'Backspace') { e.preventDefault(); e.stopImmediatePropagation(); removeEventListener('keydown', key); back(); }
   };
   (layer as any)._svcBackKey = key;
   addEventListener('keydown', key);

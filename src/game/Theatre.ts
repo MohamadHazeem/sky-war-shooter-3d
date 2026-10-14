@@ -169,7 +169,6 @@ export class Theatre implements TheatreControl, TheatrePad {
   private padMove = new THREE.Vector3();
   private padFast = false;
   private touchMove = new THREE.Vector3();
-  private titleT = 0;
   private busy = false;
 
   constructor(private engine: Engine, private input: Input, private ui: UI, private game: Game) {
@@ -226,24 +225,12 @@ export class Theatre implements TheatreControl, TheatrePad {
     row.prepend(b);
   }
 
-  /** Title menu (polled from Cinematics while in the menu): adds the "Theatre" entry. */
-  mountTitle(real: number) {
-    this.titleT -= real;
-    if (this.titleT > 0 || this.active) return;
-    this.titleT = 0.3;
-    const menu = document.querySelector('#title.show .menu');
-    if (!menu || menu.querySelector('[data-a="theatre"]')) return;
-    const b = document.createElement('button');
-    b.dataset.a = 'theatre';
-    b.innerHTML = `${tx('Theatre')} <small>${tx('saved moments')}</small>`;
-    b.addEventListener('click', () => this.openLibrary());
-    const settings = menu.querySelector('[data-a="settings"]');
-    menu.insertBefore(b, settings);
-  }
-
   // ---------------- library ----------------
 
-  async openLibrary() {
+  private libraryBack: () => void = () => this.game.startMenu();
+
+  async openLibrary(back?: () => void) {
+    if (back) this.libraryBack = back;
     if (this.active) return;
     let items: SavedMoment[] = [];
     try { items = await this.store.list(); } catch (err) { console.warn('Theatre: saved moments unavailable', err); }
@@ -252,7 +239,7 @@ export class Theatre implements TheatreControl, TheatrePad {
     this.screen.showLibrary(list, {
       play: (key) => { const m = items.find((x) => x.key === key); if (m) { this.fromLibrary = true; this.open(m.clip, false); } },
       remove: async (key) => { try { await this.store.remove(key); } catch { /* */ } this.openLibrary(); },
-      back: () => { this.screen.hideLibrary(); if (this.game.state === 'menu') document.getElementById('title')?.classList.add('show'); },
+      back: () => { this.screen.hideLibrary(); if (this.game.state === 'menu') this.libraryBack(); },
     });
   }
 

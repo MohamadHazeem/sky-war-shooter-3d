@@ -251,6 +251,7 @@ export function mountStatsToggle(host: HTMLElement | null) {
     <div class="lb-status">${tx(dnt
       ? 'Your browser asks sites not to track you (Do Not Track), so no stats are sent.'
       : 'One anonymous summary per mission (mission, result, kills, accuracy, gun positions used, settings, screen size and frame rate) helps balance the game. No name, account or personal data is sent.')}</div>`;
+  host = host.querySelector<HTMLElement>('[data-settings-extras]') ?? host;
   const anchor = host.querySelector('[data-back]')?.closest('.row');
   if (anchor) anchor.insertAdjacentElement('beforebegin', box); else host.appendChild(box);
   box.querySelector<HTMLSelectElement>('[data-stats]')!.addEventListener('input', (e) => setStatsOptIn((e.target as HTMLSelectElement).value === '1'));

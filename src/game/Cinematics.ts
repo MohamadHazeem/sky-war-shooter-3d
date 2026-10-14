@@ -204,7 +204,6 @@ export class Cinematics {
 
     const inPlay = g.state === 'playing' || g.state === 'ending';
     this.theatre.record(dt, inPlay);      // the controller's view (before any override below)
-    if (g.state === 'menu') this.theatre.mountTitle(real);
     if (inPlay) {
       this.replay.record(dt, e.camera);   // the controller's view (we override it below)
       this.trackHealth(real);

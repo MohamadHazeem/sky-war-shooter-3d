@@ -1,6 +1,6 @@
 // Field Manual entry points (Phase 5 extra goal 36). Owned by TitleExtras, so Game.ts needs
 // no new lines:
-//   title menu   TitleExtras.onTitle() -> manual.onTitle()   ("Field Manual" in the secondary group)
+//   Hangar → More opens the manual through SimpleMenu.
 //   pause menu   a "Manual" button, opening the chapter for the role being played
 //   Settings     a "Field Manual" button by Done (title and pause Settings alike)
 // The pause and Settings buttons are mounted by watching those screens rebuild themselves
@@ -12,7 +12,7 @@ import { chapterForRole, type ChapterId, type LinkId } from './FieldManual';
 import { openFieldManual } from '../ui/FieldManualScreen';
 
 export class ManualHooks {
-  constructor(private game: Game, private openGallery: () => void) {
+  constructor(private game: Game, private openGallery: (back?: () => void) => void) {
     const watch = (id: string, mount: (el: HTMLElement) => void) => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -22,23 +22,14 @@ export class ManualHooks {
     watch('settings', (s) => this.mountSettings(s));
   }
 
-  /** Game.startMenu() via TitleExtras.onTitle(): the title-menu entry. */
-  onTitle(menu: HTMLElement) {
-    menu.querySelector('[data-a="manual"]')?.remove();
-    const b = document.createElement('button');
-    b.dataset.a = 'manual';
-    b.innerHTML = `${tx('Field Manual')} <small>${tx('how to fight · all controls')}</small>`;
-    b.addEventListener('click', () => this.open());
-    menu.insertBefore(b, menu.querySelector('[data-a="settings"]'));
-  }
-
-  open(chapter?: ChapterId) {
+  open(chapter?: ChapterId, back?: () => void) {
     const g = this.game;
     // cross-links only from the title menu (they leave for other screens)
+    const returnHere = () => this.open(chapter, back);
     const links: Partial<Record<LinkId, () => void>> | undefined = g.state === 'menu'
-      ? { gallery: () => this.openGallery(), skills: () => g.skills.open(), campaign: () => g.showCampaign() }
+      ? { gallery: () => this.openGallery(returnHere), skills: () => g.skills.open(returnHere), campaign: () => g.showCampaign(returnHere) }
       : undefined;
-    openFieldManual({ chapter, links });
+    openFieldManual({ chapter, links, onClose: back });
   }
 
   private mountPause(p: HTMLElement) {
@@ -52,7 +43,7 @@ export class ManualHooks {
   }
 
   private mountSettings(st: HTMLElement) {
-    const row = st.querySelector('[data-back]')?.parentElement;
+    const row = st.querySelector('[data-settings-extras]') ?? st.querySelector('[data-back]')?.parentElement;
     if (!row || row.querySelector('[data-manual]')) return;
     const b = document.createElement('button');
     b.className = 'btn ghost';

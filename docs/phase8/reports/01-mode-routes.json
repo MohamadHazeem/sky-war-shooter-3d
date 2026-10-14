@@ -1,0 +1,46 @@
+[
+  {
+    "mode": "P-51 Survival",
+    "briefing": "SURVIVAL — ESCORT"
+  },
+  {
+    "mode": "Sea Strike",
+    "briefing": "SEA STRIKE"
+  },
+  {
+    "mode": "Hold the Field",
+    "briefing": "HOLD THE FIELD"
+  },
+  {
+    "mode": "Ace Hunt",
+    "briefing": "ACE HUNT — GUNNER"
+  },
+  {
+    "mode": "Time Attack",
+    "briefing": "TIME ATTACK — GUNNER"
+  },
+  {
+    "mode": "Weekly",
+    "briefing": "OPERATION CARPETBAGGER"
+  },
+  {
+    "mode": "Custom Battle",
+    "briefing": "CUSTOM BATTLE — GUNNER"
+  },
+  {
+    "mode": "Defend the Field",
+    "briefing": "DEFEND THE FIELD"
+  },
+  {
+    "mode": "Night Fighter",
+    "briefing": "NIGHT FIGHTER"
+  },
+  {
+    "mode": "Train Busting",
+    "briefing": "TRAIN BUSTING"
+  },
+  {
+    "mode": "Daily Run",
+    "briefing": "DAILY RUN — GUNNER"
+  }
+]

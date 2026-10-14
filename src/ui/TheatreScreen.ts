@@ -1,3 +1,4 @@
+import { onBackKey } from './serviceCommon';
 // Replay theatre screen (DOM): timeline scrubber with best-moment ticks, transport and
 // speed controls, camera modes and the aircraft list, photo settings, screenshot and
 // "save moment"; plus the saved-moments library opened from the title menu.
@@ -482,6 +483,7 @@ export class TheatreScreen {
     this.hideLibrary();
     const d = document.createElement('div');
     d.id = 'theatreLib';
+    d.className = 'layer show';
     // Arabic month names with Western digits, like the rest of the Arabic interface
     const date = (ms: number) => new Date(ms).toLocaleString(isAr() ? 'ar-u-nu-latn' : undefined, { dateStyle: isAr() ? 'long' : 'medium', timeStyle: 'short' });
     d.innerHTML = `<div class="box panel">
@@ -497,6 +499,7 @@ export class TheatreScreen {
     </div>`;
     document.body.appendChild(d);
     this.lib = d;
+    onBackKey(d, h.back);
     d.querySelectorAll<HTMLElement>('[data-play]').forEach((b) => b.addEventListener('click', () => h.play(+b.dataset.play!)));
     d.querySelectorAll<HTMLElement>('[data-del]').forEach((b) => b.addEventListener('click', () => h.remove(+b.dataset.del!)));
     d.querySelector('[data-a="back"]')!.addEventListener('click', () => h.back());
@@ -505,6 +508,7 @@ export class TheatreScreen {
   setLibraryVisible(on: boolean) { if (this.lib) this.lib.style.display = on ? '' : 'none'; }
 
   hideLibrary() {
+    this.lib?.classList.remove('show');
     this.lib?.remove();
     this.lib = null;
   }

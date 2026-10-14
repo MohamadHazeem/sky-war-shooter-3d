@@ -1,3 +1,6 @@
+import { configureMenuLoadout, groupSettings } from './MenuSections';
+import { onBackKey } from './serviceCommon';
+import './simpleMenu.css';
 import { bombingReport } from './BombingReport';
 import type { BombingResult } from '../game/Bombardier';
 import type { Mission } from '../game/Missions';
@@ -96,27 +99,6 @@ function el(html: string): HTMLElement {
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
-// Title menu layout: other modules add entries (Training, Daily Orders, Career, Skills, ...)
-// after title() builds it, so the grouping is applied by CSS order + a class, re-run whenever
-// entries change. Play modes stay large at the top; everything else is a compact 2-column grid.
-const MENU_PRIMARY = ['campaign', 'survival', 'coop'];
-const MENU_SECONDARY = ['training', 'daily', 'skills', 'career', 'trophies', 'armory', 'theatre', 'aircraft', 'whatsnew', 'manual', 'settings', 'credits'];
-function organizeMenu(menu: HTMLElement) {
-  const apply = () => {
-    menu.classList.add('grouped');
-    for (const b of Array.from(menu.children) as HTMLElement[]) {
-      const a = b.dataset.a ?? '';
-      const p = MENU_PRIMARY.indexOf(a);
-      const s = MENU_SECONDARY.indexOf(a);
-      const order = p >= 0 ? p : 10 + (s >= 0 ? s : MENU_SECONDARY.length);
-      if (b.style.order !== String(order)) b.style.order = String(order);
-      b.classList.toggle('sec', p < 0);
-    }
-  };
-  apply();
-  new MutationObserver(apply).observe(menu, { childList: true });
-}
-
 export class UI {
   readonly canvas: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
@@ -171,40 +153,25 @@ export class UI {
   fade(on: boolean) { $('#fade').style.opacity = on ? '1' : '0'; }
   fadeTo(a: number) { $('#fade').style.transition = 'none'; $('#fade').style.opacity = String(a); requestAnimationFrame(() => ($('#fade').style.transition = '')); }
 
-  title(h: { campaign(): void; survival(): void; armory(): void; settings(): void; credits(): void }) {
+  title(h: { campaign(): void; survival(): void; coop(): void; hangar(): void; settings(): void }, mission: Mission, notice = false) {
     const tl = $('#title');
-    // Cinematic dressing (letterbox, film grain, scratches, stencil tag) is decorative and
-    // pointer-events:none, so the buttons below keep their handlers untouched.
-    tl.innerHTML = `
-      <div class="tt-bars" aria-hidden="true"><i></i><i></i></div>
-      <div class="tt-stencil">${t('title.stencil')}</div>
-      <div class="wrap">
-        <div class="eyebrow">${t('title.eyebrow')}</div>
-        <h1>${t('title.logo')}</h1>
-        <div class="sub">${t('title.sub')}</div>
-        <div class="menu">
-          <button data-a="campaign">${t('title.campaign')} <small>${t('title.campaignSub', { n: campaignSize() })}</small></button>
-          <button data-a="survival">${t('title.survival')} <small>${t('title.survivalSub')}</small></button>
-          <button data-a="armory">${t('common.armory')} <small>${t('title.armorySub')}</small></button>
-          <button data-a="settings">${t('common.settings')}</button>
-          <button data-a="credits">${t('title.credits')}</button>
-        </div>
-      </div>
-      <div class="foot">${t('title.foot')}</div>
-      <div class="tt-grain" aria-hidden="true"></div>
-      <div class="tt-scratch" aria-hidden="true"></div>`;
-    tl.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => (h as any)[b.dataset.a!]()));
-    // Arrow keys move between menu items (Tab still works natively); the listener lives on
-    // the freshly built .menu, so repeated title() calls never stack handlers.
-    const menu = tl.querySelector<HTMLElement>('.menu');
-    if (menu) organizeMenu(menu);
-    menu?.addEventListener('keydown', (e) => {
+    tl.classList.add('simple-title');
+    tl.innerHTML = `<div class="wrap">
+      <div class="eyebrow">${t('title.eyebrow')}</div><h1>${t('title.logo')}</h1>
+      <div class="sub">${tx('Man the guns. Bring your crew home.')}</div>
+      <div class="menu">
+        <button class="primary" data-a="campaign">${tx('Fly a Mission')}<small>${tx('Mission {n} / {total} · {title}', { n: mission.number, total: campaignSize(), title: tx(mission.title) })}</small></button>
+        <button data-a="survival">${t('title.survival')}<small>${tx('Endless B-17 gunner waves')}</small></button>
+        <button data-a="coop">${tx('Co-op')}<small>${tx('Crew a B-17 with a friend')}</small></button>
+        <div class="menu-links"><button data-a="hangar">${tx('Hangar')}${notice ? `<i class="hangar-dot" aria-label="${tx('New items')}"></i>` : ''}</button><button data-a="settings">${t('common.settings')}</button></div>
+      </div></div>`;
+    tl.querySelectorAll<HTMLButtonElement>('[data-a]').forEach(b => b.onclick = h[b.dataset.a as keyof typeof h]);
+    const menu = tl.querySelector<HTMLElement>('.menu')!;
+    menu.addEventListener('keydown', e => {
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-      const items = Array.from(menu.querySelectorAll<HTMLButtonElement>('button')).sort((a, b) => (+a.style.order || 0) - (+b.style.order || 0));
+      const items = Array.from(menu.querySelectorAll<HTMLButtonElement>('button'));
       const i = items.indexOf(e.target as HTMLButtonElement);
-      const next = (i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length;
-      e.preventDefault();
-      items[next].focus();
+      e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus();
     });
     this.show('title');
   }
@@ -230,19 +197,19 @@ export class UI {
     this.show('campaign');
   }
 
-  survivalMenu(prog: Progress, onPick: (role: 'gunner' | 'pilot') => void, onBack: () => void) {
+  survivalMenu(_prog: Progress, onPick: (role: 'gunner' | 'pilot') => void, onBack: () => void) {
     const s = $('#survival');
-    s.innerHTML = `<div class="screen-center"><div class="box panel">
-      <div class="kicker">${t('survival.kicker')}</div><h2 class="h2">${t('survival.title')}</h2>
-      <p style="color:var(--ink-dim);font-size:15px;line-height:1.5">${t('survival.desc')}</p>
-      <div class="row" style="margin:18px 0"><button class="btn" data-r="gunner">${t('survival.gunner')}</button><button class="btn" data-r="pilot">${t('survival.pilot')}</button></div>
-      <div class="hud-label">${t('survival.best')}</div>
-      <table class="leader">${prog.survival.slice(0, 8).map((r, i) => `<tr><td>${i + 1}</td><td>${r.role === 'pilot' ? 'P-51' : 'B-17'}</td><td>${t('survival.rounds', { n: r.waves })}</td><td style="text-align:right">${r.score}</td><td style="text-align:right;color:var(--ink-dim)">${esc(r.date)}</td></tr>`).join('') || `<tr><td style="color:var(--ink-dim)">${t('survival.none')}</td></tr>`}</table>
-      <div class="row" style="margin-top:20px"><button class="btn ghost" data-back>${t('common.back')}</button></div>
+    s.innerHTML = `<div class="screen-center"><div class="box panel menu-sheet">
+      <button class="btn ghost menu-back" data-back>${t('common.back')}</button>
+      <div class="kicker">B-17</div><h2>${t('survival.title')}</h2>
+      <p>${tx('Defend the formation for as long as you can.')}</p>
+      <button class="btn" data-r="gunner">${tx('Fly as gunner')}</button>
+      <details class="more-modes"><summary>${tx('More modes')}</summary><div data-modes></div></details>
     </div></div>`;
-    s.querySelectorAll<HTMLButtonElement>('[data-r]').forEach((b) => b.addEventListener('click', () => onPick(b.dataset.r as any)));
-    s.querySelector('[data-back]')!.addEventListener('click', onBack);
+    s.querySelector<HTMLButtonElement>('[data-r]')!.onclick = () => onPick('gunner');
+    s.querySelector<HTMLButtonElement>('[data-back]')!.onclick = onBack;
     this.show('survival');
+    onBackKey(s, onBack);
   }
 
   briefing(m: Mission, onStart: () => void, onBack: () => void) {
@@ -270,6 +237,7 @@ export class UI {
     b.querySelector('[data-back]')!.addEventListener('click', onBack);
     decorateBriefing(b, m);
     this.show('briefing');
+    onBackKey(b, onBack);
   }
 
   // ---------------- HUD ----------------
@@ -509,7 +477,9 @@ export class UI {
       if ($('#pause').classList.contains('show')) this.relang?.();
     });
     mountAccessibilityPanel(st.querySelector('.box')!);
+    groupSettings(st.querySelector('.box')!);
     st.classList.add('show');
+    onBackKey(st, () => { st.classList.remove('show'); onBack(); });
   }
 
   credits(onBack: () => void) {
@@ -525,6 +495,7 @@ export class UI {
     </div></div>`;
     c.querySelector('[data-back]')!.addEventListener('click', onBack);
     this.show('credits');
+    onBackKey(c, onBack);
   }
 
   // Armory: spend merit points on permanent gun upgrades
@@ -555,7 +526,7 @@ export class UI {
   }
 
   // Between rounds: swap aircraft and weapon, buy upgrades, then launch the next round
-  hangar(prog: Progression, role: 'gunner' | 'pilot', info: { title: string; sub: string; next: string }, onLaunch: () => void) {
+  hangar(prog: Progression, role: 'gunner' | 'pilot', info: { title: string; sub: string; next: string; section?: 'armory' | 'customize' }, onLaunch: () => void) {
     const el = $('#hangar');
     const card = (id: string, name: string, desc: string, cost: number, selected: boolean, kind: string) => {
       const owned = prog.unlocked.has(id);
@@ -583,7 +554,7 @@ export class UI {
         }).join('')}</div>
         <div class="row" style="margin-top:18px"><button class="btn" data-go>${info.next === 'Back' ? t('common.back') : t('hangar.launch', { next: esc(tx(info.next)) })}</button></div>
       </div>`;
-      if (role === 'gunner') mountCrewRoster(el.querySelector('.hwrap')!, prog);
+      if (role === 'gunner' && !info.section) mountCrewRoster(el.querySelector('.hwrap')!, prog);
       el.querySelectorAll<HTMLButtonElement>('[data-a]').forEach((b) => b.addEventListener('click', () => {
         const a = AIRCRAFT.find((x) => x.id === b.dataset.a)!;
         if (prog.unlock(a.id, a.cost)) { prog.selectAircraft(a); sound.play('click', null, { gain: 0.6 }); render(); }
@@ -597,9 +568,10 @@ export class UI {
       }));
       el.querySelector('[data-go]')!.addEventListener('click', launch);
       mountHangarExtras(el, prog, role, render);
+      configureMenuLoadout(el, info.section, info.title);
       foldHangar(el);   // phones: collapsible sections (HangarFold.ts)
     };
-    const key = (e: KeyboardEvent) => { if ((e.target as HTMLElement)?.closest('.crewroster')) return; if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); launch(); } };
+    const key = (e: KeyboardEvent) => { if (info.section) { if (e.code === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); launch(); } return; } if ((e.target as HTMLElement)?.closest('.crewroster')) return; if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); launch(); } };
     const launch = () => { removeEventListener('keydown', key, true); el.classList.remove('show'); onLaunch(); };
     addEventListener('keydown', key, true);
     render();
