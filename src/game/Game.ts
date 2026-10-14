@@ -1,3 +1,4 @@
+import { FormationReturn } from './FormationReturn';
 import { setHudDetail } from '../ui/HudDetail';
 import { SimpleMenu } from './SimpleMenu';
 import { Atmos } from '../render/Atmosphere';
@@ -129,6 +130,7 @@ export class Game {
   readonly combat: CombatFeedback;  // damage arcs, lining-up warning (CombatFeedback.ts)
   readonly cine: Cinematics;       // kill cam, mission fly-by, best-moment replay (Cinematics.ts)
   readonly ditching: Ditching;
+  readonly formationReturn = new FormationReturn(this);
   readonly bookends: Bookends;     // take-off / landing scenes at Deenethorpe (Bookends.ts)
   readonly distantBattle = new DistantBattle();
   readonly bombardier: Bombardier;
@@ -289,6 +291,7 @@ export class Game {
   startMenu() {
     this.pilotOps.sea.stop();
     this.aa.release();
+    this.formationReturn.release();
     this.ditching.release();
     this.bookends.release();   // the parked field behind a debrief gives the world back first
     this.photo.exit();
@@ -317,6 +320,7 @@ export class Game {
 
   showBriefing(m: Mission, back = () => (m.number || isSideRaid(m) ? this.showCampaign() : this.startMenu())) {
     this.aa.release();
+    this.formationReturn.release();
     this.ditching.release();
     this.bookends.release();
     sound.init();
@@ -474,6 +478,7 @@ export class Game {
       this.input.endFrame();
       return;
     }
+    if (this.formationReturn.frame(dt)) { this.input.endFrame(); return; }
     if (this.ditching.frame(dt)) { this.input.endFrame(); return; }
     if (this.bookends.frame(dt)) { this.input.endFrame(); return; } // take-off / landing scene owns the frame
     if (this.state === 'paused') { this.hud.drawOverlay(); this.input.endFrame(); return; }
@@ -486,7 +491,7 @@ export class Game {
       this.menuScene.update(dt);
     } else if (this.state === 'playing' || this.state === 'ending' || this.state === 'debrief') {
       if (this.state !== 'debrief') this.director.direct(dt);
-      if (this.ditching.active) { this.input.endFrame(); return; }
+      if (this.formationReturn.active || this.ditching.active) { this.input.endFrame(); return; }
       if (this.mission?.role === 'gunner') { if (!this.bombardier.active) this.gunner.update(dt); }
       else { this.pilot.update(dt); this.coop.afterPilot(); }
       if (this.state === 'ending') this.flow.updateEnding(dt);   // count down to the debrief (bail-out / fly-by)

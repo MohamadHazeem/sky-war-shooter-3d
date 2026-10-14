@@ -102,8 +102,8 @@ export class WorldEvents {
     };
     w.events.bomberLost = (b) => {
       g.ui.feed(`B-17 "${b.name}" going down`, 'loss');
-      if (!b.isPlayer && !b.scripted) w.callout('lost' + b.id, 'Tail', `${b.name} is going down! Count the chutes!`, 1, 2);   // a set piece calls its own losses
-      else w.callout('playerdown', 'Pilot', 'We\'ve had it! Bail out! Bail out!', 0, 3);
+      if (!b.isPlayer && !b.scripted && !b.ditched) w.callout('lost' + b.id, 'Tail', `${b.name} is going down! Count the chutes!`, 1, 2);   // a set piece calls its own losses
+      else if (b.isPlayer) w.callout('playerdown', 'Pilot', 'We\'ve had it! Bail out! Bail out!', 0, 3);
     };
     w.events.playerHit = (zone, heavy) => {
       if (heavy && g.mission?.role === 'gunner') {

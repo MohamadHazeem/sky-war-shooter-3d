@@ -46,6 +46,7 @@ export class MissionFlow {
     if (!isMissionReady()) { whenMissionReady(g.ui, () => g.startMission(m)); return; }
     if (g.bookends.takeoff(m, () => g.startMission(m))) return; // take-off scene first (Bookends.ts)
     g.aa.release();
+    g.formationReturn.reset();
     g.ditching.reset();
     if (!g.coop.role) prepareCampaignMission(m, g.progress); // campaign state: formation size, enemy count/skill, P-51 escort
     sound.init();

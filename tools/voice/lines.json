@@ -3595,6 +3595,54 @@
       "peakDb": -3
     },
     {
+      "group": "Phase 9 living formation"
+    },
+    {
+      "id": "lf_damage",
+      "role": "bigfriend",
+      "text": "Number two is feathered. We are holding station."
+    },
+    {
+      "id": "lf_straggler",
+      "role": "bigfriend",
+      "text": "We are dropping back. Keep those fighters off us!"
+    },
+    {
+      "id": "lf_lead",
+      "role": "bigfriend",
+      "text": "Deputy lead taking over. Close up on me."
+    },
+    {
+      "id": "lf_reform",
+      "role": "pilot",
+      "text": "Box is re-formed. Keep your spacing."
+    },
+    {
+      "id": "lf_ditch",
+      "role": "bigfriend",
+      "text": "We cannot make the coast. Putting her down in the sea."
+    },
+    {
+      "id": "lf_kill",
+      "role": "bigfriend",
+      "text": "Got him! He is going down behind the box."
+    },
+    {
+      "id": "lf_chutes3",
+      "role": "tail",
+      "text": "I see two... three chutes!"
+    },
+    {
+      "id": "lf_chutes4",
+      "role": "tail",
+      "text": "I see three... four chutes!"
+    },
+    {
+      "id": "lf_chutes5",
+      "role": "tail",
+      "text": "I see four... five chutes!"
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {

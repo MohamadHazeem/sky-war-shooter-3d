@@ -1,0 +1,139 @@
+{
+  "damage": {
+    "engines": 2,
+    "holes": 4,
+    "status": "straggler",
+    "props": [
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "errors": [],
+  "profiles": {
+    "spin": {
+      "chutes": 4,
+      "expected": 4,
+      "programsBefore": 101,
+      "programsAfter": 101,
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    },
+    "split": {
+      "chutes": 3,
+      "expected": 3,
+      "programsBefore": 102,
+      "programsAfter": 102,
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    },
+    "explode": {
+      "chutes": 0,
+      "expected": 0,
+      "programsBefore": 102,
+      "programsAfter": 102,
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    },
+    "glide": {
+      "chutes": 5,
+      "expected": 5,
+      "programsBefore": 102,
+      "programsAfter": 102,
+      "scan": {
+        "ldr": {
+          "black": 0,
+          "white": 0,
+          "blackClusters": [],
+          "whiteClusters": []
+        },
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    }
+  },
+  "hunt": {
+    "target": "Hell's Angel II",
+    "straggler": "Hell's Angel II"
+  },
+  "lead": {
+    "old": "Iron Maiden",
+    "next": "Sky Queen",
+    "deputy": "Patches",
+    "losses": 1
+  },
+  "ditch": {
+    "triggered": true,
+    "active": true,
+    "lost": 1,
+    "combat": 1,
+    "restored": true
+  },
+  "highScan": {
+    "ldr": {
+      "black": 0,
+      "white": 0,
+      "blackClusters": [],
+      "whiteClusters": []
+    },
+    "hdr": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    }
+  },
+  "gunners": {
+    "before": 0,
+    "shots": 28,
+    "damage": 98,
+    "killed": true,
+    "after": 0
+  }
+}

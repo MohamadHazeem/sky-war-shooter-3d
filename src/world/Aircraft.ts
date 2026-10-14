@@ -108,7 +108,7 @@ export abstract class Aircraft {
     for (let i = 0; i < this.props.length; i++) {
       const p = this.props[i];
       const dead = this.engineDead[i] || !this.alive;
-      const speed = dead ? (this.falling ? 3 : 1.2) : 70 * rpmFactor;
+      const speed = dead ? (this instanceof Bomber ? 0 : this.falling ? 3 : 1.2) : 70 * rpmFactor;
       this.propSpin[i] += speed * dt;
       const spinning = speed > 20;
       p.node.quaternion.copy(p.base).multiply(_qz.setFromAxisAngle(_zAxis, this.propSpin[i]));
@@ -199,6 +199,8 @@ export class Bomber extends Aircraft {
   wobblePhase = Math.random() * 100;
   wobbleAmp = 1;
   straggling = false;
+  ditched = false;
+  gliding = false; // controlled loss: holds wings level and sinks at six metres per second
   gunners: { station: string; offset: THREE.Vector3; cooldown: number; target: Aircraft | null; burst: number; arc: (d: THREE.Vector3) => boolean }[] = [];
   crewBailed = 0;
   scripted = false;                // lost in a formation set piece (World.scriptedLoss): not a combat loss
@@ -248,7 +250,8 @@ export class Bomber extends Aircraft {
     let rpm = 1;
     if (this.falling) {
       this.fallTime += dt;
-      this.vel.y -= 9.81 * dt * 0.35;
+      if (this.gliding) this.vel.y = -6;
+      else this.vel.y -= 9.81 * dt * 0.35;
       this.vel.y = Math.max(this.vel.y, -70);
       this.root.position.addScaledVector(this.vel, dt);
       const e = new THREE.Euler(this.spin.x * dt, this.spin.y * dt, this.spin.z * dt);
@@ -260,7 +263,7 @@ export class Bomber extends Aircraft {
     this.updateProps(dt, rpm);
   }
 
-  get enginesOut() { return this.engineDead.filter(Boolean).length; }
+  get enginesOut() { let n = 0; for (const dead of this.engineDead) if (dead) n++; return n; }
 
   // Swing turrets and flexible guns toward their crews' targets
   animateGuns(dt: number) {

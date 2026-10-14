@@ -304,6 +304,7 @@ export class Director {
 
     // ---- End conditions ----
     if (g.endResult) return;
+    if (g.formationReturn.check()) return;
     if (g.ditching.checkReturn()) return;
     const pl = w.player;
     if (pl && !pl.alive && !g.coop.partnerSurvives) {

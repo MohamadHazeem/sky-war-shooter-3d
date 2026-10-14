@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { disposeOwned, markOwned } from '../render/Dispose';
+import { markOwned } from '../render/Dispose';
 import { ParticleSystem, type ParticleOpts } from '../render/Particles';
 import { chuteTexture } from '../render/ChuteTexture';
 import { VolumeFX, shockLight, type Vol } from '../render/Explosions';
@@ -100,6 +100,7 @@ export class Effects {
       this.debris.push({ mesh: m, vel: new THREE.Vector3(), spin: new THREE.Vector3(), life: 0, max: 1, smoke: false, fire: false, acc: 0, fAcc: 0, active: false, pooled: true });
     }
     for (let i = 0; i < PENDING_MAX; i++) this.pending.push({ t: 0, pos: new THREE.Vector3(), vel: new THREE.Vector3(), k: 1, kind: 0, active: false });
+    for (let i = 0; i < 64; i++) this.chutes.push(this.makeChute());
     this.flares = new Flares(this.glow, (pos, intensity, range, color) => this.steadyLight(pos, intensity, range, color));
   }
 
@@ -529,9 +530,9 @@ export class Effects {
 
   // scale > 1 draws the chute (and its jumper) larger, like the 4.2x enemy fighters, so a
   // bail-out still reads at combat range
-  parachute(pos: THREE.Vector3, vel: THREE.Vector3, scale = 1) {
+  private makeChute(): Chute {
     const obj = new THREE.Group();
-    obj.scale.setScalar(scale);
+
     const canopy = new THREE.Mesh(this.chuteGeo, this.chuteMat);
     canopy.position.y = 5.5;
     canopy.scale.setScalar(0.01);
@@ -544,9 +545,20 @@ export class Effects {
     const lines = new THREE.LineSegments(markOwned(new THREE.BufferGeometry().setFromPoints(pts)), this.lineMat);
     lines.visible = false;
     obj.add(canopy, body, lines);
-    obj.position.copy(pos);
+    obj.visible = false;
     this.scene.add(obj);
-    this.chutes.push({ obj, vel: vel.clone(), life: 60, open: -1.5 - Math.random() * 1.5, phase: Math.random() * Math.PI * 2 });
+    return { obj, vel: new THREE.Vector3(), life: 0, open: 0, phase: 0 };
+  }
+
+  parachute(pos: THREE.Vector3, vel: THREE.Vector3, scale = 1): boolean {
+    for (const c of this.chutes) {
+      if (c.life > 0) continue;
+      c.obj.visible = true; c.obj.position.copy(pos); c.obj.rotation.set(0, 0, 0); c.obj.scale.setScalar(scale);
+      c.obj.children[0].scale.setScalar(0.01); c.obj.children[2].visible = false;
+      c.vel.copy(vel); c.life = 60; c.open = -1.5 - Math.random() * 1.5; c.phase = Math.random() * Math.PI * 2;
+      return true;
+    }
+    return false; // never steal a visible chute: crew counts reflect successful spawns
   }
 
   // Objects using every material this layer can spawn, for shader pre-compilation.
@@ -650,6 +662,7 @@ export class Effects {
     }
     this.debris.length = DEBRIS_POOL + ext;
     for (const c of this.chutes) {
+      if (c.life <= 0) continue;
       c.life -= dt;
       c.open += dt;
       const canopy = c.obj.children[0];
@@ -668,9 +681,9 @@ export class Effects {
         c.vel.multiplyScalar(Math.exp(-0.4 * dt));
       }
       c.obj.position.addScaledVector(c.vel, dt);
-      if (c.life <= 0) { this.scene.remove(c.obj); disposeOwned(c.obj); }
+      if (c.life <= 0) c.obj.visible = false;
     }
-    if (this.chutes.some((c) => c.life <= 0)) this.chutes = this.chutes.filter((c) => c.life > 0);
+
   }
 
   clear() {
@@ -680,8 +693,7 @@ export class Effects {
       if (d.pooled) d.mesh.visible = false; else this.scene.remove(d.mesh);
     }
     this.debris.length = DEBRIS_POOL;
-    for (const c of this.chutes) { this.scene.remove(c.obj); disposeOwned(c.obj); }
-    this.chutes = [];
+    for (const c of this.chutes) { c.life = 0; c.obj.visible = false; }
     for (const p of this.pending) p.active = false;
     for (const s of this.lights) { s.life = 0; s.light.intensity = 0; }
     this.steadyFrames = 0;

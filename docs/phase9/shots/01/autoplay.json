@@ -1,0 +1,20 @@
+{
+  "log": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 3 enemies 4 bombers 9 playing\n59s kills 8 enemies 0 bombers 9 playing\n88s kills 10 enemies 17 bombers 9 playing\n114s kills 22 enemies 1 bombers 8 playing\n144s kills 22 enemies 1 bombers 8 playing\n174s kills 22 enemies 4 bombers 8 playing\n203s kills 24 enemies 3 bombers 8 playing\n231s kills 29 enemies 6 bombers 8 playing\n260s kills 32 enemies 20 bombers 8 playing\n286s kills 43 enemies 4 bombers 8 playing\n315s kills 46 enemies 0 bombers 8 ending\nRESULT: Mission complete — perks 0, kills 46, accuracy 51%, bombers lost 1, t=317s",
+  "state": "debrief",
+  "result": {
+    "success": true,
+    "reason": "Emden's U-boat pens took a beating. Good shooting, gunner — you'll make a veteran yet."
+  },
+  "time": 316.9433333333694,
+  "stats": {
+    "kills": 46,
+    "shots": 1741,
+    "hits": 887,
+    "damage": 14411.520001220717,
+    "bombersLost": 1,
+    "scriptedLost": 0,
+    "assists": 0,
+    "enemiesSpawned": 73
+  },
+  "formationKills": 33
+}
