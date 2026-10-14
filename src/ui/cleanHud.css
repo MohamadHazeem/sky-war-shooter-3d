@@ -1,0 +1,196 @@
+/* Shared fixed lanes. Physical corners stay consistent in RTL; text follows document direction. */
+body[data-hud-detail] { --hud-gap: 16px; --hud-side: min(28vw, 330px); --hud-bottom: 16px; }
+body[data-hud-detail] #hud .hud-tl { left: var(--hud-gap); right: auto; top: var(--hud-gap); width: var(--hud-side); text-align: start; }
+body[data-hud-detail] #hMission { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body[data-hud-detail] #hStatus { font-size: 14px; }
+body[data-hud-detail] #hObjective { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; font-size: 12px; }
+body[data-hud-detail] #hud .hud-tr { left: var(--hud-gap); right: auto; top: 86px; width: var(--hud-side); display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 9px; text-align: start; }
+body[data-hud-detail] .hud-tr .hud-big, body[data-hud-detail] .hud-tr #hScore, body[data-hud-detail] .hud-tr #hFormation { font-size: 14px !important; }
+body[data-hud-detail] .hud-tr .hud-label { font-size: 9px; margin: 0 !important; }
+body[data-hud-detail] #hCombo { display: flex; align-items: center; gap: 6px; margin: 0; }
+body[data-hud-detail] #hCombo .combo-bar { width: 45px; }
+body[data-hud-detail] #hBL { left: 50%; right: auto; bottom: var(--hud-bottom); transform: translateX(-50%); width: min(40vw, 400px); text-align: center; }
+body[data-hud-detail] #hStation { font-size: 11px; }
+body[data-hud-detail] #hAmmo { font-size: 22px; line-height: 1.1; }
+body[data-hud-detail] #hHeatM { margin: 4px auto 0; width: 150px; }
+body[data-hud-detail] #hBR { left: var(--hud-gap); right: auto; bottom: var(--hud-bottom); text-align: start; width: var(--hud-side); }
+body[data-hud-detail] #dmg svg { width: 125px; height: 82px; }
+body[data-hud-detail] #hCrewList { width: 100%; max-width: 280px; }
+body[data-hud-detail] #hStations { justify-content: center; white-space: nowrap; }
+body[data-hud-detail] #hStations span { font-size: 9px; padding: 3px; letter-spacing: 0; }
+body[data-hud-detail] #subs { left: 50%; right: auto; bottom: 142px; width: min(42vw, 700px); max-width: none; }
+body[data-hud-detail] #subs .line { font-size: calc(clamp(13px, 1.2vw, 18px) * var(--subs-scale, 1)); }
+body[data-hud-detail] #tip { left: 50%; bottom: 112px; width: min(42vw, 700px); max-width: none; box-sizing: border-box; padding: 3px 6px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body[data-hud-detail] #controlsHint { left: var(--hud-gap); right: auto; top: auto; bottom: 126px; font-size: 10px; padding: 3px 6px; }
+body[data-hud-detail] #feed { left: var(--hud-gap); right: auto; top: 164px; width: var(--hud-side); align-items: stretch; }
+body[data-hud-detail] #feed div { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body[data-hud-detail] #abilityBar { left: 50%; bottom: 82px; gap: 8px; }
+body[data-hud-detail] #abilityBar .ab-face { display: none; }
+body[data-hud-detail] #abilityBar .ab-slot { width: auto; display: flex; align-items: center; gap: 4px; }
+body[data-hud-detail] #abilityBar .ab-name { font-size: 10px; margin: 0; }
+body[data-hud-detail] #abilityBar .ab-key { position: static; transform: none; }
+body[data-hud-detail] #objCard { left: var(--hud-gap); right: auto; top: 306px; width: var(--hud-side); box-sizing: border-box; }
+body[data-hud-detail] #spPanel { left: 50%; right: auto; top: 60px; width: min(36vw, 340px); margin: 0; transform: translateX(-50%); box-sizing: border-box; }
+body[data-hud-detail] #evPrompt { left: 50%; top: 51%; width: min(38vw, 400px); min-width: 0; padding: 5px 8px; box-sizing: border-box; }
+body[data-hud-detail] #evPrompt .ev-a { font-size: 14px; }
+body[data-hud-detail] #banner { top: 205px; width: 38vw; }
+body[data-hud-detail] #banner .b1 { font-size: 22px; }
+body[data-hud-detail] #banner .b2 { font-size: 12px; }
+#hudToast { position: fixed; top: 16px; right: 16px; width: min(28vw, 300px); box-sizing: border-box; padding: 8px 12px; background: rgba(10,14,10,.88); border-inline-start: 2px solid var(--khaki); z-index: 45; pointer-events: none; display: none; text-align: start; }
+#hudToast.show { display: block; }
+#hudToast .k { font-size: 10px; color: var(--khaki); }
+#hudToast .t { font-size: 15px; }
+#hudToast .d { font-size: 11px; }
+body[data-hud-detail='standard'] #hudToast .d { display: none; }
+body[data-hud-detail='standard'].hud-heavy #hudToast { display: none; }
+body[data-hud-detail='minimal'].hud-mission #hudToast { display: none; }
+/* Full owns optional information; minimal contains only sight, gun, damage and radio. */
+body:not([data-hud-detail='full']) #hud :is(.hud-tr, #hCrewList, #hCrew, #hStations, #streakMeter, #fireFrame, #objCard, #evPrompt, #spPanel, #spTags, #mrTags, #banner, #lockHint),
+body:not([data-hud-detail='full']) :is(#svc-toasts, #perkToast),
+body[data-hud-detail='minimal'] #hud :is(.hud-tl, #feed, #tip),
+body[data-hud-detail='minimal'] :is(#abilityBar, #abilityTint, #controlsHint),
+body[data-hud-detail='standard'] #abilityBar .ab-slot:not(.ready) { display: none !important; }
+body[data-hud-detail='full'] #hStatus { display: none; }
+body[data-hud-detail='minimal'] #hud[data-role='pilot'] .instr > :not(:nth-child(5)):not(:nth-child(10)),
+body[data-hud-detail='minimal'] #iMode { display: none; }
+body[data-hud-detail='minimal'] .instr { grid-template-columns: 1fr; }
+body[data-hud-detail='standard'] #feed div { animation: hud-feed 2.2s linear forwards; }
+@keyframes hud-feed { 0%,65% { opacity: 1; } 100% { opacity: 0; } }
+/* All nonbasic controls and panels retain their existing event handlers inside details. */
+#settings .settings-advanced { margin-top: 12px; border-top: 1px solid #6b6958; padding-top: 10px; }
+#settings summary { cursor: pointer; color: var(--khaki); }
+#settings .box { max-height: 94vh; overflow-y: auto; }
+#settings .setting { min-height: 30px; margin: 4px 0; }
+/* Touch controls are input affordances, retained in every detail level. */
+body[data-hud-detail].touch #touchHud .th-top { top: 82px; right: 12px; }
+body[data-hud-detail].touch #abilityBar { pointer-events: auto; }
+@media (max-height: 500px) {
+  body[data-hud-detail] { --hud-gap: 8px; --hud-bottom: 6px; --hud-side: 25vw; }
+  body[data-hud-detail] #hMission { font-size: 9px; }
+  body[data-hud-detail] #hStatus { font-size: 12px; }
+  body[data-hud-detail] #hObjective { font-size: 10px; }
+  body[data-hud-detail] #hud .hud-tr { top: 58px; gap: 2px 5px; }
+  body[data-hud-detail] #feed { top: 106px; gap: 2px; }
+  body[data-hud-detail] #feed div { font-size: 9px; padding: 2px 4px; }
+  body[data-hud-detail] #dmg svg { width: 86px; height: 48px; }
+  body[data-hud-detail] #hCrewList { font-size: 8px; line-height: 1.1; }
+  body[data-hud-detail] #hCrewList span { font-size: 8px; padding: 1px 3px; }
+  body[data-hud-detail] #hStations span { font-size: 8px; padding: 2px; }
+  body[data-hud-detail] #hBL { width: 44vw; }
+  body[data-hud-detail] #hStation { font-size: 9px; }
+  body[data-hud-detail] #hBL > .hud-label { font-size: 9px; }
+  body[data-hud-detail] #hAmmo { font-size: 18px; }
+  body[data-hud-detail] #abilityBar { bottom: 79px; }
+  body[data-hud-detail] #tip { bottom: 106px; font-size: 10px; }
+  body[data-hud-detail] #subs { bottom: 130px; width: 44vw; }
+  body[data-hud-detail] #subs .line { font-size: 12px; padding: 2px 5px; line-height: 1.4; }
+  body[data-hud-detail] #controlsHint { bottom: 175px; }
+  body[data-hud-detail] #objCard { top: 175px; padding: 3px 6px; }
+  body[data-hud-detail] #objCard .oc-d { display: none; }
+  body[data-hud-detail] #objCard .oc-t { font-size: 12px; }
+  body[data-hud-detail] #spPanel { top: 37px; padding: 3px 6px; }
+  body[data-hud-detail] #spPanel .sp-t { font-size: 13px; }
+  body[data-hud-detail] #spPanel .sp-d { font-size: 10px; }
+  body[data-hud-detail] #banner { top: 130px; }
+  body[data-hud-detail] #banner .b1 { font-size: 14px; }
+  body[data-hud-detail] #evPrompt { top: 43%; padding: 3px 6px; }
+  body[data-hud-detail] #evPrompt .ev-h { display: none; }
+  body[data-hud-detail] #hudToast { top: 8px; right: 8px; padding: 5px 8px; }
+}
+/* Measured lane heights include the station strip and translated labels. */
+body[data-hud-detail] #abilityBar { bottom: 120px; }
+body[data-hud-detail] #tip { bottom: 168px; }
+body[data-hud-detail] #subs { bottom: 202px; }
+body[data-hud-detail='minimal'] #subs { bottom: 100px; }
+body[data-hud-detail] #controlsHint { top: 72px; bottom: auto; transform: none; }
+body[data-hud-detail] #hud .hud-tr { top: 108px; }
+body[data-hud-detail] #feed { top: 180px; }
+body[data-hud-detail] #hCrewList.cp span { min-width: 0; }
+body[data-hud-detail] #hCrewList.cp b { min-width: 0; }
+body[data-hud-detail] #hCrewList.cp em { min-width: 0; }
+body[data-hud-detail] #hCrewList.cp { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body[data-hud-detail].touch #abilityBar { display: none; }
+body[data-hud-detail] #touchHud [hidden] { display: none !important; }
+body[data-hud-detail].touch #touchHud .th-abil { flex-direction: row; left: 50%; right: auto; bottom: 100px; transform: translateX(-50%); gap: 5px; }
+@media (max-height: 500px) {
+  body[data-hud-detail] #controlsHint { top: 51px; }
+  body[data-hud-detail] #hud .hud-tr { top: 78px; }
+  body[data-hud-detail] #feed { top: 132px; }
+  body[data-hud-detail] #abilityBar { bottom: 105px; }
+  body[data-hud-detail] #tip { bottom: 144px; }
+  body[data-hud-detail] #subs { bottom: 172px; }
+  body[data-hud-detail='minimal'] #subs { bottom: 96px; }
+  body[data-hud-detail] #hCrewList.cp img { display: none; }
+  body[data-hud-detail] #hCrewList.cp { gap: 1px 3px; }
+  body[data-hud-detail] #hCrewList.cp span { gap: 2px; }
+  body[data-hud-detail] #hCrewList.cp em { display: none; }
+  body[data-hud-detail] #objCard { top: 232px; }
+  body[data-hud-detail] #evPrompt { left: auto; right: 8px; top: 147px; width: 25vw; transform: none; }
+  body[data-hud-detail] #banner { top: 105px; }
+  body[data-hud-detail].touch #touchHud .th-fire { width: 64px; height: 64px; right: 10px; bottom: 6px; font-size: 15px; }
+  body[data-hud-detail].touch #touchHud .th-zoom { width: 46px; height: 46px; right: 82px; bottom: 6px; }
+  body[data-hud-detail].touch #touchHud .th-look { width: 44px; height: 44px; right: 136px; bottom: 6px; }
+  body[data-hud-detail].touch #touchHud .th-view { width: 44px; height: 44px; right: 188px; bottom: 6px; }
+  body[data-hud-detail].touch #touchHud.pilot .th-look { right: 136px; bottom: 6px; }
+  body[data-hud-detail].touch #touchHud .th-thr { right: 10px; bottom: 84px; height: 100px; width: 40px; }
+  body[data-hud-detail].touch #touchHud .th-wing { top: 123px; right: 8px; }
+  body[data-hud-detail].touch #touchHud .th-wing button { min-width: 38px; height: 30px; font-size: 9px; }
+  body[data-hud-detail].touch #touchHud .th-abil { bottom: 104px; }
+}
+body[data-hud-detail='standard'] #hMission { display: none; }
+body[data-hud-detail] #subs, body[data-hud-detail] #tip { top: auto; }
+body[data-hud-detail] #feed { bottom: auto; transform: none; }
+body[data-hud-detail] #hud .hud-tr { transform: none; }
+body[data-hud-detail] #hBR { display: block; }
+body[data-hud-detail='minimal'] #touchHud .th-abil { display: none; }
+body[data-hud-detail='full'] #abilityBar { bottom: 140px; }
+body[data-hud-detail='full'] #abilityBar .ab-slot { flex-direction: row; }
+body[data-hud-detail='full'] #abilityBar .ab-face { display: block; width: 28px; height: 28px; }
+body[data-hud-detail='full'] #abilityBar .ab-icon { inset: 5px; }
+body[data-hud-detail='full'] #abilityBar .ab-ring { mask: radial-gradient(circle, transparent 10px, #000 11px); }
+body[data-hud-detail='full'] #tip { bottom: 180px; }
+body[data-hud-detail='full'] #subs { bottom: 212px; }
+body[data-hud-detail] #hudToast .d { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-height: 500px) {
+  body[data-hud-detail] #hudToast { max-height: 70px; overflow: hidden; }
+  body[data-hud-detail] #hudToast .k { font-size: 9px; line-height: 1.4; }
+  body[data-hud-detail] #hudToast .t { font-size: 13px; line-height: 1.4; }
+  body[data-hud-detail] #hudToast .d { font-size: 10px; line-height: 1.4; }
+  body[data-hud-detail='full'] #abilityBar { bottom: 114px; }
+  body[data-hud-detail='full'] #tip { bottom: 154px; }
+  body[data-hud-detail='full'] #subs { bottom: 181px; }
+  body[data-hud-detail].touch #touchHud .th-abil { bottom: 114px; }
+  html[dir=rtl] body[data-hud-detail].touch #hBL { direction: rtl; text-align: center; }
+  body[data-hud-detail] #feed div:nth-child(n+3) { display: none; }
+  body[data-hud-detail] #evPrompt { top: 163px; }
+}
+/* Catch optional mission panels added by other systems, including future ones. */
+body[data-hud-detail='minimal'] #hud > :not(#hBL):not(#hBR):not(#subs),
+body[data-hud-detail='standard'] #hud > :not(.hud-tl):not(#feed):not(#hBL):not(#hBR):not(#subs):not(#tip),
+body:not([data-hud-detail='full']) #nemCard { display: none !important; }
+@media (max-height: 500px) {
+  body[data-hud-detail] #tip { bottom: 154px; }
+  body[data-hud-detail='full'] #feed { top: 148px; }
+}
+body[data-hud-detail] #objCard { top: 330px; }
+body[data-hud-detail] #evPrompt { top: 47%; }
+body[data-hud-detail] #nemCard { left: auto; right: 16px; top: 150px; width: var(--hud-side); box-sizing: border-box; scale: none; }
+@media (max-height: 500px) {
+  body[data-hud-detail='standard'] #subs { bottom: 185px; }
+  body[data-hud-detail] #spPanel { top: 44px; }
+  body[data-hud-detail] #banner { top: 120px; }
+  body[data-hud-detail] #objCard { top: 232px; }
+  body[data-hud-detail] #evPrompt { top: 163px; }
+  body[data-hud-detail] #evPrompt .ev-k { font-size: 9px; line-height: 12px; }
+  body[data-hud-detail] #evPrompt .ev-a { font-size: 11px; line-height: 16px; margin: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body[data-hud-detail] #evPrompt .ev-bar { height: 4px; }
+  body[data-hud-detail] #nemCard { left: 8px; right: auto; top: 193px; padding: 3px 5px; gap: 0; transform: none; }
+  body[data-hud-detail] #nemCard :is(.nc-pic, .nc-k, .nc-t, .nc-m, .nc-s) { display: none; }
+  body[data-hud-detail] #nemCard .nc-n { font-size: 11px; line-height: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body[data-hud-detail] #nemCard .nc-u { font-size: 9px; line-height: 11px; margin-top: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body[data-hud-detail] #nemCard .nc-body { min-width: 0; }
+}
+@media (max-height: 500px) {
+  body[data-hud-detail] #banner :is(.b1, .b2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+body:has(#settings.show) #hudToast { display: none; }

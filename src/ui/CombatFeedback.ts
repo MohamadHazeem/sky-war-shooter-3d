@@ -55,6 +55,8 @@ export class CombatFeedback {
     for (let i = 0; i < WARN_MAX; i++) this.warns.push({ f: null, d: 0 });
   }
 
+  get heavyAttack() { if (this.nWarn >= 2) return true; for (const a of this.arcs) if (a.active) return true; return false; }
+
   reset() {
     for (const a of this.arcs) { a.active = false; a.shooter = null; }
     for (const w of this.warns) w.f = null;

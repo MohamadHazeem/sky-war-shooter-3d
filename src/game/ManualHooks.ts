@@ -52,7 +52,7 @@ export class ManualHooks {
   }
 
   private mountSettings(st: HTMLElement) {
-    const row = st.querySelector('[data-back]')?.parentElement;
+    const row = st.querySelector('.settings-advanced');
     if (!row || row.querySelector('[data-manual]')) return;
     const b = document.createElement('button');
     b.className = 'btn ghost';

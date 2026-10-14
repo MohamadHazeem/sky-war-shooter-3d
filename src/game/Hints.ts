@@ -1,3 +1,4 @@
+import { hudRuntime } from '../ui/HudDetail';
 import type { UI } from '../ui/UI';
 import type { Game } from './Game';
 import { STATION_ORDER, StationId } from '../world/B17Layout';
@@ -68,11 +69,11 @@ export class Hints {
     this.clock += dt;
     this.pollT -= dt;
     if (this.pollT <= 0) { this.pollT = POLL; this.detect(); }
-    if (this.queue.length && this.clock - this.lastShow >= GAP && g.world.time > 3) {
+    if (hudRuntime.detail !== 'minimal' && !hudRuntime.heavy && !this.ui.tipBusy && this.queue.length && this.clock - this.lastShow >= GAP && g.world.time > 3) {
       const h = this.queue.shift()!;
       this.lastShow = this.clock;
       this.markSeen(h.id);
-      this.ui.tip(`<span class="hint-k">${tx('TIP')}</span> ${tx(h.text)}`, SHOW_MS);
+      this.ui.tip(tx(SHORT_HINTS[h.id] ?? h.text), SHOW_MS);
     }
   }
 
@@ -121,3 +122,9 @@ export class Hints {
     panel.insertBefore(note, panel.children[2] ?? null);
   }
 }
+
+const SHORT_HINTS: Partial<Record<HintId, string>> = {
+  perk: 'Field upgrades last for this mission.', heavy: 'Heavy fighters: aim for the engines.',
+  overheat: 'Fire short bursts; watch the heat bar below.', seat: 'Press 1–5 to change gun position.',
+  boss: 'Boss ahead: keep steady bursts on target.',
+};

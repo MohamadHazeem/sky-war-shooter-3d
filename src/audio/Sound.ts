@@ -207,6 +207,7 @@ export class Sound {
   ctx: AudioContext | null = null;
   private master!: GainNode;
   private sfx!: GainNode;      // sfx slider: effects (through fx) and the crew voices
+  private crewVoice!: GainNode;
   private fx!: GainNode;       // effects, ducked under the crew voices so they stay intelligible
   private ducks: { end: number; depth: number; fx: number }[] = [];
   private amb!: GainNode;
@@ -248,6 +249,7 @@ export class Sound {
   // Per-bus levels (0..1) from the Settings sliders
   musicVolume = 1;
   sfxVolume = 1;
+  voiceVolume = 1;
   ambVolume = 1;
   radioEnabled = true;
   musicEnabled = true;
@@ -322,6 +324,7 @@ export class Sound {
     this.duck = ctx.createGain();
     this.duck.connect(this.master);
     this.sfx = ctx.createGain(); this.sfx.gain.value = this.sfxVolume; this.sfx.connect(this.master);
+    this.crewVoice = ctx.createGain(); this.crewVoice.gain.value = this.voiceVolume; this.crewVoice.connect(this.sfx);
     this.fx = ctx.createGain(); this.fx.connect(this.sfx);
     this.interphone = new Interphone(ctx, this.sfx);
     this.amb = ctx.createGain(); this.amb.gain.value = this.ambVolume; this.amb.connect(this.duck);
@@ -478,7 +481,7 @@ export class Sound {
   // (ducked while the crew talks)
   sfxBus(): GainNode | null { return this.ctx ? this.fx : null; }
   // Crew voice bus: follows the sfx slider, never ducked (Voice.ts)
-  voiceBus(): GainNode | null { return this.ctx ? this.sfx : null; }
+  voiceBus(): GainNode | null { return this.ctx ? this.crewVoice : null; }
   setMusic(on: boolean) {
     const was = this.music.enabled;
     this.musicEnabled = on; this.music.enabled = on;
@@ -492,6 +495,7 @@ export class Sound {
     this.setBus(this.musicBus, this.musicVolume);
     this.setBus(this.musicWet, this.musicVolume);
   }
+  setVoiceVolume(v: number) { this.voiceVolume = clamp01(v); this.setBus(this.crewVoice, this.voiceVolume); }
   setSfxVolume(v: number) { this.sfxVolume = clamp01(v); this.setBus(this.sfx, this.sfxVolume); }
   setAmbVolume(v: number) { this.ambVolume = clamp01(v); this.setBus(this.amb, this.ambVolume); }
 
@@ -1899,7 +1903,7 @@ export class Sound {
       const preferred = voices.filter((v) => /US|United States|Alex|Daniel|Fred|Male/i.test(v.name + v.lang));
       const pool = preferred.length ? preferred : voices;
       if (pool.length) u.voice = pool[voiceIdx % pool.length];
-      u.rate = 1.08; u.pitch = 0.85 + (voiceIdx % 3) * 0.08; u.volume = 0.9 * this.volume;
+      u.rate = 1.08; u.pitch = 0.85 + (voiceIdx % 3) * 0.08; u.volume = 0.9 * this.volume * this.voiceVolume * this.sfxVolume;
       // interphone static bed + squelch while the crewman talks
       u.onstart = () => this.radioBedOn(true);
       u.onend = () => { this.radioBedOn(false); this.play('squelch', null, { gain: 0.2 }); };

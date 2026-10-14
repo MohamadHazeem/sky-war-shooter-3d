@@ -82,7 +82,7 @@ export class TitleExtras {
     if (!st) return;
     const mount = () => {
       if (this.game.state !== 'menu' || !st.classList.contains('show')) return;
-      const row = st.querySelector('[data-back]')?.parentElement;
+      const row = st.querySelector('.settings-advanced');
       if (!row || row.querySelector('[data-whatsnew]')) return;
       const b = document.createElement('button');
       b.className = 'btn ghost';

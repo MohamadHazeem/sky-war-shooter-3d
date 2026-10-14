@@ -31,6 +31,7 @@ export function deviceInfo(): DeviceInfo {
 export function firstRunGraphics(s: Settings) {
   s.quality = deviceTiers(deviceInfo()).start;
   s.gfxAuto = 'pending';
+  s.graphicsMode = 'auto';
 }
 
 export interface BenchOptions {
@@ -170,6 +171,7 @@ export class AutoGraphics {
   private apply(q: Quality, scale: number) {
     const s = this.game.settings;
     s.quality = q;
+    s.graphicsMode = 'auto';
     delete s.gfxAuto;
     this.engine.renderScale = scale;
     this.game.applySettings();   // applies the preset (if the run ended on another), saves

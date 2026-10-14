@@ -1,3 +1,4 @@
+import { hudToast } from '../ui/HudToast';
 // ServiceRecord: wires the career, medals-with-rewards, daily orders, the Daily Run and the
 // expanded achievements into the game with as few Game.ts hooks as possible.
 //
@@ -80,7 +81,6 @@ export class ServiceRecord {
   readonly daily = new DailyTracker();
   private buf: MissionBuf | null = null;
   private runSeed: number | null = null;   // Daily Run seed while one is in progress
-  private toastHost: HTMLElement | null = null;
 
   // ui is taken for symmetry with Onboarding / Abilities; the screens build their own layers
   constructor(private game: Game, _ui: UI, private host: ServiceHost) {
@@ -357,18 +357,7 @@ export class ServiceRecord {
 
   // ---------------- toast ----------------
   private toast(kicker: string, text: string, sub: string) {
-    if (typeof document === 'undefined') return;
-    if (!this.toastHost || !this.toastHost.isConnected) {
-      this.toastHost = document.createElement('div');
-      this.toastHost.id = 'svc-toasts';
-      document.body.appendChild(this.toastHost);
-    }
-    const el = document.createElement('div');
-    el.className = 'svc-toast';
-    el.innerHTML = `<div class="svc-tk">${esc(kicker)}</div><div class="svc-tt">${esc(text)}</div>${sub ? `<div class="svc-ts">${esc(sub)}</div>` : ''}`;
-    this.toastHost.appendChild(el);
-    requestAnimationFrame(() => el.classList.add('show'));
-    setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 500); }, 4200);
+    hudToast(kicker, text, sub);
   }
 }
 

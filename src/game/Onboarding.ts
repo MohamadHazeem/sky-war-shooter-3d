@@ -1,3 +1,4 @@
+import { controlsHintVisible, hudRuntime } from '../ui/HudDetail';
 import type { Engine } from '../core/Engine';
 import type { Input } from '../core/Input';
 import type { UI } from '../ui/UI';
@@ -20,7 +21,7 @@ import '../ui/onboarding.css';
 const KEY = 'sws3d.onboarding.v1';
 const HINT_SECONDS = 20;   // "H — controls" reminder at the start of every mission
 
-interface Saved { tutorialDone: boolean; promptDismissed: boolean }
+interface Saved { tutorialDone: boolean; promptDismissed: boolean; missions?: number }
 
 // Private Game methods the onboarding needs, handed over by Game's constructor
 export interface OnboardingHost {
@@ -115,6 +116,7 @@ export class Onboarding {
     this.dismissPrompt(false);
     if (this.card.open) this.card.hide();
     this.hints.onMissionStart();
+    if (!m.tutorial) { this.saved.missions = (this.saved.missions ?? 0) + 1; this.save(); }
     if (m.tutorial) this.tutorial.start(); else this.tutorial.stop();
   }
 
@@ -129,7 +131,7 @@ export class Onboarding {
   update(dt: number) {
     const g = this.game;
     const inMission = !!g.mission && (g.state === 'playing' || g.state === 'ending');
-    this.hint.set(inMission && g.world.time < HINT_SECONDS && !this.card.open);
+    this.hint.set(hudRuntime.detail !== 'minimal' && controlsHintVisible(this.saved.missions ?? 0) && inMission && g.world.time < HINT_SECONDS && !this.card.open);
     if (this.tutorial.active && g.state !== 'playing' && g.state !== 'paused' && g.state !== 'ending') this.tutorial.stop();
     this.hints.update(dt);
   }

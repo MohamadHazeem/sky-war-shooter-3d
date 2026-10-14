@@ -1,3 +1,4 @@
+import { hudRuntime } from '../ui/HudDetail';
 import * as THREE from 'three';
 import type { Engine } from '../core/Engine';
 import type { World } from '../world/World';
@@ -119,11 +120,13 @@ export class GameFeel {
     // popup
     const p = this.popups.find((q) => !q.active) ?? this.popups.reduce((a, b) => (a.age > b.age ? a : b));
     p.active = true; p.age = 0; p.lift = 0; p.liftCur = 0; p.life = 1.5 + 0.15 * Math.min(4, this.chain);
+    if (hudRuntime.detail === 'standard') p.life = .85;
     p.rel.copy(victim.pos).sub(this.engine.camera.position);
     p.pts = `+${pts}`;
     p.hot = this.combo.onFire;
     p.sub = this.chain >= 2 ? tx(CHAIN_LABEL[Math.min(5, this.chain)]) : p.hot ? tx('ON FIRE ×{n}', { n: FIRE_SCORE }) : tx('{label} DOWN', { label: victim.label.toUpperCase() });
     p.size = Math.round(Math.min(56, 30 + 7 * size + 5 * Math.min(4, this.chain - 1)));
+    if (hudRuntime.detail === 'standard') { p.size = 18; p.sub = ''; }
     for (const q of this.popups) if (q !== p && q.active) q.lift += p.size * 1.3;
   }
 

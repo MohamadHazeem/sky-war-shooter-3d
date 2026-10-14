@@ -1,3 +1,4 @@
+import { hudToast } from '../ui/HudToast';
 // Persistent achievements: per-mission tracking, the unlock toast and the Credits-panel list.
 // Self-contained so Game.ts only needs a few one-line hooks. Progress lives in localStorage
 // (per browser), and every storage call is guarded because it can be blocked or full.
@@ -10,7 +11,6 @@ import { fmtDate } from '../ui/serviceCommon';
 import { FREE_LOOK_S, RAID_KINDS, SEARCHLIGHT_KILLS, raidKindsFlown } from './Feats';
 
 const STORE_KEY = 'sws3d.achievements.v1';
-const TOAST_MS = 4200;
 // Accuracy needs a minimum sample so a lucky burst of a few rounds can't unlock it
 const SHARP_MIN_SHOTS = 50;
 const SHARP_ACCURACY = 0.3;
@@ -152,8 +152,6 @@ class Achievements {
   private unlocked: Record<string, number>;
   private mission: MissionTrack | null = null;
   private queue: AchievementDef[] = [];
-  private toastBusy = false;
-  private toastHost: HTMLElement | null = null;
   private watchers: MissionWatcher[] = [];
 
   constructor() { this.unlocked = readStore(); }
@@ -223,24 +221,8 @@ class Achievements {
 
   // ---- toast ----
   private pump() {
-    if (this.toastBusy || !this.queue.length || typeof document === 'undefined') return;
-    const def = this.queue.shift()!;
-    this.toastBusy = true;
-    ensureStyle();
-    if (!this.toastHost) {
-      this.toastHost = document.createElement('div');
-      this.toastHost.id = 'achv-toasts';
-      document.body.appendChild(this.toastHost);
-    }
-    const el = document.createElement('div');
-    el.className = 'achv-toast';
-    el.innerHTML = `<div class="achv-star">★</div><div><div class="achv-k">${tx('Achievement unlocked · {rarity}', { rarity: tx(RARITY_LABEL[def.rarity]) })}</div><div class="achv-n">${tx(def.name)}</div><div class="achv-d">${tx(def.desc)}</div></div>`;
-    this.toastHost.appendChild(el);
-    requestAnimationFrame(() => el.classList.add('show'));
-    setTimeout(() => {
-      el.classList.remove('show');
-      setTimeout(() => { el.remove(); this.toastBusy = false; this.pump(); }, 450);
-    }, TOAST_MS);
+    for (const def of this.queue) hudToast(tx('Achievement unlocked · {rarity}', { rarity: tx(RARITY_LABEL[def.rarity]) }), def.name, def.desc);
+    this.queue.length = 0;
   }
 
   // ---- Credits list (compact: the full cabinet is on the Trophies screen) ----
