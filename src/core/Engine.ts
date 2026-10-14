@@ -2,7 +2,7 @@ import { beginMarkerFrame } from '../ui/MarkerAudit';
 import { Precipitation } from '../render/Precipitation';
 import * as THREE from 'three';
 import { Atmos, atmosUniforms, syncAtmosUniforms } from '../render/Atmosphere';
-import { farTerrainUniforms } from '../render/FarTerrain';
+import { syncFarTerrain } from '../render/FarTerrain';
 import { CloudRenderer } from '../render/Clouds';
 import { heatHaze, type HeatHaze } from '../render/HeatHaze';
 import { PostFX } from '../render/PostFX';
@@ -399,10 +399,7 @@ export class Engine {
     // the upper cloud layer's shadow on the formation (cloud shadow map, read back async)
     this.sun.intensity = Atmos.sunIntensity * 0.95 * (0.35 + 0.65 * this.clouds.sunShadow);
     atmosUniforms.uCamAlt.value = cp.y;
-    farTerrainUniforms.uFarQuality.value = this.quality === 'low' ? 0 : this.quality === 'medium' ? 1 : 2;
-    farTerrainUniforms.tFarShadow.value = this.clouds.groundShadowTexture;
-    farTerrainUniforms.uFarShadowBox.value.copy(this.clouds.groundShadowBox);
-    farTerrainUniforms.uFarCloudBase.value = Atmos.highBase;
+    syncFarTerrain(this.clouds, this.quality, cam, this.renderer.domElement.height);
     (this.sky.mesh.material as THREE.ShaderMaterial).uniforms.uGroundXZ.value.set(cp.x + Atmos.originOffset.x, cp.z + Atmos.originOffset.z);
 
     const r = this.renderer;

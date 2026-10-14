@@ -36,7 +36,8 @@ function pwaPlugin(): Plugin {
     configResolved(c) { outDir = resolve(c.root, c.build.outDir); },
     closeBundle() {
       // og-image.jpg is for link previews only: not worth precaching
-      const files = listFiles(outDir).filter((p) => p !== 'sw.js' && p !== '_headers' && p !== 'og-image.jpg' && !p.endsWith('.md'));
+      // terrain/: the far-ground map tiles stream per mission (render/FarTerrain.ts), never precached
+      const files = listFiles(outDir).filter((p) => p !== 'sw.js' && p !== '_headers' && p !== 'og-image.jpg' && !p.endsWith('.md') && !p.startsWith('terrain/'));
       const rev = (p: string) => createHash('sha256').update(readFileSync(join(outDir, p))).digest('hex').slice(0, 12);
       const shell: string[] = [];
       const media: Record<string, string> = {};

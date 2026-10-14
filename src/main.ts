@@ -161,6 +161,9 @@ async function boot() {
     (window as any).sws.hitFeedback = hitFeedbackQa(engine, game);
     const { seaQa } = await import('./dev/seaQa');
     (window as any).sws.sea = seaQa(engine, game);
+    // Ground-from-altitude rig views (Phase 10 goal 04): sws.ground.setup('down'), .save(name), .bench()
+    const { groundShots } = await import('./dev/groundShots');
+    (window as any).sws.ground = groundShots(engine, game);
   }
 }
 

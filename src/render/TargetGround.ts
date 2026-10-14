@@ -33,6 +33,11 @@ uniform float uFlakGround;
 uniform vec4 uImpacts[TGT_IMPACTS];
 uniform vec4 uPlumes[TGT_PLUMES];
 uniform vec3 uImpBound;   // circle holding every impact's marks and pall: x, z, radius
+// Set by the real-map ground (FarTerrain.ts terrain()) for this pixel: land share, and the
+// city's water as a signed side distance (m) with its half-width (0 = no mapped water: the
+// procedural river below)
+float tgtLand = 1.0, tgtRiverV = 0.0, tgtRiverW = 0.0;
+float tgtOwnTown = 0.0;   // 1: the map draws the city's streets itself (no block grid here)
 
 // 1 inside [a, b], antialiased over w metres
 float tBand(float x, float a, float b, float w) { return smoothstep(a - w, a + w, x) - smoothstep(b - w, b + w, x); }
@@ -52,7 +57,7 @@ vec3 tCity(vec2 rel, vec3 base, float fw) {
   float R = uTgt.z;
   vec2 uv = vec2(dot(rel, uTgtRot), dot(rel, vec2(-uTgtRot.y, uTgtRot.x)));
   float u = uv.x, v = uv.y;
-  float vr = v - tRiver(u);
+  float vr = tgtRiverW > 0.0 ? tgtRiverV : v - tRiver(u);
   float rn = length(uv * vec2(0.83, 1.18)) / R + (vnoise(rel / 700.0) * 0.65 + vnoise(rel / 260.0) * 0.35 - 0.5) * 0.45;
   rn = min(rn, length((uv - vec2(1450.0, 800.0)) * vec2(1.2, 1.8)) / R + 0.38);
   float city = 1.0 - smoothstep(0.7, 1.05, rn);
@@ -69,34 +74,34 @@ vec3 tCity(vec2 rel, vec3 base, float fw) {
   vec3 blockC = mix(roof, vec3(0.08, 0.085, 0.065), yard * 0.6 + smoothstep(25.0, 60.0, fw) * 0.08);
   vec3 res = mix(blockC, vec3(0.07, 0.07, 0.072), st);
   float built = city + suburb * step(h2(cell + 5.3), 0.55) * 0.7;
-  c = mix(c, res, clamp(built, 0.0, 1.0));
+  c = mix(c, res, clamp(built, 0.0, 1.0) * tgtLand * (1.0 - tgtOwnTown));
   // main roads and the two bridges
   float roads = max(tBand(v, 1250.0, 1272.0, fw), tBand(u, 820.0, 842.0, fw)) * suburb;
   // chemical works between the river and the rail yard: big sheds, tank farms, yards
-  float works = tBand(vr, -780.0, -110.0, fw) * tBand(u, -1800.0, 1700.0, fw);
+  float works = tBand(vr, -780.0, -110.0, fw) * tBand(u, -1800.0, 1700.0, fw) * tgtLand;
   if (works > 0.0) {
     float ws = tStreets(uv + vec2(400.0, 0.0), vec2(260.0, 170.0), 9.0, fw, cell, f);
     float hw = h2(cell + 11.0);
-    vec3 shed = hw < 0.3 ? vec3(0.22, 0.22, 0.21) : hw < 0.5 ? vec3(0.08, 0.085, 0.09) : vec3(0.145, 0.14, 0.125);
+    vec3 shed = hw < 0.3 ? vec3(0.165, 0.16, 0.15) : hw < 0.5 ? vec3(0.105, 0.105, 0.11) : vec3(0.135, 0.13, 0.12);
     // sawtooth roofs read as faint stripes
     shed *= mix(1.0, 0.82 + 0.18 * step(0.5, fract(f.x / 18.0)), 1.0 - smoothstep(6.0, 18.0, fw));
     if (hw > 0.62 && hw < 0.84) {
       // tank farm: rows of round storage tanks on dark ground
       vec2 tq = mod(f, 42.0) - 21.0;
       float tank = 1.0 - smoothstep(13.0 - fw * 0.5, 13.0 + fw * 0.5, length(tq));
-      shed = mix(vec3(0.07, 0.07, 0.065), vec3(0.27, 0.27, 0.26), mix(tank, 0.3, smoothstep(10.0, 30.0, fw)));
+      shed = mix(vec3(0.08, 0.08, 0.075), vec3(0.2, 0.2, 0.19), mix(tank, 0.3, smoothstep(10.0, 30.0, fw)));
     } else if (hw >= 0.84) shed = vec3(0.065, 0.06, 0.05); // coal and slag yards
     c = mix(c, mix(shed, vec3(0.095), ws), works);
   }
   // rail yard: ballast streaked with tracks and rows of wagons
-  float yardM = tBand(vr, -1080.0, -800.0, fw) * tBand(u, -2500.0, 1900.0, fw);
+  float yardM = tBand(vr, -1080.0, -800.0, fw) * tBand(u, -2500.0, 1900.0, fw) * tgtLand;
   if (yardM > 0.0) {
     float tracks = 0.5 + 0.5 * sin(vr * 0.7);
     float wagons = step(0.35, fract(u / 15.0)) * step(0.5, h2(vec2(floor(vr / 9.0), floor(u / 160.0))));
     vec3 rc = mix(vec3(0.13, 0.12, 0.105), vec3(0.05, 0.045, 0.04), mix(tracks * 0.5 + wagons * 0.5, 0.42, smoothstep(3.0, 14.0, fw)));
     c = mix(c, rc, yardM);
   }
-  c = mix(c, vec3(0.085), roads);
+  c = mix(c, vec3(0.085), roads * tgtLand);
   // docks: quays and warehouse rows between basins cut into the north bank
   float docks = tBand(vr, 110.0, 560.0, fw) * tBand(u, -1500.0, 400.0, fw);
   float water = 0.0;
@@ -104,12 +109,12 @@ vec3 tCity(vec2 rel, vec3 base, float fw) {
     float g = mod(u + 1500.0, 330.0);
     float basin = tBand(g, 110.0, 220.0, fw) * (1.0 - smoothstep(510.0 - fw, 510.0 + fw, vr));
     float shed = tBand(g, 22.0, 88.0, fw) * tBand(vr, 160.0, 480.0, fw);
-    vec3 q = mix(vec3(0.2, 0.19, 0.18), vec3(0.13, 0.11, 0.09), shed);
+    vec3 q = mix(vec3(0.145, 0.14, 0.13), vec3(0.12, 0.1, 0.085), shed);
     c = mix(c, q, docks);
     water = basin * docks;
   }
   // the river, wide and dark, fading out well beyond the city
-  float rw = 110.0 * (1.0 - smoothstep(1.5, 2.1, length(rel) / R));
+  float rw = tgtRiverW > 0.0 ? tgtRiverW : 110.0 * (1.0 - smoothstep(1.5, 2.1, length(rel) / R));
   water = max(water, 1.0 - smoothstep(rw - fw * 0.5, rw + fw * 0.5, abs(vr)));
   vec3 wc = vec3(0.03, 0.055, 0.07);
   // bridges stay dry

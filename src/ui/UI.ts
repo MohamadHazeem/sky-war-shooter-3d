@@ -538,6 +538,7 @@ export class UI {
       <p>${t('credits.p2')}</p>
       <p>${esc(t('credits.p3'))}</p>
       <p>${esc(t('credits.p4'))}</p>
+      <p>${esc(t('credits.p5'))}</p>
       ${achievementsHtml()}
       <div class="row" style="margin-top:18px"><button class="btn ghost" data-back>${t('common.back')}</button></div>
     </div></div>`;

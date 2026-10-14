@@ -141,6 +141,7 @@ export const ar: Record<UiKey, string> = {
   'credits.p2': 'نماذج الطائرات من حظيرة FlightGear مفتوحة المصدر (GPL-2.0): Boeing B-17G وFocke-Wulf Fw 190 A-8 وNorth American P-51D. أسماء المؤلفين في public/models/CREDITS.md.',
   'credits.p3': 'المؤثرات الصوتية من مساهمي Freesound.org (CC0 / CC BY — Fight2FlyPhoto وmattew وzimbot وpoissonmort وjuskiddink وHalleck وغيرهم)، والموسيقى لكيفن ماكلاود (incompetech.com، CC BY 4.0: "For the Fallen" و"Clenched Teeth" و"Constance" و"Heroic Age" و"Long Road Ahead" و"Taps"). القائمة الكاملة: public/audio/CREDITS.md.',
   'credits.p4': 'المرجع البصري: لقطة رامي الجانب في القاذفة B-17 من فيلم Yarnhub القصير المتحرك "When a B-17 Pilot Attacked the Copilot". جميع الشخصيات وأسماء القاذفات في هذه اللعبة خيالية.',
+  'credits.p5': 'خريطة أوروبا تحت التشكيل: ESA WorldCover 2021 (CC BY 4.0، وتتضمن بيانات Copernicus Sentinel معدّلة)، وGeoNames (CC BY 4.0)، وNatural Earth (ملكية عامة)، وبيانات الارتفاع AWS Terrain Tiles (SRTM وEU-DEM وغيرها). القائمة الكاملة: public/terrain/CREDITS.md.',
 
   // armory
   'armory.kicker': 'مخزن الذخائر · سرب القاذفات 401',

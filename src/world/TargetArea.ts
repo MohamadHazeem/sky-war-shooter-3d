@@ -3,7 +3,7 @@ import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { createTargetSmoke, syncTargetSmoke } from '../render/TargetSmoke';
-import { setFarTerrain } from '../render/FarTerrain';
+import { setFarTerrain, targetRiverAxis } from '../render/FarTerrain';
 import { Atmos } from '../render/Atmosphere';
 import { targetUniforms, TGT_IMPACTS, TGT_PLUMES } from '../render/TargetGround';
 import { cloudTargetUniforms } from '../render/Clouds';
@@ -158,6 +158,8 @@ export class TargetArea {
       w.formationCenter.z + Atmos.originOffset.z + w.formationForward.z * ahead);
     const a = Math.atan2(w.formationForward.x, w.formationForward.z) + 0.55;
     targetUniforms.uTgtRot.value.set(Math.cos(a), Math.sin(a));
+    const river = targetRiverAxis();   // the real map: the city's streets and docks follow its river
+    if (river) targetUniforms.uTgtRot.value.copy(river);
     targetUniforms.uTgt.value.set(this.aim.x, this.aim.y, CITY_R, 1);
   }
 
