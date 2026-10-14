@@ -216,6 +216,8 @@ export function startFighterDeath(f: Fighter, cause: string, w: World) {
     sound.play('hitHeavy', _p, { gain: 1.0, ref: 80 });
   } else {
     // cockpit hit: perspex blown out, the pilot slumps
+    const pilot = f.model.getObjectByName('pilot');
+    if (pilot) pilot.rotation.x += 0.65;
     s.phase = 3.2 + Math.random() * 1.2;
     f.localToWorld(_l.copy(COCKPIT).multiplyScalar(sc), _p);
     glassBurst(f, fx, _p, 8);
@@ -319,6 +321,8 @@ export function updateFighterDeath(dt: number) {
       }
       if (!s.jumped && t > s.jumpAt) {
         s.jumped = true;
+        const pilot = f.model.getObjectByName('pilot');
+        if (pilot) pilot.visible = false;
         const sc = f.model.scale.x;
         f.localToWorld(_l.copy(COCKPIT).multiplyScalar(sc), _p);
         _p.addScaledVector(f.up(_v), 1.2 * sc);
