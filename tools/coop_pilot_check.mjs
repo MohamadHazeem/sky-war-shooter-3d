@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
-const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
+const browser = await chromium.launch({ headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
 const port = process.env.COOP_PORT ?? '5274';
 const shots = process.env.COOP_SHOTS ?? 'docs/phase7/shots/04'; fs.mkdirSync(shots, { recursive: true });
 const errors = [], report = {};

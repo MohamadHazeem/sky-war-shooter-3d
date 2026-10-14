@@ -3,7 +3,7 @@
 // Start Vite on 5260, then PLAYWRIGHT_MODULE=/installed/playwright/index.mjs node tools/squadron_browser_check.mjs
 import assert from 'node:assert/strict';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
-const browser = await chromium.launch({ headless: true, channel: 'chrome' });
+const browser = await chromium.launch({ headless: true });
 const store = new Map();
 let time = Date.now();
 const errors = [];

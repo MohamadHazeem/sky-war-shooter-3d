@@ -38,7 +38,7 @@ export async function captureRig(argv) {
     try { ({ chromium } = await import(path.isAbsolute(candidate) ? pathToFileURL(candidate).href : candidate)); break; } catch { /* try the next existing installation */ }
   }
   if (!chromium) throw new Error('Use an existing Playwright installation: set PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs. No packages were installed.');
-  const browser = await chromium.launch({ headless: true, channel: 'chrome', args: ['--autoplay-policy=no-user-gesture-required'] });
+  const browser = await chromium.launch({ headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
   const manifest = { version: 1, complete: false, seed: Number(args.seed), backend: args.backend, quality: args.quality,
     browser: browser.version(), platform: `${process.platform}/${process.arch}`,
     revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
