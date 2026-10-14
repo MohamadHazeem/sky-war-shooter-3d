@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "test": "oxygen reconnect/recovery",
+      "before": 0.8052372711370239,
+      "connected": true,
+      "recovered": true
+    },
+    {
+      "test": "frozen burst",
+      "frost": 0,
+      "shots": 4
+    },
+    {
+      "test": "hold clears jam",
+      "cleared": true
+    },
+    {
+      "test": "reload",
+      "ammo": 600,
+      "reserve": 36
+    },
+    {
+      "test": "dressing recovery",
+      "before": 0.39949794473283334,
+      "after": 0.00269179597785341
+    },
+    {
+      "test": "fixed box supply",
+      "ammo": 750
+    },
+    {
+      "test": "menu clears vision",
+      "hypoxia": 0
+    }
+  ],
+  "errors": []
+}

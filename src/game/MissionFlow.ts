@@ -93,6 +93,7 @@ export class MissionFlow {
     const aa = m.id === 'survival-aa';
     if (aa) { /* ground controller starts after the shared mission reset */ }
     else if (m.role === 'gunner') {
+      g.gunner.survival.difficulty = diff;
       g.gunner.resetAmmo();
       g.gunner.attach(pb, m.station ?? 'waistL');
       g.gunner.cold = missionCold(m); // frost on the waist windows (LivingInterior)

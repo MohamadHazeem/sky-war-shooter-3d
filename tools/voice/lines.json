@@ -3335,6 +3335,29 @@
       "text": "Control: raid broken up. Repair crews, move out!"
     },
     {
+      "_group": "Gunner survival"
+    },
+    {
+      "id": "gs_oxygen",
+      "role": "pilot",
+      "text": "Oxygen check! Reconnect your mask hose, gunner!"
+    },
+    {
+      "id": "gs_fixed",
+      "role": "radio",
+      "text": "Oxygen connected. Breathe easy."
+    },
+    {
+      "id": "gs_jam",
+      "role": "waist",
+      "text": "My gun's jammed! Working the charging handle!"
+    },
+    {
+      "id": "gs_ammo",
+      "role": "waist",
+      "text": "Need ammo at the waist! Pass another can!"
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {

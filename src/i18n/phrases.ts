@@ -1,3 +1,4 @@
+import gunnerSurvival from './ar/gunnerSurvival';
 import cleanHud from './ar/cleanHud';
 import weather from './ar/weather';
 import aa from './ar/aa';
@@ -36,7 +37,7 @@ import ditching from './ar/ditching';
 import sea from './ar/sea';
 
 // manual first: its generic words (Low, Close, Zoom...) never override another screen's wording
-const TABLES: PhraseTable[] = [cleanHud, weather, aa, sea, ditching, squadron, secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles, bombardier];
+const TABLES: PhraseTable[] = [gunnerSurvival, cleanHud, weather, aa, sea, ditching, squadron, secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles, bombardier];
 
 export const PHRASES: Record<string, string> = Object.assign({}, ...TABLES.map((t) => t.phrases));
 export const PATTERNS: Pattern[] = TABLES.flatMap((t) => t.patterns ?? []);

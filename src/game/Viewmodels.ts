@@ -1,3 +1,4 @@
+import { frostMaterial } from './InteriorFx';
 import * as THREE from 'three';
 import { envRef } from '../render/EnvRef';
 import { Atmos } from '../render/Atmosphere';
@@ -44,6 +45,9 @@ export interface GunModel {
   group: THREE.Group;
   muzzles: THREE.Object3D[];
   recoil: THREE.Object3D[];   // parts that kick back when firing
+  charging: THREE.Group;
+  frost: THREE.ShaderMaterial;
+  ammoCan: THREE.Mesh;
   eye: THREE.Vector3;         // eye position in gun frame
   belt?: AmmoBelt;
   ejectPort: THREE.Object3D;
@@ -57,6 +61,7 @@ export class AmmoBelt {
   private bullets: THREE.InstancedMesh;
   private links: THREE.InstancedMesh;
   private count: number;
+  get capacity() { return this.count; }
   private pitch = 0.0254;
   private length: number;
   phase = 0;
@@ -179,10 +184,32 @@ export function buildM2(opts: { ringSight: boolean; belt: boolean; beltSide: 1 |
   const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.09, 8), metal);
   handle.rotation.z = Math.PI / 2;
   handle.position.set(-0.075, 0.0, -0.3);
-  recoilGroup.add(handle);
+  const charging = new THREE.Group();
+  charging.position.z = -.3;
+  handle.position.z = 0;
+  charging.add(handle);
+  recoilGroup.add(charging);
   const handleKnob = new THREE.Mesh(new THREE.SphereGeometry(0.016, 10, 8), metal);
   handleKnob.position.set(-0.12, 0.0, -0.3);
-  recoilGroup.add(handleKnob);
+  handleKnob.position.z = 0;
+  charging.add(handleKnob);
+  const frost = frostMaterial().clone();
+  const frostGeo = new RoundedBoxGeometry(.107, .102, .562, 3, .008);
+  frostGeo.setAttribute('aD', new THREE.BufferAttribute(new Float32Array(frostGeo.getAttribute('position').count), 1));
+  const frostMesh = new THREE.Mesh(frostGeo, frost);
+  frostMesh.position.set(0, 0, -.17);
+  frostMesh.name = 'survivalFrost';
+  recoilGroup.add(frostMesh);
+  const coverFrostGeo = new RoundedBoxGeometry(.097, .018, .342, 2, .005);
+  coverFrostGeo.setAttribute('aD', new THREE.BufferAttribute(new Float32Array(coverFrostGeo.getAttribute('position').count), 1));
+  const coverFrost = new THREE.Mesh(coverFrostGeo, frost);
+  coverFrost.position.set(0, .058, -.1);
+  coverFrost.name = 'survivalCoverFrost';
+  recoilGroup.add(coverFrost);
+  const ammoCan = new THREE.Mesh(new THREE.BoxGeometry(.16, .19, .24), park);
+  ammoCan.position.set(opts.beltSide * .23, -.16, -.28);
+  ammoCan.visible = false;
+  g.add(ammoCan);
   // Backplate + spade grips
   const back = new THREE.Mesh(new RoundedBoxGeometry(0.12, 0.11, 0.03, 2, 0.006), park);
   back.position.set(0, 0, -0.465);
@@ -269,7 +296,9 @@ export function buildM2(opts: { ringSight: boolean; belt: boolean; beltSide: 1 |
   eject.position.set(0, -0.08, -0.08);
   recoilGroup.add(eject);
   g.traverse((o) => { if ((o as THREE.Mesh).isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-  return { group: g, muzzles: [muzzle], recoil: [recoilGroup], eye, belt, ejectPort: eject, sight };
+  frostMesh.castShadow = frostMesh.receiveShadow = false;
+  coverFrost.castShadow = coverFrost.receiveShadow = false;
+  return { group: g, charging, frost, ammoCan, muzzles: [muzzle], recoil: [recoilGroup], eye, belt, ejectPort: eject, sight };
 }
 
 // Openings in the waist bulkheads (LivingInterior builds the rooms behind them)

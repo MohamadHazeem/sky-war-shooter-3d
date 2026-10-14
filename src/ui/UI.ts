@@ -331,7 +331,7 @@ export class UI {
 
   updateGunnerHud(d: { station: StationId; threats: Partial<Record<StationId, number>>; best: StationId | null; ammo: number; heat: number; overheated: boolean; reloading: number; zones: Record<string, number>; crew: string; wounded: ReadonlySet<CrewId> }) {
     this.setText('hStation', tx(STATIONS[d.station].label) + (d.reloading > 0 ? t('hud.reloading') : d.overheated ? t('hud.barrelHot') : ''));
-    this.setText('hAmmo', '∞');
+    this.setText('hAmmo', Number.isFinite(d.ammo) ? String(d.ammo) : '∞');
     // under 60 rounds the belt warning colours the count red (.low in style.css)
     document.getElementById('hAmmo')?.classList.toggle('low', d.ammo < 60);
     const h = document.getElementById('hHeat');

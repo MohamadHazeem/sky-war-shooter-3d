@@ -108,7 +108,7 @@ export class GameHud {
         this.lastSeatTip = w.time;
         g.ui.tip(`${bn} fighter${bn > 1 ? 's' : ''} in the ${STATIONS[best].label.toUpperCase()} arc — press <kbd>${STATIONS[best].key}</kbd>`, 2600);
       }
-      g.ui.updateGunnerHud({ station: g.gunner.station, threats: this.threats, best, ammo: s.ammo, heat: s.heat, overheated: s.overheated, reloading: s.reload, zones, crew, wounded: w.crew.wounded });
+      g.ui.updateGunnerHud({ station: g.gunner.station, threats: this.threats, best, ammo: g.gunner.survival.difficulty === 'recruit' ? Infinity : s.ammo, heat: s.heat, overheated: s.overheated, reloading: s.reload, zones, crew, wounded: w.crew.wounded });
     } else if (w.playerFighter) {
       const f = w.playerFighter;
       // flight lead warns of a bandit sitting behind the Mustang
@@ -321,5 +321,6 @@ export class GameHud {
     g.combat.draw(ctx, W, H, hx, hy);
     // Cracked glass sits in front of everything else on the gunner's view
     g.cracks.draw(ctx, W, H);
+    if (g.mission?.role === 'gunner') g.gunner.drawSurvival(ctx, W, H);
   }
 }
