@@ -58,7 +58,8 @@ const WALL_FAR = 46000, WALL_NEAR = 4500, WALL_GONE = 1500;   // m
 
 // ---------------- the sky for a weather: one flat state that can be blended ----------------
 const SUN = 0, SUN_I = 3, ZEN = 4, HOR = 7, GND = 10, AMB = 13, ENV_FLOOR = 14, ENV_I = 15, LOW = 16, HIGH = 17, HAZE = 18, NIGHT = 19, DARK = 20, EXPO = 21, LIFT = 22;
-const N = 23;
+const STRATUS = 23, TOWERS = 24;
+const N = 25;
 const BASE_EXPOSURE = 1.06;                                      // PostFX.baseExposure by day
 const BASE_LIFT = new THREE.Vector3(0.016, 0.014, 0.011);        // PostFX.grade.lift by day
 type Sky = Float64Array;
@@ -120,6 +121,8 @@ function skyFor(w: Weather, o: Sky): Sky {
   }
   const condition = WEATHER_PRESETS[presetFor(w)];
   const cloud = condition.cloud;
+  o[STRATUS] = w.mood === 'overcast' ? .9 : w.mood === 'storm' ? .12 : cloud * .65;
+  o[TOWERS] = w.mood === 'storm' || presetFor(w) === 'thunderstorm' ? 1 : .25 + cloud * .3;
   o[SUN_I] *= 1 - cloud * .55;
   o[DARK] = Math.max(o[DARK], cloud * .45);
   for (let i = ZEN; i < GND; i += 3) {
@@ -139,6 +142,8 @@ function pushSky(engine: Engine, s: Sky) {
   Atmos.horizon.setRGB(s[HOR], s[HOR + 1], s[HOR + 2]);
   Atmos.ground.setRGB(s[GND], s[GND + 1], s[GND + 2]);
   Atmos.cloudAmbient = s[AMB];
+  Atmos.stratus = s[STRATUS];
+  Atmos.towers = s[TOWERS];
   Atmos.envFloor = s[ENV_FLOOR];
   Atmos.lowCoverage = s[LOW];
   Atmos.highCoverage = s[HIGH];

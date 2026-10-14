@@ -24,7 +24,7 @@ export const farTerrainUniforms = {
   uFarMapped: { value: 0 },
   tFarShadow: { value: null as THREE.Texture | null },
   uFarShadowBox: { value: new THREE.Vector3() },
-  uFarOrigin: { value: Atmos.originOffset }, uFarCloudBase: { value: 8900 },
+  uFarOrigin: { value: Atmos.originOffset }, uFarCloudBase: { value: 8900 }, uFarLowBase: { value: 3900 },
 };
 
 /** No per-frame work: rebuild the coast strip only when a mission is armed/reset. */
@@ -47,7 +47,7 @@ export function setFarTerrain(m: Mission | null, world: World, cruise: number, f
 export const FAR_TERRAIN_GLSL = /* glsl */ `
 uniform sampler2D tLandCover, tCoast, tFarShadow;
 uniform vec4 uFarRoute;
-uniform float uFarLength, uFarSeason, uFarQuality, uFarMapped, uFarCloudBase;
+uniform float uFarLength, uFarSeason, uFarQuality, uFarMapped, uFarCloudBase, uFarLowBase;
 uniform vec3 uFarShadowBox, uFarOrigin;
 vec3 terrain(vec2 xz, float dist) {
   vec2 rel = xz - uFarRoute.xy;
@@ -82,7 +82,12 @@ vec3 terrain(vec2 xz, float dist) {
     vec2 q = xz - uFarOrigin.xz + uSunDir.xz * (uFarCloudBase / max(uSunDir.y, 0.05));
     vec2 suv = (q - uFarShadowBox.xy) / uFarShadowBox.z + 0.5;
     float edge = 1.0 - smoothstep(0.4, 0.49, max(abs(suv.x - 0.5), abs(suv.y - 0.5)));
-    alb *= mix(1.0, 0.45 + 0.55 * texture2D(tFarShadow, suv).r, edge);
+    float shadow = mix(1.0, texture2D(tFarShadow, suv).r, edge);
+    q = xz - uFarOrigin.xz + uSunDir.xz * (uFarLowBase / max(uSunDir.y, 0.05));
+    suv = (q - uFarShadowBox.xy) / uFarShadowBox.z + 0.5;
+    edge = 1.0 - smoothstep(0.4, 0.49, max(abs(suv.x - 0.5), abs(suv.y - 0.5)));
+    shadow *= mix(1.0, texture2D(tFarShadow, suv).g, edge);
+    alb *= 0.35 + 0.65 * shadow;
   }
   return alb * 1.35;
 }

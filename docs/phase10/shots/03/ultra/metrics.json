@@ -1,0 +1,92 @@
+[
+  {
+    "shot": "sunset",
+    "metrics": {
+      "luminanceMean": 0.618453979371859,
+      "histogram": [
+        0,
+        0,
+        0.0001080246913580247,
+        0.00038097993827160493,
+        0.00043547453703703706,
+        0.0004755015432098765,
+        0.016146797839506174,
+        0.10028694058641975,
+        0.2184321952160494,
+        0.20082079475308642,
+        0.19859664351851852,
+        0.15542341820987654,
+        0.08050925925925925,
+        0.028232542438271606,
+        0.00015142746913580246,
+        0
+      ],
+      "contrastRms": 0.10025600313282998,
+      "colourfulness": 18.8307650586434,
+      "sharpness": 0.0014570638302683658,
+      "edgeAliasingEstimate": 0.16559749365955542,
+      "edgeDensity": 0.003241916730669896,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 121,
+      "programsAfter": 121,
+      "mean": 8.410000000149012,
+      "p50": 8.400000005960464,
+      "p95": 9.600000008940697,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "formation-chase",
+    "metrics": {
+      "luminanceMean": 0.7264162604263042,
+      "histogram": [
+        0,
+        0,
+        4.822530864197531e-7,
+        0.00011332947530864197,
+        0.0003298611111111111,
+        0.0003288966049382716,
+        0.0002898341049382716,
+        0.001032986111111111,
+        0.04952353395061728,
+        0.14982976466049383,
+        0.16180796682098766,
+        0.17666136188271606,
+        0.22312885802469135,
+        0.18498408564814814,
+        0.051969039351851855,
+        0
+      ],
+      "contrastRms": 0.10002392884703294,
+      "colourfulness": 13.846461390419874,
+      "sharpness": 0.0015445336427456038,
+      "edgeAliasingEstimate": 0.17017182130584194,
+      "edgeDensity": 0.0035185654506375494,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 123,
+      "programsAfter": 123,
+      "mean": 10.09666666686535,
+      "p50": 10,
+      "p95": 11.200000002980232,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  }
+]

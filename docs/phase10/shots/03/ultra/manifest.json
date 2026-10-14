@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "complete": true,
+  "seed": 19431008,
+  "backend": "webgl2",
+  "quality": "ultra",
+  "browser": "155.0.8059.41",
+  "platform": "darwin/arm64",
+  "revision": "24e045fc348de0bd8cea63c0998ce0184078f9ed",
+  "dirty": true,
+  "shots": [
+    {
+      "version": 1,
+      "backend": "webgl2",
+      "quality": "ultra",
+      "seed": 19431008,
+      "shot": "sunset",
+      "label": "Formation at sunset",
+      "pillars": [
+        1,
+        2,
+        3,
+        7,
+        8,
+        10
+      ],
+      "backendActual": "webgl2",
+      "deviceInfo": {
+        "vendor": "Google Inc. (Apple)",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+      },
+      "seedDefault": 19431008,
+      "dt": 0.016666666666666666,
+      "steps": 360,
+      "settleFrames": 24,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "camera": {
+        "position": [
+          -310.0399994859527,
+          7775.389426136035,
+          -298.60789949187034
+        ],
+        "quaternion": [
+          0.038218235603471984,
+          0.9435300044290845,
+          0.11728126811320087,
+          -0.3074664231410787
+        ],
+        "fov": 58
+      },
+      "weather": {
+        "sunEl": 7,
+        "sunAz": 250,
+        "low": 0.55,
+        "high": 0.25,
+        "mood": "dusk",
+        "contrails": true
+      },
+      "subject": "sunset",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "frameMs": {
+        "samples": 60,
+        "programsBefore": 121,
+        "programsAfter": 121,
+        "mean": 8.410000000149012,
+        "p50": 8.400000005960464,
+        "p95": 9.600000008940697,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "pixelHash": "39622cb1a949e6e6145d8cb78d7f5df829b8320f02bc461fba7927a53187eb6c",
+      "errors": []
+    },
+    {
+      "version": 1,
+      "backend": "webgl2",
+      "quality": "ultra",
+      "seed": 19431008,
+      "shot": "formation-chase",
+      "label": "Combat box / chase camera",
+      "pillars": [
+        1,
+        3,
+        5,
+        8,
+        10
+      ],
+      "backendActual": "webgl2",
+      "deviceInfo": {
+        "vendor": "Google Inc. (Apple)",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+      },
+      "seedDefault": 19431008,
+      "dt": 0.016666666666666666,
+      "steps": 360,
+      "settleFrames": 24,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "camera": {
+        "position": [
+          -310.0399994859527,
+          7775.389426136035,
+          -298.60789949187034
+        ],
+        "quaternion": [
+          0.038218235603471984,
+          0.9435300044290845,
+          0.11728126811320087,
+          -0.3074664231410787
+        ],
+        "fov": 58
+      },
+      "weather": {
+        "sunEl": 40,
+        "sunAz": 140,
+        "low": 0.55,
+        "high": 0.2,
+        "contrails": true
+      },
+      "subject": "formation-chase",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "frameMs": {
+        "samples": 60,
+        "programsBefore": 123,
+        "programsAfter": 123,
+        "mean": 10.09666666686535,
+        "p50": 10,
+        "p95": 11.200000002980232,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "pixelHash": "aaed05a8ecf2f63dc2df1744ed9cc01512a90236ce0bc2ab29143b83a4b1fa4d",
+      "errors": []
+    }
+  ]
+}
