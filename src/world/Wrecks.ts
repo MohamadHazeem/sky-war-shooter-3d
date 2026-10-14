@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { HeroLOD, heroParts, insidePlanes, partCentre } from './HeroLook';
 import type { Aircraft, Fighter } from './Aircraft';
 import type { Effects } from './Effects';
 import type { ParticleOpts } from '../render/Particles';
@@ -183,15 +184,30 @@ export class Wrecks {
       for (const name of ['formationDamage', 'formationIdentity']) model.getObjectByName(name)?.removeFromParent();
       const world = sp.planes.map((p) => p.clone());
       const mats: THREE.Material[] = [];
+      // hero models break along their named parts (docs/phase10/hero-parts.md): each part, prop,
+      // crew figure... goes whole with the piece its centre falls in; the merged LODs (the whole
+      // airframe in one mesh) are dropped on pieces, which stay on LOD0. No clipping: the pieces keep the live aircraft's shader programs.
+      const parts = heroParts(model);
+      if (parts) {
+        for (const part of parts) part.visible = insidePlanes(partCentre(model, part), sp.planes);
+        for (const o of model.children) if (o.name && o.name !== 'airframe') o.visible &&= insidePlanes(o.position, sp.planes);
+        model.traverse((o) => {
+          if (!(o instanceof HeroLOD)) return;
+          for (let i = 1; i < o.levels.length; i++) o.levels[i].object.visible = false;
+          o.levels.length = 1;
+        });
+      }
       model.traverse((o) => {
         const m = o as THREE.Mesh;
         if (!m.isMesh) return;
         const src = Array.isArray(m.material) ? m.material : [m.material];
         const cl = src.map((mm) => {
           const c = mm.clone();
-          c.clippingPlanes = world;
-          c.clipShadows = true;
-          c.side = THREE.DoubleSide; // show the inside of the torn skin
+          if (!parts) {
+            c.clippingPlanes = world;
+            c.clipShadows = true;
+            c.side = THREE.DoubleSide; // show the inside of the torn skin
+          }
           mats.push(c);
           return c;
         });

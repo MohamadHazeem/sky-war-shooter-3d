@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { instantiate, ModelKind, PropInfo, setupProps } from './Models';
 import { HeroB17Controls } from './HeroB17';
 import { FlightModel, FlightParams } from './FlightModel';
+import { animateControls } from './HeroLook';
 
 export type Team = 'allied' | 'axis';
 
@@ -196,6 +197,7 @@ export class Fighter extends Aircraft {
       if (this.root.position.y < WRECK_FLOOR.fighter || this.fallTime > 40) this.remove = true;
     }
     this.updateProps(dt, this.fm.throttle * 0.6 + 0.6);
+    animateControls(this, dt); // hero models: ailerons, elevators, rudders follow the stick
   }
 }
 

@@ -53,6 +53,7 @@ import '../ui/CustomBattleScreen'; // registers the Custom Battle and Weekly Cha
 import { CoopSession } from './CoopSession';
 import { qualityFallbackReady } from '../render/FrameTiming';
 import { syncSurfaceDetail } from '../render/SurfaceDetail';
+import { syncHeroLod } from '../world/HeroLook';
 import { Director } from './Director';
 import { MissionFlow } from './MissionFlow';
 import { GameHud } from './GameHud';
@@ -290,6 +291,7 @@ export class Game {
     this.engine.post.film.setLook(s.filmLook);   // Settings "Film look" (render/FilmLook.ts)
     this.engine.post.lensDirt = s.lensDirt !== false;
     syncSurfaceDetail(this.engine.quality);   // aircraft panel lines / weathering level (render/SurfaceDetail.ts)
+    syncHeroLod(this.engine.quality);         // Low: hero aircraft on their far LOD (world/HeroLook.ts)
     save(SETTINGS_KEY, s);
   }
 

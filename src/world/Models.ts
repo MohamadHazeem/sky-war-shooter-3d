@@ -7,10 +7,13 @@ import { prepareAircraftSurface, tuneAircraftMaterial, useSkyEnv } from '../rend
 
 import { registerHeroMaterial } from './HeroTextures';
 import { prepareHeroLODs, heroStreamGeometry } from './HeroB17';
+import { isHero, prepareHero } from './HeroLook';
 
 export type ModelKind =
   | 'b17' | 'fw190' | 'p51d' | 'p51d_cockpit'
   // Extra enemy types (see public/models/CREDITS.md). Same frame as the others: metres, +Z nose, +X left wing.
+  // fw190, bf109, me262, bf110 and ju88 are the hero models (tools/hero/luftwaffe, world/HeroLook.ts):
+  // named parts with three LODs, hinged control surfaces, baked PBR maps; the node names below still hold.
   | 'bf110'  // Bf 110 twin-engine heavy fighter: prop_1 (left), prop_2 (right), gun_rear (rear MG, yaw/pitch it)
   | 'me262'  // Me 262 jet: no props; fan_1/fan_2 are the intake fans (spin about local Z), exhaust_left/right markers
   | 'bf109'  // Bf 109 G-14: prop_1
@@ -70,6 +73,7 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
       const gltf = await gltfLoader().parseAsync(bytes, assetUrl('models/'));
       const root = gltf.scene;
       const skins = new Set<THREE.Material>();
+      const hero = isHero(k);
       root.traverse((o) => {
         const m = o as THREE.Mesh;
         if (m.isMesh) {
@@ -79,18 +83,20 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
           for (const mat of mats as THREE.MeshStandardMaterial[]) {
             if (mat.transparent && mat.opacity < 0.9) { m.castShadow = false; mat.depthWrite = false; }
             if (mat.map) mat.map.anisotropy = 8;
-            // per-part roughness / metalness / sky reflection (render/AircraftLook.ts)
+            // per-part roughness / metalness / sky reflection (render/AircraftLook.ts); the Luftwaffe
+            // hero models bring their own baked maps (HeroLook.prepareHero)
             if (k === 'b17') { useSkyEnv(mat, /glass/.test(mat.name) ? 1.3 : .65); registerHeroMaterial(mat); }
-            else if (tuneAircraftMaterial(mat, k)) skins.add(mat);
+            else if (!hero && tuneAircraftMaterial(mat, k)) skins.add(mat);
           }
         }
       });
-      // panel lines, rivets and weathering on the skins (render/SurfaceDetail.ts)
+      // panel lines, rivets and weathering on the skins (render/SurfaceDetail.ts); baked into the hero textures
       if (k === 'b17') {
         prepareHeroLODs(root);
         const stripes = root.getObjectByName('invasion_markings');
         if (stripes) stripes.visible = false;
       }
+      else if (hero) prepareHero(root, k);
       else prepareAircraftSurface(root, k, skins);
       cache.set(k, root);
     } catch (e) {
@@ -121,7 +127,7 @@ export function instantiate(k: ModelKind): THREE.Object3D {
 // (roughly the converted models' bounding boxes and prop_N pivots).
 const EXTRA_PLACEHOLDERS: Partial<Record<ModelKind, { span: number; len: number; col: number; props: [number, number][] }>> = {
   bf110: { span: 16.3, len: 12.5, col: 0x6b6a52, props: [[2.35, 2.4], [-2.35, 2.4]] },
-  me262: { span: 10.5, len: 12.5, col: 0x5a5840, props: [] },
+  me262: { span: 12.6, len: 10.6, col: 0x5a5840, props: [] },
   bf109: { span: 9.8, len: 8.9, col: 0x5d6b4a, props: [[0, 2.4]] },
   ju88: { span: 20.0, len: 14.3, col: 0x4f6040, props: [[2.79, 2.9], [-2.76, 2.9]] },
   me163: { span: 8.8, len: 5.9, col: 0x5b5a45, props: [] },
@@ -222,7 +228,8 @@ export function setupProps(root: THREE.Object3D, radius: number): PropInfo[] {
     // The compressed models keep the prop's mesh on an unnamed child (extras.meshOf, see
     // tools/compress_models.mjs). Blades are what used to be the node's children: the
     // primitives of a multi-material prop; a single-mesh prop (formerly the node itself) has none.
-    const blades = node.children.flatMap((c) => c === disc ? [] : c.userData.meshOf ? ((c as THREE.Mesh).isMesh ? [] : c.children) : [c]);
+    // A hero prop keeps its spinner (spinner_N) visible while the disc shows.
+    const blades = node.children.flatMap((c) => c === disc || c.name.startsWith('spinner_') ? [] : c.userData.meshOf ? ((c as THREE.Mesh).isMesh ? [] : c.children) : [c]);
     props.push({ node, blades, disc, base: node.quaternion.clone(), layered: !!root.getObjectByName('B17G_HERO') });
   }
   return props;

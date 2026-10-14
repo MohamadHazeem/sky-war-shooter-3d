@@ -1,0 +1,59 @@
+{
+  "label": "v05b",
+  "runs": [
+    {
+      "quality": "high",
+      "bench": {
+        "avg": 13.44,
+        "p50": 13.5,
+        "p95": 17,
+        "max": 21.2,
+        "calls": 1,
+        "tris": 1,
+        "programs": 120,
+        "w": 1600,
+        "h": 900
+      },
+      "calls": 497,
+      "triangles": 673184,
+      "programs": 120,
+      "geometries": 454,
+      "textures": 104,
+      "alive": 21,
+      "ktx": {
+        "hero_bf110": false,
+        "hero_ju88": false,
+        "hero_bf109": false,
+        "hero_fw190": false,
+        "hero_me262": false
+      }
+    },
+    {
+      "quality": "low",
+      "bench": {
+        "avg": 10.6,
+        "p50": 10.1,
+        "p95": 14.2,
+        "max": 17.4,
+        "calls": 1,
+        "tris": 1,
+        "programs": 107,
+        "w": 1264,
+        "h": 711
+      },
+      "calls": 491,
+      "triangles": 601288,
+      "programs": 107,
+      "geometries": 440,
+      "textures": 82,
+      "alive": 23,
+      "ktx": {
+        "hero_bf109": false,
+        "hero_fw190": false,
+        "hero_bf110": false,
+        "hero_ju88": false,
+        "hero_me262": false
+      }
+    }
+  ]
+}

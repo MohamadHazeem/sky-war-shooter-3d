@@ -1,0 +1,45 @@
+{
+  "label": "before2",
+  "runs": [
+    {
+      "quality": "high",
+      "bench": {
+        "avg": 12.14,
+        "p50": 11.9,
+        "p95": 15.2,
+        "max": 20.2,
+        "calls": 1,
+        "tris": 1,
+        "programs": 124,
+        "w": 1600,
+        "h": 900
+      },
+      "calls": 587,
+      "triangles": 760197,
+      "programs": 124,
+      "geometries": 378,
+      "textures": 108,
+      "alive": 21
+    },
+    {
+      "quality": "low",
+      "bench": {
+        "avg": 7.92,
+        "p50": 7.4,
+        "p95": 11.7,
+        "max": 16.3,
+        "calls": 1,
+        "tris": 1,
+        "programs": 109,
+        "w": 1264,
+        "h": 711
+      },
+      "calls": 567,
+      "triangles": 736226,
+      "programs": 109,
+      "geometries": 365,
+      "textures": 95,
+      "alive": 23
+    }
+  ]
+}

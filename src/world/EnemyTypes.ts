@@ -44,13 +44,13 @@ export const ENEMY_VARIANTS: Record<EnemyType, EnemyVariant> = {
   bf110: {
     label: 'Bf 110', model: 'bf110', blurb: 'twin-engine destroyer — heavy, tough',
     params: { ...FW190_PARAMS, power: FW190_PARAMS.power * 1.02, rollRate: 1.7, maxG: 6, pitchRate: 0.8 },
-    structure: 2.6, scale: 0.85, fallbackScale: 1.3, score: 250, propRadius: 1.4,
+    structure: 2.6, scale: 0.85, fallbackScale: 1.3, score: 250, propRadius: 1.55,
     tint: new THREE.Color(0.8, 0.82, 0.78),
   },
   ju88: {
     label: 'Ju 88', model: 'ju88', blurb: 'heavy twin — slow, armoured, hard to bring down',
     params: { ...FW190_PARAMS, power: FW190_PARAMS.power * 0.95, rollRate: 1.3, maxG: 5, pitchRate: 0.7 },
-    structure: 3.4, scale: 0.75, fallbackScale: 1.45, score: 320, propRadius: 1.75,
+    structure: 3.4, scale: 0.75, fallbackScale: 1.45, score: 320, propRadius: 1.72,
     tint: new THREE.Color(0.7, 0.75, 0.7),
   },
   me163: {
@@ -71,7 +71,7 @@ export const ENEMY_VARIANTS: Record<EnemyType, EnemyVariant> = {
     label: 'Me 410', model: 'bf110', blurb: 'Hornisse, a fifty-millimetre cannon that fires from two kilometres',
     // Bf 110 airframe (stand-in) in a lighter day-fighter grey; a bit faster, a little less armour
     params: { ...FW190_PARAMS, power: FW190_PARAMS.power * 1.1, rollRate: 1.8, maxG: 6, pitchRate: 0.85 },
-    structure: 2.2, scale: 0.85, fallbackScale: 1.3, score: 350, propRadius: 1.4,
+    structure: 2.2, scale: 0.85, fallbackScale: 1.3, score: 350, propRadius: 1.55,
     tint: new THREE.Color(0.94, 1.0, 1.1), ownTint: true,
   },
   do335: {

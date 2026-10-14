@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { Fighter } from './Aircraft';
 import { EMBLEMS, type EmblemId } from '../game/Nemesis';
+import { applyHeroAce } from './HeroLook';
 
 // Markings for the named Experten (game/Nemesis.ts) and the ace squadrons' coloured noses
 // (game/SpecialEvents.ts):
@@ -170,6 +171,9 @@ export interface AceLookSpec { color: string; emblem: EmblemId; victories: numbe
 // The ace's own markings on his aircraft. Returns the meshes added (named 'ace*').
 export function applyAceLook(f: Fighter, s: AceLookSpec): THREE.Object3D[] {
   const out: THREE.Object3D[] = [];
+  // hero models carry a baked ace livery (kill bars, emblem, chevrons, band): only his nose colour
+  // and the patches go on top
+  const hero = applyHeroAce(f);
   const fit = fitOf(f), tw = tweak(f.kind), L = fit.len, box = fit.box;
   const meshes = hull(f);
   // nose ring on single-engine piston fighters
@@ -178,8 +182,8 @@ export function applyAceLook(f: Fighter, s: AceLookSpec): THREE.Object3D[] {
   // fuselage cross-section there
   const bz = box.min.z + tw.bandZ * L;
   const key = `${f.kind}:band`;
-  if (!sections.has(key)) sections.set(key, section(f, meshes, bz));
-  const sec = sections.get(key);
+  if (!hero && !sections.has(key)) sections.set(key, section(f, meshes, bz));
+  const sec = hero ? null : sections.get(key);
   if (sec) {
     bandGeo ??= new THREE.CylinderGeometry(1, 1, 1, 28, 1, true).rotateX(Math.PI / 2);
     const band = new THREE.Mesh(bandGeo, solidMat(s.color, 0.5, 0.1));
@@ -189,7 +193,7 @@ export function applyAceLook(f: Fighter, s: AceLookSpec): THREE.Object3D[] {
     f.model.add(band); out.push(band);
   }
   // fin panel: emblem and victory bars on both sides of a centre-line fin (none on twin fins)
-  const tex = finTexture(s.color, s.emblem, s.victories);
+  const tex = hero ? null : finTexture(s.color, s.emblem, s.victories);
   if (tex) {
     const fz = box.min.z + tw.finZ * L;
     const top = cast(f, meshes, new THREE.Vector3(0, box.max.y + 1, fz), new THREE.Vector3(0, -1, 0));

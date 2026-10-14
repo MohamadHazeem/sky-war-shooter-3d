@@ -22,6 +22,65 @@ import { ENEMY_VARIANTS, tintModel, type EnemyType } from './EnemyTypes';
 type ZoneDef = [name: string, x: number, y: number, z: number, r: number, hp: number, extra?: Partial<HitZone>];
 
 const ZONES: Partial<Record<EnemyType, { radius: number; zones: ZoneDef[] }>> = {
+  // Hero models (tools/hero/luftwaffe): zones over their named parts (part_* in docs/phase10/hero-parts.md).
+  // The Fw 190 A-8 keeps the base layout (Aircraft.ts), which it was built to match.
+  // Bf 109 G-6: prop hub z 2.43, cockpit z -1.0, tail -5.9, span +-4.96
+  bf109: {
+    radius: 7,
+    zones: [
+      ['engine', 0, 0.0, 1.35, 0.75, 130, { engine: 0 }],
+      ['cockpit', 0, 0.5, -1.0, 0.55, 95, { critical: true }],
+      ['fuselage', 0, 0.1, -3.0, 0.7, 170, { critical: true }],
+      ['tail', 0, 0.55, -5.3, 1.0, 120, { critical: true }],
+      ['wingL', 2.5, -0.3, -0.55, 1.45, 150, { critical: true }],
+      ['wingR', -2.5, -0.3, -0.55, 1.45, 150, { critical: true }],
+    ],
+  },
+  // Me 262 A-1a (FlightGear shape scaled to the published span / length): nacelles at x +-2.21 under the
+  // wing, cockpit z -0.72, tail -6.1, span +-6.28
+  me262: {
+    radius: 8,
+    zones: [
+      ['engine', 2.21, -0.86, -0.3, 0.75, 120, { engine: 0 }],
+      ['engine2', -2.21, -0.86, -0.3, 0.75, 120, { engine: 1 }],
+      ['cockpit', 0, 0.55, -0.75, 0.6, 95, { critical: true }],
+      ['fuselage', 0, 0.1, -2.6, 0.75, 170, { critical: true }],
+      ['tail', 0, 0.75, -6.1, 1.2, 120, { critical: true }],
+      ['wingL', 3.9, -0.2, -1.1, 1.7, 150, { critical: true }],
+      ['wingR', -3.9, -0.2, -1.1, 1.7, 150, { critical: true }],
+    ],
+  },
+  // Bf 110 G-2: engines at x +-2.35, crew z 1.2 / -0.6, twin fins at x +-2.25 z -7.9, span +-8.2
+  bf110: {
+    radius: 9,
+    zones: [
+      ['engine', 2.35, -0.2, 1.0, 0.8, 130, { engine: 0 }],
+      ['engine2', -2.35, -0.2, 1.0, 0.8, 130, { engine: 1 }],
+      ['cockpit', 0, 0.55, 0.6, 0.85, 110, { critical: true }],
+      ['fuselage', 0, 0.15, -2.6, 0.8, 190, { critical: true }],
+      ['tail', 0, 0.45, -7.3, 1.8, 140, { critical: true }],
+      ['wingL', 4.6, -0.05, -0.6, 1.9, 170, { critical: true }],
+      ['wingR', -4.6, -0.05, -0.6, 1.9, 170, { critical: true }],
+      ['wingLtip', 6.9, 0.15, -0.55, 1.2, 110],
+      ['wingRtip', -6.9, 0.15, -0.55, 1.2, 110],
+    ],
+  },
+  // Ju 88 A-4: engines at x +-2.78, glazed nose z 1..3.8, tail -9.3, span +-10
+  ju88: {
+    radius: 11,
+    zones: [
+      ['engine', 2.78, -0.34, 1.2, 0.9, 150, { engine: 0 }],
+      ['engine2', -2.78, -0.34, 1.2, 0.9, 150, { engine: 1 }],
+      ['cockpit', 0, 0.6, 2.1, 1.05, 120, { critical: true }],
+      ['fuselage', 0, 0.2, -2.0, 0.95, 230, { critical: true }],
+      ['fuselageAft', 0, 0.3, -5.8, 0.8, 200],
+      ['tail', 0, 1.0, -9.0, 1.9, 170, { critical: true }],
+      ['wingL', 5.4, 0.2, -1.05, 2.3, 210, { critical: true }],
+      ['wingR', -5.4, 0.2, -1.05, 2.3, 210, { critical: true }],
+      ['wingLtip', 8.6, 0.55, -1.15, 1.5, 130],
+      ['wingRtip', -8.6, 0.55, -1.15, 1.5, 130],
+    ],
+  },
   // He 111 H (he111.glb): nose +4.1, tail -12.9, props at x +-2.68 z 3.16, span +-11.3
   he111: {
     radius: 12.5,
@@ -52,6 +111,8 @@ const ZONES: Partial<Record<EnemyType, { radius: number; zones: ZoneDef[] }>> = 
     ],
   },
 };
+
+ZONES.me410 = ZONES.bf110; // the Me 410 flies the Bf 110 airframe
 
 // first material of a named node's meshes (the stand-in's own gun / skin materials)
 function matOf(model: THREE.Object3D, node: string): THREE.Material | null {

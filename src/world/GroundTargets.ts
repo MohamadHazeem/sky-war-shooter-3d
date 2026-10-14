@@ -3,6 +3,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import type { World } from './World';
 import type { Aircraft, Fighter } from './Aircraft';
 import { instantiate, hasModel, type ModelKind } from './Models';
+import { setGear } from './HeroLook';
 import { type Countryside, terrainHeight, hazed, vcolored } from './Countryside';
 import { segSphere } from './Ballistics';
 import { sound } from '../audio/Sound';
@@ -232,6 +233,7 @@ export class GroundTargets {
     if (kind === 'plane') {
       const mk: ModelKind = model && hasModel(model) ? model : 'fw190';
       const o = instantiate(mk);
+      setGear(o, true);   // hero models fly with the gear up; parked ones stand on it
       const big = mk === 'ju88' || mk === 'bf110';
       const k = big ? 1.0 : 1.35;
       o.scale.setScalar(k);
