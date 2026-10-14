@@ -1,0 +1,211 @@
+{
+  "device": {
+    "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+    "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+  },
+  "viewport": [
+    1920,
+    1080
+  ],
+  "samplesPerBatch": 90,
+  "batches": 3,
+  "method": "sws.bench: fixed 1/60 simulation, GPU-synchronised readback, DRS disabled, fresh browser without image encoding",
+  "perf": [
+    {
+      "tier": "low",
+      "samples": [
+        {
+          "avg": 6.98,
+          "p50": 7.5,
+          "p95": 8.4,
+          "max": 9,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1264,
+          "h": 711
+        },
+        {
+          "avg": 6.98,
+          "p50": 7.4,
+          "p95": 8.7,
+          "max": 9.3,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1264,
+          "h": 711
+        },
+        {
+          "avg": 7.2,
+          "p50": 7.7,
+          "p95": 8.9,
+          "max": 9.8,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1264,
+          "h": 711
+        }
+      ],
+      "newPrograms": []
+    },
+    {
+      "tier": "medium",
+      "samples": [
+        {
+          "avg": 9.46,
+          "p50": 8.3,
+          "p95": 9.7,
+          "max": 108.5,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1632,
+          "h": 918
+        },
+        {
+          "avg": 8.34,
+          "p50": 8.3,
+          "p95": 9.5,
+          "max": 10.5,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1632,
+          "h": 918
+        },
+        {
+          "avg": 8.32,
+          "p50": 8.3,
+          "p95": 9.2,
+          "max": 9.7,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1632,
+          "h": 918
+        }
+      ],
+      "newPrograms": []
+    },
+    {
+      "tier": "high",
+      "samples": [
+        {
+          "avg": 9.4,
+          "p50": 8.5,
+          "p95": 9.6,
+          "max": 97.7,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        },
+        {
+          "avg": 9.35,
+          "p50": 8.7,
+          "p95": 13.2,
+          "max": 14,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        },
+        {
+          "avg": 10.27,
+          "p50": 9.8,
+          "p95": 13.7,
+          "max": 14.2,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        }
+      ],
+      "newPrograms": []
+    },
+    {
+      "tier": "ultra",
+      "samples": [
+        {
+          "avg": 13.94,
+          "p50": 12.9,
+          "p95": 15.1,
+          "max": 129.8,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        },
+        {
+          "avg": 13.79,
+          "p50": 12.9,
+          "p95": 19.5,
+          "max": 29.6,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        },
+        {
+          "avg": 15.33,
+          "p50": 13.7,
+          "p95": 22.8,
+          "max": 26.3,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        }
+      ],
+      "newPrograms": []
+    },
+    {
+      "tier": "cinematic",
+      "samples": [
+        {
+          "avg": 19.16,
+          "p50": 14.4,
+          "p95": 17.3,
+          "max": 440.9,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        },
+        {
+          "avg": 14.72,
+          "p50": 14.7,
+          "p95": 16.8,
+          "max": 18.3,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        },
+        {
+          "avg": 15.26,
+          "p50": 15.4,
+          "p95": 17,
+          "max": 19,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        }
+      ],
+      "newPrograms": []
+    }
+  ],
+  "errors": []
+}

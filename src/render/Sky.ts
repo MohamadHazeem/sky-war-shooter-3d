@@ -7,8 +7,8 @@ import { TARGET_GLSL, targetUniforms } from './TargetGround';
 // it to match the haze on their own ground mesh, so the seam where the mesh ends disappears.
 export const skyGround = { uGroundHaze: { value: 24000 } };
 
-// Sky dome that follows the camera. Writes depth at the far plane only via the
-// depthWrite=false + renderOrder trick, so clouds/aerial-perspective treat it as infinity.
+// Draw the sky last at the far plane. Early depth rejection skips the expensive
+// procedural terrain/cirrus shader behind cockpit and aircraft pixels.
 export class SkyDome {
   readonly mesh: THREE.Mesh;
   readonly cirrus = { value: 1 };
@@ -23,6 +23,11 @@ export class SkyDome {
           vDir = normalize(position);
           vec4 p = projectionMatrix * vec4(mat3(viewMatrix) * position, 1.0);
           gl_Position = p;
+          #ifdef USE_REVERSED_DEPTH_BUFFER
+            gl_Position.z = 0.0;
+          #else
+            gl_Position.z = gl_Position.w;
+          #endif
         }`,
       fragmentShader: /* glsl */ `
         ${skyGLSL}
@@ -97,11 +102,11 @@ export class SkyDome {
         }`,
       side: THREE.BackSide,
       depthWrite: false,
-      depthTest: false,
+      depthTest: true,
     });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.frustumCulled = false;
-    this.mesh.renderOrder = -1000;
+    this.mesh.renderOrder = 1000;
     // Scale is irrelevant: vertex shader uses rotation only; keep it inside the frustum.
     this.mesh.scale.setScalar(1000);
   }
@@ -127,7 +132,7 @@ export function buildEnvironment(renderer: THREE.WebGLRenderer, sky: SkyDome): T
     floor.rotation.x=-Math.PI/2;floor.position.y=-60;scene.add(floor);
     capture={scene,floor,pmrem:new THREE.PMREMGenerator(renderer)};captures.set(renderer,capture);
   }
-  capture.floor.material.color.setRGB(.95,.96,1).multiplyScalar(1.6*Atmos.envFloor);
+  capture.floor.material.color.setRGB(.95,.96,1).multiplyScalar(.55*Atmos.envFloor);
   // Direct solar disk belongs to the sun light; including it in IBL double-counts energy.
   const rt=capture.pmrem.fromScene(capture.scene,0,.1,20000,{size:128});
   targets.set(rt.texture,rt);return rt.texture;

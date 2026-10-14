@@ -5,6 +5,7 @@ import { adaptationWeight, exposureTarget, halton, historyDepthMatches, JITTER }
 import { FILM_MOODS, filmColor, makeFilmLUT } from '../src/render/FilmLUT';
 import { auditMaterial } from '../src/render/MaterialAudit';
 import { SunCascades, cascadeUniform } from '../src/render/SunCascades';
+import { cloudSurfaceUniforms } from '../src/render/CloudSurfaceShadow';
 import { Atmos } from '../src/render/Atmosphere';
 import { TemporalFrame } from '../src/render/TemporalFrame';
 import { deviceTiers, pickQuality, TIERS } from '../src/render/QualityPick';
@@ -30,6 +31,7 @@ describe('renderer temporal contracts', () => {
   expect(historyDepthMatches(.1,.101)).toBe(true);
   expect(historyDepthMatches(.1,.15)).toBe(false);
   expect(historyDepthMatches(.002,.02)).toBe(false);
+  expect(historyDepthMatches(.002,.0021)).toBe(true);expect(historyDepthMatches(.002,.0023)).toBe(false);
  });
  it('adapts independently of frame rate and never brightens night without bound', () => {
   expect(1-(1-adaptationWeight(1/60,true))**60).toBeCloseTo(1-(1-adaptationWeight(1/30,true))**30,12);
@@ -88,6 +90,24 @@ describe('stable cascades and material audit',()=>{
   expect(cascades.lights[0].position.distanceTo(positions[0])).toBeLessThan(.001);
   cascades.quality(1024,24,false);expect(cascades.lights).toHaveLength(3);expect(cascades.lights.every(l=>l.castShadow)).toBe(true);expect(cascadeUniform.value.z).toBe(0);expect(cascades.lights[2].shadow.mapSize.x).toBe(1);
   expect(Atmos.sunDir.length()).toBeCloseTo(1);
+ });
+ it('uses depth-convention-correct PCF bias and staggers expensive cascades',()=>{
+  const scene=new T.Scene(),sun=new T.DirectionalLight(),camera=new T.PerspectiveCamera();
+  scene.add(sun,sun.target);camera.updateMatrixWorld();
+  const forward=new SunCascades(scene,sun,false),reverse=new SunCascades(scene,new T.DirectionalLight(),true);
+  expect(forward.lights[0].shadow.bias).toBeLessThan(0);expect(reverse.lights[0].shadow.bias).toBeGreaterThan(0);
+  reverse.quality(2048,40,true);
+  for(let frame=0;frame<25;frame++){
+   for(const light of reverse.lights)light.shadow.needsUpdate=false;
+   reverse.update(camera,4);
+   if(frame>0)expect(reverse.lights[1].shadow.needsUpdate&&reverse.lights[2].shadow.needsUpdate).toBe(false);
+  }
+ });
+ it('shares spatial cloud-shadow uniforms with cloned PBR materials',()=>{
+  const material=new T.MeshStandardMaterial(),copy=material.clone();auditMaterial(copy);
+  const shader={uniforms:{}} as T.WebGLProgramParametersWithUniforms;
+  copy.onBeforeCompile(shader,{} as T.WebGLRenderer);
+  for(const [key,value] of Object.entries(cloudSurfaceUniforms))expect(shader.uniforms[key]).toBe(value);
  });
  it('offers Cinematic manually but caps automatic selection at Ultra',()=>{
   expect(TIERS.at(-1)).toBe('cinematic');expect(deviceTiers({touch:false,shortSide:1080,reducedData:false}).cap).toBe('ultra');

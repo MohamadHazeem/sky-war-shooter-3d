@@ -1,3 +1,4 @@
+import { cloudSurfaceUniforms } from '../render/CloudSurfaceShadow';
 import { syncSurfaceDetail } from '../render/SurfaceDetail';
 import { TemporalFrame } from '../render/TemporalFrame';
 import { SunCascades, cascadeUniform } from '../render/SunCascades';
@@ -38,7 +39,7 @@ export interface QualityPreset {
 export const QUALITY: Record<Quality, QualityPreset> = {
   low:    { pixels: 0.9e6, msaa: 0, shadows: 1024, shadowRange: 24, cloudScale: 0.33, cloudSteps: 36, cloudTemporal: false, haze: false, ao: 0,   particles: 0, temporal: false },
   medium: { pixels: 1.5e6, msaa: 0, shadows: 2048, shadowRange: 48, cloudScale: 0.45, cloudSteps: 52, cloudTemporal: true,  haze: true,  ao: 0.35, particles: 0.5, temporal: true },
-  high:   { pixels: 2.3e6, msaa: 0, shadows: 2048, shadowRange: 40, cloudScale: 0.5,  cloudSteps: 64, cloudTemporal: true,  haze: true,  ao: 0.6, particles: 1, temporal: true },
+  high:   { pixels: 2.3e6, msaa: 0, shadows: 2048, shadowRange: 40, cloudScale: 0.45, cloudSteps: 56, cloudTemporal: true,  haze: true,  ao: 0.6, particles: 1, temporal: true },
   ultra:  { pixels: 3.7e6, msaa: 2, shadows: 4096, shadowRange: 40, cloudScale: 0.62, cloudSteps: 88, cloudTemporal: true,  haze: true,  ao: 0.7, particles: 1.6, temporal: true },
   cinematic: { pixels: 8.3e6, msaa: 4, shadows: 4096, shadowRange: 40, cloudScale: .75, cloudSteps: 96, cloudTemporal: true, haze: true, ao: .8, particles: 2, temporal: true },
 };
@@ -166,7 +167,7 @@ export class Engine {
     this.sun.shadow.normalBias = 0.03;
     this.scene.add(this.sun, this.sun.target);
 
-    this.cascades = new SunCascades(this.scene, this.sun);
+    this.cascades = new SunCascades(this.scene, this.sun, this.reversed);
     this.cascades.quality(2048, 40, true);
     this.hemi = new THREE.HemisphereLight(0x9fbce6, 0xd9dde4, 0.35);
     this.scene.add(this.hemi);
@@ -405,7 +406,11 @@ export class Engine {
     const cam = this.camera;
     cam.updateMatrixWorld();
     const cp = cam.getWorldPosition(_camPos);
-    this.cascades.update(cam, Atmos.sunIntensity * .95 * (.35 + .65 * this.clouds.sunShadow));
+    this.cascades.update(cam, Atmos.sunIntensity * 1.15);
+    cloudSurfaceUniforms.swsCloudShadow.value = this.clouds.groundShadowTexture;
+    cloudSurfaceUniforms.swsCloudBox.value.copy(this.clouds.groundShadowBox);
+    cloudSurfaceUniforms.swsCloudBase.value = Atmos.highBase;
+    cloudSurfaceUniforms.swsCloudOn.value = this.clouds.shadows ? 1 : 0;
     this.temporal.begin(cam);
     this.post.jitter.copy(this.temporal.jitter);
     atmosUniforms.uCamAlt.value = cp.y;
@@ -474,6 +479,7 @@ export class Engine {
     const r = this.renderer;
     cam.updateMatrixWorld();
     cascadeUniform.value.z = 0;
+    cloudSurfaceUniforms.swsCloudOn.value = 0;
     this.post.jitter.set(0, 0);
     scene.traverse(o => { const m=(o as THREE.Mesh).material;if (m) { if (Array.isArray(m)) m.forEach(auditMaterial);else auditMaterial(m); } });
     r.setRenderTarget(this.sceneRT);
@@ -495,7 +501,7 @@ export class Engine {
 
   // Transparent materials go to layer 1 (drawn after the clouds), everything else layer 0
   private sortLayers() {
-    this.scene.traverse((o) => {
+    this.scene.traverseVisible((o) => {
       if ((o as THREE.Light).isLight) { o.layers.enableAll(); return; }
       const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
       if (!m) return;

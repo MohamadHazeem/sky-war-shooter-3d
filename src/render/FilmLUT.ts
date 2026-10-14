@@ -1,8 +1,12 @@
 import * as T from 'three';
 export type FilmMood='warm'|'cold'|'overcast'|'dusk'|'night';
 export const FILM_MOODS:FilmMood[]=['warm','cold','overcast','dusk','night'];
-const looks:Record<FilmMood,readonly number[]>={warm:[.96,1,1.035,1.04,1,.94,.94],cold:[.94,1,1.06,1.01,1,1.02,.89],overcast:[.98,1,1.025,1.015,1,.98,.83],dusk:[.96,.98,1.06,1.07,1,.91,.92],night:[.89,.96,1.06,.97,1,1.045,.76]};
+const looks:Record<FilmMood,readonly number[]>={warm:[.84,.97,1.10,1.06,1,.92,1.04],cold:[.83,.97,1.15,1.02,1,1.03,.98],overcast:[.88,.99,1.10,1.02,1,.98,.94],dusk:[.83,.90,1.13,1.12,.98,.83,1.07],night:[.72,.88,1.15,.94,1,1.09,.88]};
 export function filmColor(r:number,g:number,b:number,mood:FilmMood):[number,number,number]{
+ // A bounded print shoulder/toe keeps bright cloud tops while separating middle tones.
+ const contrast=mood==='night'?.10:mood==='overcast'?.22:.30;
+ const curve=(v:number)=>v+(v*v*(3-2*v)-v)*contrast;
+ r=curve(r);g=curve(g);b=curve(b);
  const p=looks[mood],l=r*.2126+g*.7152+b*.0722,s=(1-l)**2,h=l*l;
  r*=1+(p[0]-1)*s+(p[3]-1)*h;g*=1+(p[1]-1)*s+(p[4]-1)*h;b*=1+(p[2]-1)*s+(p[5]-1)*h;
  const y=r*.2126+g*.7152+b*.0722;

@@ -1,17 +1,19 @@
 import * as T from 'three';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
-import { JITTER } from './TemporalMath';
+import { JITTER, HISTORY_DEPTH_ABS, HISTORY_DEPTH_REL } from './TemporalMath';
 
 const vert = 'varying vec2 vUv; void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}';
 const reconstruct = /* glsl */ `
 uniform sampler2D tDepth; uniform mat4 invProj; uniform float reversed; varying vec2 vUv;
-vec3 viewAt(vec2 uv){float d=texture2D(tDepth,uv).r;vec4 p=invProj*vec4(uv*2.-1.,reversed>.5?max(d,1e-7):d*2.-1.,1.);return p.xyz/p.w;}
+// Depth uses nearest sampling: reconstruct the actual sampled texel centre, not a
+// different ray at the same depth (which invents occluders on tilted flat surfaces).
+vec3 viewAt(vec2 uv){vec2 size=vec2(textureSize(tDepth,0));uv=(clamp(floor(uv*size),vec2(0.),size-1.)+.5)/size;float d=texture2D(tDepth,uv).r;vec4 p=invProj*vec4(uv*2.-1.,reversed>.5?max(d,1e-7):d*2.-1.,1.);return p.xyz/p.w;}
 bool skyAt(vec2 uv){float d=texture2D(tDepth,uv).r;return reversed>.5?d<=0.:d>=1.;}
 `;
 interface MotionRecord { previous: T.Matrix4; current: T.Matrix4; last: number; queued: number }
 const rt = (depthBuffer = false) => new T.WebGLRenderTarget(1, 1, { type: T.HalfFloatType, depthBuffer });
 
-// Object/camera motion vectors, half-res temporal SSAO, HDR neighbourhood-clipped TAA.
+// Object/camera motion vectors, half-res temporal GTAO, HDR neighbourhood-clipped TAA.
 // Buffers and matrix records are reused; first-seen objects allocate only during prewarm/spawn.
 export class TemporalFrame {
   enabled = true;
@@ -75,6 +77,9 @@ export class TemporalFrame {
       uniforms: { ...common(), frame: { value: 0 } }, vertexShader: vert, depthTest: false, depthWrite: false,
       fragmentShader: /* glsl */ `${reconstruct}
         uniform sampler2D tMotion,tHistory;uniform float valid,frame;uniform vec2 texel;
+        // Cosine-weighted horizon integral on a view-aligned slice. Integrate both
+        // sides of the projected normal's hemisphere, then normalize by the open arc.
+        float arc(float h,float n){return .25*(cos(n)+2.*h*sin(n)-cos(2.*h-n));}
         void main(){vec3 p=viewAt(vUv);float d=-p.z*.001;
           if(skyAt(vUv)||-p.z>180.){gl_FragColor=vec4(1.,d,0.,1.);return;}
           // Derivative normal from the nearer depth neighbour avoids silhouette normals.
@@ -82,13 +87,35 @@ export class TemporalFrame {
           vec3 b=viewAt(vUv-vec2(0.,texel.y))-p,t=viewAt(vUv+vec2(0.,texel.y))-p;
           vec3 n=normalize(cross(abs(l.z)<abs(r.z)?-l:r,abs(b.z)<abs(t.z)?-b:t));
           if(dot(n,-p)<0.)n=-n;
-          float radius=.65;float screenRadius=clamp(radius/max(.001,-p.z*invProj[1][1]),texel.y*2.,.12);
-          float sum=0.;float angle=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)+frame*.125;
-          for(int i=0;i<8;i++){float a=(float(i)/8.+angle)*6.283185;vec2 uv=vUv+vec2(cos(a)*texel.x/texel.y,sin(a))*screenRadius*(.3+.7*float(i+1)/8.);
-            vec3 delta=viewAt(uv)-p;float len=length(delta);
-            sum+=max(0.,dot(n,delta/max(len,.001))-.12)*(1.-smoothstep(radius*.3,radius*2.,len));}
-          float ao=clamp(1.-sum*.22,.25,1.);vec4 motion=texture2D(tMotion,vUv);vec2 prev=vUv+motion.xy;vec2 history=texture2D(tHistory,prev).rg;
-          bool accept=valid>.5&&motion.a>.5&&all(greaterThan(prev,vec2(0.)))&&all(lessThan(prev,vec2(1.)))&&abs(history.g-motion.z)<max(.002,motion.z*.025);
+          float radius=mix(.45,1.4,smoothstep(2.,35.,-p.z));
+          float screenRadius=clamp(.5*radius/max(.001,-p.z*invProj[1][1]),texel.y*2.,.12);
+          float visibility=0.;vec3 v=normalize(-p);
+          float angle=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)+frame*.125;
+          for(int slice=0;slice<3;slice++){
+            float a=(float(slice)+angle)*1.04719755;vec2 dir=vec2(cos(a)*texel.x/texel.y,sin(a));
+            vec3 tangent=normalize(vec3(cos(a),sin(a),0.)-v*dot(vec3(cos(a),sin(a),0.),v));
+            float normalAngle=atan(dot(n,tangent),max(.001,dot(n,v)));
+            vec2 horizon=vec2(-1.);
+            for(int step=1;step<=4;step++){
+              float stride=float(step*step)/16.;
+              for(int side=0;side<2;side++){
+                vec2 uv=vUv+dir*screenRadius*stride*(side==0?-1.:1.);
+                vec3 delta=viewAt(uv)-p;float len=length(delta);
+                // Finite thickness/radius reject foreground silhouettes and distant sky.
+                float candidate=dot(delta/max(len,.001),v);
+                // Tangent-plane bias: the receiver itself is not an occluder. This
+                // also rejects quantized depth on grazing, otherwise flat panels.
+                candidate=mix(-1.,candidate,smoothstep(.02,.06,dot(n,delta)/max(len,.001)));
+                candidate=mix(-1.,candidate,1.-smoothstep(radius*.5,radius*1.5,len));
+                horizon[side]=max(horizon[side],candidate);
+              }
+            }
+            float lo=max(-1.570796,normalAngle-1.570796),hi=min(1.570796,normalAngle+1.570796);
+            float h0=clamp(-acos(clamp(horizon.x,-1.,1.)),lo,hi),h1=clamp(acos(clamp(horizon.y,-1.,1.)),lo,hi);
+            visibility+=clamp((arc(h0,normalAngle)+arc(h1,normalAngle))/max(.001,arc(lo,normalAngle)+arc(hi,normalAngle)),0.,1.);
+          }
+          float ao=clamp(visibility/3.,.15,1.);vec4 motion=texture2D(tMotion,vUv);vec2 prev=vUv+motion.xy;vec2 history=texture2D(tHistory,prev).rg;
+          bool accept=valid>.5&&motion.a>.5&&all(greaterThan(prev,vec2(0.)))&&all(lessThan(prev,vec2(1.)))&&abs(history.g-motion.z)<max(${HISTORY_DEPTH_ABS},motion.z*${HISTORY_DEPTH_REL});
           if(accept)ao=mix(ao,clamp(history.r,ao-.15,ao+.15),.85);
           gl_FragColor=vec4(ao,d,0.,1.);}`,
     });
@@ -109,8 +136,8 @@ export class TemporalFrame {
           for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){vec3 s=compress(texture2D(tColor,vUv+vec2(x,y)*texel).rgb*factor);lo=min(lo,s);hi=max(hi,s);}
           vec4 hist=texture2D(tHistory,prev);vec3 h=clamp(compress(hist.rgb),lo,hi);
           bool inside=all(greaterThan(prev,vec2(0.)))&&all(lessThan(prev,vec2(1.)));
-          bool depthOK=sky?hist.a>250.:(motion.a>.5&&abs(hist.a-motion.z)<max(.002,motion.z*.025));
-          float reactive=clamp(length(c-h)*5.,0.,1.);float weight=valid*float(inside&&depthOK)*mix(.9,.25,reactive);
+          bool depthOK=sky?hist.a>250.:(motion.a>.5&&abs(hist.a-motion.z)<max(${HISTORY_DEPTH_ABS},motion.z*${HISTORY_DEPTH_REL}));
+          float reactive=clamp(length(c-h)*5.,0.,1.);float weight=valid*float(inside&&depthOK)*mix(.85,.15,reactive);
           // Transparent HDR effects have no reliable motion: reduce history near high-energy transients.
           weight*=1.-smoothstep(2.,8.,max(raw.r,max(raw.g,raw.b)))*.85;
           c=expand(mix(c,h,weight));

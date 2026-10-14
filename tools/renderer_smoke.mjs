@@ -1,6 +1,8 @@
 // Runtime assertions including hardware without WebGPU and without reversed-Z support.
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+const output=process.env.RENDERER_OUTPUT??'docs/phase10/shots/01';
+await fs.mkdir(output,{recursive:true});
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE??'playwright');
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});
 const results=[];
@@ -64,21 +66,21 @@ try{
    return {forward,webgpu:!!navigator.gpu,webgl2:e.renderer.getContext() instanceof WebGL2RenderingContext,reversed:e.reversed,scans,programs,weatherPrograms,texturesBefore,texturesAfter,projectionRestored,cut,ao,resolved,frontUpdated,studioScan,vector,expected};
   },forward);
   const jpg=await p.evaluate(()=>{sws.vqa.quality('low');sws.gallery.setup('waist');sws.step(24,1/60,true);return sws.shot(.65);});
-  await fs.writeFile(`docs/phase10/shots/01/fallback-${forward?'forward':'reversed'}-low.jpg`,Buffer.from(jpg.split(',')[1],'base64'));
+  await fs.writeFile(`${output}/fallback-${forward?'forward':'reversed'}-low.jpg`,Buffer.from(jpg.split(',')[1],'base64'));
   if(!forward){
    await p.evaluate(()=>sws.game.startMenu());await p.locator('#title [data-a="settings"]').click();
    await p.locator('#settings summary').click();
    await p.locator('[data-k="quality"]').selectOption('cinematic');await p.locator('[data-k="lensDirt"]').selectOption('false');
    result.settings=await p.evaluate(()=>({quality:sws.engine.quality,lensDirt:sws.engine.post.lensDirt,saved:JSON.parse(localStorage.getItem('sws3d.settings.v2')).lensDirt}));
    assert.equal(result.settings.quality,'cinematic');assert.equal(result.settings.lensDirt,false);assert.equal(result.settings.saved,false);
-   await p.evaluate(()=>sws.engine.render(1/60));await p.screenshot({path:'docs/phase10/shots/01/settings-en.jpg',type:'jpeg',quality:65});
+   await p.evaluate(()=>sws.engine.render(1/60));await p.screenshot({path:`${output}/settings-en.jpg`,type:'jpeg',quality:65});
    await p.locator('[data-lang]').selectOption('ar');await p.locator('#settings summary').click();assert.equal(await p.locator('option[value="cinematic"]').textContent(),'سينمائية');
    assert.match(await p.locator('[data-k="lensDirt"]').locator('..').textContent(),/اتساخ العدسة/);
-   await p.evaluate(()=>sws.engine.render(1/60));await p.screenshot({path:'docs/phase10/shots/01/settings-ar.jpg',type:'jpeg',quality:65});
+   await p.evaluate(()=>sws.engine.render(1/60));await p.screenshot({path:`${output}/settings-ar.jpg`,type:'jpeg',quality:65});
   }
   result.errors=errors;results.push(result);
   console.log(JSON.stringify(result,null,2));
-  await fs.mkdir('docs/phase10/shots/01',{recursive:true});await fs.writeFile('docs/phase10/shots/01/smoke.json',JSON.stringify(results,null,2));
+  await fs.mkdir(output,{recursive:true});await fs.writeFile(`${output}/smoke.json`,JSON.stringify(results,null,2));
   assert.equal(errors.length,0);assert.equal(result.webgpu,false);assert.equal(result.webgl2,true);assert.equal(result.reversed,!forward);
   assert.ok(Math.abs(result.vector[0]-result.expected)<.001,'object motion vector');assert.equal(result.vector[3],1);
   assert.equal(result.projectionRestored,true);assert.equal(result.frontUpdated,true);

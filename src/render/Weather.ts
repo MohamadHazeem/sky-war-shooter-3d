@@ -60,7 +60,7 @@ const WALL_FAR = 46000, WALL_NEAR = 4500, WALL_GONE = 1500;   // m
 const SUN = 0, SUN_I = 3, ZEN = 4, HOR = 7, GND = 10, AMB = 13, ENV_FLOOR = 14, ENV_I = 15, LOW = 16, HIGH = 17, HAZE = 18, NIGHT = 19, DARK = 20, EXPO = 21, LIFT = 22;
 const N = 23;
 const BASE_EXPOSURE = 1.06;                                      // PostFX.baseExposure by day
-const BASE_LIFT = new THREE.Vector3(0.016, 0.014, 0.011);        // PostFX.grade.lift by day
+const BASE_LIFT = new THREE.Vector3(0.003, 0.004, 0.006);        // PostFX.grade.lift by day
 type Sky = Float64Array;
 
 function skyFor(w: Weather, o: Sky): Sky {

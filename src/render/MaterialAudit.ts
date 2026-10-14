@@ -1,3 +1,4 @@
+import { cloudSurfaceUniforms } from './CloudSurfaceShadow';
 import * as T from 'three';
 import { cascadeUniform } from './SunCascades';
 const audited=new WeakSet<T.Material>();
@@ -13,6 +14,6 @@ export function auditMaterial(m:T.Material){
   materialAudit.pbr++;
  }else if((m as T.ShaderMaterial).isShaderMaterial){materialAudit.shader++;return;}else materialAudit.unlit++;
  const before=m.onBeforeCompile,cache=m.customProgramCacheKey.bind(m),hook=before.toString();
- m.onBeforeCompile=(shader,renderer)=>{before.call(m,shader,renderer);shader.uniforms.swsShadowRanges=cascadeUniform;};
+ m.onBeforeCompile=(shader,renderer)=>{before.call(m,shader,renderer);shader.uniforms.swsShadowRanges=cascadeUniform;Object.assign(shader.uniforms,cloudSurfaceUniforms);};
  m.customProgramCacheKey=()=>cache()+'|renderer10|'+hook;
 }

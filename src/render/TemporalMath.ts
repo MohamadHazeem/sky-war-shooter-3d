@@ -7,4 +7,5 @@ export function halton(index: number, base: number): number {
 export const JITTER = Array.from({ length: 8 }, (_, i) => [halton(i + 1, 2) - .5, halton(i + 1, 3) - .5] as const);
 export const adaptationWeight = (dt: number, brightening: boolean) => 1 - Math.exp(-Math.max(0, Math.min(dt, .1)) * (brightening ? 1.2 : 3));
 export const exposureTarget = (luminance: number) => Math.max(.65, Math.min(1.6, .3 / Math.max(luminance, .001)));
-export const historyDepthMatches = (previous: number, expected: number) => Math.abs(previous - expected) < Math.max(.002, expected * .025);
+export const HISTORY_DEPTH_ABS = .00015, HISTORY_DEPTH_REL = .012;
+export const historyDepthMatches = (previous: number, expected: number) => Math.abs(previous - expected) < Math.max(HISTORY_DEPTH_ABS, expected * HISTORY_DEPTH_REL);

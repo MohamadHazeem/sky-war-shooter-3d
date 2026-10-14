@@ -141,7 +141,7 @@ visuals while retaining fog, spotting and other gameplay rules. Glass overlays r
 
 `Engine` retains WebGL2 (including ordinary depth when `EXT_clip_control` is absent). Its pipeline is
 opaque HDR/depth → clouds → transparent HDR effects → object/camera velocity → half-resolution temporal
-SSAO → HDR TAA → metered exposure, bloom, ACES fit, mood LUT, sharpening/lens effects → display.
+GTAO → HDR TAA → metered exposure, bloom, ACES fit, mood LUT, sharpening/lens effects → display.
 `TemporalFrame.begin/end` jitter and restore the projection; its histories reset on resize, quality
 changes, camera cuts and floating-origin shifts. Mesh transforms include prop rotations; transparent
 sprites use neighbourhood clipping and an HDR reactive weight rather than fabricated object velocity.
@@ -167,3 +167,28 @@ Renderer verification: start `npx vite --port 5301 --strictPort`, then run
 `PLAYWRIGHT_MODULE=/existing/playwright/index.mjs node tools/renderer_smoke.mjs` and
 `node tools/renderer_check.mjs after` with the same environment variable. The latter consumes the
 committed baseline camera/root-pose snapshots. See `docs/phase10/reports/01.md` for measurements and limits.
+
+### Goal 01b visible lighting and render cost
+
+Sun cascades blend visibility before a single sun BRDF evaluation. PCF depth bias follows
+ordinary/reversed depth, with smaller near normal bias; mid/far refreshes are staggered.
+`CloudSurfaceShadow.ts` samples the existing upper-deck transmittance map at each receiver's
+sun-ray intersection. The old camera-only asynchronous probe has been removed. `World.prewarm`
+continues to warm the complete pipeline, including `LensScatter.ts` (quarter-resolution lens
+flare/light shafts). The sky draws last at the far plane, allowing early depth rejection behind
+opaque aircraft/interiors. High retains a 1080p main image, with 0.45-scale / 56-step clouds.
+
+`TemporalFrame` integrates three bidirectional horizon slices for contact GTAO. Reconstructed
+positions are snapped to the depth texel actually sampled, avoiding false self-occlusion on
+sloping panels. Closer depth rejection and less history weight keep moving cockpit details crisp.
+Lower environment-floor/hemi/rim fill and satin paint roughness separate sunlit metal from shadow;
+print contrast and cool shadows are graded per mood while the existing bounded exposure remains.
+
+The full goal-00 fixture rig is now available on this branch: run `node tools/visual_rig.mjs
+--url http://127.0.0.1:5301 --out docs/phase10/shots/01b/after` (one shell line). It uses installed
+Playwright/Chrome and creates 16 isolated 1080p fixtures; `--quality ultra` selects Ultra.
+`tools/renderer_visible_contact.mjs` asserts matching poses/weather before making the comparison.
+`tools/renderer_visible_runtime.mjs` verifies flat-plane/crevice AO and actual geometric/cloud
+shadow attenuation on the GPU, with and without reversed depth. Existing renderer smoke/perf
+scripts accept `RENDERER_OUTPUT` so new runs do not overwrite goal 01 evidence.
+See [the 01b report](phase10/reports/01b.md) for measured budgets and remaining limits.

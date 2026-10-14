@@ -271,9 +271,6 @@ void main() {
   // light scattered around the cloud softens its shadow (multiple scattering): 3/4 of the optical depth
   gl_FragColor = vec4(max(exp(-od * 0.0042 * 0.75), 0.1), 0.0, 0.0, 1.0);
 }
-#elif defined(PROBE_PASS)
-// One texel: the upper layer's shadow at the camera (aircraft lighting, read back asynchronously)
-void main() { gl_FragColor = vec4(cloudShadow(uCamPos), 0.0, 0.0, 1.0); }
 #else
 void main() {
   vec3 rd;
@@ -502,7 +499,6 @@ export class CloudRenderer {
   private tMat: THREE.ShaderMaterial;         // jittered march with MRT depth (temporal path)
   private resolveMat: THREE.ShaderMaterial;
   private shadowMat: THREE.ShaderMaterial;
-  private probeMat: THREE.ShaderMaterial;
   private compMat: THREE.ShaderMaterial;
   private uniforms: Record<string, THREE.IUniform>;
   // legacy output; temporal path: this frame's quarter-res jittered march (colour + depth)
@@ -511,7 +507,6 @@ export class CloudRenderer {
   private cur: THREE.WebGLRenderTarget;
   private hist: THREE.WebGLRenderTarget[];
   private shadowRT: THREE.WebGLRenderTarget;
-  private probeRT: THREE.WebGLRenderTarget;
   private idx = 0;
   private histOK = false;
   private frameN = 0;
@@ -520,8 +515,6 @@ export class CloudRenderer {
   private prevCamFwd = new THREE.Vector3();
   private prevFov = 0;
   private prevWind = new THREE.Vector3();
-  private probeBusy = false;
-  private probeBuf = new Uint8Array(4);
   scale = 0.5;
   steps = 56;
   temporal = false;
@@ -532,10 +525,6 @@ export class CloudRenderer {
   alpha = 0.3;            // history blend: weight of a texel's fresh sample (one frame in four)
   shadowSize = 52000;     // world extent (m) of the cloud shadow map
   shadowRes = 256;
-  // Upper-layer cloud shadow at the camera (0..1, 1 = full sun), smoothed: Engine dims the
-  // sun light on the aircraft with it
-  sunShadow = 1;
-  private sunShadowTarget = 1;
 
   constructor(reversed: boolean) {
     const halfRT = (count = 1) => {
@@ -550,7 +539,6 @@ export class CloudRenderer {
     this.hist = [halfRT(), halfRT()];
     this.shadowRT = halfRT();
     this.shadowRT.setSize(this.shadowRes, this.shadowRes);
-    this.probeRT = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false });
     const shared = {
       ...atmosUniforms,
       tDepth: { value: null as THREE.Texture | null },
@@ -591,7 +579,7 @@ export class CloudRenderer {
       uShadowBox: { value: new THREE.Vector3(0, 0, this.shadowSize) },
       ...cloudTargetUniforms,
     };
-    // one source, four programs: legacy march, temporal march (MRT), shadow map, shadow probe
+    // one source, three programs: legacy march, temporal march (MRT), shadow map
     const march = (defines: Record<string, number>, glsl3 = false) => new THREE.ShaderMaterial({
       uniforms: this.uniforms,
       defines,
@@ -604,7 +592,6 @@ export class CloudRenderer {
     this.mat = march({});
     this.tMat = march({ TEMPORAL: 1, SHADOWMAP: 1, SILVER: 1 }, true);
     this.shadowMat = march({ SHADOW_PASS: 1, SHADOWMAP: 1 });
-    this.probeMat = march({ PROBE_PASS: 1, SHADOWMAP: 1 });
     this.resolveMat = new THREE.ShaderMaterial({
       uniforms: {
         tCur: { value: null }, tCurD: { value: null }, tHist: { value: null }, uSub: { value: new THREE.Vector2() },
@@ -704,26 +691,7 @@ export class CloudRenderer {
     this.quad.material = this.shadowMat;
     renderer.setRenderTarget(this.shadowRT);
     this.quad.render(renderer);
-    // aircraft: sample the shadow at the camera now and then, read back without stalling
-    if (!this.probeBusy && (this.frameN & 7) === 0) {
-      this.quad.material = this.probeMat;
-      renderer.setRenderTarget(this.probeRT);
-      this.quad.render(renderer);
-      this.probeBusy = true;
-      renderer.readRenderTargetPixelsAsync(this.probeRT, 0, 0, 1, 1, this.probeBuf)
-        .then(() => { this.sunShadowTarget = this.probeBuf[0] / 255; })
-        .catch(() => { /* lost context or unsupported: keep full sun */ })
-        .finally(() => { this.probeBusy = false; });
-    }
-  }
-
-  /** Compile the infrequent shadow probe during mission warm-up, without a readback. */
-  warmProbe(renderer: THREE.WebGLRenderer) {
-    if (!this.temporal || !this.shadows) return;
-    const target = renderer.getRenderTarget(), material = this.quad.material;
-    this.quad.material = this.probeMat;
-    renderer.setRenderTarget(this.probeRT); this.quad.render(renderer);
-    this.quad.material = material; renderer.setRenderTarget(target);
+    // Surface materials sample this map directly; no per-frame CPU probe/readback.
   }
 
   // Dev (gallery): render the shadow map around the camera and read it back synchronously.
@@ -732,10 +700,7 @@ export class CloudRenderer {
     const tex = this.uniforms.tDepth.value as THREE.Texture | null;
     camera.updateMatrixWorld();
     this.syncUniforms(camera, tex as THREE.Texture, time);
-    const busy = this.probeBusy;
-    this.probeBusy = true;   // no probe readback from this call
     this.renderShadowMap(renderer);
-    this.probeBusy = busy;
     const n = this.shadowRes;
     const buf = new Uint16Array(n * n * 4);
     renderer.readRenderTargetPixels(this.shadowRT, 0, 0, n, n, buf);
@@ -786,10 +751,8 @@ export class CloudRenderer {
       renderer.setRenderTarget(this.legacyRT);
       this.quad.render(renderer);
       cloudTex = this.legacyRT.texture;
-      this.sunShadowTarget = this.sunShadow = 1;
       this.histOK = false;
     }
-    this.sunShadow += (this.sunShadowTarget - this.sunShadow) * Math.min(1, dt * 3);
     this.compMat.uniforms.tClouds.value = cloudTex;
     this.compMat.uniforms.tScene.value = sceneRT.texture;
     renderer.setRenderTarget(out);

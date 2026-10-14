@@ -14,3 +14,6 @@ trailer-out/
 tools/voice/.cache/
 
 .vite-cache/
+
+# Lossless local rig sources; review JPEGs and metadata are committed.
+docs/phase10/shots/**/*.png

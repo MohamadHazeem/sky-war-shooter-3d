@@ -333,7 +333,6 @@ export class World implements WorldView {
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     const unwarmTargetSmoke = warmTargetSmoke(this.scene);
     this.engine.precipitation.warm(render);
-    this.engine.clouds.warmProbe(this.engine.renderer);
     this.ditchingSea.warm(render, this.playerBomber?.root ?? b17.root);
     this.engine.renderer.shadowMap.needsUpdate = true;
     this.engine.warmRenderer();

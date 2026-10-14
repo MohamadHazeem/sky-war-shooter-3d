@@ -23,8 +23,8 @@ import { installSurfaceDetail, prepareSurface } from './SurfaceDetail';
 // player's B-17 from the gun positions) and, right at the camera, part of the fill (cockpit and
 // fuselage interiors stay readable). Enemies further out stay dark: their exhaust flames, the
 // searchlights and the flares find them, as designed.
-export const RIM_STRENGTH = 0.75;
-export const HEMI_DAY = 0.35;          // hemisphere intensity on a clear day
+export const RIM_STRENGTH = 0.18;
+export const HEMI_DAY = 0.22;          // hemisphere intensity on a clear day
 const DIM_REF = HEMI_DAY * 0.7 * 0.9;  // brightest sky channel of the fill at dusk (no boost above it)
 const RIM_GLSL = /* glsl */ `
 #define SWS_RIM ${RIM_STRENGTH.toFixed(3)}
@@ -131,11 +131,11 @@ const LOOKS: { test: RegExp; look: Look }[] = [
   // gun barrels, exhausts, undercarriage: worn bare metal
   { test: /gun|exhaust|gear/i, look: { rough: 0.4, metal: 0.65, env: 0.9 } },
   // engine nacelles and cowlings: painted but oily, a little glossier than the skin
-  { test: /engine/i, look: { rough: 0.46, metal: 0, env: 0.8 } },
+  { test: /engine/i, look: { rough: 0.34, metal: 0, env: 0.55 } },
 ];
 // airframe skin: satin painted metal (olive drab / RLM greys) with a crisp sun highlight
-// (big flat surfaces seen edge-on mirror the bright sky below ~0.6 roughness and lose their paint)
-const SKIN: Look = { rough: 0.66, metal: 0, env: 0.6 };
+// Reduced environment-floor radiance allows satin highlights without washing out the paint.
+const SKIN: Look = { rough: 0.43, metal: 0, env: 0.48 };
 // natural-metal P-51: polished aluminium
 const BARE: Look = { rough: 0.32, metal: 1, env: 0.9 };
 
