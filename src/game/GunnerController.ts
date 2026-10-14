@@ -11,7 +11,6 @@ import { buildM2, buildTailInterior, buildTurret, buildWaistInterior, GunModel }
 import { Loadout, Progression } from './Upgrades';
 import type { Fighter } from '../world/Aircraft';
 import { sound } from '../audio/Sound';
-import { bulletHoleTexture } from '../render/Textures';
 import { Atmos } from '../render/Atmosphere';
 import { DustMotes } from './DustMotes';
 import { KeyAim, KEY_AIM_RATE } from './KeyAim';
@@ -21,6 +20,7 @@ import { crewSeatLoadout } from './CrewRoster';
 import { LivingInterior } from './LivingInterior';
 import { Brass } from './Brass';
 import { TAIL_FLOOR, TAIL_HALF_WIDTH, FREE_LOOK_YAW, FREE_LOOK_UP, stationShafts, disposeStationDetails } from './TurretInteriors';
+import { InteriorDamage, holeLightMaterials } from './InteriorDamage';
 import { GunnerGlass } from './GlassFx';
 
 interface StationState extends SurvivalGun {
@@ -70,6 +70,7 @@ export class GunnerController {
   private ballShafts = stationShafts('ball');
   private tailShafts = stationShafts('tail');
   private shaftSun = new THREE.Vector3();
+  readonly interiorDamage = new InteriorDamage();
   readonly glassFx: GunnerGlass;   // rain, glints, oil, frost and cracks on the turret / tail glass (GlassFx.ts)
   cold = 0.5;      // 0..1 how cold the mission is (frost on the windows; set by Game per mission)
   // free look (hold C): the head turns away from the gun to look around the compartment
@@ -149,6 +150,7 @@ export class GunnerController {
     const wl = STATIONS.waistL.pivot, wr = STATIONS.waistR.pivot;
     this.waistInterior = buildWaistInterior((wl.z + wr.z) / 2, wl.z, wr.z);
     bomber.root.add(this.waistInterior);
+    this.waistInterior.add(this.interiorDamage.group);
     // sunlit dust specks in the waist section, hidden with the interior
     this.dust?.dispose();
     this.dust = new DustMotes(new THREE.Vector3(0, STATIONS.waistL.pivot.y, (wl.z + wr.z) / 2), wl.z, wr.z);
@@ -226,6 +228,7 @@ export class GunnerController {
     this.rig.children.filter((c) => c !== this.gunPivot).forEach((c) => this.rig.remove(c));
     this.muzzleLight.intensity = 0;
     this.living.detach();
+    this.interiorDamage.reset();
     for (const id of ['ball', 'tail'] as const) {
       const detail = this.interiors[id]?.getObjectByName(id + 'LivingInterior');
       if (detail) { disposeStationDetails(detail); detail.removeFromParent(); }
@@ -287,30 +290,10 @@ export class GunnerController {
 
   private addHole(p: THREE.Vector3, n: THREE.Vector3, sunLocal: THREE.Vector3, size = 1, debris = true) {
     const wi = this.waistInterior!;
-    this.holeMat ??= new THREE.MeshBasicMaterial({ map: bulletHoleTexture(), transparent: true, depthWrite: false, color: new THREE.Color(3.2, 3.1, 2.9), polygonOffset: true, polygonOffsetFactor: -2 });
-    this.beamMat ??= new THREE.ShaderMaterial({
-      uniforms: { uCol: { value: new THREE.Color() } },
-      vertexShader: /* glsl */ `
-        varying float vF; varying float vL;
-        void main() {
-          vec4 wp = modelMatrix * vec4(position, 1.0);
-          vec3 n = normalize(mat3(modelMatrix) * normal);
-          vec3 v = normalize(cameraPosition - wp.xyz);
-          vF = abs(dot(n, v));
-          vL = uv.y;
-          gl_Position = projectionMatrix * viewMatrix * wp;
-        }`,
-      fragmentShader: /* glsl */ `
-        uniform vec3 uCol; varying float vF; varying float vL;
-        void main() {
-          float a = pow(vF, 4.0) * smoothstep(0.0, 0.05, 1.0 - vL) * smoothstep(0.0, 0.45, vL) * (0.3 + 0.7 * vL);
-          gl_FragColor = vec4(uCol * a, 1.0);
-        }`,
-      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-    });
-    this.skyBeamMat ??= this.beamMat.clone();
-    this.beamMat.uniforms.uCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.028);
-    this.skyBeamMat.uniforms.uCol.value.setRGB(0.55, 0.66, 0.85).multiplyScalar(0.012 + Atmos.sunIntensity * 0.004);
+    const materials = holeLightMaterials();
+    this.holeMat = materials.hole; this.beamMat = materials.sun; this.skyBeamMat = materials.sky;
+    this.beamMat.uniforms.uCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.004);
+    this.skyBeamMat.uniforms.uCol.value.setRGB(0.55, 0.66, 0.85).multiplyScalar(0.004 + Atmos.sunIntensity * 0.001);
     const g = new THREE.Group();
     const hole = new THREE.Mesh(this.holeGeo, this.holeMat);
     const hs = (0.045 + Math.random() * 0.03) * size;
@@ -335,6 +318,7 @@ export class GunnerController {
     this.holes.push(g);
     if (this.holes.length > 48) this.holes.shift()!.removeFromParent();
     if (!debris) return;
+    this.interiorDamage.hit(p, n, size > 2);
     // splinters and dust inside the fuselage; big hits blow debris through the compartment
     const b = this.bomber!;
     const wpos = b.localToWorld(p.clone().addScaledVector(n, -0.05));
@@ -568,6 +552,7 @@ export class GunnerController {
     this.updateCamera(adt);
     this.world.playerAimDir.copy(this.aimDirection());
     this.updateLiving(dt);
+    this.interiorDamage.update(dt, this.bomber, this.world.effects, this.cold, this.engine.quality === 'low', this.station === 'waistL' || this.station === 'waistR');
     this.glassFx.update(dt, this.station, this.adsK, Math.max(this.cold, life.chill));
     if (this.station === 'ball' || this.station === 'tail') {
       this.interiors[this.station]!.getWorldQuaternion(_q).invert();

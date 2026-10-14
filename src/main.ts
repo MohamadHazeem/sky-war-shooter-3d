@@ -150,6 +150,8 @@ async function boot() {
     // Visual QA sweep: NaN / black / blown-white detector and view helpers (src/dev/visualQa.ts)
     const { visualQa } = await import('./dev/visualQa');
     (window as any).sws.vqa = visualQa(engine, game);
+    const { hitFeedbackQa } = await import('./dev/hitFeedbackQa');
+    (window as any).sws.hitFeedback = hitFeedbackQa(engine, game);
     const { seaQa } = await import('./dev/seaQa');
     (window as any).sws.sea = seaQa(engine, game);
   }

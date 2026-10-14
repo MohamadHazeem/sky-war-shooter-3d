@@ -25,9 +25,20 @@ import { frostTexture } from './InteriorFx';
 //  - frost from the frame edges of the turret glass in cold missions (InteriorFx approach).
 //  - bullet cracks: up to four procedural spider-web cracks per pane, kept for the mission.
 // Every effect is pushed back around the gunsight centre (and almost gone there in ADS).
-// Quality Low hides the overlay. The material is one program for every pane (warmGlassFx).
+// Low keeps only battle damage on gunner glass; weather, frost and wear stay hidden.
+// The material is one program for every pane (warmGlassFx).
 
 const MAX_CRACKS = 4;
+const GLASS_STATIONS = ['top', 'ball', 'tail'] as const;
+
+/** Swept closest approach: catches a fast crossing between the 10 Hz spray ticks. */
+export function sprayExposure(p: THREE.Vector3, velocity: THREE.Vector3, dt: number) {
+  const speed2 = velocity.lengthSq();
+  if (speed2 < 144) return 0;
+  const ago = THREE.MathUtils.clamp(p.dot(velocity) / speed2, 0, dt);
+  const x = p.x - velocity.x * ago, y = p.y - velocity.y * ago, z = p.z - velocity.z * ago;
+  return Math.max(0, 1 - Math.hypot(x, y, z) / 32);
+}
 const SHAPE_CANOPY = 0, SHAPE_SPHERE = 1, SHAPE_PLANE = 2;
 
 const VERT = /* glsl */ `
@@ -308,7 +319,8 @@ const FRAG = /* glsl */ `
       float r = length(c);
       if (r > size) continue;
       float ang = atan(c.y, c.x) / 6.2832 + 0.5;
-      float N = 9.0;
+      float heavy = step(0.1, size);
+      float N = mix(6.0, 11.0, heavy);
       float fa = ang * N;
       float sec = floor(fa);
       vec2 sh = h22(vec2(sec, seed));
@@ -322,7 +334,7 @@ const FRAG = /* glsl */ `
       for (int k = 0; k < 3; k++) {
         float rk = size * (0.14 + 0.17 * float(k)) * (1.0 + 0.12 * (vnoise(vec2(fa * 1.3, seed + float(k) * 5.0)) - 0.5));
         float on = step(0.3, h12(vec2(sec + float(k) * 13.0, seed)));
-        ring += on * (1.0 - smoothstep(0.0, lw, abs(r - rk))) * step(rk, len);
+        ring += heavy * on * (1.0 - smoothstep(0.0, lw, abs(r - rk))) * step(rk, len);
       }
       float core = (1.0 - smoothstep(size * 0.06, size * 0.13, r)) * (0.6 + 0.4 * vnoise(c * 900.0));   // crushed, frosted
       float hole = 1.0 - smoothstep(size * 0.028, size * 0.036, r);
@@ -506,6 +518,19 @@ export class GlassPane {
     if (this.cracks >= MAX_CRACKS || !this.mesh.parent) return false;
     _ray.set(eye, _v.copy(toward).sub(eye).normalize());
     _ray.far = 3;
+    return this.crackOnRay(size);
+  }
+
+  crackFromSegment(start: THREE.Vector3, end: THREE.Vector3, size: number): boolean {
+    if (this.cracks >= MAX_CRACKS || !this.mesh.parent) return false;
+    _v.copy(end).sub(start);
+    _ray.far = _v.length();
+    if (_ray.far < 1e-6) return false;
+    _ray.set(start, _v.normalize());
+    return this.crackOnRay(size);
+  }
+
+  private crackOnRay(size: number): boolean {
     _hits.length = 0;
     this.mesh.updateWorldMatrix(true, false);
     this.mesh.raycast(_ray, _hits);
@@ -746,6 +771,8 @@ export class GunnerGlass {
   private t = 0;
   private lastCrack = -99;
   private station: StationId | null = null;
+  private sprayTick = 0;
+  private sprayCooldown = 0;
 
   constructor(private engine: Engine, private world: World) {
     hookHits(world, (e) => this.onHit(e));
@@ -780,7 +807,8 @@ export class GunnerGlass {
     this.engines = [0, 1, 2, 3].map((i) => bomber.zone(`engine${i + 1}`) ?? null);
     this.t = 0;
     this.lastCrack = -99;
-    for (const id of ['top', 'ball', 'tail'] as GlassStation[]) {
+    this.sprayTick = this.sprayCooldown = 0;
+    for (const id of GLASS_STATIONS) {
       const p = this.pane(id);
       groups[id].add(p.mesh);
       p.setFrame(p.mesh);
@@ -811,10 +839,13 @@ export class GunnerGlass {
     const pivot = st === 'top' ? _v.set(0, 1.5, 1.15) : st === 'ball' ? _v.set(0, -1.45, -4.65) : _v.set(0, 0.3, -15.6);
     if (local.distanceTo(pivot) > 2.2) return;   // a round through this part of the ship
     const t = this.world.time;
-    if (t - this.lastCrack < 1.5 || Math.random() > (e.cannon ? 0.7 : 0.25)) return;
-    const eye = this.engine.camera.position;
-    const from = _v2.copy(e.point).addScaledVector(_v.copy(e.bulletVel).sub(b.vel).normalize(), -2);
-    if (pane.crackFromRay(eye, from, e.cannon ? 0.12 : 0.055 + Math.random() * 0.03) || pane.crackFromRay(eye, e.point, 0.06)) this.lastCrack = t;
+    if (t - this.lastCrack < 0.12) return;
+    // Use the projectile trajectory, not a ray from the eye to the attacker.
+    _n.copy(e.bulletVel).sub(b.vel).normalize();
+    if (_n.lengthSq() < 0.1) _n.copy(this.engine.camera.position).sub(e.point).normalize();
+    _hp.copy(e.point).addScaledVector(_n, -4);
+    _hn.copy(e.point).addScaledVector(_n, 4);
+    if (pane.crackFromSegment(_hp, _hn, e.cannon ? 0.14 : 0.065)) this.lastCrack = t;
   }
 
   // ads: 0..1 eye on the sight; cold: mission cold 0..1
@@ -823,6 +854,23 @@ export class GunnerGlass {
     if (!b) return;
     this.station = station;
     this.t += dt;
+    this.sprayTick += dt;
+    this.sprayCooldown = Math.max(0, this.sprayCooldown - dt);
+    if (this.sprayTick >= 0.1) {
+      const step = this.sprayTick; this.sprayTick = 0;
+      const pane = station === 'top' || station === 'ball' || station === 'tail' ? this.panes[station] : null;
+      if (pane && this.sprayCooldown === 0) for (const f of this.world.aircraft) {
+        if (f.team !== 'axis' || f.remove || f.structureFrac > 0.65) continue;
+        _hp.copy(f.pos).sub(this.engine.camera.position);
+        _hn.copy(f.vel).sub(b.vel);
+        const k = sprayExposure(_hp, _hn, step);
+        if (k <= 0) continue;
+        pane.spat = Math.min(0.65, pane.spat + 0.35 * k);
+        pane.oil = Math.min(0.6, pane.oil + 0.16 * k);
+        this.sprayCooldown = 1.5;
+        break;
+      }
+    }
     const target = rainTarget(this.world.time);
     const frost = Math.max(cold * (0.3 + 0.7 * THREE.MathUtils.smoothstep(this.t, 0, 240)), weatherNow.snow * .65);
     // oil from damaged engines streams back over the top turret
@@ -835,7 +883,7 @@ export class GunnerGlass {
     }
     const top = this.panes.top;
     if (top) top.oil = Math.min(0.6, top.oil + dt * rate * 0.004);
-    for (const id of ['top', 'ball', 'tail'] as GlassStation[]) {
+    for (const id of GLASS_STATIONS) {
       const p = this.panes[id];
       if (!p) continue;
       p.wet += (target - p.wet) * Math.min(1, dt / (target > p.wet ? 5 : 20));
@@ -844,12 +892,19 @@ export class GunnerGlass {
     }
     if (station !== 'top' && station !== 'ball' && station !== 'tail') return;
     const pane = this.panes[station];
-    if (!pane || !this.enabled || this.engine.quality === 'low') return;
+    if (!pane || !this.enabled) return;
+    const low = this.engine.quality === 'low';
+    if (low && !pane.crackCount && pane.spat < 0.01) return;
     pane.mesh.visible = true;
     updateEnv(this.engine, this.world.time, 0, 0, 0.17 + 0.08 * ads, 0.6 + 0.35 * ads);
     const air = _v.set(0, 0, -1).applyQuaternion(b.quat);
     const exposure = pane.setFlow(air, b.up(_n), b.vel.length());
-    pane.apply(pane.wet * exposure);
+    pane.apply(low ? 0 : pane.wet * exposure);
+    if (low) {
+      pane.mat.uniforms.uGlint.value = 0;
+      pane.mat.uniforms.uDust.value = 0;
+      pane.mat.uniforms.uFrost.value = 0;
+    } else pane.mat.uniforms.uDust.value = 0.8;
   }
 
   paneForDev(id: GlassStation) { return this.panes[id] ?? null; }

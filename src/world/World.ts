@@ -24,10 +24,11 @@ import { startBomberDeath, updateBomberDeath, clearBomberDeath } from './BomberD
 import { startFighterDeath, updateFighterDeath, clearFighterDeath, rebaseFighterDeath, deathOwned } from './FighterDeath';
 import { hitSounds } from '../audio/HitSounds';
 import { setup as setupDamageLook, update as updateDamageLook } from './DamageLook';
-import { update as updateDamageStages, stageOf, damageStage } from './DamageStages';
+import { update as updateDamageStages, stageOf, damageStage, impact as panelImpact, warmDamageStages } from './DamageStages';
 import { Crew, STATION_CREW } from './Crew';
 import { prewarmBoss } from './BossShip';
 import { prewarmSea } from './SeaWorld';
+import { warmInteriorDamage } from '../game/InteriorDamage';
 import { warmGlassFx } from '../game/GlassFx';
 import { bomberName, dressPlayerBomber } from '../game/Customize';
 import { aiGunnerSkill, crewRoster } from '../game/CrewRoster';
@@ -305,6 +306,8 @@ export class World implements WorldView {
     const unwarmCrew = warmLivingInterior(this.scene, at); // gunner interior: crew, brass, shafts, frost, breath
     const unwarmTurrets = warmTurretViewmodels(this.scene, at);
     const unwarmAA = warmAAGuns(this.scene, at);
+    const unwarmInteriorDamage = warmInteriorDamage(this.scene, at);
+    const unwarmDamage = warmDamageStages(this.scene, at);
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     const unwarmTargetSmoke = warmTargetSmoke(this.scene);
     this.engine.precipitation.warm(render);
@@ -315,6 +318,8 @@ export class World implements WorldView {
     unwarmCrew();
     unwarmTurrets();
     unwarmGlass();
+    unwarmDamage();
+    unwarmInteriorDamage();
     unwarmAA();
     unwarmBoss();
     unwarmSea();
@@ -557,14 +562,15 @@ export class World implements WorldView {
       this.stats.damage += e.damage;
       t.playerDamage += e.damage;
       t.lastPlayerHit = this.time;
-      this.effects.hitFlash(e.point, t.vel);
+      if (t instanceof Fighter && t.team === 'axis') panelImpact(t, e, this.effects, this.listener);
+      else this.effects.hitFlash(e.point, t.vel);
       if (this.playerIncendiary && t instanceof Fighter && t.team === 'axis' && Math.random() < this.playerIncendiary) {
         const eng = t.zone('engine');
         if (eng && !eng.burning) { eng.burning = true; this.effects.sparks(e.point, t.vel, true); }
       }
     }
     const heavy = e.cannon;
-    this.effects.sparks(e.point, t.vel, heavy);
+    if (!(e.playerShot && t instanceof Fighter && t.team === 'axis')) this.effects.sparks(e.point, t.vel, heavy);
     if (t === this.playerBomber) this.bomberDamage.onHit(e);
     if (t === this.player || t === this.playerBomber) {
       sound.playerImpact(heavy);

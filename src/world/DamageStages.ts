@@ -3,6 +3,9 @@ import type { Fighter, HitZone } from './Aircraft';
 import type { Effects } from './Effects';
 import type { ParticleOpts, ParticleSystem } from '../render/Particles';
 import { ENEMY_SCALE } from './World';
+import type { HitEvent } from './Ballistics';
+import { hitPanel } from './DamagePanel';
+import { access } from '../core/Accessibility';
 import { deathOwned } from './FighterDeath';
 
 // Staged battle damage on enemy fighters, driven by structureFrac:
@@ -62,13 +65,15 @@ interface State {
   sputter: number;   // s until the next engine cough / small explosion
   wobble: number;    // 0..1
   phase: number;
-  lastHit: number;   // last seen lastPlayerHit
   hp: Float32Array;  // zone hp at the last update, to find where hits landed
   recent: number;    // zone index that lost hp most recently, -1 none
   holes: Hole[];
   skin: THREE.Mesh[]; // airframe meshes holes are cut into
   glass: THREE.Object3D | null;
   baseQuat: THREE.Quaternion;
+  propSpeed: Float32Array;
+  propAngle: Float32Array;
+  holeCount: number;
 }
 
 const states = new WeakMap<Fighter, State>();
@@ -84,7 +89,6 @@ const _q = new THREE.Quaternion();
 const _e = new THREE.Euler();
 const _z = new THREE.Vector3(0, 0, 1);
 const _ray = new THREE.Raycaster();
-const _hits: THREE.Intersection[] = [];
 const R = () => Math.random() * 2 - 1;
 const O: ParticleOpts = { pos: _p, life: 1, size0: 1, size1: 1, color0: C_GREY };
 
@@ -116,8 +120,12 @@ export function setup(f: Fighter) {
   });
   states.set(f, {
     stage: 0, acc: Math.random() * TICK, sputter: 0.5, wobble: 0, phase: Math.random() * 100,
-    lastHit: f.lastPlayerHit, hp: Float32Array.from(f.zones, (z) => z.hp), recent: -1,
-    holes: [], skin, glass: f.model.getObjectByName('glass') ?? null, baseQuat: f.model.quaternion.clone(),
+    hp: Float32Array.from(f.zones, (z) => z.hp), recent: -1,
+    holes: Array.from({ length: MAX_HOLES }, () => {
+      const rim = new THREE.Mesh(HOLE_GEO, RIM_MAT), obj = new THREE.Mesh(HOLE_GEO, HOLE_MAT);
+      rim.add(obj); rim.visible = false; f.model.add(rim);
+      return { obj, zone: 0 };
+    }), holeCount: 0, propSpeed: new Float32Array(f.props.length).fill(70), propAngle: Float32Array.from(f.propSpin), skin, glass: f.model.getObjectByName('glass') ?? null, baseQuat: f.model.quaternion.clone(),
   });
 }
 
@@ -145,9 +153,19 @@ export function update(f: Fighter, dt: number, worldTime: number, fx: Effects, l
     if (zones[i].hp < st.hp[i]) st.recent = i;
     st.hp[i] = zones[i].hp;
   }
-  if (f.lastPlayerHit !== st.lastHit) {
-    st.lastHit = f.lastPlayerHit;
-    if (listener && near && dist > 200 && st.recent >= 0) hitMark(f, zones[st.recent], fx, listener, dist);
+  // Props lose the blur disc as the engine coughs, then windmill or seize.
+  for (let i = 0; i < f.props.length; i++) {
+    let hp = 1;
+    for (const z of zones) if (z.engine === i) hp = Math.max(0, z.hp / z.maxHp);
+    const failed = f.engineDead[i] || !f.alive;
+    const target = failed ? (hp <= 0 ? 0 : 6) : hp < 0.45 ? 9 + hp * 24 : 70;
+    st.propSpeed[i] += (target - st.propSpeed[i]) * (1 - Math.exp(-dt * 2));
+    st.propAngle[i] += st.propSpeed[i] * dt;
+    if (target === 70) continue;
+    const prop = f.props[i];
+    prop.node.quaternion.copy(prop.base).multiply(_q.setFromAxisAngle(_z, st.propAngle[i]));
+    prop.disc.visible = st.propSpeed[i] > 20;
+    for (const blade of prop.blades) blade.visible = !prop.disc.visible;
   }
 
   if (!f.alive) {
@@ -183,26 +201,38 @@ export function update(f: Fighter, dt: number, worldTime: number, fx: Effects, l
   emitStage(f, st, stage, fx, step, false);
 }
 
-// Range-scaled strike feedback, on top of Effects.hitFlash, so a hit still reads at 500+ m
-function hitMark(f: Fighter, z: HitZone, fx: Effects, listener: THREE.Vector3, dist: number) {
-  const s = Math.min(3, Math.max(1, dist / 300)); // ~constant on-screen size past 300 m
-  _l.set(R(), R(), R()).multiplyScalar(z.radius * 0.4).add(z.offset);
-  f.localToWorld(_l, _w);
-  // zone centres sit inside the airframe: pull the mark out toward the viewer
-  _w.addScaledVector(_v.copy(listener).sub(_w).normalize(), z.radius);
+// The ballistic sphere is larger than the skin. Project the entry onto the actual
+// panel, with a zone-centre fallback for aim-assisted grazing rounds. Event-only rays.
+export function impact(f: Fighter, e: HitEvent, fx: Effects, listener: THREE.Vector3 | null) {
+  const st = states.get(f);
+  const dist = listener ? f.pos.distanceTo(listener) : 0;
+  if (!st || dist > FAR) return;
+  f.root.updateMatrixWorld(true);
+  _n.copy(e.bulletVel).sub(f.vel).normalize();
+  if (_n.lengthSq() < 0.1) _n.copy(f.pos).sub(e.point).normalize();
+  _p.copy(e.point).addScaledVector(_n, -f.radius * 2);
+  _ray.set(_p, _n); _ray.far = f.radius * 4;
+  if (!hitPanel(st.skin, _ray.ray, _ray.far, _w)) {
+    f.localToWorld(e.zone.offset, _w);
+    _ray.ray.direction.copy(_w).sub(_p).normalize();
+    if (!hitPanel(st.skin, _ray.ray, _ray.far, _w)) _w.copy(e.point);
+  }
+  const scale = Math.min(2.4, Math.max(0.65, dist / 300));
   if (fx.glow.count < GLOW_HARD) {
-    emit(fx.glow, _w, f.vel, 0.08, 1.8 * s, 3.4 * s, C_FLASH, undefined, 1, 0, 1, 0, 0, false);
+    emit(fx.glow, _w, f.vel, 0.07, scale, scale * 1.8, C_FLASH, undefined, access.flash, 0, 1, 0, 0, false);
     for (let i = 0; i < 3; i++) {
-      _v.set(R(), R(), R()).normalize().multiplyScalar(25 + Math.random() * 35).add(f.vel);
-      emit(fx.glow, _w, _v, 0.2 + Math.random() * 0.15, 0.4 * s, 0.12 * s, C_SPARK, C_SPARK1, 1, 0, 1, 2.5, -9, false);
+      _v.set(R(), R(), R()).multiplyScalar(22).add(f.vel);
+      emit(fx.glow, _w, _v, 0.18, scale * 0.3, 0.08, C_SPARK, C_SPARK1, access.flash, 0, 1, 2.5, -9, false);
     }
   }
-  if (fx.smoke.count < SMOKE_HARD) {
-    _v.set(R(), R(), R()).multiplyScalar(6).add(f.vel);
-    emit(fx.smoke, _w, _v, 0.8, 0.6 * s, 2.6 * s, C_PAINT, undefined, 0.6, 0, 0, 2.5, 0, true);
-    _v.set(R(), R() + 0.5, R()).normalize().multiplyScalar(15 + Math.random() * 15).add(f.vel);
-    emit(fx.smoke, _w, _v, 0.6, 0.32 * s, 0.18 * s, C_FRAG, undefined, 1, 0.3, 0, 1.2, -9, false);
-  }
+}
+
+// All damage decal variants are rendered during World.prewarm (including hot embers).
+export function warmDamageStages(scene: THREE.Scene, at: THREE.Vector3) {
+  const meshes = [RIM_MAT, HOLE_MAT, EMBER_MAT].map(mat => {
+    const mesh = new THREE.Mesh(HOLE_GEO, mat); mesh.position.copy(at); scene.add(mesh); return mesh;
+  });
+  return () => { for (const mesh of meshes) mesh.removeFromParent(); };
 }
 
 // One-off on entering a stage
@@ -214,24 +244,24 @@ function cross(f: Fighter, st: State, stage: number, fx: Effects, near: boolean)
   const add = stage === 1 ? 1 : 2;
   for (let i = 0; i < add; i++) tearSkin(f, st, i === 0 ? zi : worstZone(f, zi), stage);
   if (stage === 3 && st.glass?.visible) st.glass.visible = false; // canopy shot away
-  if (stage === 4) for (const h of st.holes) h.obj.material = EMBER_MAT;
+  if (stage === 4) for (let i = 0; i < st.holeCount; i++) st.holes[i].obj.material = EMBER_MAT;
   if (!near) return;
   f.localToWorld(z.offset, _w);
   if (stage === 1) {
-    fx.spawnDebris(_w, f.vel, 2, false);
+    fx.spawnDebris(_w, f.vel, 2, false, undefined, k * 1.5);
     for (let i = 0; i < 3; i++) {
       _v.set(R(), R(), R()).multiplyScalar(8).add(f.vel);
       emit(fx.smoke, _w, _v, 1.4, 1 * k, 4.5 * k, C_PAINT, undefined, 0.65, 0, 0, 1.8, 0, true);
     }
   } else if (stage === 2) {
-    fx.spawnDebris(_w, f.vel, 5, false);
+    fx.spawnDebris(_w, f.vel, 5, false, undefined, k * 1.5);
     fx.sparks(_w, f.vel, false);
     for (let i = 0; i < 4; i++) {
       _v.set(R(), R(), R()).multiplyScalar(10).add(f.vel);
       emit(fx.smoke, _w, _v, 2, 1.5 * k, 6.5 * k, C_GREY, undefined, 0.75, 0, 0, 1.5, 0, true);
     }
   } else if (stage === 3) {
-    fx.spawnDebris(_w, f.vel, 4, false);
+    fx.spawnDebris(_w, f.vel, 4, false, undefined, k * 1.5);
     fx.sparks(_w, f.vel, true);
     if (st.glass) {
       // perspex shards glinting off the cockpit
@@ -243,7 +273,7 @@ function cross(f: Fighter, st: State, stage: number, fx: Effects, near: boolean)
     }
   } else {
     f.localToWorld(_l.copy(ENG_SMOKE).multiplyScalar(ENEMY_SCALE), _p);
-    fx.spawnDebris(_p, f.vel, 6, true);
+    fx.spawnDebris(_p, f.vel, 6, true, undefined, k * 1.5);
     fx.sparks(_p, f.vel, true);
     emit(fx.glow, _p, f.vel, 0.3, 4 * k, 9 * k, C_POP, C_FLAME1, 1, 0, 2, 2, 0, false, 2);
   }
@@ -263,6 +293,14 @@ function emitStage(f: Fighter, st: State, stage: number, fx: Effects, dt: number
     _n.set(R(), R() + 0.3, R()).multiplyScalar(2).add(_v);
     emit(fx.smoke, _p, _n, stage === 1 ? 2.2 : 3, 0.6 * k, (stage === 1 ? 3.5 : 5) * k, stage === 1 ? C_WISP : C_GREY1, undefined,
       stage === 1 ? 0.32 : 0.42, 0, 0, 0.8, 0.4, true);
+  }
+
+  if (stage >= 2 && smokeOk) for (const z of f.zones) {
+    if (z.engine === undefined && z.name !== 'engine') continue;
+    f.localToWorld(z.offset, _p);
+    _n.copy(f.vel).multiplyScalar(0.68); _n.y -= 2;
+    emit(fx.smoke, _p, _n, 1.3, 0.3 * k, 1.2 * k,
+      stage >= 3 ? C_OIL : C_WISP, undefined, 0.65, 0, 0, 0.2, -2, true);
   }
 
   if (stage === 2 && smokeOk) {
@@ -302,8 +340,8 @@ function emitStage(f: Fighter, st: State, stage: number, fx: Effects, dt: number
       if (Math.random() < 0.6) emit(fx.smoke, _w, _v, 7, 3 * k, 11 * k, C_COLUMN, C_OIL1, 0.85, 0, 0, 0.9, 0.3, true);
     }
     // embers / glowing skin around the holes
-    if (glowOk && st.holes.length && Math.random() < 0.7) {
-      st.holes[(Math.random() * st.holes.length) | 0].obj.getWorldPosition(_p);
+    if (glowOk && st.holeCount && Math.random() < 0.7) {
+      st.holes[(Math.random() * st.holeCount) | 0].obj.getWorldPosition(_p);
       _n.set(R(), R() + 0.5, R()).multiplyScalar(4).add(_v);
       emit(fx.glow, _p, _n, 0.35, 1.1 * k, 0.4 * k, C_FLAME, C_FLAME1, 1, 0, 2, 0.5, 0, false, 4);
     }
@@ -327,8 +365,8 @@ function emitStage(f: Fighter, st: State, stage: number, fx: Effects, dt: number
 }
 
 function wispPoint(f: Fighter, st: State, out: THREE.Vector3) {
-  if (st.holes.length) {
-    st.holes[(Math.random() * st.holes.length) | 0].obj.getWorldPosition(out);
+  if (st.holeCount) {
+    st.holes[(Math.random() * st.holeCount) | 0].obj.getWorldPosition(out);
     return;
   }
   const z = f.zones[st.recent >= 0 ? st.recent : 0];
@@ -352,7 +390,7 @@ function worstZone(f: Fighter, not = -1) {
 // (event-only, a few hundred triangles) and seat a rim + hole there, model-parented so
 // it rides along and is carried onto the wreck pieces by Wrecks' clone.
 function tearSkin(f: Fighter, st: State, zi: number, stage: number) {
-  if (st.holes.length >= MAX_HOLES || !st.skin.length) return;
+  if (st.holeCount >= MAX_HOLES || !st.skin.length) return;
   const z = f.zones[zi];
   const sc = f.model.scale.x;
   const wing = z.name.startsWith('wing');
@@ -368,27 +406,25 @@ function tearSkin(f: Fighter, st: State, zi: number, stage: number) {
   _w.copy(_n).transformDirection(f.model.matrixWorld).negate();
   _ray.set(_p, _w);
   _ray.far = z.radius * 2 + 2.5 * sc;
-  _hits.length = 0;
-  _ray.intersectObjects(st.skin, false, _hits);
-  const hit = _hits[0];
-  if (!hit || !hit.face) return;
+  if (!hitPanel(st.skin, _ray.ray, _ray.far, _p, _w)) return;
   // into model space: position and outward surface normal
   _m.copy(f.model.matrixWorld).invert();
-  _p.copy(hit.point).applyMatrix4(_m);
-  _w.copy(hit.face.normal).transformDirection(hit.object.matrixWorld).transformDirection(_m);
+  _p.applyMatrix4(_m);
+  _w.transformDirection(_m);
   if (_w.dot(_n) < 0) _w.negate();
   _p.addScaledVector(_w, 0.012);
   const size = (stage <= 1 ? 0.35 : stage === 2 ? 0.5 : 0.6) * (0.8 + Math.random() * 0.4);
-  const rim = new THREE.Mesh(HOLE_GEO, RIM_MAT);
+  const h = st.holes[st.holeCount++];
+  h.zone = zi;
+  const rim = h.obj.parent as THREE.Mesh;
+  rim.visible = true;
   rim.position.copy(_p);
   rim.quaternion.setFromUnitVectors(_z, _w).multiply(_q.setFromAxisAngle(_z, Math.random() * Math.PI));
   rim.scale.set(size * (1 + Math.random() * 0.5), size, 1);
-  const hole = new THREE.Mesh(HOLE_GEO, stage >= 4 ? EMBER_MAT : HOLE_MAT);
+  const hole = h.obj;
+  hole.material = stage >= 4 ? EMBER_MAT : HOLE_MAT;
   hole.position.set(0, 0, 0.02);
   hole.scale.set(0.72, 0.62 + Math.random() * 0.2, 1);
   hole.rotation.z = Math.random() * Math.PI;
-  rim.add(hole);
   rim.castShadow = hole.castShadow = false;
-  f.model.add(rim);
-  st.holes.push({ obj: hole, zone: zi });
 }
