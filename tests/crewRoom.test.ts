@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { stubStorage } from './helpers';
+import { DEEP_PENETRATION } from '../src/game/DeepPenetration';
 import { CAMPAIGN } from '../src/game/Missions';
 import { SURNAMES } from '../src/game/Nemesis';
 import {
@@ -24,17 +25,17 @@ const ctx = (o: Partial<CrewRoomCtx> = {}): CrewRoomCtx => ({
   mission: 'm1', role: 'gunner', kills: 3, shots: 300, hits: 60, lost: 1, total: 9,
   hospital: [], patched: [], rookies: [], aces: [], luftwaffe: 100, ...o,
 });
-const scene = (id: string, o: Partial<CrewRoomCtx> = {}) => buildScene(id, ctx({ mission: id, role: CAMPAIGN.find((m) => m.id === id)!.role, ...o }))!;
+const scene = (id: string, o: Partial<CrewRoomCtx> = {}) => buildScene(id, ctx({ mission: id, role: [...CAMPAIGN, ...DEEP_PENETRATION].find((m) => m.id === id)!.role, ...o }))!;
 const ids = (s: Scene) => s.lines.map((l) => l.id);
 const has = (s: Scene, id: string) => s.lines.some((l) => l.id === id);
-const block = (s: Scene) => s.lines.filter((l) => !/^cr_m\d+_/.test(l.id));
+const block = (s: Scene) => s.lines.filter((l) => !/^cr_(?:m|dp)\d+_/.test(l.id));
 
 beforeEach(() => { stubStorage(); });
 afterEach(() => { setLang('en'); });
 
 describe('crew-room vignettes', () => {
   it('has one vignette for every story mission, and only those', () => {
-    expect(VIGNETTES.map((v) => v.id).sort()).toEqual(CAMPAIGN.map((m) => m.id).sort());
+    expect(VIGNETTES.map((v) => v.id).sort()).toEqual([...CAMPAIGN, ...DEEP_PENETRATION].map((m) => m.id).sort());
     expect(new Set(VIGNETTES.map((v) => v.id)).size).toBe(VIGNETTES.length);
     expect(vignetteFor('survival-gunner')).toBeNull();
     expect(buildScene('raid-1-0', ctx())).toBeNull();

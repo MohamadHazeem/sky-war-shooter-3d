@@ -1,3 +1,4 @@
+import { CHAPTER_VIGNETTES } from './ChapterCrew';
 import { isSecondTourId } from './SecondTour';
 // Crew-room interludes (Phase 5 goal 30): after a successful story mission, before the campaign
 // map, a short scene in the Nissen hut or at the club where the Sky Queen's crew talks the
@@ -186,6 +187,7 @@ const V = (id: string, v: Omit<Vignette, 'id' | 'open' | 'close'>, open: [Speake
 };
 
 export const VIGNETTES: Vignette[] = [
+  ...CHAPTER_VIGNETTES,
   V('m1', { setting: 'hut', place: 'Deenethorpe · Hut 14', time: 'Night', weather: 'rain' }, [
     ['gallo', 'Well, that\'s one. First thing tomorrow I\'m painting a bomb under the window.'],
     ['mendez', 'I counted forty-one holes in her. Forty-one, and not one of them in us.'],
@@ -326,7 +328,7 @@ export const VIGNETTES: Vignette[] = [
   ]),
 ];
 
-export const vignetteFor = (missionId: string): Vignette | null => isSecondTourId(missionId) ? { ...VIGNETTES[0], id: missionId, open: [], close: [], absent: [], skip: [], finale: false } : VIGNETTES.find((v) => v.id === missionId) ?? null;
+export const vignetteFor = (missionId: string): Vignette | null => isSecondTourId(missionId) ? { ...VIGNETTES.find(v => v.id === 'm1')!, id: missionId, open: [], close: [], absent: [], skip: [], finale: false } : VIGNETTES.find((v) => v.id === missionId) ?? null;
 
 // Every line that has (or can have) a recorded clip, with the voice roles it is recorded in
 export function recordedLines(): { def: LineDef; roles: string[] }[] {

@@ -36,7 +36,9 @@ English and Arabic (right-to-left) under Settings → Language.
   squadron size, crew morale and escort availability. Missions m5, m7 and m12 end in a **boss
   battle** against a group of giant flying warships. After the story, volunteer for a **second tour**:
   25 generated operations earn a medal, then operations continue indefinitely, with both flight roles,
-  late-war fighters, changing weather and a battle group every fifth operation.
+  late-war fighters, changing weather and a battle group every fifth operation. Completing the first
+  tour also unlocks **Deep Penetration**, five historical B-17 gunner raids from the Regensburg
+  shuttle to the Leuna oil offensive, with voiced briefings and crew-room scenes.
 * **Survival**: endless rounds as a B-17 gunner or P-51 pilot, with a hangar between rounds
   (aircraft, weapons, upgrades), weather that changes per round and a boss group every third round.
 * **Hold the Field** (under Survival): man a quad .50 or 40 mm Bofors in a ground gun pit. Protect the control tower and parked B-17s from endless raids; keys 1–3 switch pits, R reloads. Choose a repair or upgrade between waves, in clear, overcast, storm, dusk or night weather.

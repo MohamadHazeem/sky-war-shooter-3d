@@ -21,6 +21,7 @@ export function sturmSlot(i: number, out: Vector3) {
 
 /** Latest lesson first, then revisit earlier ones on subsequent rounds. No custom-mode leaks. */
 export function scheduledTactic(m: Mission, round: number): PackTactic | null {
+  if (m.role === 'gunner' && !m.tutorial && !m.naval && m.tactics) return m.tactics[round % m.tactics.length] ?? null;
   if (m.role !== 'gunner' || m.tutorial || m.naval || m.specials === false || m.enemyTypes) return null;
   const survival = m.id === 'survival-gunner';
   if (!survival && !/^m\d+$/.test(m.id) && !/^tour2-\d+-\d+$/.test(m.id)) return null;

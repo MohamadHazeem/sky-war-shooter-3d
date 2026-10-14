@@ -149,6 +149,7 @@ export class TargetArea {
   private arm(m: Mission) {
     const w = this.world;
     this.active = true;
+    targetUniforms.uTgtLook.value = m.targetLook ?? 0;
     // aim point: where the formation's bombs will land when released on schedule
     const ahead = CRUISE * Math.max(0, m.bombsAway! - w.time) + CRUISE * FALL * DRAG_LAG;
     this.aim.set(
@@ -161,6 +162,7 @@ export class TargetArea {
 
   private disable() {
     targetUniforms.uTgt.value.w = 0;
+    targetUniforms.uTgtLook.value = 0;
     targetUniforms.uTgtClock.value = -1000;
     targetUniforms.uFlakGround.value = 0;
     for (const v of targetUniforms.uImpacts.value) v.set(0, 0, 0, 0);

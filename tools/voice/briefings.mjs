@@ -9,6 +9,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DEEP_PENETRATION } from '../../src/game/DeepPenetration.ts';
 import { CAMPAIGN } from '../../src/game/Missions.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -27,7 +28,7 @@ const SAY = [
 const spoken = (t) => SAY.reduce((s, [rx, to]) => s.replace(rx, to), t);
 
 const entries = [];
-for (const m of CAMPAIGN) {
+for (const m of [...CAMPAIGN, ...DEEP_PENETRATION]) {
   m.briefing.forEach((text, i) => {
     const e = { id: `brief_${m.id}_${i + 1}`, role: 'briefing', text };
     const say = spoken(text);
@@ -42,4 +43,4 @@ data.lines = data.lines.filter((l) => l.role !== 'briefing' && l.group !== MARK_
 data.lines.push({ group: MARK_GROUP }, ...entries);
 writeFileSync(FILE, JSON.stringify(data, null, 2) + '\n');
 const words = entries.reduce((n, e) => n + e.text.split(/\s+/).length, 0);
-console.log(`${entries.length} briefing paragraphs from ${CAMPAIGN.length} missions (${words} words) written to tools/voice/lines.json`);
+console.log(`${entries.length} briefing paragraphs from ${CAMPAIGN.length + DEEP_PENETRATION.length} missions (${words} words) written to tools/voice/lines.json`);

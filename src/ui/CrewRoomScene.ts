@@ -23,6 +23,7 @@ import { isSecondTourId } from '../game/SecondTour';
 import type { Game } from '../game/Game';
 import type { Mission } from '../game/Missions';
 import type { DebriefData } from './UI';
+import { DEEP_PENETRATION, isChapterMission } from '../game/DeepPenetration';
 import { CAMPAIGN } from '../game/Missions';
 import { crewRoster, manDef, MEN, POST_CREW, ROOKIES, type ManId } from '../game/CrewRoster';
 import { buildScene, spokenText, vignetteFor, VOICE_ROLE, type CrewRoomCtx, type Scene, type SceneLine, type Speaker, type Vignette } from '../game/CrewRoom';
@@ -827,7 +828,7 @@ export class CrewRoomScene {
   /** End of MissionFlow.showDebrief: remember this mission's outcome for the scene. */
   capture(g: Game, m: Mission, d: DebriefData) {
     this.pending = null;
-    if (!d.success || d.survival || (!CAMPAIGN.includes(m) && !isSecondTourId(m.id)) || !vignetteFor(m.id)) return;
+    if (!d.success || d.survival || (!CAMPAIGN.includes(m) && !isChapterMission(m.id) && !isSecondTourId(m.id)) || !vignetteFor(m.id)) return;
     try {
       const role = m.role;
       const wounded = role === 'gunner' && base ? MEN.filter((x) => crewRoster.men[x.id].wounds > (base!.wounds[x.id] ?? Infinity)).map((x) => x.id as Speaker) : [];
@@ -870,7 +871,7 @@ export class CrewRoomScene {
 
   /** Dev: play a vignette with a made-up outcome (sws console: swsCrewRoom('m8', { lost: 4 })). */
   preview(missionId: string, over: Partial<CrewRoomCtx> = {}, done: () => void = () => {}) {
-    const m = CAMPAIGN.find((x) => x.id === missionId);
+    const m = [...CAMPAIGN, ...DEEP_PENETRATION].find((x) => x.id === missionId);
     if (!m) return null;
     const ctx: CrewRoomCtx = { mission: m.id, role: m.role, kills: 4, shots: 400, hits: 96, lost: 1, total: m.bombers, hospital: [], patched: [], rookies: [], aces: [], luftwaffe: 96, ...over };
     const scene = buildScene(m.id, ctx);

@@ -11,7 +11,17 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { recordedLines, VAR_VALUES, SPEAKER_RATE } from '../../src/game/CrewRoom.ts';
+import { registerHooks } from 'node:module';
+// Node's type stripper needs extensions on the game modules' transitive imports.
+registerHooks({ resolve(specifier, context, nextResolve) {
+  try { return nextResolve(specifier, context); }
+  catch (error) {
+    if (error.code === 'ERR_MODULE_NOT_FOUND' && specifier.startsWith('.') && !/\.[a-z]+$/i.test(specifier))
+      return nextResolve(specifier + '.ts', context);
+    throw error;
+  }
+}});
+const { recordedLines, VAR_VALUES, SPEAKER_RATE } = await import('../../src/game/CrewRoom.ts');
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FILE = join(HERE, 'lines.json');
@@ -43,8 +53,9 @@ for (const { def, roles } of recordedLines()) {
 }
 
 const data = JSON.parse(readFileSync(FILE, 'utf8'));
+const previousAt = data.lines.findIndex(l => l.group === MARK_GROUP);
 data.lines = data.lines.filter((l) => l.group !== MARK_GROUP && !(typeof l.id === 'string' && l.id.startsWith('cr_')));
-let at = data.lines.findIndex((l) => l.group === BRIEF_GROUP);
+let at = previousAt >= 0 ? previousAt : data.lines.findIndex((l) => l.group === BRIEF_GROUP);
 if (at < 0) at = data.lines.length;
 data.lines.splice(at, 0, { group: MARK_GROUP }, ...entries);
 writeFileSync(FILE, JSON.stringify(data, null, 2) + '\n');

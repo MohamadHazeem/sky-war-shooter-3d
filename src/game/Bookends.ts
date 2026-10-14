@@ -260,6 +260,7 @@ export class Bookends {
 
   /** Top of Game.showDebrief on a success: true while the landing plays (done() when over). */
   landing(m: Mission, done: () => void): boolean {
+    if (m.shuttle) { this.landFor = null; return false; }
     if (this.fighter.landing(m, done)) return true;
     if (this.seq === 'landing') return true;
     if (this.landedFor === m) { this.landedFor = null; return false; }

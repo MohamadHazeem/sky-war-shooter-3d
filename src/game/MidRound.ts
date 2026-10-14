@@ -92,7 +92,7 @@ export class MidRound {
       if (o.state === 'active' && o.timeLeft <= 0) o.timeout(this);
       if (o.state !== 'active') this.finishObjective(o);
       else this.hud.showCard(o.view());
-    } else if (this.objSlots.length && this.roundT >= this.objSlots[0]) {
+    } else if (!m.signature && this.objSlots.length && this.roundT >= this.objSlots[0]) {
       // a slot comes due: needs 25 s of the round left, no boss and a gap after an event
       if (this.roundLeft < 25) this.objSlots.length = 0;
       else if (!boss && !this.setPieces.busy && w.time - this.eventStartedAt > 6 && w.time - this.objEndedAt > 8) { this.objSlots.shift(); this.startObjective(); }
@@ -109,7 +109,7 @@ export class MidRound {
       if (e.state !== 'active') this.finishEvent(e);
     } else {
       this.eventCd -= dt;
-      if (this.eventCd <= 0 && this.roundT >= EVENT_QUIET_START && this.roundLeft > 15 && !boss && !this.setPieces.busy && w.time - this.objStartedAt > 6) {
+      if (!m.signature && this.eventCd <= 0 && this.roundT >= EVENT_QUIET_START && this.roundLeft > 15 && !boss && !this.setPieces.busy && w.time - this.objStartedAt > 6) {
         if (this.startEvent()) this.eventCd = EVENT_GAP[0] + Math.random() * (EVENT_GAP[1] - EVENT_GAP[0]);
         else this.eventCd = 5;
       }

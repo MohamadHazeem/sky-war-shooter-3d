@@ -103,7 +103,12 @@ abstract class SetPiece {
   abstract start(): boolean;
   abstract step(dt: number): void;
   stop() {}
-  tick(dt: number) { this.prev = this.t; this.t += dt; this.step(dt); }
+  tick(dt: number) {
+    if (dt <= 0) return;
+    // A ship already in view has no staging delay: its zero-time cue must fire on tick one.
+    this.prev = this.t === 0 ? -Number.EPSILON : this.t;
+    this.t += dt; this.step(dt);
+  }
   /** true on the frame t crosses t0 */
   protected at(t0: number) { return this.prev < t0 && this.t >= t0; }
 }
@@ -597,6 +602,11 @@ export class SetPieces {
     this.check -= dt;
     if (this.check > 0) return;
     this.check = 1;
+    const signature = this.c.game.mission?.signature;
+    if (signature) {
+      if (!this.count && w.time >= signature.at && !boss && !eventOn && !this.c.objective) this.begin(signature.id);
+      return;
+    }
     if (!setPieceDue(this.gate(boss, eventOn))) return;
     const id = this.pick();
     if (id) this.begin(id);
