@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import type { MidRound } from './MidRound';
 import type { PacePhase } from './Pacing';
 import { Bomber, Fighter } from '../world/Aircraft';
-import type { WreckPiece } from '../world/Wrecks';
+type DebrisTrack = { root: THREE.Object3D; vel: THREE.Vector3; readonly life: number };
 import { startBomberDeath } from '../world/BomberDeath';
 import { EVENTS } from './RandomEvents';
 import { sound } from '../audio/Sound';
@@ -167,7 +167,7 @@ abstract class VictimPiece extends SetPiece {
 // ------------------------------------------------------------------ flak hit, wing folds, flat spin, chutes
 class FlakHit extends VictimPiece {
   readonly id = 'flakHit';
-  private hulk: WreckPiece | null = null;
+  private hulk: DebrisTrack | null = null;
   private fold = new THREE.Vector3();
   private chuteAt: number[] = [];
   private chutes = 0;
@@ -198,12 +198,13 @@ class FlakHit extends VictimPiece {
     }
     if (this.at(T + 0.35) && b.alive) {
       b.localToWorld(this.fold.set(s * 4.6, 0, 0.4));
-      const pieces = w.wrecks.breakBomber(b, 'wingFold', s);
-      this.hulk = pieces[1];
+      w.scriptedLoss(b, true);
+      w.destruction.separate(b, s > 0 ? 3 : 5, false);
+      const body = w.destruction.hulkBody(b)!;
+      this.hulk = { root: b.root, vel: body.vel, get life() { return b.remove ? 0 : 1; } };
       // she slides away from the box as she goes over (keeps her in the gun's view for longer)
       const pl = w.player;
       if (pl) this.hulk.vel.addScaledVector(_c.copy(b.pos).sub(pl.pos).setY(0).normalize(), 14);
-      w.scriptedLoss(b, false);
       w.effects.explosion(this.fold, b.vel, 0.35, 'small');
       sound.play('crack', this.fold, { gain: 1, ref: 120 });
       this.debris(this.fold, 12);
@@ -366,7 +367,7 @@ class Collision extends VictimPiece {
 class BombBay extends VictimPiece {
   readonly id = 'bombBay';
   private boom = -1;
-  private chunk: WreckPiece | null = null;
+  private chunk: DebrisTrack | null = null;
   private fireAcc = 0;
   private pass = 2;            // s the wingtip takes to reach the gun position
 
@@ -412,8 +413,9 @@ class BombBay extends VictimPiece {
     const w = this.w, b = this.b, pl = w.player!;
     this.boom = this.t;
     const center = b.pos.clone();
-    const pieces = w.wrecks.breakBomber(b, 'blowup', this.side);
-    w.scriptedLoss(b, false);
+    w.scriptedLoss(b, true);
+    w.destruction.explode(b);
+    const pieces = w.destruction.piecesOf(b);
     w.effects.warshipBlast(center, b.vel, 1.2);
     w.effects.explosion(center, b.vel, 1.2, 'heavy');
     sound.play('explosion', center, { gain: 2.2, ref: 300, reverb: 0.9 });
@@ -425,16 +427,18 @@ class BombBay extends VictimPiece {
     this.sp.flash(0.6 * k);
     this.debris(center, 16);
     // the loose wingtip flutters past the gun position, ~16 m out from it
-    const chunk = pieces[1];
+    const piece = pieces.find(p => !p.shard) ?? pieces[0];
+    if (!piece) return;
+    const chunk: DebrisTrack = { root: piece.root, vel: piece.body.vel, get life() { return piece.active ? piece.life : 0; } };
     const gun = w.playerGunPos() ?? pl.pos.clone();
     this.pass = THREE.MathUtils.clamp(d / 65, 1.6, 2.6);
     const out = _a.copy(chunk.root.position).sub(gun).setY(0).normalize();
     const target = _b.copy(gun).addScaledVector(out, 16).addScaledVector(w.formationForward, -4).addScaledVector(pl.vel, this.pass);
     target.y -= 2;
-    const g = 9.81 * 0.85;
+    const g = 9.81;
     chunk.vel.copy(target).sub(chunk.root.position).divideScalar(this.pass);
     chunk.vel.y += 0.5 * g * this.pass;
-    chunk.drag = 0;
+    piece.body.aero = 0; // authored near-miss trajectory, then pooled expiry
     this.chunk = chunk;
   }
 }

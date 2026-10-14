@@ -81,7 +81,13 @@ export function sourceMeshes(model: THREE.Object3D): { mesh: THREE.Mesh; part: n
   const named: [THREE.Object3D, number][] = [];
   model.traverse((o) => { const m = /^part_(\w+)$/.exec(o.name); const i = m ? PART_NAMES.indexOf(m[1] as any) : -1; if (i >= 0) named.push([o, i]); });
   if (named.length) {
-    for (const [node, part] of named) node.traverse((o) => { if ((o as THREE.Mesh).isMesh && !o.userData.destructionPiece) out.push({ mesh: o as THREE.Mesh, part }); });
+    for (const [node, part] of named) node.traverse((o) => { if (!(o as THREE.Mesh).isMesh || o.userData.destructionPiece) return;
+      for (let a: THREE.Object3D | null = o; a && a !== node; a = a.parent) {
+        if (SKIP.test(a.name)) return;
+        const parent = a.parent as THREE.LOD | null;
+        if (parent?.isLOD && parent.levels[0].object !== a) return;
+      }
+      out.push({ mesh: o as THREE.Mesh, part }); });
     return out;
   }
   let airframe: THREE.Object3D | null = null;

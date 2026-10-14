@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import type { World } from '../World';
-import { WRECK_FLOOR, type Aircraft, type Fighter } from '../Aircraft';
+import { WRECK_FLOOR, type Aircraft, type Fighter, type Bomber } from '../Aircraft';
 import type { HitEvent } from '../Ballistics';
 import { sound } from '../../audio/Sound';
 import { claimDeath, ejectPilot } from '../FighterDeath';
 import { Body } from './Aero';
 import { Structure, planEnding, EV_DETACH, EV_EXPLODE, EV_IGNITE, type Plan } from './FailureModel';
-import { CORE, FATAL, HP_SHARE, NOSE, PARENT, PART_COUNT, PART_ZONE, TAIL, isWing, kindSpec, sideOf, subtree } from './Parts';
+import { CORE, FATAL, HP_SHARE, NOSE, PARENT, PART_COUNT, PART_NAMES, PART_ZONE, TAIL, isWing, kindSpec, sideOf, subtree } from './Parts';
 import { sourceMeshes, splitOf, type Chunk, type SplitModel } from './Split';
 
 // Physical destruction of the enemy aircraft (Phase 10 goal 09).
@@ -39,6 +39,9 @@ const HIT_MASS = 120;        // kg: lighter pieces hurt nobody
 const WING_INC = 0.07;       // rad: wing rigging incidence plus the trimmed angle of attack
 const ALL = (1 << PART_COUNT) - 1;
 
+type Airframe = Fighter | Bomber;
+const isFighter = (f: Airframe): f is Fighter => f.kind !== 'b17';
+
 interface Lease { mats: THREE.Material[]; refs: number }
 
 interface Hulk {
@@ -56,7 +59,7 @@ interface Hulk {
 }
 
 interface St {
-  f: Fighter;
+  f: Airframe;
   s: Structure;
   split: SplitModel;
   mats: THREE.Material[];      // per source primitive: the aircraft's own material copies
@@ -106,7 +109,7 @@ const _forced: ForcedDeath = { kind: 0, part: 0, bail: false };
 const MERGED: Chunk = { subs: [], com: new THREE.Vector3(), area: 0, mass: 0, inertia: new THREE.Vector3(), ax: 0, ay: 0, az: 0, chord: 1, size: 1, tris: 0, u2: new THREE.Vector3() };
 
 export class Destruction {
-  private states = new WeakMap<Fighter, St>();
+  private states = new WeakMap<Airframe, St>();
   private tracked: St[] = [];
   private hulks: St[] = [];
   private pieces: Piece[] = [];
@@ -117,11 +120,11 @@ export class Destruction {
   constructor(private w: World) {}
 
   // ------------------------------------------------------------------ structure
-  /** The aircraft's structure (made on first use). Axis fighters only. */
-  state(f: Fighter): St | null {
+  /** Shared physical structure for fighters and B-17 death sequences. */
+  state(f: Airframe): St | null {
     let st = this.states.get(f);
     if (st) return st;
-    if (f.team !== 'axis' || !f.model) return null;
+    if (!f.model) return null;
     const split = splitOf(f.kind, f.model);
     const hp: number[] = [];
     for (let p = 0; p < PART_COUNT; p++) hp.push((f.zone(PART_ZONE[p])?.maxHp ?? 150) * HP_SHARE[p]);
@@ -136,14 +139,15 @@ export class Destruction {
     return st;
   }
 
-  structure(f: Fighter) { return this.states.get(f)?.s ?? null; }
+  structure(f: Airframe) { return this.states.get(f)?.s ?? null; }
 
-  /** A round struck an axis fighter (World has booked the damage to its zone). */
+  /** A round struck a fighter (World has booked the damage to its zone). */
   onHit(f: Fighter, e: HitEvent) {
-    if (f.team !== 'axis' || f.remove) return;
+    if (f.remove) return;
     const st = this.state(f);
     if (!st) return;
-    f.worldToLocal(_l.copy(e.point), _l).divideScalar(f.model.scale.x);
+    f.root.updateMatrixWorld(true);
+    f.model.worldToLocal(_l.copy(e.point));
     const part = st.split.classify(_l.x, _l.y, _l.z);
     if (st.s.hit(part, e.damage, e.cannon, e.playerShot ? this.w.playerIncendiary * 0.5 : 0, e.playerShot)) this.events(st, e.playerShot);
   }
@@ -228,7 +232,7 @@ export class Destruction {
 
   // ------------------------------------------------------------------ separation
   /** The part (and what hangs from it) breaks away; a dead aircraft becomes a falling hulk. */
-  separate(f: Fighter, part: number, bail: boolean) {
+  separate(f: Airframe, part: number, bail: boolean) {
     const st = this.state(f);
     if (!st) return;
     if (st.s.attached(part)) { st.s.detach(part); st.s.nEv = 0; }
@@ -237,7 +241,7 @@ export class Destruction {
   }
 
   /** Where the part meets the aircraft (world): for the caller's sparks and sounds. */
-  jointWorld(f: Fighter, part: number, out: THREE.Vector3) {
+  jointWorld(f: Airframe, part: number, out: THREE.Vector3) {
     const st = this.state(f);
     if (!st) return out.copy(f.pos);
     f.root.updateMatrixWorld(true);
@@ -272,12 +276,20 @@ export class Destruction {
     this.stats.separations++;
     if (this.near(piece.root.position) < 1600) sound.play('tear', piece.root.position, { gain: 1.1, ref: 120, reverb: 0.5 });
     // flying on without a wingtip: it rolls toward the stump
-    if (f.alive && isWing(part)) f.rollTrim -= 0.35 * side;
+    if (f.alive && isFighter(f) && isWing(part)) f.rollTrim -= 0.35 * side;
   }
 
   /** Hide the airframe; draw it as part meshes from now on (shared geometry, the aircraft's materials). */
   private ensureLive(st: St) {
     if (st.live) return;
+    // The fracture cache uses LOD0 exactly once. Freeze that hierarchy on the
+    // hulk: an automatic LOD switch must never restore an intact lower-detail skin.
+    st.f.model.traverse(o => {
+      const lod = o as THREE.LOD;
+      if (!lod.isLOD) return;
+      lod.autoUpdate = false;
+      for (let i = 0; i < lod.levels.length; i++) lod.levels[i].object.visible = i === 0;
+    });
     const srcs = sourceMeshes(st.f.model);
     st.live = Array.from({ length: PART_COUNT }, () => []);
     for (let p = 0; p < PART_COUNT; p++) {
@@ -300,15 +312,24 @@ export class Destruction {
   /** Move the nodes riding on these parts (props, rocket tubes, skin patches) onto the piece. */
   private carry(st: St, piece: Piece, mask: number) {
     const list: THREE.Object3D[] = [];
-    for (const child of st.f.model.children) {
-      if (child.name === 'airframe' || child.userData.destructionPiece) continue;
-      let part = child.name ? st.split.nodePart.get(child.name) : undefined;
-      if (part === undefined) {
-        if (!(child as THREE.Mesh).isMesh && !child.children.length) continue;
-        part = st.split.classify(child.position.x, child.position.y, child.position.z);
+    const ancestors = new Set<THREE.Object3D>();
+    for (const { mesh } of sourceMeshes(st.f.model)) for (let o: THREE.Object3D | null = mesh; o; o = o.parent) ancestors.add(o);
+    const visit = (child: THREE.Object3D, inherited = -1) => {
+      if (child.userData.destructionPiece) return;
+      const named = /^part_(\w+)$/.exec(child.name);
+      const own = named ? PART_NAMES.indexOf(named[1] as typeof PART_NAMES[number]) : inherited;
+      if (ancestors.has(child) || (child as THREE.LOD).isLOD) {
+        for (const c of child.children) visit(c, own);
+        return;
       }
+      // Ignore the unused skin LODs; mechanical pivots/glazing ride on the part.
+      if (/_LOD[12]$/.test(child.name) || /^(joint|fuel)_/.test(child.name)) return;
+      if (!(child as THREE.Mesh).isMesh && !child.children.length) return;
+      child.getWorldPosition(_l); st.f.model.worldToLocal(_l);
+      const part = own >= 0 ? own : st.split.nodePart.get(child.name) ?? st.split.classify(_l.x, _l.y, _l.z);
       if (mask & (1 << part)) list.push(child);
-    }
+    };
+    for (const child of st.f.model.children) visit(child);
     if (!list.length) return;
     piece.root.updateMatrixWorld(true);
     for (const o of list) { piece.frame.attach(o); piece.extra.push(o); }
@@ -316,7 +337,7 @@ export class Destruction {
 
   // ------------------------------------------------------------------ explosion
   /** A tank goes up: its part shatters, the others are thrown off whole, the aircraft is gone. */
-  explode(f: Fighter) {
+  explode(f: Airframe) {
     const st = this.state(f);
     if (st) this.explodeNow(st); else f.remove = true;
   }
@@ -335,7 +356,7 @@ export class Destruction {
     }
     const lease = this.leaseOf(st), sc = f.model.scale.x, kick = Math.sqrt(sc / 6);
     const blast = this.toWorld(st, st.split.parts[seat].fuel, _s);
-    const twin = f.enemyType === 'bf110' || f.enemyType === 'ju88' || f.enemyType === 'he111' || f.enemyType === 'me410';
+    const twin = f.kind === 'b17' || f.kind === 'bf110' || f.kind === 'ju88' || f.kind === 'he111';
     const away = (piece: Piece, speed: number) => {
       _v.copy(piece.root.position).sub(blast);
       const d = _v.length();
@@ -403,9 +424,10 @@ export class Destruction {
     else if (lost === TAIL) body.w.set(1.4 + Math.random() * 0.9, R() * 0.3, R() * 0.8);
     // the engine runs on for a moment
     if (h.mask & (1 << NOSE) && (f.zone('engine')?.hp ?? 0) > 0 && f.kind !== 'me163') { body.thrust = body.mass * 2.2; body.thrustTau = 2.5; }
-    if (bail && (f.zone('cockpit')?.hp ?? 1) > 0 && !f.pilotKilled && !f.bailedOut) h.bailAt = 0.9 + Math.random() * 2;
+    if (bail && isFighter(f) && (f.zone('cockpit')?.hp ?? 1) > 0 && !f.pilotKilled && !f.bailedOut) h.bailAt = 0.9 + Math.random() * 2;
     f.spin.set(0, 0, 0);
-    claimDeath(f);
+    f.falling = false; // the rigid body is the sole integrator
+    if (isFighter(f)) claimDeath(f);
     this.leaseOf(st);
     this.hulks.push(st);
   }
@@ -459,7 +481,7 @@ export class Destruction {
     f.vel.copy(b.vel);
     f.spin.set(0, 0, 0);
     if (f.pos.y < WRECK_FLOOR.fighter || h.age > 40) { f.remove = true; return; }
-    if (h.age >= h.bailAt) { h.bailAt = Infinity; ejectPilot(f, this.w); this.stats.bailouts++; }
+    if (isFighter(f) && h.age >= h.bailAt) { h.bailAt = Infinity; ejectPilot(f, this.w); this.stats.bailouts++; }
     // the torn joint: a smoke stream, fire from the ruptured lines, for the first seconds
     const dist = this.near(b.pos), fx = this.w.effects;
     if (dist > FAR || h.age > 9) { h.hasLast = false; return; }
@@ -636,7 +658,7 @@ export class Destruction {
       if (f.structure <= 0) { w.killAircraft(f, s.playerFire, 'fire'); return; }
     }
     // beyond saving: the pilot gets out (FighterDeath plays the bail-out)
-    if (s.doomed() && (f.zone('cockpit')?.hp ?? 1) > 0 && !f.pilotKilled) {
+    if (isFighter(f) && s.doomed() && (f.zone('cockpit')?.hp ?? 1) > 0 && !f.pilotKilled) {
       if (!st.bailAt) st.bailAt = w.time + 1.2 + Math.random() * 2.2;
       else if (w.time >= st.bailAt) { st.forceBail = true; w.killAircraft(f, s.playerFire, 'fire'); }
     }
@@ -743,10 +765,15 @@ export class Destruction {
   warm(scene: THREE.Scene, at: THREE.Vector3, models: { kind: string; model: THREE.Object3D }[]) {
     for (const m of models) splitOf(m.kind, m.model);
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), this.innerMat);
-    mesh.position.copy(at); mesh.castShadow = true;
-    scene.add(mesh);
-    return () => { mesh.removeFromParent(); mesh.geometry.dispose(); };
+    mesh.position.copy(at); mesh.castShadow = true; mesh.receiveShadow = true;
+    const unshadowed = mesh.clone(); unshadowed.receiveShadow = false;
+    scene.add(mesh, unshadowed);
+    return () => { mesh.removeFromParent(); unshadowed.removeFromParent(); mesh.geometry.dispose(); };
   }
+
+  /** Stable bodies for authored set-piece cameras and near-miss impulses. */
+  piecesOf(f: Airframe) { return this.pieces.filter(p => p.active && p.source === f); }
+  hulkBody(f: Airframe) { return this.states.get(f)?.hulk?.body ?? null; }
 
   /** Live pieces and hulks (dev / perf). */
   counts() { let pieces = 0; for (const p of this.pieces) if (p.active) pieces++; return { pieces, hulks: this.hulks.length, pool: this.pieces.length, tracked: this.tracked.length }; }

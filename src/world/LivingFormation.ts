@@ -2,13 +2,13 @@ import * as THREE from 'three';
 import { Bomber, Fighter } from './Aircraft';
 import type { World } from './World';
 import type { HitEvent } from './Ballistics';
-import type { WreckPiece } from './Wrecks';
+
 import { FormationDress } from './FormationDress';
 import { chutesDue, formationCompression, formationStatus, leadIndex, lossKind, LOSS_PROFILES, FORMATION_RADIO, type FormationLoss, type FormationMember } from './FormationRules';
 
 interface Ship extends FormationMember {
   b: Bomber; home: THREE.Vector3; target: THREE.Vector3; dress: FormationDress | null;
-  loss: FormationLoss | null; age: number; emitted: number; counted: boolean; wreck: WreckPiece | null;
+  loss: FormationLoss | null; age: number; emitted: number; counted: boolean;
 }
 const _p = new THREE.Vector3(), _v = new THREE.Vector3(), _move = new THREE.Vector3();
 /** Owns one record per formation slot (at most 18). No per-frame storage growth. */
@@ -28,7 +28,7 @@ export class LivingFormation {
   }
   add(b: Bomber) {
     const slot = this.ships.length;
-    this.ships.push({b, player: b.isPlayer, slot, status: 'station', home: b.slot.clone(), target: b.slot.clone(), dress: b.isPlayer ? null : new FormationDress(b, slot), loss: null, age: 0, emitted: 0, counted: false, wreck: null});
+    this.ships.push({b, player: b.isPlayer, slot, status: 'station', home: b.slot.clone(), target: b.slot.clone(), dress: b.isPlayer ? null : new FormationDress(b, slot), loss: null, age: 0, emitted: 0, counted: false});
     if (b.isPlayer) this.anchor.copy(b.slot);
     this.elect(false);
   }
@@ -61,12 +61,11 @@ export class LivingFormation {
       const wing = b.zone(s.loss === 'fold' ? (side > 0 ? 'wingL' : 'wingR') : s.slot % 2 ? 'wingL' : 'wingR'); if (wing) wing.burning = true;
       this.w.effects.explosion(b.pos, b.vel, s.loss === 'explode' ? 1.5 : 0.5);
       if (s.loss === 'fold') {
-        // the outer panel folds up and off on the side that failed; the rest rolls over into a flat spin
-        const pieces = this.w.wrecks.breakBomber(b, 'wingFold', side);
-        s.wreck = pieces[1]; b.falling = false; b.remove = true;
-      } else if (s.loss !== 'spin') {
-        const pieces = this.w.wrecks.breakBomber(b, s.loss === 'split' ? 'split' : 'blowup');
-        s.wreck = pieces[s.loss === 'split' ? 0 : 3]; b.falling = false; b.remove = true;
+        this.w.destruction.separate(b, side > 0 ? 3 : 5, false);
+      } else if (s.loss === 'split') {
+        this.w.destruction.separate(b, 2, false);
+      } else if (s.loss === 'explode') {
+        this.w.destruction.explode(b);
       }
     }
     this.elect(true);
@@ -124,8 +123,8 @@ export class LivingFormation {
     s.age += dt;
     const b = s.b, kind = s.loss!, due = chutesDue(kind, s.age);
     while (s.emitted < due) {
-      _p.copy(s.wreck?.root.position ?? b.pos); _p.x += (s.emitted % 2 ? -1 : 1) * 3; _p.y -= 2; _p.z -= 5;
-      _v.copy(s.wreck?.vel ?? b.vel).multiplyScalar(0.35);
+      _p.copy(b.pos); _p.x += (s.emitted % 2 ? -1 : 1) * 3; _p.y -= 2; _p.z -= 5;
+      _v.copy(b.vel).multiplyScalar(0.35);
       if (this.w.effects.parachute(_p, _v, 1.4)) b.crewBailed++;
       s.emitted++;
     }

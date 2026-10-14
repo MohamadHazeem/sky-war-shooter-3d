@@ -17,7 +17,7 @@ function bomber(x = 0, player = false): Bomber {
 function fixture() {
   const parachute = vi.fn((_pos: THREE.Vector3, _vel: THREE.Vector3, _scale: number) => true), callout = vi.fn(), piece = {root: new THREE.Group(), vel: new THREE.Vector3(), life: 26};
   const w = {time: 0, formationCenter: new THREE.Vector3(0, 7600, 0), formationForward: new THREE.Vector3(0, 0, 1), aircraft: [],
-    effects: {parachute, explosion: vi.fn()}, wrecks: {breakBomber: vi.fn(() => [piece, piece, piece, piece])}, callout} as unknown as World;
+    effects: {parachute, explosion: vi.fn()}, destruction: {separate: vi.fn((b: Bomber) => { b.falling = false; }), explode: vi.fn(), piecesOf: vi.fn(() => [{...piece, body: {vel: piece.vel}, shard: false}])}, callout} as unknown as World;
   const system = new LivingFormation(w), ships = [bomber(0), bomber(70, true), bomber(-70), bomber(170)];
   for (const b of ships) system.add(b);
   return {system, w, ships, parachute, callout};
@@ -87,18 +87,19 @@ describe('combat casualty sequencing', () => {
     system.beginLoss(ships[0], 'all engines'); system.update(12, true);
     expect(ships[0].crewBailed).toBe(0); expect(callout.mock.calls.some(c => String(c[0]).startsWith('lf_chutes'))).toBe(false);
   });
-  it('follows rebased wreck coordinates and does not use a detached original bomber for chutes', () => {
-    const {system, ships, w, parachute} = fixture(); ships[0].alive = false; system.beginLoss(ships[0], 'tail');
-    const piece = (w.wrecks.breakBomber as ReturnType<typeof vi.fn>).mock.results[0].value[0]; piece.root.position.set(10, 20, 30);
+  it('follows the physical hulk coordinates after a floating-origin rebase', () => {
+    const {system, ships, parachute} = fixture(); ships[0].alive = false; system.beginLoss(ships[0], 'tail');
+    const piece = {root: ships[0].root}; piece.root.position.set(10, 20, 30);
     system.update(2.5, true); expect(parachute.mock.calls.length).toBe(1);
     expect(parachute.mock.calls[0][0].toArray()).toEqual([13, 18, 25]);
     expect(ships[0].crewBailed).toBe(1);
   });
-  it('a neighbour whose wing is shot through loses it on that side (wingFold), and chutes come from the hulk', () => {
+  it('a neighbour whose wing is shot through loses it on that side physically, and chutes come from the hulk', () => {
     const {system, ships, w, parachute} = fixture(); ships[2].alive = false; system.beginLoss(ships[2], 'wingR');
-    const brk = w.wrecks.breakBomber as ReturnType<typeof vi.fn>;
-    expect(brk).toHaveBeenCalledWith(ships[2], 'wingFold', -1);
-    expect(ships[2].remove).toBe(true);
+    const brk = w.destruction.separate as ReturnType<typeof vi.fn>;
+    expect(brk).toHaveBeenCalledWith(ships[2], 5, false);
+    expect(ships[2].remove).toBe(false);
+    expect(ships[2].falling).toBe(false);
     system.update(LOSS_PROFILES.fold.duration, true);
     expect(parachute).toHaveBeenCalledTimes(LOSS_PROFILES.fold.chutes);
   });
