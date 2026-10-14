@@ -107,3 +107,18 @@ describe('bomber stream layout', () => {
     expect(spiral.z).toBeLessThan(-300);   // falling back through the stream
   });
 });
+
+// A hero contains three complete skins; merging hidden levels triples cost and z-fights.
+it('merges only the selected visible stream LOD', async () => {
+  const T = await import('three');
+  const { mergeForInstancing } = await import('../src/render/Impostor');
+  const root = new T.Group(), lod = new T.LOD(); root.add(lod);
+  for (let i=0;i<3;i++) {
+    const m = new T.Mesh(new T.BoxGeometry(2,1,3),new T.MeshStandardMaterial());
+    lod.addLevel(m,i*100); m.visible=i===2;
+  }
+  lod.autoUpdate=false;
+  const merged = mergeForInstancing(root,/never/)!;
+  expect(merged.geometry.index!.count/3).toBe(12);
+  expect(merged.materials).toHaveLength(1);
+});

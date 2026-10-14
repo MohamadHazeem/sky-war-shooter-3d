@@ -54,10 +54,21 @@ export interface StreamModelSource {
   nearSkip: RegExp;
 }
 
-const fromCache = (k: ModelKind) => () => (hasModel(k) ? instantiate(k) : null);
+const fromCache = (k: ModelKind, level = 0) => () => {
+  if (!hasModel(k)) return null;
+  const root = instantiate(k);
+  root.traverse(o => {
+    const lod = o as THREE.LOD;
+    if (!lod.isLOD) return;
+    lod.autoUpdate = false;
+    for (let i = 0; i < lod.levels.length; i++) lod.levels[i].object.visible = i === Math.min(level, lod.levels.length - 1);
+  });
+  return root;
+};
 export const DEFAULT_STREAM_MODELS: StreamModelSource = {
-  bomber: fromCache('b17'), near: fromCache('b17'), escort: fromCache('p51d'), gaggle: fromCache('fw190'),
+  bomber: fromCache('b17', 1), near: fromCache('b17', 2), escort: fromCache('p51d'), gaggle: fromCache('fw190'),
   propRadius: { bomber: 1.77, escort: 1.7, gaggle: 1.65 },
+  isSkin: m => !!m.userData.surf || m.name === 'GD-L' || /^hero_(skin|neutral_grey)/.test(m.name),
   hide: /^crew$/,
   nearSkip: /^(crew|interior|gun_.*|turret_.*_guns)$/,
 };
