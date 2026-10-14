@@ -583,7 +583,7 @@ export class LivingInterior {
     if (!want) { if (s.helper) { s.helper.dispose(); s.helper = null; } return; }
     const side = STATIONS[s.id].pivot.x > 0 ? 1 : -1, wz = STATIONS[s.id].pivot.z;
     if (!s.helper) {
-      _v.set(-side * 0.2, FLOOR_TOP, wz + 0.95);
+      _v.set(-side * 0.2, FLOOR_TOP, downSpot(s.down!, side, wz)[2] - 0.38);   // by his chest
       if (this.cam && this.waist) {
         // only appear where the player is not looking
         this.waist.localToWorld(_w.copy(_v));
@@ -694,9 +694,10 @@ export class LivingInterior {
 }
 
 // Where a wounded waist gunner ends up: the posed figure sits slumped by his gun; the skinned
-// man lies on his back along the walkway, head aft, clear of the man who takes the gun
+// man lies on his back along the walkway, head aft, away from the other window (the left one
+// is the forward one: he lies forward of it, the right gunner lies aft of his)
 function downSpot(f: Man, side: number, wz: number): [number, number, number] {
-  return f instanceof CrewActor ? [side * 0.3, FLOOR_TOP, wz + 1.35] : [side * 0.34, FLOOR_TOP, wz + 0.42];
+  return f instanceof CrewActor ? [side * 0.3, FLOOR_TOP, wz + (side > 0 ? 1.15 : -0.45)] : [side * 0.34, FLOOR_TOP, wz + 0.42];
 }
 function downYaw(f: Man, side: number) { return f instanceof CrewActor ? 0 : -side * Math.PI / 2; }
 

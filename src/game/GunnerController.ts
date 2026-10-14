@@ -79,6 +79,8 @@ export class GunnerController {
   private shaftSun = new THREE.Vector3();
   readonly interiorDamage = new InteriorDamage();
   readonly glassFx: GunnerGlass;   // rain, glints, oil, frost and cracks on the turret / tail glass (GlassFx.ts)
+  private hands: THREE.Object3D[] = [];    // the player's own arms on the grips (interior 2.0)
+  private handsShown = false;
   set bombsAboard(v: boolean) { this.living.bombsAboard = v; }   // Game: the bomb bay's load, until bombs away
   cold = 0.5;      // 0..1 how cold the mission is (frost on the windows; set by Game per mission)
   // free look (hold C): the head turns away from the gun to look around the compartment
@@ -219,7 +221,7 @@ export class GunnerController {
       this.barrelHaze.set(model, heatHaze.attach(model.muzzles[0], new THREE.Vector3(0, .04, -.45), .13, 0,
         { trail: new THREE.Vector3(0, .12, .5), active: () => this.station === id }));
     }
-    this.links = new Brass(wl.z - 2, wr.z + 2, undefined, undefined, true, true);
+    this.links = new Brass(Math.min(wl.z, wr.z) - 2, Math.max(wl.z, wr.z) + 2, undefined, undefined, true, true);
     bomber.root.add(this.links.flying, this.links.pile);
     this.glassFx.attach(bomber, { top: top.group, ball: ball.group, tail });
     // interior 2.0 (Phase 10 goal 07): Medium and up, once the Blender assets are in
@@ -231,7 +233,8 @@ export class GunnerController {
       this.engine.render(1 / 60);
       unwarm();
     }
-    if (high) addPlayerHands(this.guns, { top: top.group, ball: ball.group });
+    this.hands = high ? addPlayerHands(this.guns, { top: top.group, ball: ball.group }) : [];
+    this.handsShown = false;
     this.ballShafts.setVolumetric(high); this.tailShafts.setVolumetric(high);
     this.living.build(bomber, this.waistInterior, (wl.z + wr.z) / 2, wl.z, wr.z, this.guns.waistL[0], this.guns.waistR[0], high);
     this.lookYaw = this.lookPitch = this.look = 0;
@@ -293,7 +296,7 @@ export class GunnerController {
     const heavy = this.world.bomberDamage.lastHeavy;
     const a = 1.08, b = 1.12, yC = 0.15;
     const wl = STATIONS.waistL.pivot;
-    const z0 = wl.z - 3.1, z1 = wl.z + 3.1;
+    const zc = (wl.z + STATIONS.waistR.pivot.z) / 2, z0 = zc - 3.1, z1 = zc + 3.1;
     const d = dir.clone().normalize();
     const o = local.clone().addScaledVector(d, -4);
     const A = (d.x / a) ** 2 + (d.y / b) ** 2;
@@ -303,7 +306,8 @@ export class GunnerController {
     if (A < 1e-6 || disc < 0) return;
     const sq = Math.sqrt(disc);
     const sunLocal = Atmos.sunDir.clone().applyQuaternion(this.bomber.root.quaternion.clone().invert());
-    const onSkin = (p: THREE.Vector3) => p.z >= z0 && p.z <= z1 && !(Math.abs(p.z - wl.z) < 0.42 && p.y > 0.05 && p.y < 0.72); // no holes in the open windows
+    const wr = STATIONS.waistR.pivot;
+    const onSkin = (p: THREE.Vector3) => p.z >= z0 && p.z <= z1 && !(Math.abs(p.z - (p.x > 0 ? wl.z : wr.z)) < 0.42 && p.y > 0.05 && p.y < 0.72); // no holes in the open windows
     const normal = (p: THREE.Vector3) => new THREE.Vector3(p.x / (a * a), (p.y - yC) / (b * b), 0).normalize();
     let first = true;
     for (const t of [(-B - sq) / (2 * A), (-B + sq) / (2 * A)]) {
@@ -590,6 +594,9 @@ export class GunnerController {
       this.dust.update(dt, this.sunLocal, this.engine.renderer.domElement.height);
     }
     this.updateCamera(adt);
+    // own hands: only with the head turned down in free look, never over the gun view
+    const hands = this.look > 0.6 && this.lookPitch < -0.5;
+    if (hands !== this.handsShown) { this.handsShown = hands; for (const h of this.hands) h.visible = hands; }
     this.aimDirection(this.world.playerAimDir);
     this.updateLiving(dt);
     this.interiorDamage.update(dt, this.bomber, this.world.effects, this.cold, this.engine.quality === 'low', this.station === 'waistL' || this.station === 'waistR');

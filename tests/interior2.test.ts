@@ -6,6 +6,8 @@ import { lookOf } from '../src/game/CrewFigure';
 import { skinUv } from '../src/game/InteriorKit';
 import { interiorHigh } from '../src/game/InteriorAssets';
 import { SunShafts } from '../src/game/InteriorFx';
+import { STATIONS } from '../src/world/B17Layout';
+import { WAIST_WINDOWS } from '../src/audio/Cabin';
 
 // B-17 interior 2.0 (Phase 10 goal 07)
 
@@ -39,6 +41,18 @@ describe('interior 2.0 assets', () => {
   it('keeps Low on the procedural interior', () => {
     expect(interiorHigh('low')).toBe(false);
     for (const q of ['medium', 'high', 'ultra'] as const) expect(interiorHigh(q)).toBe(true);
+  });
+});
+
+describe('B-17G staggered waist windows', () => {
+  it('puts the left window forward and the right aft, the gunners well apart', () => {
+    const l = STATIONS.waistL.pivot, r = STATIONS.waistR.pivot;
+    expect(l.z).toBeGreaterThan(r.z + 1.2);
+    // each gunner stands ~0.74 m in from his pivot: the two men are ~1.4 m apart
+    const a = new THREE.Vector3(l.x - 0.74, 0, l.z), b = new THREE.Vector3(r.x + 0.74, 0, r.z);
+    expect(a.distanceTo(b)).toBeGreaterThan(1.3);
+    expect(WAIST_WINDOWS[0][2]).toBe(l.z); expect(WAIST_WINDOWS[1][2]).toBe(r.z);
+    expect((l.z + r.z) / 2).toBeCloseTo(-7.44, 5);    // the compartment (and its kit) stays centred
   });
 });
 

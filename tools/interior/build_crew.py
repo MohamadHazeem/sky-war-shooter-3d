@@ -541,15 +541,18 @@ for pb in arm.pose.bones:
     pb.location = Vector()
 
 # ---------------- first-person forearm and gloved fist round a grip ----------------
-# Origin on the grip axis (grip along game +Y), forearm running back (game -Z) and out (+X).
+# Origin on the grip axis (grip along Blender Z = game +Y), the hand behind it (Blender +Y = game
+# aft), fingers wrapped round the front, the forearm dropping back and down toward the elbow
+# (out of the sight picture) and a little out (+X: the left hand; the game mirrors it).
 F = MeshBuilder('fpArm')
-sleeve_pts = [Vector((0.0, 0.0, 0.0)), Vector((0.02, 0.08, -0.02)), Vector((0.05, 0.2, -0.05)), Vector((0.08, 0.32, -0.08))]
-fist = prim('sphere', r=0.05, u=14, v=10, scale=(1.0, 0.9, 1.3))
-F.add_object_data(fist, trs((0.0, 0.0, 0.0)), cloth, GLOVE)
-F.add_object_data(prim('sphere', r=0.022, u=8, v=6, scale=(1, 1.7, 1)), trs((-0.03, -0.03, 0.035), (0.3, 0, 0)), cloth, GLOVE)
-F.add_object_data(prim('cyl', r1=0.058, r2=0.05, h=0.08, segs=14), look_matrix(Vector((0.005, 0.03, -0.01)), Vector((0.015, 0.1, -0.025))), cloth, GLOVE)
-F.add_object_data(prim('cyl', r1=0.062, r2=0.062, h=0.05, segs=14), look_matrix(Vector((0.02, 0.1, -0.025)), Vector((0.03, 0.145, -0.035))), cloth, FLEECE)
-F.add_object_data(prim('cyl', r1=0.06, r2=0.075, h=0.36, segs=14), look_matrix(Vector((0.03, 0.14, -0.035)), Vector((0.1, 0.48, -0.1))), cloth, JACKET)
+for k, z in enumerate((-0.03, -0.01, 0.01, 0.03)):          # four fingers round the grip
+    F.add_object_data(prim('torus', R=0.025, r=0.0105 - 0.0008 * abs(k - 1.5), nu=14, nv=6, arc=math.pi * 1.35),
+                      trs((0, 0, z), (0, 0, math.pi / 2 + math.pi * 0.325)), cloth, GLOVE)
+F.add_object_data(prim('sphere', r=0.04, u=14, v=10, scale=(0.85, 0.65, 1.1)), trs((0.004, 0.034, 0.0)), cloth, GLOVE)    # back of the hand
+F.add_object_data(prim('sphere', r=0.014, u=8, v=6, scale=(1, 1, 2.2)), trs((-0.026, 0.006, 0.042), (0.5, 0.3, 0)), cloth, GLOVE)   # thumb over the top
+F.add_object_data(prim('cyl', r1=0.04, r2=0.047, h=0.075, segs=16), look_matrix(Vector((0.006, 0.055, -0.012)), Vector((0.016, 0.105, -0.06))), cloth, GLOVE)   # gauntlet
+F.add_object_data(prim('cyl', r1=0.051, r2=0.051, h=0.035, segs=16), look_matrix(Vector((0.016, 0.105, -0.06)), Vector((0.021, 0.122, -0.088))), cloth, FLEECE)  # fleece cuff
+F.add_object_data(prim('cyl', r1=0.048, r2=0.057, h=0.27, segs=16), look_matrix(Vector((0.021, 0.12, -0.085)), Vector((0.06, 0.22, -0.33))), cloth, JACKET)    # sleeve
 fp_ob = F.finish()
 fp_ob.location = (0, 0, 0)
 

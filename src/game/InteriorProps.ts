@@ -108,7 +108,7 @@ export function addWaistProps(group: THREE.Group, zc: number): void {
     group.add(coil);
   };
   regulator(1, 1.2, 0.12);
-  regulator(-1, -1.2, 0.12);
+  regulator(-1, -1.75, 0.12);   // clear of the (aft) right window
   regulator(1, -1.9, 0.12);
 
   // Fire extinguisher on a strap bracket, standing against the right wall

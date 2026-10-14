@@ -2,7 +2,7 @@
 #   /Applications/Blender.app/Contents/MacOS/Blender -b -P tools/interior/build_interior.py -- out.glb
 # Modelled in the game's bomber frame (metres, +X left, +Y up, +Z nose; turned to Blender's Z-up
 # only for the export) around the procedural fuselage shell of src/game/Viewmodels.ts
-# (ellipse A x B centred at YC, walkway top at FLOOR_TOP, waist windows at WAIST_Z):
+# (ellipse A x B centred at YC, walkway top at FLOOR_TOP, waist windows at WIN_Z, staggered):
 #   kitWaist   formers (Z-section) and hat stringers broken at the windows, window doublers,
 #              walkway with treads, G-1 oxygen bottles in cradles, A-12 regulators with hoses,
 #              ammunition boxes with feed chutes, interphone jack boxes, flak curtains, a spare
@@ -33,7 +33,9 @@ reset_scene()
 # ---- must match src/game/Viewmodels.ts / LivingInterior.ts ----
 A, B, YC = 1.08, 1.12, 0.15
 FLOOR_TOP = YC - B * 0.78 + 0.015
-WAIST_Z = -7.44
+WAIST_Z = -7.44                             # centre of the waist compartment
+STAGGER = 0.7                               # B-17G: left window forward, right window aft (B17Layout)
+WIN_Z = {1: WAIST_Z + STAGGER, -1: WAIST_Z - STAGGER}
 Z0, Z1 = WAIST_Z - 3.2, WAIST_Z + 3.2      # waist compartment
 RADIO_Z1 = Z1 + 1.7                         # radio room forward bulkhead
 BAY_Z1 = RADIO_Z1 + 2.9                     # bomb bay forward bulkhead
@@ -91,12 +93,10 @@ T_FLOOR_R = t_of_y(-1, FLOOR_TOP)
 
 def in_window(t, z, pad=0.0):
     tt = math.atan2(math.sin(t), math.cos(t))
-    if abs(z - WAIST_Z) > WIN_W / 2 + pad:
-        return False
-    if TA - pad / B < tt < TB + pad / B:
+    if abs(z - WIN_Z[1]) <= WIN_W / 2 + pad and TA - pad / B < tt < TB + pad / B:
         return True
     tr = math.pi - tt if tt > 0 else -math.pi - tt
-    return TA - pad / B < tr < TB + pad / B
+    return abs(z - WIN_Z[-1]) <= WIN_W / 2 + pad and TA - pad / B < tr < TB + pad / B
 
 
 def ring_strip(mb, z, t0, t1, d0, d1, dz0, dz1, mat, col, steps=None):
@@ -202,8 +202,9 @@ for z in FORMER_ZS:
 STRINGER_TS = [T_FLOOR_L + 0.1 + k * 0.2 for k in range(int((T_FLOOR_R - T_FLOOR_L - 0.2) / 0.2) + 1)]
 for t in STRINGER_TS:
     segs = [(Z0 + 0.02, Z1 - 0.02)]
-    if in_window(t, WAIST_Z, 0.05):
-        segs = [(Z0 + 0.02, WAIST_Z - WIN_W / 2 - 0.06), (WAIST_Z + WIN_W / 2 + 0.06, Z1 - 0.02)]
+    wz = WIN_Z[1 if math.cos(t) > 0 else -1]
+    if in_window(t, wz, 0.05):
+        segs = [(Z0 + 0.02, wz - WIN_W / 2 - 0.06), (wz + WIN_W / 2 + 0.06, Z1 - 0.02)]
     for a, b in segs:
         z_strip(W, t, a, b, 0.004, 0.028, 0.022, metal, ALU_DULL)
         z_strip(W, t, a, b, 0.004, 0.008, 0.05, metal, ALU_DULL)
@@ -211,10 +212,11 @@ for t in STRINGER_TS:
 # window doublers (a heavy frame on the skin round each opening) and the K-6 mount's sill
 for side in (1, -1):
     ta, tb = (TA, TB) if side > 0 else (math.pi - TB, math.pi - TA)
-    for z in (WAIST_Z - WIN_W / 2 - 0.035, WAIST_Z + WIN_W / 2 + 0.035):
+    wz = WIN_Z[side]
+    for z in (wz - WIN_W / 2 - 0.035, wz + WIN_W / 2 + 0.035):
         ring_strip(W, z, ta - 0.06, tb + 0.06, 0.004, 0.04, -0.035, 0.035, metal, ZINC, steps=12)
     for t in (ta - 0.03, tb + 0.03):
-        z_strip(W, t, WAIST_Z - WIN_W / 2 - 0.07, WAIST_Z + WIN_W / 2 + 0.07, 0.004, 0.045, 0.065, metal, ZINC)
+        z_strip(W, t, wz - WIN_W / 2 - 0.07, wz + WIN_W / 2 + 0.07, 0.004, 0.045, 0.065, metal, ZINC)
 
 # walkway: plywood on a light frame, aluminium edge angles and anti-slip treads
 box(W, (1.3, 0.02, Z1 - Z0 - 0.04), (0, FLOOR_TOP - 0.01, (Z0 + Z1) / 2), paint, PLY)
@@ -255,7 +257,7 @@ for side in (1, -1):
             box(W, (0.05, 0.05, 0.03), ((q.x + p.x) / 2, (q.y + p.y) / 2, z0 + k * 0.62), metal, ALU_DULL)
 
 # A-12 demand regulator panels by each window, hose looping down, walk-around bottle clipped beside
-for side, zr in ((1, WAIST_Z + 0.72), (-1, WAIST_Z - 0.72)):
+for side, zr in ((1, WIN_Z[1] + 0.62), (-1, WIN_Z[-1] - 0.62)):
     m = wall_frame(side, 0.42, zr, 0.04)
     W.add_object_data(prim('box', size=(0.06, 0.24, 0.17)), m, paint, OD)
     for dy, r in ((0.06, 0.03), (-0.04, 0.032)):     # flow blinker and pressure gauge
@@ -272,7 +274,7 @@ for side, zr in ((1, WAIST_Z + 0.72), (-1, WAIST_Z - 0.72)):
     cyl(W, q + Vector((0, 0.16, 0)), q + Vector((0, 0.2, 0)), 0.018, metal, BRASS, segs=8)
 
 # interphone jack boxes (black box, switch, two jacks) beside each window
-for side, zr in ((1, WAIST_Z - 0.62), (-1, WAIST_Z + 0.62)):
+for side, zr in ((1, WIN_Z[1] - 0.62), (-1, WIN_Z[-1] + 0.62)):
     m = wall_frame(side, 0.25, zr, 0.03)
     W.add_object_data(prim('box', size=(0.05, 0.12, 0.09)), m, paint, BLACK)
     W.add_object_data(prim('cyl', r1=0.008, h=0.04, segs=8), m @ trs((0.04, 0.03, 0), (0, math.pi / 2, 0)), metal, STEEL)
@@ -283,7 +285,7 @@ for side, zr in ((1, WAIST_Z - 0.62), (-1, WAIST_Z + 0.62)):
     tube(W, [p0, p0 + Vector((-side * 0.02, -0.12, 0.02)), p0 + Vector((-side * 0.03, -0.22, -0.04)), p0 + Vector((-side * 0.02, -0.3, 0.03))], 0.006, paint, BLACK, segs=6)
 
 # ammunition boxes on the floor under each window, with the flexible feed chute rising to the gun
-for side, zb in ((1, WAIST_Z - 0.25), (-1, WAIST_Z - 0.25)):
+for side, zb in ((1, WIN_Z[1] - 0.25), (-1, WIN_Z[-1] - 0.25)):
     x = side * 0.62
     c = Vector((x, FLOOR_TOP + 0.22, zb))
     box(W, (0.32, 0.42, 0.5), c, paint, OD)
@@ -303,14 +305,14 @@ for i, (x, y, z, ry) in enumerate(((0.42, 0, Z1 - 0.55, 0.1), (0.42, 0.42, Z1 - 
     box(W, (0.32, 0.03, 0.48), (x, FLOOR_TOP + 0.415 + y, z), paint, OD_DARK, rot=(0, ry, 0))
 
 # flak curtains (quilted aprons) hung on the wall aft of each window, a spare flak suit and M4 helmet
-for side, zc in ((1, WAIST_Z - 0.95), (-1, WAIST_Z + 0.95)):
+for side, zc in ((1, WIN_Z[1] - 1.0), (-1, WIN_Z[-1] + 1.0)):
     for k in range(5):
         m = wall_frame(side, 0.32 - k * 0.12, zc, 0.03 + k * 0.006)
         W.add_object_data(prim('box', size=(0.025, 0.12, 0.5)), m, paint, OD)
         W.add_object_data(prim('box', size=(0.028, 0.01, 0.48)), m @ trs((0, 0.06, 0)), paint, OD_DARK)
     m = wall_frame(side, 0.38, zc, 0.03)
     W.add_object_data(prim('cyl', r1=0.012, h=0.6, segs=6), m @ trs((0.02, 0.04, 0), (0, 0, 0)), metal, STEEL)  # curtain rod
-m = wall_frame(-1, 0.1, WAIST_Z - 1.55, 0.05)
+m = wall_frame(-1, 0.1, WAIST_Z - 1.85, 0.05)
 W.add_object_data(prim('box', size=(0.06, 0.55, 0.42)), m, paint, OD)
 W.add_object_data(prim('sphere', r=0.13, u=16, v=8, scale=(1, 1.1, 0.75)), m @ trs((0.1, 0.38, 0)), paint, OD_DARK)   # helmet on the hook
 W.add_object_data(prim('cyl', r1=0.012, h=0.08, segs=6), m @ trs((0.02, 0.32, 0), (0, math.pi / 2, 0)), metal, STEEL)
