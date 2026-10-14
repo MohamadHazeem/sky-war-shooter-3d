@@ -47,3 +47,21 @@ The game button checks the special modes, boss death and crew-room hooks on Low 
 using `sws.step`, and captures JPEGs. Save results exports the JSON with embedded screenshots.
 `?auto` runs both checks; the optional `&report=5262` POSTs JSON to a local QA receiver instead
 of opening a Save dialog. This diagnostic is a development page, outside the production bundle.
+
+
+### Gunner soundscape (Phase 8)
+
+`python3 tools/audio/fs_get.py <source-dir> 239138 318964 702245 267893 481148 437863 406226 788056 322021 461779`
+downloads only the ten individual CC0 previews. Then run
+`node tools/audio/soundscape_build.mjs <source-dir>` to reproduce fourteen small mono AAC
+files, the runtime mappings in `soundscape_meta.json`, source metadata, and decoded
+peak/RMS/BS.1770 loudness in `docs/phase8/reports/05-audio.json`.
+`gen_meta.py` preserves these overrides and their CREDITS section.
+
+New voices: `python3 tools/voice/generate.py --only ss_ --only pfx_ss_` (existing Chatterbox
+venv/cached model; no dependency installation). `node tools/audio/soundscape_voice_report.mjs`
+measures their decoded AAC and records take quality from the generator cache.
+`/tools/audio/soundscape_check.html` is a development-only browser harness: the button runs
+the live game's four-engine damage/repair, wind, detail, independent volume buses, voice
+queue/lookup and offline limiter checks. Low and Arabic buttons provide visual QA frames.
+All simulation frames use the project's `sws.step`; this page is outside the production build.

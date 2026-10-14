@@ -3388,6 +3388,213 @@
       "urgent": true
     },
     {
+      "_group": "Phase 8 soundscape and dynamic spoken equivalents"
+    },
+    {
+      "id": "ss_type_fw190",
+      "role": "nav",
+      "text": "Butcher-birds. Watch for the head-on pass.",
+      "peakDb": -3
+    },
+    {
+      "id": "pfx_ss_fw190",
+      "role": "nav",
+      "text": "Fw 190s,",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_type_bf109",
+      "role": "nav",
+      "text": "Messerschmitt one oh nines. Quick in the turn.",
+      "peakDb": -3
+    },
+    {
+      "id": "pfx_ss_bf109",
+      "role": "nav",
+      "text": "Bf 109s,",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_type_bf110",
+      "role": "nav",
+      "text": "Messerschmitt one tens. Heavy twins, rear gunners.",
+      "peakDb": -3
+    },
+    {
+      "id": "pfx_ss_bf110",
+      "role": "nav",
+      "text": "Bf 110s,",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_type_ju88",
+      "role": "nav",
+      "text": "Junkers eighty eights. Armoured twins, keep firing.",
+      "peakDb": -3
+    },
+    {
+      "id": "pfx_ss_ju88",
+      "role": "nav",
+      "text": "Ju 88s,",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_type_me262",
+      "role": "nav",
+      "text": "Two sixty two jets. Fast, but fragile.",
+      "peakDb": -3
+    },
+    {
+      "id": "pfx_ss_me262",
+      "role": "nav",
+      "text": "Me 262s,",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_type_me163",
+      "role": "nav",
+      "text": "Komet rocket fighters. Very fast, lightly built.",
+      "peakDb": -3
+    },
+    {
+      "id": "pfx_ss_me163",
+      "role": "nav",
+      "text": "Me 163s,",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_type_he111",
+      "role": "nav",
+      "text": "Heinkel bombers. Gunners in every window.",
+      "peakDb": -3
+    },
+    {
+      "id": "pfx_ss_he111",
+      "role": "nav",
+      "text": "He 111s,",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_type_me410",
+      "role": "nav",
+      "text": "Hornisse twins. Watch that fifty millimetre cannon.",
+      "peakDb": -3
+    },
+    {
+      "id": "pfx_ss_me410",
+      "role": "nav",
+      "text": "Me 410s,",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_type_do335",
+      "role": "nav",
+      "text": "Dornier push-pull fighters. Fast in a dive.",
+      "peakDb": -3
+    },
+    {
+      "id": "pfx_ss_do335",
+      "role": "nav",
+      "text": "Do 335s,",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_revenge_wound",
+      "role": "nav",
+      "text": "He's back. The ace who wounded our crew. Watch him!",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_revenge_down",
+      "role": "nav",
+      "text": "He's back. The ace who shot us down!",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_ace_in",
+      "role": "tail",
+      "text": "Yellow noses, twelve o'clock high! That's the ace's Staffel!",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_ace_out",
+      "role": "tail",
+      "text": "The ace is breaking off. Yellow noses heading home.",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_ace_kill",
+      "role": "pilot",
+      "text": "You got the ace! The whole group saw him go down!",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_ace_other",
+      "role": "tail",
+      "text": "Somebody got the ace! Scratch one Experte!",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_rear",
+      "role": "lead",
+      "text": "Careful, Blue two. That twin has a rear gunner. Come at him from below!",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_cover",
+      "role": "bigfriend",
+      "text": "Little friends, we've lost two engines and can't keep up. Can you cover us?",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_break_left",
+      "role": "lead",
+      "text": "He's seen you — he's breaking left! Stay with him!",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_break_right",
+      "role": "lead",
+      "text": "He's seen you — he's breaking right! Stay with him!",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_check",
+      "role": "pilot",
+      "text": "That pass is over. Crew, check in.",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_hurt",
+      "role": "radio",
+      "text": "We've got wounded back here. I'm helping them. Keep those fighters off us.",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_clear",
+      "role": "tail",
+      "text": "Tail checking in. Guns clear. Still with you.",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_quiet",
+      "role": "waist",
+      "text": "Just the engines and the wind. Keep watching that cloud bank.",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_miss",
+      "role": "top",
+      "text": "Your burst went behind him. Give him more lead.",
+      "peakDb": -3
+    },
+    {
+      "id": "ss_kill",
+      "role": "tail",
+      "text": "Good shooting. Saw that one break apart.",
+      "peakDb": -3
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {
@@ -3634,6 +3841,176 @@
       "role": "briefing",
       "text": "You are back on the left waist gun, where you started at Emden. Think of the crews who are not here today: the Lucky Lady over Schweinfurt, and the new boys who never finished their first week. Fly this one for them. Then come home, all of you.",
       "say": "You are back on the left waist gun, where you started at Emden. Think of the crews who are not here today: the Lucky Lady over Shvine-foort, and the new boys who never finished their first week. Fly this one for them. Then come home, all of you."
+    }
+  ],
+  "dynamic": [
+    {
+      "source": "Director.ts",
+      "template": "${v.label}s coming in — ${v.blurb}!",
+      "pattern": "^Fw\\ 190s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_fw190"
+    },
+    {
+      "source": "PilotOps.ts",
+      "template": "${v.label}s in this bunch — ${v.blurb}!",
+      "pattern": "^Fw\\ 190s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_fw190"
+    },
+    {
+      "source": "Director.ts",
+      "template": "${v.label}s coming in — ${v.blurb}!",
+      "pattern": "^Bf\\ 109s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_bf109"
+    },
+    {
+      "source": "PilotOps.ts",
+      "template": "${v.label}s in this bunch — ${v.blurb}!",
+      "pattern": "^Bf\\ 109s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_bf109"
+    },
+    {
+      "source": "Director.ts",
+      "template": "${v.label}s coming in — ${v.blurb}!",
+      "pattern": "^Bf\\ 110s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_bf110"
+    },
+    {
+      "source": "PilotOps.ts",
+      "template": "${v.label}s in this bunch — ${v.blurb}!",
+      "pattern": "^Bf\\ 110s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_bf110"
+    },
+    {
+      "source": "Director.ts",
+      "template": "${v.label}s coming in — ${v.blurb}!",
+      "pattern": "^Ju\\ 88s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_ju88"
+    },
+    {
+      "source": "PilotOps.ts",
+      "template": "${v.label}s in this bunch — ${v.blurb}!",
+      "pattern": "^Ju\\ 88s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_ju88"
+    },
+    {
+      "source": "Director.ts",
+      "template": "${v.label}s coming in — ${v.blurb}!",
+      "pattern": "^Me\\ 262s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_me262"
+    },
+    {
+      "source": "PilotOps.ts",
+      "template": "${v.label}s in this bunch — ${v.blurb}!",
+      "pattern": "^Me\\ 262s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_me262"
+    },
+    {
+      "source": "Director.ts",
+      "template": "${v.label}s coming in — ${v.blurb}!",
+      "pattern": "^Me\\ 163s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_me163"
+    },
+    {
+      "source": "PilotOps.ts",
+      "template": "${v.label}s in this bunch — ${v.blurb}!",
+      "pattern": "^Me\\ 163s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_me163"
+    },
+    {
+      "source": "Director.ts",
+      "template": "${v.label}s coming in — ${v.blurb}!",
+      "pattern": "^He\\ 111s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_he111"
+    },
+    {
+      "source": "PilotOps.ts",
+      "template": "${v.label}s in this bunch — ${v.blurb}!",
+      "pattern": "^He\\ 111s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_he111"
+    },
+    {
+      "source": "Director.ts",
+      "template": "${v.label}s coming in — ${v.blurb}!",
+      "pattern": "^Me\\ 410s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_me410"
+    },
+    {
+      "source": "PilotOps.ts",
+      "template": "${v.label}s in this bunch — ${v.blurb}!",
+      "pattern": "^Me\\ 410s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_me410"
+    },
+    {
+      "source": "Director.ts",
+      "template": "${v.label}s coming in — ${v.blurb}!",
+      "pattern": "^Do\\ 335s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_do335"
+    },
+    {
+      "source": "PilotOps.ts",
+      "template": "${v.label}s in this bunch — ${v.blurb}!",
+      "pattern": "^Do\\ 335s (?:coming in — |in this bunch — ).+!$",
+      "clip": "ss_type_do335"
+    },
+    {
+      "source": "NemesisRuntime.ts",
+      "template": "He's back — the one who wounded ${wounded.wounded[0]} over ${wounded.place}!",
+      "pattern": "^He's back — the one who wounded .+ over .+!$",
+      "clip": "ss_revenge_wound"
+    },
+    {
+      "source": "NemesisRuntime.ts",
+      "template": "He's back — the one who shot us down over ${downedUs.place}!",
+      "pattern": "^He's back — the one who shot us down over .+!$",
+      "clip": "ss_revenge_down"
+    },
+    {
+      "source": "SpecialEvents.ts",
+      "template": "Yellow noses, twelve o'clock high! That's ${this.ace.last}'s Staffel — ${this.ace.victories} kills!",
+      "pattern": "^Yellow noses, twelve o'clock high! That's .+'s Staffel — \\d+ kills!$",
+      "clip": "ss_ace_in"
+    },
+    {
+      "source": "SpecialEvents.ts",
+      "template": "${this.ace.last} is breaking off — the yellow noses are heading home.",
+      "pattern": "^.+ is breaking off — the yellow noses are heading home\\.$",
+      "clip": "ss_ace_out"
+    },
+    {
+      "source": "SpecialEvents.ts",
+      "template": "You got ${a.last}! The whole group saw him go down!",
+      "pattern": "^You got .+! The whole group saw him go down!$",
+      "clip": "ss_ace_kill"
+    },
+    {
+      "source": "SpecialEvents.ts",
+      "template": "Somebody got ${a.last}! Scratch one Experte!",
+      "pattern": "^Somebody got .+! Scratch one Experte!$",
+      "clip": "ss_ace_other"
+    },
+    {
+      "source": "PilotOps.ts",
+      "template": "Careful, Blue two — that ${f.label} has a rear gunner. Come at him from below!",
+      "pattern": "^Careful, Blue two — that .+ has a rear gunner\\. Come at him from below!$",
+      "clip": "ss_rear"
+    },
+    {
+      "source": "PilotOps.ts",
+      "template": "Little friends, this is ${b.name}. We've lost two engines and can't keep up — can you cover us?",
+      "pattern": "^Little friends, this is .+\\. We've lost two engines and can't keep up — can you cover us\\?$",
+      "clip": "ss_cover"
+    },
+    {
+      "source": "PilotOps.ts",
+      "template": "He's seen you — he's breaking ${side}! Stay with him!",
+      "pattern": "^He's seen you — he's breaking left! Stay with him!$",
+      "clip": "ss_break_left"
+    },
+    {
+      "source": "PilotOps.ts",
+      "template": "He's seen you — he's breaking ${side}! Stay with him!",
+      "pattern": "^He's seen you — he's breaking right! Stay with him!$",
+      "clip": "ss_break_right"
     }
   ]
 }

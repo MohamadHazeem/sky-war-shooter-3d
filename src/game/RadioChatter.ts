@@ -7,6 +7,7 @@
 // functions from the game events. Each is a no-op before attach and safe to call every frame
 // (the callout cooldowns throttle repeats).
 import { VOICE_LINES, VoiceLineId } from '../audio/voiceLines';
+import type { World } from '../world/World';
 import type { StationId } from '../world/B17Layout';
 
 export interface RadioSink { callout(key: string, speaker: string, text: string, cooldown?: number, priority?: number): void }
@@ -15,6 +16,13 @@ export type MissionRole = 'gunner' | 'pilot';
 let sink: RadioSink | null = null;
 let role: MissionRole = 'gunner';
 let rounds = 0;
+let inPass = false, passShots = 0, passHits = 0, lastContact = 0, quietAt = 30;
+let checkAt = 0, replyAt = 0, wounded = 0;
+const CONTACT_PREFIX = {
+  fw190: 'pfx_ss_fw190', bf109: 'pfx_ss_bf109', bf110: 'pfx_ss_bf110', ju88: 'pfx_ss_ju88',
+  me262: 'pfx_ss_me262', me163: 'pfx_ss_me163', he111: 'pfx_ss_he111', me410: 'pfx_ss_me410', do335: 'pfx_ss_do335',
+} as const;
+
 
 const pick = <T>(a: readonly T[]): T => a[Math.floor(Math.random() * a.length)];
 
@@ -31,6 +39,7 @@ export function attachRadioChatter(world: RadioSink, missionRole: MissionRole) {
   sink = world;
   role = missionRole;
   rounds = 0;
+  inPass = false; passShots = passHits = lastContact = checkAt = replyAt = wounded = 0; quietAt = 30;
 }
 
 export function detachRadioChatter() { sink = null; }
@@ -39,7 +48,7 @@ export function detachRadioChatter() { sink = null; }
 export function onFighterKilled(streak = 1) {
   if (role === 'pilot') { line(pick(['rc_lead_splash', 'rc_lead_nice'] as const), 'kill', 6, 1); return; }
   if (streak >= 2) line('rc_kill_streak', 'streak', 8, 2);
-  else line(pick(['rc_kill_good', 'rc_kill_flamer', 'rc_kill_chute'] as const), 'kill', 8, 1);
+  else line(pick(['rc_kill_good', 'ss_kill', 'rc_kill_chute'] as const), 'kill', 8, 1);
 }
 
 // Fighters are attacking through a gun position the player is not manning: tell him which
@@ -89,7 +98,7 @@ export function onEvasive() { if (role === 'gunner') line('rc_evasive', 'evasive
 export function onAmmo(low = false) { if (role === 'gunner') line(low ? 'rc_ammo_low' : 'rc_ammo_short', 'ammo', 30, 1); }
 
 // The player fired through a whole pass without a hit
-export function onMissedPass() { if (role === 'gunner') line('rc_lead_more', 'miss', 25, 1); }
+export function onMissedPass() { if (role === 'gunner') line('ss_miss', 'miss', 25, 1); }
 
 // A fighter is closing head-on / point-blank on the player's bomber
 export function onEnemyClose() { if (role === 'gunner') line('rc_close', 'close', 15, 1); }
@@ -108,3 +117,41 @@ export function onBreak(dir: 'left' | 'right') { if (role === 'pilot') line(dir 
 
 // P-51: an AI wingman shot one down
 export function onWingmanKill() { if (role === 'pilot') line('rc_blue3_splash', 'wingkill', 15, 1); }
+
+/** Identified type plus the existing recorded clock clip, in the navigator's voice. */
+export function onContact(world: RadioSink, type: string, clock: string) {
+  const id = CONTACT_PREFIX[type as keyof typeof CONTACT_PREFIX] ?? 'pfx_ss_fw190';
+  const prefix = VOICE_LINES[id];
+  world.callout('attack', 'Navigator', prefix.text + ' ' + clock + '!', 7, 2);
+}
+
+/** Stateful pass / check-in / quiet-time conversation. Called once per playing frame. */
+export function updateInterphone(world: World) {
+  if (role !== 'gunner' || !sink || !world.player?.alive) return;
+  let nearby = false;
+  for (const a of world.aircraft) if (a.team === 'axis' && a.alive && !a.falling && a.pos.distanceToSquared(world.player.pos) < 1440000) { nearby = true; break; }
+  interphoneTick(world.time, nearby, world.stats.shots, world.stats.hits, Math.max(world.crew.woundedCount, world.crewWounded));
+}
+
+// Scalar entry point makes pass semantics testable without a renderer or AudioContext.
+export function interphoneTick(time: number, nearby: boolean, shots: number, hits: number, hurts: number) {
+  if (role !== 'gunner' || !sink || !Number.isFinite(time + shots + hits + hurts)) return;
+  if (nearby) {
+    if (!inPass) { inPass = true; passShots = shots; passHits = hits; }
+    lastContact = time; quietAt = time + 35; checkAt = replyAt = 0;
+  } else if (inPass && time - lastContact > 4) {
+    inPass = false;
+    if (shots - passShots >= 12 && hits === passHits) onMissedPass();
+    checkAt = time + 5;
+  }
+  if (hurts > wounded) { line('ss_hurt', 'hurtcheck', 35, 2); quietAt = time + 40; }
+  wounded = hurts;
+  if (!nearby && checkAt && time >= checkAt) {
+    checkAt = 0; replyAt = time + 6;
+    line('ss_check', 'check', 35, 0);
+  } else if (!nearby && replyAt && time >= replyAt) {
+    replyAt = 0; line(hurts ? 'ss_hurt' : 'ss_clear', 'checkreply', 35, 0);
+  } else if (!nearby && !inPass && time >= quietAt) {
+    quietAt = time + 45; line('ss_quiet', 'quiet', 45, 0);
+  }
+}

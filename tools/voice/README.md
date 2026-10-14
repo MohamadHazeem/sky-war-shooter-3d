@@ -50,7 +50,9 @@ Changing a reference invalidates only that role. Reference casting and provenanc
 Chatterbox runs sequentially with one model on MPS (CPU if unavailable), resamples 24 → 16 kHz,
 then uses the same silence trim, fades, peak normalisation, AAC encoding and padding removal.
 Urgent/clock lines use `exa=0.8,cfg=0.3`; normal lines `0.55,0.5`; briefings `0.4,0.5`.
-A line can override `exa` and `cfg` independently. No runtime or subtitle changes are required.
+A line can override `exa` and `cfg` independently. `peakDb` optionally sets output headroom
+(-3 dBFS for the Phase 8 clips to allow for AAC reconstruction overshoot); it is included
+in that clip's hash and leaves older clips' levels and hashes unchanged. No runtime or subtitle changes are required.
 
 `--only` matches an exact role first, otherwise an ID prefix; repeat it to combine selections.
 `--limit` applies **before** the unchanged-hash check, so repeating a sample command is a no-op.
@@ -66,7 +68,11 @@ and exit nonzero. Metrics are written after every attempt batch to `.cache/quali
 text/spoken text, duration, words/s, peak/RMS dBFS, 20 ms RMS silence fraction below −40 dBFS,
 seed, retries and total render seconds. These proxies cannot establish intelligibility or accent quality.
 
-`--check` checks source callout coverage, not acoustic quality. It prints the 11 pre-existing,
-exactly enumerated dynamic subtitle-only gaps (`DYNAMIC_CALLOUTS` in `generate.py`) separately;
-any other missing literal/template fails. It does not pretend those dynamic lines are recorded.
-`python3 tools/voice/test_generate.py` runs offline pipeline tests, also invoked by `npm run check`.
+`--check` checks source callout coverage, not acoustic quality. The 11 formerly deferred
+source templates now have finite recorded equivalents in `lines.json` → `dynamic` and
+in the shipped manifest. Each mapping names the exact source template and an anchored
+runtime pattern. Aircraft types and turn directions retain their specific recording;
+open-ended ace names, places and victory counts remain in subtitles while the recording
+speaks the same event concisely. Missing mapped clip IDs fail coverage like missing literals.
+Any new unmapped literal/template still fails. `python3 tools/voice/test_generate.py` runs
+offline pipeline tests, also invoked by `npm run check`.

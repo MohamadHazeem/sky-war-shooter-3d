@@ -528,7 +528,7 @@ export class Game {
     this.boss.update(dt);
     this.pacing.frame(dt);
     // damaged B-17 engines change the interior drone (Sound.setEngineHealth caches repeats)
-    if (this.mission?.role === 'gunner' && w.playerBomber) sound.setEngineHealth(4 - w.playerBomber.enginesOut);
+    if (this.mission?.role === 'gunner' && w.playerBomber) sound.setBomberDamage(w.playerBomber.engineDead, w.playerBomber.zones);
     // waist-window wind roar follows the gunner's cabin (Sound.setCabin; no-op outside the bomber)
     sound.setCabin(this.mission?.role === 'gunner' && !this.menuMode ? w.playerBomber?.root ?? null : null);
     // screen effects

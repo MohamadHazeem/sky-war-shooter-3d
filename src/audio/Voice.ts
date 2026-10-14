@@ -20,6 +20,7 @@ interface Manifest {
   version: number;
   roles: Record<string, { speaker: string; aliases?: string[] }>;
   clockRoles?: string[];
+  dynamic?: { pattern: string; clip: string }[];
   clips: Record<string, Clip>;
 }
 
@@ -34,12 +35,12 @@ const BASE = import.meta.env.BASE_URL + 'audio/voice/';
 const LEAD_S = 0.3;            // call-click to first word (same as INTERPHONE_LEAD_S, so the subtitle lands with the voice)
 const TAIL_S = 0.14;           // last word to click-off
 const JOIN_S = 0.03;           // gap between joined clips ("Bandits," + "nine o'clock low!")
-const LINE_GAP_S = 0.25;       // between two lines
+const LINE_GAP_S = 0.65;       // between two lines
 const MAX_QUEUE = 4;
 const RATE_WINDOW_S = 10;      // at most RATE_MAX lines below priority 2 per window
-const RATE_MAX = 4;
+const RATE_MAX = 3;
 const CACHE_S = 240;           // decoded audio kept in memory, seconds
-const VOICE_GAIN = 1.35;       // radio chain output level on the voice bus (sfx slider, never ducked)
+const VOICE_GAIN = 1.35;       // radio chain output level on the voice bus (independent voice slider, never ducked)
 const STATIC_GAIN = 0.05;      // static bed under the voice (before the band-pass)
 const DUCK_DEPTH = 0.72;       // music + ambience level while someone talks
 const FX_DUCK = 0.65;          // effects (guns, explosions) level while someone talks: -3.7 dB, a slight dip that keeps the voice on top
@@ -74,6 +75,7 @@ export class Voice {
   private on = true;
   private man: Manifest | null = null;
   private state: 'idle' | 'loading' | 'ready' | 'failed' = 'idle';
+  private dynamic: { pattern: RegExp; clip: string }[] = [];
   private byText = new Map<string, string[]>();     // normalised text -> clip ids
   private variants = new Map<string, string[]>();   // base id -> per-role ids (id__role)
   private roleBySpeaker = new Map<string, string>();
@@ -167,6 +169,7 @@ export class Voice {
     const role = this.roleOf(speaker);
     const exact = this.byText.get(norm(text));
     if (exact) return [exact.find((id) => clips[id].role === role) ?? pick(exact)];
+    for (const rule of this.dynamic) if (rule.pattern.test(text) && clips[rule.clip]) return [rule.clip];
     const m = CLOCK_RX.exec(text.replace(/[‘’]/g, "'").trim());
     if (!m) return null;
     const pres = this.byText.get(norm(m[1]));
@@ -212,6 +215,7 @@ export class Voice {
         const cut = id.indexOf('__');
         if (cut > 0) { const base = id.slice(0, cut); (this.variants.get(base) ?? this.variants.set(base, []).get(base)!).push(id); }
       }
+      this.dynamic = (m.dynamic ?? []).filter((r) => !!m.clips[r.clip]).map((r) => ({ pattern: new RegExp(r.pattern), clip: r.clip }));
       this.man = m;
       this.state = 'ready';
       for (const id of WARM) { const v = this.man.clips[id] ? [id] : this.variants.get(id) ?? []; for (const x of v) void this.fetchBuf(x); }
@@ -321,6 +325,8 @@ export class Voice {
     this.queue.sort((a, b) => b.prio - a.prio || a.seq - b.seq);
     const i = this.queue.findIndex((q) => q.ids.every((id) => this.bufs.has(id)));
     if (i < 0) { this.later(0.1); return; } // still loading
+    this.recent = this.recent.filter((s) => t - s < RATE_WINDOW_S);
+    if (this.queue[i].prio < 2 && this.recent.length >= RATE_MAX) { this.later(.5); return; }
     const [item] = this.queue.splice(i, 1);
     this.play(ctx, item);
   }

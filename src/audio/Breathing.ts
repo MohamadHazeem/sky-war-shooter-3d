@@ -12,6 +12,8 @@ const rand = () => Math.random() * 2 - 1;
 
 export class Breathing {
   private bus: GainNode;
+  private recorded: AudioBuffer | null = null;
+  private full = true;
   private env: GainNode;
   private bp: BiquadFilterNode;
   private clicks: AudioBuffer[];
@@ -40,6 +42,9 @@ export class Breathing {
     noise.start(ctx.currentTime + 0.05);
     this.clicks = [this.clickBuffer(1700), this.clickBuffer(2300)];
   }
+
+  setBuffer(buf: AudioBuffer | null) { this.recorded = buf; }
+  setDetail(full: boolean) { this.full = full; }
 
   // Combat intensity 0..1 from the fighter sound model; eased in tick() so it never snaps.
   setIntensity(x: number) { if (Number.isFinite(x)) this.target = Math.min(1, Math.max(0, x)); }
@@ -85,6 +90,16 @@ export class Breathing {
   }
 
   private breath(t0: number, period: number) {
+    if (this.recorded && this.full) {
+      const s = this.ctx.createBufferSource(), g = this.ctx.createGain();
+      s.buffer = this.recorded;
+      s.playbackRate.value = this.recorded.duration / (period * .9);
+      g.gain.value = .13 + .07 * this.level;
+      s.connect(g).connect(this.bus); this.live.add(s);
+      s.onended = () => { this.live.delete(s); s.disconnect(); g.disconnect(); };
+      s.start(t0);
+      return;
+    }
     const k = this.level; // 0 at rest, 1 under fire
     const inhale = period * 0.42;
     const exhale = period - inhale;

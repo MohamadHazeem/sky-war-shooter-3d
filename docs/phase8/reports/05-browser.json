@@ -1,0 +1,118 @@
+{
+  "checks": [
+    {
+      "name": "Four recorded engine layers",
+      "pass": true,
+      "detail": [
+        0.6050000190734863,
+        0.6050000190734863,
+        0.6050000190734863,
+        0.6050000190734863
+      ]
+    },
+    {
+      "name": "Asymmetric dead engines silent",
+      "pass": true,
+      "detail": [
+        0.0084,
+        0.605,
+        0.605,
+        0.0084
+      ]
+    },
+    {
+      "name": "Damaged skin raises wind",
+      "pass": true,
+      "detail": 0.2279026061296463
+    },
+    {
+      "name": "Repair and mission state restore",
+      "pass": true
+    },
+    {
+      "name": "Reduced detail switches off cabin HRTF and breath sample",
+      "pass": true
+    },
+    {
+      "name": "Guns, hits and near/far flak remain finite below clipping",
+      "pass": true,
+      "detail": -1.13
+    },
+    {
+      "name": "SFX mute includes ambience and wet tails",
+      "pass": true
+    },
+    {
+      "name": "One crew line at a time, next line queued",
+      "pass": true
+    },
+    {
+      "name": "Voice remains audible with SFX and music muted",
+      "pass": true,
+      "detail": -1.15
+    },
+    {
+      "name": "Master mute silences voice",
+      "pass": true
+    },
+    {
+      "name": "Live voice resolution",
+      "pass": true
+    },
+    {
+      "name": "Offline stacked gun/skin mix limiter",
+      "pass": true,
+      "detail": {
+        "peakDb": -1.1286938218420373,
+        "nonFinite": 0
+      }
+    }
+  ],
+  "errors": [],
+  "mix": {
+    "detail": "normal",
+    "played": 52,
+    "dropped": [
+      0,
+      0,
+      0
+    ],
+    "voicesNow": 13,
+    "hrtfNow": 2,
+    "engineVoices": 0,
+    "engineAux": 0,
+    "peakOutDb": -1.13,
+    "peakInDb": 6.89,
+    "nonFinite": 0,
+    "renderCapacity": null,
+    "synthesised": 21,
+    "state": "running",
+    "sampleRate": 48000,
+    "baseLatency": 0.005333333333333333
+  },
+  "calls": [
+    {
+      "text": "Me 262s, nine o'clock high!",
+      "clips": [
+        "pfx_ss_me262",
+        "clock_9_high__nav"
+      ]
+    },
+    {
+      "text": "He's back — the one who wounded Sgt. Walsh over Berlin!",
+      "clips": [
+        "ss_revenge_wound"
+      ]
+    },
+    {
+      "text": "Yellow noses, twelve o'clock high! That's Bauer's Staffel — 45 kills!",
+      "clips": [
+        "ss_ace_in"
+      ]
+    }
+  ],
+  "offline": {
+    "peakDb": -1.1286938218420373,
+    "nonFinite": 0
+  }
+}

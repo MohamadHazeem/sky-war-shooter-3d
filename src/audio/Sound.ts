@@ -1,3 +1,4 @@
+import { DuckEnvelope, engineMask, skinDamage } from './Soundscape';
 import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import { Music } from './Music';
@@ -14,7 +15,7 @@ import { Cabin } from './Cabin';
 import { json, take } from '../core/Assets';
 import { AUDIO_MANIFEST, P_LOOPS, P_MENU_MUSIC, P_MISSION_MUSIC, P_REST, P_SFX } from '../core/Preload';
 
-// Procedural audio engine (no sample files).
+// Recorded and procedural audio engine.
 // - Engines are synthesised as looping firing-pulse trains: Wright R-1820 Cyclones
 //   (9-cyl radial) for the B-17, BMW 801 (14-cyl radial) for the Fw 190, Packard
 //   Merlin (V-12) for the P-51, each with propeller blade-pass modulation.
@@ -56,7 +57,7 @@ import { AUDIO_MANIFEST, P_LOOPS, P_MENU_MUSIC, P_MISSION_MUSIC, P_REST, P_SFX }
 export type BufName =
   | 'm2' | 'm2far' | 'cannon' | 'mg131' | 'hit' | 'hitHeavy' | 'explosion' | 'explosionFar' | 'flak' | 'flakClose'
   | 'crack' | 'casing' | 'click' | 'glass' | 'whoosh' | 'static' | 'squelch' | 'rattle' | 'rocket' | 'debris' | 'beltTick'
-  | 'm2thump' | 'm2mech'
+  | 'm2thump' | 'm2mech' | 'm2inside' | 'skin'
   | 'bk5' | 'mg81' | 'flak20' | 'flak20burst' | 'flakTower'
   | 'blastCrack' | 'blastBoom' | 'thunder' | 'rumbleLong' | 'whump' | 'patter' | 'brassPile'
   | 'tyreChirp' | 'gearThump' | 'flarePop' | 'waterImpact' | 'bellyImpact';
@@ -206,10 +207,17 @@ class Emitter implements LoopEmitter {
 export class Sound {
   ctx: AudioContext | null = null;
   private master!: GainNode;
-  private sfx!: GainNode;      // sfx slider: effects (through fx) and the crew voices
+  private sfx!: GainNode;      // sfx slider: effects and their reverb tails
   private crewVoice!: GainNode;
   private fx!: GainNode;       // effects, ducked under the crew voices so they stay intelligible
-  private ducks: { end: number; depth: number; fx: number }[] = [];
+  private ducks = new DuckEnvelope();
+  private recorded = new Set<BufName>();
+  private engineGains: GainNode[] = [];
+  private liveEngineMask = 15;
+  private cabinDamage = 0;
+  private holeBuf: AudioBuffer | null = null;
+  private breathBuf: AudioBuffer | null = null;
+  private turretBuf: AudioBuffer | null = null;
   private amb!: GainNode;
   private duck!: GainNode;
   // Music bus (dry) and its reverb send: both follow the music slider so muting music
@@ -319,15 +327,15 @@ export class Sound {
     // pre-limiter tap for the dev meter (how hard the limiter is pushed)
     this.preScope = ctx.createAnalyser(); this.preScope.fftSize = this.scopeBuf.length;
     this.master.connect(this.preScope);
-    this.ducks = [];
+    this.ducks.clear();
     // ducking bus for radio/explosions (music + ambience go through it)
     this.duck = ctx.createGain();
     this.duck.connect(this.master);
     this.sfx = ctx.createGain(); this.sfx.gain.value = this.sfxVolume; this.sfx.connect(this.master);
-    this.crewVoice = ctx.createGain(); this.crewVoice.gain.value = this.voiceVolume; this.crewVoice.connect(this.sfx);
+    this.crewVoice = ctx.createGain(); this.crewVoice.gain.value = this.voiceVolume; this.crewVoice.connect(this.master);
     this.fx = ctx.createGain(); this.fx.connect(this.sfx);
-    this.interphone = new Interphone(ctx, this.sfx);
-    this.amb = ctx.createGain(); this.amb.gain.value = this.ambVolume; this.amb.connect(this.duck);
+    this.interphone = new Interphone(ctx, this.crewVoice);
+    this.amb = ctx.createGain(); this.amb.gain.value = this.ambVolume * this.sfxVolume; this.amb.connect(this.duck);
     this.musicBus = ctx.createGain(); this.musicBus.gain.value = this.musicVolume; this.musicBus.connect(this.duck);
     this.musicWet = ctx.createGain(); this.musicWet.gain.value = this.musicVolume;
     // Reverbs
@@ -335,17 +343,19 @@ export class Sound {
     this.revOut = ctx.createConvolver(); this.revOut.buffer = this.impulse(3.8, 1.4, false);
     this.revInSend = ctx.createGain(); this.revInSend.gain.value = 0.55;
     this.revOutSend = ctx.createGain(); this.revOutSend.gain.value = 0.5;
-    this.revInSend.connect(this.revIn).connect(this.master);
-    this.revOutSend.connect(this.revOut).connect(this.master);
+    this.revInSend.connect(this.revIn).connect(this.fx);
+    this.revOutSend.connect(this.revOut).connect(this.fx);
     this.creaks = new AirframeCreaks(ctx, this.amb, this.revInSend);
     this.cabin = new Cabin(ctx, this.amb, this.revInSend, this.caps.hrtf > 2);
     this.cabin.setBuffers(this.synth3.get('windowRoar')?.[0] ?? null, this.synth3.get('rattleBed')?.[0] ?? null);
-    this.musicWet.connect(this.revOutSend);
+    const musicReverb = ctx.createConvolver(); musicReverb.buffer = this.revOut.buffer;
+    this.musicWet.connect(musicReverb).connect(this.duck);
     const first = !this.bufs.size;
     if (first) this.buildBuffers();
     this.startAmbience();
     this.breathing = new Breathing(ctx, this.amb);
     this.turretDrive = new TurretDrive(ctx, this.amb);
+    this.applyInteriorBuffers();
     for (let i = 0; i < 6; i++) this.voices.push(this.makeVoice());
     this.whizbyFx = new Whizby(ctx, this.fx, (when, dur) => this.room(when, dur, 1), (when, dur) => this.hrtfShots.take(ctx.currentTime, when, dur));
     this.music.init(ctx, this.musicBus, this.musicWet);
@@ -480,7 +490,7 @@ export class Sound {
   // Sound-effects bus, for one-off synthesized cues that should follow the volume setting
   // (ducked while the crew talks)
   sfxBus(): GainNode | null { return this.ctx ? this.fx : null; }
-  // Crew voice bus: follows the sfx slider, never ducked (Voice.ts)
+  // Independent crew voice slider, never ducked (Voice.ts)
   voiceBus(): GainNode | null { return this.ctx ? this.crewVoice : null; }
   setMusic(on: boolean) {
     const was = this.music.enabled;
@@ -496,8 +506,8 @@ export class Sound {
     this.setBus(this.musicWet, this.musicVolume);
   }
   setVoiceVolume(v: number) { this.voiceVolume = clamp01(v); this.setBus(this.crewVoice, this.voiceVolume); }
-  setSfxVolume(v: number) { this.sfxVolume = clamp01(v); this.setBus(this.sfx, this.sfxVolume); }
-  setAmbVolume(v: number) { this.ambVolume = clamp01(v); this.setBus(this.amb, this.ambVolume); }
+  setSfxVolume(v: number) { this.sfxVolume = clamp01(v); this.setBus(this.sfx, this.sfxVolume); this.setBus(this.amb, this.ambVolume * this.sfxVolume); }
+  setAmbVolume(v: number) { this.ambVolume = clamp01(v); this.setBus(this.amb, this.ambVolume * this.sfxVolume); }
 
   // Short smoothing ramp so dragging a slider does not click
   private setBus(node: GainNode | undefined, v: number) {
@@ -812,6 +822,7 @@ export class Sound {
     if (name === 'windowRoar' || name === 'rattleBed') { this.cabin?.setBuffers(name === 'windowRoar' ? arr[0] : null, name === 'rattleBed' ? arr[0] : null); return; }
     if (name.startsWith('eng_')) return;          // engine voices pick it up on their next update
     const bn = name as BufName;
+    if (this.recorded.has(bn)) return;
     this.bufs.set(bn, arr);
     this.gainMap.set(bn, SYNTH_GAIN[bn] ?? 1);
   }
@@ -852,16 +863,17 @@ export class Sound {
     const SFX: [BufName, string, number][] = [
       ['m2', 'mg50_shot', 1], ['m2far', 'mg50_burst_far', 1], ['cannon', 'cannon_shot', 1], ['mg131', 'mg50_shot', 0.7],
       ['hit', 'impact_metal', 1], ['hitHeavy', 'impact_heavy', 1], ['explosion', 'explosion_air', 1], ['explosionFar', 'explosion_far', 1],
-      ['flak', 'flak_burst', 1], ['flakClose', 'flak_burst', 1.2], ['rattle', 'shrapnel_rattle', 1], ['casing', 'casing', 1],
+      ['flak', 'flak_far', 1], ['flakClose', 'flak_near', 1.2], ['rattle', 'shrapnel_rattle', 1], ['casing', 'casing', 1],
       ['glass', 'glass_crack', 1], ['rocket', 'rocket_launch', 1], ['click', 'ui_click', 1], ['squelch', 'radio_squelch_on', 1],
       ['debris', 'shrapnel_rattle', 0.8], ['whoosh', 'flyby', 1],
+      ['m2inside', 'm2_interior', 1], ['skin', 'skin', 1], ['m2mech', 'receiver', 1], ['patter', 'skin_patter', 1],
     ];
     const sfx = SFX.map(async ([name, key, g]) => {
       const e = man.sfx?.[key];
       if (!e) return;
       const files: string[] = e.files ?? (e.file ? [e.file] : []);
       const bufs = (await Promise.all(files.map(async (f, i) => trimmed(await decode(f, P_SFX), e.trim?.[i])))).filter((b): b is AudioBuffer => !!b);
-      if (bufs.length) { this.bufs.set(name, bufs); this.gainMap.set(name, (e.gain ?? 1) * g); if (name === 'whoosh') this.flybyPeak = e.peakAt ?? 0; }
+      if (bufs.length) { this.bufs.set(name, bufs); this.recorded.add(name); this.gainMap.set(name, (e.gain ?? 1) * g); if (name === 'whoosh') this.flybyPeak = e.peakAt ?? 0; }
     });
     const confirms = (['hit_confirm', 'kill_confirm'] as const).map(async (k) => {
       const e = man.sfx?.[k];
@@ -878,6 +890,9 @@ export class Sound {
       loop('merlin', P_LOOPS).then((merlin) => {
         if (merlin?.buf) { this.engineBufs.merlin = merlin.buf; this.merlinGain = merlin.gain; if (this.playerEngine) { this.playerEngine.src.stop(); this.playerEngine.src.disconnect(); this.playerEngine.src = this.loopSrc(merlin.buf); this.playerEngine.src.connect(this.playerEngine.filter); } }
       }),
+      loop('holes', P_LOOPS).then((b) => { if (b?.buf) { this.holeBuf = b.buf; this.applyInteriorBuffers(); } }),
+      loop('breath', P_LOOPS).then((b) => { if (b?.buf) { this.breathBuf = b.buf; this.applyInteriorBuffers(); } }),
+      loop('turret', P_LOOPS).then((b) => { if (b?.buf) { this.turretBuf = b.buf; this.applyInteriorBuffers(); } }),
       loop('radio_static', P_REST).then((radio) => { if (radio?.buf) this.radioStaticBuf = radio.buf; }),
     ];
     await Promise.all([...sfx, ...confirms, ...loops]);
@@ -913,12 +928,12 @@ export class Sound {
     const b17 = this.b17Loop;
     if (b17 && this.b17 && !this.b17Sampled) {
       for (const s of this.b17.srcs) { try { s.stop(); } catch { /* */ } s.disconnect(); }
-      // two slightly detuned copies of the cabin recording: a living, beating drone
-      this.b17.srcs = [1, 1.006].map((r, i) => {
-        const s = this.loopSrc(b17.buf, r);
-        const g = ctx.createGain(); g.gain.value = b17.gain * (i ? 0.45 : 0.8);
-        s.connect(g).connect(this.b17!.filter);
-        return s;
+      // Preserve four independently panned engines when recordings arrive.
+      this.b17.srcs = [1, 1.004, .9965, 1.0075].map((r, i) => {
+        const src = this.loopSrc(b17.buf, r);
+        this.engineGains[i].gain.value = (this.liveEngineMask & (1 << i)) ? .55 * b17.gain : 0;
+        src.connect(this.engineGains[i]);
+        return src;
       });
       this.b17.filter.frequency.setValueAtTime(this.mode === 'bomber' ? 2400 : 900, t);
       this.b17Sampled = true;
@@ -1009,10 +1024,12 @@ export class Sound {
     const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 520; filter.Q.value = 0.8;
     const gain = ctx.createGain(); gain.gain.value = 0;
     const srcs: AudioBufferSourceNode[] = [];
+    this.engineGains = [];
     [1.0, 1.004, 0.9965, 1.0075].forEach((r, i) => {
       const s = this.loopSrc(this.engineBufs.cyclone, r);
       const p = ctx.createStereoPanner(); p.pan.value = [-0.7, -0.3, 0.3, 0.7][i];
-      const g = ctx.createGain(); g.gain.value = 0.32;
+      const g = ctx.createGain(); g.gain.value = (this.liveEngineMask & (1 << i)) ? .32 : 0;
+      this.engineGains.push(g);
       s.connect(g).connect(p).connect(filter);
       srcs.push(s);
     });
@@ -1126,6 +1143,8 @@ export class Sound {
     if (k === this.detail) return;
     this.detail = k; this.caps = DETAIL[k];
     this.music.setDetail(k === 'reduced');
+    this.cabin?.setDetail(k === 'normal');
+    this.breathing?.setDetail(k === 'normal');
     this.oneShots = new Budget(this.caps.voices);
     this.hrtfShots = new Budget(this.caps.hrtf);
     for (const v of this.voices) this.seat(v);   // drops / restores the second loops
@@ -1142,7 +1161,7 @@ export class Sound {
     const l = bomber.localToWorld(this.winL.set(1.02, 0.35, -7.44)), r = bomber.localToWorld(this.winR.set(-1.02, 0.35, -7.44));
     // the camera far from the cabin (kill cam, photo mode): no window roar
     const near = Math.min(l.distanceTo(this.listenerPos), r.distanceTo(this.listenerPos)) < 25;
-    this.cabin.update(near ? l : null, near ? r : null, this.maneuver, this.caps.cabinBed);
+    this.cabin.update(near ? l : null, near ? r : null, this.maneuver, this.caps.cabinBed, this.cabinDamage);
   }
 
   private ensurePlayerEngine() {
@@ -1232,6 +1251,28 @@ export class Sound {
     this.b17Depth.gain.setTargetAtTime(0.04 * (4 - a), t, 0.4);
     // the drone sags a little in pitch as the remaining engines labour
     for (const s of this.b17?.srcs ?? []) s.playbackRate.setTargetAtTime((this.baseRate.get(s) ?? 1) * (1 - 0.022 * (4 - a)), t, 1.4);
+  }
+
+  setBomberDamage(dead: readonly boolean[], zones: readonly { name: string; hp: number; maxHp: number }[]) {
+    const mask = engineMask(dead);
+    this.cabinDamage = skinDamage(zones);
+    if (mask === this.liveEngineMask) return;
+    this.liveEngineMask = mask;
+    let alive = 0;
+    for (let i = 0; i < 4; i++) {
+      const on = !!(mask & (1 << i));
+      if (on) alive++;
+      if (this.ctx && this.engineGains[i]) this.engineGains[i].gain.setTargetAtTime(on ? (this.b17Sampled ? .55 * (this.b17Loop?.gain ?? 1) : .32) : 0, this.ctx.currentTime, .35);
+    }
+    this.setEngineHealth(alive);
+  }
+
+  private applyInteriorBuffers() {
+    this.cabin?.setLeakBuffer(this.holeBuf);
+    this.breathing?.setBuffer(this.breathBuf);
+    this.breathing?.setDetail(this.detail === 'normal');
+    this.cabin?.setDetail(this.detail === 'normal');
+    this.turretDrive?.setBuffer(this.turretBuf);
   }
 
   // One of the gunner's own engines dies (0..3, left to right): a low growl winding down
@@ -1647,9 +1688,9 @@ export class Sound {
       this.play('m2thump', null, { gain: 1.3, rate: 0.72, reverb: rev * 0.9 });
       this.play('m2mech', null, { gain: 0.35, rate: 0.8, reverb: rev * 0.4 });
     } else {
-      this.play('m2', null, { gain: twin ? 0.9 : 0.8, reverb: rev });
+      this.play(this.mode === 'bomber' && this.bufs.has('m2inside') ? 'm2inside' : 'm2', null, { gain: twin ? 0.9 : 0.8, reverb: rev * .45 });
       this.play('m2thump', null, { gain: twin ? 1.15 : 1.0, reverb: rev * 0.8 });
-      this.play('m2mech', null, { gain: 0.28, reverb: rev * 0.4 });
+      if (this.caps.aux) this.play('m2mech', null, { gain: 0.4, reverb: rev * 0.2 });
       // the Mustang's six wing guns never fire in step: a second report a few ms behind and a
       // lower thump make the stack thicker than one gun
       if (this.mode === 'fighter') {
@@ -1660,12 +1701,13 @@ export class Sound {
     // the guns drown out everything else for an instant
     this.duckFor(0.09, 0.5);
     // spent brass rings on the turret floor; a Mustang's casings fall out of the wing chutes unheard
-    if (!ejectOutside && this.mode !== 'fighter' && Math.random() < 0.35) setTimeout(() => this.play('casing', null, { gain: 0.07, rate: 0.9 + Math.random() * 0.4, reverb: 0.3 }), 150 + Math.random() * 250);
+    if (!ejectOutside && this.mode !== 'fighter' && Math.random() < 0.35) this.play('casing', null, { gain: 0.12, rate: 0.9 + Math.random() * 0.4, reverb: 0.2, at: .15 + Math.random() * .25 });
   }
 
   // Shrapnel / rounds hitting our own aircraft
   playerImpact(heavy: boolean) {
-    this.play(heavy ? 'hitHeavy' : 'hit', null, { gain: 1.0, reverb: 0.6 });
+    this.play(this.mode === 'bomber' && this.bufs.has('skin') ? 'skin' : heavy ? 'hitHeavy' : 'hit', null, { gain: heavy ? 1.2 : .9, rate: heavy ? .8 : 1, reverb: .3 });
+    this.duckFor(.25, .45);
   }
 
   rattle() { this.patter(0.8); }
@@ -1698,16 +1740,9 @@ export class Sound {
     if (!this.ctx || !ok(seconds) || !ok(depth) || !ok(fx)) return;
     const t = this.ctx.currentTime;
     seconds = Math.min(30, Math.max(0, seconds));
-    const c = (v: number) => Math.min(1, Math.max(0, v));
-    this.ducks = this.ducks.filter((d) => d.end > t);
-    this.ducks.push({ end: t + seconds, depth: c(depth), fx: c(fx) });
-    const at = (time: number, key: 'depth' | 'fx') => this.ducks.reduce((m, d) => (d.end > time ? Math.min(m, d[key]) : m), 1);
-    const ends = [...new Set(this.ducks.map((d) => d.end))].sort((a, b) => a - b);
-    for (const [node, key] of [[this.duck, 'depth'], [this.fx, 'fx']] as const) {
-      node.gain.cancelScheduledValues(t);
-      node.gain.setTargetAtTime(at(t, key), t, 0.05);
-      for (const e of ends) node.gain.setTargetAtTime(at(e + 1e-4, key), e, 0.4);
-    }
+    this.ducks.add(t, seconds, depth, fx);
+    this.ducks.schedule(this.duck.gain, t);
+    this.ducks.schedule(this.fx.gain, t, true);
   }
 
   // Master limiter check (dev console: await sws.sound.limiterCheck()): renders `n` close
@@ -1903,10 +1938,10 @@ export class Sound {
       const preferred = voices.filter((v) => /US|United States|Alex|Daniel|Fred|Male/i.test(v.name + v.lang));
       const pool = preferred.length ? preferred : voices;
       if (pool.length) u.voice = pool[voiceIdx % pool.length];
-      u.rate = 1.08; u.pitch = 0.85 + (voiceIdx % 3) * 0.08; u.volume = 0.9 * this.volume * this.voiceVolume * this.sfxVolume;
+      u.rate = 1.08; u.pitch = 0.85 + (voiceIdx % 3) * 0.08; u.volume = 0.9 * this.volume * this.voiceVolume;
       // interphone static bed + squelch while the crewman talks
       u.onstart = () => this.radioBedOn(true);
-      u.onend = () => { this.radioBedOn(false); this.play('squelch', null, { gain: 0.2 }); };
+      u.onend = () => this.radioBedOn(false);
       speechSynthesis.speak(u);
       this.duckFor(Math.min(4, 0.6 + text.length * 0.06), 0.6, 0.65);
     } catch { /* speech unavailable */ }
@@ -1919,7 +1954,7 @@ export class Sound {
       const src = this.loopSrc(this.radioStaticBuf ?? this.noiseLoop(2, 'pink'));
       const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = this.radioStaticBuf ? 0.3 : 1.2;
       const gain = this.ctx.createGain(); gain.gain.value = 0;
-      src.connect(bp).connect(gain).connect(this.sfx);
+      src.connect(bp).connect(gain).connect(this.crewVoice);
       this.radioBed = { src, gain };
     }
     this.radioBed.gain.gain.setTargetAtTime(on ? 0.035 : 0, t, 0.05);

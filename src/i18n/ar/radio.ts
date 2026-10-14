@@ -80,6 +80,7 @@ const ship = (s: string, tr: (s: string) => string) => SHIPS[s] ?? tr(s);
 const crew = (s: string, tr: (s: string) => string) => crewNames[s] ?? tr(s);
 
 const patterns: Pattern[] = [
+  [new RegExp(`^(Fw 190|Bf 109|Bf 110|Ju 88|Me 262|Me 163|He 111|Me 410|Do 335)s, ${CLOCK}!$`), (m) => `طائرات ${m[1]}، ${clockAr(m[2], m[3])}!`],
   // a bare clock position (World.clockPosition), so other lines can tr() it
   [new RegExp(`^${CLOCK}$`), (m) => clockAr(m[1], m[2])],
 

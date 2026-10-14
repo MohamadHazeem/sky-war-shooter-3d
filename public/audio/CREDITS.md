@@ -117,3 +117,74 @@ resampled, trimmed, faded, normalised and encoded as AAC for the game.
 Speaker IDs, source utterances and modifications are recorded in
 [`tools/voice/refs/README.md`](../../tools/voice/refs/README.md) and `refs/sources.json`.
 Unmigrated clips remain the original macOS `say` recordings until the full render is run.
+
+
+## Phase 8 interior soundscape (CC0)
+
+Individual Freesound HQ previews, downloaded 2026-10-14. All sources in this table are
+[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). These are edited sound-design
+layers, not a claim of an original B-17 turret or oxygen-regulator recording. The interior
+prop recording is separated into four independently controlled, detuned layers at runtime.
+Source metadata and preview URLs: `tools/audio/soundscape_sources.json`.
+Rebuild: `node tools/audio/soundscape_build.mjs <source-directory>`.
+
+| Added file (replaces/layers existing sound) | Source and author | Modification |
+|---|---|---|
+| `ss_receiver.m4a` | [Gun handling_near_mono.wav by _stubb](https://freesound.org/people/_stubb/sounds/406226/) (CC0) | Close handling transient, high-passed, cropped receiver clack; mono 32 kHz AAC, peak-normalised. |
+| `ss_m2_1.m4a` | [50 Cal MG by qubodup](https://freesound.org/people/qubodup/sounds/239138/) by qubodup (CC0); [Gun handling_near_mono.wav by _stubb](https://freesound.org/people/_stubb/sounds/406226/) (CC0) | M2 burst round + delayed receiver, interior low-pass; mono 32 kHz AAC, peak-normalised. |
+| `ss_casing_1.m4a` | [Bouncing Shell Casings (Various Sizes) by GryffDavid](https://freesound.org/people/GryffDavid/sounds/318964/) by GryffDavid (CC0) | Isolated brass bounce, floor ring; mono 32 kHz AAC, peak-normalised. |
+| `ss_skin_1.m4a` | [Bullet Hit Metal by coolguy244e](https://freesound.org/people/coolguy244e/sounds/267893/) by coolguy244e (CC0) | Short thin-metal strike, heavy low resonance removed; mono 32 kHz AAC, peak-normalised. |
+| `ss_m2_2.m4a` | [50 Cal MG by qubodup](https://freesound.org/people/qubodup/sounds/239138/) by qubodup (CC0); [Gun handling_near_mono.wav by _stubb](https://freesound.org/people/_stubb/sounds/406226/) (CC0) | M2 burst round + delayed receiver, interior low-pass; mono 32 kHz AAC, peak-normalised. |
+| `ss_casing_2.m4a` | [Bouncing Shell Casings (Various Sizes) by GryffDavid](https://freesound.org/people/GryffDavid/sounds/318964/) by GryffDavid (CC0) | Isolated brass bounce, floor ring; mono 32 kHz AAC, peak-normalised. |
+| `ss_skin_2.m4a` | [Bullet Hit Metal by coolguy244e](https://freesound.org/people/coolguy244e/sounds/267893/) by coolguy244e (CC0) | Short thin-metal strike, heavy low resonance removed; mono 32 kHz AAC, peak-normalised. |
+| `ss_flak_near.m4a` | [GUNArtl_69thFieldArtilleryGun01_InMotionAudio_FREESampleSunday.wav by InMotionAudio](https://freesound.org/people/InMotionAudio/sounds/702245/) by InMotionAudio (CC0) | Artillery crack with short body, mono for positional playback; mono 32 kHz AAC, peak-normalised. |
+| `ss_flak_far.m4a` | [GUNArtl_69thFieldArtilleryGun01_InMotionAudio_FREESampleSunday.wav by InMotionAudio](https://freesound.org/people/InMotionAudio/sounds/702245/) by InMotionAudio (CC0) | Same burst, distant low-pass body; mono 32 kHz AAC, peak-normalised. |
+| `ss_patter.m4a` | [Steel nails falling.mp3 by nnicklas](https://freesound.org/people/nnicklas/sounds/461779/) by nnicklas (CC0) | Small metal impacts, high-pass skin shrapnel; mono 32 kHz AAC, peak-normalised. |
+| `ss_radial.m4a` | [G07-19_4 Engine Prop Steady Int or Ext Amb.wav by craigsmith](https://freesound.org/people/craigsmith/sounds/437863/) by craigsmith (CC0) | Interior prop texture; four offset detuned independent engine layers; mono 32 kHz AAC, peak-normalised. |
+| `ss_holes.m4a` | [R27-28-Big Cold Winter Wind.wav by craigsmith](https://freesound.org/people/craigsmith/sounds/481148/) by craigsmith (CC0) | High-passed air leak through damaged skin; mono 32 kHz AAC, peak-normalised. |
+| `ss_breath.m4a` | [Masked_Breathing_Loop by Mediasaur](https://freesound.org/people/Mediasaur/sounds/788056/) by Mediasaur (CC0) | Masked breath cycle, trimmed and band-limited; mono 32 kHz AAC, peak-normalised. |
+| `ss_turret.m4a` | [Servo motor by Burningmonkey](https://freesound.org/people/Burningmonkey/sounds/322021/) by Burningmonkey (CC0) | Servo section, crossfaded motor loop; mono 32 kHz AAC, peak-normalised. |
+
+The 34 `ss_*` / `pfx_ss_*` crew clips in `audio/voice/` are generated with the existing
+Chatterbox pipeline and reference cast (see `tools/voice/refs/README.md`), not Freesound
+recordings. Exact filenames, text, role and hashes are in `audio/voice/manifest.json`;
+measurements are in `docs/phase8/reports/05-voice.json`. Eleven formerly unvoiced dynamic
+templates now resolve to these recordings; personal names, mission locations and victory
+counts remain subtitle details, with a contextual spoken equivalent.
+
+New voice files (Chatterbox/MIT; conditioning references VCTK/CC BY 4.0, credited above):
+
+- `voice/ss_type_fw190.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/pfx_ss_fw190.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_type_bf109.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/pfx_ss_bf109.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_type_bf110.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/pfx_ss_bf110.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_type_ju88.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/pfx_ss_ju88.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_type_me262.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/pfx_ss_me262.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_type_me163.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/pfx_ss_me163.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_type_he111.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/pfx_ss_he111.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_type_me410.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/pfx_ss_me410.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_type_do335.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/pfx_ss_do335.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_revenge_wound.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_revenge_down.m4a` — nav reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_ace_in.m4a` — tail reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_ace_out.m4a` — tail reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_ace_kill.m4a` — pilot reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_ace_other.m4a` — tail reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_rear.m4a` — lead reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_cover.m4a` — bigfriend reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_break_left.m4a` — lead reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_break_right.m4a` — lead reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_check.m4a` — pilot reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_hurt.m4a` — radio reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_clear.m4a` — tail reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_quiet.m4a` — waist reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_miss.m4a` — top reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
+- `voice/ss_kill.m4a` — tail reference voice; generated, trimmed, normalised to −3 dBFS before AAC.
