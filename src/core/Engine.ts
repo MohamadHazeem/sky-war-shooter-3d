@@ -1,3 +1,4 @@
+import { beginMarkerFrame } from '../ui/MarkerAudit';
 import { Precipitation } from '../render/Precipitation';
 import * as THREE from 'three';
 import { Atmos, atmosUniforms, syncAtmosUniforms } from '../render/Atmosphere';
@@ -321,6 +322,7 @@ export class Engine {
     Atmos.windOffset.addScaledVector(Atmos.wind, dt);
     for (const u of this.updatables) u.update(dt, this.time);
     this.beforeFrame?.(dt);
+    beginMarkerFrame();
     this.onFrame?.(dt, this.time);
     this.heatHaze.update(dt);
     this.precipitation.update(dt, this.time, this.quality);

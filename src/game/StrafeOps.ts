@@ -1,3 +1,5 @@
+import { recordMarker } from '../ui/MarkerAudit';
+import { projectMarker, markerAtmosphereAlpha } from '../ui/MarkerProjection';
 import * as THREE from 'three';
 import type { World } from '../world/World';
 import { Fighter, WRECK_FLOOR } from '../world/Aircraft';
@@ -756,8 +758,8 @@ export class StrafeOps {
     const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 170);
     // the round's area: a diamond clamped to the screen edge, with its range
     const area = this.areaCenter(_v);
-    const ap = _d.copy(area).project(cam);
-    const behind = ap.z > 1;
+    const ap = projectMarker(area, cam);
+    const behind = !ap.front;
     let x = (ap.x * 0.5 + 0.5) * W, y = (-ap.y * 0.5 + 0.5) * H;
     if (behind) { x = W - x; y = H - 40; }
     x = THREE.MathUtils.clamp(x, 40, W - 40); y = THREE.MathUtils.clamp(y, 50, H - 50);
@@ -774,9 +776,11 @@ export class StrafeOps {
       const flak = !!t.gun;
       if (t.set !== set && !(flak && t.gun!.firing)) continue;
       if (d > (flak ? 2600 : 3500) || (!flak && d < 220)) continue;
-      const s = _d.copy(t.pos).add(_w.set(0, 4, 0)).project(cam);
-      if (s.z > 1 || Math.abs(s.x) > 1 || Math.abs(s.y) > 1) continue;
+      _d.copy(t.pos).add(_w.set(0, 4, 0));
+      const s = projectMarker(_d, cam);
+      if (!s.on || markerAtmosphereAlpha(_d, cam, 3500) <= 0) continue;
       const sx = (s.x * 0.5 + 0.5) * W, sy = (-s.y * 0.5 + 0.5) * H;
+      recordMarker('ground-target', null, 'world', sx, sy, _d, t.model ?? this.gt.root, 3500, t.id, t);
       if (flak) {
         ctx.fillStyle = t.gun!.firing ? `rgba(255,90,60,${pulse})` : 'rgba(255,120,90,0.55)';
         ctx.fillRect(sx - 3, sy - 16, 6, 6);

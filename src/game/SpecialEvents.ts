@@ -391,7 +391,6 @@ export class SpecialEvents {
       if (this.roundLeft < 25) this.slotT = -1;
       else if (!this.bossUp()) { this.slotT = -1; this.start(this.forced ?? this.pick()); this.forced = null; }
     }
-    this.draw();
   }
 
   private resetMission(m: unknown) {
@@ -466,13 +465,13 @@ export class SpecialEvents {
     this.hud.hideAll();
   }
 
-  private draw() {
+  draw() {
     const e = this.active;
     if (!e) { this.hud.hideAll(); return; }
     const v = e.panel();
     if (v) this.hud.showPanel(v); else this.hud.hidePanel();
     const n = e.tags(this.tagList);
-    this.hud.setTags(this.tagList, n, this.engine.camera, innerWidth, innerHeight);
+    this.hud.setTags(this.tagList, n, this.engine.camera, innerWidth, innerHeight, this.world);
   }
 
   // ---------------- shared toolbox ----------------

@@ -1,3 +1,5 @@
+import { aircraftMarkerAlpha, projectAircraft } from '../ui/MarkerProjection';
+import { recordMarker } from '../ui/MarkerAudit';
 import * as THREE from 'three';
 import type { Game } from './Game';
 import { Aircraft, Fighter, WRECK_FLOOR } from '../world/Aircraft';
@@ -236,7 +238,7 @@ export class AADefence {
     if (this.panel) this.panel.hidden = g.state === 'paused' || g.state === 'debrief' || g.photo.active;
     if (g.state === 'debrief') { if (this.panel) this.panel.hidden = true; g.ui.ctx.clearRect(0, 0, innerWidth, innerHeight); g.input.endFrame(); return; }
     if (g.photo.active) { g.photo.update(); g.ui.ctx.clearRect(0, 0, innerWidth, innerHeight); sound.setListener(g.engine.camera); g.input.endFrame(); return; }
-    if (g.state === 'paused') { g.input.endFrame(); return; }
+    if (g.state === 'paused') { this.draw(); g.input.endFrame(); return; }
     this.field.base.update(w.time);
     this.field.detail.update(g.engine.camera, w.time, this.targets.length > 0);
     if (this.choosing) {
@@ -536,12 +538,16 @@ export class AADefence {
     this.inverseAim.copy(this.aimQuat).invert();
     ctx.font = '12px ' + CANVAS_MONO; ctx.textAlign = 'center';
     for (const r of this.raiders) {
-      if (!r.f.alive || r.f.remove) continue;
-      this.projected.copy(r.f.pos).project(cam);
+      const alpha = aircraftMarkerAlpha(r.f, this.g.world, cam);
+      if (alpha <= 0) continue;
+      ctx.globalAlpha = alpha;
+      const projection = projectAircraft(r.f, cam);
+      this.projected.set(projection.x, projection.y, 0);
       const x = (this.projected.x * 0.5 + 0.5) * width, y = (-this.projected.y * 0.5 + 0.5) * height;
-      const visible = this.projected.z < 1 && this.projected.z > -1 && x > 35 && x < width - 35 && y > 120 && y < height - 110;
+      const visible = projection.on && x > 35 && x < width - 35 && y > 120 && y < height - 110;
       ctx.strokeStyle = this.lights.coned.has(r.f) ? '#fcf4b0' : '#e3a07b'; ctx.fillStyle = ctx.strokeStyle;
       if (visible) {
+        recordMarker('aa-raider', r.f, 'world', x, y);
         ctx.strokeRect(x - 16, y - 12, 32, 24); ctx.fillText(r.f.label, x, y - 19);
         ctx.fillRect(x - 16, y + 17, 32 * r.f.structureFrac, 2);
       } else {
@@ -549,9 +555,11 @@ export class AADefence {
         const angle = Math.atan2(this.v.x, this.v.z);
         const xx = clamp(width / 2 - Math.sin(angle) * width * 0.46, 25, width - 25);
         const yy = this.v.z < 0 ? height - 150 : 130;
+        recordMarker('aa-arrow', r.f, 'edge', xx, yy);
         ctx.beginPath(); ctx.moveTo(xx, yy - 9); ctx.lineTo(xx - 7, yy + 6); ctx.lineTo(xx + 7, yy + 6); ctx.closePath(); ctx.fill();
       }
     }
+    ctx.globalAlpha = 1;
     if (this.incomingText) {
       ctx.fillStyle = '#e2c87f';
       ctx.fillText(this.incomingText, width / 2, 116);

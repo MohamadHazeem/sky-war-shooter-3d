@@ -1,3 +1,5 @@
+import { projectMarker, markerAtmosphereAlpha, shownObject, liveMarkerTarget } from './MarkerProjection';
+import { recordMarker } from './MarkerAudit';
 import * as THREE from 'three';
 import type { BossBattle } from '../game/BossBattle';
 import type { BossShip, PartKind } from '../world/BossShip';
@@ -25,10 +27,11 @@ const CORNERS = [[-1, -1], [1, -1], [1, 1], [-1, 1]] as const;
 const PR = { x: 0, y: 0, on: false, behind: false };
 
 function project(cam: THREE.PerspectiveCamera, pos: THREE.Vector3, W: number, H: number) {
-  _p.copy(pos).project(cam);
-  PR.behind = _p.z > 1;
+  const p = projectMarker(pos, cam);
+  _p.set(p.x, p.y, 0);
+  PR.behind = !p.front;
   PR.x = (_p.x * 0.5 + 0.5) * W; PR.y = (-_p.y * 0.5 + 0.5) * H;
-  PR.on = !PR.behind && Math.abs(_p.x) < 1 && Math.abs(_p.y) < 1;
+  PR.on = p.on;
   return PR;
 }
 
@@ -97,7 +100,10 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
   const camPos = cam.getWorldPosition(_cam);
   for (const s of b.ships) {
     const sh = s.ship;
-    if (s.deathT >= 0 || sh.remove) continue;
+    if (s.deathT >= 0 || !liveMarkerTarget(sh) || !shownObject(sh.root)) continue;
+    const alpha = markerAtmosphereAlpha(sh.pos, cam, 3000);
+    if (alpha <= 0) continue;
+    ctx.globalAlpha = alpha;
     const d = sh.pos.distanceTo(camPos);
     if (d > 3000) continue;
     const showTags = d < 700;
@@ -105,12 +111,17 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
       if (!part.alive) continue;
       sh.partPos(part, _w);
       const pd = _w.distanceTo(camPos);
+      if (markerAtmosphereAlpha(_w, cam, 3000) <= 0) continue;
       const pr = project(cam, _w, W, H);
       const charging = part.charge > 0;
       if (!pr.on) {
-        if (charging && s.heavy?.part === part) edgeArrow(ctx, W, H, pr, t, `${tx(sh.def.name).toUpperCase()} · ${tx(KIND_TAG[part.kind])}`);
+        if (charging && s.heavy?.part === part) {
+          recordMarker('boss-part-arrow', sh, 'edge', pr.x, pr.y, _w, sh.root, 3000, sh.id, part);
+          edgeArrow(ctx, W, H, pr, t, `${tx(sh.def.name).toUpperCase()} · ${tx(KIND_TAG[part.kind])}`);
+        }
         continue;
       }
+      recordMarker('boss-part', sh, 'world', pr.x, pr.y, _w, sh.root, 3000, sh.id, part);
       const sz = THREE.MathUtils.clamp((part.zone.radius / pd) * focal * 0.9, 5, 22);
       if (charging) {
         const pulse = 0.5 + 0.5 * Math.sin(t * 16);
@@ -141,6 +152,7 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
     const c = project(cam, sh.pos, W, H);
     if (c.on) {
       if (sh.breached) {
+        recordMarker('boss-core', sh, 'world', c.x, c.y, sh.pos, sh.root, 3000);
         // exposed core: pulsing diamond on the hull
         const pulse = 0.5 + 0.5 * Math.sin(t * 7);
         const r = 11 + 4 * pulse;
@@ -149,11 +161,13 @@ export function drawBossHud(ctx: CanvasRenderingContext2D, W: number, H: number,
         ctx.fillStyle = 'rgba(255,90,60,0.95)'; ctx.textAlign = 'center'; ctx.font = `700 10px ${MONO}`;
         ctx.fillText(tx('HULL EXPOSED'), c.x, c.y + r + 13);
       } else if (s.armourPing > 0) {
+        recordMarker('boss-armour', sh, 'world', c.x, c.y, sh.pos, sh.root, 3000);
         ctx.fillStyle = `rgba(200,210,220,${Math.min(1, s.armourPing * 2)})`; ctx.textAlign = 'center'; ctx.font = `700 11px ${MONO}`;
         ctx.fillText(tx('ARMOURED'), c.x, c.y + 26);
       }
     }
   }
+  ctx.globalAlpha = 1;
   // ram warning
   for (const s of b.ships) {
     const h = s.heavy;

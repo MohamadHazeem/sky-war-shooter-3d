@@ -1,3 +1,5 @@
+import { liveMarkerTarget } from './MarkerProjection';
+import { recordMarker } from './MarkerAudit';
 import * as THREE from 'three';
 import type { World } from '../world/World';
 import { Bomber, Fighter } from '../world/Aircraft';
@@ -82,6 +84,7 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
   // incoming wave: pulsing sector where the next wave will appear, with countdown
   if (incoming && incoming.eta > 0) {
     toMap(incoming.pos, m);
+    recordMarker('incoming-wave', null, 'forecast', m.x, m.y, incoming.pos, null, 0, 'scheduled-wave');
     const pulse = 0.5 + 0.5 * Math.sin(time * 6);
     ctx.strokeStyle = `rgba(255,80,50,${0.5 + 0.4 * pulse})`; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(m.x, m.y, 6 + 4 * pulse + 6 * e, 0, Math.PI * 2); ctx.stroke();
@@ -98,6 +101,7 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
   for (const c of radarCues) {
     if (!c.on || time > c.until) continue;
     toMap(c.pos, m);
+    recordMarker('tactics-cue', null, 'forecast', m.x, m.y, c.pos, null, 0, c.label);
     const pulse = 0.5 + 0.5 * Math.sin(time * 8);
     const s = 6 + 3 * pulse + 4 * e;
     ctx.strokeStyle = `rgba(255,196,60,${0.55 + 0.4 * pulse})`; ctx.lineWidth = 2;
@@ -109,17 +113,19 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
 
   // aircraft
   for (const a of world.aircraft) {
-    if (!a.alive || a.remove || a === pl) continue;
+    if (!liveMarkerTarget(a) || a === pl) continue;
     toMap(a.pos, m);
     if (a instanceof Bomber) {
+      recordMarker('friendly-radar', a, 'radar', m.x, m.y);
       ctx.fillStyle = pal.friend;
       ctx.fillRect(m.x - 2, m.y - 2, 4, 4);
       continue;
     }
-    if (a instanceof BossShip) { drawBossBlip(ctx, m.x, m.y, e, m.clipped, time, a, a.vel.dot(_r), -a.vel.dot(_f)); continue; }
+    if (a instanceof BossShip) { recordMarker('boss-radar', a, 'radar', m.x, m.y); drawBossBlip(ctx, m.x, m.y, e, m.clipped, time, a, a.vel.dot(_r), -a.vel.dot(_f)); continue; }
     if (!(a instanceof Fighter)) continue;
     const enemy = a.team === 'axis';
     if (enemy && !world.spotted(a)) continue;   // Night Fighter: only coned / close raiders show
+    if (enemy) recordMarker('radar', a, 'radar', m.x, m.y);
     // heading arrow
     const hx = a.vel.dot(_r), hy = -a.vel.dot(_f);
     const ang = Math.atan2(hy, hx);

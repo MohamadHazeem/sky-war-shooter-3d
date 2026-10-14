@@ -1,3 +1,5 @@
+import { aircraftMarkerAlpha, projectAircraft } from '../ui/MarkerProjection';
+import { recordMarker } from '../ui/MarkerAudit';
 // Pilot-specific lifecycle; the existing CoopSession owns transport, world proxies and scores.
 import * as THREE from 'three';
 import type { Game } from './Game';
@@ -132,14 +134,15 @@ export class CoopPilot {
     const wing = this.g.pilotOps.wing; wing.callsign = 'Blue Two'; wing.start(true);
   }
   draw(ctx: CanvasRenderingContext2D, W: number, H: number, partner: Fighter | null) {
-    if (!partner) return;
+    if (!partner || aircraftMarkerAlpha(partner, this.g.world, this.g.engine.camera) <= 0 || !projectAircraft(partner, this.g.engine.camera).on) return;
     const own = this.g.world.playerFighter;
     const distance = own ? Math.round(own.pos.distanceTo(partner.pos)) : 0;
     p.copy(partner.pos).project(this.g.engine.camera);
     const label = `${tx(partner.label)} · ${distance} ${tx('m')} · ${tx(partner.alive ? 'PARTNER' : 'DOWN')}`;
     ctx.save(); ctx.font = `600 13px ${CANVAS_MONO}`; ctx.textAlign = 'center';
     const half = ctx.measureText(label).width / 2 + 10;
-    const x = THREE.MathUtils.clamp((p.x * .5 + .5) * W, half + 8, W - half - 8), y = THREE.MathUtils.clamp((-p.y * .5 + .5) * H, 70, H - 70);
+    const x = (p.x * .5 + .5) * W, y = (-p.y * .5 + .5) * H;
+    recordMarker('coop-partner', partner, 'world', x, y);
     ctx.fillStyle = 'rgba(8,20,28,.8)'; ctx.fillRect(x - half, y - 33, half * 2, 24);
     ctx.fillStyle = '#a6edff'; ctx.fillText(label, x, y - 16);
     ctx.strokeStyle = '#8fdfef'; ctx.strokeRect(x - 6, y - 6, 12, 12); ctx.restore();

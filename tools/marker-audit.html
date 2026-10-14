@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Marker audit</title>
+<style>body{margin:0;background:#15191c;color:#eee;font:13px monospace}nav{height:44px;display:flex;gap:12px;align-items:center;padding:0 12px}button{padding:5px 10px}iframe{border:0;width:100%;height:calc(100vh - 44px)}pre{max-width:100%;white-space:pre-wrap;position:absolute;top:44px;left:0;max-height:40vh;overflow:auto;background:#15191cee;pointer-events:none;font-size:11px}</style></head>
+<body><nav><button id="repro">Reproduce behind-camera fighter</button><button id="run">Run audit scenarios</button><span id="status">Loading</span></nav><iframe src="/"></iframe><pre id="result"></pre>
+<script type="module">
+const frame = document.querySelector('iframe'), status = document.querySelector('#status'), result = document.querySelector('#result');
+const ready = setInterval(() => { if(frame.contentWindow.sws?.autoplay) {clearInterval(ready);status.textContent='Ready';frame.contentWindow.engine.loopOverride=()=>{};} },200);
+document.querySelector('#repro').onclick = async () => {
+ const w=frame.contentWindow, s=w.sws,g=s.game,e=s.engine;
+ e.loopOverride=()=>{};g.bookends.auto=true;g.startMission(s.survivalMission('gunner'));s.step(2);g.settings.markers=true;g.settings.hudDetail='full';
+ for(const a of g.world.fighters('axis')){a.remove=true;a.root.removeFromParent();}
+ const T=await import('three'), cam=e.camera;
+ cam.updateMatrixWorld();const dir=cam.getWorldDirection(new T.Vector3());
+ const pos=cam.position.clone().addScaledVector(dir,-600);
+ const f=g.world.spawnEnemy(pos,'beam'); f.lastPlayerHit=g.world.time;
+ const previous=e.onFrame;e.onFrame=()=>g.hud.drawOverlay();e.frame(0,true);e.onFrame=previous;
+ const p=f.pos.clone().project(cam);const depth=-f.pos.clone().applyMatrix4(cam.matrixWorldInverse).z;
+ status.textContent=`Fighter ${f.id}: camera depth ${depth.toFixed(0)}m (BEHIND), projected z ${p.z.toFixed(6)}`;
+ result.textContent=s.markerAudit?`Fixed: ${s.markerAudit().falseMarkers} false markers. Behind-camera target cues: ${s.markerAudit().markers.filter(m=>m.targetId===f.id).map(m=>m.kind).join(', ')}.`:'Baseline: red box + health bar at screen centre despite fighter being 600m behind camera.';
+};
+document.querySelector('#run').onclick=async()=>{status.textContent='Running';try{const out=await frame.contentWindow.sws.markerAuditRun( value=>{status.textContent=value;});result.textContent=JSON.stringify(out,null,2);status.textContent='Done';}catch(e){result.textContent=String(e);status.textContent='Failed';}};
+</script></body></html>

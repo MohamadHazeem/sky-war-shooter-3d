@@ -1,3 +1,5 @@
+import { aircraftMarkerAlpha, liveMarkerTarget, projectAircraft, attackingPlayer } from './MarkerProjection';
+import { recordMarker } from './MarkerAudit';
 import * as THREE from 'three';
 import type { Engine } from '../core/Engine';
 import type { World } from '../world/World';
@@ -97,7 +99,7 @@ export class CombatFeedback {
 
   update(dt: number, active: boolean) {
     this.clock += dt;
-    for (const a of this.arcs) if (a.active && (a.life -= dt) <= 0) { a.active = false; a.shooter = null; }
+    for (const a of this.arcs) if (a.active && ((a.life -= dt) <= 0 || (a.shooter && (!liveMarkerTarget(a.shooter) || !this.world.aircraft.includes(a.shooter))))) { a.active = false; a.shooter = null; }
     this.nWarn = 0;
     if (!active) return;
     const w = this.world, pl = w.player;
@@ -105,13 +107,13 @@ export class CombatFeedback {
     const ref = this.ref();
     let fresh = false;
     for (const f of w.fighters('axis')) {
-      if (!f.alive || f.remove) continue;
+      if (!liveMarkerTarget(f) || !w.spotted(f)) continue;
       _to.copy(ref).sub(f.pos);
       const d = _to.length();
       if (d > WARN_RANGE || d < 1) continue;
       const p = w.enemyPilot(f);
       if (!p) continue;
-      const lining = p.state === 'attack' || p.state === 'duel' || (p.state === 'dogfight' && p.target === pl);
+      const lining = attackingPlayer(p.state, p.target, pl);
       if (!lining) continue;
       const aim = f.gunAim ?? f.forward(_fwd);
       if (aim.dot(_to) / d < WARN_CONE) continue;
@@ -140,10 +142,12 @@ export class CombatFeedback {
       ctx.lineCap = 'round';
       for (const a of this.arcs) {
         if (!a.active) continue;
-        if (a.shooter && !a.shooter.remove) {
+        if (a.shooter && (!liveMarkerTarget(a.shooter) || !this.world.aircraft.includes(a.shooter))) { a.active = false; a.shooter = null; continue; }
+        if (a.shooter && liveMarkerTarget(a.shooter) && this.world.aircraft.includes(a.shooter)) {
           _l.copy(a.shooter.pos).sub(ref);
           if (_l.lengthSq() > 1e-6) a.dir.copy(_l).normalize();
         }
+        recordMarker('recent-hit', a.shooter, 'damage', hx, hy);
         _l.copy(a.dir).applyQuaternion(_q);         // camera space: x right, y up, -z ahead
         const ang = Math.atan2(-_l.y, _l.x);
         // straight ahead the arc would point nowhere useful: a ring segment above instead
@@ -178,13 +182,20 @@ export class CombatFeedback {
       ctx.textBaseline = 'middle';
       for (let i = 0; i < this.nWarn; i++) {
         const f = this.warns[i].f!;
-        _s.copy(f.pos).project(cam);
-        const on = _s.z < 1 && Math.abs(_s.x) < 0.94 && Math.abs(_s.y) < 0.9;
+        if (!liveMarkerTarget(f) || !this.world.aircraft.includes(f)) continue;
+        const p = this.world.enemyPilot(f);
+        if (!p || !attackingPlayer(p.state, p.target, this.world.player)) continue;
+        const alpha = aircraftMarkerAlpha(f, this.world, cam);
+        if (alpha <= 0) continue;
+        ctx.globalAlpha = alpha;
+        const projected = projectAircraft(f, cam);
+        const on = projected.on && Math.abs(projected.x) < 0.94 && Math.abs(projected.y) < 0.9;
         const col = `rgba(255,${Math.round(120 + 60 * pulse)},40,${(0.65 + 0.35 * pulse).toFixed(3)})`;
         ctx.strokeStyle = col; ctx.fillStyle = col;
         if (on) {
           // pulsing inward chevrons above and below the fighter, plus a label
-          const x = (_s.x * 0.5 + 0.5) * W, y = (-_s.y * 0.5 + 0.5) * H;
+          const x = (projected.x * 0.5 + 0.5) * W, y = (-projected.y * 0.5 + 0.5) * H;
+          recordMarker('on-you', f, 'world', x, y);
           const g = THREE.MathUtils.clamp(3600 / this.warns[i].d, 16, 46) + 4 * pulse;
           ctx.lineWidth = 2.5;
           ctx.beginPath();
@@ -194,11 +205,12 @@ export class CombatFeedback {
           ctx.fillText(tx('ON YOU'), x, y - g - 18);
         } else {
           // edge chevron toward the attacker
-          let ex = _s.x, ey = _s.y;
-          if (_s.z > 1) { ex = -ex; ey = -ey; }
+          let ex = projected.x, ey = projected.y;
+          if (!projected.front) { ex = -ex; ey = -ey; }
           const ang = Math.atan2(-ey, ex);
           const rad = Math.min(W, H) * 0.36;
           const x = W / 2 + Math.cos(ang) * rad, y = H / 2 + Math.sin(ang) * rad;
+          recordMarker('on-you-arrow', f, 'edge', x, y);
           ctx.save();
           ctx.translate(x, y); ctx.rotate(ang);
           ctx.lineWidth = 3;

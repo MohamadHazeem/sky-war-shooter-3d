@@ -1,5 +1,6 @@
+import { aircraftMarkerAlpha, liveMarkerTarget, projectAircraft, projectMarker } from '../ui/MarkerProjection';
+import { recordMarker } from '../ui/MarkerAudit';
 import { hudRuntime, hudVisibility } from '../ui/HudDetail';
-import { spottingAlpha } from '../render/WeatherPresets';
 import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import type { Game } from './Game';
@@ -40,6 +41,8 @@ export class GameHud {
   // floating origin shift (Game.floatingOrigin)
   rebase(off: THREE.Vector3) {
     for (const p of this.popups) p.pos.sub(off);
+    // Forecast is computed before the floating-origin shift, unlike aircraft roots.
+    this.g.director.incoming?.pos.sub(off);
   }
 
   // hit / kill marker timers (every frame, before the combo update)
@@ -139,7 +142,7 @@ export class GameHud {
     const muzzle = g.loadout.leadVel || (pilot ? 880 : 870);
     let best: Fighter | null = null, bestAng = THREE.MathUtils.degToRad(pilot ? 18 : 25);
     for (const f of w.fighters('axis')) {
-      if (!f.alive || !w.spotted(f)) continue;
+      if (aircraftMarkerAlpha(f, w, cam) <= 0 || !projectAircraft(f, cam).on) continue;
       const to = f.pos.clone().sub(origin);
       const d = to.length();
       if (d > 1300 * weatherNow.spotting) continue;
@@ -152,10 +155,13 @@ export class GameHud {
     const p = new THREE.Vector3();
     for (let i = 0; i < 3; i++) { p.copy(best.pos).addScaledVector(rel, t); t = p.distanceTo(origin) / muzzle; }
     p.y += 0.5 * 9.81 * t * t;
-    const sp = p.clone().project(cam), tp = best.pos.clone().project(cam);
-    if (sp.z > 1 || Math.abs(sp.x) > 1.1 || Math.abs(sp.y) > 1.1) return;
-    const x = (sp.x * 0.5 + 0.5) * W, y = (-sp.y * 0.5 + 0.5) * H;
+    const sp = projectMarker(p, cam);
+    if (!sp.on) return;
+    const px = sp.x, py = sp.y;
+    const tp = projectAircraft(best, cam);
+    const x = (px * 0.5 + 0.5) * W, y = (-py * 0.5 + 0.5) * H;
     const tx = (tp.x * 0.5 + 0.5) * W, ty = (-tp.y * 0.5 + 0.5) * H;
+    recordMarker('lead-anchor', best, 'world', tx, ty);
     ctx.save();
     ctx.strokeStyle = 'rgba(255,200,90,0.55)'; ctx.lineWidth = 1;
     ctx.setLineDash([3, 4]);
@@ -173,6 +179,7 @@ export class GameHud {
     const W = innerWidth, H = innerHeight;
     ctx.clearRect(0, 0, W, H);
     if (g.menuMode || !(g.state === 'playing' || g.state === 'ending' || g.state === 'paused')) return;
+    g.specials.draw(); // same final camera and frame as all canvas markers (also while paused)
     if (g.bombardier.active) { g.bombardier.draw(ctx, W, H); return; }
     const cam = g.engine.camera;
     const w = g.world;
@@ -181,18 +188,19 @@ export class GameHud {
     if (visibility.markers && g.settings.markers && pl) {
       for (const a of w.aircraft) {
         ctx.globalAlpha = 1;
-        if (a === pl || !a.alive) continue;
+        if (a === pl || !liveMarkerTarget(a)) continue;
         const enemy = a.team === 'axis';
         const d = a.pos.distanceTo(cam.position);
-        const visibility = spottingAlpha(d, enemy ? 2800 : 1800, weatherNow.spotting);
+        const visibility = aircraftMarkerAlpha(a, w, cam, enemy ? 2800 : 1800);
         if (visibility <= 0) continue;
         if (enemy && !w.spotted(a)) continue;   // Night Fighter: only coned / close / firing raiders
-        const p = a.pos.clone().project(cam);
+        const p = projectAircraft(a, cam);
         const col = access.markerColor(enemy);
         if (!enemy) {
           // Friendlies: a small blue chevron above the aircraft, no brackets, so they never read as targets
-          if (p.z < 1 && Math.abs(p.x) < 1 && Math.abs(p.y) < 1) {
+          if (p.on) {
             const x = (p.x * 0.5 + 0.5) * W, y = (-p.y * 0.5 + 0.5) * H;
+            recordMarker('friendly-chevron', a, 'world', x, y, undefined, a.root, 1800);
             const up = THREE.MathUtils.clamp((a instanceof Fighter ? 1400 : 3200) / d, 10, 46);
             ctx.fillStyle = col;
             ctx.beginPath(); ctx.moveTo(x - 6, y - up - 8); ctx.lineTo(x + 6, y - up - 8); ctx.lineTo(x, y - up); ctx.closePath(); ctx.fill();
@@ -204,9 +212,10 @@ export class GameHud {
           continue;
         }
         ctx.globalAlpha = visibility;
-        if (p.z < 1 && Math.abs(p.x) < 1 && Math.abs(p.y) < 1) {
+        if (p.on) {
           const x = (p.x * 0.5 + 0.5) * W, y = (-p.y * 0.5 + 0.5) * H;
           const s = THREE.MathUtils.clamp(3200 / d, 9, 34);
+          recordMarker('target-box', a, 'world', x, y);
           ctx.strokeStyle = col; ctx.lineWidth = 2;
           ctx.beginPath();
           const c = s * 0.45;
@@ -221,10 +230,11 @@ export class GameHud {
         } else if (enemy && d < 1500) {
           // edge arrow toward off-screen attacker
           let ex = p.x, ey = p.y;
-          if (p.z > 1) { ex = -ex; ey = -ey; }
+          if (!p.front) { ex = -ex; ey = -ey; }
           const ang = Math.atan2(-ey, ex);
           const r = Math.min(W, H) * 0.42;
           const x = W / 2 + Math.cos(ang) * r, y = H / 2 + Math.sin(ang) * r;
+          recordMarker('target-arrow', a, 'edge', x, y);
           ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
           ctx.fillStyle = col;
           ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(-4, -7); ctx.lineTo(-4, 7); ctx.closePath(); ctx.fill();
@@ -235,13 +245,16 @@ export class GameHud {
     ctx.globalAlpha = 1;
     // Health bars on enemies the player has been hitting
     if (visibility.markers) for (const f of w.fighters('axis')) {
-      if (!f.alive || w.time - f.lastPlayerHit > 6) continue;
-      const p = f.pos.clone().project(cam);
-      if (p.z > 1 || Math.abs(p.x) > 1 || Math.abs(p.y) > 1) continue;
+      if (w.time - f.lastPlayerHit > 6) continue;
+      const alpha = aircraftMarkerAlpha(f, w, cam);
+      if (alpha <= 0) continue;
+      const p = projectAircraft(f, cam);
+      if (!p.on) continue;
       const d = f.pos.distanceTo(cam.position);
-      ctx.globalAlpha = spottingAlpha(d, 2800, weatherNow.spotting);
+      ctx.globalAlpha = alpha;
       const x = (p.x * 0.5 + 0.5) * W, y = (-p.y * 0.5 + 0.5) * H;
       const s = THREE.MathUtils.clamp(2400 / d, 9, 30);
+      recordMarker('health-bar', f, 'world', x, y);
       const bw = 46, frac = f.structureFrac;
       ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(x - bw / 2 - 1, y - s - 13, bw + 2, 6);
       ctx.fillStyle = frac > 0.5 ? 'rgba(230,200,90,0.95)' : frac > 0.25 ? 'rgba(240,140,50,0.95)' : 'rgba(235,70,50,0.95)';
@@ -250,8 +263,8 @@ export class GameHud {
     ctx.globalAlpha = 1;
     // Score pop-ups
     if (visibility.popups) for (const pop of this.popups) {
-      const p = pop.pos.clone().project(cam);
-      if (p.z > 1) continue;
+      const p = projectMarker(pop.pos, cam);
+      if (!p.on) continue;
       const a = Math.min(1, pop.life / 0.6);
       ctx.fillStyle = `rgba(255,214,120,${a})`;
       ctx.font = '600 20px Oswald, sans-serif'; ctx.textAlign = 'center';

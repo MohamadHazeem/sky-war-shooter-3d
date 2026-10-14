@@ -1,3 +1,6 @@
+import type { World } from '../world/World';
+import { aircraftMarkerAlpha, projectAircraft } from './MarkerProjection';
+import { recordMarker } from './MarkerAudit';
 import * as THREE from 'three';
 import type { Aircraft } from '../world/Aircraft';
 import { tx } from '../i18n';
@@ -104,7 +107,7 @@ export class SpecialHud {
   }
 
   // Name tags over aircraft: projected here (no per-frame allocation beyond the style strings)
-  setTags(list: readonly TagSpec[], n: number, cam: THREE.Camera, W: number, H: number) {
+  setTags(list: readonly TagSpec[], n: number, cam: THREE.Camera, W: number, H: number, world: World) {
     if (n) this.ensure();
     while (this.tags.length < n) {
       const el = document.createElement('div');
@@ -116,17 +119,13 @@ export class SpecialHud {
     for (let i = 0; i < this.tags.length; i++) {
       const t = this.tags[i];
       const v = i < n ? list[i] : null;
-      if (!v || !v.a.alive || v.a.remove) { if (t.on) { t.on = false; t.el.style.display = 'none'; } continue; }
+      if (!v || aircraftMarkerAlpha(v.a, world, cam) <= 0 || !projectAircraft(v.a, cam).on) { if (t.on) { t.on = false; t.el.style.display = 'none'; } continue; }
       if (!t.on) { t.on = true; t.el.style.display = ''; }
       const d = v.a.pos.distanceTo(cam.position);
-      _p.copy(v.a.pos).project(cam);
-      let x = _p.x, y = _p.y, edge = false;
-      if (_p.z > 1) { x = -x; y = -y; edge = true; }
-      if (Math.abs(x) > 0.92 || Math.abs(y) > 0.86) {
-        edge = true;
-        const k = Math.max(Math.abs(x) / 0.92, Math.abs(y) / 0.86);
-        x /= k; y /= k;
-      }
+      const p = projectAircraft(v.a, cam);
+      const x = p.x, y = p.y, edge = false;
+      t.el.style.opacity = String(aircraftMarkerAlpha(v.a, world, cam));
+      recordMarker('special-tag', v.a, 'world', (x * .5 + .5) * W, (-y * .5 + .5) * H);
       const lift = edge ? 0 : Math.min(70, Math.max(18, 3000 / Math.max(1, d)));
       const px = Math.round((x * 0.5 + 0.5) * W), py = Math.round((-y * 0.5 + 0.5) * H - lift);
       if (px !== t.x || py !== t.y) { t.x = px; t.y = py; t.el.style.transform = `translate(${px}px, ${py}px) translate(-50%, -100%)`; }
