@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as THREE from 'three';
 import {
   CORE, NOSE, TAIL, WING_L, WING_L_TIP, WING_R, WING_R_TIP, PART_COUNT, classify, layoutFrom, kindSpec, subtree, HP_SHARE,
@@ -263,6 +263,10 @@ const hitAt = (d: Destruction, f: Fighter, x: number, y: number, z: number, dmg 
   d.onHit(f, { target: f, zone: f.zones[0], point: new THREE.Vector3(x, y, z).multiplyScalar(6).add(f.pos), damage: dmg, cannon: false, shooter: null, bulletVel: new THREE.Vector3(), playerShot: true });
 
 describe('destruction runtime', () => {
+  // the runtime rolls eject impulses and spins with Math.random: seed it so a lifting panel can't balloon by chance
+  beforeEach(() => { vi.spyOn(Math, 'random').mockImplementation(mulberry(9)); });
+  afterEach(() => { vi.restoreAllMocks(); });
+
   it('rounds on the wingtip shoot it off as a piece of the real mesh; the fighter flies on rolling', () => {
     const { d, f, killAircraft } = rig();
     for (let i = 0; i < 6; i++) hitAt(d, f, 4.6, 0, 0.6);
