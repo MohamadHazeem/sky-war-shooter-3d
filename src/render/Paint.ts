@@ -1,3 +1,4 @@
+import { registerHeroMaterial } from '../world/HeroTextures';
 import * as THREE from 'three';
 import { markOwned } from './Dispose';
 import type { Rarity } from '../game/WeaponMods';
@@ -105,8 +106,10 @@ function paintedMap(id: string, src: THREE.Texture): THREE.Texture | null {
 // Recolour a B-17 model. Restores the original (shared) materials first, so schemes can be
 // switched freely; the copies are marked owned and freed when replaced.
 export function applyPaint(model: THREE.Object3D, id: string) {
+  const stripes = model.getObjectByName('invasion_markings');
+  if (stripes) stripes.visible = id === 'invasion';
   const placeholder = !model.getObjectByName('airframe');   // stand-in model: plain colours
-  const isSkin = (x: THREE.Material) => x.name === SKIN || (placeholder && !x.transparent);
+  const isSkin = (x: THREE.Material) => x.name === SKIN || /^hero_(skin|neutral_grey)/.test(x.name) || (placeholder && !x.transparent);
   const copies = new Map<THREE.Material, THREE.Material>();
   model.traverse((o) => {
     const m = o as THREE.Mesh;
@@ -132,10 +135,19 @@ export function applyPaint(model: THREE.Object3D, id: string) {
         const std = mat as THREE.MeshStandardMaterial;
         const cs = markOwned(std.clone());
         cs.userData.paint = id;
-        const map = std.map ? paintedMap(id, std.map) : null;
+        const hero = std.name.startsWith('hero_');
+        // Low retains an embedded diffuse atlas, so recolour it without streaming detail.
+        const heroLow = hero && std.name.endsWith('_low');
+        const map = (!hero || (heroLow && (id === 'silver' || id === 'desert'))) && std.map ? paintedMap(id, std.map) : null;
         if (map) cs.map = map;
-        else if (cs.color && id !== 'invasion') cs.color.multiply(id === 'silver' ? new THREE.Color(1.9, 1.9, 2.0) : new THREE.Color(1.6, 1.15, 1.1));
-        if (id === 'silver') { cs.metalness = 0.62; cs.roughness = 0.32; }
+        else if (!hero && cs.color && id !== 'invasion') cs.color.multiply(id === 'silver' ? new THREE.Color(1.9, 1.9, 2.0) : new THREE.Color(1.6, 1.15, 1.1));
+        if (hero) {
+          if (heroLow && map) cs.color.setRGB(1, 1, 1);
+          else if (id === 'silver') cs.color.fromArray(std.map ? [1, 1, 1] : [.52, .55, .58]);
+          else if (id === 'desert') cs.color.fromArray(std.map ? [2.6, 1.7, 2.3] : [.25, .17, .10]);
+          registerHeroMaterial(cs);
+        }
+        if (id === 'silver') { cs.metalness = hero ? (std.map && !heroLow ? 1 : .82) : .62; cs.roughness = hero ? (std.map && !heroLow ? 1 : .36) : .32; }
         copies.set(mat, c = cs);
       }
       return c;

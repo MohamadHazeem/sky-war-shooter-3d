@@ -1,0 +1,256 @@
+{
+  "legacy": {
+    "hero": false,
+    "props": 4,
+    "textures": [],
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "bench": {
+      "avg": 8.34,
+      "p50": 8.3,
+      "p95": 9.7,
+      "max": 10.2,
+      "calls": 1,
+      "tris": 1,
+      "programs": 117,
+      "w": 1280,
+      "h": 720
+    },
+    "errors": [],
+    "warnings": []
+  },
+  "hero": {
+    "hero": true,
+    "props": 4,
+    "textures": [
+      {
+        "compressed": true,
+        "width": 2048,
+        "height": 2048,
+        "normal": true,
+        "ao": true
+      }
+    ],
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "bench": {
+      "avg": 9.16,
+      "p50": 8.6,
+      "p95": 13.7,
+      "max": 14.6,
+      "calls": 1,
+      "tris": 1,
+      "programs": 130,
+      "w": 1280,
+      "h": 720
+    },
+    "mechanics": {
+      "bay": 1.3466536845615005,
+      "gear": 0,
+      "deadDisc": false,
+      "runningDisc": true
+    },
+    "lods": [
+      {
+        "quality": "high",
+        "distance": 60,
+        "levels": [
+          64,
+          0,
+          0
+        ]
+      },
+      {
+        "quality": "high",
+        "distance": 300,
+        "levels": [
+          6,
+          58,
+          0
+        ]
+      },
+      {
+        "quality": "high",
+        "distance": 900,
+        "levels": [
+          6,
+          0,
+          58
+        ]
+      },
+      {
+        "quality": "low",
+        "distance": 60,
+        "levels": [
+          6,
+          0,
+          58
+        ]
+      }
+    ],
+    "lowBench": {
+      "avg": 8.05,
+      "p50": 8.3,
+      "p95": 9.4,
+      "max": 10,
+      "calls": 1,
+      "tris": 1,
+      "programs": 131,
+      "w": 1264,
+      "h": 711
+    },
+    "programs": {
+      "before": 131,
+      "after": 131,
+      "added": 0
+    },
+    "errors": [],
+    "warnings": []
+  },
+  "fallback": {
+    "hero": true,
+    "props": 4,
+    "textures": [
+      {
+        "compressed": false,
+        "width": 2048,
+        "height": 2048,
+        "normal": true,
+        "ao": true
+      }
+    ],
+    "scan": {
+      "ldr": {
+        "black": 0,
+        "white": 0,
+        "blackClusters": [],
+        "whiteClusters": []
+      },
+      "hdr": {
+        "nan": 0,
+        "hot": 0,
+        "neg": 0,
+        "nanBox": null,
+        "hotBox": null
+      }
+    },
+    "bench": {
+      "avg": 8.24,
+      "p50": 8.3,
+      "p95": 9.5,
+      "max": 9.6,
+      "calls": 1,
+      "tris": 1,
+      "programs": 131,
+      "w": 1280,
+      "h": 720
+    },
+    "mechanics": {
+      "bay": 1.3466536845615005,
+      "gear": 0,
+      "deadDisc": false,
+      "runningDisc": true
+    },
+    "lods": [
+      {
+        "quality": "high",
+        "distance": 60,
+        "levels": [
+          64,
+          0,
+          0
+        ]
+      },
+      {
+        "quality": "high",
+        "distance": 300,
+        "levels": [
+          6,
+          58,
+          0
+        ]
+      },
+      {
+        "quality": "high",
+        "distance": 900,
+        "levels": [
+          6,
+          0,
+          58
+        ]
+      },
+      {
+        "quality": "low",
+        "distance": 60,
+        "levels": [
+          6,
+          0,
+          58
+        ]
+      }
+    ],
+    "lowBench": {
+      "avg": 5.66,
+      "p50": 5.2,
+      "p95": 7.7,
+      "max": 7.8,
+      "calls": 1,
+      "tris": 1,
+      "programs": 132,
+      "w": 1264,
+      "h": 711
+    },
+    "programs": {
+      "before": 133,
+      "after": 133,
+      "added": 0
+    },
+    "errors": [],
+    "warnings": []
+  },
+  "low-start": {
+    "quality": "low",
+    "hero": true,
+    "props": 4,
+    "bench": {
+      "avg": 8.5,
+      "p50": 8.3,
+      "p95": 9.4,
+      "max": 18.3,
+      "calls": 1,
+      "tris": 1,
+      "programs": 122,
+      "w": 1264,
+      "h": 711
+    },
+    "detailRequests": [],
+    "errors": [],
+    "warnings": []
+  }
+}

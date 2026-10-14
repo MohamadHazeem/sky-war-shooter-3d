@@ -1,0 +1,875 @@
+{
+  "name": "b17",
+  "_comment": "Coordinates are FlightGear model coords (x aft, y right, z up, metres) of B-17/Models/b17.xml. Instance labels: <name> of the XML <model> or file stem (+#n for repeats).",
+  "submodels": {
+    "include": [
+      "^Models/turret(up|down|noze)\\.xml$",
+      "^Models/Guns/guns\\.xml$",
+      "^Models/Engines/engine\\.xml$",
+      "^Models/Interior/interior\\.xml$",
+      "^Models/Interior/Panel/panel\\.xml$",
+      "^Models/Interior/Seats/seat\\.xml$",
+      "^Models/Pilot/pilot\\.xml$"
+    ],
+    "exclude": []
+  },
+  "exclude_objects": [
+    "main/prop(disc|blur).*",
+    "interior/intverriere",
+    "turretup/intverretourelle1",
+    "turretdown/intverretourelle2",
+    "engine.*/echappes"
+  ],
+  "texture_files": {
+    "texture.png": "Models/Liveries/1024x1024/GD-L.png"
+  },
+  "rotations": [
+    {
+      "_comment": "main gear retracted (b17.xml gear animations at position-norm 0)",
+      "objects": [
+        "main/axe[GD]2"
+      ],
+      "center": [
+        -5.452,
+        0,
+        -2.42
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "angle": 50
+    },
+    {
+      "objects": [
+        "main/roue[GD]",
+        "main/axe[GD]",
+        "main/axe[GD]2"
+      ],
+      "center": [
+        -4.704,
+        0,
+        -0.746
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "angle": 60
+    },
+    {
+      "objects": [
+        "main/axe[GD]3"
+      ],
+      "center": [
+        -7.265,
+        0,
+        -0.654
+      ],
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "angle": 60
+    },
+    {
+      "objects": [
+        "main/axeA",
+        "main/roueA"
+      ],
+      "center": [
+        5.729,
+        0,
+        -0.783
+      ],
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "angle": 85
+    },
+    {
+      "_comment": "waist guns: rest pose pointing straight out of the windows",
+      "objects": [
+        "CenterLeft/guns"
+      ],
+      "center": [
+        2.6638,
+        -1.01665,
+        0.04025
+      ],
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "angle": 90
+    },
+    {
+      "objects": [
+        "CenterRight/guns"
+      ],
+      "center": [
+        2.6638,
+        1.01665,
+        0.04025
+      ],
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "angle": -90
+    },
+    {
+      "_comment": "tail guns: remove FlightGear's 15 deg rest pitch -> straight aft",
+      "objects": [
+        "guns#2/guns",
+        "guns#3/guns"
+      ],
+      "center": [
+        11.28056,
+        0,
+        -0.000876
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "angle": 15
+    }
+  ],
+  "nodes": [
+    {
+      "name": "prop_1",
+      "objects": [
+        "main/heliceGE",
+        "main/bolGE"
+      ],
+      "axis": [
+        [
+          -7.0,
+          -6.505,
+          -0.184
+        ],
+        [
+          -8.0,
+          -6.505,
+          -0.184
+        ]
+      ]
+    },
+    {
+      "name": "prop_2",
+      "objects": [
+        "main/heliceGI",
+        "main/bolGI"
+      ],
+      "axis": [
+        [
+          -7.5,
+          -3.021,
+          -0.585
+        ],
+        [
+          -8.5,
+          -3.021,
+          -0.585
+        ]
+      ]
+    },
+    {
+      "name": "prop_3",
+      "objects": [
+        "main/heliceDI",
+        "main/bolDI"
+      ],
+      "axis": [
+        [
+          -7.5,
+          3.021,
+          -0.585
+        ],
+        [
+          -8.5,
+          3.021,
+          -0.585
+        ]
+      ]
+    },
+    {
+      "name": "prop_4",
+      "objects": [
+        "main/heliceDE",
+        "main/bolDE"
+      ],
+      "axis": [
+        [
+          -7.0,
+          6.505,
+          -0.184
+        ],
+        [
+          -8.0,
+          6.505,
+          -0.184
+        ]
+      ]
+    },
+    {
+      "name": "turret_top",
+      "objects": [
+        "turretup/.*"
+      ],
+      "pivot": [
+        -6.02222,
+        0,
+        1.27594
+      ]
+    },
+    {
+      "name": "turret_top_guns",
+      "parent": "turret_top",
+      "objects": [
+        "GunsMobile.*/guns"
+      ],
+      "pivot": [
+        -6.22222,
+        0,
+        1.45594
+      ]
+    },
+    {
+      "name": "turret_ball",
+      "objects": [
+        "turretdown/.*"
+      ],
+      "pivot": [
+        -0.16461,
+        0,
+        -1.08884
+      ]
+    },
+    {
+      "name": "turret_ball_guns",
+      "parent": "turret_ball",
+      "objects": [
+        "Down.*Gun/guns"
+      ],
+      "pivot": [
+        -0.39371,
+        0,
+        -1.54194
+      ]
+    },
+    {
+      "name": "turret_chin",
+      "objects": [
+        "turretnoze/.*"
+      ],
+      "pivot": [
+        -10.07524,
+        0,
+        -1.36947
+      ]
+    },
+    {
+      "name": "turret_chin_guns",
+      "parent": "turret_chin",
+      "objects": [
+        "InDaNose.*/guns"
+      ],
+      "pivot": [
+        -10.3805,
+        0,
+        -1.49071
+      ]
+    },
+    {
+      "name": "gun_waist_left",
+      "objects": [
+        "CenterLeft/guns"
+      ],
+      "pivot": [
+        2.6638,
+        -1.01665,
+        0.04025
+      ]
+    },
+    {
+      "name": "gun_waist_right",
+      "objects": [
+        "CenterRight/guns"
+      ],
+      "pivot": [
+        2.6638,
+        1.01665,
+        0.04025
+      ]
+    },
+    {
+      "name": "gun_tail",
+      "objects": [
+        "guns#2/guns",
+        "guns#3/guns"
+      ],
+      "pivot": [
+        11.28056,
+        0,
+        -0.000876
+      ]
+    },
+    {
+      "name": "gun_cheek_left",
+      "objects": [
+        "guns/guns"
+      ],
+      "pivot": [
+        -9.53098,
+        -1.05934,
+        -0.26133
+      ]
+    },
+    {
+      "name": "gun_cheek_right",
+      "objects": [
+        "guns#1/guns"
+      ],
+      "pivot": [
+        -9.53098,
+        1.05934,
+        -0.26133
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "name": "source_aileronD",
+      "objects": [
+        "main/aileronD"
+      ]
+    },
+    {
+      "name": "source_aileronG",
+      "objects": [
+        "main/aileronG"
+      ]
+    },
+    {
+      "name": "source_ailes",
+      "objects": [
+        "main/ailes"
+      ]
+    },
+    {
+      "name": "source_ailes2",
+      "objects": [
+        "main/ailes2"
+      ]
+    },
+    {
+      "name": "source_ailetteDE",
+      "objects": [
+        "main/ailetteDE"
+      ]
+    },
+    {
+      "name": "source_ailetteDI",
+      "objects": [
+        "main/ailetteDI"
+      ]
+    },
+    {
+      "name": "source_ailetteGE",
+      "objects": [
+        "main/ailetteGE"
+      ]
+    },
+    {
+      "name": "source_ailetteGI",
+      "objects": [
+        "main/ailetteGI"
+      ]
+    },
+    {
+      "name": "source_antenne",
+      "objects": [
+        "main/antenne"
+      ]
+    },
+    {
+      "name": "source_axeA",
+      "objects": [
+        "main/axeA"
+      ]
+    },
+    {
+      "name": "source_axeD",
+      "objects": [
+        "main/axeD"
+      ]
+    },
+    {
+      "name": "source_axeD2",
+      "objects": [
+        "main/axeD2"
+      ]
+    },
+    {
+      "name": "source_axeD3",
+      "objects": [
+        "main/axeD3"
+      ]
+    },
+    {
+      "name": "source_axeG",
+      "objects": [
+        "main/axeG"
+      ]
+    },
+    {
+      "name": "source_axeG2",
+      "objects": [
+        "main/axeG2"
+      ]
+    },
+    {
+      "name": "source_axeG3",
+      "objects": [
+        "main/axeG3"
+      ]
+    },
+    {
+      "name": "source_bendix1",
+      "objects": [
+        "main/bendix1"
+      ]
+    },
+    {
+      "name": "source_blindage",
+      "objects": [
+        "main/blindage"
+      ]
+    },
+    {
+      "name": "source_cables",
+      "objects": [
+        "main/cables"
+      ]
+    },
+    {
+      "name": "source_direction",
+      "objects": [
+        "main/direction"
+      ]
+    },
+    {
+      "name": "source_echappes",
+      "objects": [
+        "main/echappes"
+      ]
+    },
+    {
+      "name": "source_fuselage",
+      "objects": [
+        "main/fuselage"
+      ]
+    },
+    {
+      "name": "source_moteurDE",
+      "objects": [
+        "main/moteurDE"
+      ]
+    },
+    {
+      "name": "source_moteurDI",
+      "objects": [
+        "main/moteurDI"
+      ]
+    },
+    {
+      "name": "source_moteurGE",
+      "objects": [
+        "main/moteurGE"
+      ]
+    },
+    {
+      "name": "source_moteurGI",
+      "objects": [
+        "main/moteurGI"
+      ]
+    },
+    {
+      "name": "source_profondeur",
+      "objects": [
+        "main/profondeur"
+      ]
+    },
+    {
+      "name": "source_roueA",
+      "objects": [
+        "main/roueA"
+      ]
+    },
+    {
+      "name": "source_roueD",
+      "objects": [
+        "main/roueD"
+      ]
+    },
+    {
+      "name": "source_roueG",
+      "objects": [
+        "main/roueG"
+      ]
+    },
+    {
+      "name": "source_tourelle1",
+      "objects": [
+        "main/tourelle1"
+      ]
+    },
+    {
+      "name": "source_trous",
+      "objects": [
+        "main/trous"
+      ]
+    },
+    {
+      "name": "source_verriere",
+      "objects": [
+        "main/verriere"
+      ]
+    },
+    {
+      "name": "source_voletD",
+      "objects": [
+        "main/voletD"
+      ]
+    },
+    {
+      "name": "source_voletG",
+      "objects": [
+        "main/voletG"
+      ]
+    },
+    {
+      "name": "glass",
+      "objects": [
+        "main/verriere"
+      ]
+    },
+    {
+      "name": "crew",
+      "objects": [
+        "pilot.*/.*"
+      ]
+    },
+    {
+      "name": "interior",
+      "objects": [
+        "interior/.*",
+        "seat.*/.*",
+        "panel/.*"
+      ]
+    }
+  ],
+  "markers": {
+    "muzzle_top_left": {
+      "instance": "GunsMobileLeft",
+      "local": [
+        -0.53,
+        0,
+        0.005
+      ],
+      "parent": "turret_top_guns"
+    },
+    "muzzle_top_right": {
+      "instance": "GunsMobileRight",
+      "local": [
+        -0.53,
+        0,
+        0.005
+      ],
+      "parent": "turret_top_guns"
+    },
+    "muzzle_ball_left": {
+      "instance": "DownLeftGun",
+      "local": [
+        -0.53,
+        0,
+        0.005
+      ],
+      "parent": "turret_ball_guns"
+    },
+    "muzzle_ball_right": {
+      "instance": "DownRightGun",
+      "local": [
+        -0.53,
+        0,
+        0.005
+      ],
+      "parent": "turret_ball_guns"
+    },
+    "muzzle_chin_left": {
+      "instance": "InDaNose1",
+      "local": [
+        -0.53,
+        0,
+        0.005
+      ],
+      "parent": "turret_chin_guns"
+    },
+    "muzzle_chin_right": {
+      "instance": "InDaNose2",
+      "local": [
+        -0.53,
+        0,
+        0.005
+      ],
+      "parent": "turret_chin_guns"
+    },
+    "muzzle_waist_left": {
+      "instance": "CenterLeft",
+      "local": [
+        -0.53,
+        0,
+        0.005
+      ],
+      "parent": "gun_waist_left"
+    },
+    "muzzle_waist_right": {
+      "instance": "CenterRight",
+      "local": [
+        -0.53,
+        0,
+        0.005
+      ],
+      "parent": "gun_waist_right"
+    },
+    "muzzle_tail_left": {
+      "instance": "guns#2",
+      "local": [
+        -0.53,
+        0,
+        0.005
+      ],
+      "parent": "gun_tail"
+    },
+    "muzzle_tail_right": {
+      "instance": "guns#3",
+      "local": [
+        -0.53,
+        0,
+        0.005
+      ],
+      "parent": "gun_tail"
+    },
+    "muzzle_cheek_left": {
+      "instance": "guns",
+      "local": [
+        -0.53,
+        0,
+        0.005
+      ],
+      "parent": "gun_cheek_left"
+    },
+    "muzzle_cheek_right": {
+      "instance": "guns#1",
+      "local": [
+        -0.53,
+        0,
+        0.005
+      ],
+      "parent": "gun_cheek_right"
+    },
+    "eye_waist_left": [
+      2.66,
+      -0.4,
+      0.33
+    ],
+    "eye_waist_right": [
+      2.66,
+      0.4,
+      0.33
+    ],
+    "eye_tail": [
+      10.35,
+      0.0,
+      0.7
+    ],
+    "eye_turret_top": {
+      "fg": [
+        -5.85,
+        0.0,
+        1.42
+      ],
+      "parent": "turret_top"
+    },
+    "eye_turret_ball": {
+      "fg": [
+        -0.05,
+        0.0,
+        -1.58
+      ],
+      "parent": "turret_ball"
+    },
+    "eye_pilot": [
+      -7.25,
+      -0.38,
+      0.91
+    ],
+    "eye_copilot": [
+      -7.25,
+      0.38,
+      0.91
+    ],
+    "eye_bombardier": [
+      -10.2,
+      0.0,
+      -0.25
+    ],
+    "window_waist_left": [
+      2.675,
+      -1.07,
+      0.28
+    ],
+    "window_waist_right": [
+      2.675,
+      1.07,
+      0.28
+    ]
+  },
+  "origin": {
+    "auto": {
+      "wing": [
+        "main/ailes"
+      ],
+      "fuselage": [
+        "main/fuselage"
+      ],
+      "station": 1.6,
+      "chord_frac": 0.27
+    }
+  },
+  "materials": {
+    "roughness": 0.7,
+    "metallic": 0.1,
+    "by_texture": {
+      "guns.png": {
+        "roughness": 0.45,
+        "metallic": 0.3
+      },
+      "engine.png": {
+        "roughness": 0.55,
+        "metallic": 0.3
+      }
+    }
+  },
+  "preview_shots": [
+    {
+      "name": "tail",
+      "eye": [
+        14.5,
+        -2.5,
+        1.2
+      ],
+      "target": [
+        11.0,
+        0,
+        0.2
+      ],
+      "lens": 35
+    },
+    {
+      "name": "waist",
+      "eye": [
+        2.66,
+        -5.0,
+        0.8
+      ],
+      "target": [
+        2.66,
+        0,
+        0.2
+      ],
+      "lens": 35
+    },
+    {
+      "name": "waisteye",
+      "eye": [
+        2.66,
+        0.4,
+        0.33
+      ],
+      "target": [
+        2.66,
+        -3,
+        0.2
+      ],
+      "lens": 18
+    },
+    {
+      "name": "waistinside",
+      "eye": [
+        3.6,
+        0.0,
+        0.4
+      ],
+      "target": [
+        0.0,
+        0,
+        0.0
+      ],
+      "lens": 16
+    },
+    {
+      "name": "taileye",
+      "eye": [
+        10.35,
+        0.0,
+        0.7
+      ],
+      "target": [
+        15,
+        0,
+        0.4
+      ],
+      "lens": 18
+    },
+    {
+      "name": "toptur",
+      "eye": [
+        -6.0,
+        -3.0,
+        2.6
+      ],
+      "target": [
+        -6.0,
+        0,
+        1.3
+      ],
+      "lens": 35
+    },
+    {
+      "name": "nose",
+      "eye": [
+        -13.5,
+        -2.5,
+        0.5
+      ],
+      "target": [
+        -10.0,
+        0,
+        -0.6
+      ],
+      "lens": 35
+    }
+  ],
+  "max_texture": 2048
+}

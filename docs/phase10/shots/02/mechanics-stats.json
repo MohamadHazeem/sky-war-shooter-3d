@@ -1,0 +1,55 @@
+{
+  "hero": true,
+  "props": 4,
+  "propAxis": [
+    0.023546147202922856,
+    -0.01617459126028661,
+    0.9995918975009056
+  ],
+  "bay": 1.3252738875002088,
+  "gear": 0,
+  "deadDisc": false,
+  "runningDisc": true,
+  "programsBefore": 135,
+  "programsAfter": 135,
+  "newPrograms": [],
+  "owners": [],
+  "lods": [
+    {
+      "quality": "high",
+      "distance": 60,
+      "levels": [
+        67,
+        0,
+        0
+      ]
+    },
+    {
+      "quality": "high",
+      "distance": 300,
+      "levels": [
+        0,
+        67,
+        0
+      ]
+    },
+    {
+      "quality": "high",
+      "distance": 900,
+      "levels": [
+        0,
+        0,
+        67
+      ]
+    },
+    {
+      "quality": "low",
+      "distance": 60,
+      "levels": [
+        0,
+        0,
+        67
+      ]
+    }
+  ]
+}

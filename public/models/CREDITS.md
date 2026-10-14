@@ -1,6 +1,6 @@
 # 3D model credits and licences
 
-The aircraft models in this folder are converted from FlightGear flight-simulator
+The legacy aircraft models in this folder are converted from FlightGear flight-simulator
 aircraft (AC3D models and textures) with `tools/convert_models/convert_ac.py`.
 They are derivative works and remain under the original licence (GNU GPL v2).
 If you redistribute them, you must also make the corresponding source available: the
@@ -9,6 +9,16 @@ Conversion changes: format conversion to glTF, re-orientation and re-centring,
 gear retracted, props/turrets split into pivot nodes, parts merged, some parts decimated
 or dropped, crew figures posed, textures
 resized and re-encoded (JPEG/PNG), and the cockpit textures packed into atlases.
+
+## hero/b17.glb — Phase 10 B-17G rework (FlightGear derivative)
+
+* Base geometry, canopy/nose/nacelle/turret shapes, crew, UVs and GD-L livery are derived from the **same pinned FlightGear B-17 source and authors listed below**, under GNU GPL v2. This supersedes goal 02's original-only parametric exterior and its source claim.
+* Original geometry/FDM: Emmanuel Baranger; model changes: Detlef Faber; turrets: Fabien Barbier; GD-L livery: Brett Harrison (2009/2011); crew: Bertrand Augras through the FlightGear package.
+* Complete derivative recipe: `tools/hero/flightgear.json`, `build.py`, `markings.mjs`, `compress.mjs`, and `tools/convert_models/convert_ac.py`; [source, rebuild and validation](../../tools/hero/README.md). Upstream source: https://github.com/FGMEMBERS/B-17/tree/949abb7615da96104a72c2b1a351a05d60a0bf3c.
+* Changes: dimension normalization; structural part ownership; staggered waist; Cheyenne-style enclosure; cowl flaps, de-icer surfaces, exhaust/turbo/pitot/antenna fittings; actual-skin relief normal/AO bakes and curvature; reprocessed olive/grey and natural-metal PBR atlases; separate SVG-derived squadron/serial stencils; panel-varied olive paint and localized oil/soot; diffuse-only Low livery; three LODs; meshopt; KTX2 and WebP fallback.
+* Reference: USAAF AN 01-20EG-2 (15 February 1945), Figure 1, printed page 2, [public scan](https://app.aircorpslibrary.com/document/getsamplepage/tsteven3/6). The underlying US military drawing is public-domain; no scan image pixels or archive watermark are included. Committed outlines are manually digitized measurements for QA.
+* Added project work is GPL-2.0-or-later; the derivative retains the base's GPL obligations. The locally served Basis decoder is Apache-2.0; its licence accompanies the files at `hero/BASIS-LICENSE.txt`.
+* Runtime sizes/formats are in `hero/manifest.json`; the legacy GLB remains available for comparison.
 
 ## b17.glb — Boeing B-17G Flying Fortress
 * Source: https://github.com/FGMEMBERS/B-17 (commit `949abb7615da96104a72c2b1a351a05d60a0bf3c`)
