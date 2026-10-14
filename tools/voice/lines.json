@@ -3335,6 +3335,36 @@
       "text": "Control: raid broken up. Repair crews, move out!"
     },
     {
+      "id": "p8t_sturm",
+      "role": "nav",
+      "text": "Wedge at twelve! Armoured Focke-Wulfs, level! Open fire early!",
+      "urgent": true
+    },
+    {
+      "id": "p8t_hornisse",
+      "role": "nav",
+      "text": "Me 410s at one kilometre! Keep firing at the heavy cannon ships!",
+      "urgent": true
+    },
+    {
+      "id": "p8t_airbomb",
+      "role": "top",
+      "text": "Fighters holding high at twelve! Air bombs! Top turret, stop them dropping!",
+      "urgent": true
+    },
+    {
+      "id": "p8t_jet",
+      "role": "tail",
+      "text": "Jets slashing in from six! Tail gunner, take the brief shot!",
+      "urgent": true
+    },
+    {
+      "id": "p8t_axes",
+      "role": "pilot",
+      "text": "Three and nine together! Pick one pair and break their attack!",
+      "urgent": true
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {

@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { AIR_BOMB, PACK, STURM, sturmSlot, type PackTactic } from './LuftwaffeTactics';
+import type { ParticleOpts } from '../render/Particles';
 import { EnemyPilot, PilotOverride, steerTo, leadPoint, WorldView, AttackType } from './AI';
 import { CRUISE, World } from './World';
 import { Aircraft, Bomber, Fighter, type HitZone } from './Aircraft';
@@ -38,7 +40,7 @@ import { sound } from '../audio/Sound';
  * (radarCues, drawn by ui/Radar.ts). Nothing here allocates per frame.
  */
 
-export type TacticKind = 'companyFront' | 'pincer' | 'comet' | 'jet' | 'standoff' | 'topCover' | 'zerstorer' | 'bigGun';
+export type TacticKind = 'companyFront' | 'pincer' | 'comet' | 'jet' | 'standoff' | 'topCover' | 'zerstorer' | 'bigGun' | 'sturm' | 'airBomb';
 
 // ---------------------------------------------------------------- radar cues
 export interface RadarCue { pos: THREE.Vector3; label: string; until: number; on: boolean }
@@ -96,6 +98,7 @@ const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 
 // ---------------------------------------------------------------- members
 class Member implements PilotOverride {
+  get steady() { return this.g.kind === 'sturm' || this.g.kind === 'airBomb'; }
   readonly slot = new THREE.Vector3();    // formation-frame offset from the group anchor
   readonly aimErr = new THREE.Vector3();
   readonly tubes: THREE.Object3D[] = [];  // Wgr. 21 tubes, kept for the reload
@@ -278,7 +281,10 @@ class CompanyFront extends Group {
   height = 600;
   lateral = 0;
   readonly anchor = new THREE.Vector3();
-  constructor(tx: Tactics, readonly focus: Aircraft | null) { super(tx, 'companyFront'); }
+  constructor(tx: Tactics, readonly focus: Aircraft | null, readonly wedge = false) {
+    super(tx, wedge ? 'sturm' : 'companyFront');
+    if (wedge) { this.dist = STURM.distance; this.height = 0; }
+  }
 
   private anchorPos(out: THREE.Vector3) {
     const base = this.focus && this.focus.alive ? this.focus.pos : this.w.formationCenter;
@@ -288,7 +294,9 @@ class CompanyFront extends Group {
   setup(schwarm: boolean) {
     const n = this.members.length;
     this.members.forEach((m, i) => {
-      if (schwarm && n <= 4) {
+      if (this.wedge) {
+        sturmSlot(i, m.slot);
+      } else if (schwarm && n <= 4) {
         // finger four, seen head-on: leader in front, wingmen stepped back (away from the bombers)
         const S: [number, number, number][] = [[0, 0, 0], [-75, -10, 45], [95, 6, 30], [170, -4, 70]];
         const s = S[i];
@@ -305,7 +313,7 @@ class CompanyFront extends Group {
     frame(this.w);
     this.anchorPos(this.anchor);
     for (const m of this.members) {
-      fpos(this.anchor, m.slot.x + rnd(-30, 30), m.slot.y + rnd(-15, 15), m.slot.z + rnd(-30, 30), _a);
+      fpos(this.anchor, m.slot.x + (this.wedge ? 0 : rnd(-30, 30)), m.slot.y + (this.wedge ? 0 : rnd(-15, 15)), m.slot.z + (this.wedge ? 0 : rnd(-30, 30)), _a);
       this.tx.place(m.f, _a, _b.copy(F).negate(), 180);
     }
   }
@@ -313,10 +321,10 @@ class CompanyFront extends Group {
   step(dt: number) {
     frame(this.w);
     if (this.phase === 0) {
-      this.dist -= 255 * dt;
+      this.dist -= (this.wedge ? STURM.closing : 255) * dt;
       this.anchorPos(this.anchor);
       if (this.cue) this.cue.pos.copy(this.anchor);
-      if (this.dist <= 2300 || this.t > 20) this.beginRun();
+      if (this.dist <= (this.wedge ? 1400 : 2300) || this.t > 20) this.beginRun();
     } else if (this.active() === 0 || this.t > 40) {
       this.releaseAll('engage');
       this.end();
@@ -349,7 +357,7 @@ class CompanyFront extends Group {
     const f = m.f;
     if (this.phase === 0) {
       fpos(this.anchor, m.slot.x, m.slot.y, m.slot.z, _a);
-      _c.copy(FV).addScaledVector(F, -255);
+      _c.copy(FV).addScaledVector(F, -(this.wedge ? STURM.closing : 255));
       this.seek(m, _a, _c, 0.6, 290, 150);
       return true;
     }
@@ -363,7 +371,7 @@ class CompanyFront extends Group {
     const dist = dir.length();
     const err = steerTo(f.fm, dir, 1.2, 0.9);
     f.fm.throttle = 0.9;
-    if (dist < 900 && err < 0.06 + (1 - Math.min(1, m.p.skill)) * 0.03) f.trigger = true;
+    if ((!this.wedge || this.t >= (STURM.distance - STURM.fireRange) / STURM.closing) && dist < 900 && err < 0.06 + (1 - Math.min(1, m.p.skill)) * 0.03) f.trigger = true;
     if (dist0 < 260 || (!this.closing(m, t) && dist0 < 700) || m.t > 16) {
       // split-S down through the formation
       const dn = _a.copy(f.forward(_b)).multiplyScalar(0.55).addScaledVector(UP, -0.85).addScaledVector(RT, m.slot.x >= 0 ? 0.25 : -0.25).normalize();
@@ -408,7 +416,7 @@ class Pincer extends Group {
     if (this.phase === 0) {
       let ready = this.t > 16;
       for (const m of this.members) if (Math.abs(m.slot.x) < 1550 && m.f.pos.distanceTo(fpos(base, m.slot.x, m.slot.y, m.slot.z, _a)) < 380) ready = true;
-      if (ready) this.go();
+      if (ready && this.t >= 8) this.go();
     }
   }
 
@@ -494,7 +502,7 @@ class Comet extends Group {
 // ---------------------------------------------------------------- Me 262 jet
 class Jet extends Group {
   // high: the Do 335 version, set up high astern and dive through (a piston, it needs the height)
-  constructor(tx: Tactics, readonly high = false) { super(tx, 'jet'); }
+  constructor(tx: Tactics, readonly high = false, readonly low = false) { super(tx, 'jet'); }
 
   place() {
     frame(this.w);
@@ -502,7 +510,7 @@ class Jet extends Group {
       m.target = m.target ?? this.tx.pickTarget(m.f.pos);
       m.side = Math.random() < 0.5 ? 1 : -1;
       if (this.high) fpos(this.focusPos(m), m.side * rnd(300, 700), rnd(1300, 1700), -rnd(2600, 3200), _a);
-      else fpos(this.focusPos(m), m.side * rnd(300, 700), rnd(200, 450), -rnd(3600, 4200), _a);
+      else fpos(this.focusPos(m), m.side * rnd(300, 700), (this.low ? -1 : 1) * rnd(200, 450), -rnd(3600, 4200), _a);
       this.tx.place(m.f, _a, F, this.high ? 235 : 255);
       m.setAimError(this.w, 6);
     }
@@ -521,10 +529,10 @@ class Jet extends Group {
     switch (m.phase) {
       case 0: { // extend astern
         p.state = 'approach';
-        fpos(t.pos, m.side * 350, this.high ? 1300 : 250, this.high ? -1800 : -2300, _a);
+        fpos(t.pos, m.side * 350, this.high ? 1300 : this.low ? -250 : 250, this.high ? -1800 : -2300, _a);
         this.seek(m, _a, FV, 0.3, 330, 170);
         f.fm.throttle = Math.max(f.fm.throttle, 0.8);
-        if (f.pos.distanceTo(_a) < 450 || m.t > 16) { m.phase = 1; m.t = 0; p.state = 'attack'; p.calloutDone = false; m.setAimError(this.w, 6); }
+        if (m.t >= 6 && (f.pos.distanceTo(_a) < 450 || m.t > 16)) { m.phase = 1; m.t = 0; p.state = 'attack'; p.calloutDone = false; m.setAimError(this.w, 6); }
         break;
       }
       case 1: { // slashing pass at full power, no duel
@@ -752,7 +760,7 @@ class Zerstorer extends Standoff {
 // Out to a station ~1.75 km from the target bomber, turn in, a slow and steady line-up (the
 // gunners' chance: telegraphed by radio, radar cue and a gunner tip), two aimed 50 mm shells,
 // turn away, again. After `runs` runs the Me 410 presses home like any heavy.
-export const BK5 = { speed: 640, damage: 110, splash: 40, hitPad: 1.4, aimTime: 3.8, tol: 0.05, minR: 800, maxR: 2300, station: 1800, shots: 2, gap: 1.6, runs: 3 };
+export const BK5 = { speed: 640, damage: 110, splash: 40, hitPad: 1.4, aimTime: 3.8, tol: 0.05, minR: 800, maxR: 1200, station: 1800, shots: 2, gap: 1.6, runs: 3 };
 
 class BigGun extends Group {
   constructor(tx: Tactics) { super(tx, 'bigGun'); }
@@ -821,7 +829,7 @@ class BigGun extends Group {
       case 2: { // the second shell, then away
         const err = this.lay(m, t);
         m.reload -= dt;
-        if (m.shots < BK5.shots && m.reload <= 0 && err < BK5.tol) { this.tx.fireShell(f, t, m); m.shots++; m.reload = BK5.gap; }
+        if (m.shots < BK5.shots && m.reload <= 0 && err < BK5.tol && f.pos.distanceTo(t.pos) >= BK5.minR && f.pos.distanceTo(t.pos) <= BK5.maxR) { this.tx.fireShell(f, t, m); m.shots++; m.reload = BK5.gap; }
         if (m.shots >= BK5.shots ? m.reload < BK5.gap - 0.7 : m.t > 6) { m.phase = 3; m.t = 0; m.salvos++; }
         break;
       }
@@ -842,6 +850,42 @@ class BigGun extends Group {
 }
 
 interface Shell { pos: THREE.Vector3; vel: THREE.Vector3; age: number; life: number; owner: Fighter; on: boolean }
+
+// High, level Bf 109s approach twelve o'clock, then release timed bombs ahead of the moving box.
+class AirBombers extends Group {
+  constructor(tx: Tactics, readonly focus: Aircraft) { super(tx, 'airBomb'); }
+  place() {
+    frame(this.w);
+    this.members.forEach((m, i) => {
+      m.target = this.focus; m.slot.set((i - 1) * 90, AIR_BOMB.height, 3200);
+      fpos(this.focus.pos, m.slot.x, m.slot.y, m.slot.z, _a);
+      this.tx.place(m.f, _a, _b.copy(F).negate(), 180);
+    });
+  }
+  step() {
+    frame(this.w);
+    if (!this.focus.alive) { this.releaseAll('withdraw'); this.end(); return; }
+    if (this.cue) this.cue.pos.copy(this.members[0]?.f.pos ?? this.focus.pos);
+    if (this.t > 28) { this.releaseAll('engage'); this.end(); }
+  }
+  fly(m: Member) {
+    fpos(this.focus.pos, m.slot.x, m.slot.y, -1500, _a);
+    this.seek(m, _a, _c.copy(F).multiplyScalar(-180), 0.1, 200, 150);
+    if (this.t >= AIR_BOMB.warning && m.shots === 0) {
+      // Drop only when the ballistic fuse point is near the box, never home in after release.
+      _b.copy(m.f.pos).addScaledVector(m.f.vel, AIR_BOMB.fuse);
+      _c.copy(this.focus.pos).addScaledVector(this.focus.vel, AIR_BOMB.fuse);
+      _b.y -= 0.5 * 9.81 * AIR_BOMB.fuse ** 2 + 72 * AIR_BOMB.fuse;
+      if (_b.distanceTo(_c) < 140) {
+        this.tx.dropAirBomb(m.f); m.shots++;
+        this.release(m, 'break', _a.copy(F).addScaledVector(UP, 0.6));
+        return false;
+      }
+    }
+    return true;
+  }
+}
+interface AirBomb { pos: THREE.Vector3; vel: THREE.Vector3; age: number; on: boolean; owner: Fighter }
 
 // ---------------------------------------------------------------- Bf 109 top cover
 class TopCover extends Group {
@@ -915,7 +959,12 @@ export interface GroupContext {
 
 export class Tactics {
   readonly groups: Group[] = [];
+  private readonly learned = new Set<PackTactic>();
+  private readonly bombs: AirBomb[] = Array.from({ length: 12 }, () => ({ pos: new THREE.Vector3(), vel: new THREE.Vector3(), age: 0, on: false, owner: null as unknown as Fighter }));
+  private readonly bombGlow: ParticleOpts = { pos: new THREE.Vector3(), life: 0.12, size0: 9, size1: 4, color0: [12, 7, 2], frame: 1 };
+  private readonly bombPoint = new THREE.Vector3();
   groupCd = 25;           // s before the next group tactic may be picked
+  lesson: ((text: string) => void) | null = null;
   hint: ((html: string) => void) | null = null;   // gunner tip (UI.tip), set by SpecialEvents
   log: string[] = [];
   private tubeGeo: THREE.BufferGeometry | null = null;
@@ -931,6 +980,7 @@ export class Tactics {
     this.groups.length = 0;
     for (const c of radarCues) freeCue(c);
     for (const s of this.shells) s.on = false;
+    for (const b of this.bombs) b.on = false;
     this.groupCd = 25;
     this.log = [];
   }
@@ -939,6 +989,7 @@ export class Tactics {
     this.groupCd -= dt;
     const time = this.world.time;
     this.updateShells(dt);
+    this.updateAirBombs(dt);
     for (const g of this.groups) {
       if (g.done || g.kind !== 'bigGun') continue;
       // shot down while lining up the big gun: the crew cheers
@@ -1035,6 +1086,80 @@ export class Tactics {
 
   private gunner() { const w = this.world; return !!w.playerBomber && w.player === w.playerBomber; }
 
+  /** Explicit director lesson; existing jet, pincer and BK 5 machinery is reused. */
+  launchPack(id: PackTactic, count: number = PACK[id].count): Group | null {
+    let g: Group | null = null;
+    const focus = this.focusBomber();
+    if (!focus) return null;
+    if (id === 'sturm') {
+      const wedge = new CompanyFront(this, focus, true);
+      for (const f of this.spawn('fw190', Math.max(6, Math.min(12, count)))) {
+        f.maxStructure *= STURM.armour; f.structure = f.maxStructure;
+        for (const z of f.zones) { z.maxHp *= STURM.armour; z.hp = z.maxHp; }
+        wedge.add(f);
+      }
+      wedge.setup(false); wedge.place(); this.groups.push(wedge); g = wedge;
+    } else if (id === 'airBomb') {
+      const bombers = new AirBombers(this, focus);
+      for (const f of this.spawn('bf109', 3)) bombers.add(f);
+      bombers.place(); this.groups.push(bombers); g = bombers;
+    } else if (id === 'hornisse') {
+      g = this.bigGun(this.spawn('me410', 2), { focus, place: 1900, quiet: true });
+    } else if (id === 'multiAxis') {
+      g = this.pincer(this.spawn('fw190', 4), focus, true);
+    } else {
+      for (const [i, f] of this.spawn('me262', 2).entries()) {
+        g = this.jet(f, { low: i === 0, quiet: true });
+        if (g) for (const m of g.members) m.target = focus;
+      }
+    }
+    if (!g) return null;
+    const def = PACK[id];
+    if (!g.cue) this.cueAt(g, def.cue, 28)?.pos.copy(g.members[0].f.pos);
+    this.call(id, def.speaker, def.radio, 0);
+    this.teach(id);
+    this.groupCd = 45;
+    this.log.push(`${this.world.time.toFixed(1)}s pack ${id}`);
+    return g;
+  }
+
+  private teach(id: PackTactic) {
+    if (!this.gunner() || this.learned.has(id)) return;
+    this.learned.add(id);
+    (this.lesson ?? this.hint)?.(PACK[id].tip);
+  }
+
+  dropAirBomb(f: Fighter) {
+    const b = this.bombs.find(b => !b.on);
+    if (!b) return;
+    b.on = true; b.age = 0; b.owner = f;
+    b.pos.copy(f.pos).sub(this.world.formationCenter);
+    b.vel.copy(f.vel).addScaledVector(F, -CRUISE); b.vel.y -= 72;
+    this.world.effects.flashLight(f.pos, 900, 0.15);
+  }
+
+  private updateAirBombs(dt: number) {
+    const w = this.world;
+    for (const b of this.bombs) {
+      if (!b.on) continue;
+      const step = Math.min(dt, AIR_BOMB.fuse - b.age);
+      b.pos.addScaledVector(b.vel, step); b.pos.y -= 0.5 * 9.81 * step * step;
+      b.vel.y -= 9.81 * step; b.age += step;
+      this.bombPoint.copy(w.formationCenter).add(b.pos);
+      this.bombGlow.pos.copy(this.bombPoint); w.effects.glow.spawn(this.bombGlow);
+      if (b.age < AIR_BOMB.fuse - 1e-6) continue;
+      b.on = false;
+      w.effects.explosion(this.bombPoint, _a.set(0, 0, 0), 0.8);
+      for (const a of w.aircraft) {
+        if (!a.alive || a.remove || a.team !== 'allied') continue;
+        const dist = a.pos.distanceTo(this.bombPoint);
+        if (dist > AIR_BOMB.radius) continue;
+        const zone = a.zone('fuselage') ?? a.zones[0];
+        if (zone) w.ballistics.onHit?.({ target: a, zone, point: this.bombPoint, damage: AIR_BOMB.damage * (1 - dist / AIR_BOMB.radius), cannon: true, shooter: b.owner, bulletVel: b.vel, playerShot: false });
+      }
+    }
+  }
+
   // ---------------- group tactics ----------------
   companyFront(fs: Fighter[], opts: { schwarm?: boolean; telegraph?: boolean; focus?: Aircraft | null } = {}): Group | null {
     const g = new CompanyFront(this, opts.focus !== undefined ? opts.focus : this.focusBomber());
@@ -1052,7 +1177,7 @@ export class Tactics {
     return g;
   }
 
-  pincer(fs: Fighter[], focus?: Aircraft | null): Group | null {
+  pincer(fs: Fighter[], focus?: Aircraft | null, quiet = false): Group | null {
     const t = focus ?? this.focusBomber();
     if (!t) return null;
     const g = new Pincer(this, t);
@@ -1063,8 +1188,9 @@ export class Tactics {
     this.groups.push(g);
     this.cueAt(g, 'PINCER', 20); this.cueAt(g, 'PINCER', 20, true);
     frame(this.world);
-    this.call('pincer', 'Pilot', 'Two pairs splitting up — one each side! Three o\'clock and nine o\'clock, they\'re going to hit us together!', 25);
-    if (this.gunner()) this.hint?.('Pincer from <b>BOTH BEAMS</b> — pick a waist gun: <kbd>1</kbd> left · <kbd>2</kbd> right');
+    if (!quiet) this.teach('multiAxis');
+    if (!quiet) this.call('pincer', 'Pilot', 'Two pairs splitting up — one each side! Three o\'clock and nine o\'clock, they\'re going to hit us together!', 25);
+    if (!quiet && this.gunner()) this.hint?.('Pincer from <b>BOTH BEAMS</b> — pick a waist gun: <kbd>1</kbd> left · <kbd>2</kbd> right');
     this.log.push(`${this.world.time.toFixed(0)}s pincer x${g.members.length}`);
     return g;
   }
@@ -1082,15 +1208,16 @@ export class Tactics {
     return g;
   }
 
-  jet(f: Fighter, opts: { high?: boolean } = {}): Group | null {
-    const g = new Jet(this, !!opts.high);
+  jet(f: Fighter, opts: { high?: boolean; low?: boolean; quiet?: boolean } = {}): Group | null {
+    const g = new Jet(this, !!opts.high, !!opts.low);
     if (!g.add(f)) return null;
     g.place();
     this.groups.push(g);
     if (opts.high) {
       this.cueAt(g, 'PFEIL', 16);
       this.call('pfeil', 'Tail', 'Do 335 diving on us from high astern — he\'s as fast as a jet!', 25);
-    } else {
+    } else if (!opts.quiet) {
+      this.teach('jetSlash');
       this.cueAt(g, 'JET', 16);
       this.call('jet', 'Tail', 'Jet coming up from six o\'clock! Never seen anything that fast!', 25);
     }
@@ -1099,7 +1226,7 @@ export class Tactics {
   }
 
   // Me 410s: the BK 5 stand-off cannon run (BigGun)
-  bigGun(fs: Fighter[], opts: { focus?: Aircraft | null; place?: number } = {}): Group | null {
+  bigGun(fs: Fighter[], opts: { focus?: Aircraft | null; place?: number; quiet?: boolean } = {}): Group | null {
     const g = new BigGun(this);
     const side = Math.random() < 0.5 ? 1 : -1;
     fs.forEach((f, i) => {
@@ -1112,7 +1239,8 @@ export class Tactics {
     if (!g.members.length) return null;
     if (opts.place) g.place(opts.place);
     this.groups.push(g);
-    this.call('bk5spot', this.gunner() ? 'Navigator' : 'Big Friend', 'Me 410 hanging back out of range — he\'s carrying a fifty-millimetre cannon!', 40);
+    if (!opts.quiet) this.teach('hornisse');
+    if (!opts.quiet) this.call('bk5spot', this.gunner() ? 'Navigator' : 'Big Friend', 'Me 410 hanging back out of range — he\'s carrying a fifty-millimetre cannon!', 40);
     this.log.push(`${this.world.time.toFixed(0)}s bigGun x${g.members.length}`);
     return g;
   }
@@ -1335,6 +1463,7 @@ export class Tactics {
 
   // dev hook: fly one tactic now
   dev(kind: TacticKind | string): string {
+    if (kind in PACK) return this.launchPack(kind as PackTactic) ? kind : 'failed';
     switch (kind) {
       case 'companyFront': return this.companyFront(this.spawn('fw190', 6)) ? 'company front x6' : 'failed';
       case 'schwarm': return this.companyFront(this.spawn('fw190', 4), { schwarm: true }) ? 'schwarm head-on x4' : 'failed';
