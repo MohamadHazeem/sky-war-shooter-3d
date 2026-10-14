@@ -8,6 +8,7 @@ import { Atmos } from '../render/Atmosphere';
 import type { Quality } from '../core/Engine';
 import { skinMaterial } from './InteriorKit';
 import { interiorSkinTextures } from '../render/InteriorSkin';
+import { crewFabric } from '../render/CrewFabric';
 import { yokeMaterial } from './PlayerHands';
 
 // B-17 interior 2.0 (Phase 10 goal 07): the Blender-made assets of the gunner's world, loaded
@@ -118,37 +119,16 @@ function tuneCrew(root: THREE.Object3D) {
     m.side = THREE.FrontSide;
     m.envMap = envRef.tex;
     if (m.name === 'crewHard') { m.roughness = 0.45; m.metalness = 0.15; m.envMapIntensity = 0.25; }
-    else { m.roughness = m.name === 'crewLeather' ? 0.65 : 0.88; m.metalness = 0; m.envMapIntensity = 0.08; if (mesh.geometry.getAttribute('uv')) { m.normalMap = fabricNormal(); m.normalScale.set(0.5, 0.5); } }
-    addBounce(m, 0.9);
+    else {
+      const leather = m.name === 'crewLeather';
+      m.roughness = leather ? 0.72 : 0.95; m.metalness = 0; m.envMapIntensity = leather ? 0.16 : 0.08;
+      if (mesh.geometry.getAttribute('uv')) {
+        const maps = crewFabric(leather);
+        m.normalMap = maps.normal; m.roughnessMap = maps.rough; m.normalScale.setScalar(leather ? 0.55 : 0.4);
+      }
+    }
+    addBounce(m, 1.35);
   });
-}
-
-// A fine weave / grain for the clothing, on the cylindrical UVs the generator writes (4 repeats per metre)
-let fabricTex: THREE.Texture | null = null;
-function fabricNormal(): THREE.Texture {
-  if (fabricTex) return fabricTex;
-  const S = 128;
-  const c = document.createElement('canvas');
-  c.width = c.height = S;
-  const g = c.getContext('2d')!;
-  const img = g.createImageData(S, S);
-  // height: cross-weave + random fibres, then a central-difference normal
-  const h = new Float32Array(S * S);
-  let seed = 7;
-  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) h[y * S + x] = 0.5 * Math.sin(x * Math.PI / 2) * Math.sin(y * Math.PI / 2) + 0.6 * rnd();
-  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
-    const dx = h[y * S + ((x + 1) % S)] - h[y * S + ((x + S - 1) % S)];
-    const dy = h[((y + 1) % S) * S + x] - h[((y + S - 1) % S) * S + x];
-    const n = new THREE.Vector3(-dx, -dy, 2).normalize();
-    const i = (y * S + x) * 4;
-    img.data[i] = (n.x * 0.5 + 0.5) * 255; img.data[i + 1] = (n.y * 0.5 + 0.5) * 255; img.data[i + 2] = (n.z * 0.5 + 0.5) * 255; img.data[i + 3] = 255;
-  }
-  g.putImageData(img, 0, 0);
-  fabricTex = new THREE.CanvasTexture(c);
-  fabricTex.wrapS = fabricTex.wrapT = THREE.RepeatWrapping;
-  fabricTex.colorSpace = THREE.NoColorSpace;
-  return fabricTex;
 }
 
 // Per frame (LivingInterior.update): the daylight bouncing round the inside of the fuselage
