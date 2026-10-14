@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Atmos, atmosUniforms, skyGLSL } from './Atmosphere';
 import { useSkyEnv } from './AircraftLook';
 import { weatherNow } from './WeatherState';
+import { cloudOcclusionUniforms, cloudOcclusionGLSL } from './CloudOcclusion';
 import { hasModel, instantiate, type ModelKind } from '../world/Models';
 import { IMPOSTOR_FRAG_GLSL, IMPOSTOR_VERT_GLSL, ImpostorBake, mergeForInstancing, type ImpostorAtlas } from './Impostor';
 import {
@@ -85,6 +86,7 @@ const U = {
 
 const hazeGLSL = /* glsl */ `
 ${skyGLSL}
+${cloudOcclusionGLSL}
 uniform float uHaze;
 vec3 hazed(vec3 col, vec3 wp) {
   vec3 d = wp - cameraPosition;
@@ -305,7 +307,7 @@ const inst = (arr: Float32Array, size: number, dynamic = false) => {
   return a;
 };
 const shaderMat = (o: { uniforms?: Record<string, THREE.IUniform>; vertexShader: string; fragmentShader: string; blending?: THREE.Blending }) => new THREE.ShaderMaterial({
-  uniforms: { ...atmosUniforms, ...U, ...(o.uniforms ?? {}) },
+  uniforms: { ...atmosUniforms, ...cloudOcclusionUniforms, ...U, ...(o.uniforms ?? {}) },
   vertexShader: o.vertexShader, fragmentShader: o.fragmentShader,
   transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: o.blending ?? THREE.NormalBlending,
 });
@@ -399,12 +401,12 @@ export class BomberStream {
           p.y += sin(sd * 2.3 + age * 0.17) * age * 0.08 - age * 0.3;
           vec3 wp = (modelMatrix * vec4(p, 1.0)).xyz;
           vec3 dirW = normalize(mat3(modelMatrix) * vec3(0.0, 0.0, -1.0));
-          float width = mix(0.5, 6.0 * iRib.z, pow(t, 0.6));
+          float width = mix(0.5, 3.5 * iRib.z, pow(t, 0.6));
           float dist = distance(cameraPosition, wp);
           float thin;
           wp = faceCamera(wp, dirW, aSide, width * step(40.0, dist), 1.1, thin);
           gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0);
-          vA = ok * smoothstep(0.6, 2.4, age) * (1.0 - smoothstep(0.3, 1.0, t)) * mix(0.5, 0.1, sqrt(t)) * thin
+          vA = ok * smoothstep(0.6, 2.4, age) * (1.0 - smoothstep(0.3, 1.0, t)) * mix(0.34, 0.06, sqrt(t)) * thin
              * (1.0 - smoothstep(30000.0, 42000.0, dist)) * smoothstep(60.0, 180.0, dist);
           vSide = aSide; vT = t; vW = wp; vSeed = sd;
           vSun = dot(normalize(cross(dirW, normalize(cameraPosition - wp))) * aSide, uSunDir);
@@ -418,7 +420,7 @@ export class BomberStream {
           float a = vA * edge * (0.85 + 0.15 * sin(vT * 140.0 + vSeed));
           if (a < 0.002) discard;
           vec3 col = (uStreamSun * 0.22 + uHorizon * 0.78) * mix(0.9, 1.15, clamp(vSun * 0.5 + 0.5, 0.0, 1.0));
-          gl_FragColor = vec4(hazed(col, vW), a);
+          gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));
     this.trails.renderOrder = 7;
@@ -447,14 +449,18 @@ export class BomberStream {
           vec3 p2 = fieldAt(g, age + 3.0);
           vec3 wp = (modelMatrix * vec4(p, 1.0)).xyz;
           vec3 dirW = normalize(mat3(modelMatrix) * (p2 - p) + 1e-4);
-          float width = mix(30.0, 380.0 * iF1.y, pow(k, 0.75));
+          float width = mix(65.0, 850.0 * iF1.y, pow(k, 0.65));
           float dist = distance(cameraPosition, wp);
           float nearK = smoothstep(width * 0.5 + 120.0, width * 0.9 + 600.0, dist);
           float thin;
-          wp = faceCamera(wp, dirW, aSide, width * step(0.001, nearK), 1.0, thin);
+          // Old camera-facing bands stood upright like white fences. A spreading
+          // wake is a horizontal ice sheet, advected with its squadron's air mass.
+          vec3 sheetSide = normalize(mat3(modelMatrix) * vec3(1.0, 0.0, 0.0));
+          wp += sheetSide * aSide * width;
+          thin = 1.0;
           gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0);
           vA = uOn * smoothstep(0.0, 0.08, k) * (1.0 - smoothstep(0.5, 1.0, k)) * thin * nearK
-             * (1.0 - smoothstep(30000.0, 44000.0, dist)) * mix(0.14, 0.08, k);
+             * (1.0 - smoothstep(30000.0, 44000.0, dist)) * mix(0.38, 0.22, k);
           vSide = aSide; vAge = age; vW = wp; vSeed = iF1.x;
           vSun = dot(normalize(cross(dirW, normalize(cameraPosition - wp))) * aSide, uSunDir);
         }`,
@@ -464,14 +470,21 @@ export class BomberStream {
         uniform vec3 uStreamSun;
         varying float vA; varying float vSide; varying float vAge; varying vec3 vW; varying float vSeed; varying float vSun;
         void main() {
-          float edge = pow(max(1.0 - vSide * vSide, 0.0), 0.7);
+          float edge = pow(max(1.0 - vSide * vSide, 0.0), 1.8);
           // wispy streaks along the band, like spreading cirrus
           float n1 = snoise(vec2(vSide * 3.5 + vSeed * 7.0, vAge * 0.012));
           float n2 = snoise(vec2(vSide * 11.0 + vSeed * 3.0, vAge * 0.045 + 5.0));
-          float a = vA * edge * mix(0.45, 1.25, n1) * mix(0.7, 1.15, n2);
+          float density = edge * mix(0.45, 1.25, n1) * mix(0.7, 1.15, n2);
+          float slant = min(3.0, 1.0 / max(0.18, abs(normalize(cameraPosition - vW).y)));
+          float a = 1.0 - exp(-vA * density * slant);
           if (a < 0.002) discard;
-          vec3 col = (uStreamSun * 0.2 + uHorizon * 0.8) * mix(0.92, 1.1, clamp(vSun * 0.5 + 0.5, 0.0, 1.0));
-          gl_FragColor = vec4(hazed(col, vW), a);
+          // Beer attenuation through the sheet; a bounded forward lobe retains
+          // amber sunset lighting without bleaching the whole horizon white.
+          float mu = dot(normalize(vW - cameraPosition), uSunDir);
+          float phase = min(3.0, 0.51 / pow(max(0.09, 1.49 - 1.4 * mu), 1.5));
+          float transmission = exp(-density * 1.2);
+          vec3 col = uHorizon * 0.62 + uStreamSun * 0.16 * (0.4 + 0.6 * transmission) * (0.7 + phase);
+          gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));
     this.field.renderOrder = 6;
@@ -519,7 +532,7 @@ export class BomberStream {
           float a = vA * edge * mix(0.95, 0.45, vT);
           if (a < 0.002) discard;
           vec3 col = mix(vec3(0.025, 0.022, 0.02), vec3(0.15, 0.15, 0.16) + uStreamSun * 0.03, smoothstep(0.0, 0.5, vT));
-          gl_FragColor = vec4(hazed(col, vW), a);
+          gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));
     this.smoke.renderOrder = 7;
@@ -582,7 +595,7 @@ export class BomberStream {
             a = max(a, vFlash * vA * (1.0 - r));
           }
           if (a < 0.004) discard;
-          gl_FragColor = vec4(hazed(col, vW), a);
+          gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));
     this.puffs.renderOrder = 6;
