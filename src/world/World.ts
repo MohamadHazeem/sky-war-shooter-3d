@@ -1,3 +1,4 @@
+import { warmHeroLODs } from './HeroB17';
 import { LivingFormation } from './LivingFormation';
 import { FormationDress } from './FormationDress';
 import { onContact } from '../game/RadioChatter';
@@ -301,6 +302,8 @@ export class World implements WorldView {
     // B-17 break-ups of the formation set pieces (one, two and three clip planes on its materials)
     const b17 = new Bomber();
     b17.root.position.copy(camera.position).addScaledVector(fwd, 45);   // close: inside the shadow frustum, so the clipped shadow-depth programs compile too
+    this.scene.add(b17.root);
+    const unwarmHero = warmHeroLODs(b17.model);
     const b17Pieces = [];
     for (let i = 0; i < 3; i++) b17Pieces.push(...this.wrecks.breakBomber(b17, 'wingFold', 1), ...this.wrecks.breakBomber(b17, 'blowup'), ...this.wrecks.breakBomber(b17, 'split'));
     // the Mustangs of the 'little friends' set piece (gunner missions may have no escort)
@@ -345,6 +348,7 @@ export class World implements WorldView {
     if (bombs) bombs.count = bombCount;
     this.scene.remove(plainCaster); plainCaster.geometry.dispose(); this.warmKeep.push(plainCaster.material);
     this.wrecks.keepWarm(b17Pieces);   // B-17 wreck programs stay compiled for the set pieces
+    unwarmHero(); b17.root.removeFromParent();
     unwarmFormation();
     unwarm();
     unwarmCrew(); unwarmCanopy();

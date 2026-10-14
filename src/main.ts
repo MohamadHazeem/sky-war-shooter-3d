@@ -1,3 +1,4 @@
+import { loadHeroTextures, enableHeroTextures } from './world/HeroTextures';
 import { Engine } from './core/Engine';
 import { Input } from './core/Input';
 import { UI } from './ui/UI';
@@ -49,6 +50,8 @@ async function boot() {
   performance.mark('menu'); // time to menu (tools/serve_throttled.mjs measurements)
   setTimeout(() => document.getElementById('loading')!.classList.remove('show'), 250);
   loadInBackground();
+  enableHeroTextures();
+  if (engine.quality !== 'low') void loadHeroTextures(engine.renderer);
   // First launch: benchmark the idle menu and pick the graphics preset (Settings → Detect re-runs it)
   const autoGfx = new AutoGraphics(engine, game);
   (window as any).game = game;

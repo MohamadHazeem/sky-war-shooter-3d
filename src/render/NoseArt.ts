@@ -243,9 +243,10 @@ const DRAW: Record<string, (g: G, name: string) => void> = {
   },
 };
 
-export function drawNoseArt(id: string, name: string, canvas = document.createElement('canvas')): HTMLCanvasElement {
-  canvas.width = CW; canvas.height = CH;
+export function drawNoseArt(id: string, name: string, canvas = document.createElement('canvas'), resolution = 1): HTMLCanvasElement {
+  canvas.width = CW * resolution; canvas.height = CH * resolution;
   const g = canvas.getContext('2d')!;
+  g.scale(resolution, resolution);
   g.clearRect(0, 0, CW, CH);
   (DRAW[id] ?? DRAW.script)(g, name || 'Sky Queen');
   return canvas;
@@ -272,7 +273,7 @@ function texture(id: string, name: string) {
   let t = textures.get(k);
   if (t) { textures.delete(k); textures.set(k, t); }   // most recently used last
   else {
-    t = new THREE.CanvasTexture(drawNoseArt(id, name));
+    t = new THREE.CanvasTexture(drawNoseArt(id, name, document.createElement('canvas'), 2));
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = 8;
     // Player plus up to 18 formation names, in either language. Keep live squadron textures resident.
@@ -284,10 +285,12 @@ function texture(id: string, name: string) {
 
 // The plane conformed to the B-17's left nose side: shared by every dressed bomber (same
 // airframe geometry), so it is computed once and never marked owned.
-let conformed: THREE.BufferGeometry | null = null;
+const conformed = new Map<boolean, THREE.BufferGeometry>();
 const _ray = new THREE.Raycaster();
 function decalGeometry(model: THREE.Object3D): THREE.BufferGeometry {
-  if (conformed) return conformed;
+  const hero = !!model.getObjectByName('B17G_HERO');
+  const cached = conformed.get(hero);
+  if (cached) return cached;
   const airframe = model.getObjectByName('airframe');
   const geo = new THREE.PlaneGeometry(DECAL_W, DECAL_H, 10, 6);
   geo.rotateY(Math.PI / 2);                       // faces +X (the left side), +u runs aft
@@ -315,7 +318,8 @@ function decalGeometry(model: THREE.Object3D): THREE.BufferGeometry {
   }
   geo.computeVertexNormals();
   geo.computeBoundingSphere();
-  return (conformed = geo);
+  conformed.set(hero, geo);
+  return geo;
 }
 
 // Put (or replace) the nose-art decal on a B-17 model. id 'none' removes it.

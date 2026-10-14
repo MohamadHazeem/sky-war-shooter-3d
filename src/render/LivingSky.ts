@@ -1,3 +1,4 @@
+import { b17StreamGeometry } from '../world/Models';
 import * as THREE from 'three';
 import { registerFlipMaterial } from './Flipbooks';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -417,6 +418,8 @@ export class LivingSky {
   // The formation to fly with: its centre and course (World.formationCenter/-Forward are
   // updated in place, including on floating-origin shifts) and its contrail switch
   bind(src: { formationCenter: THREE.Vector3; formationForward: THREE.Vector3; contrails?: { enabled: boolean } }, speed = 75) {
+    const hero = b17StreamGeometry();
+    if (hero && this.bombers.geometry !== hero) { this.bombers.geometry.dispose(); this.bombers.geometry = hero; }
     this.anchor = src.formationCenter;
     this.forward = src.formationForward;
     this.contrailSrc = src.contrails ?? null;

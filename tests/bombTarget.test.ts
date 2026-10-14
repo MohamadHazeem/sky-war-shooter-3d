@@ -6,7 +6,7 @@ import { targetUniforms } from '../src/render/TargetGround';
 import { CAMPAIGN } from '../src/game/Missions';
 function setup() {
   const bomber = { alive: true, pos: new THREE.Vector3(0, 7600, 0), vel: new THREE.Vector3(0, 0, 75), localToWorld: (p: THREE.Vector3) => p.add(bomber.pos) };
-  const world = { time: 0, formationCenter: bomber.pos.clone(), formationForward: new THREE.Vector3(0, 0, 1), bombers: () => [bomber], flakIntensity: 0, callout: () => {} };
+  const world = { time: 0, aircraft: [], formationCenter: bomber.pos.clone(), formationForward: new THREE.Vector3(0, 0, 1), bombers: () => [bomber], flakIntensity: 0, callout: () => {} };
   const engine = { scene: new THREE.Scene(), camera: new THREE.PerspectiveCamera(), renderer: { domElement: { height: 720 } } };
   const target = new TargetArea(engine as never, world as never), mission = CAMPAIGN.find(m => m.id === 'm3')!;
   target.update(0, mission);

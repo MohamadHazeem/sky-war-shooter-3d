@@ -1,0 +1,52 @@
+{
+  "formation": {
+    "ldr": {
+      "black": 0,
+      "white": 0,
+      "blackClusters": [],
+      "whiteClusters": []
+    },
+    "hdr": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    }
+  },
+  "waist": {
+    "ldr": {
+      "black": 0,
+      "white": 0,
+      "blackClusters": [],
+      "whiteClusters": []
+    },
+    "hdr": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    }
+  },
+  "perf": {
+    "avg": 4.56,
+    "p50": 4.3,
+    "p95": 6.5,
+    "max": 7.4,
+    "calls": 1,
+    "tris": 1,
+    "programs": 136,
+    "w": 1264,
+    "h": 711
+  },
+  "meshes": {
+    "lods": 77,
+    "levels": [
+      10,
+      0,
+      67
+    ],
+    "triangles": 3165
+  }
+}

@@ -87,6 +87,8 @@ export class FormationDress {
   dispose() { this.holes.dispose(); }
   static warm(scene: THREE.Scene, at: THREE.Vector3) {
     const m = new THREE.InstancedMesh(holeGeo, holeMat, 1); m.setMatrixAt(0, _matrix.makeTranslation(at.x, at.y, at.z)); m.frustumCulled = false; scene.add(m);
-    return () => { m.removeFromParent(); m.dispose(); };
+    const badge = new THREE.Mesh(badgeGeo, badgeMaterial(0));
+    badge.position.copy(at); badge.frustumCulled = false; scene.add(badge);
+    return () => { badge.removeFromParent(); m.removeFromParent(); m.dispose(); };
   }
 }
