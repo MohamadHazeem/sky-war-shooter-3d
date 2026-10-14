@@ -20,14 +20,14 @@ export function streamShots(engine: Engine, game: Game, vqa: Vqa, bench: (n?: nu
     }
   };
   // a calm frame on a gun position: no enemies, the stream baked and in place
-  const setup = (mood: string, station: string, yaw: number, pitch: number, q: Quality = 'high') => {
+  const setup = (mood: string, station: string, yaw: number, pitch: number, q: Quality = 'high', ads = false) => {
     vqa.freeze();
     vqa.quality(q);
     ensureMission();
     vqa.mood(mood);
     for (let i = 0; i < 40 && !s.stats().baked.gaggle; i++) step(10);
     vqa.clear();
-    vqa.gunner(station, { yaw, pitch });
+    vqa.gunner(station, { yaw, pitch, ads });
     step(90, 16);
     vqa.clear();
     step(2, 2);
@@ -37,20 +37,29 @@ export function streamShots(engine: Engine, game: Game, vqa: Vqa, bench: (n?: nu
     const r = await fetch(`http://localhost:${port}/save?file=${encodeURIComponent(file)}`, { method: 'POST', body: url });
     return r.text();
   };
+  // a full-resolution crop of the current frame (the save server shrinks whole frames to 800 px)
+  const crop = async (file: string, x: number, y: number, w: number, h: number, port = 5318) => {
+    engine.render(1 / 60);
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d')!.drawImage(engine.renderer.domElement, x, y, w, h, 0, 0, w, h);
+    const r = await fetch(`http://localhost:${port}/save?file=${encodeURIComponent(file)}`, { method: 'POST', body: c.toDataURL('image/jpeg', 0.92) });
+    return r.text();
+  };
   return {
-    setup, step, save,
+    setup, step, save, crop,
     /** top turret toward the stream, tail looking back over the following boxes, sunset field */
     async all(port = 5318, q: Quality = 'high') {
       const out: string[] = [];
-      setup('clear', 'top', 1.75, 0.12, q); out.push(await save(`visual-qa/08/top-turret-stream-${q}.jpg`, port));
-      setup('clear', 'tail', 0.25, 0.04, q); out.push(await save(`visual-qa/08/tail-following-boxes-${q}.jpg`, port));
+      setup('clear', 'top', -0.3, 0.04, q, true); out.push(await save(`visual-qa/08/top-turret-stream-${q}.jpg`, port));
+      setup('clear', 'tail', 0, -0.02, q, true); out.push(await save(`visual-qa/08/tail-following-boxes-${q}.jpg`, port));
       setup('dusk', 'waistR', 0, 0.05, q); out.push(await save(`visual-qa/08/sunset-contrail-field-${q}.jpg`, port));
       vqa.release();
       return out;
     },
     /** frame times with the stream on and off at a quality tier */
     perf(q: Quality = 'high', n = 90) {
-      setup('clear', 'top', 1.75, 0.12, q);
+      setup('clear', 'top', -0.45, 0.06, q);
       s.enabled = true; step(4, 4);
       const on = { ...bench(n), stream: s.stats() };
       s.enabled = false; step(4, 4);

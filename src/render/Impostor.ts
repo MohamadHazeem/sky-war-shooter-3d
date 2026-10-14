@@ -228,6 +228,8 @@ void impFrames(vec3 vl, vec3 q) {
   float fe = clamp((el + 1.5707963) / 3.14159265 * IMP_EL - 0.5, 0.0, IMP_EL - 1.0);
   float j0 = floor(fe), we = fe - j0;
   float j1 = min(j0 + 1.0, IMP_EL - 1.0);
+  // a short cross-fade around the half-way point between frames: a wide blend shows both views at once (ghost doubles)
+  wa = smoothstep(0.3, 0.7, wa); we = smoothstep(0.3, 0.7, we);
   vImpA = vec4(impUv(q, k0, j0), impUv(q, k1, j0));
   vImpB = vec4(impUv(q, k0, j1), impUv(q, k1, j1));
   vImpK = vec4(k0, k1, j0, j1);

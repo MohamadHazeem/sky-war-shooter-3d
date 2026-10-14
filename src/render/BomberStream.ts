@@ -399,12 +399,12 @@ export class BomberStream {
           p.y += sin(sd * 2.3 + age * 0.17) * age * 0.08 - age * 0.3;
           vec3 wp = (modelMatrix * vec4(p, 1.0)).xyz;
           vec3 dirW = normalize(mat3(modelMatrix) * vec3(0.0, 0.0, -1.0));
-          float width = mix(0.6, 13.0 * iRib.z, pow(t, 0.6));
+          float width = mix(0.5, 6.0 * iRib.z, pow(t, 0.6));
           float dist = distance(cameraPosition, wp);
           float thin;
           wp = faceCamera(wp, dirW, aSide, width * step(40.0, dist), 1.1, thin);
           gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0);
-          vA = ok * smoothstep(0.6, 2.4, age) * (1.0 - smoothstep(0.5, 1.0, t)) * mix(0.7, 0.3, t) * thin
+          vA = ok * smoothstep(0.6, 2.4, age) * (1.0 - smoothstep(0.3, 1.0, t)) * mix(0.5, 0.1, sqrt(t)) * thin
              * (1.0 - smoothstep(30000.0, 42000.0, dist)) * smoothstep(60.0, 180.0, dist);
           vSide = aSide; vT = t; vW = wp; vSeed = sd;
           vSun = dot(normalize(cross(dirW, normalize(cameraPosition - wp))) * aSide, uSunDir);
@@ -752,7 +752,7 @@ export class BomberStream {
       return m;
     };
     const range = (a: number, n: number) => Array.from({ length: n }, (_, i) => a + i);
-    if (this.bakes.bomber?.done && !this.bomberImp) this.bomberImp = mk(this.bakes.bomber, false, range(0, L.bombers), 1.6, 1, null);
+    if (this.bakes.bomber?.done && !this.bomberImp) this.bomberImp = mk(this.bakes.bomber, false, range(0, L.bombers), 2.0, 1, null);
     if (this.bakes.escort?.done && !this.escortImp) this.escortImp = mk(this.bakes.escort, true, range(L.escortFirst, L.escortCount), 1.3, 0.8, null);
     const gStart = L.escortFirst + L.escortCount;
     if (this.bakes.gaggle?.done && !this.gaggleImp) this.gaggleImp = mk(this.bakes.gaggle, true, range(gStart, L.count - gStart), 1.3, 0.5, null);
@@ -1130,6 +1130,8 @@ export class BomberStream {
     return -1;
   }
   get groups() { return this.layout?.groups ?? []; }
+  /** shared uniforms (dev inspection) */
+  get uniforms() { return U; }
 }
 
 const _z = new THREE.Vector3(0, 0, 1);

@@ -25,9 +25,9 @@ export const REC_FLOATS = REC_TEXELS * 4;
 export const LOSS_TEXELS = 2;
 export const NOT_LOST = 1e9;
 
-// Drawn size of the stream aircraft (model scale). Bombers a little over life size so the
-// silhouettes read at 2-5 km; fighters more (the gameplay enemies are drawn 6x)
-export const BOMBER_SCALE = 1.3;
+// Drawn size of the stream aircraft (model scale), like the enlarged gameplay aircraft: at
+// 2-5 km a life-size B-17 is a few pixels; the box spacing grows with it (squadronSlot)
+export const BOMBER_SCALE = 1.9;
 export const ESCORT_SCALE = 2.4;
 export const GAGGLE_SCALE = 3.0;
 
@@ -105,7 +105,7 @@ export function squadronSizes(n: number): [number, number, number] {
 // Slot of ship i in a squadron (relative to the squadron's lead), metres
 export function squadronSlot(i: number, out = new THREE.Vector3()) {
   const e = ELEM[Math.floor(i / 3) % ELEM.length], v = VIC[i % 3];
-  return out.set(e[0] + v[0], e[1] + v[1], e[2] + v[2]).multiplyScalar(1.6);
+  return out.set(e[0] + v[0], e[1] + v[1], e[2] + v[2]).multiplyScalar(1.6 * BOMBER_SCALE / 1.3);
 }
 
 function rng(seed: number) {
@@ -133,7 +133,7 @@ export function buildStream(tier: StreamTier, seed = 1944): StreamLayoutData {
     // natural-metal share of the group (1944: olive drab boxes with a few silver replacements, some all-silver)
     const silver = [0.08, 0.25, 0.6][Math.floor(R() * 3)];
     const sq = squadronSizes(size);
-    const centres = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(-mirror * 200, 80, -100), new THREE.Vector3(mirror * 200, -80, -160)];
+    const centres = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(-mirror * 270, 100, -130), new THREE.Vector3(mirror * 270, -100, -210)];
     for (let s = 0; s < 3; s++) {
       g.squadrons.push(centres[s].clone().add(new THREE.Vector3(0, 0, -60)));
       for (let i = 0; i < sq[s]; i++) {
