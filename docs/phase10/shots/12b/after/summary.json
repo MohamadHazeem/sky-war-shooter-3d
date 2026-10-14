@@ -1,0 +1,67 @@
+[
+  {
+    "tier": "low",
+    "mean": 2.4051041666263098,
+    "worst": 4.414999999850989,
+    "worstScene": "tail-bf109",
+    "maxP95": 5.800000011920929,
+    "passes": 16,
+    "ratioFailures": 11,
+    "renderSize": [
+      1074,
+      604
+    ]
+  },
+  {
+    "tier": "medium",
+    "mean": 6.41375000004967,
+    "worst": 8.783333333333333,
+    "worstScene": "waist-interior",
+    "maxP95": 11.699999988079071,
+    "passes": 16,
+    "ratioFailures": 3,
+    "renderSize": [
+      1490,
+      838
+    ]
+  },
+  {
+    "tier": "high",
+    "mean": 7.943125000037252,
+    "worst": 10.261666666716337,
+    "worstScene": "tail-bf109",
+    "maxP95": 12.300000011920929,
+    "passes": 16,
+    "ratioFailures": 1,
+    "renderSize": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "tier": "ultra",
+    "mean": 8.401041666697711,
+    "worst": 11.076666666318973,
+    "worstScene": "tail-bf109",
+    "maxP95": 12.200000002980232,
+    "passes": 16,
+    "ratioFailures": 1,
+    "renderSize": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "tier": "cinematic",
+    "mean": 9.357708333292978,
+    "worst": 11.22999999995033,
+    "worstScene": "tail-bf109",
+    "maxP95": 12.299999997019768,
+    "passes": 16,
+    "ratioFailures": 1,
+    "renderSize": [
+      1920,
+      1080
+    ]
+  }
+]

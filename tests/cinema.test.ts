@@ -127,7 +127,7 @@ describe('film look parameters', () => {
     resolveFilm(out, LOOK_PRESETS.newsreel, SHOT_PRESETS.gunCamera, { calm: true, economy: true });
     expect(out.grain).toBe(0); expect(out.weave).toBe(0); expect(out.flicker).toBe(0); expect(out.dust).toBe(0);
     expect(out.dof).toBe(false); expect(out.objectBlur).toBe(0);
-    expect(out.on).toBe(true);   // the grade and vignette stay
+    expect(out.on).toBe(false);  // Low skips the whole optional film pass
     expect(SHOT_PRESETS.gunCamera.grain).toBeGreaterThan(0);   // presets themselves untouched
   });
 

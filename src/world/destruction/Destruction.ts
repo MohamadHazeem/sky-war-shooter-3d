@@ -504,7 +504,7 @@ export class Destruction {
       const root = new THREE.Group(), frame = new THREE.Group();
       root.add(frame);
       root.visible = false;
-      root.userData.destructionPiece = true;
+      root.userData.destructionPiece = true; root.userData.formationBatch = true;
       this.w.scene.add(root);
       const p: Piece = {
         root, frame, meshes: [], extra: [], body: new Body(), active: false, age: 0, life: 0, fire: 0, smoke: 0,

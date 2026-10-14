@@ -1,5 +1,6 @@
+import { registerFormationSource } from '../render/AircraftSubmission';
 import * as THREE from 'three';
-import { instantiate, ModelKind, PropInfo, setupProps } from './Models';
+import { instantiate, instantiateCompactBomber, ModelKind, PropInfo, setupProps } from './Models';
 import { HeroB17Controls } from './HeroB17';
 import { FlightModel, FlightParams } from './FlightModel';
 import { animateControls } from './HeroLook';
@@ -79,6 +80,8 @@ export abstract class Aircraft {
   fireNear = 0;            // player rounds that passed within ~30 m (Ballistics; the enemy AI's evasion reads it)
 
   constructor(public readonly kind: ModelKind, public readonly team: Team, propRadius: number) {
+    this.root.userData.formationBatch = true;
+    registerFormationSource(this.root, this, null);
     this.model = instantiate(kind);
     this.root.add(this.model);
     this.props = setupProps(this.model, propRadius);
@@ -117,8 +120,10 @@ export abstract class Aircraft {
       p.node.quaternion.copy(p.base).multiply(_qz.setFromAxisAngle(_zAxis, this.propSpin[i]));
       p.disc.visible = spinning;
       // The hero keeps its three yellow-tipped blades at every RPM. Blend in only
-      // the faint shutter sweep; changing opacity preserves the prewarmed program.
-      if (p.layered) (p.disc.material as THREE.MeshBasicMaterial).opacity = Math.min(.55, Math.max(0, (speed - 20) / 90));
+      // the faint shutter sweep without changing shader defines.
+      // B-17s run at fixed cruise RPM while alive; stopped/dead sweeps are hidden.
+      // Their constant-opacity material is shared by the formation draw.
+      if (p.layered) (p.disc.material as THREE.MeshBasicMaterial).opacity = .55;
       // Slowly sway the disc texture against the spin (~4.5 s period at full rpm) so the
       // blade banding and streaks shimmer instead of sitting as a static tint.
       p.disc.rotation.z = Math.sin(this.propSpin[i] * 0.02 + i * 1.7) * 0.18;
@@ -222,6 +227,7 @@ export class Bomber extends Aircraft {
 
   constructor() {
     super('b17', 'allied', 1.77);
+    registerFormationSource(this.root, this, instantiateCompactBomber());
     this.controls = new HeroB17Controls(this.model);
     const find = (n: string) => this.model.getObjectByName(n) ?? undefined;
     const turret = (key: string, y: string, p: string, rest: THREE.Vector3) => {

@@ -1,3 +1,4 @@
+import { registerBatchTint } from '../render/AircraftSubmission';
 import * as THREE from 'three';
 import { markOwned } from '../render/Dispose';
 import type { Fighter } from './Aircraft';
@@ -10,6 +11,7 @@ const SOOT_MIN = 0.25;       // colour multiplier at zero structure (sooty, not 
 
 interface Slot {
   mat: THREE.Material;
+  tint: THREE.Color;
   color: THREE.Color | null;      // base colour, kept to re-derive the sooted tint
 }
 
@@ -19,6 +21,7 @@ interface State {
 }
 
 const states = new WeakMap<Fighter, State>();
+const sharedSurfaces = new WeakMap<THREE.Material, {version: number; material: THREE.MeshStandardMaterial}>();
 
 // Give the fighter its own material copies. Called once when the enemy is spawned.
 export function setup(f: Fighter) {
@@ -35,11 +38,20 @@ export function setup(f: Fighter) {
         c = markOwned(mm.clone());
         copies.set(mm, c);
         const col = (c as THREE.MeshStandardMaterial).color;
-        slots.push({ mat: c, color: col ? col.clone() : null });
+        slots.push({ mat: c, tint: new THREE.Color(), color: col ? col.clone() : null });
       }
       return c;
     });
-    m.material = Array.isArray(m.material) ? next : next[0];
+    const single = !Array.isArray(m.material), original = src[0];
+    m.material = single ? next[0] : next;
+    if (single && (next[0] as THREE.MeshStandardMaterial).isMeshStandardMaterial && !next[0].transparent && !next[0].clippingPlanes) {
+      let shared = sharedSurfaces.get(original);
+      if (!shared || shared.version !== original.version) {
+        shared = {version: original.version, material: (next[0] as THREE.MeshStandardMaterial).clone()};
+        sharedSurfaces.set(original, shared);
+      }
+      registerBatchTint(next[0] as THREE.MeshStandardMaterial, shared.material, slots.find(s => s.mat === next[0])!.tint);
+    }
   });
   states.set(f, { slots, soot: -1 });
   setupStages(f); // torn-skin patches are added later and keep their own shared materials
@@ -60,5 +72,6 @@ export function update(f: Fighter, _worldTime: number) {
   st.soot = soot;
   for (const s of st.slots) if (s.color) {
     (s.mat as THREE.MeshStandardMaterial).color.copy(s.color).multiplyScalar(soot);
+    s.tint.setScalar(soot);
   }
 }

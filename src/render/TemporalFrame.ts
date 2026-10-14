@@ -46,14 +46,29 @@ export class TemporalFrame {
 
   constructor(reversed: boolean) {
     this.motion = new T.ShaderMaterial({
-      uniforms: { prevMVP: { value: new T.Matrix4() }, prevMV: { value: new T.Matrix4() }, known: { value: 0 } },
+      uniforms: { prevMVP: { value: new T.Matrix4() }, prevMV: { value: new T.Matrix4() }, known: { value: 0 }, previousBatchTexture: { value: null } },
       vertexShader: /* glsl */ `
         uniform mat4 prevMVP; uniform mat4 prevMV; varying vec4 oldClip; varying vec4 curClip; varying float oldDepth;
-        void main(){vec4 p=vec4(position,1.);
+        #include <batching_pars_vertex>
+        #ifdef USE_BATCHING
+          uniform highp sampler2D previousBatchTexture;
+          mat4 previousBatchMatrix(float id) {
+            int size=textureSize(previousBatchTexture,0).x, j=int(id)*4;
+            ivec2 p=ivec2(j%size,j/size);
+            return mat4(texelFetch(previousBatchTexture,p,0),texelFetch(previousBatchTexture,p+ivec2(1,0),0),
+              texelFetch(previousBatchTexture,p+ivec2(2,0),0),texelFetch(previousBatchTexture,p+ivec2(3,0),0));
+          }
+        #endif
+        void main(){vec4 p=vec4(position,1.), oldP=p;
         #ifdef USE_INSTANCING
           p=instanceMatrix*p;
+          oldP=p;
         #endif
-        oldClip=prevMVP*p;oldDepth=-(prevMV*p).z*.001;curClip=projectionMatrix*modelViewMatrix*p;gl_Position=curClip;}`,
+        #ifdef USE_BATCHING
+          float id=getIndirectIndex(gl_DrawID);
+          p=getBatchingMatrix(id)*p;oldP=previousBatchMatrix(id)*oldP;
+        #endif
+        oldClip=prevMVP*oldP;oldDepth=-(prevMV*oldP).z*.001;curClip=projectionMatrix*modelViewMatrix*p;gl_Position=curClip;}`,
       fragmentShader: /* glsl */ `
         uniform float known; varying vec4 oldClip; varying vec4 curClip; varying float oldDepth;
         void main(){vec2 delta=(oldClip.xy/oldClip.w-curClip.xy/curClip.w)*.5;gl_FragColor=vec4(delta,oldDepth,known);}`,
@@ -69,6 +84,7 @@ export class TemporalFrame {
       u.prevMVP.value.multiplyMatrices(this.prevVP, known ? record.previous : object.matrixWorld);
       u.prevMV.value.multiplyMatrices(this.prevCamera, known ? record.previous : object.matrixWorld);
       u.known.value = known ? 1 : 0;
+      u.previousBatchTexture.value = object.userData.previousBatchTexture ?? null;
       if (record.queued !== this.frame) { this.pending.push(record); record.queued = this.frame; }
       this.motion.uniformsNeedUpdate = true;
     };

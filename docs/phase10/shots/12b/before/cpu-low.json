@@ -1,0 +1,1632 @@
+{
+  "timing": {
+    "samples": 120,
+    "programsBefore": 186,
+    "programsAfter": 186,
+    "mean": 12.251666666691502,
+    "p50": 12.400000005960464,
+    "p95": 14.5,
+    "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+  },
+  "draws": 1317,
+  "groups": [
+    {
+      "name": "weather-precipitation",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "weather-lightning",
+      "type": "Line",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "PerspectiveCamera",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "",
+      "type": "DirectionalLight",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Object3D",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "DirectionalLight",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Object3D",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "DirectionalLight",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Object3D",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "HemisphereLight",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "livingSky",
+      "type": "Group",
+      "nodes": 7,
+      "meshes": 6,
+      "visible": 0
+    },
+    {
+      "name": "bomberStream",
+      "type": "Group",
+      "nodes": 11,
+      "meshes": 10,
+      "visible": 10
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "",
+      "type": "PointLight",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "PointLight",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "PointLight",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "PointLight",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 4,
+      "meshes": 2,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "target_bombs",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "target_cloud_smoke",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "",
+      "type": "PointLight",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "PointLight",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 23,
+      "meshes": 22,
+      "visible": 0
+    },
+    {
+      "name": "",
+      "type": "Object3D",
+      "nodes": 1,
+      "meshes": 0,
+      "visible": 0
+    },
+    {
+      "name": "storm-wall",
+      "type": "Mesh",
+      "nodes": 1,
+      "meshes": 1,
+      "visible": 1
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 607,
+      "meshes": 199,
+      "visible": 68
+    },
+    {
+      "name": "",
+      "type": "Group",
+      "nodes": 602,
+      "meshes": 195,
+      "visible": 65
+    }
+  ],
+  "cpu": [
+    {
+      "name": "readPixels",
+      "url": "",
+      "line": -1,
+      "samples": 302
+    },
+    {
+      "name": "projectObject",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 10085,
+      "samples": 57
+    },
+    {
+      "name": "projectObject",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 10085,
+      "samples": 41
+    },
+    {
+      "name": "WebGLRenderer.renderBufferDirect",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 9791,
+      "samples": 36
+    },
+    {
+      "name": "projectObject",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 10085,
+      "samples": 34
+    },
+    {
+      "name": "traverseVisible",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 10010,
+      "samples": 29
+    },
+    {
+      "name": "getParameters",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 4090,
+      "samples": 25
+    },
+    {
+      "name": "getProgram",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 10232,
+      "samples": 24
+    },
+    {
+      "name": "traverseVisible",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 10010,
+      "samples": 24
+    },
+    {
+      "name": "updateMatrixWorld",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 10057,
+      "samples": 23
+    },
+    {
+      "name": "projectObject",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 10085,
+      "samples": 22
+    },
+    {
+      "name": "projectObject",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 10085,
+      "samples": 21
+    },
+    {
+      "name": "renderObject",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 5377,
+      "samples": 20
+    },
+    {
+      "name": "(program)",
+      "url": "",
+      "line": -1,
+      "samples": 18
+    },
+    {
+      "name": "multiplyMatrices",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 8263,
+      "samples": 17
+    },
+    {
+      "name": "setProgram",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 10333,
+      "samples": 17
+    },
+    {
+      "name": "traverseVisible",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 10010,
+      "samples": 17
+    },
+    {
+      "name": "updateMatrixWorld",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 10057,
+      "samples": 15
+    },
+    {
+      "name": "renderObject",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 5377,
+      "samples": 15
+    },
+    {
+      "name": "traverseVisible",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 10010,
+      "samples": 14
+    },
+    {
+      "name": "renderObject",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 5377,
+      "samples": 13
+    },
+    {
+      "name": "renderObjects",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 10205,
+      "samples": 12
+    },
+    {
+      "name": "renderObject",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 5377,
+      "samples": 12
+    },
+    {
+      "name": "updateMatrixWorld",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 10057,
+      "samples": 11
+    },
+    {
+      "name": "updateMatrixWorld",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 10057,
+      "samples": 11
+    },
+    {
+      "name": "sort",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 4584,
+      "samples": 11
+    },
+    {
+      "name": "traverseVisible",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 10010,
+      "samples": 11
+    },
+    {
+      "name": "multiplyMatrices",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 8263,
+      "samples": 10
+    },
+    {
+      "name": "projectObject",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 10085,
+      "samples": 10
+    },
+    {
+      "name": "updateMatrixWorld",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 10057,
+      "samples": 9
+    },
+    {
+      "name": "multiplyMatrices",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 8263,
+      "samples": 9
+    },
+    {
+      "name": "copyArray",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 2910,
+      "samples": 9
+    },
+    {
+      "name": "renderObject",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 5377,
+      "samples": 9
+    },
+    {
+      "name": "bindVertexArray",
+      "url": "",
+      "line": -1,
+      "samples": 8
+    },
+    {
+      "name": "traverseVisible",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 10010,
+      "samples": 8
+    },
+    {
+      "name": "",
+      "url": "http://127.0.0.1:5312/src/core/Engine.ts",
+      "line": 660,
+      "samples": 8
+    },
+    {
+      "name": "setValue",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 3411,
+      "samples": 7
+    },
+    {
+      "name": "markUniformsLightsNeedsUpdate",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 10496,
+      "samples": 7
+    },
+    {
+      "name": "setup",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 892,
+      "samples": 7
+    },
+    {
+      "name": "",
+      "url": "http://127.0.0.1:5312/src/audio/Synth3.ts",
+      "line": 116,
+      "samples": 7
+    },
+    {
+      "name": "buffer",
+      "url": "http://127.0.0.1:5312/src/audio/HitSounds.ts",
+      "line": 58,
+      "samples": 7
+    },
+    {
+      "name": "multiplyMatrices",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 8263,
+      "samples": 6
+    },
+    {
+      "name": "renderObject",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 10215,
+      "samples": 6
+    },
+    {
+      "name": "renderObject",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 5377,
+      "samples": 6
+    },
+    {
+      "name": "updateMatrixWorld",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 10057,
+      "samples": 5
+    },
+    {
+      "name": "applyMatrix4",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 4367,
+      "samples": 5
+    },
+    {
+      "name": "arraysEqual",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+      "line": 2905,
+      "samples": 5
+    },
+    {
+      "name": "uniformMatrix4fv",
+      "url": "",
+      "line": -1,
+      "samples": 5
+    },
+    {
+      "name": "multiplyMatrices",
+      "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+      "line": 8263,
+      "samples": 5
+    },
+    {
+      "name": "",
+      "url": "http://127.0.0.1:5312/src/audio/HitSounds.ts",
+      "line": 135,
+      "samples": 5
+    }
+  ]
+}

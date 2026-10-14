@@ -146,7 +146,7 @@ class Bloom {
       this.quad.render(renderer);
       prev = this.up[i];
     }
-    return this.up[0].texture;
+    return prev.texture;
   }
 }
 
@@ -492,7 +492,7 @@ export class PostFX {
     const film = this.film, fp = film.resolve(this.economy);
     const src = film.pre(renderer, scene, camera, hdr.texture, depth, dt);
     const exposure = this.temporal && !this.economy ? this.eye.render(renderer, hdr.texture, dt) : null;
-    const bloomTex = this.bloom.render(renderer, src, hdr.width, hdr.height, this.economy ? 3 : this.bloomLevels);
+    const bloomTex = this.bloom.render(renderer, src, hdr.width, hdr.height, this.economy ? 1 : this.bloomLevels);
     const u = this.finalMat.uniforms;
     u.tColor.value = src;
     u.tExposure.value = exposure;
@@ -532,7 +532,7 @@ export class PostFX {
     const noGrain = access.prefs.reduceMotion || fp.on;
     u.uGrain.value = noGrain ? 0 : this.grain;
     u.uGrainDark.value = noGrain ? 0 : this.grainDark;
-    u.uChroma.value = this.chroma;
+    u.uChroma.value = this.economy ? 0 : this.chroma;
     u.uFlash.value = this.flash * access.flash;
     u.uHypoxia.value = this.hypoxia;
     u.uZoomPulse.value = this.zoomPulse * access.flash;

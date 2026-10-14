@@ -1,0 +1,4178 @@
+[
+  {
+    "functionName": "updateVisiblePose",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 21,
+    "columnNumber": 33,
+    "samples": 44
+  },
+  {
+    "functionName": "updateVisiblePose",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 21,
+    "columnNumber": 33,
+    "samples": 34
+  },
+  {
+    "functionName": "updateVisiblePose",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 21,
+    "columnNumber": 33,
+    "samples": 33
+  },
+  {
+    "functionName": "WebGLRenderer.renderBufferDirect",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 9791,
+    "columnNumber": 36,
+    "samples": 30
+  },
+  {
+    "functionName": "update",
+    "scriptId": "208",
+    "url": "http://127.0.0.1:5312/src/world/Ballistics.ts?t=1791985045202",
+    "lineNumber": 136,
+    "columnNumber": 7,
+    "samples": 29
+  },
+  {
+    "functionName": "updateVisiblePose",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 21,
+    "columnNumber": 33,
+    "samples": 28
+  },
+  {
+    "functionName": "update",
+    "scriptId": "85",
+    "url": "http://127.0.0.1:5312/src/world/World.ts?t=1791985045204",
+    "lineNumber": 1137,
+    "columnNumber": 7,
+    "samples": 26
+  },
+  {
+    "functionName": "texSubImage2D",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 24
+  },
+  {
+    "functionName": "onBeforeRender",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 19906,
+    "columnNumber": 15,
+    "samples": 23
+  },
+  {
+    "functionName": "update",
+    "scriptId": "34",
+    "url": "http://127.0.0.1:5312/src/world/HeroB17.ts",
+    "lineNumber": 11,
+    "columnNumber": 7,
+    "samples": 21
+  },
+  {
+    "functionName": "setProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10333,
+    "columnNumber": 21,
+    "samples": 20
+  },
+  {
+    "functionName": "(program)",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 19
+  },
+  {
+    "functionName": "update",
+    "scriptId": "226",
+    "url": "http://127.0.0.1:5312/src/render/Contrails.ts",
+    "lineNumber": 157,
+    "columnNumber": 7,
+    "samples": 19
+  },
+  {
+    "functionName": "update",
+    "scriptId": "147",
+    "url": "http://127.0.0.1:5312/src/render/Particles.ts?t=1791985045202",
+    "lineNumber": 230,
+    "columnNumber": 7,
+    "samples": 18
+  },
+  {
+    "functionName": "update",
+    "scriptId": "34",
+    "url": "http://127.0.0.1:5312/src/world/HeroB17.ts",
+    "lineNumber": 11,
+    "columnNumber": 7,
+    "samples": 18
+  },
+  {
+    "functionName": "updateVisiblePose",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 21,
+    "columnNumber": 33,
+    "samples": 17
+  },
+  {
+    "functionName": "getParameters",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 4090,
+    "columnNumber": 23,
+    "samples": 17
+  },
+  {
+    "functionName": "projectObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10085,
+    "columnNumber": 24,
+    "samples": 17
+  },
+  {
+    "functionName": "texSubImage2D",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 17
+  },
+  {
+    "functionName": "prepare",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 226,
+    "columnNumber": 8,
+    "samples": 16
+  },
+  {
+    "functionName": "refreshMaterialUniforms",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 8053,
+    "columnNumber": 33,
+    "samples": 16
+  },
+  {
+    "functionName": "updateVisiblePose",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 21,
+    "columnNumber": 33,
+    "samples": 15
+  },
+  {
+    "functionName": "upload",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3419,
+    "columnNumber": 14,
+    "samples": 15
+  },
+  {
+    "functionName": "getParameters",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 4090,
+    "columnNumber": 23,
+    "samples": 15
+  },
+  {
+    "functionName": "onBeforeRender",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 19906,
+    "columnNumber": 15,
+    "samples": 14
+  },
+  {
+    "functionName": "getParameters",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 4090,
+    "columnNumber": 23,
+    "samples": 14
+  },
+  {
+    "functionName": "projectObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10085,
+    "columnNumber": 24,
+    "samples": 14
+  },
+  {
+    "functionName": "updateVisiblePose",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 21,
+    "columnNumber": 33,
+    "samples": 13
+  },
+  {
+    "functionName": "collect",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 77,
+    "columnNumber": 11,
+    "samples": 13
+  },
+  {
+    "functionName": "renderObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10215,
+    "columnNumber": 23,
+    "samples": 13
+  },
+  {
+    "functionName": "renderObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5377,
+    "columnNumber": 22,
+    "samples": 12
+  },
+  {
+    "functionName": "WebGLRenderer.renderBufferDirect",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 9791,
+    "columnNumber": 36,
+    "samples": 12
+  },
+  {
+    "functionName": "draw",
+    "scriptId": "99",
+    "url": "http://127.0.0.1:5312/src/ui/CombatFeedback.ts?t=1791985045202",
+    "lineNumber": 148,
+    "columnNumber": 5,
+    "samples": 11
+  },
+  {
+    "functionName": "refreshUniformsCommon",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 8088,
+    "columnNumber": 31,
+    "samples": 11
+  },
+  {
+    "functionName": "setFromRotationMatrix",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8943,
+    "columnNumber": 22,
+    "samples": 10
+  },
+  {
+    "functionName": "update",
+    "scriptId": "149",
+    "url": "http://127.0.0.1:5312/src/render/Flipbooks.ts?t=1791984863072",
+    "lineNumber": 445,
+    "columnNumber": 7,
+    "samples": 10
+  },
+  {
+    "functionName": "updateVisiblePose",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 21,
+    "columnNumber": 33,
+    "samples": 10
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 10
+  },
+  {
+    "functionName": "setValueV3f",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2942,
+    "columnNumber": 20,
+    "samples": 10
+  },
+  {
+    "functionName": "texSubImage2D",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 10
+  },
+  {
+    "functionName": "bindVertexArray",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 10
+  },
+  {
+    "functionName": "collect",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 77,
+    "columnNumber": 11,
+    "samples": 9
+  },
+  {
+    "functionName": "WebGLRenderer.renderBufferDirect",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 9791,
+    "columnNumber": 36,
+    "samples": 9
+  },
+  {
+    "functionName": "bindVertexArray",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 9
+  },
+  {
+    "functionName": "texSubImage2D",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 9
+  },
+  {
+    "functionName": "update",
+    "scriptId": "382",
+    "url": "http://127.0.0.1:5312/src/render/SmokeRibbons.ts",
+    "lineNumber": 238,
+    "columnNumber": 7,
+    "samples": 8
+  },
+  {
+    "functionName": "setValue",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3362,
+    "columnNumber": 9,
+    "samples": 8
+  },
+  {
+    "functionName": "getProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10232,
+    "columnNumber": 21,
+    "samples": 8
+  },
+  {
+    "functionName": "frame",
+    "scriptId": "13",
+    "url": "http://127.0.0.1:5312/src/game/Game.ts?t=1791985045206",
+    "lineNumber": 561,
+    "columnNumber": 6,
+    "samples": 7
+  },
+  {
+    "functionName": "setFromRotationMatrix",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8943,
+    "columnNumber": 22,
+    "samples": 7
+  },
+  {
+    "functionName": "sort",
+    "scriptId": "320",
+    "url": "http://127.0.0.1:5312/src/render/DepthSort.ts",
+    "lineNumber": 9,
+    "columnNumber": 5,
+    "samples": 7
+  },
+  {
+    "functionName": "updateVisiblePose",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 21,
+    "columnNumber": 33,
+    "samples": 7
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 7
+  },
+  {
+    "functionName": "collect",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 77,
+    "columnNumber": 11,
+    "samples": 7
+  },
+  {
+    "functionName": "getProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10232,
+    "columnNumber": 21,
+    "samples": 7
+  },
+  {
+    "functionName": "setValue",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3411,
+    "columnNumber": 9,
+    "samples": 7
+  },
+  {
+    "functionName": "setTexture2D",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6392,
+    "columnNumber": 22,
+    "samples": 7
+  },
+  {
+    "functionName": "copyArray",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2910,
+    "columnNumber": 18,
+    "samples": 7
+  },
+  {
+    "functionName": "bufferSubData",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 7
+  },
+  {
+    "functionName": "renderObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10215,
+    "columnNumber": 23,
+    "samples": 7
+  },
+  {
+    "functionName": "projectObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10085,
+    "columnNumber": 24,
+    "samples": 7
+  },
+  {
+    "functionName": "updateProps",
+    "scriptId": "86",
+    "url": "http://127.0.0.1:5312/src/world/Aircraft.ts?t=1791985045200",
+    "lineNumber": 107,
+    "columnNumber": 12,
+    "samples": 6
+  },
+  {
+    "functionName": "animateGuns",
+    "scriptId": "86",
+    "url": "http://127.0.0.1:5312/src/world/Aircraft.ts?t=1791985045200",
+    "lineNumber": 305,
+    "columnNumber": 12,
+    "samples": 6
+  },
+  {
+    "functionName": "tearSkin",
+    "scriptId": "239",
+    "url": "http://127.0.0.1:5312/src/world/DamageStages.ts?t=1791985045204",
+    "lineNumber": 460,
+    "columnNumber": 17,
+    "samples": 6
+  },
+  {
+    "functionName": "collect",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 77,
+    "columnNumber": 11,
+    "samples": 6
+  },
+  {
+    "functionName": "setMatrixAt",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 19638,
+    "columnNumber": 12,
+    "samples": 6
+  },
+  {
+    "functionName": "WebGLRenderer.render",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10001,
+    "columnNumber": 24,
+    "samples": 6
+  },
+  {
+    "functionName": "bindVertexArray",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 6
+  },
+  {
+    "functionName": "getVertexPosition",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 17674,
+    "columnNumber": 18,
+    "samples": 5
+  },
+  {
+    "functionName": "getY",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 15044,
+    "columnNumber": 5,
+    "samples": 5
+  },
+  {
+    "functionName": "setFromRotationMatrix",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8943,
+    "columnNumber": 22,
+    "samples": 5
+  },
+  {
+    "functionName": "update",
+    "scriptId": "91",
+    "url": "http://127.0.0.1:5312/src/game/GunnerController.ts?t=1791985045202",
+    "lineNumber": 511,
+    "columnNumber": 7,
+    "samples": 5
+  },
+  {
+    "functionName": "drawSurvival",
+    "scriptId": "261",
+    "url": "http://127.0.0.1:5312/src/game/GunnerSurvivalHud.ts",
+    "lineNumber": 5,
+    "columnNumber": 28,
+    "samples": 5
+  },
+  {
+    "functionName": "setTargetAtTime",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 5
+  },
+  {
+    "functionName": "update",
+    "scriptId": "34",
+    "url": "http://127.0.0.1:5312/src/world/HeroB17.ts",
+    "lineNumber": 11,
+    "columnNumber": 7,
+    "samples": 5
+  },
+  {
+    "functionName": "setTexture2D",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6392,
+    "columnNumber": 22,
+    "samples": 5
+  },
+  {
+    "functionName": "uploadTexture",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6553,
+    "columnNumber": 23,
+    "samples": 5
+  },
+  {
+    "functionName": "getTextureCacheKey",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6374,
+    "columnNumber": 28,
+    "samples": 5
+  },
+  {
+    "functionName": "markUniformsLightsNeedsUpdate",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10496,
+    "columnNumber": 40,
+    "samples": 5
+  },
+  {
+    "functionName": "getParameters",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 4090,
+    "columnNumber": 23,
+    "samples": 5
+  },
+  {
+    "functionName": "(garbage collector)",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 5
+  },
+  {
+    "functionName": "update",
+    "scriptId": "86",
+    "url": "http://127.0.0.1:5312/src/world/Aircraft.ts?t=1791985045200",
+    "lineNumber": 282,
+    "columnNumber": 7,
+    "samples": 4
+  },
+  {
+    "functionName": "setFromEuler",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 3602,
+    "columnNumber": 13,
+    "samples": 4
+  },
+  {
+    "functionName": "intersectTriangle",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 17196,
+    "columnNumber": 18,
+    "samples": 4
+  },
+  {
+    "functionName": "intersectTriangle",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 17196,
+    "columnNumber": 18,
+    "samples": 4
+  },
+  {
+    "functionName": "renderTracers",
+    "scriptId": "208",
+    "url": "http://127.0.0.1:5312/src/world/Ballistics.ts?t=1791985045202",
+    "lineNumber": 224,
+    "columnNumber": 14,
+    "samples": 4
+  },
+  {
+    "functionName": "updateVisiblePose",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 21,
+    "columnNumber": 33,
+    "samples": 4
+  },
+  {
+    "functionName": "setMatrixAt",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 19638,
+    "columnNumber": 12,
+    "samples": 4
+  },
+  {
+    "functionName": "collect",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 77,
+    "columnNumber": 11,
+    "samples": 4
+  },
+  {
+    "functionName": "collect",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 77,
+    "columnNumber": 11,
+    "samples": 4
+  },
+  {
+    "functionName": "setValue",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3411,
+    "columnNumber": 9,
+    "samples": 4
+  },
+  {
+    "functionName": "getTextureCacheKey",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6374,
+    "columnNumber": 28,
+    "samples": 4
+  },
+  {
+    "functionName": "bindTexture",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5890,
+    "columnNumber": 21,
+    "samples": 4
+  },
+  {
+    "functionName": "bindTexture",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 4
+  },
+  {
+    "functionName": "setValue",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3362,
+    "columnNumber": 9,
+    "samples": 4
+  },
+  {
+    "functionName": "setValueM4",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3008,
+    "columnNumber": 19,
+    "samples": 4
+  },
+  {
+    "functionName": "arraysEqual",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2905,
+    "columnNumber": 20,
+    "samples": 4
+  },
+  {
+    "functionName": "useProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5709,
+    "columnNumber": 20,
+    "samples": 4
+  },
+  {
+    "functionName": "setProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10333,
+    "columnNumber": 21,
+    "samples": 4
+  },
+  {
+    "functionName": "uploadTexture",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6553,
+    "columnNumber": 23,
+    "samples": 4
+  },
+  {
+    "functionName": "getTextureCacheKey",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6374,
+    "columnNumber": 28,
+    "samples": 4
+  },
+  {
+    "functionName": "projectObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10085,
+    "columnNumber": 24,
+    "samples": 4
+  },
+  {
+    "functionName": "render",
+    "scriptId": "42",
+    "url": "http://127.0.0.1:5312/src/render/HeatHaze.ts",
+    "lineNumber": 268,
+    "columnNumber": 7,
+    "samples": 4
+  },
+  {
+    "functionName": "frame",
+    "scriptId": "10",
+    "url": "http://127.0.0.1:5312/src/core/Engine.ts?t=1791985045206",
+    "lineNumber": 433,
+    "columnNumber": 6,
+    "samples": 3
+  },
+  {
+    "functionName": "setFromEuler",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 3602,
+    "columnNumber": 13,
+    "samples": 3
+  },
+  {
+    "functionName": "update",
+    "scriptId": "227",
+    "url": "http://127.0.0.1:5312/src/world/Effects.ts?t=1791985045204",
+    "lineNumber": 1278,
+    "columnNumber": 7,
+    "samples": 3
+  },
+  {
+    "functionName": "update",
+    "scriptId": "379",
+    "url": "http://127.0.0.1:5312/src/render/Explosions.ts?t=1791985045202",
+    "lineNumber": 344,
+    "columnNumber": 7,
+    "samples": 3
+  },
+  {
+    "functionName": "updateFighterDeath",
+    "scriptId": "235",
+    "url": "http://127.0.0.1:5312/src/world/FighterDeath.ts?t=1791985045202",
+    "lineNumber": 431,
+    "columnNumber": 34,
+    "samples": 3
+  },
+  {
+    "functionName": "checkGeometryIntersection",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 17823,
+    "columnNumber": 34,
+    "samples": 3
+  },
+  {
+    "functionName": "getZ",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 15055,
+    "columnNumber": 5,
+    "samples": 3
+  },
+  {
+    "functionName": "updateMatrixWorld",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 10057,
+    "columnNumber": 18,
+    "samples": 3
+  },
+  {
+    "functionName": "fromBufferAttribute",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 4927,
+    "columnNumber": 20,
+    "samples": 3
+  },
+  {
+    "functionName": "prepare",
+    "scriptId": "82",
+    "url": "http://127.0.0.1:5312/src/game/BombRun.ts?t=1791985045202",
+    "lineNumber": 51,
+    "columnNumber": 8,
+    "samples": 3
+  },
+  {
+    "functionName": "clearRect",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 3
+  },
+  {
+    "functionName": "setValueAtTime",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 3
+  },
+  {
+    "functionName": "render",
+    "scriptId": "10",
+    "url": "http://127.0.0.1:5312/src/core/Engine.ts?t=1791985045206",
+    "lineNumber": 538,
+    "columnNumber": 7,
+    "samples": 3
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 3
+  },
+  {
+    "functionName": "collect",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 77,
+    "columnNumber": 11,
+    "samples": 3
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 3
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 3
+  },
+  {
+    "functionName": "bindVertexArrayObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 911,
+    "columnNumber": 31,
+    "samples": 3
+  },
+  {
+    "functionName": "getBoundingSphereAt",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 19607,
+    "columnNumber": 20,
+    "samples": 3
+  },
+  {
+    "functionName": "renderObjects",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10205,
+    "columnNumber": 24,
+    "samples": 3
+  },
+  {
+    "functionName": "setValueV1f",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2922,
+    "columnNumber": 20,
+    "samples": 3
+  },
+  {
+    "functionName": "flatten",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2887,
+    "columnNumber": 16,
+    "samples": 3
+  },
+  {
+    "functionName": "flatten",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2887,
+    "columnNumber": 16,
+    "samples": 3
+  },
+  {
+    "functionName": "pixelStorei",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5995,
+    "columnNumber": 21,
+    "samples": 3
+  },
+  {
+    "functionName": "setValueV1i",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3022,
+    "columnNumber": 20,
+    "samples": 3
+  },
+  {
+    "functionName": "getProgramCacheKeyBooleans",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 4380,
+    "columnNumber": 36,
+    "samples": 3
+  },
+  {
+    "functionName": "multiDrawElementsWEBGL",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 3
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 3
+  },
+  {
+    "functionName": "update",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2603,
+    "columnNumber": 16,
+    "samples": 3
+  },
+  {
+    "functionName": "projectObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10085,
+    "columnNumber": 24,
+    "samples": 3
+  },
+  {
+    "functionName": "bufferSubData",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 3
+  },
+  {
+    "functionName": "intersectsFrustum",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 17701,
+    "columnNumber": 18,
+    "samples": 3
+  },
+  {
+    "functionName": "getProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10232,
+    "columnNumber": 21,
+    "samples": 3
+  },
+  {
+    "functionName": "WebGLRenderer.render",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10001,
+    "columnNumber": 24,
+    "samples": 3
+  },
+  {
+    "functionName": "getProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10232,
+    "columnNumber": 21,
+    "samples": 3
+  },
+  {
+    "functionName": "setTexture2D",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6392,
+    "columnNumber": 22,
+    "samples": 3
+  },
+  {
+    "functionName": "copy",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 7988,
+    "columnNumber": 5,
+    "samples": 3
+  },
+  {
+    "functionName": "updateWorldMatrix",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 10079,
+    "columnNumber": 18,
+    "samples": 3
+  },
+  {
+    "functionName": "auditMaterial",
+    "scriptId": "33",
+    "url": "http://127.0.0.1:5312/src/render/MaterialAudit.ts?t=1791982162759",
+    "lineNumber": 10,
+    "columnNumber": 29,
+    "samples": 3
+  },
+  {
+    "functionName": "blastBoom",
+    "scriptId": "172",
+    "url": "http://127.0.0.1:5312/src/audio/Synth3.ts",
+    "lineNumber": 345,
+    "columnNumber": 25,
+    "samples": 3
+  },
+  {
+    "functionName": "render.peak",
+    "scriptId": "172",
+    "url": "http://127.0.0.1:5312/src/audio/Synth3.ts",
+    "lineNumber": 351,
+    "columnNumber": 24,
+    "samples": 3
+  },
+  {
+    "functionName": "(idle)",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "Game.engine.onFrame",
+    "scriptId": "13",
+    "url": "http://127.0.0.1:5312/src/game/Game.ts?t=1791985045206",
+    "lineNumber": 279,
+    "columnNumber": 19,
+    "samples": 2
+  },
+  {
+    "functionName": "onQuaternionChange",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 9324,
+    "columnNumber": 29,
+    "samples": 2
+  },
+  {
+    "functionName": "damageEffects",
+    "scriptId": "85",
+    "url": "http://127.0.0.1:5312/src/world/World.ts?t=1791985045204",
+    "lineNumber": 1395,
+    "columnNumber": 14,
+    "samples": 2
+  },
+  {
+    "functionName": "kill",
+    "scriptId": "147",
+    "url": "http://127.0.0.1:5312/src/render/Particles.ts?t=1791985045202",
+    "lineNumber": 201,
+    "columnNumber": 5,
+    "samples": 2
+  },
+  {
+    "functionName": "setFromEuler",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 3602,
+    "columnNumber": 13,
+    "samples": 2
+  },
+  {
+    "functionName": "update",
+    "scriptId": "236",
+    "url": "http://127.0.0.1:5312/src/world/destruction/Destruction.ts?t=1791985045202",
+    "lineNumber": 756,
+    "columnNumber": 7,
+    "samples": 2
+  },
+  {
+    "functionName": "hulkTick",
+    "scriptId": "236",
+    "url": "http://127.0.0.1:5312/src/world/destruction/Destruction.ts?t=1791985045202",
+    "lineNumber": 512,
+    "columnNumber": 9,
+    "samples": 2
+  },
+  {
+    "functionName": "_computeIntersections",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 17730,
+    "columnNumber": 22,
+    "samples": 2
+  },
+  {
+    "functionName": "checkGeometryIntersection",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 17823,
+    "columnNumber": 34,
+    "samples": 2
+  },
+  {
+    "functionName": "updateMatrixWorld",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 10057,
+    "columnNumber": 18,
+    "samples": 2
+  },
+  {
+    "functionName": "sparks",
+    "scriptId": "227",
+    "url": "http://127.0.0.1:5312/src/world/Effects.ts?t=1791985045204",
+    "lineNumber": 523,
+    "columnNumber": 7,
+    "samples": 2
+  },
+  {
+    "functionName": "update",
+    "scriptId": "249",
+    "url": "http://127.0.0.1:5312/src/world/PlayerBomberDamage.ts?t=1791985045202",
+    "lineNumber": 689,
+    "columnNumber": 7,
+    "samples": 2
+  },
+  {
+    "functionName": "checkWounds",
+    "scriptId": "228",
+    "url": "http://127.0.0.1:5312/src/world/AI.ts",
+    "lineNumber": 506,
+    "columnNumber": 12,
+    "samples": 2
+  },
+  {
+    "functionName": "getZ",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 15055,
+    "columnNumber": 5,
+    "samples": 2
+  },
+  {
+    "functionName": "getY",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 15044,
+    "columnNumber": 5,
+    "samples": 2
+  },
+  {
+    "functionName": "bomberGunners",
+    "scriptId": "85",
+    "url": "http://127.0.0.1:5312/src/world/World.ts?t=1791985045204",
+    "lineNumber": 1418,
+    "columnNumber": 14,
+    "samples": 2
+  },
+  {
+    "functionName": "updateProps",
+    "scriptId": "86",
+    "url": "http://127.0.0.1:5312/src/world/Aircraft.ts?t=1791985045200",
+    "lineNumber": 107,
+    "columnNumber": 12,
+    "samples": 2
+  },
+  {
+    "functionName": "setFromRotationMatrix",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8943,
+    "columnNumber": 22,
+    "samples": 2
+  },
+  {
+    "functionName": "gunLead",
+    "scriptId": "264",
+    "url": "http://127.0.0.1:5312/src/world/Gunnery.ts",
+    "lineNumber": 15,
+    "columnNumber": 23,
+    "samples": 2
+  },
+  {
+    "functionName": "toArray",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8775,
+    "columnNumber": 8,
+    "samples": 2
+  },
+  {
+    "functionName": "update",
+    "scriptId": "262",
+    "url": "http://127.0.0.1:5312/src/game/Brass.ts?t=1791985045202",
+    "lineNumber": 108,
+    "columnNumber": 7,
+    "samples": 2
+  },
+  {
+    "functionName": "shot",
+    "scriptId": "64",
+    "url": "http://127.0.0.1:5312/src/audio/Sound.ts?t=1791985045202",
+    "lineNumber": 2324,
+    "columnNumber": 5,
+    "samples": 2
+  },
+  {
+    "functionName": "remove",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "drawOverlay",
+    "scriptId": "119",
+    "url": "http://127.0.0.1:5312/src/game/GameHud.ts?t=1791985045204",
+    "lineNumber": 225,
+    "columnNumber": 12,
+    "samples": 2
+  },
+  {
+    "functionName": "fillText",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "fillText",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "towards",
+    "scriptId": "170",
+    "url": "http://127.0.0.1:5312/src/audio/Safe.ts",
+    "lineNumber": 11,
+    "columnNumber": 23,
+    "samples": 2
+  },
+  {
+    "functionName": "update",
+    "scriptId": "99",
+    "url": "http://127.0.0.1:5312/src/ui/CombatFeedback.ts?t=1791985045202",
+    "lineNumber": 111,
+    "columnNumber": 7,
+    "samples": 2
+  },
+  {
+    "functionName": "update",
+    "scriptId": "115",
+    "url": "http://127.0.0.1:5312/src/game/CoopSession.ts?t=1791985045204",
+    "lineNumber": 309,
+    "columnNumber": 7,
+    "samples": 2
+  },
+  {
+    "functionName": "setPing",
+    "scriptId": "305",
+    "url": "http://127.0.0.1:5312/src/ui/CoopScreen.ts",
+    "lineNumber": 208,
+    "columnNumber": 8,
+    "samples": 2
+  },
+  {
+    "functionName": "bindFramebuffer",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5678,
+    "columnNumber": 25,
+    "samples": 2
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 2
+  },
+  {
+    "functionName": "updateVisiblePose",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 21,
+    "columnNumber": 33,
+    "samples": 2
+  },
+  {
+    "functionName": "setMatrixAt",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 19638,
+    "columnNumber": 12,
+    "samples": 2
+  },
+  {
+    "functionName": "setMatrixAt",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 19638,
+    "columnNumber": 12,
+    "samples": 2
+  },
+  {
+    "functionName": "setMatrixAt",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 19638,
+    "columnNumber": 12,
+    "samples": 2
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 2
+  },
+  {
+    "functionName": "setProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10333,
+    "columnNumber": 21,
+    "samples": 2
+  },
+  {
+    "functionName": "getProgramCacheKeyParameters",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 4328,
+    "columnNumber": 38,
+    "samples": 2
+  },
+  {
+    "functionName": "getInternalFormat",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6197,
+    "columnNumber": 27,
+    "samples": 2
+  },
+  {
+    "functionName": "bindTexture",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "setValueM4",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3008,
+    "columnNumber": 19,
+    "samples": 2
+  },
+  {
+    "functionName": "arraysEqual",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2905,
+    "columnNumber": 20,
+    "samples": 2
+  },
+  {
+    "functionName": "needsUpdate",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 963,
+    "columnNumber": 21,
+    "samples": 2
+  },
+  {
+    "functionName": "multiDrawElementsWEBGL",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "setValueT1Array",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3255,
+    "columnNumber": 24,
+    "samples": 2
+  },
+  {
+    "functionName": "bindTexture",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5890,
+    "columnNumber": 21,
+    "samples": 2
+  },
+  {
+    "functionName": "updateTexture",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6511,
+    "columnNumber": 23,
+    "samples": 2
+  },
+  {
+    "functionName": "texParameteri",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "uniformMatrix4fv",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "setup",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 892,
+    "columnNumber": 15,
+    "samples": 2
+  },
+  {
+    "functionName": "needsUpdate",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 963,
+    "columnNumber": 21,
+    "samples": 2
+  },
+  {
+    "functionName": "drawArraysInstanced",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "applyMatrix4",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 13667,
+    "columnNumber": 13,
+    "samples": 2
+  },
+  {
+    "functionName": "bufferSubData",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "bufferSubData",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "setValue",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3411,
+    "columnNumber": 9,
+    "samples": 2
+  },
+  {
+    "functionName": "setup",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 4780,
+    "columnNumber": 15,
+    "samples": 2
+  },
+  {
+    "functionName": "setValue",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3411,
+    "columnNumber": 9,
+    "samples": 2
+  },
+  {
+    "functionName": "activeTexture",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "arraysEqual",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2905,
+    "columnNumber": 20,
+    "samples": 2
+  },
+  {
+    "functionName": "copyArray",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2910,
+    "columnNumber": 18,
+    "samples": 2
+  },
+  {
+    "functionName": "upload",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3419,
+    "columnNumber": 14,
+    "samples": 2
+  },
+  {
+    "functionName": "uniformMatrix4fv",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "setup",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 892,
+    "columnNumber": 15,
+    "samples": 2
+  },
+  {
+    "functionName": "multiDrawElementsWEBGL",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 2
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 2
+  },
+  {
+    "functionName": "projectObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10085,
+    "columnNumber": 24,
+    "samples": 2
+  },
+  {
+    "functionName": "update",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2603,
+    "columnNumber": 16,
+    "samples": 2
+  },
+  {
+    "functionName": "get",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2376,
+    "columnNumber": 13,
+    "samples": 2
+  },
+  {
+    "functionName": "getWorldQuaternion",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 9943,
+    "columnNumber": 19,
+    "samples": 2
+  },
+  {
+    "functionName": "render",
+    "scriptId": "41",
+    "url": "http://127.0.0.1:5312/src/render/Clouds.ts",
+    "lineNumber": 874,
+    "columnNumber": 7,
+    "samples": 2
+  },
+  {
+    "functionName": "WebGLRenderer.render",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10001,
+    "columnNumber": 24,
+    "samples": 2
+  },
+  {
+    "functionName": "release",
+    "scriptId": "124",
+    "url": "http://127.0.0.1:5312/src/core/Gamepad.ts",
+    "lineNumber": 292,
+    "columnNumber": 8,
+    "samples": 2
+  },
+  {
+    "functionName": "onQuaternionChange",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 9324,
+    "columnNumber": 29,
+    "samples": 2
+  },
+  {
+    "functionName": "src.onended",
+    "scriptId": "170",
+    "url": "http://127.0.0.1:5312/src/audio/Safe.ts",
+    "lineNumber": 32,
+    "columnNumber": 15,
+    "samples": 1
+  },
+  {
+    "functionName": "disconnect",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "",
+    "scriptId": "447",
+    "url": "",
+    "lineNumber": 0,
+    "columnNumber": 0,
+    "samples": 1
+  },
+  {
+    "functionName": "step",
+    "scriptId": "7",
+    "url": "http://127.0.0.1:5312/src/main.ts?t=1791985045206",
+    "lineNumber": 67,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "onQuaternionChange",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 9324,
+    "columnNumber": 29,
+    "samples": 1
+  },
+  {
+    "functionName": "setFromRotationMatrix",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8943,
+    "columnNumber": 22,
+    "samples": 1
+  },
+  {
+    "functionName": "trail",
+    "scriptId": "227",
+    "url": "http://127.0.0.1:5312/src/world/Effects.ts?t=1791985045204",
+    "lineNumber": 611,
+    "columnNumber": 6,
+    "samples": 1
+  },
+  {
+    "functionName": "angleOf",
+    "scriptId": "149",
+    "url": "http://127.0.0.1:5312/src/render/Flipbooks.ts?t=1791984863072",
+    "lineNumber": 362,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "smoothstep",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 2295,
+    "columnNumber": 19,
+    "samples": 1
+  },
+  {
+    "functionName": "mv",
+    "scriptId": "149",
+    "url": "http://127.0.0.1:5312/src/render/Flipbooks.ts?t=1791984863072",
+    "lineNumber": 407,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "want",
+    "scriptId": "44",
+    "url": "http://127.0.0.1:5312/src/render/SoftDepth.ts",
+    "lineNumber": 52,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "setFromEuler",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 3602,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "setFromEuler",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 3602,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "emit",
+    "scriptId": "227",
+    "url": "http://127.0.0.1:5312/src/world/Effects.ts?t=1791985045204",
+    "lineNumber": 245,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "updateMatrixWorld",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 10057,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "sub",
+    "scriptId": "384",
+    "url": "http://127.0.0.1:5312/src/world/destruction/Aero.ts",
+    "lineNumber": 97,
+    "columnNumber": 4,
+    "samples": 1
+  },
+  {
+    "functionName": "shown",
+    "scriptId": "236",
+    "url": "http://127.0.0.1:5312/src/world/destruction/Destruction.ts?t=1791985045202",
+    "lineNumber": 251,
+    "columnNumber": 6,
+    "samples": 1
+  },
+  {
+    "functionName": "trail",
+    "scriptId": "227",
+    "url": "http://127.0.0.1:5312/src/world/Effects.ts?t=1791985045204",
+    "lineNumber": 611,
+    "columnNumber": 6,
+    "samples": 1
+  },
+  {
+    "functionName": "structureTick",
+    "scriptId": "236",
+    "url": "http://127.0.0.1:5312/src/world/destruction/Destruction.ts?t=1791985045202",
+    "lineNumber": 777,
+    "columnNumber": 14,
+    "samples": 1
+  },
+  {
+    "functionName": "tick",
+    "scriptId": "381",
+    "url": "http://127.0.0.1:5312/src/world/destruction/FailureModel.ts",
+    "lineNumber": 94,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "airload",
+    "scriptId": "384",
+    "url": "http://127.0.0.1:5312/src/world/destruction/Aero.ts",
+    "lineNumber": 52,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "toWorld",
+    "scriptId": "236",
+    "url": "http://127.0.0.1:5312/src/world/destruction/Destruction.ts?t=1791985045202",
+    "lineNumber": 172,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "fireGuns",
+    "scriptId": "85",
+    "url": "http://127.0.0.1:5312/src/world/World.ts?t=1791985045204",
+    "lineNumber": 1360,
+    "columnNumber": 9,
+    "samples": 1
+  },
+  {
+    "functionName": "play",
+    "scriptId": "64",
+    "url": "http://127.0.0.1:5312/src/audio/Sound.ts?t=1791985045202",
+    "lineNumber": 2131,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "createGain",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "createBufferSource",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "muzzleFlash",
+    "scriptId": "227",
+    "url": "http://127.0.0.1:5312/src/world/Effects.ts?t=1791985045204",
+    "lineNumber": 393,
+    "columnNumber": 12,
+    "samples": 1
+  },
+  {
+    "functionName": "fly",
+    "scriptId": "235",
+    "url": "http://127.0.0.1:5312/src/world/FighterDeath.ts?t=1791985045202",
+    "lineNumber": 391,
+    "columnNumber": 12,
+    "samples": 1
+  },
+  {
+    "functionName": "getY",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 15044,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "raycast",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 17710,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "getY",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 15044,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "checkGeometryIntersection",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 17823,
+    "columnNumber": 34,
+    "samples": 1
+  },
+  {
+    "functionName": "intersectTriangle",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 17196,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "heroClassify",
+    "scriptId": "385",
+    "url": "http://127.0.0.1:5312/src/world/destruction/Split.ts",
+    "lineNumber": 255,
+    "columnNumber": 22,
+    "samples": 1
+  },
+  {
+    "functionName": "onHit",
+    "scriptId": "249",
+    "url": "http://127.0.0.1:5312/src/world/PlayerBomberDamage.ts?t=1791985045202",
+    "lineNumber": 560,
+    "columnNumber": 6,
+    "samples": 1
+  },
+  {
+    "functionName": "onHit",
+    "scriptId": "236",
+    "url": "http://127.0.0.1:5312/src/world/destruction/Destruction.ts?t=1791985045202",
+    "lineNumber": 125,
+    "columnNumber": 6,
+    "samples": 1
+  },
+  {
+    "functionName": "updateMatrixWorld",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 10057,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "updateMatrixWorld",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 10057,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "updateMatrixWorld",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 10057,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "traverse",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 9997,
+    "columnNumber": 9,
+    "samples": 1
+  },
+  {
+    "functionName": "heroClassify",
+    "scriptId": "385",
+    "url": "http://127.0.0.1:5312/src/world/destruction/Split.ts",
+    "lineNumber": 255,
+    "columnNumber": 22,
+    "samples": 1
+  },
+  {
+    "functionName": "hit",
+    "scriptId": "381",
+    "url": "http://127.0.0.1:5312/src/world/destruction/FailureModel.ts",
+    "lineNumber": 71,
+    "columnNumber": 4,
+    "samples": 1
+  },
+  {
+    "functionName": "play",
+    "scriptId": "165",
+    "url": "http://127.0.0.1:5312/src/audio/Creaks.ts",
+    "lineNumber": 228,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "startFighterDeath",
+    "scriptId": "235",
+    "url": "http://127.0.0.1:5312/src/world/FighterDeath.ts?t=1791985045202",
+    "lineNumber": 246,
+    "columnNumber": 33,
+    "samples": 1
+  },
+  {
+    "functionName": "emit",
+    "scriptId": "42",
+    "url": "http://127.0.0.1:5312/src/render/HeatHaze.ts",
+    "lineNumber": 190,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "levelOf",
+    "scriptId": "184",
+    "url": "http://127.0.0.1:5312/src/game/CrewRoster.ts",
+    "lineNumber": 456,
+    "columnNumber": 23,
+    "samples": 1
+  },
+  {
+    "functionName": "createBufferSource",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "onHit",
+    "scriptId": "242",
+    "url": "http://127.0.0.1:5312/src/game/GlassFx.ts",
+    "lineNumber": 850,
+    "columnNumber": 6,
+    "samples": 1
+  },
+  {
+    "functionName": "_onChangeCallback",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 4009,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "spawn",
+    "scriptId": "383",
+    "url": "http://127.0.0.1:5312/src/render/Sparks.ts?t=1791985045202",
+    "lineNumber": 47,
+    "columnNumber": 6,
+    "samples": 1
+  },
+  {
+    "functionName": "R",
+    "scriptId": "227",
+    "url": "http://127.0.0.1:5312/src/world/Effects.ts?t=1791985045204",
+    "lineNumber": 16,
+    "columnNumber": 10,
+    "samples": 1
+  },
+  {
+    "functionName": "maneuver",
+    "scriptId": "85",
+    "url": "http://127.0.0.1:5312/src/world/World.ts?t=1791985045204",
+    "lineNumber": 598,
+    "columnNumber": 9,
+    "samples": 1
+  },
+  {
+    "functionName": "",
+    "scriptId": "85",
+    "url": "http://127.0.0.1:5312/src/world/World.ts?t=1791985045204",
+    "lineNumber": 214,
+    "columnNumber": 30,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "228",
+    "url": "http://127.0.0.1:5312/src/world/AI.ts",
+    "lineNumber": 562,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "flyWing",
+    "scriptId": "228",
+    "url": "http://127.0.0.1:5312/src/world/AI.ts",
+    "lineNumber": 529,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "",
+    "scriptId": "228",
+    "url": "http://127.0.0.1:5312/src/world/AI.ts",
+    "lineNumber": 209,
+    "columnNumber": 32,
+    "samples": 1
+  },
+  {
+    "functionName": "playerGunPos",
+    "scriptId": "85",
+    "url": "http://127.0.0.1:5312/src/world/World.ts?t=1791985045204",
+    "lineNumber": 261,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "getZ",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 15055,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "stageOf",
+    "scriptId": "239",
+    "url": "http://127.0.0.1:5312/src/world/DamageStages.ts?t=1791985045204",
+    "lineNumber": 153,
+    "columnNumber": 23,
+    "samples": 1
+  },
+  {
+    "functionName": "shot",
+    "scriptId": "64",
+    "url": "http://127.0.0.1:5312/src/audio/Sound.ts?t=1791985045202",
+    "lineNumber": 2324,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "setP",
+    "scriptId": "170",
+    "url": "http://127.0.0.1:5312/src/audio/Safe.ts",
+    "lineNumber": 8,
+    "columnNumber": 20,
+    "samples": 1
+  },
+  {
+    "functionName": "onQuaternionChange",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 9324,
+    "columnNumber": 29,
+    "samples": 1
+  },
+  {
+    "functionName": "setFromEuler",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 3602,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "setFromRotationMatrix",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8943,
+    "columnNumber": 22,
+    "samples": 1
+  },
+  {
+    "functionName": "emitTip",
+    "scriptId": "231",
+    "url": "http://127.0.0.1:5312/src/world/WingVapor.ts?t=1791985045200",
+    "lineNumber": 74,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "220",
+    "url": "http://127.0.0.1:5312/src/world/LivingFormation.ts?t=1791985045200",
+    "lineNumber": 103,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "379",
+    "url": "http://127.0.0.1:5312/src/render/Explosions.ts?t=1791985045202",
+    "lineNumber": 344,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "findAssistTarget",
+    "scriptId": "91",
+    "url": "http://127.0.0.1:5312/src/game/GunnerController.ts?t=1791985045202",
+    "lineNumber": 779,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "getPoint",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 23072,
+    "columnNumber": 9,
+    "samples": 1
+  },
+  {
+    "functionName": "initNonuniformCatmullRom",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 22974,
+    "columnNumber": 36,
+    "samples": 1
+  },
+  {
+    "functionName": "getUtoTmapping",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 22580,
+    "columnNumber": 15,
+    "samples": 1
+  },
+  {
+    "functionName": "compose",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8573,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "166",
+    "url": "http://127.0.0.1:5312/src/audio/TurretDrive.ts",
+    "lineNumber": 30,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "cancelScheduledValues",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "setTargetAtTime",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "get",
+    "scriptId": "184",
+    "url": "http://127.0.0.1:5312/src/game/CrewRoster.ts",
+    "lineNumber": 954,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "playerMuzzle",
+    "scriptId": "227",
+    "url": "http://127.0.0.1:5312/src/world/Effects.ts?t=1791985045204",
+    "lineNumber": 373,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "createGain",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "createBufferSource",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "updateWorldMatrix",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 10079,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "updateWorldMatrix",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 10079,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "invert",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8413,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "wrapAngle",
+    "scriptId": "62",
+    "url": "http://127.0.0.1:5312/src/world/B17Layout.ts",
+    "lineNumber": 100,
+    "columnNumber": 25,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "258",
+    "url": "http://127.0.0.1:5312/src/game/GunRecoil.ts",
+    "lineNumber": 35,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "$",
+    "scriptId": "12",
+    "url": "http://127.0.0.1:5312/src/ui/UI.ts?t=1791985045202",
+    "lineNumber": 27,
+    "columnNumber": 10,
+    "samples": 1
+  },
+  {
+    "functionName": "frame",
+    "scriptId": "119",
+    "url": "http://127.0.0.1:5312/src/game/GameHud.ts?t=1791985045204",
+    "lineNumber": 53,
+    "columnNumber": 6,
+    "samples": 1
+  },
+  {
+    "functionName": "lineTo",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "recordMarker",
+    "scriptId": "35",
+    "url": "http://127.0.0.1:5312/src/ui/MarkerAudit.ts",
+    "lineNumber": 38,
+    "columnNumber": 28,
+    "samples": 1
+  },
+  {
+    "functionName": "liveMarkerTarget",
+    "scriptId": "133",
+    "url": "http://127.0.0.1:5312/src/ui/MarkerProjection.ts",
+    "lineNumber": 34,
+    "columnNumber": 32,
+    "samples": 1
+  },
+  {
+    "functionName": "drawSurvival",
+    "scriptId": "91",
+    "url": "http://127.0.0.1:5312/src/game/GunnerController.ts?t=1791985045202",
+    "lineNumber": 487,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "setText",
+    "scriptId": "12",
+    "url": "http://127.0.0.1:5312/src/ui/UI.ts?t=1791985045202",
+    "lineNumber": 235,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "setAttribute",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "updateFighterVoices",
+    "scriptId": "64",
+    "url": "http://127.0.0.1:5312/src/audio/Sound.ts?t=1791985045202",
+    "lineNumber": 2012,
+    "columnNumber": 20,
+    "samples": 1
+  },
+  {
+    "functionName": "frame",
+    "scriptId": "109",
+    "url": "http://127.0.0.1:5312/src/game/Pacing.ts?t=1791985045202",
+    "lineNumber": 247,
+    "columnNumber": 6,
+    "samples": 1
+  },
+  {
+    "functionName": "damageStage",
+    "scriptId": "239",
+    "url": "http://127.0.0.1:5312/src/world/DamageStages.ts?t=1791985045204",
+    "lineNumber": 202,
+    "columnNumber": 27,
+    "samples": 1
+  },
+  {
+    "functionName": "direct",
+    "scriptId": "122",
+    "url": "http://127.0.0.1:5312/src/game/Director.ts",
+    "lineNumber": 234,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "get scripted",
+    "scriptId": "88",
+    "url": "http://127.0.0.1:5312/src/game/PilotOps.ts?t=1791985045202",
+    "lineNumber": 56,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "director",
+    "scriptId": "122",
+    "url": "http://127.0.0.1:5312/src/game/Director.ts",
+    "lineNumber": 66,
+    "columnNumber": 9,
+    "samples": 1
+  },
+  {
+    "functionName": "",
+    "scriptId": "122",
+    "url": "http://127.0.0.1:5312/src/game/Director.ts",
+    "lineNumber": 112,
+    "columnNumber": 39,
+    "samples": 1
+  },
+  {
+    "functionName": "addLevel",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 16768,
+    "columnNumber": 9,
+    "samples": 1
+  },
+  {
+    "functionName": "matches",
+    "scriptId": "285",
+    "url": "http://127.0.0.1:5312/src/game/Weekly.ts?t=1791985045202",
+    "lineNumber": 268,
+    "columnNumber": 10,
+    "samples": 1
+  },
+  {
+    "functionName": "roundDef",
+    "scriptId": "16",
+    "url": "http://127.0.0.1:5312/src/game/Missions.ts",
+    "lineNumber": 957,
+    "columnNumber": 24,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "83",
+    "url": "http://127.0.0.1:5312/src/game/Bombardier.ts?t=1791985045204",
+    "lineNumber": 161,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "262",
+    "url": "http://127.0.0.1:5312/src/game/Brass.ts?t=1791985045202",
+    "lineNumber": 108,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "emit",
+    "scriptId": "42",
+    "url": "http://127.0.0.1:5312/src/render/HeatHaze.ts",
+    "lineNumber": 190,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "contains",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "267",
+    "url": "http://127.0.0.1:5312/src/game/Hints.ts",
+    "lineNumber": 65,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "setTargetAtTime",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "label",
+    "scriptId": "27",
+    "url": "http://127.0.0.1:5312/src/core/KeyMap.ts",
+    "lineNumber": 247,
+    "columnNumber": 6,
+    "samples": 1
+  },
+  {
+    "functionName": "syncHud",
+    "scriptId": "98",
+    "url": "http://127.0.0.1:5312/src/game/GameFeel.ts?t=1791985045202",
+    "lineNumber": 316,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "record",
+    "scriptId": "279",
+    "url": "http://127.0.0.1:5312/src/game/Replay.ts?t=1791985045200",
+    "lineNumber": 142,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "autoQuality",
+    "scriptId": "13",
+    "url": "http://127.0.0.1:5312/src/game/Game.ts?t=1791985045206",
+    "lineNumber": 725,
+    "columnNumber": 12,
+    "samples": 1
+  },
+  {
+    "functionName": "setValueAtTime",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "227",
+    "url": "http://127.0.0.1:5312/src/world/Effects.ts?t=1791985045204",
+    "lineNumber": 1278,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "record",
+    "scriptId": "398",
+    "url": "http://127.0.0.1:5312/src/game/Recorder.ts",
+    "lineNumber": 459,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "computeThreat",
+    "scriptId": "94",
+    "url": "http://127.0.0.1:5312/src/audio/Threat.ts",
+    "lineNumber": 21,
+    "columnNumber": 29,
+    "samples": 1
+  },
+  {
+    "functionName": "WebGLRenderer.renderBufferDirect",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 9791,
+    "columnNumber": 36,
+    "samples": 1
+  },
+  {
+    "functionName": "setProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10333,
+    "columnNumber": 21,
+    "samples": 1
+  },
+  {
+    "functionName": "get",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 4485,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "bindTexture",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5890,
+    "columnNumber": 21,
+    "samples": 1
+  },
+  {
+    "functionName": "bindTexture",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "uniform2f",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "arraysEqual",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2905,
+    "columnNumber": 20,
+    "samples": 1
+  },
+  {
+    "functionName": "projectObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10085,
+    "columnNumber": 24,
+    "samples": 1
+  },
+  {
+    "functionName": "viewport",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "toArray",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8775,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "collect",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 77,
+    "columnNumber": 11,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "34",
+    "url": "http://127.0.0.1:5312/src/world/HeroB17.ts",
+    "lineNumber": 11,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "setColorAt",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 19664,
+    "columnNumber": 11,
+    "samples": 1
+  },
+  {
+    "functionName": "toArray",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8775,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "setMatrixAt",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 19638,
+    "columnNumber": 12,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "15",
+    "url": "http://127.0.0.1:5312/src/world/HeroLook.ts",
+    "lineNumber": 111,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "setMatrixAt",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 19638,
+    "columnNumber": 12,
+    "samples": 1
+  },
+  {
+    "functionName": "setColorAt",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 19664,
+    "columnNumber": 11,
+    "samples": 1
+  },
+  {
+    "functionName": "toArray",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8775,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "compose",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8573,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "set needsUpdate",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 6301,
+    "columnNumber": 16,
+    "samples": 1
+  },
+  {
+    "functionName": "setFromProjectionMatrix",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 18766,
+    "columnNumber": 24,
+    "samples": 1
+  },
+  {
+    "functionName": "WebGLShadowMap.render",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5163,
+    "columnNumber": 23,
+    "samples": 1
+  },
+  {
+    "functionName": "renderObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5377,
+    "columnNumber": 22,
+    "samples": 1
+  },
+  {
+    "functionName": "setValueT1",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3124,
+    "columnNumber": 19,
+    "samples": 1
+  },
+  {
+    "functionName": "updateTexture",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6511,
+    "columnNumber": 23,
+    "samples": 1
+  },
+  {
+    "functionName": "pixelStorei",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5995,
+    "columnNumber": 21,
+    "samples": 1
+  },
+  {
+    "functionName": "resizeImage",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6163,
+    "columnNumber": 21,
+    "samples": 1
+  },
+  {
+    "functionName": "texParameteri",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "useProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5709,
+    "columnNumber": 20,
+    "samples": 1
+  },
+  {
+    "functionName": "useProgram",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "getProgramCacheKeyParameters",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 4328,
+    "columnNumber": 38,
+    "samples": 1
+  },
+  {
+    "functionName": "refreshUniformsCommon",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 8088,
+    "columnNumber": 31,
+    "samples": 1
+  },
+  {
+    "functionName": "setup",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 892,
+    "columnNumber": 15,
+    "samples": 1
+  },
+  {
+    "functionName": "setFunc",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5485,
+    "columnNumber": 20,
+    "samples": 1
+  },
+  {
+    "functionName": "setFromProjectionMatrix",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 18766,
+    "columnNumber": 24,
+    "samples": 1
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "get",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2376,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "setProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10333,
+    "columnNumber": 21,
+    "samples": 1
+  },
+  {
+    "functionName": "renderInstances",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2448,
+    "columnNumber": 25,
+    "samples": 1
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "setMode",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2436,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "getDepthMaterial",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5334,
+    "columnNumber": 26,
+    "samples": 1
+  },
+  {
+    "functionName": "copy",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 6559,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "viewport",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "lookAt",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 9758,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "renderScene",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10130,
+    "columnNumber": 22,
+    "samples": 1
+  },
+  {
+    "functionName": "setValueT1",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3124,
+    "columnNumber": 19,
+    "samples": 1
+  },
+  {
+    "functionName": "allocateTextureUnit",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6368,
+    "columnNumber": 29,
+    "samples": 1
+  },
+  {
+    "functionName": "uniformMatrix4fv",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "uniform4fv",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "setValueV3f",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2942,
+    "columnNumber": 20,
+    "samples": 1
+  },
+  {
+    "functionName": "uniform3f",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "setValueM4",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3008,
+    "columnNumber": 19,
+    "samples": 1
+  },
+  {
+    "functionName": "uniform1f",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "setTexture2D",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6392,
+    "columnNumber": 22,
+    "samples": 1
+  },
+  {
+    "functionName": "arraysEqual",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2905,
+    "columnNumber": 20,
+    "samples": 1
+  },
+  {
+    "functionName": "uploadTexture",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6553,
+    "columnNumber": 23,
+    "samples": 1
+  },
+  {
+    "functionName": "texSubImage2D",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5935,
+    "columnNumber": 23,
+    "samples": 1
+  },
+  {
+    "functionName": "bindTexture",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5890,
+    "columnNumber": 21,
+    "samples": 1
+  },
+  {
+    "functionName": "bindTexture",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "setTextureParameters",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6453,
+    "columnNumber": 30,
+    "samples": 1
+  },
+  {
+    "functionName": "bindTexture",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5890,
+    "columnNumber": 21,
+    "samples": 1
+  },
+  {
+    "functionName": "arraysEqual",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2905,
+    "columnNumber": 20,
+    "samples": 1
+  },
+  {
+    "functionName": "useProgram",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "customProgramCacheKey",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 15943,
+    "columnNumber": 22,
+    "samples": 1
+  },
+  {
+    "functionName": "getProgramCacheKeyParameters",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 4328,
+    "columnNumber": 38,
+    "samples": 1
+  },
+  {
+    "functionName": "setValueV3f",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2942,
+    "columnNumber": 20,
+    "samples": 1
+  },
+  {
+    "functionName": "drawElementsInstanced",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "getBindingState",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 917,
+    "columnNumber": 25,
+    "samples": 1
+  },
+  {
+    "functionName": "bindVertexArrayObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 911,
+    "columnNumber": 31,
+    "samples": 1
+  },
+  {
+    "functionName": "findLightProbeGrid",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10323,
+    "columnNumber": 29,
+    "samples": 1
+  },
+  {
+    "functionName": "drawElements",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "enable",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5666,
+    "columnNumber": 16,
+    "samples": 1
+  },
+  {
+    "functionName": "disable",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5672,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "mesh.onBeforeRender",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 114,
+    "columnNumber": 26,
+    "samples": 1
+  },
+  {
+    "functionName": "getMatrixAt",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 19653,
+    "columnNumber": 12,
+    "samples": 1
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "setMode",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2436,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "FlipbookFX.mesh.onBeforeRender",
+    "scriptId": "149",
+    "url": "http://127.0.0.1:5312/src/render/Flipbooks.ts?t=1791984863072",
+    "lineNumber": 346,
+    "columnNumber": 29,
+    "samples": 1
+  },
+  {
+    "functionName": "onBeforeRender",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 9572,
+    "columnNumber": 15,
+    "samples": 1
+  },
+  {
+    "functionName": "mesh.onBeforeRender",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 114,
+    "columnNumber": 26,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 105,
+    "columnNumber": 16,
+    "samples": 1
+  },
+  {
+    "functionName": "updateBuffer",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 67,
+    "columnNumber": 22,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 105,
+    "columnNumber": 16,
+    "samples": 1
+  },
+  {
+    "functionName": "get",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2376,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2603,
+    "columnNumber": 16,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2383,
+    "columnNumber": 16,
+    "samples": 1
+  },
+  {
+    "functionName": "clearUpdateRanges",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 12893,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "intersectsFrustum",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 17701,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "WebGLRenderer.renderBufferDirect",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 9791,
+    "columnNumber": 36,
+    "samples": 1
+  },
+  {
+    "functionName": "setProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10333,
+    "columnNumber": 21,
+    "samples": 1
+  },
+  {
+    "functionName": "proto.customProgramCacheKey",
+    "scriptId": "30",
+    "url": "http://127.0.0.1:5312/src/render/SurfaceDetail.ts",
+    "lineNumber": 546,
+    "columnNumber": 39,
+    "samples": 1
+  },
+  {
+    "functionName": "setValueM3",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2994,
+    "columnNumber": 19,
+    "samples": 1
+  },
+  {
+    "functionName": "setValue",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3362,
+    "columnNumber": 9,
+    "samples": 1
+  },
+  {
+    "functionName": "setValue",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3362,
+    "columnNumber": 9,
+    "samples": 1
+  },
+  {
+    "functionName": "get",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 27657,
+    "columnNumber": 16,
+    "samples": 1
+  },
+  {
+    "functionName": "bindVertexArray",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "setClear",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5435,
+    "columnNumber": 21,
+    "samples": 1
+  },
+  {
+    "functionName": "bindFramebuffer",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5678,
+    "columnNumber": 25,
+    "samples": 1
+  },
+  {
+    "functionName": "updateMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 32685,
+    "columnNumber": 15,
+    "samples": 1
+  },
+  {
+    "functionName": "multiply",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 2996,
+    "columnNumber": 9,
+    "samples": 1
+  },
+  {
+    "functionName": "render",
+    "scriptId": "31",
+    "url": "http://127.0.0.1:5312/src/render/TemporalFrame.ts?t=1791982039089",
+    "lineNumber": 236,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "has",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2340,
+    "columnNumber": 15,
+    "samples": 1
+  },
+  {
+    "functionName": "setValueT1",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3124,
+    "columnNumber": 19,
+    "samples": 1
+  },
+  {
+    "functionName": "get",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 4485,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "arraysEqual",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2905,
+    "columnNumber": 20,
+    "samples": 1
+  },
+  {
+    "functionName": "createTexture",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "getMipLevels",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6287,
+    "columnNumber": 22,
+    "samples": 1
+  },
+  {
+    "functionName": "resizeImage",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6163,
+    "columnNumber": 21,
+    "samples": 1
+  },
+  {
+    "functionName": "bindTexture",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5890,
+    "columnNumber": 21,
+    "samples": 1
+  },
+  {
+    "functionName": "useProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5709,
+    "columnNumber": 20,
+    "samples": 1
+  },
+  {
+    "functionName": "bindVertexArrayObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 911,
+    "columnNumber": 31,
+    "samples": 1
+  },
+  {
+    "functionName": "getBindingState",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 917,
+    "columnNumber": 25,
+    "samples": 1
+  },
+  {
+    "functionName": "setMaterial",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5824,
+    "columnNumber": 21,
+    "samples": 1
+  },
+  {
+    "functionName": "drawElements",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "renderMultiDraw",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2453,
+    "columnNumber": 25,
+    "samples": 1
+  },
+  {
+    "functionName": "determinantAffine",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8349,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "TemporalFrame.motion.onBeforeRender",
+    "scriptId": "31",
+    "url": "http://127.0.0.1:5312/src/render/TemporalFrame.ts?t=1791982039089",
+    "lineNumber": 79,
+    "columnNumber": 31,
+    "samples": 1
+  },
+  {
+    "functionName": "multiplyMatrices",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8263,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "painterSortStable",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 4510,
+    "columnNumber": 26,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 105,
+    "columnNumber": 16,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 105,
+    "columnNumber": 16,
+    "samples": 1
+  },
+  {
+    "functionName": "bindVertexArray",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "projectObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10085,
+    "columnNumber": 24,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 105,
+    "columnNumber": 16,
+    "samples": 1
+  },
+  {
+    "functionName": "updateMatrixWorld",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 10057,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "get",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5083,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "setup",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 4780,
+    "columnNumber": 15,
+    "samples": 1
+  },
+  {
+    "functionName": "renderObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10215,
+    "columnNumber": 23,
+    "samples": 1
+  },
+  {
+    "functionName": "WebGLRenderer.renderBufferDirect",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 9791,
+    "columnNumber": 36,
+    "samples": 1
+  },
+  {
+    "functionName": "bindTexture",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "disable",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5672,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "updateMatrixWorld",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 10057,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "WebGLRenderer.setRenderTarget",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10560,
+    "columnNumber": 33,
+    "samples": 1
+  },
+  {
+    "functionName": "render",
+    "scriptId": "145",
+    "url": "http://127.0.0.1:5312/src/render/EyeAdaptation.ts",
+    "lineNumber": 47,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "WebGLRenderer.renderBufferDirect",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 9791,
+    "columnNumber": 36,
+    "samples": 1
+  },
+  {
+    "functionName": "setProgram",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10333,
+    "columnNumber": 21,
+    "samples": 1
+  },
+  {
+    "functionName": "setMode",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 1191,
+    "columnNumber": 17,
+    "samples": 1
+  },
+  {
+    "functionName": "WebGLRenderer.render",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10001,
+    "columnNumber": 24,
+    "samples": 1
+  },
+  {
+    "functionName": "renderObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10215,
+    "columnNumber": 23,
+    "samples": 1
+  },
+  {
+    "functionName": "bindTexture",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "upload",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3419,
+    "columnNumber": 14,
+    "samples": 1
+  },
+  {
+    "functionName": "set",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 6443,
+    "columnNumber": 4,
+    "samples": 1
+  },
+  {
+    "functionName": "bindFramebuffer",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "active",
+    "scriptId": "233",
+    "url": "http://127.0.0.1:5312/src/world/Exhaust.ts?t=1791985045200",
+    "lineNumber": 112,
+    "columnNumber": 11,
+    "samples": 1
+  },
+  {
+    "functionName": "sortLayers",
+    "scriptId": "10",
+    "url": "http://127.0.0.1:5312/src/core/Engine.ts?t=1791985045206",
+    "lineNumber": 675,
+    "columnNumber": 11,
+    "samples": 1
+  },
+  {
+    "functionName": "",
+    "scriptId": "10",
+    "url": "http://127.0.0.1:5312/src/core/Engine.ts?t=1791985045206",
+    "lineNumber": 676,
+    "columnNumber": 24,
+    "samples": 1
+  },
+  {
+    "functionName": "auditMaterial",
+    "scriptId": "33",
+    "url": "http://127.0.0.1:5312/src/render/MaterialAudit.ts?t=1791982162759",
+    "lineNumber": 10,
+    "columnNumber": 29,
+    "samples": 1
+  },
+  {
+    "functionName": "WebGLRenderer.renderBufferDirect",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 9791,
+    "columnNumber": 36,
+    "samples": 1
+  },
+  {
+    "functionName": "upload",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 3419,
+    "columnNumber": 14,
+    "samples": 1
+  },
+  {
+    "functionName": "flatten",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2887,
+    "columnNumber": 16,
+    "samples": 1
+  },
+  {
+    "functionName": "setValueV3f",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 2942,
+    "columnNumber": 20,
+    "samples": 1
+  },
+  {
+    "functionName": "uniformMatrix4fv",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "projectObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10085,
+    "columnNumber": 24,
+    "samples": 1
+  },
+  {
+    "functionName": "add",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 4199,
+    "columnNumber": 4,
+    "samples": 1
+  },
+  {
+    "functionName": "bindFramebuffer",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "set needsUpdate",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 6301,
+    "columnNumber": 16,
+    "samples": 1
+  },
+  {
+    "functionName": "capture",
+    "scriptId": "44",
+    "url": "http://127.0.0.1:5312/src/render/SoftDepth.ts",
+    "lineNumber": 55,
+    "columnNumber": 8,
+    "samples": 1
+  },
+  {
+    "functionName": "bindFramebuffer",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 5678,
+    "columnNumber": 25,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "123",
+    "url": "http://127.0.0.1:5312/src/game/FeatWatch.ts?t=1791985045202",
+    "lineNumber": 78,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "sub",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 4249,
+    "columnNumber": 4,
+    "samples": 1
+  },
+  {
+    "functionName": "bake",
+    "scriptId": "50",
+    "url": "http://127.0.0.1:5312/src/render/BomberStream.ts?t=1791985045202",
+    "lineNumber": 973,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "updateMatrixWorld",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 10057,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "124",
+    "url": "http://127.0.0.1:5312/src/core/Gamepad.ts",
+    "lineNumber": 78,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "getGamepads",
+    "scriptId": "0",
+    "url": "",
+    "lineNumber": -1,
+    "columnNumber": -1,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "123",
+    "url": "http://127.0.0.1:5312/src/game/FeatWatch.ts?t=1791985045202",
+    "lineNumber": 78,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "49",
+    "url": "http://127.0.0.1:5312/src/render/LivingSky.ts?t=1791985045202",
+    "lineNumber": 579,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "updateGlows",
+    "scriptId": "49",
+    "url": "http://127.0.0.1:5312/src/render/LivingSky.ts?t=1791985045202",
+    "lineNumber": 785,
+    "columnNumber": 12,
+    "samples": 1
+  },
+  {
+    "functionName": "lookAt",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 8212,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "setFromEuler",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 3602,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "update",
+    "scriptId": "36",
+    "url": "http://127.0.0.1:5312/src/render/Precipitation.ts",
+    "lineNumber": 74,
+    "columnNumber": 7,
+    "samples": 1
+  },
+  {
+    "functionName": "getZ",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 15055,
+    "columnNumber": 5,
+    "samples": 1
+  },
+  {
+    "functionName": "get structureFrac",
+    "scriptId": "86",
+    "url": "http://127.0.0.1:5312/src/world/Aircraft.ts?t=1791985045200",
+    "lineNumber": 61,
+    "columnNumber": 18,
+    "samples": 1
+  },
+  {
+    "functionName": "collect",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 77,
+    "columnNumber": 11,
+    "samples": 1
+  },
+  {
+    "functionName": "engineLoops",
+    "scriptId": "64",
+    "url": "http://127.0.0.1:5312/src/audio/Sound.ts?t=1791985045202",
+    "lineNumber": 1720,
+    "columnNumber": 12,
+    "samples": 1
+  },
+  {
+    "functionName": "updateTexture",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 6511,
+    "columnNumber": 23,
+    "samples": 1
+  },
+  {
+    "functionName": "applyMatrix4",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 13667,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "updateVisiblePose",
+    "scriptId": "23",
+    "url": "http://127.0.0.1:5312/src/render/AircraftSubmission.ts?t=1791985045200",
+    "lineNumber": 21,
+    "columnNumber": 33,
+    "samples": 1
+  },
+  {
+    "functionName": "renderObject",
+    "scriptId": "24",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.js?v=c6ab7b01",
+    "lineNumber": 10215,
+    "columnNumber": 23,
+    "samples": 1
+  },
+  {
+    "functionName": "applyMatrix4",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 6692,
+    "columnNumber": 13,
+    "samples": 1
+  },
+  {
+    "functionName": "get iridescence",
+    "scriptId": "130",
+    "url": "http://127.0.0.1:5312/.vite-cache/deps/three.core-CuoYMbPq.js?v=593dbc09",
+    "lineNumber": 27872,
+    "columnNumber": 16,
+    "samples": 1
+  }
+]

@@ -845,7 +845,8 @@ export class BomberStream {
     const host = this.host;
     const L = this.layout;
     this.shown = this.enabled && !!host && !!L && (host.livingFormation ? host.livingFormation.ships.length > 0 : true) && weatherNow.night < 0.5;
-    this.group.visible = this.shown;
+    this.group.visible = this.shown && this.tier !== 'low';
+    if (this.tier === 'low') return;
     if (!this.shown || !L || !host) return;
     this.bake(renderer);
     const dt = this.last < 0 ? 0 : Math.max(0, Math.min(0.1, time - this.last));

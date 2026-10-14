@@ -19,7 +19,7 @@ export function installCascadeShader(){
    getDirectionalLightInfo(directionalLights[0],directSun);
    float sunVisibility=1.;
    #if defined(USE_SHADOWMAP) && NUM_DIR_LIGHT_SHADOWS == 3
-   if(receiveShadow){
+   if(receiveShadow && swsShadowRanges.z>=0.){
      float dist=length(vViewPosition);
      vec2 fade=smoothstep(swsShadowRanges.xy*.6,swsShadowRanges.xy*.85,vec2(dist));
      vec3 weights=mix(vec3(1.,0.,0.),vec3(1.-fade.x,fade.x*(1.-fade.y),fade.y),swsShadowRanges.z);
@@ -46,7 +46,7 @@ export function installCascadeShader(){
 export class SunCascades {
  readonly lights:T.DirectionalLight[];
  private rotation=new T.Matrix4();private inverse=new T.Matrix4();private point=new T.Vector3();private origin=new T.Vector3();private up=new T.Vector3(0,1,0);
- private frame=0;private active=true;private ranges=[40,260,3000];private lastSun=new T.Vector3();
+ private frame=0;private active=true;private disabled=false;private ranges=[40,260,3000];private lastSun=new T.Vector3();
  constructor(scene:T.Scene,sun:T.DirectionalLight,reversed=false){
   installCascadeShader();this.lights=[sun,new T.DirectionalLight(),new T.DirectionalLight()];
   for(let i=0;i<3;i++){const l=this.lights[i];l.castShadow=true;l.layers.enableAll();l.userData.noRebase=true;l.target.userData.noRebase=true;l.shadow.autoUpdate=false;l.shadow.normalBias=i===0?.008:.035;l.shadow.bias=(reversed?1:-1)*.000012;l.shadow.radius=1.4;
@@ -54,7 +54,7 @@ export class SunCascades {
   }
  }
  quality(size:number,range:number,enabled:boolean){
-  this.active=enabled;this.ranges[0]=range;cascadeUniform.value.set(range,260,enabled?1:0);this.frame=0;
+  this.active=enabled;this.disabled=size<=1;this.ranges[0]=range;cascadeUniform.value.set(range,260,this.disabled?-1:enabled?1:0);this.frame=0;
   for(let i=0;i<3;i++){const l=this.lights[i],s=i===0?size:enabled?(i===1?Math.min(size,2048):1024):1;
    if(l.shadow.mapSize.x!==s){l.shadow.map?.dispose();l.shadow.map=null;l.shadow.mapSize.set(s,s);}
    const c=l.shadow.camera,r=this.ranges[i];c.left=-r;c.right=r;c.top=r;c.bottom=-r;c.near=1;c.far=r*4+600;c.updateProjectionMatrix();l.shadow.needsUpdate=true;
@@ -65,7 +65,7 @@ export class SunCascades {
   this.lastSun.copy(Atmos.sunDir);this.rotation.lookAt(this.origin,Atmos.sunDir,this.up);this.inverse.copy(this.rotation).invert();
   for(let i=0;i<3;i++){
    const l=this.lights[i];l.color.copy(Atmos.sunColor);l.intensity=intensity;
-   if(i>0&&!this.active&&this.frame>0)continue;
+   if((this.disabled||i>0&&!this.active)&&this.frame>0)continue;
    const range=this.ranges[i];
    // Far maps amortise submission cost; nearby aircraft/interior shadows update every frame.
    if(i>0&&!changed&&this.frame>0&&this.frame%(i===1?4:12)!==(i===1?0:6))continue;

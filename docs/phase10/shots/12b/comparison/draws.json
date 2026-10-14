@@ -1,0 +1,32 @@
+[
+  {
+    "shot": "formation-chase",
+    "mode": "batched",
+    "draws": 211
+  },
+  {
+    "shot": "formation-chase",
+    "mode": "original",
+    "draws": 2494
+  },
+  {
+    "shot": "waist-interior",
+    "mode": "batched",
+    "draws": 431
+  },
+  {
+    "shot": "waist-interior",
+    "mode": "original",
+    "draws": 2110
+  },
+  {
+    "shot": "damaged-neighbour",
+    "mode": "batched",
+    "draws": 155
+  },
+  {
+    "shot": "damaged-neighbour",
+    "mode": "original",
+    "draws": 335
+  }
+]

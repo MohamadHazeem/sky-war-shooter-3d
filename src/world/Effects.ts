@@ -135,6 +135,7 @@ export class Effects {
   // loading the flipbook atlases (once) and turns on the ribbons and streaks
   setQuality(q: string) {
     const low = q === 'low';
+    this.smoke.budget = low ? 512 : Infinity; this.glow.budget = low ? 256 : Infinity;
     this.vol.setQuality(low);
     this.hiFx = !low;
     this.ribbons.enabled = !low && this.volumetric;

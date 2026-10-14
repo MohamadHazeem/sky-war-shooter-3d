@@ -47,7 +47,7 @@ export async function captureRig(argv) {
     try { ({ chromium } = await import(path.isAbsolute(candidate) ? pathToFileURL(candidate).href : candidate)); break; } catch { /* try the next existing installation */ }
   }
   if (!chromium) throw new Error('Use an existing Playwright installation: set PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs. No packages were installed.');
-  const browser = await chromium.launch({ headless: true, args: ['--autoplay-policy=no-user-gesture-required', ...(process.platform === 'darwin' ? ['--use-gl=angle', '--use-angle=metal'] : []), '--enable-gpu', '--disable-frame-rate-limit', '--disable-gpu-vsync'] });
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE, args: ['--autoplay-policy=no-user-gesture-required', ...(process.platform === 'darwin' ? ['--use-gl=angle', '--use-angle=metal'] : []), '--enable-gpu', '--disable-frame-rate-limit', '--disable-gpu-vsync'] });
   const manifest = { version: 1, complete: false, seed: Number(args.seed), backend: args.backend, quality: args.quality, cameraReference: args['camera-from'] || null,
     browser: browser.version(), platform: `${process.platform}/${process.arch}`,
     revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),

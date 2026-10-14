@@ -84,6 +84,7 @@ export interface ParticleOpts {
 const tmpC = new THREE.Color();
 
 export class ParticleSystem {
+  budget = Infinity; // quality cap for new visual particles; existing particles expire naturally
   readonly mesh: THREE.Mesh;
   private n = 0;
   private max: number;
@@ -154,7 +155,7 @@ export class ParticleSystem {
   }
 
   spawn(o: ParticleOpts) {
-    if (this.n >= this.max) return;
+    if (this.n >= this.max || this.n >= this.budget) return;
     const i = this.n++;
     this.pos[i * 3] = o.pos.x; this.pos[i * 3 + 1] = o.pos.y; this.pos[i * 3 + 2] = o.pos.z;
     const v = o.vel;

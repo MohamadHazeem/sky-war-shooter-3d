@@ -9,7 +9,7 @@ import { DitchingSea } from './DitchingSea';
 import { warmTargetSmoke } from '../render/TargetSmoke';
 import { Engine } from '../core/Engine';
 import { Aircraft, Bomber, Fighter, makeGun } from './Aircraft';
-import { hasModel, ModelKind } from './Models';
+import { hasModel, instantiateCompactBomber, ModelKind } from './Models';
 import { disposeOwned } from '../render/Dispose';
 import { Ballistics, HitEvent } from './Ballistics';
 import { Effects } from './Effects';
@@ -255,6 +255,7 @@ export class World implements WorldView {
 
   // ---------- setup ----------
   reset() {
+    this.engine.submission.reset();
     this.livingFormation.reset();
     for (const a of this.aircraft) { this.scene.remove(a.root); disposeOwned(a.root); }
     this.aircraft = [];
@@ -302,6 +303,7 @@ export class World implements WorldView {
     const splitDummies = models.map((m) => new Fighter(m as ModelKind, 'axis', ENEMY_VARIANTS.fw190.params));
     // Intact fighters need their unclipped colour/shadow variants as well as the fragments.
     for (const fighter of splitDummies) {
+      setupDamageLook(fighter);
       fighter.root.position.copy(camera.position).addScaledVector(fwd, 60);
       this.scene.add(fighter.root); dummies.push(fighter);
     }
@@ -310,6 +312,8 @@ export class World implements WorldView {
     b17.root.position.copy(camera.position).addScaledVector(fwd, 45);   // close: inside the shadow frustum, so the clipped shadow-depth programs compile too
     this.scene.add(b17.root);
     const unwarmHero = warmHeroLODs(b17.model);
+    const compact = instantiateCompactBomber();
+    if (compact) { compact.position.copy(b17.pos); compact.userData.formationBatch = true; this.scene.add(compact); }
     // the Mustangs of the 'little friends' set piece (gunner missions may have no escort)
     const p51 = new Fighter('p51d', 'allied', P51_PARAMS);
     p51.root.position.copy(camera.position).addScaledVector(fwd, 70);
@@ -323,13 +327,20 @@ export class World implements WorldView {
     const bombCount = bombs?.count ?? 0;
     if (bombs) { bombs.count = 1; bombs.setMatrixAt(0, new THREE.Matrix4().makeTranslation(at.x, at.y, at.z)); bombs.instanceMatrix.needsUpdate = true; }
     // Untextured, non-instanced fragments from the flak-damaged neighbour cast shadows too.
-    const plainCaster = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshDepthMaterial({ side: THREE.BackSide }));
+    const plainCaster = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ side: THREE.BackSide }));
     plainCaster.position.copy(at); plainCaster.castShadow = true; plainCaster.frustumCulled = false;
-    this.scene.add(plainCaster);
+    plainCaster.userData.formationBatch = true; this.scene.add(plainCaster);
     // Torn/debris sheets use the double-sided depth program even without a map.
-    const bothCaster = new THREE.Mesh(plainCaster.geometry, new THREE.MeshDepthMaterial({ side: THREE.DoubleSide }));
+    const bothCaster = new THREE.Mesh(plainCaster.geometry, new THREE.MeshStandardMaterial({ side: THREE.DoubleSide }));
     bothCaster.position.copy(at); bothCaster.castShadow = true; bothCaster.frustumCulled = false;
-    this.scene.add(bothCaster);
+    bothCaster.userData.formationBatch = true; this.scene.add(bothCaster);
+    const depthMap = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); depthMap.needsUpdate = true;
+    const mappedCaster = new THREE.Mesh(plainCaster.geometry, new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, map: depthMap }));
+    mappedCaster.position.copy(at); mappedCaster.castShadow = true; mappedCaster.frustumCulled = false;
+    mappedCaster.userData.formationBatch = true; this.scene.add(mappedCaster);
+    const tintedCaster = new THREE.Mesh(plainCaster.geometry, new THREE.MeshStandardMaterial());
+    tintedCaster.position.copy(at); tintedCaster.castShadow = true; tintedCaster.frustumCulled = false;
+    tintedCaster.userData.formationBatch = true; tintedCaster.userData.batchTint = new THREE.Color(); this.scene.add(tintedCaster);
     const unwarmSea = prewarmSea(this.scene, at);
     const unwarmBoss = prewarmBoss(this.scene, camera.position, fwd);
     const unwarmFormation = FormationDress.warm(this.scene, at);
@@ -357,8 +368,8 @@ export class World implements WorldView {
     unwarmTargetSmoke();
     unwarmStream();
     if (bombs) bombs.count = bombCount;
-    this.scene.remove(plainCaster, bothCaster); plainCaster.geometry.dispose(); this.warmKeep.push(plainCaster.material, bothCaster.material);
-    unwarmHero(); b17.root.removeFromParent();
+    this.scene.remove(plainCaster, bothCaster, mappedCaster, tintedCaster); plainCaster.geometry.dispose(); this.warmKeep.push(plainCaster.material, bothCaster.material, mappedCaster.material, tintedCaster.material);
+    unwarmHero(); b17.root.removeFromParent(); compact?.removeFromParent();
     unwarmFormation();
     unwarm(); unwarmDust();
     for (const o of effectObjects) {

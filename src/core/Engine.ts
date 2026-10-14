@@ -1,3 +1,4 @@
+import { AircraftSubmission } from '../render/AircraftSubmission';
 import { SkyCache } from '../render/SkyCache';
 import { cloudSurfaceUniforms } from '../render/CloudSurfaceShadow';
 import { syncSurfaceDetail } from '../render/SurfaceDetail';
@@ -46,8 +47,8 @@ export interface QualityPreset {
   particles: number;     // visual particle budget multiplier (0 = living sky off)
 }
 export const QUALITY: Record<Quality, QualityPreset> = {
-  low:    { skyScale: 1, aoSlices: 1, pixels: 0.9e6, msaa: 0, shadows: 1024, shadowRange: 24, cloudScale: 0.28, cloudSteps: 32, cloudTemporal: false, haze: false, ao: 0,   particles: 0, temporal: false },
-  medium: { skyScale: .5, aoSlices: 1, pixels: 1.5e6, msaa: 0, shadows: 1536, shadowRange: 48, cloudScale: 0.33, cloudSteps: 36, cloudTemporal: true,  haze: true,  ao: 0.35, particles: 0.5, temporal: true },
+  low:    { skyScale: .5, aoSlices: 1, pixels: 0.65e6, msaa: 0, shadows: 1, shadowRange: 24, cloudScale: 0.18, cloudSteps: 20, cloudTemporal: false, haze: false, ao: 0,   particles: 0, temporal: false },
+  medium: { skyScale: .5, aoSlices: 1, pixels: 1.25e6, msaa: 0, shadows: 1024, shadowRange: 48, cloudScale: 0.24, cloudSteps: 28, cloudTemporal: true,  haze: false,  ao: 0, particles: 0.5, temporal: false },
   high:   { skyScale: .5, aoSlices: 2, pixels: 2.3e6, msaa: 0, shadows: 2048, shadowRange: 40, cloudScale: 0.36, cloudSteps: 40, cloudTemporal: true,  haze: true,  ao: 0.6, particles: 1, temporal: true },
   ultra:  { skyScale: .75, aoSlices: 3, pixels: 3.7e6, msaa: 2, shadows: 3072, shadowRange: 40, cloudScale: 0.45, cloudSteps: 52, cloudTemporal: true,  haze: true,  ao: 0.7, particles: 1.6, temporal: true },
   cinematic: { skyScale: 1, aoSlices: 3, pixels: 8.3e6, msaa: 4, shadows: 4096, shadowRange: 40, cloudScale: .5, cloudSteps: 64, cloudTemporal: true, haze: true, ao: .8, particles: 2, temporal: true },
@@ -63,6 +64,7 @@ export interface Updatable { update(dt: number, time: number): void }
 export class Engine {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
+  readonly submission = new AircraftSubmission();
   readonly precipitation = new Precipitation(this.scene);
   readonly camera: THREE.PerspectiveCamera;
   readonly sky = new SkyDome();
@@ -237,6 +239,8 @@ export class Engine {
   setQuality(q: Quality) {
     if (!QUALITY[q]) q = 'high';
     this.quality = q;
+    this.submission.low = q === 'low';
+    this.submission.medium = q === 'medium';
     this.resetDynamicResolution();
     this.post.film.setPreset(q);
     setHeroQuality(q === 'low');
@@ -460,9 +464,12 @@ export class Engine {
     r.setRenderTarget(this.sceneRT);
     r.clear();
     // Pass 1: opaque geometry (layer 0) -> HDR + depth
-    this.sortLayers();
+    // Film velocity uses the articulated source graph; keep that pose current during a shot.
+    this.submission.allowCompact = this.quality !== 'medium' || !(this.post.film.shot ?? this.post.film.look).objectBlur;
+    const drawScene = this.submission.prepare(this.scene, cam, r.shadowMap.needsUpdate);
+    this.sortLayers(drawScene);
     cam.layers.set(0);
-    r.render(this.scene, cam);
+    r.render(drawScene, cam);
     // Opaque, transparent and velocity passes share one simulation pose. Three otherwise
     // walks/rebuilds every bomber hierarchy three times per frame (CPU-bound at 1080p).
     const autoWorld = this.scene.matrixWorldAutoUpdate;
@@ -484,11 +491,11 @@ export class Engine {
       this.copyQuad.render(r);
       cam.layers.set(1);
       r.shadowMap.autoUpdate = false;
-      r.render(this.scene, cam);
+      r.render(drawScene, cam);
       r.shadowMap.autoUpdate = true;
       r.autoClear = true;
       cam.layers.set(0);
-      const resolved = this.temporal.render(r, this.scene, cam, this.sceneRT, this.sceneRT.depthTexture!);
+      const resolved = this.temporal.render(r, drawScene, cam, this.sceneRT, this.sceneRT.depthTexture!);
       this.post.render(r, cam, resolved, this.sceneRT.depthTexture!, this.time, dt, this.scene);
     } finally {
       this.scene.matrixWorldAutoUpdate = autoWorld;
@@ -507,6 +514,11 @@ export class Engine {
       syncSurfaceDetail(quality);
       softDepth.want(); // compile the depth-copy pass before the first damage trail
       this.render(1/60);
+      // Mission-owned interior/damage meshes also need their batched variants before a hit or station switch.
+      this.submission.warming = true;
+      this.renderer.shadowMap.needsUpdate = true;
+      for (const light of this.scene.children) if ((light as THREE.DirectionalLight).isDirectionalLight && (light as THREE.DirectionalLight).castShadow) (light as THREE.DirectionalLight).shadow.needsUpdate = true;
+      try { this.render(1/60); } finally { this.submission.warming = false; }
     }
     syncSurfaceDetail(this.quality);
     this.skyCache.scale = 1; this.render(1/60); // also retain the direct Low/Cinematic sky program
@@ -532,7 +544,7 @@ export class Engine {
     r.render(scene, cam);
     cloudShadowUniforms.uCloudShadowOn.value = cloudShadows;
     this.post.render(r, cam, this.sceneRT, this.sceneRT.depthTexture!, this.time, dt);
-    cascadeUniform.value.z = this.quality === 'low' ? 0 : 1;
+    cascadeUniform.value.z = this.quality === 'low' ? -1 : 1;
   }
 
   // Compile a studio scene's programs in the background (KHR_parallel_shader_compile), for
@@ -547,8 +559,8 @@ export class Engine {
   }
 
   // Transparent materials go to layer 1 (drawn after the clouds), everything else layer 0
-  private sortLayers() {
-    this.scene.traverseVisible((o) => {
+  private sortLayers(scene = this.scene) {
+    scene.traverseVisible((o) => {
       if ((o as THREE.Light).isLight) { o.layers.enableAll(); return; }
       const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
       if (!m) return;

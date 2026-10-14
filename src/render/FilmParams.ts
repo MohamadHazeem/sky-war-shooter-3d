@@ -75,7 +75,7 @@ export function resolveFilm(out: FilmParams, look: FilmParams, shot: FilmParams 
   // a shot keeps the player's period grade unless it has one of its own (the gun camera)
   if (shot && shot.grade === 'none' && look.grade !== 'none') out.grade = look.grade;
   if (f.calm) { out.grain = 0; out.weave = 0; out.flicker = 0; out.dust = 0; }
-  if (f.economy) { out.dof = false; out.objectBlur = 0; }
+  if (f.economy) { out.on = false; out.dof = false; out.objectBlur = 0; }
   return out;
 }
 
