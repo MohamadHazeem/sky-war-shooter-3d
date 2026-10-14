@@ -3,6 +3,8 @@ import { Precipitation } from '../render/Precipitation';
 import * as THREE from 'three';
 import { Atmos, atmosUniforms, syncAtmosUniforms } from '../render/Atmosphere';
 import { farTerrainUniforms } from '../render/FarTerrain';
+import { cloudShadowUniforms } from '../render/CloudShadow';
+import { weatherNow } from '../render/WeatherState';
 import { CloudRenderer } from '../render/Clouds';
 import { heatHaze, type HeatHaze } from '../render/HeatHaze';
 import { PostFX } from '../render/PostFX';
@@ -32,9 +34,9 @@ export interface QualityPreset {
 }
 export const QUALITY: Record<Quality, QualityPreset> = {
   low:    { pixels: 0.9e6, msaa: 0, shadows: 1024, shadowRange: 24, cloudScale: 0.33, cloudSteps: 36, cloudTemporal: false, haze: false, ao: 0,   particles: 0 },
-  medium: { pixels: 1.5e6, msaa: 2, shadows: 2048, shadowRange: 48, cloudScale: 0.45, cloudSteps: 52, cloudTemporal: true,  haze: true,  ao: 0,   particles: 0.5 },
-  high:   { pixels: 2.3e6, msaa: 4, shadows: 2048, shadowRange: 40, cloudScale: 0.5,  cloudSteps: 64, cloudTemporal: true,  haze: true,  ao: 0.6, particles: 1 },
-  ultra:  { pixels: 3.7e6, msaa: 4, shadows: 4096, shadowRange: 40, cloudScale: 0.62, cloudSteps: 88, cloudTemporal: true,  haze: true,  ao: 0.7, particles: 1.6 },
+  medium: { pixels: 1.5e6, msaa: 2, shadows: 2048, shadowRange: 48, cloudScale: 0.38, cloudSteps: 40, cloudTemporal: true,  haze: true,  ao: 0,   particles: 0.5 },
+  high:   { pixels: 2.3e6, msaa: 4, shadows: 2048, shadowRange: 40, cloudScale: 0.4,  cloudSteps: 44, cloudTemporal: true,  haze: true,  ao: 0.6, particles: 1 },
+  ultra:  { pixels: 3.7e6, msaa: 4, shadows: 4096, shadowRange: 40, cloudScale: 0.5,  cloudSteps: 56, cloudTemporal: true,  haze: true,  ao: 0.7, particles: 1.6 },
 };
 export const QUALITY_ORDER: Quality[] = ['low', 'medium', 'high', 'ultra'];
 // One tier down (the auto-quality fallback): ultra -> high -> medium -> low
@@ -224,6 +226,7 @@ export class Engine {
     sc.updateProjectionMatrix();
     this.post.ao = p.ao;
     this.post.economy = q === 'low';
+    atmosUniforms.uAtmosQuality.value = q === 'low' ? 0 : 1;
     this.heatHaze.enabled = p.haze;
     this.livingSky.setQuality(p.particles);
     // a new tier gets a fresh chance at the display's full refresh rate
@@ -396,13 +399,14 @@ export class Engine {
     this.sun.position.copy(snapped).addScaledVector(Atmos.sunDir, 300);
     this.sun.target.position.copy(snapped);
     this.sun.target.updateMatrixWorld();
-    // the upper cloud layer's shadow on the formation (cloud shadow map, read back async)
-    this.sun.intensity = Atmos.sunIntensity * 0.95 * (0.35 + 0.65 * this.clouds.sunShadow);
+    // Spatial maps shade each aircraft skin; immersion also dims cockpit/local light.
+    this.sun.intensity = Atmos.sunIntensity * 0.95 * (1 - 0.65 * weatherNow.cloudInside);
     atmosUniforms.uCamAlt.value = cp.y;
     farTerrainUniforms.uFarQuality.value = this.quality === 'low' ? 0 : this.quality === 'medium' ? 1 : 2;
     farTerrainUniforms.tFarShadow.value = this.clouds.groundShadowTexture;
     farTerrainUniforms.uFarShadowBox.value.copy(this.clouds.groundShadowBox);
     farTerrainUniforms.uFarCloudBase.value = Atmos.highBase;
+    farTerrainUniforms.uFarLowBase.value = Atmos.lowBase;
     (this.sky.mesh.material as THREE.ShaderMaterial).uniforms.uGroundXZ.value.set(cp.x + Atmos.originOffset.x, cp.z + Atmos.originOffset.z);
 
     const r = this.renderer;
@@ -440,7 +444,10 @@ export class Engine {
     const r = this.renderer;
     cam.updateMatrixWorld();
     r.setRenderTarget(this.sceneRT);
+    const cloudShadows = cloudShadowUniforms.uCloudShadowOn.value;
+    cloudShadowUniforms.uCloudShadowOn.value = 0;
     r.render(scene, cam);
+    cloudShadowUniforms.uCloudShadowOn.value = cloudShadows;
     this.post.render(r, cam, this.sceneRT, this.sceneRT.depthTexture!, this.time, dt);
   }
 
@@ -473,6 +480,7 @@ export class Engine {
       if ((child as any).userData?.noRebase) continue;
       child.position.sub(offset);
     }
+    this.clouds.rebase(offset);
     Atmos.windOffset.add(offset);
     Atmos.originOffset.add(offset);
   }

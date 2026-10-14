@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Atmos } from './Atmosphere';
+import { cloudOcclusionUniforms, cloudOcclusionGLSL } from './CloudOcclusion';
 
 // Condensation trails: one camera-facing ribbon per engine. Each ribbon is a ring
 // buffer of world-space points; the ribbon starts a little behind the engine (the
@@ -47,11 +48,11 @@ export class Contrails {
     this.geo.setAttribute('aSeed', this.seed);
     this.geo.setIndex(idx);
     this.mat = new THREE.ShaderMaterial({
-      uniforms: { uLife: { value: LIFE }, uSun: { value: new THREE.Vector3() }, uSunCol: { value: new THREE.Color() }, uTime: { value: 0 } },
+      uniforms: { ...cloudOcclusionUniforms, uLife: { value: LIFE }, uSun: { value: new THREE.Vector3() }, uSunCol: { value: new THREE.Color() }, uTime: { value: 0 } },
       vertexShader: /* glsl */ `
         attribute vec3 aDir; attribute float aAge; attribute float aSide; attribute float aSeed;
         uniform float uLife; uniform float uTime; uniform vec3 uSun;
-        varying float vAlpha; varying float vSide; varying float vT; varying float vSeed; varying float vNear; varying float vSun;
+        varying float vDistance; varying float vAlpha; varying float vSide; varying float vT; varying float vSeed; varying float vNear; varying float vSun;
         void main() {
           float t = clamp(aAge / uLife, 0.0, 1.0);
           float width = mix(0.4, 7.5, pow(t, 0.6));
@@ -73,13 +74,15 @@ export class Contrails {
           vSide = aSide; vT = t; vSeed = aSeed;
           // how much this edge of the ribbon faces the sun (-1 shadow side .. 1 sun side)
           vSun = dot(side * aSide, uSun);
+          vDistance = distance(cameraPosition, p);
           vNear = smoothstep(18.0, 70.0, distance(cameraPosition, p));
           // seen end-on a ribbon turns into a flat sheet: fade it out
           vNear *= 1.0 - smoothstep(0.82, 0.97, abs(dot(d, toCam)));
         }`,
       fragmentShader: /* glsl */ `
+        ${cloudOcclusionGLSL}
         uniform vec3 uSunCol;
-        varying float vAlpha; varying float vSide; varying float vT; varying float vSeed; varying float vNear; varying float vSun;
+        varying float vDistance; varying float vAlpha; varying float vSide; varying float vT; varying float vSeed; varying float vNear; varying float vSun;
         float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vnoise(vec2 p) {
           vec2 i = floor(p), f = fract(p);
@@ -87,7 +90,7 @@ export class Contrails {
           return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
         }
         void main() {
-          float edge = 1.0 - vSide * vSide;
+          float edge = pow(max(0.0, 1.0 - vSide * vSide), 2.0);
           float a = vAlpha * edge * mix(0.9, 0.35, vT) * vNear;
           // a little break-up along the trail
           a *= 0.8 + 0.2 * sin(vT * 90.0 + vSeed);
@@ -98,8 +101,13 @@ export class Contrails {
           a *= mix(0.8, 1.15, puff) * mix(1.0, mix(0.35, 1.0, gaps), smoothstep(0.15, 0.7, vT));
           // sun-facing edge is a touch brighter than the shadowed edge
           float sunSide = clamp(vSun * 0.5 + 0.5, 0.0, 1.0);
-          vec3 col = (uSunCol * 0.75 + vec3(0.45, 0.5, 0.58)) * mix(0.92, 1.2, sunSide);
-          gl_FragColor = vec4(col, a);
+          // Cylinder optical depth: the shaded half sees a longer path through ice.
+          // Beer attenuation and a diffuse multiple-scattering floor replace flat white ribbons.
+          float optical = (0.4 + 1.8 * puff) * sqrt(max(0.0, 1.0 - vSide * vSide));
+          float transmission = exp(-optical * (1.0 - sunSide));
+          vec3 col = uSunCol * (0.24 + 0.65 * transmission) + vec3(0.12, 0.16, 0.23);
+          a = (1.0 - exp(-a * 0.9)) * 0.72;
+          gl_FragColor = vec4(col, a * cloudVisibility(vDistance));
         }`,
       transparent: true,
       depthWrite: false,
@@ -132,7 +140,7 @@ export class Contrails {
     this.mesh.visible = this.enabled;
     if (!this.enabled) return;
     const P = this.pos.array as Float32Array, D = this.dir.array as Float32Array, A = this.age.array as Float32Array;
-    const tmp = new THREE.Vector3();
+    const tmp = _tmp;
     this.trails.forEach((tr, ti) => {
       if (time - tr.last >= INTERVAL) {
         const p = tr.emit();
@@ -171,3 +179,5 @@ export class Contrails {
     this.pos.needsUpdate = this.dir.needsUpdate = this.age.needsUpdate = true;
   }
 }
+
+const _tmp = new THREE.Vector3();

@@ -579,7 +579,7 @@ export class GlassPane {
 // All panes share the blended condition; the quality toggle affects cosmetics only.
 export function rainTarget(time: number): number {
   void time;
-  return weatherNow.effects ? weatherNow.rain : 0;
+  return weatherNow.effects ? Math.max(weatherNow.rain, weatherNow.cloudInside * .65) : 0;
 }
 const SUN_VIS: Record<string, number> = { clear: 1, dusk: 0.9, overcast: 0.3, storm: 0.08, night: 0.35 };
 const sunVis = () => {

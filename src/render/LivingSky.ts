@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { Atmos, atmosUniforms, skyGLSL } from './Atmosphere';
 import { mulberry } from './Particles';
+import { cloudOcclusionUniforms, cloudOcclusionGLSL } from './CloudOcclusion';
 import { useSkyEnv } from './AircraftLook';
 
 // The living sky: purely visual life 3-9 km out, so the player's box is one of many.
@@ -203,7 +204,7 @@ export class LivingSky {
     tg.setAttribute('iEmit', this.trailEmit);
     tg.instanceCount = 0;
     this.trails = new THREE.Mesh(tg, new THREE.ShaderMaterial({
-      uniforms: { ...atmosUniforms, ...shared, uLife: { value: LIFE } },
+      uniforms: { ...atmosUniforms, ...shared, ...cloudOcclusionUniforms, uLife: { value: LIFE } },
       vertexShader: /* glsl */ `
         ${ribbonVert}
         uniform float uTime; uniform float uSpeed; uniform float uLife;
@@ -231,13 +232,14 @@ export class LivingSky {
         }`,
       fragmentShader: /* glsl */ `
         ${hazeGLSL}
+        ${cloudOcclusionGLSL}
         uniform vec3 uSunCol;
         varying float vA; varying float vSide; varying float vT; varying vec3 vW; varying float vSeed;
         void main() {
           float edge = 1.0 - vSide * vSide;
           float a = vA * edge * (0.85 + 0.15 * sin(vT * 160.0 + vSeed));
           vec3 col = uSunCol * 0.24 + vec3(0.42, 0.47, 0.55);
-          gl_FragColor = vec4(hazed(col, vW), a);
+          gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
       transparent: true, depthWrite: false, side: THREE.DoubleSide,
     }));

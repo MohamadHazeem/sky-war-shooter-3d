@@ -1,3 +1,4 @@
+import { patchCloudShadow } from './CloudShadow';
 import * as THREE from 'three';
 
 // Procedural surface detail on the aircraft skins, so they read as painted, worn, riveted
@@ -84,10 +85,10 @@ const seen = new WeakSet<THREE.Material>();
 
 const effective = (): SurfLevel => override ?? level;
 
-// Program cache key suffix for a tagged material ('' when the detail is off)
+// Tagged skins keep the cloud-shadow program even when surface detail is off.
 export function surfaceKey(m: THREE.Material): string {
   const l = effective();
-  return m.userData.surf && l ? `|sws-surf-${l}${debug ? '-d' + debug : ''}` : '';
+  return m.userData.surf ? `|sws-cloud-shadow${l ? `|sws-surf-${l}${debug ? '-d' + debug : ''}` : ''}` : '';
 }
 
 function relevel() {
@@ -319,6 +320,7 @@ const ZERO4 = () => [0, 1, 2, 3].map(() => new THREE.Vector4());
 export function patchSurface(sh: THREE.WebGLProgramParametersWithUniforms, mat: THREE.Material) {
   const tag = mat.userData.surf as SurfTag | undefined;
   if (!tag) return;
+  patchCloudShadow(sh);
   if (!seen.has(mat)) { seen.add(mat); known.add(new WeakRef(mat)); }
   const l = effective();
   if (!l) return;

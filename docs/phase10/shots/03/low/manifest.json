@@ -1,0 +1,155 @@
+{
+  "version": 1,
+  "complete": true,
+  "seed": 19431008,
+  "backend": "webgl2",
+  "quality": "low",
+  "browser": "155.0.8059.41",
+  "platform": "darwin/arm64",
+  "revision": "24e045fc348de0bd8cea63c0998ce0184078f9ed",
+  "dirty": true,
+  "shots": [
+    {
+      "version": 1,
+      "backend": "webgl2",
+      "quality": "low",
+      "seed": 19431008,
+      "shot": "sunset",
+      "label": "Formation at sunset",
+      "pillars": [
+        1,
+        2,
+        3,
+        7,
+        8,
+        10
+      ],
+      "backendActual": "webgl2",
+      "deviceInfo": {
+        "vendor": "Google Inc. (Apple)",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+      },
+      "seedDefault": 19431008,
+      "dt": 0.016666666666666666,
+      "steps": 360,
+      "settleFrames": 24,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1264,
+        711
+      ],
+      "camera": {
+        "position": [
+          -310.0399994859527,
+          7775.389426136035,
+          -298.60789949187034
+        ],
+        "quaternion": [
+          0.038218235603471984,
+          0.9435300044290845,
+          0.11728126811320087,
+          -0.3074664231410787
+        ],
+        "fov": 58
+      },
+      "weather": {
+        "sunEl": 7,
+        "sunAz": 250,
+        "low": 0.55,
+        "high": 0.25,
+        "mood": "dusk",
+        "contrails": true
+      },
+      "subject": "sunset",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "frameMs": {
+        "samples": 60,
+        "programsBefore": 111,
+        "programsAfter": 111,
+        "mean": 8.341666666666667,
+        "p50": 8.300000011920929,
+        "p95": 10.400000005960464,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "pixelHash": "67c780d0d967d3ef3640cd31d1473555d286c557112a226208701926a1474267",
+      "errors": []
+    },
+    {
+      "version": 1,
+      "backend": "webgl2",
+      "quality": "low",
+      "seed": 19431008,
+      "shot": "cloud-flythrough",
+      "label": "Inside the cloud layer",
+      "pillars": [
+        2,
+        3,
+        7,
+        10
+      ],
+      "backendActual": "webgl2",
+      "deviceInfo": {
+        "vendor": "Google Inc. (Apple)",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+      },
+      "seedDefault": 19431008,
+      "dt": 0.016666666666666666,
+      "steps": 360,
+      "settleFrames": 24,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1264,
+        711
+      ],
+      "camera": {
+        "position": [
+          180,
+          4900,
+          400
+        ],
+        "quaternion": [
+          -0.007319939235671809,
+          0.9869210649692631,
+          -0.046892271427149274,
+          -0.15405954981734818
+        ],
+        "fov": 55
+      },
+      "weather": {
+        "sunEl": 40,
+        "sunAz": 140,
+        "low": 0.86,
+        "high": 0.25
+      },
+      "subject": "cloud-flythrough",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "frameMs": {
+        "samples": 60,
+        "programsBefore": 112,
+        "programsAfter": 112,
+        "mean": 3.401666666318973,
+        "p50": 2.8999999910593033,
+        "p95": 5.700000002980232,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "pixelHash": "c0a003d0bf0227145c7f804b13cc8f7e1cf05536f4ad75ff302ecba16b8ddcef",
+      "errors": []
+    }
+  ]
+}

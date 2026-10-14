@@ -1,0 +1,32 @@
+{
+  "nonfinite": 0,
+  "tried": [],
+  "inside": 0.9764705882352941,
+  "outside": 0,
+  "wetTarget": 0.6347058823529412,
+  "wet": 0.349894993974623,
+  "effectsOff": 0,
+  "insideSun": 1.4384945638781048,
+  "cutHistory": 0,
+  "rebased": [
+    -10000,
+    10000
+  ],
+  "programs": 126,
+  "programsAfter": 126,
+  "low": {
+    "temporal": false,
+    "steps": 36,
+    "scale": 0.33,
+    "inside": 0,
+    "shadows": 0,
+    "veil": 0
+  },
+  "main": {
+    "quality": "high",
+    "temporal": true,
+    "atmosphere": 1,
+    "state": "playing"
+  },
+  "errors": []
+}

@@ -14,5 +14,6 @@ export const weatherNow = {
   k: 0,                   // ... and how far (0..1); outside a front from = to = mood, k = 0
   night: 0,               // 0..1: moonlit night (brighter tracers, flare glare)
   dark: 0,                // 0..1: how much a light in the cloud shows (night 1, storm ~0.45, clear 0)
+  cloudInside: 0,         // local volumetric density probe, for condensation on glass
   muzzle: 0,              // 0..1: the player's own guns firing close to the glass (decays; Effects bumps it)
 };
