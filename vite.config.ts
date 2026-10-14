@@ -41,7 +41,7 @@ function pwaPlugin(): Plugin {
       const shell: string[] = [];
       const media: Record<string, string> = {};
       for (const p of files) {
-        if (p.startsWith('models/') || p.startsWith('audio/')) media[p] = rev(p);
+        if (p.startsWith('models/') || p.startsWith('audio/') || p.startsWith('fx/')) media[p] = rev(p);
         else shell.push(p);
       }
       shell.sort();

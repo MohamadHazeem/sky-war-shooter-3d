@@ -237,7 +237,12 @@ export class ParticleSystem {
   clear() { this.n = 0; this.geo.instanceCount = 0; }
 }
 
+const HALO = 2.6;
+
 // Tracer streaks: camera-facing ribbons between two points, at least ~1.5 px wide.
+// Effects 2.0: an HDR white-hot core (drives the bloom) inside a coloured glow and a wide, faint
+// halo (the quad is HALO times the streak width), with the burning head brighter than the tail.
+// Sparks.ts uses the same renderer for motion-stretched sparks and fragments.
 export class TracerRenderer {
   readonly mesh: THREE.Mesh;
   private max: number;
@@ -273,7 +278,7 @@ export class TracerRenderer {
           float dist = length(toCam);
           vec3 side = normalize(cross(dir, toCam / dist));
           float w = max(iC.a, dist * uPx * 2.1);
-          p += side * position.x * w;
+          p += side * position.x * w * ${HALO.toFixed(1)};
           gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
           vQ = position.xy;
           // Thin far tracers get dimmer per pixel but keep their energy
@@ -283,13 +288,16 @@ export class TracerRenderer {
       fragmentShader: /* glsl */ `
         varying vec2 vQ; varying vec4 vC;
         void main() {
-          // white-hot core inside a soft coloured glow; the head burns brightest
-          float a = abs(vQ.x);
-          float core = 1.0 - smoothstep(0.0, 0.35, a);
-          float glow = (1.0 - a) * (1.0 - a);
-          float along = smoothstep(0.0, 0.7, vQ.y) * (0.75 + 0.25 * vQ.y);
-          vec3 c = vC.rgb * glow * 0.8 + vec3(dot(vC.rgb, vec3(0.33))) * core * 0.9;
-          gl_FragColor = vec4(c * along, 1.0);
+          // white-hot HDR core inside a soft coloured glow and a faint wide halo; the head burns brightest
+          float a = abs(vQ.x) * ${HALO.toFixed(1)};   // in streak widths
+          float core = exp(-a * a * 14.0);
+          float glow = exp(-a * a * 2.6) * 0.75;
+          float halo = exp(-a * 2.2) * 0.12 * (1.0 - smoothstep(${(HALO * 0.6).toFixed(2)}, ${HALO.toFixed(1)}, a));
+          float along = smoothstep(0.0, 0.7, vQ.y) * (0.7 + 0.3 * vQ.y);
+          float head = exp(-(1.0 - vQ.y) * 9.0);
+          float lum = dot(vC.rgb, vec3(0.33));
+          vec3 c = vC.rgb * (glow + halo) * (along + head * 0.8) + vec3(lum * 1.1, lum, lum * 0.85) * core * (along * 1.2 + head * 1.6);
+          gl_FragColor = vec4(c, 1.0);
         }`,
       transparent: true,
       depthWrite: false,
@@ -313,9 +321,19 @@ export class TracerRenderer {
   }
 
   end(camera: THREE.PerspectiveCamera, screenH: number) {
-    this.geo.instanceCount = this.n;
-    this.a.needsUpdate = this.b.needsUpdate = this.c.needsUpdate = true;
+    this.flush();
     this.uniforms.uPx.value = (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)) / screenH;
+  }
+
+  // Upload what was pushed since begin() (the caller keeps uPx current)
+  flush() {
+    this.geo.instanceCount = this.n;
+    for (let q = 0; q < 3; q++) {
+      const at = q === 0 ? this.a : q === 1 ? this.b : this.c;
+      at.clearUpdateRanges();
+      if (this.n > 0) at.addUpdateRange(0, this.n * at.itemSize);
+      at.needsUpdate = true;
+    }
   }
 }
 

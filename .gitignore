@@ -15,3 +15,6 @@ tools/voice/.cache/
 
 # Phase 10 visual rig: keep local lossless originals; commit compact JPEG evidence only.
 docs/phase10/shots/**/*.png
+
+# Effects 2.0 bake intermediates (tools/fx/bake_flipbooks.py): logs, previews, per-effect atlases, sim cache
+tools/fx/out/

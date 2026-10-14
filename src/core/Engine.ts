@@ -6,6 +6,7 @@ import { farTerrainUniforms } from '../render/FarTerrain';
 import { CloudRenderer } from '../render/Clouds';
 import { heatHaze, type HeatHaze } from '../render/HeatHaze';
 import { PostFX } from '../render/PostFX';
+import { softDepth } from '../render/SoftDepth';
 import { buildEnvironment, SkyDome } from '../render/Sky';
 import { envRef } from '../render/EnvRef';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
@@ -418,6 +419,8 @@ export class Engine {
     // Heat-haze offsets, soft-depth-tested against the opaque depth (before pass 2, so a
     // canopy or turret dome doesn't mask the exhaust shimmer seen through it)
     this.post.hazeTex = this.heatHaze.render(r, cam, this.sceneRT.depthTexture!);
+    // linear depth copy for the soft effects (render/SoftDepth.ts), only when something wants it
+    softDepth.capture(r, cam, this.sceneRT.depthTexture!, this.clouds.sunShadow);
     // Copy the composite back over the scene colour (keeping its depth buffer), then
     // pass 2: transparent effects (layer 1) on top of the clouds, depth-tested.
     r.autoClear = false;
