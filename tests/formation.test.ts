@@ -17,7 +17,7 @@ function bomber(x = 0, player = false): Bomber {
 function fixture() {
   const parachute = vi.fn((_pos: THREE.Vector3, _vel: THREE.Vector3, _scale: number) => true), callout = vi.fn(), piece = {root: new THREE.Group(), vel: new THREE.Vector3(), life: 26};
   const w = {time: 0, formationCenter: new THREE.Vector3(0, 7600, 0), formationForward: new THREE.Vector3(0, 0, 1), aircraft: [],
-    effects: {parachute, explosion: vi.fn()}, destruction: {separate: vi.fn((b: Bomber) => { b.falling = false; }), explode: vi.fn(), piecesOf: vi.fn(() => [{...piece, body: {vel: piece.vel}, shard: false}])}, callout} as unknown as World;
+    effects: {parachute, explosion: vi.fn(), sparks: vi.fn()}, destruction: {jointWorld: vi.fn((b: Bomber, _part: number, out: THREE.Vector3) => out.copy(b.pos).addScalar(7)), separate: vi.fn((b: Bomber) => { b.falling = false; }), explode: vi.fn(), piecesOf: vi.fn(() => [{...piece, body: {vel: piece.vel}, shard: false}])}, callout} as unknown as World;
   const system = new LivingFormation(w), ships = [bomber(0), bomber(70, true), bomber(-70), bomber(170)];
   for (const b of ships) system.add(b);
   return {system, w, ships, parachute, callout};
@@ -66,6 +66,15 @@ describe('living formation transitions', () => {
 });
 
 describe('combat casualty sequencing', () => {
+  it('places a small tear burst at the failed joint and avoids a duplicate fuel explosion', () => {
+    const {system, ships, w} = fixture(); ships[0].alive = ships[2].alive = false;
+    system.beginLoss(ships[0], 'wingL');
+    expect(w.effects.explosion).toHaveBeenCalledExactlyOnceWith(ships[0].pos.clone().addScalar(7), ships[0].vel, .22, 'small');
+    expect(w.effects.sparks).toHaveBeenCalledOnce();
+    system.beginLoss(ships[2], 'fire', 'explode');
+    expect(w.destruction.explode).toHaveBeenCalledExactlyOnceWith(ships[2]);
+    expect(w.effects.explosion).toHaveBeenCalledOnce();
+  });
   it('uses damage cause and supports four distinct airborne endings', () => {
     expect(lossKind('tail', 0)).toBe('split'); expect(lossKind('all engines', 0)).toBe('glide');
     expect(lossKind('wingR', 0.99)).toBe('fold'); expect(lossKind('cockpit', 0.99)).toBe('spin'); expect(lossKind('ditch', 0)).toBe('ditch');

@@ -4,6 +4,7 @@ import type { World } from './World';
 import type { HitEvent } from './Ballistics';
 
 import { FormationDress } from './FormationDress';
+import { TAIL, WING_L, WING_R } from './destruction/Parts';
 import { chutesDue, formationCompression, formationStatus, leadIndex, lossKind, LOSS_PROFILES, FORMATION_RADIO, type FormationLoss, type FormationMember } from './FormationRules';
 
 interface Ship extends FormationMember {
@@ -59,13 +60,17 @@ export class LivingFormation {
       for (const z of b.zones) z.burning = false;
     } else {
       const wing = b.zone(s.loss === 'fold' ? (side > 0 ? 'wingL' : 'wingR') : s.slot % 2 ? 'wingL' : 'wingR'); if (wing) wing.burning = true;
-      this.w.effects.explosion(b.pos, b.vel, s.loss === 'explode' ? 1.5 : 0.5);
-      if (s.loss === 'fold') {
-        this.w.destruction.separate(b, side > 0 ? 3 : 5, false);
-      } else if (s.loss === 'split') {
-        this.w.destruction.separate(b, 2, false);
+      if (s.loss === 'fold' || s.loss === 'split') {
+        const part = s.loss === 'split' ? TAIL : side > 0 ? WING_L : WING_R;
+        this.w.destruction.jointWorld(b, part, _p);
+        this.w.destruction.separate(b, part, false);
+        // A local tear reveals the separated structure; a whole-airframe fireball hides it.
+        this.w.effects.explosion(_p, b.vel, 0.22, 'small');
+        this.w.effects.sparks(_p, b.vel);
       } else if (s.loss === 'explode') {
         this.w.destruction.explode(b);
+      } else {
+        this.w.effects.explosion(b.pos, b.vel, 0.5);
       }
     }
     this.elect(true);
