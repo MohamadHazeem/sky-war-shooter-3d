@@ -1,0 +1,10 @@
+{
+  "state": "menu",
+  "tutorial": "over",
+  "done": true,
+  "ready": true,
+  "quality": "low",
+  "shown": [
+    "title"
+  ]
+}

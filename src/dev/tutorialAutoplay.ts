@@ -6,16 +6,20 @@ import { STATION_ORDER, STATIONS, StationId } from '../world/B17Layout';
 // Development-only: plays Gunnery School through scripted input, the way a player would —
 // mouse aim (the gun's target angles), short bursts on the left button, the right button
 // to zoom, the number keys to change seats and real Tab key events for the map.
-//   sws.tutorialAutoplay()            -> step log, ends on the campaign screen
-//   sws.tutorialAutoplay({ fromTitle: true })  clicks the title prompt's "Start training"
+//   sws.tutorialAutoplay()            -> step log, ends on the clean title screen
+//   sws.tutorialAutoplay({ fromTitle: true })  uses the first flight, or Hangar → More → Training
 export function tutorialAutoplay(engine: Engine, game: Game, opts: { fromTitle?: boolean; maxSteps?: number } = {}): string {
   const w = game.world, gun = game.gunner, tut = game.onboarding.tutorial;
   const inp = (game as any).input;
   const log: string[] = [];
   if (opts.fromTitle) {
-    const go = document.querySelector<HTMLElement>('#title .ob-prompt [data-ob="go"]');
-    if (!go) return 'no first-launch prompt on the title screen';
-    go.click();
+    if (!tut.active) {
+      document.querySelector<HTMLElement>('#title [data-a="hangar"]')?.click();
+      document.querySelector<HTMLElement>('#hangarHub [data-tab="more"]')?.click();
+      const go = document.querySelector<HTMLElement>('#hangarHub [data-route="training"]');
+      if (!go) return 'training route unavailable';
+      go.click();
+    }
   } else game.onboarding.startTutorial();
   let burst = 0, lastStep = '', tabs = 0, tabT = 0;
   const maxSteps = opts.maxSteps ?? 4000;
@@ -77,7 +81,7 @@ export function tutorialAutoplay(engine: Engine, game: Game, opts: { fromTitle?:
     for (let i = 0; i < 3; i++) engine.frame(1 / 60, false);
     if (tut.phase === 'over' && game.state === 'menu') break;
   }
-  const camp = document.querySelector('#campaign.show') ? 'campaign screen shown' : `state ${game.state}`;
+  const camp = document.querySelector('#title.show') ? 'title screen shown' : `state ${game.state}`;
   log.push(`END ${w.time.toFixed(1)}s · ${camp} · tutorialDone=${game.onboarding.tutorialDone} · steps: ${tut.log.join(', ')}`);
   return log.join('\n');
 }

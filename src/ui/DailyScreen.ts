@@ -12,6 +12,7 @@ export interface DailyScreenOpts {
   career: CareerData;
   fly(role: 'gunner' | 'pilot'): void;
   back(): void;
+  more(): void;
 }
 
 export function showDailyScreen(o: DailyScreenOpts) {
@@ -41,13 +42,14 @@ export function showDailyScreen(o: DailyScreenOpts) {
     <p class="svc-note">${tx('A Survival sortie with today\'s fixed weather and enemy schedule, identical for everyone. Fly it as often as you like; post your best to today\'s board.')}</p>
     <div class="row svc-runs">
       <button class="btn" data-fly="gunner">${tx('Fly as B-17 gunner')}</button>
-      <button class="btn" data-fly="pilot">${tx('Fly as P-51 escort')}</button>
+      <button class="btn ghost" data-more>${tx('More modes')}</button>
       <span class="svc-best">${tx('Your best today: gunner <b>{g}</b> · escort <b>{p}</b>', { g: num(best('gunner')), p: num(best('pilot')) })}</span>
     </div>
     <div class="svc-boards" data-boards></div>
     <div class="row svc-actions"><button class="btn ghost" data-back>${tx('Back')}</button></div>
   </div></div>`;
   el.querySelectorAll<HTMLButtonElement>('[data-fly]').forEach((b) => b.addEventListener('click', () => o.fly(b.dataset.fly as 'gunner' | 'pilot')));
+  el.querySelector('[data-more]')!.addEventListener('click', o.more);
   el.querySelector('[data-back]')!.addEventListener('click', o.back);
   const boards = el.querySelector<HTMLElement>('[data-boards]')!;
   mountLeaderboard(boards, dailyMode('gunner'), 'TODAY · B-17 GUNNER · TOP 10');

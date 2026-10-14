@@ -73,6 +73,7 @@ export function mountSkillSection(wrap: HTMLElement, prog: Progression, rerender
 // ---------------- the tree ----------------
 
 export function renderTree(host: HTMLElement, ctx: TreeCtx, compact = false) {
+  let branch = BRANCHES[0].id;
   let armed: SkillId | null = null;
   let respecArmed = false;
 
@@ -92,13 +93,16 @@ export function renderTree(host: HTMLElement, ctx: TreeCtx, compact = false) {
         <button class="sk-respec ${respecArmed ? 'armed' : ''}" data-respec ${cost <= 0 || ctx.prog.points < cost ? 'disabled' : ''}
           title="${tx('Refund every skill point. Costs merit.')}">${cost <= 0 ? tx('Respec') : tx(respecArmed ? 'Confirm respec · {n} merit' : 'Respec · {n} merit', { n: fmt(cost) })}</button>
       </div>
-      <div class="sk-branches ${compact ? 'compact' : ''}">${BRANCHES.map((b) => branchHtml(b, ctx, xp, armed)).join('')}</div>
+      ${!compact ? `<label class="skill-branch-picker">${tx('Skill branch')} <select data-branch-pick>${BRANCHES.map(b => `<option value="${b.id}" ${b.id === branch ? 'selected' : ''}>${tx(b.name)}</option>`).join('')}</select></label>` : ''}
+      <div class="sk-branches ${compact ? 'compact' : ''}">${BRANCHES.filter(b => compact || b.id === branch).map((b) => branchHtml(b, ctx, xp, armed)).join('')}</div>
       <div class="sk-legend"><span class="lg owned">${tx('Qualified')}</span><span class="lg available">${tx('Available')}</span><span class="lg short">${tx('Short of points')}</span><span class="lg locked">${tx('Locked')}</span>
         <span class="sk-hint">${tx('Hover a card for details · click twice to qualify')}</span></div>`;
     wire();
   };
 
   const wire = () => {
+    const picker = host.querySelector<HTMLSelectElement>('[data-branch-pick]');
+    if (picker) picker.onchange = () => { branch = picker.value as typeof branch; armed = null; draw(); };
     host.querySelectorAll<HTMLButtonElement>('.sk-node').forEach((n) => {
       const id = n.dataset.id as SkillId;
       n.addEventListener('mouseenter', () => showTip(n, id, ctx));

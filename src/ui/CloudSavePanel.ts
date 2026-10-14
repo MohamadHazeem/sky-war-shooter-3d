@@ -6,7 +6,7 @@ import { tx } from '../i18n';
 export function mountCloudSave(host: HTMLElement) {
   const box = document.createElement('div');
   box.className = 'lb-panel cloud';
-  host.appendChild(box);
+  (host.querySelector('[data-settings-extras]') ?? host).appendChild(box);
   const code = cloudCode();
   box.innerHTML = `<div class="hud-label">${tx('CLOUD SAVE')}</div>
     <div class="cs-row">${tx('Your transfer code:')} <b class="cs-code">${prettyCode(code)}</b> <button class="btn ghost" data-copy>${tx('Copy')}</button> <button class="btn ghost" data-push>${tx('Save now')}</button></div>

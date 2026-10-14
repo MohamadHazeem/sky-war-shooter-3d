@@ -192,9 +192,11 @@ export class CoopSession {
   // ---------------- hooks ----------------
 
   // Game.startMenu(): a title screen means any co-op game is over; (re)add the menu entry
+  openMenu(back = () => this.game.startMenu()) { this.screen.menu('', '', () => { this.leave(); back(); }); }
+
   onTitle() {
     if (this.phase !== 'idle') this.leave();
-    this.screen.titleButton(() => this.screen.menu());
+
   }
 
   // Game.direct(): the guest never runs the director, spawns or end conditions

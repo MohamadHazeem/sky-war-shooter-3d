@@ -149,7 +149,6 @@ export class Tutorial {
           this.phase = 'over';
           this.active = false;
           this.game.startMenu();
-          this.host.showCampaign();
         }
         break;
     }
@@ -172,7 +171,7 @@ export class Tutorial {
     this.phase = 'finale'; this.t = 0;
     this.log.push('complete');
     this.host.onDone();
-    this.render(tx('GUNNERY SCHOOL'), tx('Course complete'), tx('You\'re ready, gunner! Off to the campaign…'), true);
+    this.render(tx('GUNNERY SCHOOL'), tx('Course complete'), tx('You’re ready, gunner. Choose your next flight.'), true);
     this.ui.banner('GUNNERY SCHOOL COMPLETE', 'You\'re ready, gunner!', 4200);
     this.game.world.callout('tutdone', 'Pilot', 'You\'re ready, gunner! Welcome to the crew of the Sky Queen.', 0, 3);
   }

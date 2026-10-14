@@ -1,0 +1,21 @@
+<!doctype html><meta charset="utf-8"><title>Menu QA</title>
+<style>body{margin:0}iframe{width:100vw;height:100vh;border:0;display:block}nav{position:fixed;z-index:999;bottom:0;background:#eee;color:#111;padding:5px;font:12px monospace}button{margin:2px}pre{max-height:180px;overflow:auto}</style>
+<iframe id="game" title="Game under test" src="/"></iframe>
+<nav id="qa"><button id="fresh">Restart first flight</button><button id="step">Step 60 frames</button><button id="course">Play training</button><button id="low">Low preset</button><button id="read">Inspect state</button><button id="hide">Hide tools</button><pre id="result"></pre></nav>
+<script type="module">
+// Local development only. Run at localhost:5281 for an isolated first-launch profile.
+if (!import.meta.env.DEV) throw Error('Development only');
+const frame = document.querySelector('iframe'), out = document.querySelector('pre');
+const hooks = () => frame.contentWindow.sws;
+const inspect = () => {
+  const s = hooks();
+  if (!s?.game) { out.textContent = 'Loading'; return; }
+  out.textContent = JSON.stringify({state:s.game.state,mission:s.game.mission?.id,tutorial:s.game.onboarding.tutorial.phase,done:s.game.onboarding.tutorialDone,ready:s.assetsReady(),quality:s.game.settings.quality,shown:[...frame.contentDocument.querySelectorAll('.layer.show')].map(e=>e.id)},null,2);
+};
+document.querySelector('#fresh').onclick=()=>{if (!hooks()?.game) return inspect();hooks().game.onboarding.reset();hooks().game.startMenu();hooks().step(1);inspect()};
+document.querySelector('#step').onclick=()=>{hooks().step(60,1/60,true);inspect()};
+document.querySelector('#course').onclick=()=>{out.textContent=hooks().tutorialAutoplay({fromTitle:true,maxSteps:12000});hooks().step(1)};
+document.querySelector('#low').onclick=()=>{const s=hooks();s.game.settings.quality='low';s.game.applySettings();s.step(2);inspect()};
+document.querySelector('#read').onclick=inspect;
+document.querySelector('#hide').onclick=()=>document.querySelector('nav').hidden=true;
+</script>

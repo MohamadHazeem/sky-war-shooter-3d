@@ -39,7 +39,7 @@ export interface ModeDef {
   matches(m: Mission): boolean;
   board(role: Role): string;          // online leaderboard mode string ('' = never posted)
   boardFor?(m: Mission): string;      // the board for one mission (e.g. the week it was flown in)
-  panel?(body: HTMLElement, onPick: (m: Mission) => void): void;   // own tab body on the Survival screen
+  panel?(body: HTMLElement, onPick: (m: Mission) => void, options?: { boards?: boolean }): void;   // own tab body on the Survival screen
   pace?: PaceProfile;                 // round pacing (default: build -> breather -> final wave)
   paceFor?(m: Mission): PaceProfile;  // pacing for one mission (custom battles: final wave sized to its numbers)
   elite?: boolean;                    // final-wave banner text
@@ -304,36 +304,26 @@ html[dir="rtl"] .mode-tab { letter-spacing: 0; }
 export type PanelHeader = (el: HTMLElement, open: (tabId: string) => void, tab: string) => void;
 export const PANEL_HEADERS: PanelHeader[] = [];
 
-// Tabs, one per mode: description, a start button per role and the mode's online top 10 for
-// each role (or the mode's own panel). Mounted into the Survival screen's box; the screen's own
-// role buttons are hidden (the Survival tab has the same two) when they are found.
+// The default is one gunner action. Variants stay behind a native disclosure and a
+// compact selector, so adding a registered mode never adds another top-level button.
 export function mountModePanel(host: HTMLElement, onPick: (m: Mission) => void, startTab = 'survival') {
   injectCss();
+  const target = host.querySelector<HTMLElement>('[data-modes]') ?? host;
+  target.querySelector('.mode-panel')?.remove();
   const panel = document.createElement('div');
-  panel.className = 'mode-panel';
-  const own = host.querySelector<HTMLElement>('[data-r]')?.parentElement;
-  if (own) { own.style.display = 'none'; own.after(panel); }
-  else host.appendChild(panel);
+  panel.className = 'mode-panel'; target.appendChild(panel);
+  const details = host.querySelector<HTMLDetailsElement>('.more-modes');
+  if (details && startTab !== 'survival') details.open = true;
   const show = (id: string) => {
-    const d = MODES.find((x) => x.id === id) ?? MODES[0];
-    const roles = d.roles ?? (['gunner', 'pilot'] as Role[]);
-    panel.innerHTML = `<div data-headers></div><div class="mode-tabs">${MODES.map((x) => `<button class="mode-tab${x === d ? ' on' : ''}" data-tab="${esc(x.id)}">${esc(tx(x.title))}</button>`).join('')}</div>
+    const d = MODES.find(x => x.id === id) ?? MODES[0];
+    const roles = d.id === 'survival' ? ['pilot'] as Role[] : d.roles ?? ['gunner', 'pilot'] as Role[];
+    panel.innerHTML = `<label class="mode-picker">${tx('Mode')}<select data-mode-select>${MODES.map(x => `<option value="${esc(x.id)}" ${x === d ? 'selected' : ''}>${esc(tx(x.id === 'survival' ? 'P-51 Survival' : x.title))}</option>`).join('')}</select></label>
       <div class="mode-body"><p>${esc(tx(d.blurb))}</p>
-      <div class="row">${roles.includes('gunner') ? `<button class="btn" data-mode-role="gunner">${tx('B-17 Gunner')}</button>` : ''}${roles.includes('pilot') ? `<button class="btn" data-mode-role="pilot">${tx('P-51 Escort')}</button>` : ''}</div>
-      <div data-boards></div></div>`;
-    panel.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => b.addEventListener('click', () => show(b.dataset.tab!)));
-    const heads = panel.querySelector<HTMLElement>('[data-headers]')!;
-    for (const h of PANEL_HEADERS) h(heads, show, d.id);
-    if (d.panel) {
-      const body = panel.querySelector<HTMLElement>('.mode-body')!;
-      body.innerHTML = '';
-      d.panel(body, onPick);
-      return;
-    }
-    panel.querySelectorAll<HTMLButtonElement>('[data-mode-role]').forEach((b) => b.addEventListener('click', () => onPick(d.mission(b.dataset.modeRole as Role))));
-    const boards = panel.querySelector<HTMLElement>('[data-boards]')!;
-    if (roles.includes('gunner')) mountLeaderboard(boards, d.board('gunner'), tx('ONLINE TOP 10 — {mode} · B-17 GUNNER', { mode: tx(d.title).toUpperCase() }));
-    if (roles.includes('pilot')) mountLeaderboard(boards, d.board('pilot'), tx('ONLINE TOP 10 — {mode} · P-51 ESCORT', { mode: tx(d.title).toUpperCase() }));
+      <div class="row">${roles.map(r => `<button class="btn ghost" data-mode-role="${r}">${tx(r === 'gunner' ? 'B-17 Gunner' : 'P-51 Escort')}</button>`).join('')}</div></div>`;
+    panel.querySelector<HTMLSelectElement>('select')!.onchange = e => show((e.target as HTMLSelectElement).value);
+    if (d.panel) { const body = panel.querySelector<HTMLElement>('.mode-body')!; body.innerHTML = ''; d.panel(body, onPick, { boards: false }); }
+    else panel.querySelectorAll<HTMLButtonElement>('[data-mode-role]').forEach(b => b.onclick = () => onPick(d.mission(b.dataset.modeRole as Role)));
+    panel.querySelectorAll('.btn').forEach(b => b.classList.add('ghost'));
   };
   show(startTab);
 }

@@ -107,7 +107,7 @@ export function showTrophyScreen(c: CareerData, h: { back(): void; career(): voi
     el.querySelectorAll<HTMLButtonElement>('[data-f]').forEach((b) => b.addEventListener('click', () => { filter = b.dataset.f as Filter; render(); }));
     el.querySelector('[data-back]')!.addEventListener('click', h.back);
     el.querySelector('[data-car]')!.addEventListener('click', h.career);
+    onBackKey(el, h.back);
   };
   render();
-  onBackKey(el, h.back);
 }

@@ -1,4 +1,5 @@
 import { controlsHintVisible, hudRuntime } from '../ui/HudDetail';
+import { shouldStartFirstFlight } from './MenuModel';
 import type { Engine } from '../core/Engine';
 import type { Input } from '../core/Input';
 import type { UI } from '../ui/UI';
@@ -8,11 +9,10 @@ import { sound } from '../audio/Sound';
 import { Tutorial, TUTORIAL } from './Tutorial';
 import { Hints } from './Hints';
 import { ControlsCard, ControlsHint } from '../ui/ControlsCard';
-import { tx } from '../i18n';
 import '../ui/onboarding.css';
 
 // First-time player experience, kept out of Game.ts: the Gunnery School tutorial (offered
-// on the title screen until it is done or skipped), the H/F1 controls card, the
+// automatically for new profiles), the H/F1 controls card, the
 // "H — controls" reminder and the once-per-profile context hints.
 //
 // Game.ts hooks (see each method): constructor, startMenu → onTitle(),
@@ -73,47 +73,24 @@ export class Onboarding {
   }
 
   startTutorial() {
-    this.dismissPrompt(false);
+    this.saved.promptDismissed = true;
+    this.save();
     this.game.startMission(TUTORIAL);
   }
 
   // ---------------- hooks ----------------
-  // Game.startMenu(), after ui.title(): Training entry and the first-launch prompt
+  // Game.startMenu(): first flight starts once; no prompt overlays the title.
   onTitle() {
     this.tutorial.stop();
     if (this.card.open) { this.card.hide(); }
     this.hint.set(false);
-    const title = document.getElementById('title');
-    const menu = title?.querySelector('.menu');
-    if (!title || !menu) return;
-    if (!menu.querySelector('[data-a="training"]')) {
-      const b = document.createElement('button');
-      b.dataset.a = 'training';
-      b.innerHTML = `${tx('Training')} <small>${tx(this.saved.tutorialDone ? 'gunnery course' : '2-minute gunnery course')}</small>`;
-      b.addEventListener('click', () => this.startTutorial());
-      menu.insertBefore(b, menu.firstChild);
+    if (shouldStartFirstFlight(this.saved, this.game.progress, this.game.service.career.missions)) {
+      this.startTutorial();
     }
-    if (this.saved.tutorialDone || this.saved.promptDismissed || title.querySelector('.ob-prompt')) return;
-    const p = document.createElement('div');
-    p.className = 'ob-prompt';
-    p.setAttribute('role', 'dialog');
-    p.innerHTML = `<div class="k">${tx('NEW RECRUIT?')}</div>
-      <div class="t">${tx('First time? Take the 2-minute gunnery course')}</div>
-      <div class="d">${tx('Aim, fire, lead, zoom and change seats — one step at a time. Nobody shoots back.')}</div>
-      <div class="row"><button class="btn" data-ob="go">${tx('Start training')}</button><button class="btn ghost" data-ob="skip">${tx('Skip')}</button></div>`;
-    p.querySelector('[data-ob="go"]')!.addEventListener('click', () => this.startTutorial());
-    p.querySelector('[data-ob="skip"]')!.addEventListener('click', () => this.dismissPrompt(true));
-    title.appendChild(p);
-  }
-
-  private dismissPrompt(remember: boolean) {
-    document.querySelector('#title .ob-prompt')?.remove();
-    if (remember) { this.saved.promptDismissed = true; this.save(); }
   }
 
   // Game.startMission(), at the end
   onMissionStart(m: Mission) {
-    this.dismissPrompt(false);
     if (this.card.open) this.card.hide();
     this.hints.onMissionStart();
     if (!m.tutorial) { this.saved.missions = (this.saved.missions ?? 0) + 1; this.save(); }

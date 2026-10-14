@@ -1,0 +1,111 @@
+{
+  "results": [
+    {
+      "view": "title-settings-en",
+      "basicControls": 9,
+      "advanced": true,
+      "extras": true
+    },
+    {
+      "view": "hangar-crew-settings-en",
+      "basicControls": 9,
+      "advanced": true,
+      "extras": true
+    },
+    {
+      "view": "hangar-aircraft-settings-en",
+      "basicControls": 9,
+      "advanced": true,
+      "extras": true
+    },
+    {
+      "view": "hangar-records-settings-en",
+      "basicControls": 9,
+      "advanced": true,
+      "extras": true
+    },
+    {
+      "view": "hangar-more-settings-en",
+      "basicControls": 9,
+      "advanced": true,
+      "extras": true
+    },
+    {
+      "view": "hangar-settings-ar",
+      "basicControls": 9,
+      "advanced": true,
+      "extras": true
+    },
+    {
+      "view": "title-settings-ar",
+      "basicControls": 9,
+      "advanced": true,
+      "extras": true
+    },
+    {
+      "view": "gunner-standard-heavy-en",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 53.796875
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 254
+        },
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 634.8125,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 606,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 484,
+          "right": 908.796875,
+          "bottom": 518
+        },
+        {
+          "id": "abilityBar",
+          "left": 592.3203125,
+          "top": 563,
+          "right": 687.6796875,
+          "bottom": 600
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 133.203125,
+          "bottom": 95
+        }
+      ],
+      "issues": []
+    },
+    {
+      "view": "round-hangar-settings",
+      "spaceGuard": true,
+      "escapeReturn": true
+    }
+  ],
+  "errors": []
+}

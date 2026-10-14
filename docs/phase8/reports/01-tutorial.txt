@@ -1,0 +1,10 @@
+7.9s aim
+10.4s fire
+19.8s lead
+23.4s zoom
+26.2s seat
+34.2s radar
+39.2s perks
+45.6s fight
+139.9s finale
+END 0.0s · title screen shown · tutorialDone=true · steps: aim 5.0s, fire 8.0s, lead 2.2s, zoom 1.4s, seat 6.6s, radar 3.5s, perks 5.0s, fight 92.9s, complete
