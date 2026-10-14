@@ -186,8 +186,8 @@ export class GroundTargets {
   skill = 1;                                 // flak accuracy
   readonly root = new THREE.Group();
   private meshes = new Map<GroundKind | 'planewreck', THREE.InstancedMesh>();
-  private mat: THREE.MeshLambertMaterial;
-  private gunMat: THREE.MeshLambertMaterial;
+  private mat: THREE.MeshStandardMaterial;
+  private gunMat: THREE.MeshStandardMaterial;
   private gunGeo = new Map<number, { ped: THREE.BufferGeometry; bar: THREE.BufferGeometry }>();
   private dirty = new Set<THREE.InstancedMesh>();
   private dust = 0;
@@ -197,8 +197,8 @@ export class GroundTargets {
   constructor(private world: World, private cs: Countryside) {
     this.root.name = 'ground_targets';
     cs.group.add(this.root);
-    this.mat = hazed(new THREE.MeshLambertMaterial({ vertexColors: true }), { key: 'targets' });
-    this.gunMat = hazed(new THREE.MeshLambertMaterial({ vertexColors: true }), { key: 'targets' });
+    this.mat = hazed(new THREE.MeshStandardMaterial({ vertexColors: true }), { key: 'targets' });
+    this.gunMat = hazed(new THREE.MeshStandardMaterial({ vertexColors: true }), { key: 'targets' });
   }
 
   private mesh(k: GroundKind | 'planewreck'): THREE.InstancedMesh {

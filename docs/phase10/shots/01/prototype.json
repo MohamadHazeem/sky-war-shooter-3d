@@ -1,0 +1,22 @@
+{
+  "result": [
+    {
+      "requested": "WebGPU",
+      "backend": "WebGPU",
+      "p50": 4.5,
+      "p90": 7.799999997019768,
+      "legacyError": ""
+    },
+    {
+      "requested": "WebGL2",
+      "backend": "WebGL2",
+      "p50": 0.29999999701976776,
+      "p90": 0.30000001192092896,
+      "legacyError": ""
+    }
+  ],
+  "warnings": [
+    "THREE.NodeBuilder: Material \"ShaderMaterial\" is not compatible.",
+    "THREE.NodeBuilder: Material \"ShaderMaterial\" is not compatible."
+  ]
+}

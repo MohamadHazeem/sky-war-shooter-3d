@@ -182,6 +182,7 @@ const front = {
   t: 0,
   k: -1,                          // last blend applied (-1: not started)
   envDirty: false,
+  envAge: 0,
   rearm: false,
   told: 0,                        // events reported (bit 1: wall sighted, 2: arriving, 4: done)
   wallDir: new THREE.Vector2(),
@@ -195,8 +196,14 @@ export function applyWeather(engine: Engine, w: Weather) {
   if (!wall) {
     wall = new StormWall();
     engine.scene.add(wall.mesh);
-    // the reflection map catches up with a front at the next pause (keeps the temporal history)
-    engine.add({ update: () => { if (front.envDirty && engine.paused) { front.envDirty = false; engine.refreshLighting(false); } } });
+    // Persistent PMREM shaders permit sky IBL updates during a front, not only on pause.
+    // Amortise the capture over three seconds of changing weather, retaining temporal history.
+    engine.add({ update: (dt) => {
+      front.envAge += dt;
+      if (front.envDirty && (engine.paused || front.envAge >= 3)) {
+        front.envDirty = false; front.envAge = 0; engine.refreshLighting(false);
+      }
+    } });
   }
   Object.assign(conditionA, conditionFor(w));
   Object.assign(conditionB, conditionA);
@@ -214,7 +221,7 @@ export function applyWeather(engine: Engine, w: Weather) {
   const f = w.front ?? (ROUND_WEATHER.includes(w) ? survivalFront(w, Math.random) : null);
   front.def = f;
   front.base = w;
-  front.t = 0; front.k = -1; front.envDirty = false; front.rearm = false; front.told = 0;
+  front.t = 0; front.k = -1; front.envDirty = false; front.envAge = 0; front.rearm = false; front.told = 0;
   front.wallSet = false; front.flashT = 0; front.lightningT = 4;
   wall.uniforms.uFade.value = 0;
   if (f) { const target = frontTarget(w, f); skyFor(target, skyB); Object.assign(conditionB, conditionFor(target)); }

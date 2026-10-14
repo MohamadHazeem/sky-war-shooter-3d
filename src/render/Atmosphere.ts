@@ -1,5 +1,11 @@
 import * as THREE from 'three';
 
+// Scene-referred light unit: 25,000 lux. Keep sunlight pre-exposed in the half-float HDR
+// range; 105,000 lux of direct daylight becomes 4.2 scene units before the BRDF's 1/pi.
+// Sky radiance and authored emissive effects use the corresponding scene-linear scale.
+export const LIGHT_UNIT_LUX = 25000;
+export const DAY_SUN_LUX = 105000;
+
 // Shared lighting/atmosphere state. All colors are linear HDR.
 // Tuned against the reference frames (reference/video-frames): high summer sun,
 // deep blue zenith, pale hazy horizon, a bright sea of cumulus below the formation.
@@ -8,7 +14,7 @@ export const Atmos = {
   sunElevationDeg: 52,
   sunAzimuthDeg: 205,
   sunColor: new THREE.Color(1.0, 0.95, 0.88),
-  sunIntensity: 4.2,
+  sunIntensity: DAY_SUN_LUX / LIGHT_UNIT_LUX,
   zenith: new THREE.Color(0.045, 0.15, 0.5),
   horizon: new THREE.Color(0.5, 0.62, 0.8),
   ground: new THREE.Color(0.11, 0.14, 0.17),

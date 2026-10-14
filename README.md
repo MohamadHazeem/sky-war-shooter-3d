@@ -97,7 +97,7 @@ system in nine short illustrated chapters, with a controls reference that follow
 | Z / X / G | Abilities |
 
 Keys are remappable (Settings → Controls). Settings also cover difficulty, aim assist, lead
-indicator, field of view, volumes, radio voices, graphics quality (Low/Medium/High/Ultra, with
+indicator, field of view, volumes, radio voices, graphics quality (Low/Medium/High/Ultra/Cinematic, with
 dynamic resolution and 120/144 Hz support), an FPS counter, colour-blind markers, subtitle size,
 reduced shake/flashes, kill cam and anonymous stats.
 
@@ -114,7 +114,8 @@ reduced shake/flashes, kill cam and anonymous stats.
   * Raymarched volumetric clouds with depth-aware upsampling, and per-mission time of day (from high summer sun to golden-hour winter light).
   * Condensation trails streaming from every bomber engine.
   * A second pass draws transparent effects (contrails, tracers, smoke, glass) over the clouds.
-  * HDR post-processing: bloom with lens dirt, sun lens flare (occluded by aircraft and clouds), camera motion blur, near-field depth of field, filmic grading and trauma-based camera shake.
+  * Motion-vector TAA, half-resolution temporal SSAO, cascaded PCF shadows and dynamic sky IBL (Medium and above).
+  * HDR post-processing: bounded eye adaptation, mood LUT grading, bloom with optional lens dirt, sun lens flare (occluded by aircraft and clouds), camera motion blur, near-field depth of field, filmic grading and trauma-based camera shake.
   * Procedural riveted-aluminium interior and parkerised gun textures. Bullet holes let in pinpoints of daylight and dusty sunbeams.
   * Explosions with fireball, shockwave, burning debris and lingering smoke.
 * **Simulation**:

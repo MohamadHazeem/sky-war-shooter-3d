@@ -136,3 +136,34 @@ Snow slows traverse 10%. Both sides' bullets drift with wind, and Bombardier sco
 and TargetArea's falling bombs use the same wind. Gameplay modifiers follow this shared state.
 The Settings “Weather effects” switch removes precipitation, glass weather, wet sheen and lightning
 visuals while retaining fog, spotting and other gameplay rules. Glass overlays remain off on Low.
+
+## Phase 10 renderer foundation
+
+`Engine` retains WebGL2 (including ordinary depth when `EXT_clip_control` is absent). Its pipeline is
+opaque HDR/depth → clouds → transparent HDR effects → object/camera velocity → half-resolution temporal
+SSAO → HDR TAA → metered exposure, bloom, ACES fit, mood LUT, sharpening/lens effects → display.
+`TemporalFrame.begin/end` jitter and restore the projection; its histories reset on resize, quality
+changes, camera cuts and floating-origin shifts. Mesh transforms include prop rotations; transparent
+sprites use neighbourhood clipping and an HDR reactive weight rather than fabricated object velocity.
+Camera blur explicitly subtracts TAA jitter. Transparent/velocity passes reuse the opaque pass's scene matrices; a `finally` block restores automatic updates and the camera projection.
+
+`SunCascades` owns three nested, texel-snapped PCF maps: the camera/interior, formation, and distant
+aircraft out to 2 km. Mid/far maps refresh every 4/12 frames. Light counts stay constant across presets;
+Low uses the original close map and disables temporal post. `World.prewarm` calls `Engine.warmRenderer`
+with its effect/aircraft variants present, including all three surface-detail shader variants.
+
+`Sky.buildEnvironment` retains the PMREM generator and capture materials. Weather fronts refresh sky
+IBL every three seconds; replaced render targets are disposed after detached material references have
+been retargeted. The sun disk is excluded from IBL to avoid counting direct light twice. Light values
+are scene-referred (25,000 lux/unit for the direct sun); eye adaptation remains bounded to preserve
+night visibility/art direction. `MaterialAudit` preserves existing shader hooks and dynamic cache keys,
+clamps PBR scalar inputs, and leaves deliberately unlit effects alone.
+
+Medium/High use TAA without MSAA, Ultra adds 2× MSAA, Cinematic adds 4× and larger cloud/pixel budgets.
+AutoGraphics caps automatic picks at Ultra; Cinematic is a manual advanced option. `PostFX.lensDirt`
+is controlled by the saved Settings option. LUTs are preloaded and blend with weather fronts.
+
+Renderer verification: start `npx vite --port 5301 --strictPort`, then run
+`PLAYWRIGHT_MODULE=/existing/playwright/index.mjs node tools/renderer_smoke.mjs` and
+`node tools/renderer_check.mjs after` with the same environment variable. The latter consumes the
+committed baseline camera/root-pose snapshots. See `docs/phase10/reports/01.md` for measurements and limits.

@@ -336,6 +336,7 @@ export class World implements WorldView {
     this.engine.clouds.warmProbe(this.engine.renderer);
     this.ditchingSea.warm(render, this.playerBomber?.root ?? b17.root);
     this.engine.renderer.shadowMap.needsUpdate = true;
+    this.engine.warmRenderer();
     render();
     unwarmTargetSmoke();
     if (bombs) bombs.count = bombCount;

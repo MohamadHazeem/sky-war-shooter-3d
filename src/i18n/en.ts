@@ -113,6 +113,7 @@ export const en = {
   'settings.q.low': 'low',
   'settings.q.medium': 'medium',
   'settings.q.high': 'high',
+  'settings.q.cinematic': 'cinematic',
   'settings.q.ultra': 'ultra',
   'settings.fpsCounter': 'FPS counter',
   'settings.detect': 'Detect best settings',

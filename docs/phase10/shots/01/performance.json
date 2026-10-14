@@ -1,0 +1,207 @@
+{
+  "viewport": [
+    1920,
+    1080
+  ],
+  "samplesPerBatch": 90,
+  "batches": 3,
+  "method": "sws.bench: fixed 1/60 simulation, GPU-synchronised readback, DRS disabled, fresh browser without image encoding",
+  "perf": [
+    {
+      "tier": "low",
+      "samples": [
+        {
+          "avg": 8,
+          "p50": 7.9,
+          "p95": 9,
+          "max": 52.3,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1264,
+          "h": 711
+        },
+        {
+          "avg": 7.49,
+          "p50": 7.8,
+          "p95": 8.8,
+          "max": 9,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1264,
+          "h": 711
+        },
+        {
+          "avg": 7.38,
+          "p50": 7.7,
+          "p95": 9,
+          "max": 9.4,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1264,
+          "h": 711
+        }
+      ],
+      "newPrograms": []
+    },
+    {
+      "tier": "medium",
+      "samples": [
+        {
+          "avg": 10.97,
+          "p50": 8.8,
+          "p95": 10.8,
+          "max": 190.2,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1632,
+          "h": 918
+        },
+        {
+          "avg": 8.97,
+          "p50": 8.8,
+          "p95": 10.3,
+          "max": 14.5,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1632,
+          "h": 918
+        },
+        {
+          "avg": 9.22,
+          "p50": 9,
+          "p95": 11.8,
+          "max": 13.1,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1632,
+          "h": 918
+        }
+      ],
+      "newPrograms": []
+    },
+    {
+      "tier": "high",
+      "samples": [
+        {
+          "avg": 13.4,
+          "p50": 10.5,
+          "p95": 14.7,
+          "max": 238.3,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        },
+        {
+          "avg": 10.65,
+          "p50": 10.4,
+          "p95": 13.6,
+          "max": 15.8,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        },
+        {
+          "avg": 10.98,
+          "p50": 10.5,
+          "p95": 15.1,
+          "max": 17.1,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        }
+      ],
+      "newPrograms": []
+    },
+    {
+      "tier": "ultra",
+      "samples": [
+        {
+          "avg": 17.2,
+          "p50": 12.4,
+          "p95": 17.2,
+          "max": 390.7,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        },
+        {
+          "avg": 13,
+          "p50": 12.6,
+          "p95": 16.5,
+          "max": 20.1,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        },
+        {
+          "avg": 13.11,
+          "p50": 12.5,
+          "p95": 17.7,
+          "max": 18.7,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        }
+      ],
+      "newPrograms": []
+    },
+    {
+      "tier": "cinematic",
+      "samples": [
+        {
+          "avg": 19.42,
+          "p50": 14.2,
+          "p95": 18.1,
+          "max": 479.8,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        },
+        {
+          "avg": 14.17,
+          "p50": 13.3,
+          "p95": 17.9,
+          "max": 19.8,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        },
+        {
+          "avg": 14.25,
+          "p50": 13.4,
+          "p95": 19.5,
+          "max": 23.4,
+          "calls": 1,
+          "tris": 1,
+          "programs": 164,
+          "w": 1920,
+          "h": 1080
+        }
+      ],
+      "newPrograms": []
+    }
+  ],
+  "errors": []
+}

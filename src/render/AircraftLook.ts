@@ -1,3 +1,4 @@
+import { disposeEnvironment } from './Sky';
 import * as THREE from 'three';
 import { Atmos } from './Atmosphere';
 import { envRef } from './EnvRef';
@@ -116,7 +117,7 @@ export function freshEnv(m: THREE.Material) {
 // scene at that moment (a hidden turret interior) would be left with a dead texture, so
 // keep the previous one alive for one more weather change.
 export function retireEnv(old: THREE.Texture | null) {
-  retired?.dispose();
+  if (retired) disposeEnvironment(retired);
   retired = old;
 }
 
@@ -126,17 +127,17 @@ const LOOKS: { test: RegExp; look: Look }[] = [
   // canopies and turret glass: glossy, the sky and sun mirrored in them
   { test: /glass/i, look: { rough: 0.03, metal: 0.0, env: 1.6 } },
   // insides seen through the windows: matte, barely reflective
-  { test: /interior|interiour|panel|seat|pilot|crew/i, look: { rough: 0.85, metal: 0.05, env: 0.3 } },
+  { test: /interior|interiour|panel|seat|pilot|crew/i, look: { rough: 0.85, metal: 0, env: 0.3 } },
   // gun barrels, exhausts, undercarriage: worn bare metal
   { test: /gun|exhaust|gear/i, look: { rough: 0.4, metal: 0.65, env: 0.9 } },
   // engine nacelles and cowlings: painted but oily, a little glossier than the skin
-  { test: /engine/i, look: { rough: 0.46, metal: 0.3, env: 0.8 } },
+  { test: /engine/i, look: { rough: 0.46, metal: 0, env: 0.8 } },
 ];
 // airframe skin: satin painted metal (olive drab / RLM greys) with a crisp sun highlight
 // (big flat surfaces seen edge-on mirror the bright sky below ~0.6 roughness and lose their paint)
-const SKIN: Look = { rough: 0.66, metal: 0.12, env: 0.6 };
+const SKIN: Look = { rough: 0.66, metal: 0, env: 0.6 };
 // natural-metal P-51: polished aluminium
-const BARE: Look = { rough: 0.32, metal: 0.72, env: 0.9 };
+const BARE: Look = { rough: 0.32, metal: 1, env: 0.9 };
 
 // Returns true for the airframe skin (painted, bare metal or nacelle): the surfaces that get
 // panel lines, rivets and weathering (SurfaceDetail.ts).

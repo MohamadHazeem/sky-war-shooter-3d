@@ -4,8 +4,8 @@
 // a preset holds as long as dynamic resolution can keep it on time without dropping far.
 import { DRS_FAST, DRS_SLOW, drsAbsorb, drsTargetMs } from './FrameTiming';
 
-export type Tier = 'low' | 'medium' | 'high' | 'ultra';
-export const TIERS: Tier[] = ['low', 'medium', 'high', 'ultra'];
+export type Tier = 'low' | 'medium' | 'high' | 'ultra' | 'cinematic';
+export const TIERS: Tier[] = ['low', 'medium', 'high', 'ultra', 'cinematic'];
 const idx = (t: Tier) => Math.max(0, TIERS.indexOf(t));
 
 export interface FrameStats { p50: number; p90: number; n: number }
@@ -22,8 +22,8 @@ export const MIN_FRAMES = 12;
 // Rounded costs relative to High: throttled menu measurements, checked in the gunner view.
 // Medium keeps the shadow submission cost; it is much closer to High than a 0.6 step.
 // See docs/phase6/reports/02.md for the measured model and its limitations.
-export const TIER_COST: Record<Tier, number> = { low: 0.7, medium: 0.8, high: 1, ultra: 1.35 };
-export const PIXEL_SHARE: Record<Tier, number> = { low: 0.1, medium: 0.2, high: 0.4, ultra: 0.35 };
+export const TIER_COST: Record<Tier, number> = { low: 0.7, medium: 0.8, high: 1, ultra: 1.35, cinematic: 2.1 };
+export const PIXEL_SHARE: Record<Tier, number> = { low: 0.1, medium: 0.2, high: 0.4, ultra: 0.35, cinematic: .55 };
 // Missions draw more than the menu (cockpit, more fighters, effects): menu frames are scaled up
 export const MENU_TO_MISSION = 1.3;
 // A tier holds while dynamic resolution can keep it on time at this render scale or above

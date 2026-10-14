@@ -284,6 +284,7 @@ export class Game {
     this.gunner.baseFov = fov;
     this.pilot.baseFov = fov;
     this.engine.applyGraphics(s.quality, !!s.fpsCounter);
+    this.engine.post.lensDirt = s.lensDirt !== false;
     syncSurfaceDetail(this.engine.quality);   // aircraft panel lines / weathering level (render/SurfaceDetail.ts)
     save(SETTINGS_KEY, s);
   }
