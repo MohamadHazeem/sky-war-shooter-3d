@@ -173,6 +173,9 @@ async function boot() {
     const { aiQa, aiAuto } = await import('./dev/aiQa');
     (window as any).sws.aiQa = aiQa(engine, game);
     void aiAuto(engine, game);
+    // Ground-from-altitude rig views (Phase 10 goal 04): sws.ground.setup('down'), .save(name), .bench()
+    const { groundShots } = await import('./dev/groundShots');
+    (window as any).sws.ground = groundShots(engine, game);
   }
 }
 

@@ -13,6 +13,10 @@
 /audio/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 
+# Far-terrain map tiles (render/FarTerrain.ts): fetched per mission, not precached by the worker
+/terrain/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
 /icons/*
   Cache-Control: public, max-age=604800
 /og-image.jpg

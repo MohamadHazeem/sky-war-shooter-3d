@@ -2,7 +2,7 @@ import { beginMarkerFrame } from '../ui/MarkerAudit';
 import { Precipitation } from '../render/Precipitation';
 import * as THREE from 'three';
 import { Atmos, atmosUniforms, syncAtmosUniforms } from '../render/Atmosphere';
-import { farTerrainUniforms } from '../render/FarTerrain';
+import { syncFarTerrain } from '../render/FarTerrain';
 import { cloudShadowUniforms } from '../render/CloudShadow';
 import { weatherNow } from '../render/WeatherState';
 import { CloudRenderer } from '../render/Clouds';
@@ -411,11 +411,7 @@ export class Engine {
     // Spatial maps shade each aircraft skin; immersion also dims cockpit/local light.
     this.sun.intensity = Atmos.sunIntensity * 0.95 * (1 - 0.65 * weatherNow.cloudInside);
     atmosUniforms.uCamAlt.value = cp.y;
-    farTerrainUniforms.uFarQuality.value = this.quality === 'low' ? 0 : this.quality === 'medium' ? 1 : 2;
-    farTerrainUniforms.tFarShadow.value = this.clouds.groundShadowTexture;
-    farTerrainUniforms.uFarShadowBox.value.copy(this.clouds.groundShadowBox);
-    farTerrainUniforms.uFarCloudBase.value = Atmos.highBase;
-    farTerrainUniforms.uFarLowBase.value = Atmos.lowBase;
+    syncFarTerrain(this.clouds, this.quality, cam, this.renderer.domElement.height);
     (this.sky.mesh.material as THREE.ShaderMaterial).uniforms.uGroundXZ.value.set(cp.x + Atmos.originOffset.x, cp.z + Atmos.originOffset.z);
 
     const r = this.renderer;
