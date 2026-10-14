@@ -35,6 +35,7 @@ import { bomberName, dressPlayerBomber } from '../game/Customize';
 import { aiGunnerSkill, crewRoster } from '../game/CrewRoster';
 import { warmTurretViewmodels } from '../game/Viewmodels';
 import { warmLivingInterior } from '../game/LivingInterior';
+import { warmBailOutCanopy } from '../game/BailOutCanopy';
 import { PlayerBomberDamage } from './PlayerBomberDamage';
 import { dressEnemy } from './EnemyDress';
 import { updateWeather, weatherRestart, weatherEvents, frontState, FRONT_EVENT } from '../render/Weather';
@@ -304,6 +305,7 @@ export class World implements WorldView {
     const unwarmSea = prewarmSea(this.scene, at);
     const unwarmBoss = prewarmBoss(this.scene, camera.position, fwd);
     const unwarm = this.bomberDamage.warmup(this.scene, at);
+    const unwarmCanopy = warmBailOutCanopy(this.scene, at);
     const unwarmCrew = warmLivingInterior(this.scene, at); // gunner interior: crew, brass, shafts, frost, breath
     const unwarmTurrets = warmTurretViewmodels(this.scene, at);
     const unwarmAA = warmAAGuns(this.scene, at);
@@ -316,7 +318,7 @@ export class World implements WorldView {
     unwarmTargetSmoke();
     this.wrecks.keepWarm(b17Pieces);   // B-17 wreck programs stay compiled for the set pieces
     unwarm();
-    unwarmCrew();
+    unwarmCrew(); unwarmCanopy();
     unwarmTurrets();
     unwarmGlass();
     unwarmDamage();
@@ -396,6 +398,12 @@ export class World implements WorldView {
       b.slot.y -= dt * 2.0 * b.enginesOut;
     }
     if (b.isPlayer) wob.multiplyScalar(crewRoster.effects().formation);
+    if (b.isPlayer && b.damageControl) {
+      const damage = b.damageControl.controls;
+      wob.x += Math.sin(this.time * .18) * damage * 14;
+      wob.y -= damage * (3 + Math.sin(this.time * .31) * 2);
+      wob.z -= damage * 18;
+    }
     wob.add(this.formOff);
     // player's ship: jink sideways and down, banking into it (sin^2 profile, bank leads the slide)
     let jinkRoll = 0, jinkPitch = 0, turb = 0;
@@ -711,7 +719,7 @@ export class World implements WorldView {
       this.stats.bombersLost++;
       this.events.bomberLost?.(a);
       // crew bailing out
-      const n = 2 + Math.floor(Math.random() * 6);
+      const n = a.isPlayer ? 0 : 2 + Math.floor(Math.random() * 6); // player chutes follow the escape manifest
       for (let i = 0; i < n; i++) {
         setTimeout(() => {
           if (a.remove) return;
@@ -923,6 +931,7 @@ export class World implements WorldView {
       for (const g of gs) {
         if (b.isPlayer && g.station && this.playerStation && g.station.id === this.playerStation.id) continue;
         if (b.isPlayer && g.station && this.remoteStations.has(g.station.id)) continue;
+        if (b.isPlayer && g.station && this.crew.wounded.has(STATION_CREW[g.station.id])) { g.burst = 0; continue; }
         const sk = aiGunnerSkill(b.isPlayer ? g.station?.id : null); // crew skill (CrewRoster); default elsewhere
         g.retarget -= dt;
         g.cooldown -= dt;

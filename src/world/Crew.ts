@@ -46,6 +46,8 @@ export class Crew {
 
   wound(id: CrewId) { this.hurt.add(id); this.onWound?.(id); }
 
+  transferWound(from: CrewId, to: CrewId) { if (this.hurt.delete(from)) this.hurt.add(to); }
+
   // A replacement (or a patched-up crewman) is at this position again
   heal(id: CrewId) { this.hurt.delete(id); }
 

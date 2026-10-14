@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { CrewTask } from './B17DamageRules';
 import type { World } from '../world/World';
 import type { Bomber, Fighter } from '../world/Aircraft';
 import { STATIONS, StationId, wrapAngle } from '../world/B17Layout';
@@ -15,7 +16,7 @@ import { sound } from '../audio/Sound';
 // The living B-17 interior around the waist guns (GunnerController owns one):
 //  - the other waist gunner, manning his M2 at the opposite window: tracks the target the
 //    AI gunner of that station has (World.crewGunner), fires with muzzle flash, light, recoil
-//    and brass; slumps when he is wounded, and a rookie takes his gun a little later
+//    and brass; slumps when he is wounded, and the radio operator can come aft to take his gun
 //  - glimpses of the rest of the crew: the radio room door forward (operator at his set),
 //    the top of the ball turret in the floor turning with its AI aim, and the tail gunner's
 //    back at the far end of the tunnel aft
@@ -27,7 +28,6 @@ const A = 1.08, B = 1.12, YC = 0.15;
 const FLOOR_TOP = YC - B * 0.78 + 0.015;
 const R = () => Math.random() * 2 - 1;
 const AI_RATE = 12;                       // rounds per second (World.bomberGunners, single gun)
-const REPLACE_AFTER = 14;                 // s until a rookie takes a wounded gunner's place
 const GRIP = new THREE.Vector3(0.085, -0.02, -0.52);   // spade grips, gun frame
 const FIG_BACK = 0.74, FIG_SIDE = 0.1;    // where the gunner stands behind his pivot
 const BALL_Y = -1.15;                     // centre of the ball turret's top dome (its top just clears the floor)
@@ -91,6 +91,38 @@ export class LivingInterior {
   private guns: Partial<Record<Waist, GunModel>> = {};
   private airframe: AirframeSwap[] = [];
   private cabinOn = false;
+  private helper: CrewFigure | null = null;
+  private helperPose = newPose();
+  private helperTime = 0;
+  private kit = new THREE.Group();
+  private aidKit: THREE.Mesh | null = null;
+  private ammoKit: THREE.Mesh | null = null;
+  private bottle: THREE.Mesh | null = null;
+
+  refreshCrew() { this.dressCrew(); }
+
+  /** One crewman walks the catwalk, then crouches to work. No transient geometry. */
+  assist(task: CrewTask, targetZ: number, progress: number, dt: number, radioPresent: boolean) {
+    const f = this.helper;
+    if (!f || !this.waist) return;
+    const on = task !== 'idle';
+    f.root.visible = on;
+    if (this.radioMan) this.radioMan.visible = !on && radioPresent;
+    if (!on) return;
+    this.helperTime += dt;
+    const p = this.helperPose, walking = progress < 1;
+    const stride = walking ? Math.sin(this.helperTime * 7) : 0;
+    const z = this.radioBase.z + (targetZ - this.radioBase.z) * progress;
+    f.root.position.set(-.15, FLOOR_TOP, z);
+    f.root.rotation.y = targetZ < this.radioBase.z ? Math.PI : 0;
+    p.hip.set(0, walking ? .65 + Math.abs(stride) * .025 : .4, 0);
+    p.lean = walking ? .15 : .45; p.headPitch = walking ? .05 : .25;
+    p.footL.set(.13, .07 + Math.max(0, stride) * .07, stride * .23);
+    p.footR.set(-.13, .07 + Math.max(0, -stride) * .07, -stride * .23);
+    p.handL.set(.16, walking ? .8 : .55, .28); p.handR.set(-.16, walking ? .8 : .55, .28);
+    f.apply(p); this.kit.position.set(0, walking ? .8 : .55, .32);
+    this.aidKit!.visible = task === 'aid'; this.ammoKit!.visible = task === 'ammo'; this.bottle!.visible = task === 'fire';
+  }
 
   // swap the player's airframe to the copy without the structure inside the cabin
   private cabinGeometry(on: boolean) {
@@ -112,6 +144,18 @@ export class LivingInterior {
     this.bomber = bomber;
     this.waist = waist;
     this.guns = { waistL: gunL, waistR: gunR };
+    this.helper = new CrewFigure(this.lookAt('radio', false));
+    this.helper.root.visible = false; waist.add(this.helper.root);
+    const M = interiorMats();
+    this.kit.clear(); this.helper.root.add(this.kit);
+    this.aidKit = new THREE.Mesh(new THREE.BoxGeometry(.3, .22, .14), M.olive);
+    const cross = new THREE.Mesh(new THREE.BoxGeometry(.15, .04, .01), M.sky);
+    cross.position.z = .08; this.aidKit.add(cross);
+    const crossV = new THREE.Mesh(new THREE.BoxGeometry(.04, .15, .01), M.sky); crossV.position.z = .08; this.aidKit.add(crossV);
+    this.ammoKit = new THREE.Mesh(new THREE.BoxGeometry(.34, .25, .16), M.metal);
+    this.bottle = new THREE.Mesh(new THREE.CylinderGeometry(.065, .065, .32, 8), M.olive);
+    const nozzle = new THREE.Mesh(new THREE.BoxGeometry(.06, .025, .13), M.dark); nozzle.position.set(0, .18, .04); this.bottle.add(nozzle);
+    this.kit.add(this.aidKit, this.ammoKit, this.bottle); this.helperTime = 0;
     this.statics ??= this.buildStatics(zc);
     waist.add(this.statics);
     this.shafts ??= new SunShafts(leftZ, rightZ);
@@ -141,6 +185,9 @@ export class LivingInterior {
   }
 
   detach() {
+    this.kit.traverse(o => { if (o instanceof THREE.Mesh) o.geometry.dispose(); });
+    this.kit.removeFromParent(); this.kit.clear();
+    this.helper?.dispose(); this.helper = null;
     this.world.scene.onBeforeRender = () => {};
     this.cabinGeometry(false);
     this.airframe = [];
@@ -184,13 +231,13 @@ export class LivingInterior {
       id: other, crew: other, yaw, pitch, gun, man: null, manLook: '', down: null, downT: 0, downFrom: new THREE.Vector3(), downYaw0: 0,
       woundT: -1, aimYaw: 0, aimPitch: 0, vYaw: 0, vPitch: 0, cooldown: 0, recoilT: 0, shots: 0, idle: Math.random() * 10,
     };
-    // a man already hit at that gun is lying beside it, a rookie on the grips
+    // A wounded man stays beside his empty gun until a real replacement arrives.
     if (this.world.crew.wounded.has(other)) {
       this.st.down = this.newFigure(this.lookAt(other, false));
       this.layDown(this.st, true);
-      this.st.woundT = REPLACE_AFTER;
+      this.st.woundT = 0;
     }
-    this.mount(this.st, this.world.crew.wounded.has(other));
+    if (!this.world.crew.wounded.has(other)) this.mount(this.st, crewRoster.occupant(other) === null);
   }
 
   private lookAt(crew: CrewId, rookie: boolean): FigureLook {
@@ -453,14 +500,14 @@ export class LivingInterior {
     }
     if (s.woundT >= 0) {
       s.woundT += dt;
-      if (!s.man && s.woundT >= REPLACE_AFTER) this.mount(s, true);
+      // A replacement appears only after the radio operator reaches this station.
       if (!hit) {
         // the round is over: the wounded man has been carried forward
         s.woundT = -1;
         s.down?.dispose(); s.down = null;
         if (!s.man) this.mount(s, crewRoster.occupant(s.crew) === null);
       }
-    } else if (!s.man) this.mount(s, crewRoster.occupant(s.crew) === null);
+    } else this.mount(s, crewRoster.occupant(s.crew) === null);
     if (s.down) this.animateDown(dt, s);
 
     // --- aim: the AI gunner's target, or a slow search of the sky ---

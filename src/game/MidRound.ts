@@ -188,6 +188,7 @@ export class MidRound {
   }
 
   startEvent(id?: EventId): RandomEvent | null {
+    if (!id && (this.game.b17Damage.rules.fire || this.game.b17Damage.rules.runaway.some(Boolean))) return null;
     if (this.event) { this.event.timeout(this); this.finishEvent(this.event); }
     const ids = (Object.keys(EVENTS) as EventId[]).filter((k) => EVENTS[k].eligible(this));
     const pick = id ?? this.pickFresh(ids);

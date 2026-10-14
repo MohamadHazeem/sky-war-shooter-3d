@@ -65,7 +65,7 @@ export class GunnerController {
   private muzzleLight = new THREE.PointLight(0xffb060, 0, 6, 2);
   private crewLight = new THREE.PointLight(0xffb060, 0, 5, 2);   // the other waist gunner's muzzle flash
   // living interior: the other waist gunner, crew glimpses, brass pile, shafts, frost, breath
-  private living: LivingInterior;
+  readonly living: LivingInterior;
   private tailBrass: Brass | null = null;
   private ballShafts = stationShafts('ball');
   private tailShafts = stationShafts('tail');
@@ -435,12 +435,14 @@ export class GunnerController {
     const push = inp.edgePush();
     let mdx = inp.mouseDX + push.x * 900 * adt, mdy = inp.mouseDY + push.y * 700 * adt;
     // free look (hold C): the mouse turns the head, the gun stays laid where it was
-    const looking = inp.down('KeyC') && this.transition <= 0;
+    const workingFire = inp.down('KeyX') && !!this.bomber.damageControl?.reachable(this.station);
+    const looking = (inp.down('KeyC') || workingFire) && this.transition <= 0;
     if (looking) {
       const ls = 0.0024 * inp.sensitivity;
       const ly = LOOK_YAW[def.type];
       this.lookYaw = THREE.MathUtils.clamp(this.lookYaw - mdx * ls, -ly, ly);
       this.lookPitch = THREE.MathUtils.clamp(this.lookPitch - mdy * ls * (inp.invertY ? -1 : 1), -1.25, def.id === 'ball' ? FREE_LOOK_UP : 1.15);
+      if (workingFire) { this.lookYaw += ((this.station === 'waistL' ? -1.6 : this.station === 'waistR' ? 1.6 : 2.6) - this.lookYaw) * Math.min(1, dt * 5); this.lookPitch += (-.25 - this.lookPitch) * Math.min(1, dt * 5); }
       mdx = mdy = 0;
     } else {
       const back = Math.min(1, adt * 7);
@@ -491,7 +493,7 @@ export class GunnerController {
     if (s.overheated && s.heat < 0.45) s.overheated = false;
     const trigger = inp.mouse(0) || inp.down('Space');
     const thawed = trigger && !s.jam && s.reload <= 0 ? life.thaw(s, dt) : s.frost === 0;
-    const wantFire = trigger && thawed && !clearing && !this.jammed && this.transition <= 0 && s.reload <= 0 && !s.overheated && s.ammo > 0 && this.bomber.alive;
+    const wantFire = trigger && !inp.down('KeyX') && thawed && !clearing && !this.jammed && this.transition <= 0 && s.reload <= 0 && !s.overheated && s.ammo > 0 && this.bomber.alive;
     this.firing = wantFire;
     this.brassClatter(dt, wantFire);
     // Low belt warning: a metallic tick every 0.6 s while firing with under 60 rounds left
@@ -549,7 +551,16 @@ export class GunnerController {
       this.sunLocal.copy(Atmos.sunDir).applyQuaternion(this.bomber.root.getWorldQuaternion(_q).invert());
       this.dust.update(dt, this.sunLocal, this.engine.renderer.domElement.height);
     }
+    this.gunPivot.visible = true;
+    if (this.station === 'top' && this.waistInterior) this.waistInterior.visible = workingFire;
     this.updateCamera(adt);
+    if (workingFire && this.station === 'top') {
+      // The engineer leaves the turret grips to work at the rear bomb-bay access hatch.
+      this.gunPivot.visible = false;
+      this.bomber.localToWorld(_eye.set(0, .3, -5.7), this.engine.camera.position);
+      this.bomber.localToWorld(_mouth.set(.3, -.55, -4.6), _mouth);
+      this.engine.camera.lookAt(_mouth);
+    }
     this.world.playerAimDir.copy(this.aimDirection());
     this.updateLiving(dt);
     this.interiorDamage.update(dt, this.bomber, this.world.effects, this.cold, this.engine.quality === 'low', this.station === 'waistL' || this.station === 'waistR');

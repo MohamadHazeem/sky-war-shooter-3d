@@ -572,6 +572,13 @@ export class PlayerBomberDamage {
       const e = this.eng[i];
       if (!e) continue;
       if (b.engineDead[i] && !e.dead) this.engineDied(e, i);
+      if (b.damageControl) e.feathered = b.damageControl.feathered[i];
+      if (b.damageControl?.runaway[i] && !e.dead) {
+        e.angle += dt * 125;
+        const prop = b.props[i];
+        if (prop) { prop.node.quaternion.copy(prop.base).multiply(_q.setFromAxisAngle(_z, e.angle)); prop.disc.visible = true; }
+        windmills++;
+      }
       if (e.dead) {
         e.deadT += dt;
         if (!e.fateCalled && e.deadT > 2.6 && b.alive) {
@@ -660,7 +667,7 @@ export class PlayerBomberDamage {
     const b = this.b!;
     e.dead = true;
     e.deadT = 0;
-    e.feathered = Math.random() < 0.7;
+    e.feathered = b.damageControl ? b.damageControl.feathered[i] : Math.random() < 0.7;
     e.fateCalled = !b.alive;
     e.spin = 70;
     // the engine seizes: a cough of flame and a gout of black oil smoke

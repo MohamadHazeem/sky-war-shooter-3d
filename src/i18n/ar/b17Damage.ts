@@ -1,0 +1,27 @@
+import type { PhraseTable } from '../types';
+const table: PhraseTable = { phrases: {
+  'FUSELAGE FIRE': 'حريق في جسم الطائرة',
+  'BOMB BAY FIRE': 'حريق في حجرة القنابل',
+  'Waist guns · hold {key} to extinguish': 'مدافع الخصر · اضغط مطولاً على {key} لإطفاء الحريق',
+  'Top turret · hold {key} to extinguish': 'البرج العلوي · اضغط مطولاً على {key} لإطفاء الحريق',
+  'Top turret · hold {key} to feather number {n}': 'البرج العلوي · اضغط مطولاً على {key} لإيقاف مروحة المحرك {n}',
+  'ENGINE {n} · RUNAWAY': 'المحرك {n} · دوران خارج السيطرة',
+  'ENGINE {n} · FEATHERED': 'المحرك {n} · المروحة في وضع الريش',
+  'ENGINE {n} · FIRE': 'المحرك {n} · حريق',
+  'CONTROL CABLES DAMAGED · pilot fighting the drift': 'تضررت كابلات التحكم · الطيار يقاوم الانحراف',
+  'Crew fighting the fire': 'الطاقم يكافح الحريق',
+  'Crew giving first aid / taking over the gun': 'الطاقم يقدم الإسعاف ويتولى المدفع',
+  'Crew carrying ammunition': 'أحد أفراد الطاقم يحمل الذخيرة',
+  'Fire out': 'أُخمد الحريق',
+  'CREW ESCAPE RECORD': 'سجل نجاة الطاقم',
+  'Parachute open': 'فُتحت المظلة',
+  'Missing': 'مفقود',
+  'Fire in the fuselage! Waist gunners, get the extinguisher!': 'حريق في جسم الطائرة! رماة الخصر، أحضروا المطفأة!',
+  'Fire in the bomb bay! Get forward with the extinguisher!': 'حريق في حجرة القنابل! تقدموا بالمطفأة!',
+  'Runaway propeller! Engineer, feather that engine!': 'المروحة خارج السيطرة! يا مهندس، ضع مروحة ذلك المحرك في وضع الريش!',
+  'Control cables hit. Help me hold her steady!': 'أصيبت كابلات التحكم. ساعدني في تثبيتها!',
+  'Cabin fire is out. Keep those guns covered.': 'أُخمد حريق المقصورة. ابقوا على المدافع.',
+  'Coming aft with the first aid kit. I will take his gun.': 'أنا قادم إلى الخلف بحقيبة الإسعاف. سأتولى مدفعه.',
+  'Bringing another ammunition can down the catwalk.': 'أحمل صندوق ذخيرة آخر عبر الممر.',
+} };
+export default table;

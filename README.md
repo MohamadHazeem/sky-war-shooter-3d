@@ -77,7 +77,7 @@ system in nine short illustrated chapters, with a controls reference that follow
 | Arrows / stick (bombsight) | Left/right correct course; up/down adjust the tracking rate |
 | Space / RT, B / LT (bombsight) | Release manually; hold release to wait for a cloud gap |
 | Q / E / G | Abilities: call the Mustangs, Overdrive, Focus |
-| X / O | Random events: fire extinguisher, oxygen check |
+| X (hold) / O | Extinguish cabin fires at the waist or bomb-bay access from the top turret; feather a damaged engine from the top turret / oxygen check |
 | Tab | Big radar map (shows where the next wave will come from) |
 | F | Photo mode |
 | H | Controls card |

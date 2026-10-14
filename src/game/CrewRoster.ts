@@ -168,6 +168,7 @@ export class CrewRoster {
   notes: string[] = [];                 // latest roster news for the hangar (heals, level-ups)
   private effectCache: CrewEffects | null = null;
   readonly serious = new Set<ManId>();
+  escapeRecorded = false;
   private skillCache: Partial<Record<StationId, AISkill>> = {};
   private listeners: ((e: RosterEvent, who?: ManId) => void)[] = [];
   private aiHits = new WeakMap<object, number>();   // fighter -> world time our AI gunners last hit it
@@ -281,6 +282,17 @@ export class CrewRoster {
     return k;
   }
 
+  /** An actual man moves into the wounded gunner's position; no new crew are spawned. */
+  relieve(post: CrewId, helper: CrewId): boolean {
+    if (!this.active || post === helper || !this.world?.crew.wounded.has(post) || this.world.crew.wounded.has(helper)) return false;
+    const fit = this.occ[helper], hurt = this.occ[post];
+    if (!fit || this.wounded.has(fit)) return false;
+    this.occ[post] = fit; this.occ[helper] = hurt;
+    this.world.crew.transferWound(post, helper);
+    for (const p of [post, helper]) { const id = this.occ[p]; crewMember(p).name = id ? manDef(id).call : ROOKIES[p].call; }
+    this.emit('change'); return true;
+  }
+
   // ---------- assignment ----------
   swap(a: Post, b: Post) {
     if (a === b) return;
@@ -309,7 +321,7 @@ export class CrewRoster {
   // Game.startMission, after ui.hud(): who flies, rookies for resting men, HUD panel.
   beginMission(world: World, ui: RosterUI, role: 'gunner' | 'pilot') {
     if (this.world === world) void this.active;   // close out an abandoned mission first
-    this.world = world; this.ui = ui;
+    this.world = world; this.ui = ui; this.escapeRecorded = false;
     this.wounded.clear(); this.benched.clear(); this.resting.clear(); this.flew.clear(); this.serious.clear();
     this.live = role === 'gunner';
     this.missionBomber = world.playerBomber;
@@ -397,7 +409,7 @@ export class CrewRoster {
   private finish(success: boolean, completed: boolean) {
     // At most one fatal casualty: only a wounded veteran actually aboard a lost ship,
     // with at least three combat losses. Scripted losses never trigger this roll.
-    if (completed && this.world?.playerBomber?.alive === false && this.world.combatLosses >= 3) {
+    if (completed && !this.escapeRecorded && this.world?.playerBomber?.alive === false && this.world.combatLosses >= 3) {
       const candidates = [...this.wounded].filter((id) => !this.men[id].dead && this.level(id) >= 3 && !this.resting.has(id) && !this.benched.has(id));
       if (candidates.length && Math.random() < 0.03 * this.effects().seriousWound) {
         const id = candidates[Math.floor(Math.random() * candidates.length)];

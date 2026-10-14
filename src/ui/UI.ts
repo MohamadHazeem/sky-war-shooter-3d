@@ -83,6 +83,7 @@ export interface DebriefData {
   closestKill?: number | null;     // metres from the player's aircraft; null when no kills
   killsByGun?: { label: string; kills: number }[]; // gunner missions: kills per gun position
   ditched?: boolean;
+  escape?: import('../game/B17DamageRules').EscapeEntry[];
   merit?: number;    // points earned for the Armory
   points?: number;   // Armory balance after this mission
 }
@@ -690,6 +691,7 @@ export class UI {
         ${d.merit !== undefined ? `<div class="stat"><div class="hud-label">${t('debrief.merit')}${d.ditched ? `<br><small>${esc(tx('Ditched · bomber lost · crew rescued'))}</small>` : ''}</div><div class="v" style="color:var(--khaki)">+${d.merit}</div></div>` : ''}
         ${extra.join('')}
       </div>
+      ${d.escape ? `<section class="escape-record"><div class="kicker">${esc(tx('CREW ESCAPE RECORD'))}</div><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;font-size:13px">${d.escape.map(m => `<div>${esc(tx(m.name))} · ${esc(tx(m.escaped ? 'Parachute open' : 'Missing'))}</div>`).join('')}</div></section>` : ''}
       ${bombingReport(d.bombing)}
       <div>${d.medals.map((m, i) => `<span class="medal pop" style="animation-delay:${medalDelay(i)}s">✦ ${esc(tx(m))}</span>`).join('')}</div>
       <div class="row" style="margin-top:22px">

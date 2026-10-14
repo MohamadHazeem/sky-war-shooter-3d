@@ -1,0 +1,50 @@
+{
+  "results": [
+    {
+      "test": "waist hold extinguishes",
+      "out": true
+    },
+    {
+      "test": "top hold extinguishes",
+      "out": true
+    },
+    {
+      "test": "engine feather stops runaway and fire",
+      "burning": true,
+      "feathered": true,
+      "out": true
+    },
+    {
+      "test": "control damage produces drift",
+      "controls": 0.4,
+      "offset": [
+        84.52914463390437,
+        16.350275514750138,
+        -70.38936153384446
+      ]
+    },
+    {
+      "test": "crew puts out ignored fire",
+      "out": true
+    },
+    {
+      "test": "radio operator replaces wounded waist gunner",
+      "gunFit": true,
+      "helperWounded": true,
+      "name": "gallo"
+    },
+    {
+      "test": "skip preserves ten named escape results",
+      "count": 10,
+      "same": true,
+      "state": "debrief"
+    },
+    {
+      "test": "restart clears incidents and canopy",
+      "fire": null,
+      "escape": 0,
+      "canopy": false
+    }
+  ],
+  "errors": []
+}
