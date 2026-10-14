@@ -13,10 +13,11 @@ if [[ -z "${FG_SRC:-}" ]]; then
   echo 'Set FG_SRC to the directory containing the pinned B-17 source. See tools/hero/README.md.' >&2; exit 1
 fi
 export BASISU TOKTX
-mkdir -p tools/hero/output docs/phase10/shots/02b
+mkdir -p tools/hero/output docs/phase10/shots/02c
 "$BLENDER" -b -t 8 --python-exit-code 1 -P tools/convert_models/convert_ac.py -- \
   "$FG_SRC/B-17/Models/b17.xml" tools/hero/output/flightgear.glb \
   --config tools/hero/flightgear.json --fg-root "$FG_SRC"
+node tools/hero/markings.mjs
 "$BLENDER" -b -t 8 --python-exit-code 1 -P tools/hero/build.py
 node tools/hero/compress.mjs
 "$BLENDER" -b -t 8 --python-exit-code 1 -P tools/hero/render.py

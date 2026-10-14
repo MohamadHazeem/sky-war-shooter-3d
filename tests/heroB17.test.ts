@@ -1,5 +1,6 @@
 import {describe, expect, it, beforeAll} from 'vitest';
 import * as THREE from 'three';
+import {Bomber} from '../src/world/Aircraft';
 import {readFileSync, statSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {HeroLOD, HeroB17Controls, prepareHeroLODs, setHeroQuality, heroLevel, warmHeroLODs, heroStreamGeometry} from '../src/world/HeroB17';
@@ -44,10 +45,11 @@ describe('shipped B-17 asset contract', () => {
         for(const c of level!.listChildren())for(const p of c.getMesh()?.listPrimitives()??[])totals[i]+=(p.getIndices()?.getCount()??0)/3;
       }
     }
-    expect(totals[0]).toBeGreaterThan(20000);expect(totals[1]).toBeLessThan(totals[0]*.6);expect(totals[2]).toBeLessThan(totals[1]*.7);
+    expect(totals[0]).toBeGreaterThan(20000);expect(totals[1]).toBeLessThan(totals[0]*.6);// LOD2 retains the readable prop blades and stencil patches.
+    expect(totals[2]).toBeLessThan(totals[1]*.75);expect(totals[2]).toBeLessThan(26000);
   });
   it('matches the artifact verified against the USAAF three-view and section widths',()=>{
-    const qa=JSON.parse(readFileSync('docs/phase10/shots/02b/silhouette.json','utf8'));
+    const qa=JSON.parse(readFileSync('docs/phase10/shots/02c/silhouette.json','utf8'));
     expect(qa.artifactSha256).toBe(createHash('sha256').update(readFileSync('public/models/hero/b17.glb')).digest('hex'));
     expect(qa.pass).toBe(true);
     for(const section of Object.values(qa.sections) as {relativeError:number;tolerance:number}[])expect(section.relativeError).toBeLessThanOrEqual(section.tolerance);
@@ -55,6 +57,12 @@ describe('shipped B-17 asset contract', () => {
   it('ships meshopt, UVs, normal/ORM maps and transmission under the download budget', () => {
     const r=asset.getRoot();
     expect(r.listExtensionsRequired().map(e=>e.extensionName)).toContain('EXT_meshopt_compression');
+    const stencils=r.listMaterials().find(m=>m.getName()==='hero_stencils')!;
+    expect(stencils.getAlphaMode()).toBe('MASK');
+    expect(stencils.getBaseColorTexture()!.getSize()).toEqual([1024,512]);
+    const lowSkin=r.listMaterials().find(m=>m.getName()==='hero_skin_low')!;
+    expect(lowSkin.getBaseColorTexture()!.getSize()).toEqual([512,512]);
+    expect(lowSkin.getNormalTexture()).toBeNull();
     const skin=r.listMaterials().find(m=>m.getName()==='hero_skin')!;
     expect(skin.getBaseColorTexture()).toBeTruthy();expect(skin.getNormalTexture()).toBeTruthy();expect(skin.getOcclusionTexture()).toBeTruthy();
     expect(r.listMaterials().some(m=>!!m.getExtension('KHR_materials_transmission'))).toBe(true);
@@ -77,6 +85,24 @@ function fixture(){
   prepareHeroLODs(root);return root;
 }
 describe('runtime B-17 LOD and animation',()=>{
+  it('keeps hero blades visible from idle to cruise and stops the blur on engine loss',()=>{
+    const blades=new THREE.Group(),node=new THREE.Group();node.add(blades);
+    const disc=new THREE.Mesh(new THREE.CircleGeometry(),new THREE.MeshBasicMaterial({transparent:true}));
+    const material=disc.material,version=material.version;
+    const ship=Object.assign(Object.create(Bomber.prototype),{
+      props:[{node,blades:[blades],disc,base:new THREE.Quaternion(),layered:true}],
+      propSpin:[0],engineDead:[false],alive:true,
+    }) as Bomber;
+    ship.updateProps(.1,.15);expect(blades.visible).toBe(true);expect(disc.visible).toBe(false);
+    const idle=ship.propSpin[0];
+    ship.updateProps(.1,1);expect(blades.visible).toBe(true);expect(disc.visible).toBe(true);
+    expect(material.opacity).toBeGreaterThan(0);expect(material.opacity).toBeLessThan(.6);expect(ship.propSpin[0]).toBeGreaterThan(idle);
+    ship.engineDead[0]=true;const stopped=ship.propSpin[0];ship.updateProps(1);
+    expect(ship.propSpin[0]).toBe(stopped);expect(blades.visible).toBe(true);expect(disc.visible).toBe(false);
+    expect(material.version).toBe(version); // RPM never changes shader defines.
+    ship.props[0].layered=false;ship.engineDead[0]=false;ship.updateProps(.1);
+    expect(blades.visible).toBe(false); // Preserve other aircraft's existing behavior.
+  });
   it('retains the existing stream fallback for a legacy mesh without LODs',()=>{
     expect(heroStreamGeometry(new THREE.Group())).toBeNull();
   });

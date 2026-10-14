@@ -114,10 +114,13 @@ export abstract class Aircraft {
       const spinning = speed > 20;
       p.node.quaternion.copy(p.base).multiply(_qz.setFromAxisAngle(_zAxis, this.propSpin[i]));
       p.disc.visible = spinning;
+      // The hero keeps its three yellow-tipped blades at every RPM. Blend in only
+      // the faint shutter sweep; changing opacity preserves the prewarmed program.
+      if (p.layered) (p.disc.material as THREE.MeshBasicMaterial).opacity = Math.min(.55, Math.max(0, (speed - 20) / 90));
       // Slowly sway the disc texture against the spin (~4.5 s period at full rpm) so the
       // blade banding and streaks shimmer instead of sitting as a static tint.
       p.disc.rotation.z = Math.sin(this.propSpin[i] * 0.02 + i * 1.7) * 0.18;
-      for (const b of p.blades) b.visible = !spinning;
+      for (const b of p.blades) b.visible = p.layered || !spinning;
     }
   }
 

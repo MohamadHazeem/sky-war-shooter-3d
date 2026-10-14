@@ -21,7 +21,7 @@ bpy.ops.object.camera_add();cam=bpy.context.object;scene.camera=cam;cam.data.len
 scene.view_settings.view_transform='AgX';scene.render.image_settings.file_format='JPEG';scene.render.image_settings.quality=85
 for name,pos in [('front',(27,-33,17)),('rear',(-27,36,15)),('side',(37,7,7)),('nose',(10,-12,5))]:
     cam.location=pos;target=(0,-3,0) if name=='nose' else (0,4,0);cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z','Y').to_euler()
-    scene.render.filepath=str(ROOT/f'docs/phase10/shots/02b/{prefix}-{name}.jpg');bpy.ops.render.render(write_still=True)
+    scene.render.filepath=str(ROOT/f'docs/phase10/shots/02c/{prefix}-{name}.jpg');bpy.ops.render.render(write_still=True)
 
 if level==0 and 'HERO_RENDER_MODEL' not in os.environ:
     skin=bpy.data.materials.get('hero_skin')
@@ -30,4 +30,4 @@ if level==0 and 'HERO_RENDER_MODEL' not in os.environ:
             if 'base' in node.image.name:node.image=bpy.data.images.load(str(ROOT/'tools/hero/output/silver.png'));node.image.colorspace_settings.name='sRGB'
             elif 'orm' in node.image.name:node.image=bpy.data.images.load(str(ROOT/'tools/hero/output/silver-orm.png'));node.image.colorspace_settings.name='Non-Color'
     cam.location=(27,-33,17);cam.rotation_euler=(Vector((0,4,0))-cam.location).to_track_quat('-Z','Y').to_euler()
-    scene.render.filepath=str(ROOT/'docs/phase10/shots/02b/turntable-silver.jpg');bpy.ops.render.render(write_still=True)
+    scene.render.filepath=str(ROOT/'docs/phase10/shots/02c/turntable-silver.jpg');bpy.ops.render.render(write_still=True)

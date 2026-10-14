@@ -199,7 +199,7 @@ function propDiscTexture() {
   return discTex;
 }
 
-export interface PropInfo { node: THREE.Object3D; blades: THREE.Object3D[]; disc: THREE.Mesh; base: THREE.Quaternion; }
+export interface PropInfo { node: THREE.Object3D; blades: THREE.Object3D[]; disc: THREE.Mesh; base: THREE.Quaternion; layered: boolean; }
 
 const discGeos = new Map<number, THREE.CircleGeometry>(); // one disc geometry per size, shared
 
@@ -223,7 +223,7 @@ export function setupProps(root: THREE.Object3D, radius: number): PropInfo[] {
     // tools/compress_models.mjs). Blades are what used to be the node's children: the
     // primitives of a multi-material prop; a single-mesh prop (formerly the node itself) has none.
     const blades = node.children.flatMap((c) => c === disc ? [] : c.userData.meshOf ? ((c as THREE.Mesh).isMesh ? [] : c.children) : [c]);
-    props.push({ node, blades, disc, base: node.quaternion.clone() });
+    props.push({ node, blades, disc, base: node.quaternion.clone(), layered: !!root.getObjectByName('B17G_HERO') });
   }
   return props;
 }

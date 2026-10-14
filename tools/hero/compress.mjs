@@ -18,9 +18,12 @@ for(const n of doc.getRoot().listNodes()) if(n.getMesh()) {
 }
 for(const m of doc.getRoot().listMaterials()) {
   if(m.getMetallicRoughnessTexture())m.setOcclusionTexture(m.getMetallicRoughnessTexture()).setOcclusionStrength(.55);
+  if(m.getName()==='hero_stencils')m.setAlphaMode('MASK').setAlphaCutoff(.4).setDoubleSided(true);
   if(/marking|walkway/.test(m.getName()))m.setDoubleSided(true);
 }
-await doc.transform(textureCompress({encoder:sharp,targetFormat:'webp',quality:90,resize:[256,256]}),meshopt({encoder:MeshoptEncoder,level:'high',quantizeTexcoord:14}));
+const stencilTexture=doc.getRoot().listMaterials().find(m=>m.getName()==='hero_stencils').getBaseColorTexture();
+stencilTexture.setName('hero_stencils').setURI('hero_stencils.png');
+await doc.transform(textureCompress({encoder:sharp,targetFormat:'webp',quality:95,resize:[512,512],pattern:/^(?!hero_stencils(?:\.|$))/}),textureCompress({encoder:sharp,targetFormat:'webp',lossless:true,pattern:/^hero_stencils$/}),meshopt({encoder:MeshoptEncoder,level:'high',quantizeTexcoord:14}));
 await io.write(out+'/b17.glb',doc);
 const ktx=process.env.TOKTX, basis=process.env.BASISU;
 const names=['base','normal','orm','silver','silver-orm'];

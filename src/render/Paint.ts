@@ -136,15 +136,18 @@ export function applyPaint(model: THREE.Object3D, id: string) {
         const cs = markOwned(std.clone());
         cs.userData.paint = id;
         const hero = std.name.startsWith('hero_');
-        const map = !hero && std.map ? paintedMap(id, std.map) : null;
+        // Low retains an embedded diffuse atlas, so recolour it without streaming detail.
+        const heroLow = hero && std.name.endsWith('_low');
+        const map = (!hero || (heroLow && (id === 'silver' || id === 'desert'))) && std.map ? paintedMap(id, std.map) : null;
         if (map) cs.map = map;
         else if (!hero && cs.color && id !== 'invasion') cs.color.multiply(id === 'silver' ? new THREE.Color(1.9, 1.9, 2.0) : new THREE.Color(1.6, 1.15, 1.1));
         if (hero) {
-          if (id === 'silver') cs.color.fromArray(std.map ? [1, 1, 1] : [.52, .55, .58]);
+          if (heroLow && map) cs.color.setRGB(1, 1, 1);
+          else if (id === 'silver') cs.color.fromArray(std.map ? [1, 1, 1] : [.52, .55, .58]);
           else if (id === 'desert') cs.color.fromArray(std.map ? [2.6, 1.7, 2.3] : [.25, .17, .10]);
           registerHeroMaterial(cs);
         }
-        if (id === 'silver') { cs.metalness = hero ? (std.map ? 1 : .82) : .62; cs.roughness = hero ? (std.map ? 1 : .36) : .32; }
+        if (id === 'silver') { cs.metalness = hero ? (std.map && !heroLow ? 1 : .82) : .62; cs.roughness = hero ? (std.map && !heroLow ? 1 : .36) : .32; }
         copies.set(mat, c = cs);
       }
       return c;

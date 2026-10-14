@@ -6,7 +6,7 @@ import json,math,hashlib
 from pathlib import Path
 import numpy as np
 from PIL import Image,ImageDraw,ImageFilter
-ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'docs/phase10/shots/02b'
+ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'docs/phase10/shots/02c';OUT.mkdir(parents=True,exist_ok=True)
 ref=json.loads((ROOT/'tools/hero/silhouette-reference.json').read_text());data=json.loads((ROOT/'tools/hero/output/projections.json').read_text())
 # Scan span establishes scale. Side drawing shares it; front is separately printed at same span.
 scale=1004/31.62
