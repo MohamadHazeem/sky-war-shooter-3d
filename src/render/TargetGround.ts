@@ -178,6 +178,11 @@ vec3 targetGround(vec2 rel, vec3 alb, float fw, vec3 light, vec2 camRel, vec3 d)
       alb = mix(alb, vec3(0.2, 0.19, 0.17), ring * 0.7);
       emis += vec3(1.0, 0.4, 0.1) * 0.1 * min(fireGlow, 2.0);
     }
+    // Pathfinder target indicators, laid before our arrival; hidden by the real cloud deck.
+    if (uTgtClock < 3.0 && uTgtClock > -40.0) {
+      float marker = 1.0 - smoothstep(35.0, max(80.0, fw * 2.0), length(rel));
+      emis += vec3(1.0, 0.18, 0.035) * marker * 18.0;
+    }
     // flak batteries: four-gun sites ringed around the city, muzzle flashes during the barrage
     if (uFlakGround > 0.0) {
       float rr = sqrt(r2);

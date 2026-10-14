@@ -96,7 +96,7 @@ export const CAMPAIGN: Mission[] = [
       { at: 0, afterClear: true, count: 4, from: 'high', attack: 'high', skill: 1.0, radio: ['Tail', 'Fighters up high, coming out of the sun!'] },
       { at: 0, afterClear: true, count: 6, from: 'mixed', skill: 1.0 },
     ],
-    duration: 180, maxBombersLost: 4,
+    bombsAway: 125, duration: 180, maxBombersLost: 4,
   },
   {
     // overcast on the way in, breaking up over the Rhine before the bomb run (Weather.ts front)
@@ -143,7 +143,7 @@ export const CAMPAIGN: Mission[] = [
       { at: 0, afterClear: true, count: 5, from: 'mixed', skill: 1.1 },
       { at: 0, afterClear: true, count: 6, from: 'rear', attack: 'stern', skill: 1.15, radio: ['Tail', 'Another Staffel forming up astern!'] },
     ],
-    duration: 160, maxBombersLost: 5,
+    bombsAway: 120, duration: 160, maxBombersLost: 5,
   },
   {
     id: 'm6', weather: { sunEl: 11, sunAz: 250, low: 0.7, high: 0.5 }, success: "The Mustangs drove them off. The Sky Queen limps home across the North Sea on two engines.", number: 6, title: 'The Long Way Home', target: 'Return leg — over the Netherlands', date: '6 March 1944', role: 'gunner', station: 'waistL',

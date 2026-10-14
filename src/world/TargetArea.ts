@@ -1,3 +1,4 @@
+import { bombingOvercast } from '../game/BombRunState';
 import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -77,6 +78,7 @@ export class TargetArea {
   constructor(private engine: Engine, private world: World) {
     const mat = new THREE.MeshStandardMaterial({ color: 0x4b4e3c, roughness: 0.55, metalness: 0.35 });
     this.mesh = new THREE.InstancedMesh(bombGeometry(), mat, MAX_BOMBS);
+    this.mesh.name = 'target_bombs';
     this.mesh.count = 0;
     this.mesh.frustumCulled = false;
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -118,7 +120,7 @@ export class TargetArea {
     this.secondaries = [6, 11.5, 19, 34].map((s) => FALL + s + Math.random() * 2);
   }
 
-  update(dt: number, mission: Mission | null) {
+  update(dt: number, mission: Mission | null, managedRelease = false) {
     const w = this.world;
     if (mission !== this.mission || w.time < this.lastTime - 0.5) {
       this.clear();
@@ -134,7 +136,7 @@ export class TargetArea {
     }
     if (!this.active || !mission?.bombsAway) return;
     const t = w.time;
-    if (!this.released && !this.playerControlled && t >= mission.bombsAway) this.bombsAway(); // in case the game did not call it
+    if (!this.released && !managedRelease && !this.playerControlled && t >= mission.bombsAway) this.bombsAway(); // in case the game did not call it
     const clock = this.released ? t - this.releaseT : t - mission.bombsAway;
     if (dt > 0) {
       this.releaseDue(t);
@@ -255,7 +257,7 @@ export class TargetArea {
 
   private radio(clock: number, m: Mission) {
     const gunner = m.role === 'gunner';
-    if (clock > -16 && clock < -10 && gunner) this.say('doors', 'Bombardier', 'Bomb bay doors coming open. Hold her steady…', 3);
+    if (clock > -16 && clock < -10 && gunner && !this.world.bombRunHold) this.say('doors', 'Bombardier', 'Bomb bay doors coming open. Hold her steady…', 3);
     if (!this.released) return;
     const first = Math.min(...this.impacts.filter((x): x is Impact => !!x).map((x) => x.t));
     if (!Number.isFinite(first)) return;
@@ -287,7 +289,7 @@ export class TargetArea {
     u.uTgtClock.value = clock;
     u.uTgtWind.value.set(Atmos.wind.x, Atmos.wind.z);
     // flak batteries fire through the flak window (eased in and out)
-    const fl = m.flak && this.world.flakIntensity > 0 ? 1 : 0;
+    const fl = this.world.bombRunHold || (m.flak && this.world.flakIntensity > 0) ? 1 : 0;
     this.flak += (fl - this.flak) * Math.min(1, dt * 0.8);
     u.uFlakGround.value = this.flak < 0.01 ? 0 : this.flak;
     let glow = 0;
@@ -312,12 +314,17 @@ export class TargetArea {
       const p = this.plumes[k];
       const v = u.uPlumes.value[k];
       const imp = p ? this.impacts[p.slot] : null;
-      if (!p || !imp) { v.set(0, 0, 0, 0); continue; }
+      if (!p || !imp) {
+        // Earlier waves: two permanent columns in the existing warmed smoke batch.
+        if (k >= TGT_PLUMES - 2) v.set(k === TGT_PLUMES - 2 ? -600 : 500, -350, -180, 1.2);
+        else v.set(0, 0, 0, 0);
+        continue;
+      }
       v.set(imp.x, imp.z, p.t, p.s);
     }
     // the deck parts over the target; fires light it from below
     const lx = this.aim.x - Atmos.originOffset.x, lz = this.aim.y - Atmos.originOffset.z;
-    cloudTargetUniforms.uGap.value.set(lx, lz, 4800, this.playerControlled ? 0.5 + 0.35 * Math.sin(this.world.time * 0.3) : 0.85);
+    cloudTargetUniforms.uGap.value.set(lx, lz, 4800, bombingOvercast(weatherNow.cloud, weatherNow.mood) ? 0.08 : this.playerControlled ? 0.5 + 0.35 * Math.sin(this.world.time * 0.3) : 0.85);
     cloudTargetUniforms.uGlow.value.set(lx, lz, 3200, Math.min(1.5, glow * 0.25));
   }
 }

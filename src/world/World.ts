@@ -122,6 +122,10 @@ export class World implements WorldView {
   difficulty = 1;
   aiGunnerFactor = 1; // damage multiplier for AI bomber crews
   playerDamageScale = 0.6; // incoming damage on the player's own aircraft (game balance)
+  bombRunHold = false;
+  bombRunLevel = false;
+  bombRunLift = 0;
+  private bombRunSettle = 0;
   flakIntensity = 0;   // bursts per second around the formation
   floorY = 250;        // fighters below this height crash (low-level operations lower it and run their own terrain collision: StrafeOps.ts)
   private flakAcc = 0;
@@ -265,6 +269,7 @@ export class World implements WorldView {
     this.formationForward.set(0, 0, 1);
     this.time = 0;
     this.flakIntensity = 0;
+    this.bombRunHold = this.bombRunLevel = false; this.bombRunLift = this.bombRunSettle = 0;
     this.stats = { kills: 0, shots: 0, hits: 0, damage: 0, bombersLost: 0, scriptedLost: 0, assists: 0, enemiesSpawned: 0 };
     this.crewWounded = 0;
     this.lastWound = -99;
@@ -308,6 +313,14 @@ export class World implements WorldView {
     const at = camera.position.clone().addScaledVector(fwd, 80);
     this.effects.explosion(at, new THREE.Vector3(), 1);
     this.effects.parachute(at, new THREE.Vector3());
+    // The real instanced bomb stream, including its instancing program, before release.
+    const bombs = this.scene.getObjectByName('target_bombs') as THREE.InstancedMesh | undefined;
+    const bombCount = bombs?.count ?? 0;
+    if (bombs) { bombs.count = 1; bombs.setMatrixAt(0, new THREE.Matrix4().makeTranslation(at.x, at.y, at.z)); bombs.instanceMatrix.needsUpdate = true; }
+    // Untextured, non-instanced fragments from the flak-damaged neighbour cast shadows too.
+    const plainCaster = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshDepthMaterial({ side: THREE.BackSide }));
+    plainCaster.position.copy(at); plainCaster.castShadow = true; plainCaster.frustumCulled = false;
+    this.scene.add(plainCaster);
     const unwarmSea = prewarmSea(this.scene, at);
     const unwarmBoss = prewarmBoss(this.scene, camera.position, fwd);
     const unwarmFormation = FormationDress.warm(this.scene, at);
@@ -320,8 +333,13 @@ export class World implements WorldView {
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     const unwarmTargetSmoke = warmTargetSmoke(this.scene);
     this.engine.precipitation.warm(render);
+    this.engine.clouds.warmProbe(this.engine.renderer);
     this.ditchingSea.warm(render, this.playerBomber?.root ?? b17.root);
+    this.engine.renderer.shadowMap.needsUpdate = true;
+    render();
     unwarmTargetSmoke();
+    if (bombs) bombs.count = bombCount;
+    this.scene.remove(plainCaster); plainCaster.geometry.dispose(); this.warmKeep.push(plainCaster.material);
     this.wrecks.keepWarm(b17Pieces);   // B-17 wreck programs stay compiled for the set pieces
     unwarmFormation();
     unwarm();
@@ -375,11 +393,14 @@ export class World implements WorldView {
   // Formation weave (~50 s side to side, slow climbs and dives) plus the player's evasive
   // jinks, which come more often while fighters are pressing an attack.
   private maneuver(dt: number) {
+    if (this.bombRunLevel) { this.bombRunSettle = 1; this.jinkT = this.jinkDur; this.formRoll *= Math.exp(-dt * 3); this.lurch *= Math.exp(-dt * 2.5); return; }
     const t = this.time;
     const wx = 0.12, wy = 0.09;
-    this.formOff.set(Math.sin(t * wx) * 60, Math.sin(t * wy + 1) * 35, 0);
+    const settle = this.bombRunSettle > .001 ? 1 - Math.exp(-dt * .8) : 1;
+    this.bombRunSettle *= Math.exp(-dt);
+    this.formOff.lerp(_v.set(Math.sin(t * wx) * 60, Math.sin(t * wy + 1) * 35, 0), settle);
     // bank into the weave: lateral acceleration over g
-    this.formRoll = Math.atan((60 * wx * wx * Math.sin(t * wx)) / 9.81) * 1.1;
+    this.formRoll += (Math.atan((60 * wx * wx * Math.sin(t * wx)) / 9.81) * 1.1 - this.formRoll) * settle;
     const pb = this.playerBomber;
     if (!pb || !pb.alive) return;
     let near = 0;
@@ -408,6 +429,7 @@ export class World implements WorldView {
     }
     if (b.isPlayer) wob.multiplyScalar(crewRoster.effects().formation);
     wob.add(this.formOff);
+    wob.y += this.bombRunLift * (b.isPlayer ? 1 : .35);
     // player's ship: jink sideways and down, banking into it (sin^2 profile, bank leads the slide)
     let jinkRoll = 0, jinkPitch = 0, turb = 0;
     if (b.isPlayer && this.jinkT < this.jinkDur) {
@@ -428,8 +450,8 @@ export class World implements WorldView {
     const roll = latRate * 0.045 + (wob.x - this.formOff.x) * 0.004 + (b.straggling ? 0.05 * b.enginesOut : 0) + this.formRoll + jinkRoll + (b.isPlayer ? this.lurch + turb : 0);
     // Yaw: slight heading wander that follows the lateral drift, plus a slow independent wander
     const yaw = Math.atan2(this.formationForward.x, this.formationForward.z) + latRate * 0.02 + Math.sin(this.time * 0.07 + ph.yaw) * 0.008;
-    const pitch = Math.cos(t * 0.47) * 0.012 * b.wobbleAmp + Math.cos(this.time * 0.09 + 1) * 35 * 0.09 / CRUISE + jinkPitch + turb * 0.6;
-    b.root.quaternion.setFromEuler(new THREE.Euler(-pitch, yaw, roll, 'YXZ'));
+    const pitch = Math.cos(t * 0.47) * 0.012 * b.wobbleAmp + Math.cos(this.time * 0.09 + 1) * 35 * 0.09 / CRUISE + jinkPitch + turb * 0.6 + (b.isPlayer ? this.bombRunLift * .008 : 0);
+    b.root.quaternion.setFromEuler(new THREE.Euler(this.bombRunLevel ? 0 : -pitch, this.bombRunLevel ? Math.atan2(this.formationForward.x, this.formationForward.z) : yaw, this.bombRunLevel ? this.formRoll : roll, 'YXZ'));
   }
 
   add(a: Aircraft) {
@@ -676,7 +698,7 @@ export class World implements WorldView {
   // Debris coming through (set pieces): the pilot throws the ship into an evasive jink now,
   // sliding toward formation x sign `side`. Skipped while a jink is already on.
   evade(side: number) {
-    if (this.jinkT < this.jinkDur) return;
+    if (this.bombRunLevel || this.jinkT < this.jinkDur) return;
     this.jinkT = 0; this.jinkDur = 3.6; this.jinkSide = side < 0 ? -1 : 1;
     this.nextJink = 10 + Math.random() * 6;
   }

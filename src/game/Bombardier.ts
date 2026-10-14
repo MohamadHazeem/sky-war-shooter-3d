@@ -32,6 +32,7 @@ export class Bombardier {
   course = 0;
   result: BombingResult | null = null;
   private releasedAt = -1;
+  get releaseTime() { return this.releasedAt; }
   private impacts: BombImpact[] = [];
   private baseHeading = 0;
   private jolt = 0;
@@ -129,7 +130,7 @@ export class Bombardier {
         this.range += Math.cos(beat * 4.7) * w.flakIntensity * 35;
       }
       this.jolt *= Math.exp(-dt * 0.6);
-      if (inp.hit('Space') || inp.mouseHit(0) || releaseDue(this.range, CRUISE, inp.mouse(2), w.time, g.mission!.bombsAway! + 12)) this.release();
+      if ((!g.bombRun.enabled || w.time >= g.mission!.bombsAway! - 5) && (inp.hit('Space') || inp.mouseHit(0) || releaseDue(this.range, CRUISE, inp.mouse(2), w.time, g.mission!.bombsAway! + 12))) this.release();
     } else if (w.time >= this.releasedAt + BOMB_FALL + 5) this.leave();
     this.uiClock -= dt;
     if (this.uiClock <= 0) {
@@ -139,16 +140,20 @@ export class Bombardier {
       });
     }
   }
-  private release() {
+  release(manual = true) {
+    if (this.releasedAt >= 0) return;
     const g = this.g, w = g.world, aim = g.target.aimPoint, f = w.formationForward;
     this.impacts = impactPattern({ x: w.formationCenter.x + Atmos.originOffset.x - aim.x, z: w.formationCenter.z + Atmos.originOffset.z - aim.y,
       forwardX: f.x, forwardZ: f.z, speed: CRUISE, windX: Atmos.wind.x, windZ: Atmos.wind.z, joltX: this.jolt, joltZ: this.jolt * 0.4 }, Math.min(36, w.bombers().filter(b => b.alive).length * 3));
     const score = bombingScore(this.impacts);
+    if (!manual) score.score = 0;
     this.result = { percent: score.percent, score: score.score, photo: '' };
     this.releasedAt = w.time;
     g.target.bombsAway(this.impacts); g.director.bombsDropped = true; g.score += 200 + score.score;
-    g.service.career.bestBombing = Math.max(g.service.career.bestBombing, score.percent); saveCareer(g.service.career);
-    if (score.pickle) achievements.unlock('pickleBarrel');
+    if (manual) {
+      g.service.career.bestBombing = Math.max(g.service.career.bestBombing, score.percent); saveCareer(g.service.career);
+      if (score.pickle) achievements.unlock('pickleBarrel');
+    }
     w.callout('bombs', 'Bombardier', "Bombs away! Let's get out of here!", 0, 3);
   }
   /** After cinematic/shake layers: the gyroscope stabilises the nose eyepiece. */

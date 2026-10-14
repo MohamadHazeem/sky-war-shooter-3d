@@ -72,7 +72,7 @@ export class MidRound {
     const live = g.state === 'playing' && !!m && !!w.player && w.player.alive && m.midRound !== false;
     // a pause, perk card or hangar break freezes a formation set piece; it carries on afterwards
     if (!live) { this.stopAll(g.state === 'paused' && m === this.mission && !!w.player?.alive); return; }
-    if (roundIdx !== this.roundIdx || roundT0 !== this.roundT0) this.newRound(roundIdx, roundT0);
+    if (roundIdx !== this.roundIdx) this.newRound(roundIdx, roundT0);
     const r = m!.round ? roundDef(m!, roundIdx) : { duration: Number.isFinite(m!.duration) ? m!.duration : 120, start: 7 };
     this.roundT = w.time - roundT0;
     this.roundLeft = r.duration - this.roundT;

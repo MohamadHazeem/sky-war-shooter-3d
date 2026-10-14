@@ -192,16 +192,18 @@ export class Director {
     const t = w.time;
     const enemies = w.activeEnemies().length;
     if (g.onboarding.direct(dt, m)) return;
-    if (g.state === 'playing') Chatter.updateInterphone(w);
+    if (g.state === 'playing' && !g.bombRun.active) Chatter.updateInterphone(w);
     // field promotion: every 5 kills, once the kill's slow-motion beat has played
-    if (g.killsSincePerk >= 6 && t - g.worldEvents.lastKillAt > 1.2 && g.state === 'playing' && w.player?.alive) {
+    if (!g.bombRun.active && g.killsSincePerk >= 6 && t - g.worldEvents.lastKillAt > 1.2 && g.state === 'playing' && w.player?.alive) {
       g.killsSincePerk = 0;
       g.awardPerk('6 KILLS · FIELD UPGRADE');
     }
     const ops = g.pilotOps.direct(dt, g.roundIdx, t - g.roundT0); // P-51 missions (PilotOps.ts)
     g.score += ops.score;
     if (ops.fail && !g.endResult) { g.flow.finish(false, ops.fail); return; } // raid missions: too many bombers through (RaidDefence.ts)
-    if (ops.scripted) {
+    if (g.bombRun.holding) {
+      this.updateIncoming(null, null);
+    } else if (ops.scripted) {
       this.incoming = ops.incoming; this.incomingOff = null;
       if (ops.roundOver && !this.roundClear && g.state === 'playing') { this.roundClear = true; g.flow.endRound(m); }
     } else if (m.round) {
@@ -270,12 +272,13 @@ export class Director {
       }
     }
     // Flak
-    if (m.flak) {
+    if (g.bombRun.enabled && (g.bombRun.active || this.bombsDropped)) w.flakIntensity = 0;
+    else if (m.flak) {
       const inFlak = t >= m.flak.start && t <= m.flak.end;
       w.flakIntensity = inFlak ? m.flak.intensity : 0;
       if (inFlak && t - dt < m.flak.start) w.callout('flak', 'Navigator', 'Flak ahead. Initial point in two minutes — here it comes.', 0, 3);
     }
-    if (m.bombsAway && !this.bombsDropped && !g.target.playerControlled && t >= m.bombsAway) {
+    if (!g.bombRun.enabled && m.bombsAway && !this.bombsDropped && !g.target.playerControlled && t >= m.bombsAway) {
       this.bombsDropped = true;
       g.dropBombs();
       w.callout('bombs', 'Bombardier', 'Bombs away! Let\'s get out of here!', 0, 3);
@@ -326,7 +329,7 @@ export class Director {
       return;
     }
     const roundDone = m.round ? this.roundsComplete : false;
-    if (roundDone || (!m.round && m.waves.length && this.waveIdx >= m.waves.length && enemies === 0 && t >= Math.min(m.duration, (m.flak?.end ?? 0) + 5))) {
+    if (!g.bombRun.active && (roundDone || (!m.round && m.waves.length && this.waveIdx >= m.waves.length && enemies === 0 && t >= Math.min(m.duration, (m.flak?.end ?? 0) + 5)))) {
       if ((!m.bombsAway || this.bombsDropped) && !g.bombardier.awaitingImpact) {
         if (!m.escortArrive || this.escortsSpawned) g.flow.finish(true, m.success ?? (m.role === 'gunner' ? 'The formation fought its way through. Good shooting, gunner.' : 'The bombers made it through. Outstanding work, Blue Leader.'));
       }

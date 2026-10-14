@@ -5,6 +5,7 @@ import { Atmos } from '../render/Atmosphere';
 import { weatherNow } from '../render/WeatherState';
 import type { WeatherPreset } from '../render/WeatherPresets';
 import { AADefence } from './AADefence';
+import { BombRun } from './BombRun';
 import { Bombardier } from './Bombardier';
 import * as THREE from 'three';
 import { Engine, lowerQuality } from '../core/Engine';
@@ -134,6 +135,7 @@ export class Game {
   readonly bookends: Bookends;     // take-off / landing scenes at Deenethorpe (Bookends.ts)
   readonly distantBattle = new DistantBattle();
   readonly bombardier: Bombardier;
+  readonly bombRun: BombRun;
   readonly target: TargetArea;      // bomb run: target city, bomb stream, impacts (TargetArea.ts)
   // ---- Game-only state ----
   private woundT = 0;   // eased wounded-crew amount for the PostFX desaturation
@@ -151,6 +153,7 @@ export class Game {
     this.world = new World(engine);
     this.target = new TargetArea(engine, this.world);
     this.bombardier = new Bombardier(this);
+    this.bombRun = new BombRun(this);
     this.gunner = new GunnerController(engine, this.world, input);
     this.pilot = new PilotController(engine, this.world, input);
     this.pilotOps = new PilotOps(this.world, ui, input, this.pilot); // + Blue Two's orders (keys) and the padlock target
@@ -396,9 +399,9 @@ export class Game {
 
   dropBombs() { this.target.bombsAway(); }
 
-  clearBombs() { this.bombardier.reset(); this.target.clear(); }
+  clearBombs() { this.bombardier.reset(); this.bombRun.reset(); this.target.clear(); }
 
-  private updateBombs(dt: number) { this.target.update(dt, this.menuMode ? null : this.mission); }
+  private updateBombs(dt: number) { this.target.update(dt, this.menuMode ? null : this.mission, this.bombRun.enabled); }
 
   get currentScore() { return this.score; }   // share stamp / analytics
 
@@ -482,11 +485,13 @@ export class Game {
     if (this.ditching.frame(dt)) { this.input.endFrame(); return; }
     if (this.bookends.frame(dt)) { this.input.endFrame(); return; } // take-off / landing scene owns the frame
     if (this.state === 'paused') { this.hud.drawOverlay(); this.input.endFrame(); return; }
+    this.bombRun.prepare(dt);
     this.coop.beforeWorld(dt);
     w.update(dt);
     this.coop.update(dt);
     this.bombardier.update(dt);
     this.updateBombs(dt);
+    this.bombRun.update();
     if (this.menuMode) {
       this.menuScene.update(dt);
     } else if (this.state === 'playing' || this.state === 'ending' || this.state === 'debrief') {
@@ -544,8 +549,12 @@ export class Game {
     this.woundT += (woundTarget - this.woundT) * (1 - Math.exp(-dt * 0.6));
     this.engine.post.hypoxia = !this.menuMode && this.mission?.role === 'gunner' && this.state === 'playing' ? this.gunner.survival.hypoxia : 0;
     this.engine.post.desat = this.woundT < 0.002 ? 0 : this.woundT;
-    this.midRound.update(dt, this.roundIdx, this.roundT0);
-    this.specials.update(dt, this.roundIdx, this.roundT0);
+    if (this.bombRun.holding) {
+      this.midRound.hud.hideAll(); this.specials.hud.hideAll();
+    } else {
+      this.midRound.update(dt, this.roundIdx, this.roundT0);
+      this.specials.update(dt, this.roundIdx, this.roundT0);
+    }
     this.cracks.update(dt);
     this.ui.redVignette(Math.min(0.35, this.damageT * 0.45 + (this.mission?.role === 'gunner' && !this.menuMode ? w.crewWounded * 0.05 : 0)));
     if (this.mission?.role === 'pilot' && !this.menuMode) { /* pilot sets exposure/vignette */ }
