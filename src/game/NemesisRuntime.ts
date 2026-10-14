@@ -13,6 +13,7 @@ import {
   aceName, unitLabel, traitLabel, fullRankName,
 } from './Nemesis';
 import { applyAceLook, paintNose } from '../world/AceLook';
+import { acePersona, PERSONALITY_LABEL, SIGNATURES } from '../world/PilotMind';
 import { deathKindOf } from '../world/FighterDeath';
 import { Aircraft, Bomber, Fighter } from '../world/Aircraft';
 import type { AttackType } from '../world/AI';
@@ -67,6 +68,13 @@ function health(f: Fighter) {
   let h = f.structureFrac;
   for (const z of f.zones) if (z.critical) h = Math.min(h, Math.max(0, z.hp) / z.maxHp);
   return h;
+}
+
+// The dossier card's style line: personality, and his signature move once the crew has seen it
+export function aceStyleLine(a: AceRecord) {
+  const p = acePersona(a.trait, a.id, -1);
+  const move = p.signature && a.history.length ? tx('Signature: {move}', { move: tx(SIGNATURES[p.signature].label) }) : tx('Signature move: not yet seen');
+  return `${tx(PERSONALITY_LABEL[p.personality])} · ${move}`;
 }
 
 // German pilot on the radio (subtitles only, like the ace squadron's taunts)
@@ -166,6 +174,8 @@ export class NemesisRuntime {
     // skill: an Experte, sharper with a grudge, rusty just out of hospital
     const lp = w.enemyPilot(L);
     if (lp) lp.skill = Math.max(lp.skill, 1.75) + 0.1 * ace.grudge - (ace.recovered ? 0.2 : 0);
+    // his personality and signature move (world/PilotMind.ts); the crew knows the move if they have met him
+    if (lp) lp.setPersona({ ...acePersona(ace.trait, ace.id, -1), known: ace.history.length > 0 });
     this.entrance(live);
     // radio: what the crew remembers about him, or the intelligence officer's warning
     const pilot = !sp.gunner();
@@ -415,6 +425,7 @@ export class NemesisRuntime {
       <div class="nc-n">${esc(fullRankName(a))}</div>
       <div class="nc-u">${esc(unitLabel(a.unit))} · ${esc(tx(acLabel(a.type)))} · <b>${tx('{n} victories', { n: a.victories })}</b></div>
       <div class="nc-t">${emblemSvg(a.emblem, a.color, 16)} ${esc(traitLabel(a.trait))}</div>
+      <div class="nc-t">${esc(aceStyleLine(a))}</div>
       ${mem ? `<div class="nc-m">${esc(mem)}</div>` : ''}
       ${a.scars ? `<div class="nc-s">${tx('Patched up after last time · out for revenge')}</div>` : ''}
     </div>`;

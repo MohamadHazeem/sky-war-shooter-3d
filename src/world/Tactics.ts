@@ -7,6 +7,7 @@ import { Aircraft, Bomber, Fighter, type HitZone } from './Aircraft';
 import { ENEMY_VARIANTS, EnemyType } from './EnemyTypes';
 import { BK5_MUZZLE } from './EnemyDress';
 import { formRaid } from './Raid';
+import { schwarmChance, staggerDelay } from './PilotMind';
 import { sound } from '../audio/Sound';
 
 /**
@@ -1417,6 +1418,31 @@ export class Tactics {
     }
     // gunner groups sent at a gun position keep their arc attacks
     this.perType(ctx.station ? fs.filter((f) => !w.enemyPilot(f)?.station) : fs, skill);
+    this.formSchwarme(fs);
+  }
+
+  // Enemy AI 2.0: single-engine fighters left to themselves fly as Rotten (pairs) or Schwärme
+  // (fours): wingmen hold a slot on the leader and start their runs staggered behind his
+  // (EnemyPilot.wing). Better units (decision quality) do it more often and keep it tighter.
+  private formSchwarme(fs: Fighter[]) {
+    const w = this.world;
+    const free: EnemyPilot[] = [];
+    for (const f of fs) {
+      const p = w.enemyPilot(f);
+      if (f.alive && p && !p.override && !p.wing && (f.enemyType === 'fw190' || f.enemyType === 'bf109')) free.push(p);
+    }
+    if (free.length < 2) return;
+    const q = free[0].quality(w);
+    if (Math.random() >= schwarmChance(q)) return;
+    const size = free.length >= 4 && q > 0.5 ? 4 : 2;
+    let leader = free[0];
+    for (let i = 0; i < free.length; i++) {
+      const k = i % size;
+      if (k === 0) { leader = free[i]; continue; }
+      free[i].wing = { leader, i: k, delay: staggerDelay(k, q) };
+      free[i].station = leader.station;
+    }
+    this.log.push(`${w.time.toFixed(0)}s schwarm x${free.length} (${size}s, q ${q.toFixed(2)})`);
   }
 
   private perType(fs: Fighter[], _skill: number) {

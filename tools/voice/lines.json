@@ -3873,6 +3873,121 @@
       "peakDb": -3
     },
     {
+      "_group": "Phase 10 enemy AI 2.0: aces' signature moves, weak guns, wounded fighters, evasions, Rotte passes (src/world/PilotMind.ts)"
+    },
+    {
+      "id": "ai_sig_l_corkscrew",
+      "role": "nav",
+      "text": "He's corkscrewing through his run! Wait for him to level out, then hit him!",
+      "urgent": true
+    },
+    {
+      "id": "ai_sig_k_corkscrew",
+      "role": "nav",
+      "text": "That's his corkscrew! Hold fire till he levels out!",
+      "urgent": true
+    },
+    {
+      "id": "ai_sig_l_splits",
+      "role": "ball",
+      "text": "He rolled over and split-S'd under the box! He goes out low!",
+      "urgent": true
+    },
+    {
+      "id": "ai_sig_k_splits",
+      "role": "ball",
+      "text": "Here comes his split-S! Ball turret, catch him going down!",
+      "urgent": true
+    },
+    {
+      "id": "ai_sig_l_zoom",
+      "role": "top",
+      "text": "He pulled straight up after his pass! He hangs up there at the top!",
+      "urgent": true
+    },
+    {
+      "id": "ai_sig_k_zoom",
+      "role": "top",
+      "text": "He'll zoom up again! Top turret, wait for him at the top!",
+      "urgent": true
+    },
+    {
+      "id": "ai_sig_l_wingover",
+      "role": "waist",
+      "text": "He wingovered straight back in! He comes at the same gun again!",
+      "urgent": true
+    },
+    {
+      "id": "ai_sig_k_wingover",
+      "role": "waist",
+      "text": "Same trick — he'll wingover and come right back! Stay on him!",
+      "urgent": true
+    },
+    {
+      "id": "ai_sig_l_lowsix",
+      "role": "tail",
+      "text": "He snuck up low at six! Watch under the tail!",
+      "urgent": true
+    },
+    {
+      "id": "ai_sig_k_lowsix",
+      "role": "tail",
+      "text": "His low-six trick again! Tail and ball, watch under us!",
+      "urgent": true
+    },
+    {
+      "id": "ai_weak_tail",
+      "role": "nav",
+      "text": "He's going for our tail — the tail gunner's hit! Somebody cover six!",
+      "urgent": true
+    },
+    {
+      "id": "ai_weak_waistl",
+      "role": "nav",
+      "text": "He's lining up on the left waist — that gun's hurt! Cover nine o'clock!",
+      "urgent": true
+    },
+    {
+      "id": "ai_weak_waistr",
+      "role": "nav",
+      "text": "He's lining up on the right waist — that gun's hurt! Cover three o'clock!",
+      "urgent": true
+    },
+    {
+      "id": "ai_weak_top",
+      "role": "nav",
+      "text": "He's diving on the top turret — the engineer's hit! Cover the top!",
+      "urgent": true
+    },
+    {
+      "id": "ai_weak_ball",
+      "role": "nav",
+      "text": "He's coming up under us — the ball turret's hurt! Cover the belly!",
+      "urgent": true
+    },
+    {
+      "id": "ai_limp",
+      "role": "waist",
+      "text": "That one's hit — he's limping home, trailing smoke!"
+    },
+    {
+      "id": "ai_press",
+      "role": "top",
+      "text": "He's smoking but he's coming back in — finish him!",
+      "urgent": true
+    },
+    {
+      "id": "ai_broke",
+      "role": "pilot",
+      "text": "You drove him off — he broke away!"
+    },
+    {
+      "id": "ai_pair",
+      "role": "nav",
+      "text": "Pair coming in, one behind the other! Stay on the gun!",
+      "urgent": true
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {

@@ -23,6 +23,7 @@ const _la = new THREE.Vector3();
 const _lb = new THREE.Vector3();
 const _qi = new THREE.Quaternion();
 const _hit = new THREE.Vector3();
+const NEAR_MISS_R = 30;   // m: a player round passing this close to an aircraft counts as a near miss (Aircraft.fireNear)
 
 // Ray-segment vs sphere: returns t in [0,1] of first intersection or -1.
 export function segSphere(ax: number, ay: number, az: number, bx: number, by: number, bz: number,
@@ -123,13 +124,20 @@ export class Ballistics {
       const bx = ax + this.vx[i] * dt, by = ay + this.vy[i] * dt, bz = az + this.vz[i] * dt;
       let hitT = 2, hitAc: Aircraft | null = null, hitZone: HitZone | null = null;
       const team = this.team[i];
-      const hs = this.player[i] === 1 ? this.playerHitScale : 1;
+      const pl = this.player[i] === 1;
+      const hs = pl ? this.playerHitScale : 1;
       for (const ac of aircraft) {
         if (ac.remove || ac === this.owner[i]) continue;
         if ((ac.team === 'allied' ? 0 : 1) === team) continue;
         const p = ac.root.position;
         // Bullets move relative to the target during the frame; test in target frame
-        const t0 = segSphere(ax, ay, az, bx, by, bz, p.x, p.y, p.z, ac.radius * hs + 2);
+        const r0 = ac.radius * hs + 2;
+        // the player's rounds: one wider test first, so a close miss is felt (EnemyPilot evasion)
+        if (pl && r0 < NEAR_MISS_R) {
+          if (segSphere(ax, ay, az, bx, by, bz, p.x, p.y, p.z, NEAR_MISS_R) < 0) continue;
+          ac.fireNear++;
+        }
+        const t0 = segSphere(ax, ay, az, bx, by, bz, p.x, p.y, p.z, r0);
         if (t0 < 0) continue;
         _qi.copy(ac.root.quaternion).invert();
         // Relative motion: aircraft were updated first, so at the segment start the target

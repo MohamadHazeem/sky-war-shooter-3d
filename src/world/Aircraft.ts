@@ -74,6 +74,7 @@ export abstract class Aircraft {
   get structureFrac() { return this.maxStructure === Infinity ? 1 : Math.max(0, this.structure) / this.maxStructure; }
   playerDamage = 0;
   lastPlayerHit = -99;
+  fireNear = 0;            // player rounds that passed within ~30 m (Ballistics; the enemy AI's evasion reads it)
 
   constructor(public readonly kind: ModelKind, public readonly team: Team, propRadius: number) {
     this.model = instantiate(kind);

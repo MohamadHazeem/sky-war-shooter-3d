@@ -9,6 +9,7 @@ import type { Fighter } from '../world/Aircraft';
 import { StrafeRun, pullOutHeight } from '../game/StrafeOps';
 import type { GroundTarget } from '../world/GroundTargets';
 import { crewRoomScene } from '../ui/CrewRoomScene';
+import { AI_STATS, resetAiStats } from '../world/PilotMind';
 
 // Development-only scripted player used for automated playtests in headless browsers
 // (where requestAnimationFrame never fires). Usage from the console / Playwright:
@@ -100,6 +101,7 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
   game.bookends.auto = true;   // no take-off / landing scenes in automated runs
   crewRoomScene.auto = true;   // nor crew-room scenes
   game.startMission(mission);
+  resetAiStats();   // enemy AI decisions this run (extra.ai)
   const log: string[] = [];
   let perks = 0;
   let chase: Fighter | null = null, commitT = 0, switches = 0;
@@ -329,6 +331,8 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
       : game.pilotOps.raid.active ? { switches, ...Object.fromEntries(Object.entries(pt).map(([k, v]) => [k, Math.round(v)])), through: game.pilotOps.raid.through, allow: game.pilotOps.raid.def?.allowThrough, down: game.pilotOps.raid.shotDown, jettisoned: game.pilotOps.raid.jettisoned }
       : game.pilotOps.strafe.active || passes ? { objectives: game.pilotOps.strafe.objectives.slice(), passes, ends: game.pilotOps.strafe.log.filter((l) => l.includes('over') || l.includes('scramble')) } : {},
   };
+  lastMetrics.extra.ai = { ...AI_STATS };
+  log.push(`enemy AI: ${JSON.stringify(AI_STATS)}`);
   if (trace.length && !w.playerFighter?.alive) log.push('last frames: ' + trace.join(' / '));
   if (game.pilotOps.strafe.active || passes) log.push(`strafe: passes ${passes} · destroyed ${JSON.stringify(game.pilotOps.strafe.destroyed)} · objectives ${game.pilotOps.strafe.objectives.join('/')} · ${game.pilotOps.strafe.log.slice(-12).join(' | ')}`);
   if (mission.role === 'pilot') log.push(`BFM modes (samples): ${JSON.stringify(modes)} · BFM firing samples ${fired} · hits taken ${taken}`);
