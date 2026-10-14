@@ -1,0 +1,122 @@
+<title>Parallel Agent Playbook</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; numbered steps only for the real build→review→ship loop; practices grouped by lane. */
+:root {
+  --bg: #f4f5f1; --surface: #ffffff; --fg: #1d211b; --muted: #5b6356; --line: #d9ddd3;
+  --accent: #55652f; --accent-soft: #e6ebd9; --warn: #8a4b16;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151813; --surface: #1d211b; --fg: #e8ebe3; --muted: #a2ab99; --line: #333a2e;
+  --accent: #b5c77f; --accent-soft: #2a3220; --warn: #e3a36a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151813; --surface: #1d211b; --fg: #e8ebe3; --muted: #a2ab99; --line: #333a2e;
+  --accent: #b5c77f; --accent-soft: #2a3220; --warn: #e3a36a; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body); }
+.wrap { max-width: 760px; margin: 0 auto; padding-inline: 20px; padding-block: 48px 72px; display: flex; flex-direction: column; gap: 40px; }
+header { display: flex; flex-direction: column; gap: 10px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 800 clamp(30px, 6vw, 44px)/1.08 var(--display); margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+.lede { color: var(--muted); max-width: 62ch; margin: 0; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 20px; font: 500 13px/1.4 var(--mono); color: var(--muted); }
+.stats b { color: var(--fg); font-weight: 500; }
+h2 { font: 700 21px/1.25 var(--display); margin: 0 0 12px; text-wrap: balance; }
+section { display: flex; flex-direction: column; }
+ol.loop { list-style: none; counter-reset: s; margin: 0; padding: 0; display: grid; gap: 10px; }
+ol.loop li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; }
+ol.loop li::before { content: counter(s); font: 700 15px/30px var(--display); text-align: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); }
+ul.p { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+ul.p li { padding-left: 18px; position: relative; min-width: 0; }
+ul.p li::before { content: ""; position: absolute; left: 2px; top: .7em; width: 6px; height: 6px; background: var(--accent); }
+b.k { font-weight: 600; }
+code { font: 400 .86em var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere; }
+.pitfalls { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--warn); padding: 18px 20px; border-radius: 4px; }
+.pitfalls h2 { color: var(--warn); }
+footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Practice note · Sky War Shooter 3D</div>
+    <h1>Parallel Agent Playbook</h1>
+    <p class="lede">How we sped up development by running many AI coding agents in parallel, with one agent acting as reviewer, integrator and release manager.</p>
+    <div class="stats"><span><b>3</b> agent lanes</span><span><b>~10</b> goals building at once</span><span><b>1</b> spec file per goal</span><span><b>0</b> check-ins before deploy</span></div>
+  </header>
+
+  <section>
+    <h2>The loop</h2>
+    <ol class="loop">
+      <li><div><b class="k">Write one spec per goal</b>: what to read first, what to build, and when it counts as done (tests, screenshots, report path, dev-server port).</div></li>
+      <li><div><b class="k">Launch each goal in its own worktree and branch</b>, so agents never edit the same checkout.</div></li>
+      <li><div><b class="k">Agents implement, test and write a report</b> with files changed, numbers and screenshots.</div></li>
+      <li><div><b class="k">The lead reviews the evidence</b>, not the whole diff: report, screenshots, test count. Weak results go back with a short follow-up spec.</div></li>
+      <li><div><b class="k">Merge, run the full check, deploy, push</b>, one goal at a time as soon as it lands.</div></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Roles</h2>
+    <ul class="p">
+      <li><b class="k">Orchestrate, don't implement.</b> One lead agent plans, writes specs, reviews and merges. Implementation goes to cheaper or separate-budget agents.</li>
+      <li><b class="k">One shared rules file</b> (<code>AGENTS.md</code>) for every agent: git profile, never push or deploy, commit trailer, the check that must pass, translation and performance rules.</li>
+      <li><b class="k">Measurable bars</b> instead of opinions: a scorecard, a fixed capture rig for before/after shots, and automated audits (HUD overlap, false markers).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Parallel lanes</h2>
+    <ul class="p">
+      <li><b class="k">Codex CLI</b> in headless mode, 3–4 sessions at once; more returns HTTP 429.</li>
+      <li><b class="k">Claude subagents</b> in isolated worktrees, each with its own dev-server port and browser tab.</li>
+      <li><b class="k">A second Claude Code account</b> run headless with its own config folder (<code>CLAUDE_CONFIG_DIR</code>), so its usage limits add up instead of competing.</li>
+      <li><b class="k">Split work by subsystem</b> (renderer, clouds, models, effects, AI) so lanes rarely touch the same files.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Keeping the pipeline full</h2>
+    <ul class="p">
+      <li><b class="k">A queue runner with a concurrency cap</b> starts the next task the moment a slot frees up.</li>
+      <li><b class="k">Automatic retry on rate limits</b>: a 429 waits 5 minutes and relaunches instead of failing.</li>
+      <li><b class="k">Reasoning effort per task</b>: high for big features, medium for merges and small fixes.</li>
+      <li><b class="k">Background jobs with completion notifications</b> instead of polling.</li>
+      <li><b class="k">Keep the machine awake</b> (<code>caffeinate</code>) and the session open for overnight runs.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Merging fast</h2>
+    <ul class="p">
+      <li><b class="k">Merge early and often</b>: each goal as it lands, not in a batch at the end.</li>
+      <li><b class="k">Script the recurring conflicts</b>: we had two hotspots (a registry list and a generated manifest) and resolved both with small union scripts.</li>
+      <li><b class="k">Hand hard conflicts to an agent</b> on a dedicated merge branch, with both feature specs as context, while the lead reviews the next goal.</li>
+      <li><b class="k">Hold dependent goals</b> until their foundation is merged, or tell them to use only merged APIs.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Autonomy</h2>
+    <ul class="p">
+      <li><b class="k">Standing permission</b> to merge, deploy and push once checks pass, with no "ready to ship?" questions.</li>
+      <li><b class="k">No planning questionnaires</b>: the lead picks goals from the owner's stated focus and starts; the owner redirects if needed.</li>
+      <li><b class="k">Short status messages</b> after each landing: what shipped, what is building, what is blocked.</li>
+    </ul>
+  </section>
+
+  <section class="pitfalls">
+    <h2>Pitfalls we hit</h2>
+    <ul class="p">
+      <li>Headless agent CLIs can hang waiting on stdin. Always redirect <code>&lt; /dev/null</code>.</li>
+      <li>Editing a runner script while runs are reading it breaks those runs.</li>
+      <li>macOS ships bash 3.2: an empty array under <code>set -u</code> crashes. Use <code>${A[@]+"${A[@]}"}</code>.</li>
+      <li>Counting sessions with <code>pgrep -f</code> also matches your own waiting loop. Match the binary path.</li>
+      <li>Too many parallel sessions on one account triggers rate limits. Cap it, or add accounts.</li>
+      <li>Machine sleep or a closed session kills long background jobs. Make them resumable.</li>
+    </ul>
+  </section>
+
+  <footer>Tools used: Claude Code (lead and subagents), OpenAI Codex CLI, git worktrees, Vite, Vitest, Cloudflare Workers.</footer>
+</div>

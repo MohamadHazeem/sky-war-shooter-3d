@@ -54,8 +54,10 @@ Every graphics goal is judged on fixed camera shots from the capture rig (goal 0
 
 | # | Goal | Spec | Status |
 |---|---|---|---|
-| 00 | Capture rig + reference board | [00](phase10/00-capture-rig.md) | Queued |
-| 01 | Renderer 2.0 | [01](phase10/01-renderer.md) | Queued |
-| 02 | Hero asset pipeline + B-17 | [02](phase10/02-hero-b17.md) | Queued |
-| 03 | Clouds & sky 2.0 | [03](phase10/03-clouds.md) | Queued |
-| 04–13 | Waves B–D | written after Wave A lands | Planned |
+| 00 | Capture rig + reference board | [00](phase10/00-capture-rig.md) | Done — merged |
+| 01 | Renderer 2.0 | [01](phase10/01-renderer.md) | Building (Codex) |
+| 02 | Hero asset pipeline + B-17 | [02](phase10/02-hero-b17.md) | Building (Codex) |
+| 03 | Clouds & sky 2.0 | [03](phase10/03-clouds.md) | Building (Codex) |
+| 04, 06, 07, 08, 09, 10, 11 | Wave B–C goals | specs in docs/phase10 | Building (Claude agents) |
+| 05 | Luftwaffe hero models | [05](phase10/05-luftwaffe-models.md) | Building (2nd Claude account) |
+| 12–13 | Presets & performance, final scorecard | to write | Planned |
