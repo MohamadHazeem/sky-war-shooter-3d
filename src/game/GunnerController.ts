@@ -24,6 +24,8 @@ import { Brass } from './Brass';
 import { TAIL_FLOOR, TAIL_HALF_WIDTH, FREE_LOOK_YAW, FREE_LOOK_UP, stationShafts, disposeStationDetails } from './TurretInteriors';
 import { InteriorDamage, holeLightMaterials } from './InteriorDamage';
 import { GunnerGlass } from './GlassFx';
+import { interiorAssets, interiorHigh, interiorWarmed, warmInteriorAssets } from './InteriorAssets';
+import { addPlayerHands } from './PlayerHands';
 
 interface StationState extends SurvivalGun {
   def: StationDef;
@@ -77,6 +79,7 @@ export class GunnerController {
   private shaftSun = new THREE.Vector3();
   readonly interiorDamage = new InteriorDamage();
   readonly glassFx: GunnerGlass;   // rain, glints, oil, frost and cracks on the turret / tail glass (GlassFx.ts)
+  set bombsAboard(v: boolean) { this.living.bombsAboard = v; }   // Game: the bomb bay's load, until bombs away
   cold = 0.5;      // 0..1 how cold the mission is (frost on the windows; set by Game per mission)
   // free look (hold C): the head turns away from the gun to look around the compartment
   look = 0;
@@ -219,7 +222,18 @@ export class GunnerController {
     this.links = new Brass(wl.z - 2, wr.z + 2, undefined, undefined, true, true);
     bomber.root.add(this.links.flying, this.links.pile);
     this.glassFx.attach(bomber, { top: top.group, ball: ball.group, tail });
-    this.living.build(bomber, this.waistInterior, (wl.z + wr.z) / 2, wl.z, wr.z, this.guns.waistL[0], this.guns.waistR[0]);
+    // interior 2.0 (Phase 10 goal 07): Medium and up, once the Blender assets are in
+    const high = interiorHigh(this.engine.quality) && !!interiorAssets();
+    if (high && !interiorWarmed()) {
+      // assets arrived after the session's prewarm: compile their programs now, behind the mission fade
+      const at = this.engine.camera.getWorldPosition(new THREE.Vector3()).add(this.engine.camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(6));
+      const unwarm = warmInteriorAssets(this.engine.scene, at);
+      this.engine.render(1 / 60);
+      unwarm();
+    }
+    if (high) addPlayerHands(this.guns, { top: top.group, ball: ball.group });
+    this.ballShafts.setVolumetric(high); this.tailShafts.setVolumetric(high);
+    this.living.build(bomber, this.waistInterior, (wl.z + wr.z) / 2, wl.z, wr.z, this.guns.waistL[0], this.guns.waistR[0], high);
     this.lookYaw = this.lookPitch = this.look = 0;
     this.setStation(station, true);
   }
@@ -583,7 +597,7 @@ export class GunnerController {
     if (this.station === 'ball' || this.station === 'tail') {
       this.interiors[this.station]!.getWorldQuaternion(_q).invert();
       this.shaftSun.copy(Atmos.sunDir).applyQuaternion(_q);
-      (this.station === 'ball' ? this.ballShafts : this.tailShafts).update(this.shaftSun);
+      (this.station === 'ball' ? this.ballShafts : this.tailShafts).update(this.shaftSun, 0, 1, dt);
     }
   }
 
@@ -614,7 +628,7 @@ export class GunnerController {
       _ventX.set(0.5, 0, 0).applyQuaternion(this.gunPivot.quaternion);
     }
     const eyeIn = this.def.type === 'waist' ? this.ads : this.ads * 0.45;
-    this.living.update(dt, this.station, this.sunLocal, eyeIn, Math.max(this.cold, this.survival.chill), _mouth, _vent, _ventX, 0.27 + 0.28 * effort, this.engine.renderer.domElement.height);
+    this.living.update(dt, this.station, this.sunLocal, eyeIn, Math.max(this.cold, this.survival.chill), _mouth, _vent, _ventX, 0.27 + 0.28 * effort, this.engine.renderer.domElement.height, this.engine.camera);
   }
 
   // Overdrive: a red-hot glow along the exposed barrel (and through the cooling-jacket holes),

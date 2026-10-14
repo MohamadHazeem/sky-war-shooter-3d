@@ -161,6 +161,9 @@ async function boot() {
     (window as any).sws.hitFeedback = hitFeedbackQa(engine, game);
     const { seaQa } = await import('./dev/seaQa');
     (window as any).sws.sea = seaQa(engine, game);
+    // B-17 interior 2.0 station captures (Phase 10 goal 07): await sws.interiorShots('after')
+    const { interiorShots } = await import('./dev/interiorShots');
+    (window as any).sws.interiorShots = interiorShots(engine, game);
   }
 }
 

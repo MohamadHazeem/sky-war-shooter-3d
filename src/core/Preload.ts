@@ -17,6 +17,7 @@
 import { NOW, json, progress, request } from './Assets';
 import { ALL_MODELS, ESSENTIAL_MODELS, loadModels, modelPath } from '../world/Models';
 import { tx } from '../i18n';
+import { loadInteriorAssets } from '../game/InteriorAssets';
 
 interface AudioManifest {
   loops?: Record<string, { file: string }>;
@@ -83,6 +84,7 @@ export function loadInBackground() {
       ...loopFiles(man, allLoops.filter((k) => !MISSION_LOOPS.includes(k))),
       ...musicFiles(man, allMusic.filter((k) => !['menu', 'tension', 'combat'].includes(k))),
     ], P_REST);
+    void loadInteriorAssets(P_LOOPS);   // B-17 interior 2.0 (~0.6 MB): not waited for; Low never uses it
     missionFiles = [...ALL_MODELS.map(modelPath), ...sfxFiles(man, allSfx)];
     void Promise.all([...menuMusic, ...missionMusic, ...rest, ...sfx, ...loops, models]).then(registerServiceWorker);
     await Promise.all([...sfx, models]);

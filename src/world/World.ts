@@ -37,6 +37,7 @@ import { bomberName, dressPlayerBomber } from '../game/Customize';
 import { aiGunnerSkill, crewRoster } from '../game/CrewRoster';
 import { warmTurretViewmodels } from '../game/Viewmodels';
 import { warmLivingInterior } from '../game/LivingInterior';
+import { warmInteriorAssets } from '../game/InteriorAssets';
 import { PlayerBomberDamage } from './PlayerBomberDamage';
 import { dressEnemy } from './EnemyDress';
 import { updateWeather, weatherRestart, weatherEvents, frontState, FRONT_EVENT } from '../render/Weather';
@@ -326,6 +327,7 @@ export class World implements WorldView {
     const unwarmFormation = FormationDress.warm(this.scene, at);
     const unwarm = this.bomberDamage.warmup(this.scene, at);
     const unwarmCrew = warmLivingInterior(this.scene, at); // gunner interior: crew, brass, shafts, frost, breath
+    const unwarmInterior2 = warmInteriorAssets(this.scene, at); // interior 2.0 kit + skinned crew, when loaded
     const unwarmTurrets = warmTurretViewmodels(this.scene, at);
     const unwarmAA = warmAAGuns(this.scene, at);
     const unwarmInteriorDamage = warmInteriorDamage(this.scene, at);
@@ -344,6 +346,7 @@ export class World implements WorldView {
     unwarmFormation();
     unwarm();
     unwarmCrew();
+    unwarmInterior2();
     unwarmTurrets();
     unwarmGlass();
     unwarmDamage();

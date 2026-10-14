@@ -386,6 +386,10 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
   shell.name = 'waistShell';
   shell.castShadow = true; shell.receiveShadow = true;
   g.add(shell);
+  // the structure and clutter below are replaced by the Blender kit on Medium and up (InteriorKit)
+  const legacy = new THREE.Group();
+  legacy.name = 'waistLegacyDetail';
+  g.add(legacy);
   // Ribs (formers) every 0.5 m, broken at the windows
   const ribZs: number[] = [];
   for (let z = z0 + 0.25; z < z1; z += 0.48) ribZs.push(z);
@@ -403,7 +407,7 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
     for (const seg of pts) {
       const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(seg), seg.length, 0.035, 4), fmat);
       tube.castShadow = true; tube.receiveShadow = true;
-      g.add(tube);
+      legacy.add(tube);
     }
   }
   // Window frames (thick sills with depth) for both windows
@@ -413,7 +417,7 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
     const yLo = yC + winH[0], yHi = yC + winH[1];
     const mk = (w: number, h: number, d: number, x: number, y: number, z: number) => {
       const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), fmat);
-      m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; g.add(m);
+      m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; legacy.add(m);
     };
     // Thin pressed-metal window surround (sits just inside the skin)
     const depth = 0.05;
@@ -430,14 +434,14 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
   const floor = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.03, z1 - z0), new THREE.MeshStandardMaterial({ color: 0x2a2418, roughness: 0.9, envMap: envRef.tex, envMapIntensity: 0.1 }));
   floor.position.set(0, yC - b * 0.78, zCenter);
   floor.receiveShadow = true;
-  g.add(floor);
+  legacy.add(floor);
   // Ammunition boxes under each window
   const boxMat = new THREE.MeshStandardMaterial({ color: 0x3b3d2a, roughness: 0.75, metalness: 0.2, envMap: envRef.tex, envMapIntensity: 0.15 });
   for (const [side, zc] of [[1, leftZ], [-1, rightZ]] as [number, number][]) {
     const box = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.4, 0.5), boxMat);
     box.position.set(side * 0.62, yC - b * 0.78 + 0.22, zc - 0.25);
     box.castShadow = true; box.receiveShadow = true;
-    g.add(box);
+    legacy.add(box);
   }
   // Oxygen bottles, cables and stringers for clutter
   const yel = new THREE.MeshStandardMaterial({ color: 0x8a7a2a, roughness: 0.5, metalness: 0.3, envMap: envRef.tex, envMapIntensity: 0.2 });
@@ -446,17 +450,17 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
     bottle.rotation.x = Math.PI / 2;
     bottle.position.set(-0.75, yC + 0.75, zCenter - 1.6 + i * 0.25);
     bottle.castShadow = true;
-    g.add(bottle);
+    legacy.add(bottle);
   }
   for (const t of [0.95, 1.35, 1.8, 2.2, -0.6, -2.6]) {
     const s = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, z1 - z0), fmat);
     s.position.set(Math.cos(t) * (a - 0.03), yC + Math.sin(t) * (b - 0.03), zCenter);
-    g.add(s);
+    legacy.add(s);
   }
   const cable = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
     new THREE.Vector3(0.3, yC + b - 0.1, z0), new THREE.Vector3(0.35, yC + b - 0.14, zCenter), new THREE.Vector3(0.28, yC + b - 0.1, z1),
   ]), 20, 0.012, 6), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.6 }));
-  g.add(cable);
+  legacy.add(cable);
   // Bulkheads closing the ends: the forward one has the open door to the radio room, the aft
   // one the opening into the tail tunnel (both furnished by LivingInterior)
   const floorTop = yC - b * 0.78 + 0.015;
@@ -470,9 +474,9 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
       hole.quadraticCurveTo(-dw, y1, -dw, y1 - r); hole.lineTo(-dw, y0);
     } else hole.absellipse(0, TUNNEL_Y - yC, TUNNEL_A, TUNNEL_B, 0, Math.PI * 2, true, 0);
     shape.holes.push(hole);
-    const bh = new THREE.Mesh(new THREE.ShapeGeometry(shape, 24), mat);
-    bh.position.set(0, yC, z);
-    if (z === z1) bh.rotation.y = Math.PI; // face the inside of the tube
+    const bh = new THREE.Mesh(new THREE.ShapeGeometry(shape, 24).translate(0, yC, z), mat);
+    bh.name = 'waistBulkhead';
+    if (z === z1) bh.geometry.translate(0, 0, -z).rotateY(Math.PI).translate(0, 0, z); // face the inside of the tube
     bh.receiveShadow = true;
     g.add(bh);
     // door frame / tunnel coaming
@@ -493,7 +497,7 @@ export function buildWaistInterior(zCenter: number, leftZ: number, rightZ: numbe
       g.add(coaming);
     }
   }
-  addWaistProps(g, zCenter);
+  addWaistProps(legacy, zCenter);
   return g;
 }
 

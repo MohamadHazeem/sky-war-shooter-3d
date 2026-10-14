@@ -47,9 +47,75 @@ export function shaftMaterial(): THREE.ShaderMaterial {
   return shaftMat;
 }
 
+// Volumetric variant (interior 2.0, Medium and up): the prism is ray-marched in the fragment
+// shader. Every face of the closed prism is drawn; an entry face integrates from itself to where
+// the view ray leaves the prism (found analytically against its six planes), an exit face only
+// when the eye is inside the beam (from the eye to the face), so nothing is counted twice and
+// the beam needs no depth texture. Along the ray: drifting dust (two octaves of value noise
+// with bright motes), soft edges, fading with distance from the window.
+let shaftVolMat: THREE.ShaderMaterial | null = null;
+export function shaftVolumeMaterial(): THREE.ShaderMaterial {
+  shaftVolMat ??= new THREE.ShaderMaterial({
+    uniforms: {
+      uCol: { value: new THREE.Color() }, uCam: { value: new THREE.Vector3() }, uTime: { value: 0 },
+      uPlanes: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) }, uLen: { value: SHAFT_LEN },
+    },
+    vertexShader: /* glsl */ `
+      varying vec3 vP;
+      void main() { vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: /* glsl */ `
+      uniform vec3 uCol; uniform vec3 uCam; uniform float uTime; uniform vec4 uPlanes[6]; uniform float uLen;
+      varying vec3 vP;
+      float h31(vec3 p) { p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+      float vnoise(vec3 p) {
+        vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(mix(h31(i), h31(i + vec3(1,0,0)), f.x), mix(h31(i + vec3(0,1,0)), h31(i + vec3(1,1,0)), f.x), f.y),
+                   mix(mix(h31(i + vec3(0,0,1)), h31(i + vec3(1,0,1)), f.x), mix(h31(i + vec3(0,1,1)), h31(i + vec3(1,1,1)), f.x), f.y), f.z);
+      }
+      void main() {
+        vec3 rd = vP - uCam; float dist = length(rd); rd /= dist;
+        // clip the ray against the prism: inside where dot(n, p) <= w for all six planes
+        float t0 = 0.0, t1 = 1e4;
+        for (int i = 0; i < 6; i++) {
+          vec3 n = uPlanes[i].xyz; float w = uPlanes[i].w;
+          float dn = dot(n, rd), s = w - dot(n, uCam);
+          if (abs(dn) < 1e-5) { if (s < 0.0) discard; continue; }
+          float t = s / dn;
+          if (dn < 0.0) t0 = max(t0, t); else t1 = min(t1, t);
+        }
+        // entry or exit face? (by where this fragment lies on the ray: independent of winding)
+        bool entry = abs(dist - t0) < abs(dist - t1);
+        if (entry) { if (t0 <= 0.0) discard; t0 = dist; }            // eye outside: from here to the exit
+        else { if (t0 > 0.0) discard; t0 = 0.0; t1 = dist; }         // eye inside: from the eye to here
+        if (t1 <= t0) discard;
+        const int N = 10;
+        float dt = (t1 - t0) / float(N), acc = 0.0;
+        float j = h31(vec3(gl_FragCoord.xy, uTime * 60.0));
+        for (int k = 0; k < N; k++) {
+          vec3 p = uCam + rd * (t0 + (float(k) + j) * dt);
+          // soft edges: distance inside the nearest side plane
+          float e = 1e3;
+          for (int i = 0; i < 4; i++) e = min(e, uPlanes[i].w - dot(uPlanes[i].xyz, p));
+          float along = clamp((uPlanes[4].w - dot(uPlanes[4].xyz, p)) / uLen, 0.0, 1.0);   // 0 at the window
+          vec3 q = p * 9.0 + vec3(0.0, uTime * 0.25, uTime * 0.6);
+          float dust = 0.55 + 0.45 * vnoise(q) + 0.35 * vnoise(q * 2.7 + 7.1);
+          float mote = smoothstep(0.83, 0.95, vnoise(p * 55.0 + vec3(uTime * 0.4, 0.0, uTime * 1.3)));
+          float near = smoothstep(0.15, 0.6, length(p - uCam));
+          acc += (dust + 2.5 * mote) * smoothstep(0.0, 0.06, e) * smoothstep(0.0, 0.08, along) * (1.0 - smoothstep(0.35, 1.0, along)) * near;
+        }
+        float a = acc * dt;
+        gl_FragColor = vec4(uCol * a, 1.0);
+      }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+  });
+  return shaftVolMat;
+}
+
 export class SunShafts {
   readonly group = new THREE.Group();
-  private shafts: { mesh: THREE.Mesh; pos: THREE.BufferAttribute; corners: THREE.Vector3[]; out: THREE.Vector3; mat: THREE.ShaderMaterial }[] = [];
+  private shafts: { mesh: THREE.Mesh; pos: THREE.BufferAttribute; corners: THREE.Vector3[]; out: THREE.Vector3; mat: THREE.ShaderMaterial; vol: THREE.ShaderMaterial; centre: THREE.Vector3 }[] = [];
+  private volumetric = false;
+  private t = 0;
 
   constructor(leftZ: number, rightZ: number, apertures?: { corners: THREE.Vector3[]; out: THREE.Vector3 }[]) {
     const xAt = (y: number) => A * Math.sqrt(1 - (y / B) ** 2);
@@ -63,29 +129,47 @@ export class SunShafts {
       return { corners, out: new THREE.Vector3(side, 0.25, 0).normalize() };
     });
     for (const { corners, out } of windows) {
-      // 4 side quads of a prism (flat-shaded, 4 vertices each): window edge (t = 0) to the far end (t = 1)
+      // 4 side quads of a prism (flat-shaded, 4 vertices each): window edge (t = 0) to the far end
+      // (t = 1), then the window and far caps (aU = 0: invisible to the classic shader)
       const geo = new THREE.BufferGeometry();
-      const pos = new THREE.BufferAttribute(new Float32Array(16 * 3), 3).setUsage(THREE.DynamicDrawUsage);
+      const pos = new THREE.BufferAttribute(new Float32Array(24 * 3), 3).setUsage(THREE.DynamicDrawUsage);
       geo.setAttribute('position', pos);
-      geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(16 * 3), 3).setUsage(THREE.DynamicDrawUsage));
+      geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(24 * 3), 3).setUsage(THREE.DynamicDrawUsage));
       const at: number[] = [], au: number[] = [], idx: number[] = [];
       for (let i = 0; i < 4; i++) { at.push(0, 0, 1, 1); au.push(0, 1, 0, 1); const o = i * 4; idx.push(o, o + 1, o + 2, o + 1, o + 3, o + 2); }
+      for (const t of [0, 1]) { at.push(t, t, t, t); au.push(0, 0, 0, 0); }
+      idx.push(16, 17, 18, 16, 18, 19, 20, 22, 21, 20, 23, 22);
       geo.setAttribute('aT', new THREE.BufferAttribute(new Float32Array(at), 1));
       geo.setAttribute('aU', new THREE.BufferAttribute(new Float32Array(au), 1));
       geo.setIndex(idx);
       geo.boundingSphere = new THREE.Sphere(corners[0].clone(), 4);
       const mat = shaftMaterial().clone();
+      const vol = shaftVolumeMaterial().clone();
       const mesh = new THREE.Mesh(geo, mat);
       mesh.renderOrder = 2;
       mesh.name = 'sunShaft';
+      const centre = corners.reduce((c, v) => c.add(v), new THREE.Vector3()).multiplyScalar(0.25);
+      // the volume shader works in the mesh's own frame: the eye goes in each frame
+      mesh.onBeforeRender = (_r, _s, cam) => {
+        if (mesh.material !== vol) return;
+        vol.uniforms.uCam.value.setFromMatrixPosition(cam.matrixWorld);
+        mesh.worldToLocal(vol.uniforms.uCam.value);
+      };
       this.group.add(mesh);
-      this.shafts.push({ mesh, pos, corners, out, mat });
+      this.shafts.push({ mesh, pos, corners, out, mat, vol, centre });
     }
+  }
+
+  // interior 2.0: ray-marched dusty shafts instead of the feathered prism
+  setVolumetric(on: boolean) {
+    this.volumetric = on;
+    for (const s of this.shafts) s.mesh.material = on ? s.vol : s.mat;
   }
 
   // sunLocal: toward the sun, bomber-local
   // ownSide: the player's window (+1 left, -1 right, 0 none) and own: its shaft strength (fainter in the hip view)
-  update(sunLocal: THREE.Vector3, ownSide = 0, own = 1) {
+  update(sunLocal: THREE.Vector3, ownSide = 0, own = 1, dt = 1 / 60) {
+    this.t += dt;
     const sunUp = THREE.MathUtils.smoothstep(Atmos.sunElevationDeg, -2, 6);
     for (const s of this.shafts) {
       const k = THREE.MathUtils.smoothstep(sunLocal.dot(s.out), 0.04, 0.4) * sunUp * (Math.sign(s.out.x) === ownSide ? own : 1);
@@ -94,9 +178,16 @@ export class SunShafts {
       s.mat.uniforms.uCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.0045 * k);
       const P = s.pos.array as Float32Array;
       const N = (s.mesh.geometry.getAttribute('normal') as THREE.BufferAttribute).array as Float32Array;
+      const V = this.volumetric ? s.vol.uniforms : null;
       for (let i = 0; i < 4; i++) {
         const c0 = s.corners[i], c1 = s.corners[(i + 1) % 4];
         _n.subVectors(c1, c0).cross(sunLocal).normalize();
+        // outward side plane (the prism's centre line is inside)
+        if (V) {
+          let w = _n.dot(c0);
+          if (_n.dot(s.centre) > w) { _n.negate(); w = -w; }
+          (V.uPlanes.value as THREE.Vector4[])[i].set(_n.x, _n.y, _n.z, w);
+        }
         const o = i * 12;
         for (let v = 0; v < 4; v++) {
           const c = v & 1 ? c1 : c0, far = v >= 2 ? SHAFT_LEN : 0;
@@ -104,12 +195,31 @@ export class SunShafts {
           N[o + v * 3] = _n.x; N[o + v * 3 + 1] = _n.y; N[o + v * 3 + 2] = _n.z;
         }
       }
+      for (let cap = 0; cap < 2; cap++) {
+        const far = cap * SHAFT_LEN;
+        for (let v = 0; v < 4; v++) {
+          const c = s.corners[v], o = 48 + cap * 12 + v * 3;
+          P[o] = c.x - sunLocal.x * far; P[o + 1] = c.y - sunLocal.y * far; P[o + 2] = c.z - sunLocal.z * far;
+          N[o] = sunLocal.x; N[o + 1] = sunLocal.y; N[o + 2] = sunLocal.z;
+        }
+      }
+      if (V) {
+        // window plane (its normal toward the sun; inside = the cabin side) and the far cap parallel to it
+        _n.subVectors(s.corners[1], s.corners[0]).cross(_m.subVectors(s.corners[3], s.corners[0])).normalize();
+        if (_n.dot(sunLocal) < 0) _n.negate();
+        const w = _n.dot(s.corners[0]), across = _n.dot(sunLocal) * SHAFT_LEN;
+        (V.uPlanes.value as THREE.Vector4[])[4].set(_n.x, _n.y, _n.z, w);
+        (V.uPlanes.value as THREE.Vector4[])[5].set(-_n.x, -_n.y, -_n.z, -(w - across));
+        V.uLen.value = Math.max(0.05, across);
+        V.uCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.012 * k);
+        V.uTime.value = this.t;
+      }
       s.pos.needsUpdate = true;
       s.mesh.geometry.getAttribute('normal').needsUpdate = true;
     }
   }
 }
-const _n = new THREE.Vector3();
+const _n = new THREE.Vector3(), _m = new THREE.Vector3();
 
 // ---------------- window frost ----------------
 let frostTex: THREE.CanvasTexture | null = null;
