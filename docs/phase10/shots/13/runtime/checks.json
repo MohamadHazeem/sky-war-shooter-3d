@@ -1,0 +1,174 @@
+[
+  {
+    "quality": "high",
+    "kind": "b17",
+    "before": {
+      "programs": 190,
+      "kind": "b17"
+    },
+    "after": {
+      "counts": {
+        "pieces": 1,
+        "hulks": 1,
+        "pool": 1,
+        "tracked": 1
+      },
+      "programs": 190,
+      "alive": false,
+      "falling": false,
+      "finite": true,
+      "newPrograms": [],
+      "mass": 6604,
+      "sourceTriangles": 39653
+    },
+    "exploded": {
+      "counts": {
+        "pieces": 7,
+        "hulks": 0,
+        "pool": 7,
+        "tracked": 0
+      },
+      "shards": 5,
+      "finite": true,
+      "programs": 190
+    },
+    "errors": []
+  },
+  {
+    "quality": "high",
+    "kind": "p51d",
+    "before": {
+      "programs": 190,
+      "kind": "p51d"
+    },
+    "after": {
+      "counts": {
+        "pieces": 1,
+        "hulks": 1,
+        "pool": 1,
+        "tracked": 1
+      },
+      "programs": 190,
+      "alive": false,
+      "falling": false,
+      "finite": true,
+      "newPrograms": [],
+      "mass": 636.1702127659576,
+      "sourceTriangles": 89361
+    },
+    "exploded": {
+      "counts": {
+        "pieces": 7,
+        "hulks": 0,
+        "pool": 7,
+        "tracked": 0
+      },
+      "shards": 5,
+      "finite": true,
+      "programs": 190
+    },
+    "errors": []
+  },
+  {
+    "quality": "low",
+    "kind": "b17",
+    "before": {
+      "programs": 181,
+      "kind": "b17"
+    },
+    "after": {
+      "counts": {
+        "pieces": 1,
+        "hulks": 1,
+        "pool": 1,
+        "tracked": 1
+      },
+      "programs": 181,
+      "alive": false,
+      "falling": false,
+      "finite": true,
+      "newPrograms": [],
+      "mass": 6604,
+      "sourceTriangles": 39653
+    },
+    "exploded": {
+      "counts": {
+        "pieces": 7,
+        "hulks": 0,
+        "pool": 7,
+        "tracked": 0
+      },
+      "shards": 5,
+      "finite": true,
+      "programs": 181
+    },
+    "errors": []
+  },
+  {
+    "quality": "low",
+    "kind": "p51d",
+    "before": {
+      "programs": 181,
+      "kind": "p51d"
+    },
+    "after": {
+      "counts": {
+        "pieces": 1,
+        "hulks": 1,
+        "pool": 1,
+        "tracked": 1
+      },
+      "programs": 181,
+      "alive": false,
+      "falling": false,
+      "finite": true,
+      "newPrograms": [],
+      "mass": 636.1702127659576,
+      "sourceTriangles": 89361
+    },
+    "exploded": {
+      "counts": {
+        "pieces": 7,
+        "hulks": 0,
+        "pool": 7,
+        "tracked": 0
+      },
+      "shards": 5,
+      "finite": true,
+      "programs": 181
+    },
+    "errors": []
+  },
+  {
+    "crew": "before",
+    "camera": {
+      "position": [
+        106.4248775547296,
+        7620.180507013734,
+        381.5296610265162
+      ],
+      "target": [
+        106.27129715691554,
+        7620.094225304794,
+        379.889091452219
+      ]
+    },
+    "errors": []
+  },
+  {
+    "crew": "after",
+    "camera": {
+      "position": [
+        106.4248775547296,
+        7620.180507013734,
+        381.5296610265162
+      ],
+      "target": [
+        106.27129715691554,
+        7620.094225304794,
+        379.889091452219
+      ]
+    },
+    "errors": []
+  }
+]
