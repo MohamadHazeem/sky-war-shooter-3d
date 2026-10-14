@@ -324,10 +324,10 @@ export const EVENTS: Record<EventId, EventDef> = {
     create: (c) => new EngineFire(c.world.playerBomber!),
   },
   jammedGun: {
-    eligible: (c) => (c.role === 'gunner' ? !!c.world.playerBomber?.alive : !!c.world.playerFighter?.alive),
+    eligible: (c) => c.role === 'pilot' && !!c.world.playerFighter?.alive,
     create: () => new JammedGun(),
   },
-  oxygen: { eligible: () => true, create: () => new OxygenFailure() },
+  oxygen: { eligible: (c) => c.role === 'pilot', create: () => new OxygenFailure() },
   straggler: {
     eligible: (c) => c.roundLeft >= 30 && c.aliveBombers().filter((b) => !b.straggling).length >= 3,
     create: (c) => new Straggler(c.bomberInView() ?? c.nearbyBomber()!),

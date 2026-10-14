@@ -537,6 +537,7 @@ export class Game {
     // wounded gunner (crewWounded 0..4): the picture drains of colour, easing in and out slowly
     const woundTarget = this.menuMode ? 0 : Math.min(1, w.crewWounded / 4);
     this.woundT += (woundTarget - this.woundT) * (1 - Math.exp(-dt * 0.6));
+    this.engine.post.hypoxia = !this.menuMode && this.mission?.role === 'gunner' && this.state === 'playing' ? this.gunner.survival.hypoxia : 0;
     this.engine.post.desat = this.woundT < 0.002 ? 0 : this.woundT;
     this.midRound.update(dt, this.roundIdx, this.roundT0);
     this.specials.update(dt, this.roundIdx, this.roundT0);

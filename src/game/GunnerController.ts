@@ -1,3 +1,5 @@
+import { GunnerSurvival, survivalGun, STATION_AMMO, type SurvivalGun } from './GunnerSurvival';
+import { drawSurvival } from './GunnerSurvivalHud';
 import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import type { Input } from '../core/Input';
@@ -21,7 +23,7 @@ import { Brass } from './Brass';
 import { TAIL_FLOOR, TAIL_HALF_WIDTH, FREE_LOOK_YAW, FREE_LOOK_UP, stationShafts, disposeStationDetails } from './TurretInteriors';
 import { GunnerGlass } from './GlassFx';
 
-interface StationState {
+interface StationState extends SurvivalGun {
   def: StationDef;
   yaw: number; pitch: number;       // current (relative to rest)
   tYaw: number; tPitch: number;     // target
@@ -50,6 +52,7 @@ const _ce = new THREE.Euler();
 const _flip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
 const LOOK_YAW = FREE_LOOK_YAW;
 export class GunnerController {
+  readonly survival = new GunnerSurvival();
   station: StationId = 'waistL';
   private states = new Map<StationId, StationState>();
   private rig = new THREE.Group();        // attached to the bomber, at the pivot
@@ -105,7 +108,7 @@ export class GunnerController {
   private burstT = 0;        // seconds the trigger has been held continuously
   private clatterClock = 0;  // time until the next spent-brass tinkle on the floor
   firing = false;
-  jammed = false;   // MidRound/RandomEvents: this gun position is jammed (R clears it)
+  legacyJammed = false;   // MidRound/RandomEvents: this gun position is jammed (R clears it)
   private holes: THREE.Object3D[] = [];
   private holeMat: THREE.MeshBasicMaterial | null = null;
   private beamMat: THREE.ShaderMaterial | null = null;
@@ -121,10 +124,10 @@ export class GunnerController {
   private keyAim = new KeyAim();
 
   constructor(private engine: Engine, private world: World, private input: Input) {
-    for (const id of Object.keys(STATIONS) as StationId[]) {
+    for (const id of STATION_ORDER) {
       const def = STATIONS[id];
-      const max = def.type === 'waist' ? 600 : def.id === 'top' ? 750 : 1000;
-      this.states.set(id, { def, yaw: 0, pitch: 0, tYaw: 0, tPitch: 0, vYaw: 0, vPitch: 0, ammo: max, maxAmmo: max, baseAmmo: max, heat: 0, overheated: false, reload: 0 });
+      const max = STATION_AMMO[id];
+      this.states.set(id, { ...survivalGun(max), def, yaw: 0, pitch: 0, tYaw: 0, tPitch: 0, vYaw: 0, vPitch: 0, ammo: max, maxAmmo: max, baseAmmo: max, heat: 0, overheated: false, reload: 0 });
     }
     this.rig.add(this.gunPivot);
     // Lights live permanently in the scene (intensity 0 when unused) so attaching or
@@ -206,11 +209,19 @@ export class GunnerController {
   }
 
   detach() {
+    this.engine.post.hypoxia = 0;
     this.applyModelVisibility(null);
     if (this.bomber) {
       this.bomber.root.remove(this.rig);
       if (this.waistInterior) this.bomber.root.remove(this.waistInterior);
     }
+    for (const models of Object.values(this.guns)) for (const model of models ?? []) {
+      model.frost.dispose();
+      (model.group.getObjectByName('survivalFrost') as THREE.Mesh | undefined)?.geometry.dispose();
+      (model.group.getObjectByName('survivalCoverFrost') as THREE.Mesh | undefined)?.geometry.dispose();
+      model.ammoCan.geometry.dispose();
+    }
+    this.guns = {};
     this.gunPivot.clear();
     this.rig.children.filter((c) => c !== this.gunPivot).forEach((c) => this.rig.remove(c));
     this.muzzleLight.intensity = 0;
@@ -385,10 +396,14 @@ export class GunnerController {
   get state() { return this.states.get(this.station)!; }
   get def() { return STATIONS[this.station]; }
 
-  // Upgrades/perks changed (belts are unlimited: ammo stays topped up)
+  get jammed() { return this.legacyJammed || this.state.jam; }
+  set jammed(value: boolean) { this.legacyJammed = value; }
+  drawSurvival(ctx: CanvasRenderingContext2D, width: number, height: number) { drawSurvival(ctx, width, height, this.survival, this.state, this.world.time); }
+
+  // Perks must not refill ammunition mid-burst.
   applyLoadout(l: Loadout, _refill = false) {
     this.loadout = crewSeatLoadout(l, () => this.station); // + the seat bonus of the crewman at the gun
-    for (const s of this.states.values()) s.ammo = s.maxAmmo;
+    if (_refill) this.resetAmmo();
   }
 
   // Crew Chief perk: a kill cools the barrel
@@ -398,16 +413,13 @@ export class GunnerController {
   }
 
   resetAmmo() {
-    for (const s of this.states.values()) { s.ammo = s.maxAmmo; s.heat = 0; s.overheated = false; s.reload = 0; }
+    for (const s of this.states.values()) { Object.assign(s, survivalGun(s.maxAmmo)); s.heat = 0; s.overheated = false; }
+    this.survival.reset(); this.legacyJammed = false;
   }
 
   update(dt: number) {
     if (!this.bomber) return;
     const inp = this.input;
-    const s = this.state;
-    const def = s.def;
-    const adt = dt * this.aimTimeScale; // aim/sight time: real time during bullet-time
-
     // Station switching
     if (this.transition > 0) {
       const before = this.transition;
@@ -415,7 +427,22 @@ export class GunnerController {
       if (before > 0.45 && this.transition <= 0.45 && this.pendingStation) { this.setStation(this.pendingStation); this.pendingStation = null; }
       if (this.transition < 0) this.transition = 0;
     }
-    for (const id of Object.keys(STATIONS) as StationId[]) if (inp.hit('Digit' + STATIONS[id].key)) this.requestStation(id);
+    for (const id of STATION_ORDER) if (inp.hit('Digit' + STATIONS[id].key)) this.requestStation(id);
+
+    const s = this.state;
+    const def = s.def;
+    const life = this.survival;
+    const wasOxygen = life.oxygen;
+    life.update(dt, this.cold, weatherNow.snow, this.world.crewWounded);
+    if (inp.hit('KeyO')) life.reconnect();
+    if (wasOxygen && !life.oxygen) this.world.callout('gs_fixed', 'Radio', 'Oxygen connected. Breathe easy.', 10, 2);
+    const reloading = s.reload > 0;
+    for (const st of this.states.values()) life.tickGun(st, dt, st.def.type === 'waist');
+    if (reloading && s.reload === 0) sound.play('beltTick', null, { gain: .7 });
+    if (s.jam && inp.hit('KeyR')) sound.play('click', null, { gain: .65, rate: .7 });
+    const clearing = s.jam;
+    if (life.clearJam(s, dt, inp.down('KeyR'), inp.hit('KeyR'))) sound.play('beltTick', null, { gain: .8, rate: .7 });
+    const adt = dt * this.aimTimeScale * life.aimScale; // aim/sight time: real time during bullet-time
 
     // Aim: mouse moves the target; the gun follows on a damped spring (heavy mount)
     const lock = this.findAssistTarget(def);
@@ -468,21 +495,19 @@ export class GunnerController {
     const targetFov = this.zoom ? this.baseFov * (34 / 62) : this.baseFov;
     this.fov += (targetFov - this.fov) * Math.min(1, adt * 10);
 
-    // Reload
-    if (s.reload > 0) {
-      s.reload -= dt;
-      if (s.reload <= 0) { s.ammo = s.maxAmmo; this.guns[this.station]?.forEach((g) => { if (g.belt) { g.belt.visibleRounds = 999; g.belt.update(); } }); }
-    } else if ((inp.hit('KeyR') && s.ammo < s.maxAmmo) || s.ammo <= 0) {
-      if (s.ammo <= 0) this.onNotice?.('RELOADING — new ammunition box');
-      s.reload = def.type === 'waist' ? 4.5 : 6;
-      sound.play('click', null, { gain: 0.5, rate: 0.7 });
+    if (!clearing && (inp.hit('KeyR') || s.ammo === 0)) {
+      const before = s.reload;
+      life.reload(s, def.type === 'waist');
+      if (!before && s.reload) sound.play('click', null, { gain: .5, rate: .7 });
     }
 
     // Fire
     this.cooldown -= dt;
     s.heat = Math.max(0, s.heat - dt * (s.overheated ? 0.22 : 0.16));
     if (s.overheated && s.heat < 0.45) s.overheated = false;
-    const wantFire = (inp.mouse(0) || inp.down('Space')) && !this.jammed && this.transition <= 0 && s.reload <= 0 && !s.overheated && s.ammo > 0 && this.bomber.alive;
+    const trigger = inp.mouse(0) || inp.down('Space');
+    const thawed = trigger && !s.jam && s.reload <= 0 ? life.thaw(s, dt) : s.frost === 0;
+    const wantFire = trigger && thawed && !clearing && !this.jammed && this.transition <= 0 && s.reload <= 0 && !s.overheated && s.ammo > 0 && this.bomber.alive;
     this.firing = wantFire;
     this.brassClatter(dt, wantFire);
     // Low belt warning: a metallic tick every 0.6 s while firing with under 60 rounds left
@@ -497,13 +522,17 @@ export class GunnerController {
       while (this.cooldown <= 0) {
         this.cooldown += 1 / rate;
         const g = guns[this.shotCount % guns.length];
+        if (!life.shot(s, s.heat, 1 - this.bomber.integrity)) {
+          if (s.jam) { sound.play('click', null, { gain: .8 }); this.world.callout('gs_jam', 'Waist', "My gun's jammed! Working the charging handle!", 30, 2); }
+          break;
+        }
         this.fireRound(g, def);
+        if (s.ammo === 100 && def.type === 'waist') this.world.callout('gs_ammo', 'Waist', 'Need ammo at the waist! Pass another can!', 30, 2);
         this.shotCount++;
-        // unlimited belts: the counter never runs down
         if (!this.heatFree) s.heat += W.heat * this.loadout.heat;
         if (s.heat >= 1 && this.noOverheat) s.heat = 1;
         else if (s.heat >= 1) { s.overheated = true; this.onNotice?.('BARREL OVERHEATED — let it cool'); this.world.callout('hot', 'Pilot', 'Short bursts! You\'ll burn out that barrel!', 15); }
-        if (s.ammo <= 0) break;
+        if (s.ammo <= 0 || s.overheated) break;
       }
     } else if (this.cooldown < 0) this.cooldown = 0;
     if (s.ammo === 0 && (inp.mouseHit(0) || inp.hit('Space'))) sound.play('click', null, { gain: 0.6 });
@@ -515,13 +544,21 @@ export class GunnerController {
     this.muzzleLight.intensity = Math.max(0, this.muzzleLight.intensity - dt * 120);
 
     // Apply gun orientation
-    const yaw = def.rest.yaw + s.yaw, pitch = def.rest.pitch + s.pitch;
+    const sway = this.survival.wound * .006 * access.shake;
+    const yaw = def.rest.yaw + s.yaw + Math.sin(this.world.time * 1.7) * sway, pitch = def.rest.pitch + s.pitch + Math.sin(this.world.time * 2.3) * sway;
     this.gunPivot.rotation.set(0, 0, 0);
     this.gunPivot.quaternion.setFromEuler(_ce.set(-pitch, yaw, 0, 'YXZ'));
 
     sound.setTurretTraverse(def.id === 'ball' ? Math.hypot(s.vYaw, s.vPitch) : 0);
     this.tailBrass?.update(dt);
-    for (const g of guns) g.belt?.tick(dt);
+    for (const g of guns) {
+      g.charging.position.z = -.3 - .12 * Math.sin((s.jam ? s.clear : s.reload > 0 ? 1 - s.reload / life.tuning.reload : 0) * Math.PI);
+      g.frost.uniforms.uGrow.value = s.frost * .95;
+      g.ammoCan.visible = s.reload > 0;
+      g.ammoCan.position.y = -.28 + .24 * Math.sin(Math.PI * s.reload / life.tuning.reload);
+      if (g.belt) { const rounds = Math.ceil(g.belt.capacity * s.ammo / s.maxAmmo); if (g.belt.visibleRounds !== rounds) { g.belt.visibleRounds = rounds; g.belt.update(); } g.belt.tick(dt); }
+      g.group.rotation.x = s.reload > 0 ? -.10 * Math.sin(Math.PI * s.reload / life.tuning.reload) : 0;
+    }
     this.updateOverdriveFx(guns);
     // dust motes only matter while the waist interior is on screen
     if (this.dust && this.waistInterior?.visible) {
@@ -531,7 +568,7 @@ export class GunnerController {
     this.updateCamera(adt);
     this.world.playerAimDir.copy(this.aimDirection());
     this.updateLiving(dt);
-    this.glassFx.update(dt, this.station, this.adsK, this.cold);
+    this.glassFx.update(dt, this.station, this.adsK, Math.max(this.cold, life.chill));
     if (this.station === 'ball' || this.station === 'tail') {
       this.interiors[this.station]!.getWorldQuaternion(_q).invert();
       this.shaftSun.copy(Atmos.sunDir).applyQuaternion(_q);
@@ -558,7 +595,7 @@ export class GunnerController {
       _ventX.set(0.5, 0, 0).applyQuaternion(this.gunPivot.quaternion);
     }
     const eyeIn = this.def.type === 'waist' ? this.ads : this.ads * 0.45;
-    this.living.update(dt, this.station, this.sunLocal, eyeIn, this.cold, _mouth, _vent, _ventX, 0.27 + 0.28 * effort, this.engine.renderer.domElement.height);
+    this.living.update(dt, this.station, this.sunLocal, eyeIn, Math.max(this.cold, this.survival.chill), _mouth, _vent, _ventX, 0.27 + 0.28 * effort, this.engine.renderer.domElement.height);
   }
 
   // Overdrive: a red-hot glow along the exposed barrel (and through the cooling-jacket holes),
@@ -653,7 +690,6 @@ export class GunnerController {
     s.vPitch += (0.05 + Math.random() * 0.07) * this.loadout.recoil;
     sound.playerGun(this.station === 'ball' || this.station === 'tail', !!W.cannon, this.station === 'ball');
     g.belt?.advance(1);
-    if (g.belt && s.ammo < 60) { g.belt.visibleRounds = Math.max(0, Math.floor(s.ammo * 0.8)); }
     this.ejectCasing(g);
   }
 

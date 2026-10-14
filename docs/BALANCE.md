@@ -330,3 +330,46 @@ the goal-34 code as committed; `val35-near1000` = the night variant below).
 * **No balance numbers changed.** Only a comment in `RaidDefence.ts` was fixed (the AA bursts comment had slipped
   onto the `SPOT_FLASH` line).
 * Next, if wanted: human playtests on m12 and the night; the bot data no longer argues for a change on either.
+
+## Phase 8 goal 03 — gunner survival
+
+Tuning lives in `src/game/GunnerSurvival.ts` (`SURVIVAL`, `SURVIVAL_RULES`, `STATION_AMMO`).
+These are forgiving interruptions, with no new lethal damage source.
+
+| Rule | Recruit | Veteran | Ace |
+|---|---|---|---|
+| Random oxygen / suit failures | off | 12% hose; 16% suit on eligible heavy hits | probabilities ×1.5 |
+| Failure spacing / suit repair | — | 90 s / 60 s | 90 s / 60 s |
+| Oxygen grace / smooth rise | — | 6 s / 35 s | 4 s / 25 s |
+| Crew oxygen rescue | 18 s (if explicitly forced) | 45 s | 55 s |
+| Jam chance per fired round | off | 0.018% | 0.03% |
+| Minimum jam interval | — | 120 s, shared across seats | 120 s |
+| Hold R to clear (or two taps ≤0.45 s apart) | 0.7 s | 1.4 s | 1.8 s |
+| Freeze threshold, effective idle seconds | off | 90 | 65 |
+| Waist can reload / crew delivery | 2 s | 4.5 s / 12 s | 5 s / 18 s |
+| Wound effect multiplier | 0.25 | 0.65 | 1.0 |
+
+Jam probability is multiplied by `1 + 3*heat² + 2*damage + 2*chill`, capped at ×8;
+only a ready gun attempting a shot rolls. First 120 s of each round are jam-free.
+Chill eases over 12 s toward `0.25*missionCold + 0.55*snow + 0.7*suitFailure`, capped at 1.
+Idle advances at `0.5 + chill`: Veteran frost starts after roughly 138 s in typical clear weather
+(chill .15), 75 s in snow (chill .70), or 67 s with the suit circuit out (chill .85).
+Frost takes 20 more effective seconds to saturate; holding fire warms it in at most about 0.42 s.
+Firing resets idle. The cold-mission input already represents the game's −30 to −50°C flight conditions.
+
+Each station tracks its own aggregate belt/box: waist 600, top 750, ball/tail 1,000 rounds.
+Waist stations start with one spare can; partial reloads preserve unused reserve rounds. At ≤20%,
+crew supply replenishes a depleted reserve automatically. Turret boxes are serviced directly after
+the delivery delay; R does not instantly refill them. Crew deliveries can repeat indefinitely so a
+long survival round cannot exhaust the aircraft permanently. Recruit retains unlimited belts.
+Round breaks refill ammunition and reset failures; perk changes during combat do not refill it.
+
+Hypoxia uses a smoothstep curve, removes at most 35% aim speed, and recovers within 8 s after O
+or crew rescue. Wounds use the existing player wound count and field-dressing timer: each dressing
+reduces sway/tunnel severity, easing over 2 s. At three wounds, Veteran sway amplitude is 0.0039 rad,
+tunnel opacity .325, and additional aim slowdown 7.8%; reduced-shake settings also reduce sway.
+No new shaders are compiled on failure: receiver frost reuses the material warmed by
+`World.prewarm → warmLivingInterior`; hypoxia is a uniform in the existing post pass and works on Low.
+
+Validation: 12 focused unit tests plus scripted real-station browser checks on Low and High.
+This is an initial balance pass; long campaign win rates have not been re-measured.
