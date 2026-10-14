@@ -1,6 +1,6 @@
 # 3D model credits and licences
 
-The aircraft models in this folder are converted from FlightGear flight-simulator
+The other aircraft models in this folder (b17, p51d, me163, he111, do335) are converted from FlightGear flight-simulator
 aircraft (AC3D models and textures) with `tools/convert_models/convert_ac.py`.
 They are derivative works and remain under the original licence (GNU GPL v2).
 If you redistribute them, you must also make the corresponding source available: the
@@ -10,6 +10,24 @@ gear retracted, props/turrets split into pivot nodes, parts merged, some parts d
 or dropped, crew figures posed, textures
 resized and re-encoded (JPEG/PNG), and the cockpit textures packed into atlases.
 
+## Luftwaffe hero models: bf109.glb, fw190.glb, me262.glb, bf110.glb, ju88.glb (own work, Phase 10)
+Since Phase 10 goal 05 these five files are **own work** of this project, generated from scratch by the
+Blender Python pipeline in `tools/hero/luftwaffe/` (no third-party meshes, textures or photos): every shape is
+lofted from published dimensions (span, length, wing area, chords, propeller diameter: public-domain
+manufacturer and type-data figures) and the camouflage, markings, panel lines and weathering are computed
+procedurally. Licence: the same as the game's code (GPL-2.0-or-later, `package.json`), so they can be shared
+under the same terms; the sources to rebuild them are the scripts in `tools/hero/luftwaffe/`.
+* Types: Messerschmitt Bf 109 G-6, Focke-Wulf Fw 190 A-8, Messerschmitt Me 262 A-1a, Messerschmitt Bf 110 G-2,
+  Junkers Ju 88 A-4. Liveries are generic period schemes (RLM 74/75/76, 81/82/76, 70/71/65), with
+  representative unit markings (JG 1 red band, JG 7 band, ZG 76 / KG 54 style codes) and invented aircraft
+  numbers. Only the Balkenkreuz is painted; the Hakenkreuz is omitted on purpose.
+* Ace liveries (`<kind>_ace.webp`, loaded only when an ace flies the type) are generated the same way.
+* Reference used for proportions: public-domain dimension data only (no drawings or photos are included or
+  traced; links in `docs/phase10/reports/05.md`).
+* The FlightGear models these replace are listed below with their original credits: they are no longer in
+  the game for these five types, but `tools/convert_models/` can still rebuild them from the upstream sources.
+* The Me 410 stand-in still uses the Bf 110 airframe (now the hero Bf 110).
+
 ## b17.glb — Boeing B-17G Flying Fortress
 * Source: https://github.com/FGMEMBERS/B-17 (commit `949abb7615da96104a72c2b1a351a05d60a0bf3c`)
 * Licence: GNU General Public License v2 (`COPYING` in the repository).
@@ -18,7 +36,7 @@ resized and re-encoded (JPEG/PNG), and the cockpit textures packed into atlases.
 * Livery used: "GD-L" by Brett Harrison (2009/2011). Other liveries in the source: default (Emmanuel Baranger), 398bg, 447bg, 48457, 483575 (Brett Harrison), Memphis Belle (Alex Lerr).
 * Crew figure (`ww2_pilot_old`): from Bertrand Augras' X-Plane pilot collection, as included in the FlightGear package.
 
-## fw190.glb — Focke-Wulf Fw 190 A-8
+## fw190.glb — Focke-Wulf Fw 190 A-8  (FlightGear version, replaced in Phase 10 by the own-work hero model above)
 * Source: https://github.com/FGMEMBERS/fw190 (commit `49575361d5700466329e73d083867da5983451cd`)
 * Licence: GNU General Public License v2 (stated in the repository `README`).
 * Author: Detlef Faber (FlightGear hangar).
@@ -40,7 +58,7 @@ resized and re-encoded (JPEG/PNG), and the cockpit textures packed into atlases.
 * Not included: the K-14 gun sight and the other `Aircraft/Instruments-3d` parts, which are in the
   FlightGear base package and not in this repository.
 
-## bf110.glb — Messerschmitt Bf 110
+## bf110.glb — Messerschmitt Bf 110  (FlightGear version, replaced in Phase 10 by the own-work hero model above)
 * Source: https://github.com/FGMEMBERS/Messerschmitt-BF110 (commit `2459e2c7555263f05eebb460bed4e5de340db4dc`)
 * Licence: GNU General Public License v2 (`COPYING` in the repository).
 * 3D model and FDM: Emmanuel Baranger (2011–2015), http://helijah.free.fr/flightgear/hangar.htm
@@ -48,14 +66,14 @@ resized and re-encoded (JPEG/PNG), and the cockpit textures packed into atlases.
 * Crew figures (`ww2_pilot_old`): from Bertrand Augras' X-Plane pilot collection, as included in the FlightGear package.
 * Not included: the night-fighter radar antennas, the cockpit instruments and the detailed cockpit parts.
 
-## me262.glb — Messerschmitt Me 262
+## me262.glb — Messerschmitt Me 262  (FlightGear version, replaced in Phase 10 by the own-work hero model above)
 * Source: https://github.com/FGMEMBERS/ME-262 (commit `b9f6fe1337ba036ca18c633ca18a9066d378a0aa`)
 * Licence: GNU General Public License v2 (`COPYING` in the repository).
 * 3D model: Emmanuel Baranger (2007–2011). FDM: Michael Koehne.
 * Livery used: default (`Models/texture.png`) by Laurent Hayvel (2008). No swastika.
 * Pilot figure (`ww2_pilot_old`): Bertrand Augras' collection, as above.
 
-## bf109.glb — Messerschmitt Bf 109 G-14
+## bf109.glb — Messerschmitt Bf 109 G-14  (FlightGear version, replaced in Phase 10 by the own-work hero model above)
 * Source: https://github.com/FGMEMBERS/bf109 (commit `11bc9d86a24bf8295651414ab545976617761aa3`)
 * Licence: GNU General Public License v2 (stated in the repository `README`).
 * Authors: Detlef Faber (model), Marco Schüle (cockpit improvements).
@@ -66,7 +84,7 @@ resized and re-encoded (JPEG/PNG), and the cockpit textures packed into atlases.
   http://www.cockpitinstrumente.de. Only the low-detail cockpit shell (`cockpit.ac`, `cockpit.png`, `interiour.png`)
   is in this glb, not the instruments.
 
-## ju88.glb — Junkers Ju 88 A-4
+## ju88.glb — Junkers Ju 88 A-4  (FlightGear version, replaced in Phase 10 by the own-work hero model above)
 * Source: https://github.com/FGMEMBERS/Ju-88 (commit `2104ecaf355192323faf232c5c3bcd9657dcaa60`)
 * Licence: the repository has no licence file. It is the Ju-88 from the official FlightGear aircraft collection
   (FGAddon, `trunk/Aircraft/Ju-88`), which accepts only GPL-compatible content (GPL v2 or later). Treat it as GPL v2+.
@@ -103,5 +121,5 @@ resized and re-encoded (JPEG/PNG), and the cockpit textures packed into atlases.
 
 ## Me 410 (no model of its own)
 There is no GPL-compatible Me 410 model in the FlightGear repositories (FGMEMBERS, FGAddon), so the game's Me 410
-flies `bf110.glb` (above) as a stand-in, repainted lighter at runtime and fitted with a procedural BK 5 cannon tray and
+flies `bf110.glb` (now the own-work hero Bf 110) as a stand-in, repainted lighter at runtime and fitted with a procedural BK 5 cannon tray and
 barrel and two FDL 131 barbette blisters (`src/world/EnemyDress.ts`). No He 219 or Ta 152 model exists there either.

@@ -4,10 +4,13 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { NOW, assetUrl, request, take } from '../core/Assets';
 import { prepareAircraftSurface, tuneAircraftMaterial } from '../render/AircraftLook';
+import { isHero, prepareHero } from './HeroLook';
 
 export type ModelKind =
   | 'b17' | 'fw190' | 'p51d' | 'p51d_cockpit'
   // Extra enemy types (see public/models/CREDITS.md). Same frame as the others: metres, +Z nose, +X left wing.
+  // fw190, bf109, me262, bf110 and ju88 are the hero models (tools/hero/luftwaffe, world/HeroLook.ts):
+  // named parts with three LODs, hinged control surfaces, baked PBR maps; the node names below still hold.
   | 'bf110'  // Bf 110 twin-engine heavy fighter: prop_1 (left), prop_2 (right), gun_rear (rear MG, yaw/pitch it)
   | 'me262'  // Me 262 jet: no props; fan_1/fan_2 are the intake fans (spin about local Z), exhaust_left/right markers
   | 'bf109'  // Bf 109 G-14: prop_1
@@ -67,6 +70,7 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
       const gltf = await gltfLoader().parseAsync(bytes, assetUrl('models/'));
       const root = gltf.scene;
       const skins = new Set<THREE.Material>();
+      const hero = isHero(k);
       root.traverse((o) => {
         const m = o as THREE.Mesh;
         if (m.isMesh) {
@@ -76,13 +80,15 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
           for (const mat of mats as THREE.MeshStandardMaterial[]) {
             if (mat.transparent && mat.opacity < 0.9) { m.castShadow = false; mat.depthWrite = false; }
             if (mat.map) mat.map.anisotropy = 8;
-            // per-part roughness / metalness / sky reflection (render/AircraftLook.ts)
-            if (tuneAircraftMaterial(mat, k)) skins.add(mat);
+            // per-part roughness / metalness / sky reflection (render/AircraftLook.ts); the hero
+            // models bring their own baked maps (HeroLook.prepareHero)
+            if (!hero && tuneAircraftMaterial(mat, k)) skins.add(mat);
           }
         }
       });
-      // panel lines, rivets and weathering on the skins (render/SurfaceDetail.ts)
-      prepareAircraftSurface(root, k, skins);
+      // panel lines, rivets and weathering on the skins (render/SurfaceDetail.ts); baked into the hero textures
+      if (hero) prepareHero(root, k);
+      else prepareAircraftSurface(root, k, skins);
       cache.set(k, root);
     } catch (e) {
       console.warn(`Model ${k} unavailable, using placeholder`, e);
@@ -207,7 +213,8 @@ export function setupProps(root: THREE.Object3D, radius: number): PropInfo[] {
     // The compressed models keep the prop's mesh on an unnamed child (extras.meshOf, see
     // tools/compress_models.mjs). Blades are what used to be the node's children: the
     // primitives of a multi-material prop; a single-mesh prop (formerly the node itself) has none.
-    const blades = node.children.flatMap((c) => c === disc ? [] : c.userData.meshOf ? ((c as THREE.Mesh).isMesh ? [] : c.children) : [c]);
+    // A hero prop keeps its spinner (spinner_N) visible while the disc shows.
+    const blades = node.children.flatMap((c) => c === disc || c.name.startsWith('spinner_') ? [] : c.userData.meshOf ? ((c as THREE.Mesh).isMesh ? [] : c.children) : [c]);
     props.push({ node, blades, disc, base: node.quaternion.clone() });
   }
   return props;

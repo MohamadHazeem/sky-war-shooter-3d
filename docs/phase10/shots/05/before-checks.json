@@ -1,0 +1,92 @@
+{
+  "tag": "before",
+  "turntables": {},
+  "game": {
+    "waist150-bf109": [
+      {
+        "type": "bf109",
+        "kind": "bf109",
+        "d": 150
+      }
+    ],
+    "waist150-fw190": [
+      {
+        "type": "fw190",
+        "kind": "fw190",
+        "d": 150
+      }
+    ],
+    "waist150-me262": [
+      {
+        "type": "me262",
+        "kind": "me262",
+        "d": 150
+      }
+    ],
+    "waist150-bf110": [
+      {
+        "type": "bf110",
+        "kind": "bf110",
+        "d": 150
+      }
+    ],
+    "waist150-ju88": [
+      {
+        "type": "ju88",
+        "kind": "ju88",
+        "d": 150
+      }
+    ],
+    "tail-diving-bf109": [
+      {
+        "type": "bf109",
+        "kind": "bf109",
+        "d": 212
+      }
+    ],
+    "headon-fw190-wedge": [
+      {
+        "type": "fw190",
+        "kind": "fw190",
+        "d": 422
+      },
+      {
+        "type": "fw190",
+        "kind": "fw190",
+        "d": 477
+      },
+      {
+        "type": "fw190",
+        "kind": "fw190",
+        "d": 476
+      },
+      {
+        "type": "fw190",
+        "kind": "fw190",
+        "d": 541
+      },
+      {
+        "type": "fw190",
+        "kind": "fw190",
+        "d": 539
+      }
+    ],
+    "bench": {
+      "avg": 17.75,
+      "p50": 18.1,
+      "p95": 23.2,
+      "max": 25.6,
+      "calls": 1,
+      "tris": 1,
+      "programs": 124,
+      "w": 1600,
+      "h": 900
+    },
+    "programs": 124,
+    "memory": {
+      "geometries": 483,
+      "textures": 121
+    }
+  },
+  "errors": []
+}

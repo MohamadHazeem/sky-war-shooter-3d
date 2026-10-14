@@ -12,6 +12,7 @@
     "test": "vitest run",
     "check": "tsc --noEmit && vite build --logLevel error && vitest run",
     "models:compress": "node tools/compress_models.mjs",
+    "models:luftwaffe": "sh tools/hero/luftwaffe/build.sh",
     "icons": "node tools/make_icons.mjs",
     "size": "node tools/size_report.mjs dist"
   },
