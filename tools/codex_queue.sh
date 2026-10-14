@@ -5,7 +5,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 MAX="${MAX:-4}"
-running() { pgrep -f '/bin/codex exec' | wc -l | tr -d ' '; }
+running() { pgrep -f 'node .*/bin/codex exec' | wc -l | tr -d ' '; }
 for item in "$@"; do
   IFS=: read -r phase task effort <<<"$item"
   while [ "$(running)" -ge "$MAX" ]; do sleep 60; done
