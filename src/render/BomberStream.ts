@@ -561,6 +561,7 @@ export class BomberStream {
         }`,
       fragmentShader: /* glsl */ `
         ${hazeGLSL}
+        ${noiseGLSL}
         uniform vec3 uStreamSun;
         varying vec2 vQ; varying float vA; varying float vFlash; varying vec3 vW; varying float vSeed; varying float vKind;
         void main() {
@@ -572,8 +573,9 @@ export class BomberStream {
             col = vec3(0.78, 0.76, 0.7) * (uStreamSun * 0.2 + uHorizon * 0.5) * (0.85 + 0.25 * vQ.y);
           } else {
             vec2 o = vec2(cos(vSeed * 40.0), sin(vSeed * 40.0)) * 0.28;
-            float b1 = 1.0 - smoothstep(0.1, 0.75, length(vQ - o * 0.6));
-            float b2 = 1.0 - smoothstep(0.05, 0.55, length(vQ + o));
+            float erosion = (snoise(vQ * 12.0 + vSeed * 19.0) - 0.5) * 0.12;
+            float b1 = 1.0 - smoothstep(0.34, 0.57, length(vQ - o * 0.6) + erosion);
+            float b2 = 1.0 - smoothstep(0.20, 0.43, length(vQ + o) - erosion);
             a = clamp(b1 + b2 * 0.7, 0.0, 1.0) * vA;
             col = vec3(0.045, 0.04, 0.036) + uStreamSun * 0.012 * (0.6 + 0.4 * vQ.y);
             col = mix(col, vec3(9.0, 5.0, 2.0), vFlash * (1.0 - smoothstep(0.0, 0.7, r)));
