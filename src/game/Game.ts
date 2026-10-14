@@ -367,9 +367,9 @@ export class Game {
   // aim assist: Settings level x Hawkeye perk; bullet magnetism x Gyro Gunsight / Gyro Lock
   private applyAssist() {
     const a = this.settings.aimAssist === 'off' ? 0 : this.settings.aimAssist === 'low' ? 0.5 : 1;
-    this.gunner.assist = Math.min(1.6, a * this.loadout.assist);
+    this.gunner.assist = this.settings.difficulty === 'ace' ? 0 : Math.min(1.6, a * this.loadout.assist);
     this.pilot.assist = Math.min(1.6, a * this.loadout.assist);
-    this.world.ballistics.playerHitScale = (1 + 0.4 * a) * this.loadout.hitScale;
+    this.world.ballistics.playerHitScale = this.settings.difficulty === 'ace' && this.mission?.role === 'gunner' ? 1 : (1 + 0.4 * a) * this.loadout.hitScale;
   }
 
   private mountCloud() {

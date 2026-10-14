@@ -1,3 +1,4 @@
+import { gunLead } from '../world/Gunnery';
 import { aircraftMarkerAlpha, liveMarkerTarget, projectAircraft, projectMarker } from '../ui/MarkerProjection';
 import { recordMarker } from '../ui/MarkerAudit';
 import { hudRuntime, hudVisibility } from '../ui/HudDetail';
@@ -155,6 +156,7 @@ export class GameHud {
     const p = new THREE.Vector3();
     for (let i = 0; i < 3; i++) { p.copy(best.pos).addScaledVector(rel, t); t = p.distanceTo(origin) / muzzle; }
     p.y += 0.5 * 9.81 * t * t;
+    if (!pilot) gunLead(p, origin, best.pos, best.vel, shooter.vel, g.gunner.loadout.weapon.velocity * g.gunner.loadout.velocity);
     const sp = projectMarker(p, cam);
     if (!sp.on) return;
     const px = sp.x, py = sp.y;
@@ -276,7 +278,7 @@ export class GameHud {
     if (visibility.extras) g.boss.drawHud(ctx, W, H, cam);
     // Lead indicator aim aid: pip for the enemy nearest the line of fire ('recruit' = only on Recruit difficulty)
     const leadMode = g.settings.leadPip ?? 'recruit';
-    if (visibility.markers && pl?.alive && (g.loadout.leadPip || leadMode === 'always' || (leadMode === 'recruit' && g.settings.difficulty === 'recruit'))) this.drawLeadPip(ctx, W, H);
+    if ((g.mission?.role === 'pilot' || g.settings.difficulty !== 'ace') && visibility.markers && pl?.alive && (g.loadout.leadPip || leadMode === 'always' || (leadMode === 'recruit' && g.settings.difficulty === 'recruit'))) this.drawLeadPip(ctx, W, H);
     // Gunner hip reticle: waist guns without the ring sight up (fades as RMB brings the eye down)
     if (g.mission?.role === 'gunner' && ((g.gunner.def.type === 'waist' && g.gunner.ads < 0.6) || g.gunner.def.id === 'top')) {
       const a = g.gunner.def.id === 'top' ? 0.85 : 0.85 * (1 - g.gunner.ads / 0.6);

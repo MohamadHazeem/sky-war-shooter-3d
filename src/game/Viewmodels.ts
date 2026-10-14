@@ -1,3 +1,4 @@
+import { RecoilSpring } from './GunRecoil';
 import { frostMaterial } from './InteriorFx';
 import * as THREE from 'three';
 import { envRef } from '../render/EnvRef';
@@ -91,8 +92,8 @@ export class AmmoBelt {
     this.cases = new THREE.InstancedMesh(caseGeo, brassMat(), this.count);
     this.bullets = new THREE.InstancedMesh(bulletGeo, bulletMat(), this.count);
     this.links = new THREE.InstancedMesh(linkGeo, linkMat(), this.count);
-    // Tips: alternating armour-piercing (black), incendiary (blue), tracer (red)
-    const tipCols = [new THREE.Color(0.55, 0.24, 0.09), new THREE.Color(0.06, 0.06, 0.06), new THREE.Color(0.55, 0.24, 0.09), new THREE.Color(0.6, 0.08, 0.05)];
+    // Tips: mixed ball / armour-piercing (black), with one red tracer in five.
+    const tipCols = [new THREE.Color(0.55, 0.24, 0.09), new THREE.Color(0.06, 0.06, 0.06), new THREE.Color(0.55, 0.24, 0.09), new THREE.Color(0.06, 0.06, 0.06), new THREE.Color(0.6, 0.08, 0.05)];
     this.tipCols = tipCols;
     for (let i = 0; i < this.count; i++) this.bullets.setColorAt(i, tipCols[i % tipCols.length]);
     for (const m of [this.cases, this.bullets, this.links]) { m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; this.group.add(m); }
@@ -100,13 +101,17 @@ export class AmmoBelt {
   }
 
   private feed = 0;
+  private jiggle = new RecoilSpring();
   private tipCols: THREE.Color[] = [];
   private shown = -1;
 
   // a fired round pulls the belt one link toward the gun; tick() eases it there
-  advance(rounds: number) { this.feed += rounds; }
+  advance(rounds: number) { this.feed += rounds; this.jiggle.v += .22 * rounds; }
 
   tick(dt: number) {
+    this.jiggle.update(dt, 34, 9);
+    this.group.rotation.z = this.jiggle.x * 1.5;
+    this.group.position.y = this.jiggle.x;
     if (this.feed - this.phase > 6) this.phase = this.feed - 6; // long bursts: keep up
     this.phase += (this.feed - this.phase) * Math.min(1, dt * 28);
     if (Math.abs(this.phase - this.shown) < 0.004) return;
@@ -118,9 +123,9 @@ export class AmmoBelt {
     const { tan, pos, x, y } = this;
     const z = this.roundDir;
     const frac = this.phase - Math.floor(this.phase);
-    const shift = Math.floor(this.phase) % 4;
+    const shift = Math.floor(this.phase) % this.tipCols.length;
     if (this.tipCols.length) {
-      for (let i = 0; i < this.count; i++) this.bullets.setColorAt(i, this.tipCols[(i + shift) % 4]);
+      for (let i = 0; i < this.count; i++) this.bullets.setColorAt(i, this.tipCols[(i + shift) % this.tipCols.length]);
       if (this.bullets.instanceColor) this.bullets.instanceColor.needsUpdate = true;
     }
     for (let i = 0; i < this.count; i++) {
@@ -497,11 +502,11 @@ export function buildTurret(kind: 'top' | 'ball'): { group: THREE.Group; guns: G
   const g = new THREE.Group();
   const fmat = frameMat();
   const guns: GunModel[] = [];
-  // Ball: paired breeches flank the curled-up gunner. Top retains its existing view.
-  for (const side of (kind === 'ball' ? [-1, 1] : [0])) {
+  // Both powered turrets carry paired M2s, straddling the sight axis.
+  for (const side of [-1, 1]) {
     const m = buildM2({ ringSight: false, belt: true, beltSide: side < 0 ? -1 : 1,
       beltPoints: kind === 'ball' ? [new THREE.Vector3(0, 0.035, -0.02), new THREE.Vector3(side * 0.10, 0.10, -0.06), new THREE.Vector3(side * 0.10, 0.10, -0.42)] : undefined });
-    m.group.position.set(side * 0.36, kind === 'ball' ? -0.22 : -0.19, kind === 'ball' ? 0.1 : -0.05);
+    m.group.position.set(side * 0.36, kind === 'ball' ? -0.22 : .02, kind === 'ball' ? 0.1 : -0.05);
     g.add(m.group);
     guns.push(m);
   }

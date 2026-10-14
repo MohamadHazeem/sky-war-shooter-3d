@@ -1,3 +1,4 @@
+import { BULLET_DRAG, BULLET_GRAVITY, tracerBurn } from './Gunnery';
 import { windDrift } from '../render/WeatherPresets';
 import * as THREE from 'three';
 import { weatherNow } from '../render/WeatherState';
@@ -113,10 +114,10 @@ export class Ballistics {
       this.ttl[i] -= dt;
       if (this.ttl[i] <= 0) { this.kill(i); continue; }
       const ax = this.px[i], ay = this.py[i], az = this.pz[i];
-      this.vy[i] -= 9.81 * dt;
+      this.vy[i] -= BULLET_GRAVITY * dt;
       this.vx[i] += driftX; this.vz[i] += driftZ;
       // light drag
-      const dragK = Math.exp(-0.12 * dt);
+      const dragK = Math.exp(-BULLET_DRAG * dt);
       this.vx[i] *= dragK; this.vy[i] *= dragK; this.vz[i] *= dragK;
       const bx = ax + this.vx[i] * dt, by = ay + this.vy[i] * dt, bz = az + this.vz[i] * dt;
       let hitT = 2, hitAc: Aircraft | null = null, hitZone: HitZone | null = null;
@@ -171,6 +172,8 @@ export class Ballistics {
     for (let i = 0; i < this.n; i++) {
       if (!this.tracer[i]) continue;
       const pl = this.player[i] === 1;
+      const burn = this.cannon[i] ? 1 : tracerBurn(this.age[i]);
+      if (burn <= 0) continue;
       // ground flak (axis rounds with no aircraft behind them, GroundTargets.ts): long, bright streaks
       const gf = this.team[i] === 1 && this.owner[i] === null;
       // A new round has not travelled a full streak yet. Extending its tail behind
@@ -179,7 +182,7 @@ export class Ballistics {
       const x = this.px[i], y = this.py[i], z = this.pz[i];
       // fade slightly as the tracer compound burns out
       // everyone else's tracers a little dimmer than the player's own
-      const k = Math.min(1, this.ttl[i] / 0.6) * (pl ? hg : gf ? 1 : 0.55) * ng;
+      const k = burn * Math.min(1, this.ttl[i] / 0.6) * (pl ? hg : gf ? 1 : 0.55) * ng;
       let r = this.col[i * 3] * k, g = this.col[i * 3 + 1] * k, b = this.col[i * 3 + 2] * k;
       if (pl && ht > 0) { g += r * 0.32 * ht; b += r * 0.08 * ht; }
       const wd = gf ? 0.4 : this.cannon[i] ? 0.3 : pl ? 0.17 : 0.09;

@@ -1,3 +1,4 @@
+import { access } from '../core/Accessibility';
 import * as THREE from 'three';
 import { disposeOwned, markOwned } from '../render/Dispose';
 import { ParticleSystem, type ParticleOpts } from '../render/Particles';
@@ -161,8 +162,8 @@ export class Effects {
   // ring sight is never washed out
   playerMuzzle(pos: THREE.Vector3, dir: THREE.Vector3, vel: THREE.Vector3) {
     _p.copy(pos).addScaledVector(dir, 0.25);
-    this.glow.spawn({ pos: _p, vel, life: 0.03, size0: 0.16, size1: 0.26, color0: [7, 4, 1.5], alpha0: 1, alpha1: 0, frame: 2, rotVel: 0 });
-    this.nearMuzzle(pos, 1);
+    this.glow.spawn({ pos: _p, vel, life: 0.03, size0: 0.16, size1: 0.26, color0: [7, 4, 1.5], alpha0: access.flash, alpha1: 0, frame: 2, rotVel: 0 });
+    this.nearMuzzle(pos, access.flash);
   }
 
   muzzleFlash(pos: THREE.Vector3, dir: THREE.Vector3, scale = 1, vel?: THREE.Vector3) {
@@ -197,8 +198,8 @@ export class Effects {
     this.flashLight(pos, 260, 0.07, 0xffb366, 40);
   }
 
-  gunSmoke(pos: THREE.Vector3, vel: THREE.Vector3) {
-    this.emit(this.smoke, pos, vel, 0.9, 0.3, 1.6, C_GUN_SMOKE, undefined, 0.16, 0, 0, 2.5, 0, true);
+  gunSmoke(pos: THREE.Vector3, vel: THREE.Vector3, close = false) {
+    this.emit(this.smoke, pos, vel, close ? .4 : .9, .3, close ? .85 : 1.6, C_GUN_SMOKE, undefined, close ? .24 : .16, 0, 0, close ? .1 : 2.5, 0, true);
   }
 
   groundDust(pos: THREE.Vector3) {
