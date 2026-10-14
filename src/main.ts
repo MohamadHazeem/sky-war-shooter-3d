@@ -161,6 +161,8 @@ async function boot() {
     (window as any).sws.hitFeedback = hitFeedbackQa(engine, game);
     const { seaQa } = await import('./dev/seaQa');
     (window as any).sws.sea = seaQa(engine, game);
+    const { cineQa } = await import('./dev/cineQa');
+    (window as any).sws.cine = cineQa(engine, game);   // combat director / film look (src/dev/cineQa.ts)
   }
 }
 

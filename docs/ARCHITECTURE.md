@@ -136,3 +136,30 @@ Snow slows traverse 10%. Both sides' bullets drift with wind, and Bombardier sco
 and TargetArea's falling bombs use the same wind. Gameplay modifiers follow this shared state.
 The Settings “Weather effects” switch removes precipitation, glass weather, wet sheen and lightning
 visuals while retaining fog, spotting and other gameplay rules. Glass overlays remain off on Low.
+
+## Combat director and film look (Phase 10 goal 10)
+
+`Cinematics` (game/Cinematics.ts) owns every cinematic camera: the special-kill cam, set-piece drama
+shots, the fly-by, the best-moment replay and, since goal 10, the **combat director's shots**
+(`game/CombatDirector.ts`: close passes in slow motion through the waist window, from a wing-tip camera
+or on a long lens from a neighbouring B-17; kill follows on the 16 mm gun camera, a handheld chase or the
+long lens). `CombatDirector.poll()` runs once a frame with nothing else playing; the pure rules
+(`game/CineDirectorRules.ts`, tests in `tests/cinema.test.ts`) keep it rare (Settings "Combat director":
+off / rare / often) and out of critical moments. `ShotRig` places the camera from the live aircraft each
+frame (no stored scene positions, so floating-origin rebases are safe). The mission-end **combat film**
+is `Theatre.openReel()` (debrief button "▶ Combat film"): the recording's best moments cut together by
+the theatre director, which also has long-lens and wing-tip shots.
+
+The **film look** is `render/FilmLook.ts` (parameters in `render/FilmParams.ts`), owned by
+`PostFX.film`. Three self-contained passes hook into `PostFX.render`: `film.pre()` (per-object motion
+blur from a velocity pass of the objects `film.heroes` hands in, then bokeh DOF) before bloom,
+`film.target()` as the composite's render target, and `film.present()` (grain, gate weave, halation,
+lens ghosts, Kodachrome / newsreel / gun-camera grades, vignette, flicker, dust). Cameras ask for a
+look with `post.film.setShot('cinema' | 'telephoto' | 'gunCamera' | 'reel' | 'reelColour', focus)`
+and `post.film.focusTarget`; play uses `post.film.setLook()` from Settings "Film look" (goal 12's
+Cinematic preset should set it). Reduce motion removes slow motion, handheld sway, grain, weave,
+flicker and dust; Low drops DOF and per-object blur. Each pass is a texture-in/texture-out function
+with plain uniforms, so a Renderer 2.0 port re-implements them one at a time (the velocity pass only
+needs "draw these objects with this material" plus each mesh's previous world matrix).
+Dev hooks: `sws.cine.pass('waist' | 'wingtip' | 'telephoto')`, `sws.cine.kill('gunCam' | 'chase' |
+'telephoto')`, `sws.cine.reel()`, `sws.cine.film(look)`, `sws.cine.status()`, `sws.cine.save(name)`.

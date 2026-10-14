@@ -10,6 +10,8 @@ import { Replay } from './Replay';
 import { Theatre } from './Theatre';
 import { CamSnapshot, CineOverlay, HudHider, ModelReveal, cineLens } from './CineShared';
 import { tx } from '../i18n';
+import { access } from '../core/Accessibility';
+import { CombatDirector, ShotRig, type ShotPlan } from './CombatDirector';
 
 // Cinematic moments: kill cam, end-of-mission fly-by and the best-moment replay (Replay.ts).
 //
@@ -32,6 +34,12 @@ import { tx } from '../i18n';
 // the kill cam (setting, tutorial, the player's health, station change, cooldown shared with it),
 // and never while fighters are pressing an attack nearby (2+ within 1.5 km, or one within 600 m).
 //
+// Director shots (CombatDirector.ts, Phase 10 goal 10): close passes in slow motion and kill
+// follows on ordinary kills (gun camera, chase, long lens from a neighbour), rare and never in a
+// critical moment (Settings "Combat director"). Every sequence here also gets the film look
+// (FilmLook.ts: bokeh focused on the subject, per-object motion blur, grain, halation); Reduce
+// motion turns their slow motion, handheld sway and grain off.
+//
 // Ownership rules, so control is never broken:
 //   - The controllers keep running every frame and keep their own state. preFrame() hands
 //     them back their own FOV/zoom/near/far and blocks their input (no aim drift, no
@@ -50,7 +58,7 @@ const FLY_DUR = 4.6;
 const HP_LOW = 0.5, HP_DROP = 0.035;
 const HEAVY = ['bf110', 'ju88', 'me410', 'he111'];
 
-type Mode = 'none' | 'kill' | 'flyby' | 'replay' | 'drama';
+type Mode = 'none' | 'kill' | 'flyby' | 'replay' | 'drama' | 'shot';
 const DRAMA_SLOW = 0.55;          // drama cam slow motion (eases back to 1 over its second half)
 const DRAMA_NEAR = 1500, DRAMA_CLOSE = 600;
 
@@ -62,10 +70,16 @@ const _a = new THREE.Vector3();
 const _b = new THREE.Vector3();
 const _f = new THREE.Vector3();
 const _l = new THREE.Vector3();
+const _h = new THREE.Vector3();
+const ZERO = new THREE.Vector3();
 
 export class Cinematics {
   readonly replay: Replay;
   readonly theatre: Theatre;       // replay theatre: 90 s recorder + playback screen (Theatre.ts)
+  readonly director: CombatDirector; // close passes / kill follows (CombatDirector.ts)
+  private rig = new ShotRig();
+  private heroD = new Float64Array(12);
+  private heroA: THREE.Object3D[] = [];
   private mode: Mode = 'none';
   /** The best-moment replay is playing over the live world (Bookends steps its parked scene aside). */
   get replaying() { return this.mode === 'replay'; }
@@ -123,7 +137,35 @@ export class Cinematics {
   constructor(private engine: Engine, private input: Input, private ui: UI, private game: Game) {
     this.replay = new Replay(engine, game.world);
     this.theatre = new Theatre(engine, input, ui, game);
+    this.director = new CombatDirector(game);
+    engine.post.film.heroes = this.collectHeroes;
   }
+
+  /** Per-object motion blur subjects (FilmLook): the nearest aircraft and wreckage that move
+   *  against the camera (the formation flying along with it would only cost draw calls). */
+  private collectHeroes = (out: THREE.Object3D[], cam: THREE.Camera) => {
+    const w = this.game.world, cine = this.mode !== 'none';
+    const range = cine ? 1600 : 650, cap = cine ? 10 : 6;
+    const ref = this.mode === 'shot' ? this.rig.refVel : (w.player?.vel ?? ZERO);
+    const cp = cam.getWorldPosition(_h);
+    const d = this.heroD, a = this.heroA;
+    let n = 0;
+    const consider = (root: THREE.Object3D, vel: THREE.Vector3, skipInside: number) => {
+      if (!root.visible) return;
+      const dd = root.position.distanceToSquared(cp);
+      if (dd > range * range || dd < skipInside * skipInside) return;
+      const rx = vel.x - ref.x, ry = vel.y - ref.y, rz = vel.z - ref.z;
+      if (rx * rx + ry * ry + rz * rz < 144) return;
+      if (n === cap && dd >= d[cap - 1]) return;
+      let i = n < cap ? n++ : cap - 1;
+      while (i > 0 && d[i - 1] > dd) { d[i] = d[i - 1]; a[i] = a[i - 1]; i--; }
+      d[i] = dd; a[i] = root;
+    };
+    for (const ac of w.aircraft) if (!ac.remove) consider(ac.root, ac.vel, ac === w.player ? ac.radius : 0);
+    const pieces = (w.wrecks as unknown as { pieces?: { root: THREE.Object3D; vel: THREE.Vector3 }[] }).pieces;
+    if (pieces) for (const pc of pieces) consider(pc.root, pc.vel, 0);
+    for (let i = 0; i < n; i++) out.push(a[i]);
+  };
 
   // ---------------- hooks ----------------
 
@@ -137,7 +179,7 @@ export class Cinematics {
     if (special || heavy || streak >= 3) {
       this.pending = victim;
       this.pendingDur = special ? DUR_SPECIAL : heavy ? DUR_HEAVY : DUR_STREAK;
-    }
+    } else this.director.onKill(victim);
   }
 
   /** Set pieces: ask for a short drama shot of `focus`. Returns false when the rules say no now
@@ -181,15 +223,19 @@ export class Cinematics {
     inp.enabled = false; inp.active = false;
     inp.mouseDX = 0; inp.mouseDY = 0; inp.wheel = 0;
     this.inputOff = true;
-    const e = this.engine;
+    const e = this.engine, calm = access.prefs.reduceMotion;   // Reduce motion: no slow motion
     if (this.mode === 'kill') {
       const u = this.kc.t / this.kc.dur;
-      const s = u < 0.72 ? KC_SLOW : THREE.MathUtils.lerp(KC_SLOW, KC_SLOW_END, (u - 0.72) / 0.28);
+      const s = calm ? 1 : u < 0.72 ? KC_SLOW : THREE.MathUtils.lerp(KC_SLOW, KC_SLOW_END, (u - 0.72) / 0.28);
       if (e.timeScale > s) { e.timeScale = s; this.lastSet = s; }
     } else if (this.mode === 'drama') {
       const u = this.dr.t / this.dr.dur;
-      const s = u < 0.5 ? DRAMA_SLOW : THREE.MathUtils.lerp(DRAMA_SLOW, 1, (u - 0.5) / 0.5);
+      const s = calm ? 1 : u < 0.5 ? DRAMA_SLOW : THREE.MathUtils.lerp(DRAMA_SLOW, 1, (u - 0.5) / 0.5);
       if (e.timeScale > s) { e.timeScale = s; this.lastSet = s; }
+    } else if (this.mode === 'shot') {
+      // the rig eases in and out of its slow motion: raise it again while the scale is still ours
+      const s = this.rig.scale;
+      if (e.timeScale > s || (e.timeScale === this.lastSet && e.timeScale !== s)) { e.timeScale = s; this.lastSet = s; }
     } else if (e.timeScale !== 1 && e.timeScale > 0.06) e.timeScale = 1;   // fly-by runs at normal speed (leave a hit-stop alone)
   }
 
@@ -209,7 +255,7 @@ export class Cinematics {
       this.trackHealth(real);
       this.flushed = false;
     }
-    if (this.mode === 'kill' || this.mode === 'flyby' || this.mode === 'drama') this.snap.refresh(e);
+    if (this.mode === 'kill' || this.mode === 'flyby' || this.mode === 'drama' || this.mode === 'shot') this.snap.refresh(e);
 
     // kill cam request from this frame's kill event
     if (this.pending) {
@@ -220,6 +266,12 @@ export class Cinematics {
       const q = this.dramaReq;
       this.dramaReq = null;
       if (this.mode === 'none' && this.dramaAllowed()) this.startDrama(q.focus, q.dur, q.title, q.sub);
+    }
+    // combat director: a close pass or a kill follow, when the rules allow one
+    if (this.mode === 'none' && g.state === 'playing' && !this.flyQueued) {
+      const fit = !!(g.mission && w.player) && this.playerFit();
+      const plan = this.director.poll(real, fit, w.time - this.lastKillCam);
+      if (plan) this.startShot(plan);
     }
     if (this.flyQueued) {
       this.flyDelay -= real;
@@ -233,6 +285,7 @@ export class Cinematics {
 
     if (this.mode === 'kill') this.updateKill(dt, real);
     else if (this.mode === 'drama') this.updateDrama(real);
+    else if (this.mode === 'shot') this.updateShot(dt, real);
     else if (this.mode === 'flyby') this.updateFlyby(real);
     else if (this.mode === 'replay') this.replay.update(real);
 
@@ -322,6 +375,7 @@ export class Cinematics {
     k.dir.normalize();
     this.lastKillCam = g.world.time;
     this.mode = 'kill';
+    e.post.film.setShot('cinema');
     e.post.resetHistory();
     this.updateKill(0, 0);
   }
@@ -360,6 +414,7 @@ export class Cinematics {
     cam.lookAt(_a.copy(k.look).sub(off));
     cam.rotateZ(k.side * 0.07 * (1 - eu));
     cineLens(e, 40 - 6 * eu);
+    e.post.film.focusTarget = k.cam.distanceTo(k.focus);
     this.overlay.setFade(k.t > k.dur - FADE_OUT ? (k.t - (k.dur - FADE_OUT)) / FADE_OUT : 0);
   }
 
@@ -401,6 +456,7 @@ export class Cinematics {
     this.lastSet = -1;
     this.lastKillCam = w.time;   // the kill cam waits its cooldown after a drama shot too
     this.mode = 'drama';
+    e.post.film.setShot('cinema');
     e.post.resetHistory();
     this.updateDrama(0);
   }
@@ -419,8 +475,53 @@ export class Cinematics {
     cam.position.copy(pl.pos).addScaledVector(d.off, 1 - 0.14 * eu);
     cam.lookAt(_b.copy(pl.pos).add(d.look));
     cineLens(e, 38 - 6 * eu);
+    e.post.film.focusTarget = cam.position.distanceTo(_b);
     this.overlay.setFade(d.t > d.dur - FADE_OUT ? (d.t - (d.dur - FADE_OUT)) / FADE_OUT : 0);
   }
+
+  // ---------------- director shots (CombatDirector.ts) ----------------
+
+  private startShot(plan: ShotPlan) {
+    const e = this.engine, g = this.game, rig = this.rig;
+    this.snap.capture(e);
+    rig.start(plan, e.camera);
+    if (!rig.inside && g.mission?.role === 'gunner') this.reveal.reveal(g.world.playerBomber?.model);
+    this.hud.hide(this.ui.canvas);
+    const s = plan.subject;
+    const what = s instanceof Fighter && s.label ? s.label.toUpperCase() : tx('BANDIT');
+    const nb = plan.neighbour;
+    const tag = plan.cam === 'gunCam' ? tx('GUN CAMERA FILM') : plan.cam === 'waist' ? tx('WAIST WINDOW') : plan.cam === 'wingtip' ? tx('WING CAMERA')
+      : plan.cam === 'telephoto' ? (nb?.name ? tx('FROM “{name}”', { name: nb.name }) : tx('FROM THE NEXT SHIP')) : tx('KILL CAM');
+    const cap = plan.event === 'pass' ? tx('{what} · CLOSE PASS', { what }) : tx('{what} · DESTROYED', { what });
+    this.overlay.show(true, tag, cap, tx('CLICK TO SKIP'), rig.academy);
+    this.overlay.setFade(0);
+    this.fadeIn = 0;
+    this.lastSet = -1;
+    this.lastKillCam = g.world.time;
+    this.mode = 'shot';
+    e.post.film.setShot(rig.look);
+    e.post.resetHistory();
+    this.updateShot(0, 0);
+  }
+
+  private updateShot(dt: number, real: number) {
+    const e = this.engine, rig = this.rig;
+    if (!rig.update(e.camera, real, dt)) { this.end(); return; }
+    cineLens(e, rig.fov);
+    e.post.film.focusTarget = rig.focus;
+    this.overlay.setFade(rig.t > rig.dur - FADE_OUT ? (rig.t - (rig.dur - FADE_OUT)) / FADE_OUT : 0);
+  }
+
+  /** Dev / capture (sws.cine): force a director shot now. */
+  devShot(event: 'pass' | 'kill', cam?: string): string {
+    if (this.mode !== 'none') this.end();
+    const plan = this.director.force(event, cam as never);
+    if (!plan) return 'no fighter to film';
+    this.startShot(plan);
+    return `${plan.event}/${plan.cam}`;
+  }
+
+  get shotInfo() { return this.mode === 'shot' ? { cam: this.rig.plan?.cam, t: this.rig.t, scale: this.rig.scale, focus: this.rig.focus, fov: this.rig.fov } : { mode: this.mode }; }
 
   // ---------------- fly-by ----------------
 
@@ -463,6 +564,7 @@ export class Cinematics {
     this.fadeIn = 0;
     this.flyT = 0;
     this.mode = 'flyby';
+    e.post.film.setShot('cinema');
     e.post.resetHistory();
     this.updateFlyby(0);
   }
@@ -502,6 +604,7 @@ export class Cinematics {
     cam.lookAt(_a.copy(_b).addScaledVector(UP, 1.5));   // the subject stays dead centre
     cam.rotateZ(this.flySide * THREE.MathUtils.lerp(0.05, -0.025, su));
     cineLens(e, THREE.MathUtils.lerp(32, 27, su));
+    e.post.film.focusTarget = cam.position.distanceTo(_b);
     const m = this.game.mission;
     this.overlay.setCard(t > 0.55 && t < FLY_DUR - 0.75, tx('MISSION COMPLETE'), m ? (m.number ? tx('Mission {n} · {title}', { n: m.number, title: tx(m.title) }) : tx(m.title)) : '');
     // dip in from the gun view, dip out to the debrief
@@ -552,6 +655,7 @@ export class Cinematics {
     this.overlay.setFade(1);
     this.fadeIn = FADE_IN;
     cineLens(e, 50);
+    e.post.film.setShot('cinema', 70);
     e.post.resetHistory();
     addEventListener('pointerdown', this.skipReplay, true);
     addEventListener('keydown', this.skipReplay, true);
@@ -566,6 +670,7 @@ export class Cinematics {
   private replayEnded() {
     removeEventListener('pointerdown', this.skipReplay, true);
     removeEventListener('keydown', this.skipReplay, true);
+    this.engine.post.film.setShot(null);
     this.snap.restore(this.engine);
     this.reveal.restore();
     this.hud.restore();
@@ -587,6 +692,9 @@ export class Cinematics {
     if (mode === 'replay') { this.replay.stop(); return; }
     this.mode = 'none';
     if (this.inputOff) this.giveInput();
+    this.rig.stop();
+    this.engine.camera.up.set(0, 1, 0);
+    this.engine.post.film.setShot(null);
     this.snap.restore(this.engine);
     this.reveal.restore();
     this.hud.restore();
@@ -596,7 +704,7 @@ export class Cinematics {
     // back to the gun out of black (a skip comes out of half-black: it should feel instant)
     this.overlay.setFade(skipped ? 0.5 : 1);
     this.fadeIn = skipped ? FADE_IN * 0.5 : FADE_IN;
-    if (mode === 'kill' || mode === 'drama') {
+    if (mode === 'kill' || mode === 'drama' || mode === 'shot') {
       const e = this.engine;
       if (e.timeScale === this.lastSet) e.timeScale = 1;
       // a hit-stop that started during the kill cam restores our slow-mo when it ends: undo that too
@@ -623,6 +731,7 @@ export class Cinematics {
     if (this.mode !== 'none') this.end();
     this.replay.reset();
     this.theatre.newMission();
+    this.director.newMission();
     this.lastKillCam = -1e9;
     this.pending = null;
     this.dramaReq = null;

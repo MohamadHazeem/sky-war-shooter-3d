@@ -284,6 +284,7 @@ export class Game {
     this.gunner.baseFov = fov;
     this.pilot.baseFov = fov;
     this.engine.applyGraphics(s.quality, !!s.fpsCounter);
+    this.engine.post.film.setLook(s.filmLook);   // Settings "Film look" (render/FilmLook.ts)
     syncSurfaceDetail(this.engine.quality);   // aircraft panel lines / weathering level (render/SurfaceDetail.ts)
     save(SETTINGS_KEY, s);
   }
@@ -464,6 +465,7 @@ export class Game {
     this.gunner.rateBoost = this.berserkT > 0 ? 1.4 : 1;
     // Brief slow-motion beat on a confirmed kill
     if (this.coop.flying) { this.slowmo = 0; this.engine.timeScale = 1; }
+    if (access.prefs.reduceMotion) this.slowmo = 0;   // Reduce motion: no slow-motion beats
     if (this.slowmo > 0) {
       this.slowmo -= dt / Math.max(0.05, this.engine.timeScale);
       this.engine.timeScale = this.slowmo > 0 ? 0.35 : 1;

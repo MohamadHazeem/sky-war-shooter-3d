@@ -62,7 +62,7 @@ function pwaPlugin(): Plugin {
 // Dev server only: POST /__dev/save?path=<file> stores the request body in the repo, for the
 // in-browser tools in src/dev (sws.ogCard() -> public/og-image.jpg, sws.trailer({ save: true })
 // -> trailer-out/*.webm, which is git-ignored). Only these paths are writable.
-const DEV_SAVE = [/^public\/og-image\.jpg$/, /^docs\/screenshots\/[\w.-]+\.(png|jpg)$/, /^trailer-out\/[\w.-]+\.webm$/];
+const DEV_SAVE = [/^public\/og-image\.jpg$/, /^docs\/screenshots\/[\w.-]+\.(png|jpg)$/, /^docs\/phase10\/shots\/\d+\/[\w.-]+\.(png|jpg)$/, /^trailer-out\/[\w.-]+\.webm$/];
 function devSavePlugin(): Plugin {
   return {
     name: 'sws-dev-save',
