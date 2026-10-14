@@ -12,3 +12,6 @@ trailer-out/
 # local TTS environment (tools/voice/chatterbox_*.py)
 .venv-tts/
 tools/voice/.cache/
+
+# Phase 10 visual rig: keep local lossless originals; commit compact JPEG evidence only.
+docs/phase10/shots/**/*.png

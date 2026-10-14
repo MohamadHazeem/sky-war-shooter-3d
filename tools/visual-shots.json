@@ -1,0 +1,18 @@
+[
+  {"id":"waist-fw190","label":"Waist gun / Fw 190 at 150 m","pillars":[1,2,3,6,7,10],"station":"waistL","weather":"clear"},
+  {"id":"tail-bf109","label":"Tail gun / diving Bf 109","pillars":[1,5,6,7,10],"station":"tail","weather":"clear"},
+  {"id":"top-formation","label":"Top turret / formation","pillars":[1,2,3,6,8,10],"station":"top","weather":"clear"},
+  {"id":"ball-europe","label":"Ball turret / Europe below","pillars":[2,4,6,7,10],"station":"ball","weather":"ground"},
+  {"id":"b17-beauty","label":"B-17 / side and rim sunlight","pillars":[1,2,7,10],"weather":"beauty"},
+  {"id":"formation-chase","label":"Combat box / chase camera","pillars":[1,3,5,8,10],"weather":"clear"},
+  {"id":"cloud-flythrough","label":"Inside the cloud layer","pillars":[2,3,7,10],"weather":"cloud"},
+  {"id":"sunset","label":"Formation at sunset","pillars":[1,2,3,7,8,10],"weather":"sunset"},
+  {"id":"overcast-rain","label":"Waist gun / overcast and rain","pillars":[2,3,5,6,7,10],"station":"waistL","weather":"rain"},
+  {"id":"night-flak","label":"Night / flak and searchlights","pillars":[2,3,5,7,8,10],"weather":"night"},
+  {"id":"explosion-close","label":"Close explosion and fragments","pillars":[2,5,7,9,10],"weather":"clear"},
+  {"id":"flak-barrage","label":"Formation in a flak barrage","pillars":[3,5,8,10],"weather":"clear"},
+  {"id":"damaged-neighbour","label":"Burning neighbouring B-17","pillars":[1,2,5,8,9,10],"weather":"clear"},
+  {"id":"waist-interior","label":"Waist compartment / light shafts","pillars":[1,2,6,7,10],"station":"waistL","weather":"interior"},
+  {"id":"bomb-run","label":"Bomb run over Emden","pillars":[4,5,7,8,10],"weather":"ground"},
+  {"id":"p51-cockpit","label":"P-51 cockpit","pillars":[1,2,6,7,10],"weather":"clear"}
+]
