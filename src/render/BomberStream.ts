@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { StreamTracers } from './StreamTracers';
 import { STREAM_MIN_HALF_PX, STREAM_MIN_COVERAGE } from './StreamReadability';
 import { Atmos, atmosUniforms, skyGLSL } from './Atmosphere';
 import { useSkyEnv } from './AircraftLook';
@@ -346,6 +347,7 @@ export class BomberStream {
   private escortImp: THREE.Mesh | null = null;
   private gaggleImp: THREE.Mesh | null = null;
   private near: THREE.Mesh | null = null;
+  readonly tracers = new StreamTracers();
   private trails: THREE.Mesh;
   private field: THREE.Mesh;
   private smoke: THREE.Mesh;
@@ -376,6 +378,7 @@ export class BomberStream {
     this.group.name = 'bomberStream';
     this.group.userData.noRebase = true;
     this.group.visible = false;
+    this.group.add(this.tracers.renderer.mesh);
 
     // --- contrails: one ribbon per engine (or pair) of every bomber, one per fighter ---
     this.trails = new THREE.Mesh(ribbonStrip(26), shaderMat({
@@ -701,6 +704,7 @@ export class BomberStream {
     this.barrages = [];
     this.wrecks = [];
     this.nGlows = 0;
+    this.tracers.clear();
     this.attackedUntil = L.groups.map(() => -1);
     this.gaggleKill = L.gaggles.map(() => 20 + this.rnd() * 20);
     this.gaggleRetarget = L.gaggles.map((g) => g.period * (2.5 + this.rnd() * 1.5));
@@ -846,6 +850,7 @@ export class BomberStream {
       this.gaggles(time, dt);
       this.losses(time, dt, camL);
     }
+    this.tracers.update(time, this.group.matrixWorld, cam, heightPx);
     this.writeGlows(time);
   }
 
@@ -961,6 +966,8 @@ export class BomberStream {
           fighterPos(d, i, time + 0.1, V, top, _v2);
           _v2.sub(_v1).multiplyScalar(4);   // ~40 m ahead along the flight path
           this.glow(_v1.x + _v2.x, _v1.y + _v2.y, _v1.z + _v2.z, time, 0.07 + R() * 0.08, 7 + R() * 6, 30, 20, 9);
+          groupCentre(L.groups[gg.target], time, _v3);
+          this.tracers.emit(_v1.x, _v1.y, _v1.z, _v3.x, _v3.y, _v3.z, time, false);
         }
       }
       if (attacking) {
@@ -969,7 +976,12 @@ export class BomberStream {
         const g = L.groups[gg.target];
         if (R() < dt * 14) {
           const i = g.first + Math.floor(R() * g.count);
-          if (!this.lost(i)) { bomberPose(d, i, time, V, _pose); this.glow(_pose.p.x, _pose.p.y, _pose.p.z, time, 0.06, 5 + R() * 4, 22, 16, 7); }
+          if (!this.lost(i)) {
+            bomberPose(d, i, time, V, _pose);
+            this.glow(_pose.p.x, _pose.p.y, _pose.p.z, time, 0.06, 5 + R() * 4, 22, 16, 7);
+            fighterPos(d, gg.first, time, V, top, _v3);
+            this.tracers.emit(_pose.p.x, _pose.p.y, _pose.p.z, _v3.x, _v3.y, _v3.z, time, true);
+          }
         }
         this.gaggleKill[k] -= dt;
         if (this.gaggleKill[k] <= 0) {
