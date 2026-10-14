@@ -8,6 +8,8 @@
 //
 // Game hooks: showCampaignMap (Game.showCampaign), mountCampaignReport (end of showDebrief),
 // isSideRaid (briefing Back button). Rendered into the #campaign layer UI.ts creates.
+import { mountChapterAccess } from './ChapterSelect';
+import { isChapterMission } from '../game/DeepPenetration';
 import { CAMPAIGN, type Mission } from '../game/Missions';
 import { STATIONS } from '../world/B17Layout';
 import { CHART, type ChartPlace } from './BriefingMap';
@@ -96,6 +98,9 @@ html[lang=ar] .cm-nem-t { letter-spacing: 0; }
 .cm-op-card .btn { align-self: flex-start; margin-top: 8px; padding: 9px 18px; font-size: 14px; }
 .cm-op-card .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .cm-op-card.done { opacity: 0.55; }
+.cm-op-card:disabled { opacity: 0.4; cursor: not-allowed; }
+button.cm-op-card:not(:disabled) { cursor: pointer; }
+button.cm-op-card:focus-visible { outline: 2px solid var(--khaki); outline-offset: 3px; }
 .cm-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
 .cm-chips span { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border: 1px solid var(--line); color: var(--ink-dim); }
 .cm-chips span.good { color: var(--good); border-color: rgba(159,194,107,0.4); }
@@ -491,6 +496,7 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
     showCampaignMap(progress, onPick, onBack);
   });
   root.querySelector('[data-secondtour]')?.addEventListener('click', () => { startSecondTour(d); selected = null; showCampaignMap(progress, onPick, onBack); });
+  mountChapterAccess(root, progress, d, onPick, () => showCampaignMap(progress, onPick, onBack));
   showLayer();
 }
 
@@ -539,6 +545,7 @@ export function showCampaignSummary(progress: ProgressLike, onPick: (m: Mission)
   root.querySelector('[data-back]')!.addEventListener('click', onBack);
   root.querySelector('[data-secondtour]')?.addEventListener('click', () => { startSecondTour(d); selected = null; showCampaignMap(progress, onPick, onBack); });
   root.querySelector('[data-newtour]')?.addEventListener('click', () => { showCampaignMap(progress, onPick, onBack); root.querySelector<HTMLElement>('[data-newtour]')?.click(); });
+  mountChapterAccess(root, progress, d, onPick, () => showCampaignMap(progress, onPick, onBack));
   showLayer();
 }
 
@@ -551,6 +558,15 @@ export interface Merit { earn(n: number): void }
  * the intelligence report on the debrief, with a way back to the map. No-op for other missions.
  */
 export function mountCampaignReport(m: Mission, o: Outcome, prog: Merit, progress: ProgressLike, toMap: (then?: () => void) => void) {
+  if (isChapterMission(m.id)) {
+    const host = document.querySelector<HTMLElement>('#debrief .box');
+    host?.querySelector('.lb-panel')?.remove();
+    const button = document.createElement('button');
+    button.className = 'btn'; button.textContent = tx('Deep Penetration');
+    button.addEventListener('click', () => toMap(() => document.querySelector<HTMLButtonElement>('[data-chapter]')?.click()));
+    host?.appendChild(button);
+    return;
+  }
   const res = recordCampaignOutcome(m, o, progress);
   if (!res) return;
   if (res.reward) prog.earn(res.reward);

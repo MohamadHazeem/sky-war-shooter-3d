@@ -2148,6 +2148,141 @@
       "group": "crew room (tools/voice/crewroom.mjs)"
     },
     {
+      "id": "cr_dp1_1",
+      "roles": [
+        "nav",
+        "copilot"
+      ],
+      "text": "We kept the sun on the right and flew south. Africa still feels like another world.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp1_3",
+      "roles": [
+        "top",
+        "waist"
+      ],
+      "text": "The engines need work before we cross the sea again. Tonight, at least, they can cool down.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp1_2",
+      "roles": [
+        "radio",
+        "nav"
+      ],
+      "text": "I saved a corner of the chart for a letter home. They will never believe where we landed.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp2_1",
+      "roles": [
+        "ball",
+        "copilot"
+      ],
+      "text": "I saw the bomb bay open in a sheet of fire. I cannot get that window out of my head.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp2_3",
+      "roles": [
+        "radio",
+        "waist"
+      ],
+      "text": "I left the radio on until the last landing. I kept hoping to hear another call sign.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp2_2",
+      "roles": [
+        "pilot",
+        "nav"
+      ],
+      "text": "Sit here a while. Nobody has to tell the story twice tonight.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp3_1",
+      "roles": [
+        "tail",
+        "copilot"
+      ],
+      "text": "Those Mustangs stayed. I asked the cook to keep two extra plates.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp3_3",
+      "roles": [
+        "nav",
+        "waist"
+      ],
+      "text": "An escort is more than a mark on the briefing map. Today we saw the men behind it.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp3_2",
+      "roles": [
+        "top",
+        "nav"
+      ],
+      "text": "Then let them eat first. We can wait for once.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp4_1",
+      "roles": [
+        "nav",
+        "copilot"
+      ],
+      "text": "There is a hole through Berlin on my chart. The pencil stopped there, too.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp4_3",
+      "roles": [
+        "radio",
+        "waist"
+      ],
+      "text": "I will put the chart beside the stove. Let it dry before we fold it away.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp4_2",
+      "roles": [
+        "waist",
+        "nav"
+      ],
+      "text": "Leave the hole. We know the way back now.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp5_1",
+      "roles": [
+        "bombardier",
+        "copilot"
+      ],
+      "text": "All those tanks below us, and I only remember the ship beside us.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp5_3",
+      "roles": [
+        "tail",
+        "waist"
+      ],
+      "text": "The new boys asked whether it gets easier. I told them we learn to look after each other.",
+      "noTable": true
+    },
+    {
+      "id": "cr_dp5_2",
+      "roles": [
+        "pilot",
+        "nav"
+      ],
+      "text": "Write down the names before the numbers. That is how we finish this book.",
+      "noTable": true
+    },
+    {
       "id": "cr_m1_1",
       "role": "radio",
       "text": "Well, that's one. First thing tomorrow I'm painting a bomb under the window.",
@@ -3932,6 +4067,85 @@
       "role": "briefing",
       "text": "You are back on the left waist gun, where you started at Emden. Think of the crews who are not here today: the Lucky Lady over Schweinfurt, and the new boys who never finished their first week. Fly this one for them. Then come home, all of you.",
       "say": "You are back on the left waist gun, where you started at Emden. Think of the crews who are not here today: the Lucky Lady over Shvine-foort, and the new boys who never finished their first week. Fly this one for them. Then come home, all of you."
+    },
+    {
+      "id": "brief_dp1_1",
+      "role": "briefing",
+      "text": "On 17 August 1943, the Eighth Air Force attacks Regensburg and Schweinfurt. Our force strikes the Messerschmitt works at Regensburg, then continues south across the Alps to North Africa. Fog has delayed the Schweinfurt force; the intended diversion is coming apart.",
+      "say": "On 17 August 1943, the Eighth Air Force attacks Ray-gens-boorg and Shvine-foort. Our force strikes the Messerschmitt works at Ray-gens-boorg, then continues south across the Alps to North Africa. Fog has delayed the Shvine-foort force; the intended diversion is coming apart."
+    },
+    {
+      "id": "brief_dp1_2",
+      "role": "briefing",
+      "text": "The short-range escort cannot follow us deep into Germany. Expect Fw 190s and Bf 109s from both beams, with Bf 110s behind. Cover a damaged Fortress falling out of the box before we reach the assembly halls beside the Danube.",
+      "say": "The short-range escort cannot follow us deep into Germany. Expect Focke-Wulf one-ninetys and Messerschmitt one-oh-nines from both beams, with Bf 110s behind. Cover a damaged Fortress falling out of the box before we reach the assembly halls beside the Danube."
+    },
+    {
+      "id": "brief_dp1_3",
+      "role": "briefing",
+      "text": "This chapter revisits historical raids with our fictional crew and existing aircraft. Combat time and geography are compressed. After bombs away, hold the southern course: this sortie ends on the shuttle route, not back in England."
+    },
+    {
+      "id": "brief_dp2_1",
+      "role": "briefing",
+      "text": "On 14 October 1943, the Eighth returns to the ball-bearing factories at Schweinfurt. The August raid did not stop production for long. Once the escort turns back, the Fortresses must fight their way to the target and out again without fighter cover.",
+      "say": "On 14 October 1943, the Eighth returns to the ball-bearing factories at Shvine-foort. The August raid did not stop production for long. Once the escort turns back, the Fortresses must fight their way to the target and out again without fighter cover."
+    },
+    {
+      "id": "brief_dp2_2",
+      "role": "briefing",
+      "text": "Expect repeated single-engine attacks and rocket-carrying Bf 110s and Ju 88s. Watch the high fighters: they may drop bombs into the box. Switch to the top turret to interrupt them, then cover the low squadron through the bomb run."
+    },
+    {
+      "id": "brief_dp2_3",
+      "role": "briefing",
+      "text": "The long factory roofs and rail sidings mark the aiming area. A neighbouring ship will be hit in the bomb bay; keep clear of the wreckage and hold your station. The crew will remember the empty bunks after this one."
+    },
+    {
+      "id": "brief_dp3_1",
+      "role": "briefing",
+      "text": "Operation Argument opens on 20 February 1944. The Eighth strikes aircraft factories across Germany; our objective is the Leipzig aircraft industry. Assembly sheds and the nearby airfield stand out against the winter ground."
+    },
+    {
+      "id": "brief_dp3_2",
+      "role": "briefing",
+      "text": "Long-range escort now reaches deeper into Germany. Keep firing until the Mustangs arrive. Me 410 heavy fighters may stand off with cannon while the single-engine fighters close; the top turret must cover both threats."
+    },
+    {
+      "id": "brief_dp3_3",
+      "role": "briefing",
+      "text": "Two little friends will dive past the formation to clear a pursuer. Check your fire as they cross. Dawson has kept his promise to buy an escort pilot dinner; tonight he may finally get to pay the bill."
+    },
+    {
+      "id": "brief_dp4_1",
+      "role": "briefing",
+      "text": "On 6 March 1944, a major American bomber force reaches Berlin. The earlier attempt on 4 March had been reduced by weather. Today the industrial districts and railway network lie at the end of a long, heavily defended route."
+    },
+    {
+      "id": "brief_dp4_2",
+      "role": "briefing",
+      "text": "Escort reliefs cover the stream, but the enemy can still converge from three and nine together. Pick one pair and break its approach. No jets are expected on this March raid; the danger is coordinated conventional fighters and heavy flak."
+    },
+    {
+      "id": "brief_dp4_3",
+      "role": "briefing",
+      "text": "A damaged fighter may tumble into the box. Stop it before it strikes a Fortress. Beyond the mist, follow the broad street grid and rail yards through the bomb run, then stay alert for attacks on the return leg."
+    },
+    {
+      "id": "brief_dp5_1",
+      "role": "briefing",
+      "text": "On 2 November 1944, the oil offensive returns to the Leuna synthetic fuel works near Merseburg. Fuel shortages are hurting German flying and training, but the refinery is still producing. Its tank farms and processing blocks are our aiming area."
+    },
+    {
+      "id": "brief_dp5_2",
+      "role": "briefing",
+      "text": "Merseburg is protected by concentrated heavy flak. Armoured Fw 190 formations and Bf 109s remain dangerous; late-war jets may make brief passes. Keep the tail guns ready, and switch forward when the armoured wedge assembles.",
+      "say": "Merseburg is protected by concentrated heavy flak. Armoured Focke-Wulf one-ninety formations and Messerschmitt one-oh-nines remain dangerous; late-war jets may make brief passes. Keep the tail guns ready, and switch forward when the armoured wedge assembles."
+    },
+    {
+      "id": "brief_dp5_3",
+      "role": "briefing",
+      "text": "A Fortress beside us will take a direct flak hit. There is no fighter to shoot at in that moment: stay steady and protect the survivors. The target is fuel production; the crew's measure of success is how many men come home."
     }
   ],
   "dynamic": [

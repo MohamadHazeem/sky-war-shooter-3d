@@ -1,4 +1,5 @@
 import { isSecondTourId, SECOND_TOUR_LENGTH } from '../game/SecondTour';
+import { DEEP_PENETRATION, isChapterMission } from '../game/DeepPenetration';
 import { CAMPAIGN, type Mission } from '../game/Missions';
 import { briefingVoice } from '../audio/BriefingVoice';
 import { tx } from '../i18n';
@@ -88,8 +89,8 @@ export function decorateBriefing(root: HTMLElement, m: Mission) {
   ensureStyle();
   const sheet = root.querySelector<HTMLElement>('.sheet');
   if (!sheet) return;
-  const inCampaign = m.number > 0 && (CAMPAIGN.includes(m) || isSecondTourId(m.id));
-  const total = isSecondTourId(m.id) ? SECOND_TOUR_LENGTH : CAMPAIGN.length;
+  const inCampaign = m.number > 0 && (CAMPAIGN.includes(m) || isChapterMission(m.id) || isSecondTourId(m.id));
+  const total = isChapterMission(m.id) ? DEEP_PENETRATION.length : isSecondTourId(m.id) ? SECOND_TOUR_LENGTH : CAMPAIGN.length;
 
   // Mission badge + facts
   const kicker = sheet.querySelector<HTMLElement>('.kicker');
@@ -108,6 +109,7 @@ export function decorateBriefing(root: HTMLElement, m: Mission) {
     meta.innerHTML = facts(m).map((f) => `<span${f.hot ? ' class="hot"' : ''}>${esc(f.text)}</span>`).join('');
     target.after(meta);
   }
+  if (isChapterMission(m.id) && kicker) kicker.textContent = tx('Deep Penetration') + ' · ' + kicker.textContent;
   decorateCampaignBriefing(sheet, m); // dynamic campaign: side-raid kicker, strategic modifiers
 
   // Recorded briefing

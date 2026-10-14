@@ -18,6 +18,12 @@ export interface Wave {
 }
 
 export interface Mission {
+  /** Authored historical scenarios override the default escalation and random drama. */
+  tactics?: import('../world/LuftwaffeTactics').PackTactic[];
+  signature?: { id: import('./SetPieces').SetPieceId; at: number };
+  targetLook?: 1 | 2 | 3 | 4 | 5;
+  shuttle?: boolean; // southbound exit; no English landing scene
+
   id: string;
   number: number;
   title: string;

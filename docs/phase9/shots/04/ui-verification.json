@@ -1,0 +1,46 @@
+{
+  "errors": [],
+  "secondTourBefore": "tour2-7-0",
+  "secondTourAfter": "tour2-7-0",
+  "layouts": [
+    {
+      "id": "dp1",
+      "referenceWeather": "clear",
+      "look": 1,
+      "programs": 123
+    },
+    {
+      "id": "dp2",
+      "referenceWeather": "clear",
+      "look": 2,
+      "programs": 118
+    },
+    {
+      "id": "dp3",
+      "referenceWeather": "clear",
+      "look": 3,
+      "programs": 119
+    },
+    {
+      "id": "dp4",
+      "referenceWeather": "clear",
+      "look": 4,
+      "programs": 119
+    },
+    {
+      "id": "dp5",
+      "referenceWeather": "clear",
+      "look": 5,
+      "programs": 119
+    }
+  ],
+  "layoutPrograms": [
+    119,
+    119,
+    119,
+    119,
+    119,
+    119
+  ],
+  "reset": 0
+}

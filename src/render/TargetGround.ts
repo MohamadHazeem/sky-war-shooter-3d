@@ -12,6 +12,7 @@ export const TGT_PLUMES = 8;
 
 export const targetUniforms = {
   uTgt: { value: new THREE.Vector4() },        // absolute ground x, z of the aim point, city radius (m), on (0/1)
+  uTgtLook: { value: 0 },                     // authored target layout, 0 retains the original city
   uTgtRot: { value: new THREE.Vector2(1, 0) }, // cos, sin of the river / street grid axis
   uTgtClock: { value: -1000 },                 // s since bombs away (negative before)
   uTgtWind: { value: new THREE.Vector2() },    // ground wind (m/s): smoke drift
@@ -27,6 +28,7 @@ export const TARGET_GLSL = /* glsl */ `
 #define TGT_PLUMES ${TGT_PLUMES}
 uniform vec4 uTgt;
 uniform vec2 uTgtRot;
+uniform float uTgtLook;
 uniform float uTgtClock;
 uniform vec2 uTgtWind;
 uniform float uFlakGround;
@@ -115,6 +117,32 @@ vec3 tCity(vec2 rel, vec3 base, float fw) {
   // bridges stay dry
   float bridge = max(tBand(u, -712.0, -690.0, fw), tBand(u, 820.0, 842.0, fw)) * step(abs(vr), rw + 20.0);
   c = mix(c, wc, water * (1.0 - bridge));
+  // Authored chapter silhouettes, using the existing compiled sky material on every preset.
+  // Airport / assembly works, bearing halls, Leipzig airfield, Berlin rail grid, Leuna tanks.
+  if (uTgtLook > 0.5) {
+    float dry = smoothstep(130.0 - fw, 150.0 + fw, abs(vr));
+    float zone = tBand(u, -1700.0, 1700.0, fw) * tBand(vr, -1500.0, -150.0, fw);
+    if (uTgtLook < 1.5 || (uTgtLook > 2.5 && uTgtLook < 3.5)) {
+      float runway = tBand(v, -1250.0, -1120.0, fw) * tBand(u, -1800.0, 1800.0, fw);
+      float cross = uTgtLook > 2.5 ? tBand(u + v * 0.6, -100.0, 30.0, fw) * tBand(v, -1400.0, -350.0, fw) : 0.0;
+      c = mix(c, vec3(0.32, 0.31, 0.27), max(runway, cross) * dry);
+      float halls = tBand(v, -900.0, -300.0, fw) * tBand(u, -1300.0, 1300.0, fw);
+      float rows = tBand(mod(u + 1400.0, 370.0), 30.0, 310.0, fw);
+      c = mix(c, mix(vec3(0.09), vec3(0.3, 0.29, 0.25), rows), halls * dry);
+    } else if (uTgtLook < 2.5) {
+      float halls = tBand(v, -1200.0, 500.0, fw) * tBand(u, -1400.0, 1400.0, fw);
+      float roof = tBand(mod(v + 1500.0, 360.0), 30.0, 270.0, fw);
+      c = mix(c, mix(vec3(0.07), vec3(0.28, 0.2, 0.14), roof), halls * dry);
+    } else if (uTgtLook < 4.5) {
+      float rails = tBand(v, -1100.0, 0.0, fw) * tBand(u, -2200.0, 2000.0, fw);
+      float tracks = 0.5 + 0.5 * sin(v / 18.0);
+      c = mix(c, mix(vec3(0.065), vec3(0.21, 0.2, 0.18), tracks), rails * dry);
+    } else {
+      vec2 tankQ = mod(uv + 1800.0, 180.0) - 90.0;
+      float tanks = 1.0 - smoothstep(55.0 - fw, 55.0 + fw, length(tankQ));
+      c = mix(c, mix(vec3(0.065, 0.06, 0.05), vec3(0.4, 0.4, 0.36), tanks), zone * dry);
+    }
+  }
   return c;
 }
 

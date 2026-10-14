@@ -20,6 +20,7 @@ interface Place extends Geo {
 }
 
 const PLACES: Place[] = [
+  { key: 'Merseburg', lat: 51.32, lon: 12.0, ip: { lat: 52.3, lon: 4.2 } },
   { key: 'Emden', lat: 53.37, lon: 7.21, ip: { lat: 53.4, lon: 5.6 } },
   { key: 'Bremen', lat: 53.08, lon: 8.8, ip: { lat: 52.95, lon: 4.7 } },
   { key: 'Ludwigshafen', lat: 49.48, lon: 8.44, eng: ESSEX, ip: { lat: 51.2, lon: 3.1 } },

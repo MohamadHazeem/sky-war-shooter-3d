@@ -1,0 +1,375 @@
+{
+  "errors": [],
+  "results": [
+    {
+      "id": "dp1",
+      "log": "0s kills 0 enemies 0 bombers 12 playing\n30s kills 1 enemies 8 bombers 12 playing\n60s kills 3 enemies 7 bombers 12 playing\n90s kills 6 enemies 6 bombers 12 playing\n118s kills 9 enemies 8 bombers 12 playing\n148s kills 11 enemies 9 bombers 12 playing\n177s kills 14 enemies 22 bombers 12 playing\n206s kills 19 enemies 16 bombers 11 playing\n233s kills 24 enemies 11 bombers 11 playing\n260s kills 32 enemies 3 bombers 11 playing\n288s kills 34 enemies 1 bombers 11 ending\nRESULT: Mission complete — perks 0, kills 34, accuracy 62%, bombers lost 1, t=288s",
+      "metrics": {
+        "mission": "dp1",
+        "role": "gunner",
+        "skill": 1,
+        "difficulty": 1,
+        "result": "Mission complete",
+        "success": true,
+        "failCause": null,
+        "stopped": false,
+        "timeout": false,
+        "t": 288,
+        "rounds": [
+          {
+            "idx": 0,
+            "t": 288,
+            "boss": false,
+            "kills": 34,
+            "lost": 1,
+            "complete": true
+          }
+        ],
+        "boss": [],
+        "dmgTaken": 1856,
+        "hitsTaken": 668,
+        "minHp": 0.74,
+        "endHp": 0.74,
+        "wounds": 0,
+        "bombersLost": 1,
+        "kills": 34,
+        "kpm": 7.07,
+        "accuracy": 0.617,
+        "shots": 2135,
+        "hits": 1318,
+        "perks": 0,
+        "extra": {}
+      },
+      "tactics": [
+        "7s topCover x1",
+        "25s pincer x4",
+        "25.0s pack multiAxis"
+      ],
+      "pieces": [
+        "65s set piece straggler"
+      ],
+      "enemyTypes": [
+        "fw190",
+        "bf109",
+        "bf110"
+      ],
+      "moments": [
+        {
+          "name": "moment",
+          "t": 70.0099999999973,
+          "subject": "Lucky Lady"
+        },
+        {
+          "name": "target",
+          "t": 155.01250000001536
+        }
+      ],
+      "audioReady": true,
+      "audioDurations": [
+        18.52625,
+        16.549583333333334,
+        13.8235
+      ]
+    },
+    {
+      "id": "dp2",
+      "log": "0s kills 0 enemies 0 bombers 12 playing\n28s kills 3 enemies 5 bombers 12 playing\n58s kills 6 enemies 7 bombers 12 playing\n86s kills 9 enemies 6 bombers 11 playing\n114s kills 14 enemies 8 bombers 11 playing\n141s kills 20 enemies 8 bombers 11 playing\n168s kills 28 enemies 7 bombers 11 playing\n195s kills 33 enemies 21 bombers 11 playing\n222s kills 39 enemies 13 bombers 11 playing\n248s kills 46 enemies 6 bombers 11 playing\n273s kills 52 enemies 0 bombers 11 playing\nRESULT: Mission complete — perks 0, kills 52, accuracy 66%, bombers lost 1, t=279s",
+      "metrics": {
+        "mission": "dp2",
+        "role": "gunner",
+        "skill": 1,
+        "difficulty": 1,
+        "result": "Mission complete",
+        "success": true,
+        "failCause": null,
+        "stopped": false,
+        "timeout": false,
+        "t": 279,
+        "rounds": [
+          {
+            "idx": 0,
+            "t": 279,
+            "boss": false,
+            "kills": 52,
+            "lost": 1,
+            "complete": true
+          }
+        ],
+        "boss": [],
+        "dmgTaken": 2035,
+        "hitsTaken": 660,
+        "minHp": 0.94,
+        "endHp": 1,
+        "wounds": 1,
+        "bombersLost": 1,
+        "kills": 52,
+        "kpm": 11.17,
+        "accuracy": 0.659,
+        "shots": 2301,
+        "hits": 1516,
+        "perks": 0,
+        "extra": {}
+      },
+      "tactics": [
+        "25.0s pack airBomb",
+        "85s topCover x1",
+        "134s standoff x1"
+      ],
+      "pieces": [
+        "65s set piece bombBay",
+        "80s set piece bombBay done"
+      ],
+      "enemyTypes": [
+        "fw190",
+        "bf110",
+        "bf109",
+        "ju88"
+      ],
+      "moments": [
+        {
+          "name": "moment",
+          "t": 68.06733333333052,
+          "subject": "Tondelayo II"
+        },
+        {
+          "name": "target",
+          "t": 165.0151666666874
+        }
+      ],
+      "audioReady": true,
+      "audioDurations": [
+        16.433,
+        14.489083333333333,
+        11.657166666666667
+      ]
+    },
+    {
+      "id": "dp3",
+      "log": "0s kills 0 enemies 0 bombers 12 playing\n30s kills 1 enemies 6 bombers 12 playing\n60s kills 2 enemies 7 bombers 12 playing\n90s kills 5 enemies 7 bombers 12 playing\n117s kills 10 enemies 9 bombers 12 playing\n144s kills 15 enemies 8 bombers 12 playing\n171s kills 21 enemies 10 bombers 12 playing\n201s kills 24 enemies 22 bombers 12 playing\n228s kills 28 enemies 16 bombers 12 playing\n254s kills 33 enemies 8 bombers 12 playing\n281s kills 37 enemies 4 bombers 12 playing\n309s kills 38 enemies 2 bombers 12 playing\nRESULT: Mission complete — perks 0, kills 39, accuracy 70%, bombers lost 0, t=323s",
+      "metrics": {
+        "mission": "dp3",
+        "role": "gunner",
+        "skill": 1,
+        "difficulty": 1,
+        "result": "Mission complete",
+        "success": true,
+        "failCause": null,
+        "stopped": false,
+        "timeout": false,
+        "t": 323,
+        "rounds": [
+          {
+            "idx": 0,
+            "t": 323,
+            "boss": false,
+            "kills": 39,
+            "lost": 0,
+            "complete": true
+          }
+        ],
+        "boss": [],
+        "dmgTaken": 1443,
+        "hitsTaken": 340,
+        "minHp": 0.8,
+        "endHp": 0.8,
+        "wounds": 0,
+        "bombersLost": 0,
+        "kills": 39,
+        "kpm": 7.24,
+        "accuracy": 0.696,
+        "shots": 1884,
+        "hits": 1311,
+        "perks": 0,
+        "extra": {}
+      },
+      "tactics": [
+        "7s bigGun x1",
+        "16s standoff x1",
+        "25s bigGun x2",
+        "25.0s pack hornisse",
+        "57s topCover x1",
+        "79s topCover x1",
+        "112s companyFront x5",
+        "136s standoff x1"
+      ],
+      "pieces": [
+        "65s set piece littleFriends",
+        "78s set piece littleFriends done"
+      ],
+      "enemyTypes": [
+        "fw190",
+        "me410",
+        "bf110",
+        "bf109"
+      ],
+      "moments": [
+        {
+          "name": "moment",
+          "t": 68.02249999999742
+        },
+        {
+          "name": "target",
+          "t": 175.0081666666968
+        }
+      ],
+      "audioReady": true,
+      "audioDurations": [
+        14.79375,
+        13.421833333333334,
+        11.289416666666666
+      ]
+    },
+    {
+      "id": "dp4",
+      "log": "0s kills 0 enemies 0 bombers 12 playing\n30s kills 1 enemies 8 bombers 12 playing\n59s kills 2 enemies 7 bombers 12 playing\n87s kills 5 enemies 3 bombers 11 playing\n114s kills 12 enemies 7 bombers 11 playing\n141s kills 17 enemies 9 bombers 11 playing\n171s kills 20 enemies 9 bombers 11 playing\n199s kills 24 enemies 23 bombers 11 playing\n229s kills 25 enemies 27 bombers 11 playing\n256s kills 33 enemies 19 bombers 11 playing\n282s kills 42 enemies 10 bombers 11 playing\n308s kills 48 enemies 4 bombers 11 playing\nRESULT: Mission complete — perks 0, kills 50, accuracy 58%, bombers lost 1, t=336s",
+      "metrics": {
+        "mission": "dp4",
+        "role": "gunner",
+        "skill": 1,
+        "difficulty": 1,
+        "result": "Mission complete",
+        "success": true,
+        "failCause": null,
+        "stopped": false,
+        "timeout": false,
+        "t": 336,
+        "rounds": [
+          {
+            "idx": 0,
+            "t": 336,
+            "boss": false,
+            "kills": 50,
+            "lost": 1,
+            "complete": true
+          }
+        ],
+        "boss": [],
+        "dmgTaken": 840,
+        "hitsTaken": 249,
+        "minHp": 0.88,
+        "endHp": 0.88,
+        "wounds": 0,
+        "bombersLost": 1,
+        "kills": 50,
+        "kpm": 8.93,
+        "accuracy": 0.578,
+        "shots": 2755,
+        "hits": 1593,
+        "perks": 0,
+        "extra": {}
+      },
+      "tactics": [
+        "7s standoff x1",
+        "25s pincer x4",
+        "25.0s pack multiAxis",
+        "139s standoff x1",
+        "178s companyFront x6"
+      ],
+      "pieces": [
+        "65s set piece collision",
+        "87s set piece collision done"
+      ],
+      "enemyTypes": [
+        "bf110",
+        "fw190",
+        "bf109",
+        "me410"
+      ],
+      "moments": [
+        {
+          "name": "moment",
+          "t": 73.52166666666365,
+          "subject": "Ole Rattler"
+        },
+        {
+          "name": "target",
+          "t": 185.01133333337253
+        }
+      ],
+      "audioReady": true,
+      "audioDurations": [
+        15.59475,
+        14.15675,
+        12.364416666666667
+      ]
+    },
+    {
+      "id": "dp5",
+      "log": "0s kills 0 enemies 0 bombers 12 playing\n30s kills 2 enemies 10 bombers 12 playing\n60s kills 3 enemies 9 bombers 12 playing\n87s kills 8 enemies 8 bombers 11 playing\n115s kills 12 enemies 7 bombers 11 playing\n142s kills 19 enemies 7 bombers 11 playing\n171s kills 23 enemies 9 bombers 11 playing\n198s kills 27 enemies 6 bombers 11 playing\n226s kills 32 enemies 22 bombers 11 playing\n254s kills 36 enemies 16 bombers 11 playing\n280s kills 46 enemies 5 bombers 11 playing\nRESULT: Mission complete — perks 0, kills 51, accuracy 74%, bombers lost 1, t=300s",
+      "metrics": {
+        "mission": "dp5",
+        "role": "gunner",
+        "skill": 1,
+        "difficulty": 1,
+        "result": "Mission complete",
+        "success": true,
+        "failCause": null,
+        "stopped": false,
+        "timeout": false,
+        "t": 300,
+        "rounds": [
+          {
+            "idx": 0,
+            "t": 300,
+            "boss": false,
+            "kills": 51,
+            "lost": 1,
+            "complete": true
+          }
+        ],
+        "boss": [],
+        "dmgTaken": 1471,
+        "hitsTaken": 529,
+        "minHp": 0.81,
+        "endHp": 0.99,
+        "wounds": 1,
+        "bombersLost": 1,
+        "kills": 51,
+        "kpm": 10.21,
+        "accuracy": 0.738,
+        "shots": 2267,
+        "hits": 1674,
+        "perks": 0,
+        "extra": {}
+      },
+      "tactics": [
+        "17s topCover x1",
+        "25.0s pack sturm",
+        "87s pincer x4",
+        "123s jet",
+        "134s topCover x2",
+        "155s pincer x4",
+        "169s jet",
+        "175s jet",
+        "179s jet",
+        "201s jet"
+      ],
+      "pieces": [
+        "65s set piece flakHit",
+        "86s set piece flakHit done"
+      ],
+      "enemyTypes": [
+        "fw190",
+        "bf109",
+        "me262"
+      ],
+      "moments": [
+        {
+          "name": "moment",
+          "t": 73.54149999999683,
+          "subject": "Patches"
+        },
+        {
+          "name": "target",
+          "t": 195.00083333337838
+        }
+      ],
+      "audioReady": true,
+      "audioDurations": [
+        16.29225,
+        15.501666666666667,
+        13.387666666666666
+      ]
+    }
+  ]
+}

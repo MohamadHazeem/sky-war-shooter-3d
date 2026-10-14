@@ -39,6 +39,7 @@ export function briefingMapSvg(m: Mission): string {
   const place = PLACES.find((p) => m.target.includes(p.key));
   if (!place) return '';
   const legs = legsFor(place);
+  if (m.shuttle) legs[1] = { pts: [place, { lat: 45.5, lon: 10.5 }], dashed: true };
   const flakPt = m.flak && !place.home ? { at: proj(place), r: flakRadius(m.flak.intensity) } : null;
 
   // Fit the route (and flak zone) into the chart, keeping the viewBox aspect.
@@ -154,6 +155,7 @@ export function briefingMapSvg(m: Mission): string {
     ${routeParts.join('')}
     ${baseMark}
     ${targetMark}
+    ${m.shuttle ? label(...pt({ lat: 45.5, lon: 10.5 }), txt('South to North Africa'), 'middle', 10) : ''}
     ${compass}
     ${scale}
     <rect x="2" y="2" width="${W - 4}" height="${H - 4}" fill="none" stroke="${COAST}" stroke-width="2.4"/>
