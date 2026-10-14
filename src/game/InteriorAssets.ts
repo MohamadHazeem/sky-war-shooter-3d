@@ -179,12 +179,15 @@ export function warmInteriorAssets(scene: THREE.Scene, at: THREE.Vector3): () =>
   const n = g.getAttribute('position').count;
   g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3).fill(0.5), 3));
   objs.push(new THREE.Mesh(g, skinMaterial()), new THREE.Mesh(g, skinMaterial(true)), new THREE.Mesh(g, yokeMaterial()));
+  // Authored hull meshes carry tangents; procedural shells do not. Warm both variants.
+  const tangents = g.clone(); tangents.computeTangents();
+  objs.push(new THREE.Mesh(tangents, skinMaterial()), new THREE.Mesh(tangents, skinMaterial(true)));
   for (const o of objs) {
     o.position.copy(at); o.position.y += 3;
     o.traverse((c) => { c.frustumCulled = false; });
     scene.add(o);
   }
-  return () => { for (const o of objs) o.removeFromParent(); g.dispose(); };
+  return () => { for (const o of objs) o.removeFromParent(); g.dispose(); tangents.dispose(); };
 }
 
 export function cloneSkinned(o: THREE.Object3D): THREE.Object3D { return skeletonClone(o); }

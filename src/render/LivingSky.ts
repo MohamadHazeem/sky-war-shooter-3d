@@ -245,7 +245,7 @@ export class LivingSky {
           vec3 col = uSunCol * 0.24 + vec3(0.42, 0.47, 0.55);
           gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
-      transparent: true, depthWrite: false, side: THREE.DoubleSide,
+      transparent: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true,
     }));
     this.trails.frustumCulled = false;
     this.trails.renderOrder = 7;
@@ -297,7 +297,7 @@ export class LivingSky {
           vec3 col = mix(vec3(0.025, 0.022, 0.02), vec3(0.16, 0.16, 0.17) + uSunCol * 0.03, smoothstep(0.0, 0.5, vT));
           gl_FragColor = vec4(hazed(col, vW), a);
         }`,
-      transparent: true, depthWrite: false, side: THREE.DoubleSide,
+      transparent: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true,
     }));
     this.smoke.frustumCulled = false;
     this.smoke.renderOrder = 7;

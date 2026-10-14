@@ -1,3 +1,4 @@
+import { SkyCache } from '../render/SkyCache';
 import { cloudSurfaceUniforms } from '../render/CloudSurfaceShadow';
 import { syncSurfaceDetail } from '../render/SurfaceDetail';
 import { TemporalFrame } from '../render/TemporalFrame';
@@ -30,6 +31,8 @@ export type Quality = 'low' | 'medium' | 'high' | 'ultra' | 'cinematic';
 // Per-tier render settings. `particles` scales the purely visual particle budgets
 // (living sky: distant boxes, dogfights, flak puffs); other systems may read it too.
 export interface QualityPreset {
+  skyScale: number;      // distant terrain/sky only; foreground stays at the main pixel budget
+  aoSlices: number;      // temporally rotated horizon slices (one shared shader)
   pixels: number;        // pixel budget of the main render targets (before dynamic resolution)
   msaa: number;          // scene MSAA samples
   shadows: number;       // sun shadow map size (0 = no shadows)
@@ -43,11 +46,11 @@ export interface QualityPreset {
   particles: number;     // visual particle budget multiplier (0 = living sky off)
 }
 export const QUALITY: Record<Quality, QualityPreset> = {
-  low:    { pixels: 0.9e6, msaa: 0, shadows: 1024, shadowRange: 24, cloudScale: 0.33, cloudSteps: 36, cloudTemporal: false, haze: false, ao: 0,   particles: 0, temporal: false },
-  medium: { pixels: 1.5e6, msaa: 0, shadows: 2048, shadowRange: 48, cloudScale: 0.38, cloudSteps: 40, cloudTemporal: true,  haze: true,  ao: 0.35, particles: 0.5, temporal: true },
-  high:   { pixels: 2.3e6, msaa: 0, shadows: 2048, shadowRange: 40, cloudScale: 0.4,  cloudSteps: 44, cloudTemporal: true,  haze: true,  ao: 0.6, particles: 1, temporal: true },
-  ultra:  { pixels: 3.7e6, msaa: 2, shadows: 4096, shadowRange: 40, cloudScale: 0.5,  cloudSteps: 56, cloudTemporal: true,  haze: true,  ao: 0.7, particles: 1.6, temporal: true },
-  cinematic: { pixels: 8.3e6, msaa: 4, shadows: 4096, shadowRange: 40, cloudScale: .6, cloudSteps: 72, cloudTemporal: true, haze: true, ao: .8, particles: 2, temporal: true },
+  low:    { skyScale: 1, aoSlices: 1, pixels: 0.9e6, msaa: 0, shadows: 1024, shadowRange: 24, cloudScale: 0.28, cloudSteps: 32, cloudTemporal: false, haze: false, ao: 0,   particles: 0, temporal: false },
+  medium: { skyScale: .5, aoSlices: 1, pixels: 1.5e6, msaa: 0, shadows: 1536, shadowRange: 48, cloudScale: 0.33, cloudSteps: 36, cloudTemporal: true,  haze: true,  ao: 0.35, particles: 0.5, temporal: true },
+  high:   { skyScale: .5, aoSlices: 2, pixels: 2.3e6, msaa: 0, shadows: 2048, shadowRange: 40, cloudScale: 0.36, cloudSteps: 40, cloudTemporal: true,  haze: true,  ao: 0.6, particles: 1, temporal: true },
+  ultra:  { skyScale: .75, aoSlices: 3, pixels: 3.7e6, msaa: 2, shadows: 3072, shadowRange: 40, cloudScale: 0.45, cloudSteps: 52, cloudTemporal: true,  haze: true,  ao: 0.7, particles: 1.6, temporal: true },
+  cinematic: { skyScale: 1, aoSlices: 3, pixels: 8.3e6, msaa: 4, shadows: 4096, shadowRange: 40, cloudScale: .5, cloudSteps: 64, cloudTemporal: true, haze: true, ao: .8, particles: 2, temporal: true },
 };
 export const QUALITY_ORDER: Quality[] = ['low', 'medium', 'high', 'ultra', 'cinematic'];
 // One tier down (the auto-quality fallback): ultra -> high -> medium -> low
@@ -63,6 +66,7 @@ export class Engine {
   readonly precipitation = new Precipitation(this.scene);
   readonly camera: THREE.PerspectiveCamera;
   readonly sky = new SkyDome();
+  readonly skyCache = new SkyCache(this.sky.mesh);
   readonly sun: THREE.DirectionalLight;
   readonly hemi: THREE.HemisphereLight;
   readonly clouds: CloudRenderer;
@@ -199,6 +203,8 @@ export class Engine {
     syncAircraftLook(this.hemi);
 
     window.addEventListener('resize', () => this.resize());
+    this.skyCache.scale = QUALITY.high.skyScale;
+    this.temporal.aoSlices = QUALITY.high.aoSlices;
     this.resize();
     this.post.film.prewarm(this.renderer, this.scene, this.camera);   // film look passes (FilmLook.ts): compiled up front
   }
@@ -231,9 +237,12 @@ export class Engine {
   setQuality(q: Quality) {
     if (!QUALITY[q]) q = 'high';
     this.quality = q;
+    this.resetDynamicResolution();
+    this.post.film.setPreset(q);
     setHeroQuality(q === 'low');
     if (q !== 'low') void loadHeroTextures(this.renderer);
     const p = QUALITY[q];
+    this.skyCache.scale = p.skyScale;
     const maxSamples = (this.renderer.capabilities as { maxSamples?: number }).maxSamples ?? 4;
     this.sceneRT.samples = Math.min(p.msaa, maxSamples);
     this.sceneRT.dispose();
@@ -251,6 +260,7 @@ export class Engine {
     this.cascades.quality(p.shadows, p.shadowRange, q !== 'low');
     this.temporal.enabled = p.temporal;
     this.temporal.ao = p.ao;
+    this.temporal.aoSlices = p.aoSlices;
     this.temporal.reset();
     this.post.temporal = p.temporal;
     this.post.ao = p.temporal ? 0 : p.ao;
@@ -285,6 +295,7 @@ export class Engine {
     this.renderer.setPixelRatio(this.pixelRatio);
     this.renderer.setSize(w, h);
     const pw = Math.floor(w * this.pixelRatio), ph = Math.floor(h * this.pixelRatio);
+    this.skyCache.setSize(pw, ph);
     this.sceneRT.setSize(pw, ph);
     this.hdrRT.setSize(pw, ph);
     this.clouds.setQuality(QUALITY[this.quality], pw, ph);
@@ -347,7 +358,8 @@ export class Engine {
   // background tabs where requestAnimationFrame is paused.
   frame(fixedDt?: number, render = true) {
     const now = performance.now();
-    let dt = fixedDt ?? Math.min((now - this.last) / 1000, 0.05);
+    const interval = (now - this.last) / 1000;
+    let dt = fixedDt ?? Math.min(interval, 0.05);
     this.last = now;
     this.fpsAcc += dt; this.fpsN++;
     if (this.fpsAcc > 0.5) { this.fps = this.fpsN / this.fpsAcc; this.fpsAcc = 0; this.fpsN = 0; }
@@ -367,12 +379,21 @@ export class Engine {
     this.livingSky.boxesOff = this.bomberStream.group.visible;   // the stream draws the other boxes
     if (render) { if (this.renderOverride) this.renderOverride(realDt); else this.render(realDt); }
     if (fixedDt === undefined) {
-      this.dynamicResolution(realDt);
+      this.dynamicResolution(interval);
       this.fpsCounter?.update(realDt, this);
     }
     this.lastFrameAt = now;
   }
   private lastFrameAt = 0;
+
+  // A benchmark or preset switch must not inherit the previous tier's slow ceiling/hold.
+  resetDynamicResolution(scale = this.renderScale) {
+    this.renderScale = Math.max(.55, Math.min(1, scale));
+    this.ftEma = 1 / this.refreshHz;
+    this.drsT = this.drsHold = this.drsUp = this.drsCeilT = 0;
+    this.drsCeil = 1; this.lastRaiseAt = -99;
+    this.hiGiveUp = false; this.hiMiss = 0;
+  }
 
   private dynamicResolution(dt: number) {
     if (dt <= 0 || dt > 0.25) return; // tab switches, breakpoints
@@ -435,6 +456,7 @@ export class Engine {
     (this.sky.mesh.material as THREE.ShaderMaterial).uniforms.uGroundXZ.value.set(cp.x + Atmos.originOffset.x, cp.z + Atmos.originOffset.z);
 
     const r = this.renderer;
+    this.skyCache.renderBackground(r, cam);
     r.setRenderTarget(this.sceneRT);
     r.clear();
     // Pass 1: opaque geometry (layer 0) -> HDR + depth
@@ -478,13 +500,19 @@ export class Engine {
   // advanced post programs so a preset change does not first compile them in combat.
   warmRenderer() {
     const enabled=this.temporal.enabled, economy=this.post.economy, temporal=this.post.temporal;
+    const skyScale = this.skyCache.scale;
+    this.skyCache.scale = .5;
     this.temporal.enabled=true;this.post.economy=false;this.post.temporal=true;
     for (const quality of ['low', 'medium', 'high']) {
       syncSurfaceDetail(quality);
+      softDepth.want(); // first smoke emission must not compile the depth-copy pass
       this.render(1/60);
     }
     syncSurfaceDetail(this.quality);
+    this.skyCache.scale = 1; this.render(1/60); // also retain the direct Low/Cinematic sky program
+    this.skyCache.scale = skyScale;
     this.temporal.enabled=enabled;this.post.economy=economy;this.post.temporal=temporal;
+    this.post.film.prewarm(this.renderer, this.scene, this.camera);
     this.temporal.reset();this.post.resetHistory();
   }
 

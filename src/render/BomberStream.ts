@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { cloudOcclusionGLSL, cloudOcclusionUniforms } from './CloudOcclusion';
 import { Atmos, atmosUniforms, skyGLSL } from './Atmosphere';
 import { useSkyEnv } from './AircraftLook';
 import { weatherNow } from './WeatherState';
@@ -83,14 +84,22 @@ const U = {
   uA2C: { value: 1 },
 };
 
-const hazeGLSL = /* glsl */ `
+// Distant ribbons need slowly varying aerial perspective, not two atmosphere LUT reads
+// at every overlapping fragment. Interpolate it from their existing segmented vertices.
+const hazeVertexGLSL = /* glsl */ `
 ${skyGLSL}
 uniform float uHaze;
-vec3 hazed(vec3 col, vec3 wp) {
-  vec3 d = wp - cameraPosition;
-  float dist = length(d);
-  return mix(col, skyRadiance(d / max(dist, 1.0)), 1.0 - exp(-dist / (26000.0 * max(uHaze, 0.05))));
+varying vec4 vStreamHaze;
+void streamHaze(vec3 wp) {
+  vec3 d = wp - cameraPosition; float dist = length(d);
+  vStreamHaze = vec4(skyRadiance(d / max(dist, 1.0)), 1.0 - exp(-dist / (26000.0 * max(uHaze, 0.05))));
 }
+`;
+const hazeGLSL = /* glsl */ `
+${cloudOcclusionGLSL}
+uniform vec3 uHorizon;
+varying vec4 vStreamHaze;
+vec3 hazed(vec3 col, vec3 wp) { return mix(col, vStreamHaze.rgb, vStreamHaze.a); }
 `;
 
 const ribbonVert = /* glsl */ `
@@ -305,9 +314,12 @@ const inst = (arr: Float32Array, size: number, dynamic = false) => {
   return a;
 };
 const shaderMat = (o: { uniforms?: Record<string, THREE.IUniform>; vertexShader: string; fragmentShader: string; blending?: THREE.Blending }) => new THREE.ShaderMaterial({
-  uniforms: { ...atmosUniforms, ...U, ...(o.uniforms ?? {}) },
-  vertexShader: o.vertexShader, fragmentShader: o.fragmentShader,
-  transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: o.blending ?? THREE.NormalBlending,
+  uniforms: { ...atmosUniforms, ...cloudOcclusionUniforms, ...U, ...(o.uniforms ?? {}) },
+  vertexShader: o.fragmentShader.includes('hazed(') ? hazeVertexGLSL + o.vertexShader
+    .replaceAll('uniform vec3 uSunDir;', '')
+    .replace('gl_Position = projectionMatrix', 'streamHaze(wp); gl_Position = projectionMatrix') : o.vertexShader,
+  fragmentShader: o.fragmentShader,
+  transparent: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true, blending: o.blending ?? THREE.NormalBlending,
 });
 
 // Bomber engine positions (model metres, just behind the nacelles) for 1, 2 and 4 ribbons
@@ -375,7 +387,7 @@ export class BomberStream {
     this.group.visible = false;
 
     // --- contrails: one ribbon per engine (or pair) of every bomber, one per fighter ---
-    this.trails = new THREE.Mesh(ribbonStrip(26), shaderMat({
+    this.trails = new THREE.Mesh(ribbonStrip(16), shaderMat({
       vertexShader: /* glsl */ `
         ${STREAM_GLSL}
         ${ribbonVert}
@@ -418,13 +430,13 @@ export class BomberStream {
           float a = vA * edge * (0.85 + 0.15 * sin(vT * 140.0 + vSeed));
           if (a < 0.002) discard;
           vec3 col = (uStreamSun * 0.22 + uHorizon * 0.78) * mix(0.9, 1.15, clamp(vSun * 0.5 + 0.5, 0.0, 1.0));
-          gl_FragColor = vec4(hazed(col, vW), a);
+          gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));
     this.trails.renderOrder = 7;
 
     // --- the contrail field: one wide, long-lived band per squadron ---
-    this.field = new THREE.Mesh(ribbonStrip(36), shaderMat({
+    this.field = new THREE.Mesh(ribbonStrip(24), shaderMat({
       vertexShader: /* glsl */ `
         ${STREAM_GLSL}
         ${ribbonVert}
@@ -471,7 +483,7 @@ export class BomberStream {
           float a = vA * edge * mix(0.45, 1.25, n1) * mix(0.7, 1.15, n2);
           if (a < 0.002) discard;
           vec3 col = (uStreamSun * 0.2 + uHorizon * 0.8) * mix(0.92, 1.1, clamp(vSun * 0.5 + 0.5, 0.0, 1.0));
-          gl_FragColor = vec4(hazed(col, vW), a);
+          gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));
     this.field.renderOrder = 6;
@@ -519,7 +531,7 @@ export class BomberStream {
           float a = vA * edge * mix(0.95, 0.45, vT);
           if (a < 0.002) discard;
           vec3 col = mix(vec3(0.025, 0.022, 0.02), vec3(0.15, 0.15, 0.16) + uStreamSun * 0.03, smoothstep(0.0, 0.5, vT));
-          gl_FragColor = vec4(hazed(col, vW), a);
+          gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));
     this.smoke.renderOrder = 7;
@@ -580,7 +592,7 @@ export class BomberStream {
             a = max(a, vFlash * vA * (1.0 - r));
           }
           if (a < 0.004) discard;
-          gl_FragColor = vec4(hazed(col, vW), a);
+          gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));
     this.puffs.renderOrder = 6;

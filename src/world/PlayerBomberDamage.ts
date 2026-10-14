@@ -432,9 +432,15 @@ export class PlayerBomberDamage {
   warmup(scene: THREE.Scene, at: THREE.Vector3): () => void {
     if (this.world.playerBomber && this.b !== this.world.playerBomber) this.attach(this.world.playerBomber);
     const objs: THREE.Object3D[] = [RIM_MAT, HOLE_MAT, SCORCH_MAT, EMBER_MAT].map((m) => new THREE.Mesh(RIM_GEOS[0], m));
-    for (const m of voidMats.values()) objs.push(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), m));
-    objs.forEach((o, i) => { o.position.copy(at); o.position.x += i * 1.5; scene.add(o); });
-    return () => objs.forEach((o) => { scene.remove(o); if (o instanceof THREE.Mesh && o.geometry.type === 'BoxGeometry') o.geometry.dispose(); });
+    // Preserve real geometry defines (notably tangent/vertex colour) across every LOD.
+    // A box warms a different program from the authored skin.
+    for (const skin of this.skinMeshes) {
+      const mesh = new THREE.Mesh(skin.geometry, skin.material);
+      mesh.castShadow = skin.castShadow; mesh.receiveShadow = skin.receiveShadow;
+      objs.push(mesh);
+    }
+    objs.forEach((o, i) => { o.position.copy(at); o.position.x += i % 8; o.frustumCulled = false; scene.add(o); });
+    return () => objs.forEach((o) => scene.remove(o));
   }
 
   // ---------- hits ----------

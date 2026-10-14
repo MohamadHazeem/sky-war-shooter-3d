@@ -78,11 +78,12 @@ export function pickQuality({ tier, stats, refreshHz, cap = 'ultra', upper, reco
   return { quality: TIERS[i], tryUpper: false };
 }
 
-export interface DeviceInfo { touch: boolean; shortSide: number; reducedData: boolean }
+export interface DeviceInfo { touch: boolean; shortSide: number; reducedData: boolean; cores?: number; memoryGB?: number }
 
 // Where the benchmark starts and the highest preset it may pick: touch devices and data savers
 // start from medium; phones (short side under 600 CSS px) never go above medium, tablets above high
 export function deviceTiers(d: DeviceInfo): { start: Tier; cap: Tier } {
+  if ((d.cores && d.cores <= 4) || (d.memoryGB && d.memoryGB <= 4)) return { start: 'low', cap: 'medium' };
   if (d.touch && d.shortSide < 600) return { start: 'medium', cap: 'medium' };
   if (d.touch) return { start: 'medium', cap: 'high' };
   if (d.reducedData) return { start: 'medium', cap: 'ultra' };

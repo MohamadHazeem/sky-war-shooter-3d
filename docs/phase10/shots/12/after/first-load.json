@@ -1,0 +1,142 @@
+{
+  "menuMs": 4342.29999999702,
+  "domContentLoadedMs": 2766.2999999970198,
+  "resources": [
+    {
+      "name": "/models/fw190.glb",
+      "transferBytes": 255524,
+      "bodyBytes": 255224,
+      "endMs": 926.5
+    },
+    {
+      "name": "/models/b17.glb",
+      "transferBytes": 691936,
+      "bodyBytes": 691636,
+      "endMs": 1963.9000000059605
+    },
+    {
+      "name": "/models/p51d.glb",
+      "transferBytes": 1154540,
+      "bodyBytes": 1154240,
+      "endMs": 2703.0999999940395
+    },
+    {
+      "name": "/css2",
+      "transferBytes": 0,
+      "bodyBytes": 0,
+      "endMs": 75.09999999403954
+    },
+    {
+      "name": "/audio/manifest.json",
+      "transferBytes": 1990,
+      "bodyBytes": 1690,
+      "endMs": 137.09999999403954
+    },
+    {
+      "name": "/assets/index-DR92CnGP.css",
+      "transferBytes": 24696,
+      "bodyBytes": 24396,
+      "endMs": 249.40000000596046
+    },
+    {
+      "name": "/assets/index-zMZPN0uL.js",
+      "transferBytes": 1132906,
+      "bodyBytes": 1132606,
+      "endMs": 2705.5
+    },
+    {
+      "name": "/models/hero/b17.glb",
+      "transferBytes": 1293080,
+      "bodyBytes": 1292780,
+      "endMs": 3955.5999999940395
+    },
+    {
+      "name": "/audio/ui_click.mp3",
+      "transferBytes": 7239,
+      "bodyBytes": 6939,
+      "endMs": 2852.7000000029802
+    },
+    {
+      "name": "/audio/mg50_shot_1.mp3",
+      "transferBytes": 9747,
+      "bodyBytes": 9447,
+      "endMs": 2871.5
+    },
+    {
+      "name": "/audio/mg50_shot_2.mp3",
+      "transferBytes": 9747,
+      "bodyBytes": 9447,
+      "endMs": 2878.7000000029802
+    },
+    {
+      "name": "/audio/mg50_shot_3.mp3",
+      "transferBytes": 8493,
+      "bodyBytes": 8193,
+      "endMs": 2886
+    },
+    {
+      "name": "/audio/mg50_shot_4.mp3",
+      "transferBytes": 9747,
+      "bodyBytes": 9447,
+      "endMs": 2894.2999999970198
+    },
+    {
+      "name": "/audio/impact_metal_1.mp3",
+      "transferBytes": 26047,
+      "bodyBytes": 25747,
+      "endMs": 2966.2000000029802
+    },
+    {
+      "name": "/audio/impact_metal_2.mp3",
+      "transferBytes": 23539,
+      "bodyBytes": 23239,
+      "endMs": 3016
+    },
+    {
+      "name": "/audio/impact_metal_3.mp3",
+      "transferBytes": 15389,
+      "bodyBytes": 15089,
+      "endMs": 2979.5
+    },
+    {
+      "name": "/audio/impact_metal_4.mp3",
+      "transferBytes": 9120,
+      "bodyBytes": 8820,
+      "endMs": 2987.0999999940395
+    },
+    {
+      "name": "/audio/impact_metal_5.mp3",
+      "transferBytes": 15389,
+      "bodyBytes": 15089,
+      "endMs": 3012.0999999940395
+    },
+    {
+      "name": "/audio/impact_metal_6.mp3",
+      "transferBytes": 13508,
+      "bodyBytes": 13208,
+      "endMs": 3040.4000000059605
+    },
+    {
+      "name": "/audio/hit_confirm.mp3",
+      "transferBytes": 9747,
+      "bodyBytes": 9447,
+      "endMs": 3061.7000000029802
+    },
+    {
+      "name": "/audio/radio_squelch_on.mp3",
+      "transferBytes": 4731,
+      "bodyBytes": 4431,
+      "endMs": 3090
+    },
+    {
+      "name": "/audio/kill_confirm.mp3",
+      "transferBytes": 18524,
+      "bodyBytes": 18224,
+      "endMs": 3092.0999999940395
+    }
+  ],
+  "transferBytesBeforeMenu": 4735639,
+  "quality": "high",
+  "errors": [],
+  "method": "Production build; fresh HTTP cache/storage; service worker blocked; shared 10 Mbit/s link, 60 ms request latency; external requests blocked; engine animation stopped; performance.mark(menu)"
+}

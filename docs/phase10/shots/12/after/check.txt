@@ -1,0 +1,20 @@
+
+> sky-war-shooter-3d@0.1.0 check
+> tsc --noEmit && vite build --logLevel error && vitest run
+
+
+ RUN  v5.0.3 /Users/Digital Next/Projects/Sky War Shooter 3D/.claude/worktrees/codex-12-presets-perf
+
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 0.237s
+
+OK
+
+ Test Files  82 passed (82)
+      Tests  852 passed (852)
+   Start at  14:54:39
+   Duration  5.38s (tests 64%, import 22%, transform 13%, worker 1%)
+
+    Isolate  82 workers spawned · ~70ms startup each (spawn + environment, per file)
+             at least ~269ms faster with isolate: false — reuses workers across files instead of one per file

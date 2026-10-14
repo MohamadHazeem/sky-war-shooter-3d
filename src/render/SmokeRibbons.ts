@@ -131,7 +131,7 @@ export class SmokeRibbons {
         }`,
       transparent: true,
       depthWrite: false,
-      side: THREE.DoubleSide,
+      side: THREE.DoubleSide, forceSinglePass: true,
       blending: THREE.CustomBlending,
       blendEquation: THREE.AddEquation,
       blendSrc: THREE.OneFactor,

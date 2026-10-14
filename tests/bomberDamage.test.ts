@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { meshToModel, skinVoidMaterial } from '../src/world/PlayerBomberDamage';
+import { PlayerBomberDamage, meshToModel, skinVoidMaterial } from '../src/world/PlayerBomberDamage';
 
 // The see-through damage voids are placed in the model frame (from hit points), while the
 // shader sees each mesh's raw geometry positions. With KHR_mesh_quantization those are
@@ -98,4 +98,19 @@ describe('PlayerBomberDamage void coordinate space', () => {
     // all clones share one program
     expect(ma.customProgramCacheKey()).toBe(mb.customProgramCacheKey());
   });
+});
+
+
+it('warms the authored skin geometry and retains shared geometry after cleanup', () => {
+  const skin = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial());
+  skin.geometry.setAttribute('tangent', new THREE.Float32BufferAttribute(new Float32Array(96), 4));
+  skin.castShadow = skin.receiveShadow = true;
+  let disposed = false; skin.geometry.addEventListener('dispose', () => { disposed = true; });
+  const damage = Object.assign(Object.create(PlayerBomberDamage.prototype), { world: {}, skinMeshes: [skin] }) as PlayerBomberDamage;
+  const scene = new THREE.Scene();
+  const cleanup = damage.warmup(scene, new THREE.Vector3(0, 0, -20));
+  const warm = scene.children.find(o => (o as THREE.Mesh).geometry === skin.geometry) as THREE.Mesh;
+  expect(warm.material).toBe(skin.material); expect(warm.frustumCulled).toBe(false);
+  expect(warm.castShadow && warm.receiveShadow).toBe(true);
+  cleanup(); expect(scene.children).toHaveLength(0); expect(disposed).toBe(false);
 });

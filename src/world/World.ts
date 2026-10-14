@@ -1,3 +1,4 @@
+import { warmDustMotes } from '../game/DustMotes';
 import { warmHeroLODs } from './HeroB17';
 import { LivingFormation } from './LivingFormation';
 import { FormationDress } from './FormationDress';
@@ -299,6 +300,11 @@ export class World implements WorldView {
     // new type doesn't stall (the pieces reuse the aircraft's own materials: nothing new to compile)
     const models = [...new Set(Object.values(ENEMY_VARIANTS).map((v) => v.model))].filter((m) => hasModel(m as ModelKind));
     const splitDummies = models.map((m) => new Fighter(m as ModelKind, 'axis', ENEMY_VARIANTS.fw190.params));
+    // Intact fighters need their unclipped colour/shadow variants as well as the fragments.
+    for (const fighter of splitDummies) {
+      fighter.root.position.copy(camera.position).addScaledVector(fwd, 60);
+      this.scene.add(fighter.root); dummies.push(fighter);
+    }
     // B-17 break-ups of the formation set pieces (one, two and three clip planes on its materials)
     const b17 = new Bomber();
     b17.root.position.copy(camera.position).addScaledVector(fwd, 45);   // close: inside the shadow frustum, so the clipped shadow-depth programs compile too
@@ -322,10 +328,17 @@ export class World implements WorldView {
     const plainCaster = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshDepthMaterial({ side: THREE.BackSide }));
     plainCaster.position.copy(at); plainCaster.castShadow = true; plainCaster.frustumCulled = false;
     this.scene.add(plainCaster);
+    // Torn/debris sheets use the double-sided depth program even without a map.
+    const bothCaster = new THREE.Mesh(plainCaster.geometry, new THREE.MeshDepthMaterial({ side: THREE.DoubleSide }));
+    bothCaster.position.copy(at); bothCaster.castShadow = true; bothCaster.frustumCulled = false;
+    this.scene.add(bothCaster);
     const unwarmSea = prewarmSea(this.scene, at);
     const unwarmBoss = prewarmBoss(this.scene, camera.position, fwd);
     const unwarmFormation = FormationDress.warm(this.scene, at);
     const unwarm = this.bomberDamage.warmup(this.scene, at);
+    const unwarmDust = warmDustMotes(this.scene, at);
+    const effectObjects = this.effects.warmupObjects();
+    for (const o of effectObjects) { o.position.copy(at); o.frustumCulled = false; this.scene.add(o); }
     const unwarmCanopy = warmBailOutCanopy(this.scene, at);
     const unwarmCrew = warmLivingInterior(this.scene, at); // gunner interior: crew, brass, shafts, frost, breath
     const unwarmInterior2 = warmInteriorAssets(this.scene, at); // interior 2.0 kit + skinned crew, when loaded
@@ -346,11 +359,15 @@ export class World implements WorldView {
     unwarmTargetSmoke();
     unwarmStream();
     if (bombs) bombs.count = bombCount;
-    this.scene.remove(plainCaster); plainCaster.geometry.dispose(); this.warmKeep.push(plainCaster.material);
+    this.scene.remove(plainCaster, bothCaster); plainCaster.geometry.dispose(); this.warmKeep.push(plainCaster.material, bothCaster.material);
     this.wrecks.keepWarm(b17Pieces);   // B-17 wreck programs stay compiled for the set pieces
     unwarmHero(); b17.root.removeFromParent();
     unwarmFormation();
-    unwarm();
+    unwarm(); unwarmDust();
+    for (const o of effectObjects) {
+      o.removeFromParent();
+      if (o instanceof THREE.LineSegments) o.geometry.dispose();
+    }
     unwarmCrew(); unwarmCanopy();
     unwarmInterior2();
     unwarmTurrets();
@@ -364,6 +381,22 @@ export class World implements WorldView {
     for (const f of dummies) this.scene.remove(f.root);
     this.warmKeep.push(...this.wrecks.clearKeepMaterials()); // keep the compiled wreck programs (Wrecks.clearKeepMaterials)
     this.effects.clear();
+  }
+
+  // Refresh only mission-owned/lazy materials after the first complete prewarm. Do not
+  // rebuild the retained wreck pools or accumulate another set of warmKeep materials.
+  warmMission(camera: THREE.Camera) {
+    const at = camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(80).add(camera.position);
+    const damage = this.bomberDamage.warmup(this.scene, at);
+    const dust = warmDustMotes(this.scene, at);
+    const interior = warmInteriorAssets(this.scene, at);
+    const objects = this.effects.warmupObjects();
+    for (const o of objects) { o.position.copy(at); o.frustumCulled = false; this.scene.add(o); }
+    try { this.engine.warmRenderer(); }
+    finally {
+      damage(); dust(); interior();
+      for (const o of objects) { o.removeFromParent(); if (o instanceof THREE.LineSegments) o.geometry.dispose(); }
+    }
   }
 
   // Combat box: lead element + high and low elements, 3-ship vics, offsets in meters

@@ -46,8 +46,8 @@ export const drsFloor = (targetMs: number) => (targetMs < 1000 / 65 ? 0.72 : 0.5
 
 // Dynamic resolution thresholds, as multiples of the target frame time: slower than SLOW scales
 // the resolution down (by a bigger step past HARD), faster than FAST leaves room to scale up
-export const DRS_SLOW = 1.14;
-export const DRS_FAST = 1.054;
+export const DRS_SLOW = 1.08;
+export const DRS_FAST = 1.02;
 export const DRS_HARD = 1.68;
 
 // Share of a frame that scales with the render resolution (clouds, post, fill); the rest

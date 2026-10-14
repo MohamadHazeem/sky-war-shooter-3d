@@ -12,6 +12,10 @@ export type FilmLookSetting = 'off' | 'film' | 'kodachrome' | 'newsreel';
 export const FILM_LOOKS: FilmLookSetting[] = ['off', 'film', 'kodachrome', 'newsreel'];
 export const filmLook = (v?: string): FilmLookSetting => (FILM_LOOKS as string[]).includes(v ?? '') ? v as FilmLookSetting : 'off';
 
+/** Cinematic supplies a default; an explicit saved Off or period stock always wins. */
+export const presetFilmLook = (quality: string, setting?: string): FilmLookSetting =>
+  setting === undefined ? (quality === 'cinematic' ? 'film' : 'off') : filmLook(setting);
+
 export interface FilmParams {
   on: boolean;          // the film pass (everything below except dof / objectBlur) runs
   grade: FilmGrade;

@@ -120,7 +120,7 @@ export class Contrails {
         }`,
       transparent: true,
       depthWrite: false,
-      side: THREE.DoubleSide,
+      side: THREE.DoubleSide, forceSinglePass: true,
     });
     this.mesh = new THREE.Mesh(this.geo, this.mat);
     this.mesh.frustumCulled = false;

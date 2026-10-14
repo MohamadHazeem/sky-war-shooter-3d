@@ -21,6 +21,7 @@ function bench(full: number, reduced: number) {
   vi.spyOn(performance, 'now').mockImplementation(() => clock);
   const engine = {
     quality: 'high', renderScale: 0.65, refreshHz: 60,
+    resetDynamicResolution(scale: number) { this.renderScale = scale; },
     resize: vi.fn(), setQuality(q: string) { this.quality = q; },
     timedFrame: vi.fn(() => { const ms = engine.renderScale === 1 ? full : reduced; clock += ms; return ms; }),
   };
@@ -33,10 +34,10 @@ function bench(full: number, reduced: number) {
 
 describe('graphics benchmark recovery phase', () => {
   it('measures DRS recovery before dropping and starts at the proven scale', async () => {
-    const { auto, engine } = bench(24, 14);
+    const { auto, engine } = bench(24, 13);
     const result = await auto.run({ sync: true });
     expect(result?.quality).toBe('high');
-    expect(result?.recovered?.p50).toBe(14);
+    expect(result?.recovered?.p50).toBe(13);
     expect(result?.scale).toBe(0.8);
     expect(engine.renderScale).toBe(0.8);
   });
@@ -51,7 +52,7 @@ describe('graphics benchmark recovery phase', () => {
   });
 
   it('an abort during recovery restores the previous preset and resolution without saving', async () => {
-    const { auto, engine, game } = bench(24, 14);
+    const { auto, engine, game } = bench(24, 13);
     const timed = engine.timedFrame.getMockImplementation()!;
     engine.timedFrame.mockImplementation(() => {
       if (engine.renderScale === 0.8) auto.abort();

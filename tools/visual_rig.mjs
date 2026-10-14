@@ -21,10 +21,10 @@ export async function smallJpeg(source, width = 960) {
 export async function captureRig(argv) {
   const args = parseArgs(argv, { out: 'docs/phase10/shots/baseline', url: 'http://127.0.0.1:5300', backend: 'webgl2', quality: 'high', seed: '19431008', shots: '', 'verify-repeat': false, help: false }, ['verify-repeat', 'help']);
   if (args.help) {
-    console.log('node tools/visual_rig.mjs --out docs/phase10/shots/<goal>/after [--url http://127.0.0.1:5300] [--backend webgl2|webgpu] [--quality low|medium|high|ultra] [--seed uint32] [--shots id,id] [--verify-repeat]\nStart Vite separately. Uses installed Playwright/Chrome; PLAYWRIGHT_MODULE can name an existing module path. No dependency downloads. Each shot uses a new isolated page. PNGs are ignored by git; commit JPEGs and metadata only.');
+    console.log('node tools/visual_rig.mjs --out docs/phase10/shots/<goal>/after [--url http://127.0.0.1:5300] [--backend webgl2|webgpu] [--quality low|medium|high|ultra|cinematic] [--seed uint32] [--shots id,id] [--verify-repeat]\nStart Vite separately. Uses an existing Playwright bundled headless shell; PLAYWRIGHT_MODULE can name an existing module path. No dependency downloads. Each shot uses a new isolated page. PNGs are ignored by git; commit JPEGs and metadata only.');
     return;
   }
-  if (!['webgl2', 'webgpu'].includes(args.backend) || !['low', 'medium', 'high', 'ultra'].includes(args.quality)) throw new Error('Invalid backend or quality');
+  if (!['webgl2', 'webgpu'].includes(args.backend) || !['low', 'medium', 'high', 'ultra', 'cinematic'].includes(args.quality)) throw new Error('Invalid backend or quality');
   if (!/^\d+$/.test(args.seed) || Number(args.seed) > 0xffffffff) throw new Error('Seed must be a uint32');
   const ids = args.shots ? args.shots.split(',') : catalog.map(s => s.id);
   if (new Set(ids).size !== ids.length || ids.some(id => !catalog.some(s => s.id === id))) throw new Error('Unknown or duplicate shot ID');
@@ -38,7 +38,7 @@ export async function captureRig(argv) {
     try { ({ chromium } = await import(path.isAbsolute(candidate) ? pathToFileURL(candidate).href : candidate)); break; } catch { /* try the next existing installation */ }
   }
   if (!chromium) throw new Error('Use an existing Playwright installation: set PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs. No packages were installed.');
-  const browser = await chromium.launch({ headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
+  const browser = await chromium.launch({ headless: true, args: ['--autoplay-policy=no-user-gesture-required', '--use-angle=metal', '--enable-gpu', '--disable-frame-rate-limit', '--disable-gpu-vsync'] });
   const manifest = { version: 1, complete: false, seed: Number(args.seed), backend: args.backend, quality: args.quality,
     browser: browser.version(), platform: `${process.platform}/${process.arch}`,
     revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),

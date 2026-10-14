@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { access } from '../core/Accessibility';
 import {
-  LOOK_PRESETS, SHOT_PRESETS, cocScalePx, filmLook, resolveFilm,
+  LOOK_PRESETS, SHOT_PRESETS, cocScalePx, presetFilmLook, resolveFilm,
   type FilmParams, type FilmLookSetting, type ShotLook,
 } from './FilmParams';
 
@@ -590,6 +590,9 @@ export class FilmLook {
   /** The player's look in play (Settings "Film look"; goal 12's Cinematic preset). */
   look: FilmParams = LOOK_PRESETS.off;
   lookName: FilmLookSetting = 'off';
+  private preset = 'high';
+  private setting: string | undefined;
+  private readonly flags = { calm: false, economy: false };
   /** A cinematic camera's look while it runs (null in play). */
   shot: FilmParams | null = null;
   shotName: ShotLook | null = null;
@@ -611,23 +614,25 @@ export class FilmLook {
     this.bokeh = new Bokeh(reversed);
   }
 
-  setLook(name?: string) { this.lookName = filmLook(name); this.look = LOOK_PRESETS[this.lookName]; }
+  setPreset(quality: string) { this.preset = quality; this.setLook(this.setting); }
+  setLook(name?: string) { this.setting = name; this.lookName = presetFilmLook(this.preset, name); this.look = LOOK_PRESETS[this.lookName]; }
 
   /** Compile every pass's program up front (no hitch on the first cinematic). */
   prewarm(r: THREE.WebGLRenderer, scene: THREE.Scene, cam: THREE.Camera) {
-    // the full-screen passes: drawn once into a 1x1 target, exactly as they run (same program keys)
     const tmp = rt(1, 1), quad = new FullScreenQuad(), prev = r.getRenderTarget();
-    r.setRenderTarget(tmp);
-    for (const m of [...this.motion.materials.slice(1), ...this.bokeh.materials, this.pass.material]) { quad.material = m; quad.render(r); }
-    r.setRenderTarget(prev);
-    tmp.dispose(); quad.dispose();
-    // the velocity material is drawn in the world scene (its lights and shadows are in the key)
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.motion.materials[0]);
     mesh.frustumCulled = false;
-    scene.add(mesh);
-    r.compile(scene, cam);
-    scene.remove(mesh);
-    mesh.geometry.dispose();
+    try {
+      r.setRenderTarget(tmp);
+      for (const m of [...this.motion.materials.slice(1), ...this.bokeh.materials, this.pass.material]) { quad.material = m; quad.render(r); }
+      // Match the actual velocity pass's HDR target and the complete world's light counts.
+      // Compiling against the canvas instead creates an unused output-colour variant.
+      scene.add(mesh);
+      r.compile(scene, cam);
+    } finally {
+      scene.remove(mesh); mesh.geometry.dispose();
+      r.setRenderTarget(prev); tmp.dispose(); quad.dispose();
+    }
   }
 
   setShot(name: ShotLook | null, focus = NaN) {
@@ -650,7 +655,8 @@ export class FilmLook {
 
   /** Resolve this frame's parameters (PostFX.render, before anything is drawn). */
   resolve(economy: boolean): FilmParams {
-    const p = resolveFilm(this.p, this.look, this.shot, { calm: access.prefs.reduceMotion, economy });
+    this.flags.calm = access.prefs.reduceMotion; this.flags.economy = economy;
+    const p = resolveFilm(this.p, this.look, this.shot, this.flags);
     if (Number.isFinite(this.focusTarget)) p.focus = this.focusTarget;
     return p;
   }
