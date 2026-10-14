@@ -1,3 +1,7 @@
+import { LensScatter } from './LensScatter';
+import { EyeAdaptation } from './EyeAdaptation';
+import { FILM_MOODS, makeFilmLUT, type FilmMood } from './FilmLUT';
+import { weatherNow } from './WeatherState';
 import * as THREE from 'three';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { Atmos } from './Atmosphere';
@@ -87,10 +91,10 @@ class Bloom {
       depthTest: false, depthWrite: false,
     });
     this.upMat = new THREE.ShaderMaterial({
-      uniforms: { tSrc: { value: null }, tBase: { value: null }, uTexel: { value: new THREE.Vector2() } },
+      uniforms: { tSrc: { value: null }, tBase: { value: null }, uConserve: { value: 1 }, uTexel: { value: new THREE.Vector2() } },
       vertexShader: vert,
       fragmentShader: /* glsl */ `
-        uniform sampler2D tSrc; uniform sampler2D tBase; uniform vec2 uTexel; varying vec2 vUv;
+        uniform sampler2D tSrc; uniform sampler2D tBase; uniform float uConserve; uniform vec2 uTexel; varying vec2 vUv;
         void main() {
           vec2 o = uTexel * 0.5;
           vec3 c = texture2D(tSrc, vUv + vec2(-o.x * 2.0, 0.0)).rgb;
@@ -101,7 +105,7 @@ class Bloom {
           c += texture2D(tSrc, vUv + vec2(o.x, -o.y)).rgb * 2.0;
           c += texture2D(tSrc, vUv + vec2(0.0, -o.y * 2.0)).rgb;
           c += texture2D(tSrc, vUv + vec2(-o.x, -o.y)).rgb * 2.0;
-          gl_FragColor = vec4(c / 12.0 + texture2D(tBase, vUv).rgb, 1.0);
+          gl_FragColor = vec4((c / 12.0 + texture2D(tBase, vUv).rgb) * mix(1., .5, uConserve), 1.0);
         }`,
       depthTest: false, depthWrite: false,
     });
@@ -131,6 +135,7 @@ class Bloom {
       renderer.setRenderTarget(this.down[i]);
       this.quad.render(renderer);
     }
+    this.upMat.uniforms.uConserve.value = levels === 3 ? 0 : 1;
     this.quad.material = this.upMat;
     let prev = this.down[levels - 1];
     for (let i = levels - 2; i >= 0; i--) {
@@ -148,11 +153,19 @@ class Bloom {
 const finalFrag = /* glsl */ `
 precision highp float;
 uniform sampler2D tColor;
+uniform sampler2D tExposure;
+uniform sampler2D tLUT;
+uniform sampler2D tLUTNext;
+uniform float uLUTBlend;
+uniform float uAdvanced;
+uniform float uSharpen;
 uniform sampler2D tBloom;
+uniform sampler2D tScatter;
 uniform sampler2D tDepth;
 uniform mat4 uInvProj;
 uniform mat4 uCamWorld;
 uniform mat4 uPrevViewProj;
+uniform vec2 uJitter;
 uniform float uReversed;
 uniform float uExposure;
 uniform float uBloomStrength;
@@ -191,45 +204,14 @@ uniform float uProjY;
 uniform sampler2D tHaze;
 uniform float uHazeOn;
 
-float sunVisibility() {
-  if (uSunOn <= 0.0) return 0.0;
-  float v = 0.0;
-  for (int i = 0; i < 9; i++) {
-    vec2 o = vec2(float(i % 3) - 1.0, float(i / 3) - 1.0) * 0.006;
-    vec2 uv = clamp(uSunUV + o, 0.0, 1.0);
-    float d = texture2D(tDepth, uv).r;
-    v += (uReversed > 0.5 ? d <= 0.0 : d >= 1.0) ? 1.0 : 0.0;
-  }
-  v /= 9.0;
-  v *= texture2D(tCloud, uSunUV).a;   // cloud transmittance toward the sun
-  return v * uSunOn;
-}
-
-// Sun glare, starburst, halo and lens ghosts
-vec3 lensFlare(vec2 uv, float vis) {
-  if (vis <= 0.001) return vec3(0.0);
-  vec2 asp = vec2(uAspect, 1.0);
-  vec2 d = (uv - uSunUV) * asp;
-  float r = length(d);
-  float ang = atan(d.y, d.x);
-  vec3 f = uSunCol * (exp(-r * 14.0) * 0.07 + exp(-r * 40.0) * 0.45); // tight glow: facing the sun no longer milks out the frame
-  f += uSunCol * pow(abs(cos(ang * 3.0)), 60.0) * exp(-r * 5.0) * 0.14;      // 6-point starburst
-  f += uSunCol * exp(-pow((r - 0.42) / 0.012, 2.0)) * 0.012 * vec3(0.8, 0.9, 1.2); // halo ring
-  vec2 toC = vec2(0.5) - uSunUV;
-  const int N = 5;
-  float gpos[5] = float[5](0.45, 0.8, 1.15, 1.45, 1.8);
-  float gsz[5] = float[5](0.05, 0.022, 0.09, 0.035, 0.12);
-  vec3 gcol[5] = vec3[5](vec3(0.9, 0.6, 0.3), vec3(0.4, 0.8, 0.6), vec3(0.5, 0.6, 1.0), vec3(1.0, 0.7, 0.9), vec3(0.6, 0.7, 0.9));
-  for (int i = 0; i < N; i++) {
-    vec2 gp = uSunUV + toC * gpos[i] * 2.0;
-    float gd = length((uv - gp) * asp);
-    f += gcol[i] * smoothstep(gsz[i], gsz[i] * 0.65, gd) * 0.025 * length(uSunCol) * 0.25;
-  }
-  return f * vis;
-}
 uniform float uNoBlurDist;
 varying vec2 vUv;
 
+vec3 sampleLUT(sampler2D lut, vec3 c) {
+  c=clamp(c,0.,1.)*15.;float b=floor(c.b);
+  vec2 uv=vec2((b*16.+c.r+.5)/256.,(c.g+.5)/16.);
+  return mix(texture2D(lut,uv).rgb,texture2D(lut,uv+vec2(min(1.,15.-b)/16.,0.)).rgb,fract(c.b));
+}
 vec3 ACESFilm(vec3 x) {
   // Narkowicz ACES approximation with slightly softer toe for a filmic look
   const float a = 2.51, b = 0.03, c = 2.43, d = 0.59, e = 0.14;
@@ -262,31 +244,6 @@ vec3 sceneTap(vec2 uv) {
   return vec3(texture2D(tColor, uv + off).r, texture2D(tColor, uv).g, texture2D(tColor, uv - off).b);
 }
 
-// Screen-space light shafts: march from the pixel toward the sun and accumulate sky
-// visibility (far depth x cloud transmittance), so sunlight reads through gaps between
-// clouds. Tinted by the sun colour but normalised to unit brightness, so uShafts is the
-// real strength. Static per-pixel jitter avoids temporal shimmer.
-vec3 godRays(vec2 uv) {
-  if (uSunOn <= 0.0 || uShafts <= 0.0) return vec3(0.0);
-  const int N = 24;
-  vec2 dstep = (uSunUV - uv) * (0.9 / float(N));
-  vec2 p = uv + dstep * hash12(gl_FragCoord.xy);
-  float acc = 0.0, wsum = 0.0, w = 1.0;
-  for (int i = 0; i < N; i++) {
-    vec2 s = p + dstep * float(i);
-    if (all(greaterThanEqual(s, vec2(0.0))) && all(lessThanEqual(s, vec2(1.0)))) {
-      float d = texture2D(tDepth, s).r;
-      bool isSky = uReversed > 0.5 ? d <= 0.0 : d >= 1.0;
-      if (isSky) acc += texture2D(tCloud, s).a * w;
-    }
-    wsum += w;
-    w *= 0.93;
-  }
-  vec3 tint = uSunCol / max(max(uSunCol.r, uSunCol.g), max(uSunCol.b, 1e-4));
-  float falloff = exp(-length((uv - uSunUV) * vec2(uAspect, 1.0)) * 1.5);
-  return tint * (acc / wsum) * falloff * uShafts * uSunOn;
-}
-
 // Cheap contact shadowing: for 4 opposite pairs of depth taps on a ~0.35 m disc, a pair
 // whose average sits in front of the centre means a crease (wing root, frames, ammo boxes).
 // Planar surfaces cancel out, and a range check keeps foreground silhouettes from haloing.
@@ -316,7 +273,7 @@ void main() {
   // Camera motion blur via reprojection
   vec4 prev = uPrevViewProj * vec4(wp, 1.0);
   vec2 prevUv = prev.xy / prev.w * 0.5 + 0.5;
-  vec2 vel = (vUv - prevUv) * uMotionBlur;
+  vec2 vel = (vUv + uJitter * .5 - prevUv) * uMotionBlur;
   float vlen = length(vel);
   float maxV = 0.06;
   if (vlen > maxV) vel *= maxV / vlen;
@@ -369,15 +326,20 @@ void main() {
   if (!sky) col *= contactAO(dist, noise);
 
   vec3 bloom = texture2D(tBloom, vUv).rgb;
-  col += bloom * uBloomStrength;
+  if(uAdvanced>.5){
+    // Bounded unsharp mask after temporal resolve, before bloom and display mapping.
+    vec2 px=1./uRes;vec3 blur=(texture2D(tColor,vUv+vec2(px.x,0.)).rgb+texture2D(tColor,vUv-vec2(px.x,0.)).rgb+texture2D(tColor,vUv+vec2(0.,px.y)).rgb+texture2D(tColor,vUv-vec2(0.,px.y)).rgb)*.25;
+    col=max(vec3(0.),col+clamp(col-blur,-.12,.12)*uSharpen);
+    col=mix(col,bloom,uBloomStrength);
+  }else col += bloom * uBloomStrength;
   // lens dirt lights up where the bloom is bright
   col += bloom * texture2D(tDirt, vUv).rgb * uDirt;
-  float sv = sunVisibility();
-  col += lensFlare(vUv, sv);
-  col += texture2D(tDirt, vUv).rgb * uSunCol * sv * 0.025 * exp(-length((vUv - uSunUV) * vec2(uAspect, 1.0)) * 2.5);
-  col += godRays(vUv);
+  vec4 scattering = texture2D(tScatter, vUv);
+  float sv = scattering.a;
+  col += scattering.rgb;
+  col += texture2D(tDirt, vUv).rgb * uSunCol * sv * (uDirt * 0.0714286) * exp(-length((vUv - uSunUV) * vec2(uAspect, 1.0)) * 2.5);
   col += vec3(1.0, 0.85, 0.6) * uFlash;
-  col *= uExposure;
+  col *= uExposure * (uAdvanced>.5?texture2D(tExposure,vec2(.5)).r:1.);
 
   col = ACESFilm(col);
 
@@ -390,6 +352,8 @@ void main() {
   col = max(mix(vec3(l), col, uSat), 0.0);
   col = mix(col, col * col * (3.0 - 2.0 * col), uCurve);
   col = uLift + col * (1.0 - uLift);
+
+  if(uAdvanced>.5){vec3 graded=sampleLUT(tLUT,col);if(uLUTBlend>.001)graded=mix(graded,sampleLUT(tLUTNext,col),uLUTBlend);col=graded;}
 
   // Damage tint
   col = mix(col, col * vec3(1.4, 0.55, 0.5), uDamageFlash);
@@ -425,12 +389,20 @@ export class PostFX {
   // Film look (FilmLook.ts): per-object motion blur, bokeh DOF and the film pass (grain, weave,
   // halation, lens ghosts, period grades). Off in play unless Settings "Film look" is on.
   readonly film: FilmLook;
+  private eye = new EyeAdaptation();
+  private luts = Object.fromEntries(FILM_MOODS.map(m => [m, makeFilmLUT(m)])) as unknown as Record<FilmMood, THREE.Texture>;
+  temporal = true;
+  lensDirt = true;
+  sharpen = .3;
   private finalMat: THREE.ShaderMaterial;
   private quad: FullScreenQuad;
+  readonly jitter = new THREE.Vector2();
+  private blurProjection = new THREE.Matrix4();
   private prevViewProj = new THREE.Matrix4();
   private hasPrev = false;
   exposure = 1.0;
   bloomStrength = 0.09;
+  bloomLevels = 4;
   motionBlur = 0.55;
   nearFocus = 0.9;
   dofStrength = 1.0;
@@ -447,20 +419,21 @@ export class PostFX {
   zoomPulse = 0;   // radial zoom-blur pulse on kills (GameFeel), ~0..0.05
   noBlurDist = 1.5;
   flareStrength = 1;
-  shafts = 0.35;   // sun god-ray strength (0 disables)
+  shafts = 0.12;   // sun god-ray strength (0 disables)
   // Look development (Engine-owned; Game drives `exposure` per frame, this multiplies it)
   baseExposure = 1.06;
   economy = false; // Low: compact bloom, no camera blur, DOF or sun shafts; same programs
-  ao = 0.6;        // contact AO strength (quality preset)
+  ao = 0;        // contact AO strength (quality preset)
   readonly grade = {
     shadowTint: new THREE.Vector3(0.96, 1.0, 1.02),
-    highTint: new THREE.Vector3(1.05, 1.0, 0.91),
-    sat: 0.9,
-    curve: 0.16,
-    lift: new THREE.Vector3(0.016, 0.014, 0.011),
+    highTint: new THREE.Vector3(1.025, 1.0, 0.97),
+    sat: 1.0,
+    curve: 0.28,
+    lift: new THREE.Vector3(0.003, 0.004, 0.006),
   };
   cloudTex: THREE.Texture | null = null;
   hazeTex: THREE.Texture | null = null;   // heat-haze offsets of this frame (Engine), null = none
+  private scatter: LensScatter;
   private rotOnly = new THREE.Matrix4();
   private curVP = new THREE.Matrix4();
   private sunW = new THREE.Vector3();
@@ -470,9 +443,10 @@ export class PostFX {
     this.film = new FilmLook(reversed);
     this.finalMat = new THREE.ShaderMaterial({
       uniforms: {
-        tColor: { value: null }, tBloom: { value: null }, tDepth: { value: null },
+        tExposure: { value: null }, tLUT: { value: this.luts.warm }, tLUTNext: { value: this.luts.warm }, uLUTBlend: { value: 0 }, uAdvanced: { value: 1 }, uSharpen: { value: .3 },
+        tScatter: { value: null }, tColor: { value: null }, tBloom: { value: null }, tDepth: { value: null },
         uInvProj: { value: new THREE.Matrix4() }, uCamWorld: { value: new THREE.Matrix4() },
-        uPrevViewProj: { value: new THREE.Matrix4() }, uReversed: { value: reversed ? 1 : 0 },
+        uPrevViewProj: { value: new THREE.Matrix4() }, uJitter: { value: this.jitter }, uReversed: { value: reversed ? 1 : 0 },
         uExposure: { value: 1 }, uBloomStrength: { value: 0.1 }, uMotionBlur: { value: 0.5 },
         uNearFocus: { value: 1 }, uDofStrength: { value: 1 }, uTime: { value: 0 },
         uDamageFlash: { value: 0 }, uVignette: { value: 0.9 }, uGrain: { value: 0.03 },
@@ -492,24 +466,42 @@ export class PostFX {
       depthTest: false, depthWrite: false,
     });
     this.quad = new FullScreenQuad(this.finalMat);
+    this.scatter = new LensScatter(this.finalMat.uniforms);
   }
+
+  private lutForWeather(mood: string) {
+    const film: FilmMood = mood === 'night' ? 'night' : mood === 'dusk' ? 'dusk'
+      : mood === 'overcast' || mood === 'storm' ? 'overcast' : Atmos.sunElevationDeg < 25 ? 'warm' : 'cold';
+    return this.luts[film];
+  }
+
+  warmTextures(renderer: THREE.WebGLRenderer) { for (const texture of Object.values(this.luts)) renderer.initTexture(texture); }
 
   setSize(w: number, h: number) {
     this.bloom.setSize(w, h);
+    this.scatter.setSize(w, h);
     this.finalMat.uniforms.uRes.value.set(w, h);
     this.film.setSize(w, h);
   }
 
-  resetHistory() { this.hasPrev = false; this.film.resetHistory(); }
+  resetHistory() { this.hasPrev = false; this.eye.reset(); this.film.resetHistory(); }
 
   render(renderer: THREE.WebGLRenderer, camera: THREE.PerspectiveCamera, hdr: THREE.WebGLRenderTarget,
     depth: THREE.Texture, time: number, dt: number, scene?: THREE.Scene) {
     // film look: per-object motion blur and DOF on the HDR scene first (no-ops when off)
     const film = this.film, fp = film.resolve(this.economy);
     const src = film.pre(renderer, scene, camera, hdr.texture, depth, dt);
-    const bloomTex = this.bloom.render(renderer, src, hdr.width, hdr.height, this.economy ? 3 : 6);
+    const exposure = this.temporal && !this.economy ? this.eye.render(renderer, hdr.texture, dt) : null;
+    const bloomTex = this.bloom.render(renderer, src, hdr.width, hdr.height, this.economy ? 3 : this.bloomLevels);
     const u = this.finalMat.uniforms;
     u.tColor.value = src;
+    u.tExposure.value = exposure;
+    u.tLUT.value = this.lutForWeather(weatherNow.from);
+    u.tLUTNext.value = this.lutForWeather(weatherNow.to);
+    u.uLUTBlend.value = weatherNow.k;
+    u.uAdvanced.value = this.temporal && !this.economy ? 1 : 0;
+    u.uSharpen.value = this.sharpen;
+    u.uDirt.value = this.lensDirt ? .35 : 0;
     u.tBloom.value = bloomTex;
     u.tDepth.value = depth;
     u.uInvProj.value.copy(camera.projectionMatrixInverse);
@@ -517,7 +509,10 @@ export class PostFX {
     // Rotation-only view-projection: blur comes from the camera turning, not from it
     // travelling with the formation (which would smear everything attached to it).
     this.rotOnly.extractRotation(camera.matrixWorld).invert();
-    const curVP = this.curVP.multiplyMatrices(camera.projectionMatrix, this.rotOnly);
+    this.blurProjection.copy(camera.projectionMatrix);
+    this.blurProjection.elements[8] -= this.jitter.x;
+    this.blurProjection.elements[9] -= this.jitter.y;
+    const curVP = this.curVP.multiplyMatrices(this.blurProjection, this.rotOnly);
     u.uPrevViewProj.value.copy(this.hasPrev ? this.prevViewProj : curVP);
     // Normalise blur to a 60 fps shutter so low frame rates don't smear excessively
     u.uMotionBlur.value = (this.economy ? 0 : this.motionBlur) * Math.min(1.5, (1 / 60) / Math.max(dt, 1e-3));
@@ -556,6 +551,7 @@ export class PostFX {
     u.uShafts.value = this.economy ? 0 : this.shafts;
     u.tHaze.value = this.hazeTex;
     u.uHazeOn.value = this.hazeTex ? 1 : 0;
+    u.tScatter.value = this.scatter.render(renderer);
     renderer.setRenderTarget(film.target());
     this.quad.render(renderer);
     film.present(renderer, bloomTex, time);

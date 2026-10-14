@@ -7,8 +7,8 @@ import { TARGET_GLSL, targetUniforms } from './TargetGround';
 // it to match the haze on their own ground mesh, so the seam where the mesh ends disappears.
 export const skyGround = { uGroundHaze: { value: 24000 } };
 
-// Sky dome that follows the camera. Writes depth at the far plane only via the
-// depthWrite=false + renderOrder trick, so clouds/aerial-perspective treat it as infinity.
+// Draw the sky last at the far plane. Early depth rejection skips the expensive
+// procedural terrain/cirrus shader behind cockpit and aircraft pixels.
 export class SkyDome {
   readonly mesh: THREE.Mesh;
   readonly cirrus = { value: 1 };
@@ -16,19 +16,25 @@ export class SkyDome {
   constructor() {
     const geo = new THREE.SphereGeometry(1, 64, 32);
     const mat = new THREE.ShaderMaterial({
-      uniforms: { ...atmosUniforms, ...targetUniforms, ...farTerrainUniforms, ...skyGround, uCirrus: this.cirrus, uGroundXZ: { value: new THREE.Vector2() } },
+      uniforms: { ...atmosUniforms, ...targetUniforms, ...farTerrainUniforms, ...skyGround, uCirrus: this.cirrus, uSunDisk: { value: 1 }, uGroundXZ: { value: new THREE.Vector2() } },
       vertexShader: /* glsl */ `
         varying vec3 vDir;
         void main() {
           vDir = normalize(position);
           vec4 p = projectionMatrix * vec4(mat3(viewMatrix) * position, 1.0);
           gl_Position = p;
+          #ifdef USE_REVERSED_DEPTH_BUFFER
+            gl_Position.z = 0.0;
+          #else
+            gl_Position.z = gl_Position.w;
+          #endif
         }`,
       fragmentShader: /* glsl */ `
         ${skyGLSL}
         uniform vec2 uGroundXZ;
         uniform float uGroundHaze;
         uniform float uCirrus;
+        uniform float uSunDisk;
         uniform float uHaze;
         varying vec3 vDir;
 
@@ -90,47 +96,43 @@ export class SkyDome {
           }
           // Sun disk (very bright so bloom catches it)
           float mu = dot(d, uSunDir);
-          col += uSunColor * smoothstep(0.99985, 0.99993, mu) * 60.0;
+          col += uSunColor * smoothstep(0.99985, 0.99993, mu) * 60.0 * uSunDisk;
           gl_FragColor = vec4(col, 1.0);
         }`,
       side: THREE.BackSide,
       depthWrite: false,
-      depthTest: false,
+      depthTest: true,
     });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.frustumCulled = false;
-    this.mesh.renderOrder = -1000;
+    this.mesh.renderOrder = 1000;
     // Scale is irrelevant: vertex shader uses rotation only; keep it inside the frustum.
     this.mesh.scale.setScalar(1000);
   }
 }
 
-// Renders the sky into a cube map for PBR reflections / ambient (PMREM).
+// Retain PMREM shaders and the capture scene across weather updates. The old implementation
+// disposed/recompiled these during fronts, causing multi-hundred-ms stalls in flight.
+interface EnvironmentCapture { scene: THREE.Scene; floor: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>; pmrem: THREE.PMREMGenerator }
+const captures = new WeakMap<THREE.WebGLRenderer, EnvironmentCapture>();
+const targets = new WeakMap<THREE.Texture, THREE.WebGLRenderTarget>();
+export function disposeEnvironment(texture: THREE.Texture) {
+  const rt=targets.get(texture);if(rt){rt.dispose();targets.delete(texture);}else texture.dispose();
+}
 export function buildEnvironment(renderer: THREE.WebGLRenderer, sky: SkyDome): THREE.Texture {
-  const scene = new THREE.Scene();
-  const dome = sky.mesh.clone();
-  const source = sky.mesh.material as THREE.ShaderMaterial;
-  // Share texture references, not cloneUniforms (cloud shadows are render-target textures).
-  dome.material = new THREE.ShaderMaterial({
-    vertexShader: source.vertexShader, fragmentShader: source.fragmentShader,
-    side: source.side, depthWrite: false, depthTest: false,
-    uniforms: { ...source.uniforms, ...atmosUniforms, uFarMapped: { value: 0 },
-      uFarQuality: { value: 0 }, uTgt: { value: new THREE.Vector4() }, uGroundHaze: { value: 24000 } },
-  });
-  scene.add(dome);
-  // Cloud-sea floor so the lower hemisphere reflects bright white like the real thing.
-  const floor = new THREE.Mesh(
-    new THREE.CircleGeometry(5000, 32),
-    new THREE.MeshBasicMaterial({ color: new THREE.Color(0.95, 0.96, 1.0).multiplyScalar(1.6 * Atmos.envFloor), side: THREE.DoubleSide }),
-  );
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.y = -60;
-  scene.add(floor);
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const rt = pmrem.fromScene(scene, 0, 0.1, 20000);
-  pmrem.dispose();
-  dome.material.dispose();
-  floor.geometry.dispose();
-  (floor.material as THREE.Material).dispose();
-  return rt.texture;
+  let capture=captures.get(renderer);
+  if(!capture){
+    const scene=new THREE.Scene(),dome=sky.mesh.clone(),source=sky.mesh.material as THREE.ShaderMaterial;
+    dome.material=new THREE.ShaderMaterial({vertexShader:source.vertexShader,fragmentShader:source.fragmentShader,
+      side:source.side,depthWrite:false,depthTest:false,
+      uniforms:{...source.uniforms,...atmosUniforms,uSunDisk:{value:0},uFarMapped:{value:0},uFarQuality:{value:0},uTgt:{value:new THREE.Vector4()},uGroundHaze:{value:24000}}});
+    scene.add(dome);
+    const floor=new THREE.Mesh(new THREE.CircleGeometry(5000,32),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));
+    floor.rotation.x=-Math.PI/2;floor.position.y=-60;scene.add(floor);
+    capture={scene,floor,pmrem:new THREE.PMREMGenerator(renderer)};captures.set(renderer,capture);
+  }
+  capture.floor.material.color.setRGB(.95,.96,1).multiplyScalar(.55*Atmos.envFloor);
+  // Direct solar disk belongs to the sun light; including it in IBL double-counts energy.
+  const rt=capture.pmrem.fromScene(capture.scene,0,.1,20000,{size:128});
+  targets.set(rt.texture,rt);return rt.texture;
 }

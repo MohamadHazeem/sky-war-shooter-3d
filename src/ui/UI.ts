@@ -40,7 +40,8 @@ export interface Settings {
   ambVolume: number;
   radio: boolean;
   music: boolean;
-  quality: 'low' | 'medium' | 'high' | 'ultra';
+  lensDirt?: boolean;
+  quality: 'low' | 'medium' | 'high' | 'ultra' | 'cinematic';
   weatherEffects?: boolean; // undefined = on; cosmetic precipitation / glass only
   fpsCounter?: boolean;   // on-screen frame-rate readout (render/FpsCounter.ts); undefined = off
   markers: boolean;
@@ -455,7 +456,8 @@ export class UI {
       <label class="setting">${t('settings.audioDetail')} <select data-k="audioDetail"><option value="normal">${t('settings.audioNormal')}</option><option value="reduced" ${s.audioDetail === 'reduced' ? 'selected' : ''}>${t('settings.audioReduced')}</option></select></label>
       <label class="setting">${t('settings.breathing')} <select data-k="breathing"><option value="true">${t('common.on')}</option><option value="false" ${s.breathing === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
       <label class="setting">${t('settings.radio')} <select data-k="radio"><option value="true">${t('common.on')}</option><option value="false" ${!s.radio ? 'selected' : ''}>${t('settings.subsOnly')}</option></select></label>
-      <label class="setting">${t('settings.quality')} <select data-k="quality">${(['low', 'medium', 'high', 'ultra'] as const).map((q) => `<option value="${q}" ${s.quality === q ? 'selected' : ''}>${t(`settings.q.${q}`)}</option>`).join('')}</select></label>
+      <label class="setting">${tx('Lens dirt')} <select data-k="lensDirt"><option value="true">${t('common.on')}</option><option value="false" ${s.lensDirt === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
+      <label class="setting">${t('settings.quality')} <select data-k="quality">${(['low', 'medium', 'high', 'ultra', 'cinematic'] as const).map((q) => `<option value="${q}" ${s.quality === q ? 'selected' : ''}>${t(`settings.q.${q}`)}</option>`).join('')}</select></label>
       <label class="setting">${tx('Weather effects')} <select data-k="weatherEffects"><option value="true">${t('common.on')}</option><option value="false" ${s.weatherEffects === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
       ${this.detectGraphics ? `<div class="setting"><span></span><button class="btn ghost" style="padding:6px 10px;font-size:12px;letter-spacing:1px" data-detect title="${t('settings.detectHint')}">${t('settings.detect')}</button></div>` : ''}
       <label class="setting">${t('settings.fpsCounter')} <select data-k="fpsCounter"><option value="false">${t('common.off')}</option><option value="true" ${s.fpsCounter ? 'selected' : ''}>${t('common.on')}</option></select></label>
@@ -474,7 +476,7 @@ export class UI {
       const k = i.dataset.k as keyof Settings;
       let v: any = i.value;
       if (k === 'voiceVolume' || k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume' || k === 'fov') v = parseFloat(v);
-      if (k === 'weatherEffects' || k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'killCam' || k === 'fpsCounter' || k === 'breathing' || k === 'bookends' || k === 'crewRoom') v = v === 'true';
+      if (k === 'lensDirt' || k === 'weatherEffects' || k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'killCam' || k === 'fpsCounter' || k === 'breathing' || k === 'bookends' || k === 'crewRoom') v = v === 'true';
       (s as any)[k] = v;
       if (k === 'quality') { delete s.gfxAuto; s.graphicsMode = 'manual'; st.querySelector<HTMLSelectElement>('[data-graphics]')!.value = graphicsChoice(s); }   // the player's choice wins over the first-launch pick
       if (k === 'fov') { const b = i.closest('label')?.querySelector('.fov-val'); if (b) b.textContent = `${v}°`; }

@@ -88,10 +88,12 @@ describe('quality presets', () => {
     expect(QUALITY.low.cloudSteps).toBeGreaterThanOrEqual(32);
     expect(QUALITY.low.cloudTemporal).toBe(false);
     expect(QUALITY.low.haze).toBe(false);
-    expect(QUALITY.medium.msaa).toBeGreaterThan(QUALITY.low.msaa);
+    expect(QUALITY.medium.temporal).toBe(true);
+    expect(QUALITY.low.temporal).toBe(false);
   });
   it('orders the tiers and steps down one at a time', () => {
-    expect(QUALITY_ORDER).toEqual(['low', 'medium', 'high', 'ultra']);
+    expect(QUALITY_ORDER).toEqual(['low', 'medium', 'high', 'ultra', 'cinematic']);
+    expect(lowerQuality('cinematic')).toBe('ultra');
     expect(lowerQuality('ultra')).toBe('high');
     expect(lowerQuality('high')).toBe('medium');
     expect(lowerQuality('low')).toBe('low');

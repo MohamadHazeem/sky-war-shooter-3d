@@ -663,10 +663,10 @@ export class Airbase {
   private wet = { value: 0 };
   private savedHaze = -1;
 
-  constructor(quality: 'low' | 'medium' | 'high' | 'ultra' = 'high') {
+  constructor(quality: 'low' | 'medium' | 'high' | 'ultra' | 'cinematic' = 'high') {
     const t0 = performance.now();
     this.group.name = 'airbase';
-    const hi = quality === 'high' || quality === 'ultra';
+    const hi = quality === 'high' || quality === 'ultra' || quality === 'cinematic';
     const rwyCorners = RUNWAYS.map(([a0, b0, a1, b1]) => {
       const len = Math.hypot(a1 - a0, b1 - b0), na = -(b1 - b0) / len * (RWY.width / 2), nb = (a1 - a0) / len * (RWY.width / 2);
       return [af2(a0 - na, b0 - nb), af2(a1 - na, b1 - nb), af2(a1 + na, b1 + nb), af2(a0 + na, b0 + nb)];
@@ -713,7 +713,7 @@ export class Airbase {
     tex.anisotropy = 8;
     tex.minFilter = THREE.LinearMipmapLinearFilter;
     this.tex.push(tex);
-    const mat = this.keep(new THREE.MeshLambertMaterial({ color: 0xffffff }));
+    const mat = this.keep(new THREE.MeshStandardMaterial({ color: 0xffffff }));
     hazed(mat, { key: 'abGround', vertHead: 'varying vec3 vMap;', vertBody: 'vMap = position;', fragHead: GROUND_FRAG_HEAD, fragColor: GROUND_FRAG });
     this.wetSurface(mat);
     const inner = mat.onBeforeCompile;
@@ -725,7 +725,7 @@ export class Airbase {
   private buildConcrete() {
     const tex = concreteTexture();
     this.tex.push(tex);
-    const mk = (color: number, off: number, key: string) => this.keep(hazed(new THREE.MeshLambertMaterial({ map: tex, color, polygonOffset: true, polygonOffsetFactor: off, polygonOffsetUnits: off }), { key }));
+    const mk = (color: number, off: number, key: string) => this.keep(hazed(new THREE.MeshStandardMaterial({ map: tex, color, polygonOffset: true, polygonOffsetFactor: off, polygonOffsetUnits: off }), { key }));
     const rwy = mk(0xffffff, -3, 'abRunway'), track = mk(0xd2d0ca, -2, 'abTrack'), pan = mk(0xc9c7c0, -2, 'abPan');
     this.wetSurface(rwy); this.wetSurface(track); this.wetSurface(pan);
     const parts: THREE.BufferGeometry[] = [];
@@ -737,7 +737,7 @@ export class Airbase {
     }
     this.add(mergeGeometries(parts)!, rwy, 'ab_runways', false);
     // threshold bars and a centreline of dashes on 05/23 (sparse wartime markings)
-    const paint = this.keep(hazed(new THREE.MeshLambertMaterial({ color: 0xe8e4d6, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), { key: 'abPaint' }));
+    const paint = this.keep(hazed(new THREE.MeshStandardMaterial({ color: 0xe8e4d6, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), { key: 'abPaint' }));
     const marks: THREE.BufferGeometry[] = [];
     for (const end of [-1, 1]) for (let i = -4; i <= 4; i++) {
       if (!i) continue;
@@ -800,7 +800,7 @@ export class Airbase {
     }
     const geo = this.keepG(mergeGeometries([vcolored(crown, 0x48622f), vcolored(new THREE.CylinderGeometry(0.035, 0.05, 0.42, 5).translate(0, 0.21, 0), 0x4a3a2a)])!);
     geo.computeVertexNormals();
-    const mat = this.keep(hazed(new THREE.MeshLambertMaterial({ vertexColors: true }), { key: 'abTrees' }));
+    const mat = this.keep(hazed(new THREE.MeshStandardMaterial({ vertexColors: true }), { key: 'abTrees' }));
     const im = new THREE.InstancedMesh(geo, mat, trees.length);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), pp = new THREE.Vector3(), col = new THREE.Color(), y = new THREE.Vector3(0, 1, 0);
     trees.forEach((t, i) => {
@@ -820,7 +820,7 @@ export class Airbase {
     const sh = new THREE.Shape();
     sh.moveTo(-0.56, 0); sh.lineTo(0.56, 0); sh.lineTo(0, 0.6); sh.closePath();
     const roof = this.keepG(vcolored(new THREE.ExtrudeGeometry(sh, { depth: 1.06, bevelEnabled: false }).translate(0, 1, -0.53).toNonIndexed(), 0xffffff));
-    const mat = this.keep(hazed(new THREE.MeshLambertMaterial({ vertexColors: true }), { key: 'abHouses' }));
+    const mat = this.keep(hazed(new THREE.MeshStandardMaterial({ vertexColors: true }), { key: 'abHouses' }));
     const W = new THREE.InstancedMesh(walls, mat, houses.length), R = new THREE.InstancedMesh(roof, mat, houses.length);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), c = new THREE.Color();
     // Northamptonshire limestone and brick, Collyweston slate and thatch
@@ -845,7 +845,7 @@ export class Airbase {
   }
 
   private buildSite() {
-    const mat = this.keep(hazed(new THREE.MeshLambertMaterial({ vertexColors: true }), { key: 'abSite' }));
+    const mat = this.keep(hazed(new THREE.MeshStandardMaterial({ vertexColors: true }), { key: 'abSite' }));
     const at = (o: THREE.Object3D, a: number, b: number, yaw: number) => { afToLocal(a, b, o.position, 0); o.rotation.y = yaw; return o; };
     const faceRunway = afYaw(0, -1);   // +z toward the runway (-b)
     at(this.add(towerGeometry(), mat, 'ab_tower'), TOWER.a, TOWER.b, faceRunway);
@@ -872,7 +872,7 @@ export class Airbase {
     // the runway controller's chequered caravan beside the threshold of 05, the windsock
     const chq = checkerTexture();
     this.tex.push(chq);
-    const cmat = this.keep(hazed(new THREE.MeshLambertMaterial({ map: chq }), { key: 'abChq' }));
+    const cmat = this.keep(hazed(new THREE.MeshStandardMaterial({ map: chq }), { key: 'abChq' }));
     const cv = caravanGeometry();
     const car = new THREE.Group();
     const body = new THREE.Mesh(this.keepG(cv.body), cmat); body.castShadow = true;
@@ -894,7 +894,7 @@ export class Airbase {
   }
 
   private buildVehicles() {
-    const mat = this.keep(hazed(new THREE.MeshLambertMaterial({ vertexColors: true }), { key: 'abVehicles' }));
+    const mat = this.keep(hazed(new THREE.MeshStandardMaterial({ vertexColors: true }), { key: 'abVehicles' }));
     const beaconMat = this.keep(new THREE.MeshBasicMaterial({ color: new THREE.Color(6, 0.6, 0.3) }));
     const beaconGeo = this.keepG(new THREE.SphereGeometry(0.16, 8, 6));
     // crash crews standing by beside the runway, near the tower

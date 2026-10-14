@@ -1,3 +1,8 @@
+import { cloudSurfaceUniforms } from '../render/CloudSurfaceShadow';
+import { syncSurfaceDetail } from '../render/SurfaceDetail';
+import { TemporalFrame } from '../render/TemporalFrame';
+import { SunCascades, cascadeUniform } from '../render/SunCascades';
+import { auditMaterial } from '../render/MaterialAudit';
 import { beginMarkerFrame } from '../ui/MarkerAudit';
 import { Precipitation } from '../render/Precipitation';
 import * as THREE from 'three';
@@ -18,7 +23,7 @@ import { BomberStream } from '../render/BomberStream';
 import { FpsCounter } from '../render/FpsCounter';
 import { DRS_FAST, DRS_HARD, DRS_SLOW, drsFloor, drsTargetMs, fasterRefreshFrom, refreshFromTimestamps } from '../render/FrameTiming';
 
-export type Quality = 'low' | 'medium' | 'high' | 'ultra';
+export type Quality = 'low' | 'medium' | 'high' | 'ultra' | 'cinematic';
 
 // Per-tier render settings. `particles` scales the purely visual particle budgets
 // (living sky: distant boxes, dogfights, flak puffs); other systems may read it too.
@@ -32,15 +37,17 @@ export interface QualityPreset {
   cloudTemporal: boolean; // jittered march + reprojected accumulation, silver linings, cloud shadows
   haze: boolean;         // heat-haze refraction (exhausts, muzzle blasts, explosion ripples)
   ao: number;            // screen-space contact AO strength (0 = off)
+  temporal: boolean;    // motion-vector TAA + half-resolution temporal SSAO
   particles: number;     // visual particle budget multiplier (0 = living sky off)
 }
 export const QUALITY: Record<Quality, QualityPreset> = {
-  low:    { pixels: 0.9e6, msaa: 0, shadows: 1024, shadowRange: 24, cloudScale: 0.33, cloudSteps: 36, cloudTemporal: false, haze: false, ao: 0,   particles: 0 },
-  medium: { pixels: 1.5e6, msaa: 2, shadows: 2048, shadowRange: 48, cloudScale: 0.38, cloudSteps: 40, cloudTemporal: true,  haze: true,  ao: 0,   particles: 0.5 },
-  high:   { pixels: 2.3e6, msaa: 4, shadows: 2048, shadowRange: 40, cloudScale: 0.4,  cloudSteps: 44, cloudTemporal: true,  haze: true,  ao: 0.6, particles: 1 },
-  ultra:  { pixels: 3.7e6, msaa: 4, shadows: 4096, shadowRange: 40, cloudScale: 0.5,  cloudSteps: 56, cloudTemporal: true,  haze: true,  ao: 0.7, particles: 1.6 },
+  low:    { pixels: 0.9e6, msaa: 0, shadows: 1024, shadowRange: 24, cloudScale: 0.33, cloudSteps: 36, cloudTemporal: false, haze: false, ao: 0,   particles: 0, temporal: false },
+  medium: { pixels: 1.5e6, msaa: 0, shadows: 2048, shadowRange: 48, cloudScale: 0.38, cloudSteps: 40, cloudTemporal: true,  haze: true,  ao: 0.35, particles: 0.5, temporal: true },
+  high:   { pixels: 2.3e6, msaa: 0, shadows: 2048, shadowRange: 40, cloudScale: 0.4,  cloudSteps: 44, cloudTemporal: true,  haze: true,  ao: 0.6, particles: 1, temporal: true },
+  ultra:  { pixels: 3.7e6, msaa: 2, shadows: 4096, shadowRange: 40, cloudScale: 0.5,  cloudSteps: 56, cloudTemporal: true,  haze: true,  ao: 0.7, particles: 1.6, temporal: true },
+  cinematic: { pixels: 8.3e6, msaa: 4, shadows: 4096, shadowRange: 40, cloudScale: .6, cloudSteps: 72, cloudTemporal: true, haze: true, ao: .8, particles: 2, temporal: true },
 };
-export const QUALITY_ORDER: Quality[] = ['low', 'medium', 'high', 'ultra'];
+export const QUALITY_ORDER: Quality[] = ['low', 'medium', 'high', 'ultra', 'cinematic'];
 // One tier down (the auto-quality fallback): ultra -> high -> medium -> low
 export const lowerQuality = (q: Quality): Quality => QUALITY_ORDER[Math.max(0, QUALITY_ORDER.indexOf(q) - 1)];
 
@@ -58,6 +65,8 @@ export class Engine {
   readonly hemi: THREE.HemisphereLight;
   readonly clouds: CloudRenderer;
   readonly post: PostFX;
+  readonly temporal: TemporalFrame;
+  readonly cascades: SunCascades;
   readonly livingSky: LivingSky;   // distant bomber boxes, dogfights and flak (purely visual)
   readonly bomberStream = new BomberStream();   // the thousand-bomber stream, escorts, gaggles (purely visual)
   readonly heatHaze: HeatHaze = heatHaze;   // screen-space refraction emitters (HeatHaze.ts)
@@ -115,7 +124,6 @@ export class Engine {
   private hiMiss = 0;
   private probing = false;
   private fpsCounter: FpsCounter | null = null;
-  private lightRot = new THREE.Matrix4();
 
   constructor(container: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({
@@ -145,7 +153,7 @@ export class Engine {
     this.sceneRT = new THREE.WebGLRenderTarget(1, 1, {
       type: THREE.HalfFloatType,
       depthTexture: depthTex(),
-      samples: 4, // MSAA: clean aircraft and interior edges
+      samples: QUALITY.high.msaa, // temporal tiers resolve thin geometry across frames
     });
     this.hdrRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
     this.hdrRT.texture.minFilter = this.hdrRT.texture.magFilter = THREE.LinearFilter;
@@ -164,6 +172,8 @@ export class Engine {
     this.sun.shadow.normalBias = 0.03;
     this.scene.add(this.sun, this.sun.target);
 
+    this.cascades = new SunCascades(this.scene, this.sun, this.reversed);
+    this.cascades.quality(2048, 40, true);
     this.hemi = new THREE.HemisphereLight(0x9fbce6, 0xd9dde4, 0.35);
     this.scene.add(this.hemi);
     // sky rim / Fresnel on aircraft, coloured from the sky (AircraftLook.ts)
@@ -171,12 +181,14 @@ export class Engine {
 
     this.clouds = new CloudRenderer(this.reversed);
     this.post = new PostFX(this.reversed);
+    this.temporal = new TemporalFrame(this.reversed);
     this.post.cloudTex = this.clouds.texture;
+    this.post.warmTextures(this.renderer);
     this.heatHaze.setReversed(this.reversed);
     this.livingSky = new LivingSky();
     this.scene.add(this.livingSky.group);
     this.scene.add(this.bomberStream.group);
-    this.bomberStream.setQuality(this.quality, this.sceneRT.samples);
+    this.bomberStream.setQuality(this.quality === 'cinematic' ? 'ultra' : this.quality, this.sceneRT.samples);
 
     this.scene.environment = buildEnvironment(this.renderer, this.sky);
     envRef.tex = this.scene.environment;
@@ -204,6 +216,8 @@ export class Engine {
     retireEnv(old);
     if (!resetHistory) return;
     this.post.resetHistory();
+    this.temporal.reset();
+    this.cascades.reset();
     this.clouds.resetHistory();
   }
 
@@ -230,12 +244,18 @@ export class Engine {
     const sc = this.sun.shadow.camera;
     sc.left = -p.shadowRange; sc.right = p.shadowRange; sc.top = p.shadowRange; sc.bottom = -p.shadowRange;
     sc.updateProjectionMatrix();
-    this.post.ao = p.ao;
+    this.cascades.quality(p.shadows, p.shadowRange, q !== 'low');
+    this.temporal.enabled = p.temporal;
+    this.temporal.ao = p.ao;
+    this.temporal.reset();
+    this.post.temporal = p.temporal;
+    this.post.ao = p.temporal ? 0 : p.ao;
     this.post.economy = q === 'low';
     atmosUniforms.uAtmosQuality.value = q === 'low' ? 0 : 1;
+    this.post.bloomLevels = q === 'cinematic' ? 6 : q === 'ultra' ? 5 : 4;
     this.heatHaze.enabled = p.haze;
     this.livingSky.setQuality(p.particles);
-    this.bomberStream.setQuality(q, this.sceneRT.samples);
+    this.bomberStream.setQuality(q === 'cinematic' ? 'ultra' : q, this.sceneRT.samples);
     // a new tier gets a fresh chance at the display's full refresh rate
     this.hiGiveUp = false; this.hiMiss = 0;
   }
@@ -265,6 +285,7 @@ export class Engine {
     this.hdrRT.setSize(pw, ph);
     this.clouds.setQuality(QUALITY[this.quality], pw, ph);
     this.post.setSize(pw, ph);
+    this.temporal.setSize(pw, ph);
     this.heatHaze.setSize(pw, ph);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
@@ -396,20 +417,15 @@ export class Engine {
   render(dt: number) {
     const cam = this.camera;
     cam.updateMatrixWorld();
-    // Keep the shadow frustum centred on the camera, snapped to whole shadow-map texels in
-    // light space so the edges of the (tight, sharp) shadows don't crawl as the camera moves
     const cp = cam.getWorldPosition(_camPos);
-    const p = this.preset;
-    const texel = (2 * p.shadowRange) / Math.max(1, this.sun.shadow.mapSize.x);
-    this.lightRot.lookAt(_origin, Atmos.sunDir, _up);
-    const ls = _v.copy(cp).applyMatrix4(_m.copy(this.lightRot).invert());
-    ls.x = Math.round(ls.x / texel) * texel; ls.y = Math.round(ls.y / texel) * texel;
-    const snapped = ls.applyMatrix4(this.lightRot);
-    this.sun.position.copy(snapped).addScaledVector(Atmos.sunDir, 300);
-    this.sun.target.position.copy(snapped);
-    this.sun.target.updateMatrixWorld();
-    // Spatial maps shade each aircraft skin; immersion also dims cockpit/local light.
-    this.sun.intensity = Atmos.sunIntensity * 0.95 * (1 - 0.65 * weatherNow.cloudInside);
+    this.cascades.update(cam, Atmos.sunIntensity * 1.15 * (1 - 0.65 * weatherNow.cloudInside));   // immersion dims cockpit/local light
+    cloudSurfaceUniforms.swsCloudShadow.value = this.clouds.groundShadowTexture;
+    cloudSurfaceUniforms.swsCloudBox.value.copy(this.clouds.groundShadowBox);
+    cloudSurfaceUniforms.swsCloudBase.value = Atmos.highBase;
+    cloudSurfaceUniforms.swsCloudLayers.value.set(Atmos.lowBase, Atmos.lowTop, Atmos.highBase, Atmos.highTop);
+    cloudSurfaceUniforms.swsCloudOn.value = this.clouds.shadows ? 1 : 0;
+    this.temporal.begin(cam);
+    this.post.jitter.copy(this.temporal.jitter);
     atmosUniforms.uCamAlt.value = cp.y;
     syncFarTerrain(this.clouds, this.quality, cam, this.renderer.domElement.height);
     (this.sky.mesh.material as THREE.ShaderMaterial).uniforms.uGroundXZ.value.set(cp.x + Atmos.originOffset.x, cp.z + Atmos.originOffset.z);
@@ -421,27 +437,51 @@ export class Engine {
     this.sortLayers();
     cam.layers.set(0);
     r.render(this.scene, cam);
-    // Clouds + aerial perspective composite
-    this.clouds.render(r, cam, this.sceneRT, this.hdrRT, this.time, dt);
-    this.post.cloudTex = this.clouds.texture;
-    // Heat-haze offsets, soft-depth-tested against the opaque depth (before pass 2, so a
-    // canopy or turret dome doesn't mask the exhaust shimmer seen through it)
-    this.post.hazeTex = this.heatHaze.render(r, cam, this.sceneRT.depthTexture!);
-    // linear depth copy for the soft effects (render/SoftDepth.ts), only when something wants it
-    softDepth.capture(r, cam, this.sceneRT.depthTexture!, this.clouds.sunShadow);
-    // Copy the composite back over the scene colour (keeping its depth buffer), then
-    // pass 2: transparent effects (layer 1) on top of the clouds, depth-tested.
-    r.autoClear = false;
-    r.setRenderTarget(this.sceneRT);
-    this.copyMat.uniforms.tSrc.value = this.hdrRT.texture;
-    this.copyQuad.render(r);
-    cam.layers.set(1);
-    r.shadowMap.autoUpdate = false;
-    r.render(this.scene, cam);
-    r.shadowMap.autoUpdate = true;
-    r.autoClear = true;
-    cam.layers.set(0);
-    this.post.render(r, cam, this.sceneRT, this.sceneRT.depthTexture!, this.time, dt, this.scene);
+    // Opaque, transparent and velocity passes share one simulation pose. Three otherwise
+    // walks/rebuilds every bomber hierarchy three times per frame (CPU-bound at 1080p).
+    const autoWorld = this.scene.matrixWorldAutoUpdate;
+    this.scene.matrixWorldAutoUpdate = false;
+    try {
+      // Clouds + aerial perspective composite
+      this.clouds.render(r, cam, this.sceneRT, this.hdrRT, this.time, dt);
+      this.post.cloudTex = this.clouds.texture;
+      // Heat-haze offsets, soft-depth-tested against the opaque depth (before pass 2, so a
+      // canopy or turret dome doesn't mask the exhaust shimmer seen through it)
+      this.post.hazeTex = this.heatHaze.render(r, cam, this.sceneRT.depthTexture!);
+      // linear depth copy for the soft effects (render/SoftDepth.ts), only when something wants it
+      softDepth.capture(r, cam, this.sceneRT.depthTexture!, this.clouds.sunShadow);
+      // Copy the composite back over the scene colour (keeping its depth buffer), then
+      // pass 2: transparent effects (layer 1) on top of the clouds, depth-tested.
+      r.autoClear = false;
+      r.setRenderTarget(this.sceneRT);
+      this.copyMat.uniforms.tSrc.value = this.hdrRT.texture;
+      this.copyQuad.render(r);
+      cam.layers.set(1);
+      r.shadowMap.autoUpdate = false;
+      r.render(this.scene, cam);
+      r.shadowMap.autoUpdate = true;
+      r.autoClear = true;
+      cam.layers.set(0);
+      const resolved = this.temporal.render(r, this.scene, cam, this.sceneRT, this.sceneRT.depthTexture!);
+      this.post.render(r, cam, resolved, this.sceneRT.depthTexture!, this.time, dt, this.scene);
+    } finally {
+      this.scene.matrixWorldAutoUpdate = autoWorld;
+      this.temporal.end(cam);
+    }
+  }
+
+  // Called with all effect/aircraft variants present in World.prewarm. Even Low warms the
+  // advanced post programs so a preset change does not first compile them in combat.
+  warmRenderer() {
+    const enabled=this.temporal.enabled, economy=this.post.economy, temporal=this.post.temporal;
+    this.temporal.enabled=true;this.post.economy=false;this.post.temporal=true;
+    for (const quality of ['low', 'medium', 'high']) {
+      syncSurfaceDetail(quality);
+      this.render(1/60);
+    }
+    syncSurfaceDetail(this.quality);
+    this.temporal.enabled=enabled;this.post.economy=economy;this.post.temporal=temporal;
+    this.temporal.reset();this.post.resetHistory();
   }
 
   // Another scene (own camera and lights, no sky or clouds) through the same MSAA target and
@@ -450,18 +490,24 @@ export class Engine {
   renderStudio(scene: THREE.Scene, cam: THREE.PerspectiveCamera, dt: number) {
     const r = this.renderer;
     cam.updateMatrixWorld();
+    cascadeUniform.value.z = 0;
+    cloudSurfaceUniforms.swsCloudOn.value = 0;
+    this.post.jitter.set(0, 0);
+    scene.traverse(o => { const m=(o as THREE.Mesh).material;if (m) { if (Array.isArray(m)) m.forEach(auditMaterial);else auditMaterial(m); } });
     r.setRenderTarget(this.sceneRT);
     const cloudShadows = cloudShadowUniforms.uCloudShadowOn.value;
     cloudShadowUniforms.uCloudShadowOn.value = 0;
     r.render(scene, cam);
     cloudShadowUniforms.uCloudShadowOn.value = cloudShadows;
     this.post.render(r, cam, this.sceneRT, this.sceneRT.depthTexture!, this.time, dt);
+    cascadeUniform.value.z = this.quality === 'low' ? 0 : 1;
   }
 
   // Compile a studio scene's programs in the background (KHR_parallel_shader_compile), for
   // the same render target renderStudio draws into
   compileStudio(scene: THREE.Scene, cam: THREE.PerspectiveCamera): Promise<unknown> {
     const r = this.renderer, prev = r.getRenderTarget();
+    scene.traverse(o => { const m=(o as THREE.Mesh).material; if(m) { if(Array.isArray(m))m.forEach(auditMaterial);else auditMaterial(m); } });
     r.setRenderTarget(this.sceneRT);
     const p = r.compileAsync(scene, cam);
     r.setRenderTarget(prev);
@@ -470,11 +516,11 @@ export class Engine {
 
   // Transparent materials go to layer 1 (drawn after the clouds), everything else layer 0
   private sortLayers() {
-    this.scene.traverse((o) => {
+    this.scene.traverseVisible((o) => {
       if ((o as THREE.Light).isLight) { o.layers.enableAll(); return; }
       const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
       if (!m) return;
-      if (Array.isArray(m)) m.forEach(freshEnv); else freshEnv(m);   // back from outside the scene: the current sky
+      if (Array.isArray(m)) { for (const material of m) { auditMaterial(material); freshEnv(material); } } else { auditMaterial(m); freshEnv(m); }   // back from outside the scene: the current sky
       const transparent = Array.isArray(m) ? m.some((x) => x.transparent) : m.transparent;
       o.layers.set(transparent && o !== this.sky.mesh ? 1 : 0);
     });
@@ -482,6 +528,7 @@ export class Engine {
 
   // Floating origin: shift the whole world so the camera stays near the origin horizontally.
   rebase(offset: THREE.Vector3) {
+    this.temporal.reset();this.cascades.reset();
     for (const child of this.scene.children) {
       if (child === this.camera || child === this.sky.mesh || child === this.sun || child === this.sun.target || child === this.hemi) continue;
       if ((child as any).userData?.noRebase) continue;
@@ -493,10 +540,6 @@ export class Engine {
   }
 }
 
-const _origin = new THREE.Vector3();
-const _up = new THREE.Vector3(0, 1, 0);
-const _v = new THREE.Vector3();
-const _m = new THREE.Matrix4();
 const _px = new Uint8Array(4);
 
 const _camPos = new THREE.Vector3();

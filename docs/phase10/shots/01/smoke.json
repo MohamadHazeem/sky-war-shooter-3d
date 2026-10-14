@@ -1,0 +1,277 @@
+[
+  {
+    "forward": false,
+    "webgpu": false,
+    "webgl2": true,
+    "reversed": true,
+    "scans": [
+      {
+        "quality": "low",
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      {
+        "quality": "high",
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      {
+        "quality": "ultra",
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      {
+        "quality": "cinematic",
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      {
+        "quality": "medium",
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      {
+        "quality": "low",
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    ],
+    "programs": [
+      {
+        "quality": "low",
+        "added": []
+      },
+      {
+        "quality": "high",
+        "added": []
+      },
+      {
+        "quality": "ultra",
+        "added": []
+      },
+      {
+        "quality": "cinematic",
+        "added": []
+      },
+      {
+        "quality": "medium",
+        "added": []
+      },
+      {
+        "quality": "low",
+        "added": []
+      }
+    ],
+    "weatherPrograms": [],
+    "texturesBefore": 128,
+    "texturesAfter": 128,
+    "projectionRestored": true,
+    "cut": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    },
+    "ao": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    },
+    "resolved": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    },
+    "frontUpdated": true,
+    "studioScan": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    },
+    "vector": [
+      -0.01544952392578125,
+      0.0026035308837890625,
+      0.00749969482421875,
+      1
+    ],
+    "expected": -0.015453255383792518,
+    "settings": {
+      "quality": "cinematic",
+      "lensDirt": false,
+      "saved": false
+    },
+    "errors": []
+  },
+  {
+    "forward": true,
+    "webgpu": false,
+    "webgl2": true,
+    "reversed": false,
+    "scans": [
+      {
+        "quality": "low",
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      {
+        "quality": "high",
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      {
+        "quality": "ultra",
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      {
+        "quality": "cinematic",
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      {
+        "quality": "medium",
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      },
+      {
+        "quality": "low",
+        "hdr": {
+          "nan": 0,
+          "hot": 0,
+          "neg": 0,
+          "nanBox": null,
+          "hotBox": null
+        }
+      }
+    ],
+    "programs": [
+      {
+        "quality": "low",
+        "added": []
+      },
+      {
+        "quality": "high",
+        "added": []
+      },
+      {
+        "quality": "ultra",
+        "added": []
+      },
+      {
+        "quality": "cinematic",
+        "added": []
+      },
+      {
+        "quality": "medium",
+        "added": []
+      },
+      {
+        "quality": "low",
+        "added": []
+      }
+    ],
+    "weatherPrograms": [],
+    "texturesBefore": 128,
+    "texturesAfter": 128,
+    "projectionRestored": true,
+    "cut": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    },
+    "ao": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    },
+    "resolved": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    },
+    "frontUpdated": true,
+    "studioScan": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    },
+    "vector": [
+      -0.01544952392578125,
+      0.005207061767578125,
+      0.00749969482421875,
+      1
+    ],
+    "expected": -0.015453255383792518,
+    "errors": []
+  }
+]

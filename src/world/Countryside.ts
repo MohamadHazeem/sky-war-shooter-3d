@@ -546,10 +546,10 @@ export class Countryside {
   readonly stats = { trees: 0, poplars: 0, houses: 0, ms: 0 };
   onFrame: (() => void) | null = null;   // called while the ground is drawn (StrafeOps: notices the menu)
 
-  constructor(quality: 'low' | 'medium' | 'high' | 'ultra' = 'high') {
+  constructor(quality: 'low' | 'medium' | 'high' | 'ultra' | 'cinematic' = 'high') {
     const t0 = performance.now();
     this.group.name = 'countryside';
-    const hi = quality === 'high' || quality === 'ultra';
+    const hi = quality === 'high' || quality === 'ultra' || quality === 'cinematic';
     const S = hi ? 2048 : 1024;
     const painted = paintMap(S, hi ? 9000 : quality === 'medium' ? 6000 : 3500);
     this.buildGround(painted.canvas, hi ? 256 : 192);
@@ -597,7 +597,7 @@ export class Countryside {
     tex.generateMipmaps = true;
     tex.minFilter = THREE.LinearMipmapLinearFilter;
     this.tex.push(tex);
-    const mat = this.keep(new THREE.MeshLambertMaterial({ color: 0xffffff }));
+    const mat = this.keep(new THREE.MeshStandardMaterial({ color: 0xffffff }));
     patch(mat, { key: 'ground', vertHead: 'varying vec3 vMap;', vertBody: 'vMap = position;', fragHead: GROUND_FRAG_HEAD, fragColor: GROUND_FRAG });
     const inner = mat.onBeforeCompile;
     mat.onBeforeCompile = (sh, r) => {
@@ -631,7 +631,7 @@ export class Countryside {
       g.fillStyle = '#4a4744'; g.fillRect(22.5, 0, 1, 128); g.fillRect(44, 0, 1, 128);
     });
     this.tex.push(roadTex, railTex);
-    const mk = (map: THREE.Texture, off: number) => this.keep(patch(new THREE.MeshLambertMaterial({ map, polygonOffset: true, polygonOffsetFactor: off, polygonOffsetUnits: off }), { key: 'ribbon' }));
+    const mk = (map: THREE.Texture, off: number) => this.keep(patch(new THREE.MeshStandardMaterial({ map, polygonOffset: true, polygonOffsetFactor: off, polygonOffsetUnits: off }), { key: 'ribbon' }));
     const roadMat = mk(roadTex, -2), railMat = mk(railTex, -3);
     const water = this.keep(patch(new THREE.MeshStandardMaterial({ color: 0x1e3134, roughness: 0.1, metalness: 0.15, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }), { key: 'water' }));
     const add = (g: THREE.BufferGeometry, m: THREE.Material, name: string) => {
@@ -646,7 +646,7 @@ export class Countryside {
     add(ribbon(ROAD2, 6.5, 0.3, 20), roadMat, 'country_road2');
     add(ribbon(RIVER, 30, 0.15, 30, 0, RIVER.count - 1, 0), water, 'country_river');
     // bridges where the road / rail cross the river: a deck with low parapets
-    const stone = this.keep(patch(new THREE.MeshLambertMaterial({ color: 0x8c8478 }), { key: 'haze' }));
+    const stone = this.keep(patch(new THREE.MeshStandardMaterial({ color: 0x8c8478 }), { key: 'haze' }));
     for (const [p, w, lift] of [[ROAD, 8.5, 0.6], [ROAD2, 7.5, 0.6], [RAIL, 7.5, 0.8]] as [Path, number, number][]) {
       for (const i of riverCrossings(p)) {
         const du = p.u[Math.min(p.count - 1, i + 1)] - p.u[i - 1], dv = p.v[Math.min(p.count - 1, i + 1)] - p.v[i - 1];
@@ -668,7 +668,7 @@ export class Countryside {
   private buildTrees(trees: TreeSpot[], poplars: TreeSpot[]) {
     const broad = [this.keepG(treeGeometry(1, false)), this.keepG(treeGeometry(0, false))];
     const tall = [this.keepG(treeGeometry(1, true)), this.keepG(treeGeometry(0, true))];
-    const mat = this.keep(patch(new THREE.MeshLambertMaterial({ vertexColors: true }), { key: 'trees' }));
+    const mat = this.keep(patch(new THREE.MeshStandardMaterial({ vertexColors: true }), { key: 'trees' }));
     const byChunk = new Map<number, { cx: number; cz: number; b: TreeSpot[]; p: TreeSpot[] }>();
     const put = (t: TreeSpot, pop: boolean) => {
       const cx = Math.floor(t.u / CHUNK), cz = Math.floor(t.v / CHUNK), key = cx * 1000 + cz;
@@ -709,7 +709,7 @@ export class Countryside {
   private buildHouses(houses: HouseSpot[]) {
     const { walls, roof } = houseGeometries();
     this.keepG(walls); this.keepG(roof);
-    const wm = this.keep(patch(new THREE.MeshLambertMaterial({ vertexColors: true }), { key: 'houses' }));
+    const wm = this.keep(patch(new THREE.MeshStandardMaterial({ vertexColors: true }), { key: 'houses' }));
     const W = new THREE.InstancedMesh(walls, wm, houses.length), R = new THREE.InstancedMesh(roof, wm, houses.length);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), c = new THREE.Color();
     const WALLS = [0xd9cdb4, 0xcfc2a6, 0xbfb29a, 0xe3dccb, 0xa89c88], ROOFS = [0x7a3b2a, 0x6a3324, 0x4b4d52, 0x5c5048, 0x8a4a33];
@@ -726,7 +726,7 @@ export class Countryside {
   }
 
   private buildLandmarks() {
-    const mat = this.keep(patch(new THREE.MeshLambertMaterial({ vertexColors: true }), { key: 'landmarks' }));
+    const mat = this.keep(patch(new THREE.MeshStandardMaterial({ vertexColors: true }), { key: 'landmarks' }));
     const add = (g: THREE.BufferGeometry, u: number, v: number, ang = 0, name = 'country_landmark', dy = 0) => {
       const m = new THREE.Mesh(this.keepG(g), mat);
       m.position.set(u, terrainHeight(u, v) + dy, v); m.rotation.y = ang; m.name = name;

@@ -90,6 +90,8 @@ function devSavePlugin(): Plugin {
 
 export default defineConfig({
   base: './',
+  cacheDir: '.vite-cache',
+  optimizeDeps: { include: ['three/webgpu', 'three/tsl'] },
   server: { port: 5173, host: '127.0.0.1' },
   build: { target: 'es2022', chunkSizeWarningLimit: 2000 },
   define: { __ASSET_SIZES__: JSON.stringify(assetSizes()) },

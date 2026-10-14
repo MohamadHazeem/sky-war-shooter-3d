@@ -24,3 +24,5 @@ tools/interior/out/
 
 # Python bytecode caches (Blender build scripts)
 __pycache__/
+
+.vite-cache/

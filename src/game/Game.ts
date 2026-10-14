@@ -288,6 +288,7 @@ export class Game {
     this.pilot.baseFov = fov;
     this.engine.applyGraphics(s.quality, !!s.fpsCounter);
     this.engine.post.film.setLook(s.filmLook);   // Settings "Film look" (render/FilmLook.ts)
+    this.engine.post.lensDirt = s.lensDirt !== false;
     syncSurfaceDetail(this.engine.quality);   // aircraft panel lines / weathering level (render/SurfaceDetail.ts)
     save(SETTINGS_KEY, s);
   }
