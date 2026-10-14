@@ -18,3 +18,6 @@ docs/phase10/shots/**/*.png
 
 # Effects 2.0 bake intermediates (tools/fx/bake_flipbooks.py): logs, previews, per-effect atlases, sim cache
 tools/fx/out/
+
+# B-17 interior 2.0 Blender build intermediates (tools/interior/)
+tools/interior/out/

@@ -7,12 +7,13 @@
 // Sound.ts owns one, rebuilds it with the graph, and feeds it the window positions every frame
 // (Sound.setCabin) once the lazy synthesis has made the loops (Synth3 windowRoar / rattleBed).
 import { FREQ, GAIN, place, towards } from './Safe';
+import { STATIONS } from '../world/B17Layout';
 
 export interface P3 { x: number; y: number; z: number }
 
 // Waist window openings in the B-17 model frame (+X left wing, +Z nose): the gun pivots sit at
-// x +-0.84, z -7.44 (B17Layout.STATIONS); the opening is at the skin, a little above the pivot
-export const WAIST_WINDOWS: readonly [number, number, number][] = [[1.02, 0.35, -7.44], [-1.02, 0.35, -7.44]];
+// x +-0.84 at their (staggered) z (B17Layout.STATIONS); the opening is at the skin, a little above the pivot
+export const WAIST_WINDOWS: readonly [number, number, number][] = [[1.02, 0.35, STATIONS.waistL.pivot.z], [-1.02, 0.35, STATIONS.waistR.pivot.z]];
 const ROAR = 0.42;       // window roar level at (or inside) the reference distance
 const BED = 0.1;         // rattle bed at full jink load
 

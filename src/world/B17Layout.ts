@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 
 // B-17G crew/gun station geometry in the model frame (+Z nose, +Y up, +X left wing).
+// The waist windows are staggered as on the B-17G (left forward, right aft) so the two waist
+// gunners no longer stand back to back.
 export type StationId = 'waistL' | 'waistR' | 'top' | 'ball' | 'tail';
 
 export interface StationDef {
@@ -23,12 +25,12 @@ const D = THREE.MathUtils.degToRad;
 export const STATIONS: Record<StationId, StationDef> = {
   waistL: {
     id: 'waistL', label: 'Left Waist', key: '1', type: 'waist',
-    pivot: new THREE.Vector3(0.84, 0.27, -7.44), rest: { yaw: D(90), pitch: 0 },
+    pivot: new THREE.Vector3(0.84, 0.27, -6.74), rest: { yaw: D(90), pitch: 0 },
     yaw: [D(-52), D(52)], pitch: [D(-38), D(48)], twin: false, eyeBack: 0.62, eyeUp: 0.2, crew: 'Sgt. Price',
   },
   waistR: {
     id: 'waistR', label: 'Right Waist', key: '2', type: 'waist',
-    pivot: new THREE.Vector3(-0.84, 0.27, -7.44), rest: { yaw: D(-90), pitch: 0 },
+    pivot: new THREE.Vector3(-0.84, 0.27, -8.14), rest: { yaw: D(-90), pitch: 0 },
     yaw: [D(-52), D(52)], pitch: [D(-38), D(48)], twin: false, eyeBack: 0.62, eyeUp: 0.2, crew: 'Sgt. Walsh',
   },
   top: {

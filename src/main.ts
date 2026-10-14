@@ -176,6 +176,9 @@ async function boot() {
     // Ground-from-altitude rig views (Phase 10 goal 04): sws.ground.setup('down'), .save(name), .bench()
     const { groundShots } = await import('./dev/groundShots');
     (window as any).sws.ground = groundShots(engine, game);
+    // B-17 interior 2.0 station captures (Phase 10 goal 07): await sws.interiorShots('after')
+    const { interiorShots } = await import('./dev/interiorShots');
+    (window as any).sws.interiorShots = interiorShots(engine, game);
   }
 }
 

@@ -502,7 +502,7 @@ export class Game {
     } else if (this.state === 'playing' || this.state === 'ending' || this.state === 'debrief') {
       if (this.state !== 'debrief') this.director.direct(dt);
       if (this.formationReturn.active || this.ditching.active) { this.input.endFrame(); return; }
-      if (this.mission?.role === 'gunner') { if (!this.bombardier.active) this.gunner.update(dt); }
+      if (this.mission?.role === 'gunner') { this.gunner.bombsAboard = !this.director.bombsDropped; if (!this.bombardier.active) this.gunner.update(dt); }
       else { this.pilot.update(dt); this.coop.afterPilot(); }
       if (this.state === 'ending') this.flow.updateEnding(dt);   // count down to the debrief (bail-out / fly-by)
     }

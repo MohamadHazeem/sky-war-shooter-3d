@@ -10,8 +10,11 @@ import { GunModel, WAIST_DOOR_TOP, WAIST_DOOR_W, TUNNEL_A, TUNNEL_B, TUNNEL_Y } 
 import { CrewFigure, FigureLook, lookOf, newPose, lerpPose, Pose, figureMaterial } from './CrewFigure';
 import { crewRoster, manDef } from './CrewRoster';
 import { Brass, brassGeometry, brassMaterial, linkGeometry, linkMaterial } from './Brass';
-import { SunShafts, WindowFrost, BreathFog, shaftMaterial, frostMaterial, breathMaterial } from './InteriorFx';
+import { SunShafts, WindowFrost, BreathFog, shaftMaterial, shaftVolumeMaterial, frostMaterial, breathMaterial } from './InteriorFx';
 import { sound } from '../audio/Sound';
+import { CrewActor } from './CrewActor';
+import { InteriorKit, KIT_FWD_Z } from './InteriorKit';
+import { interiorLight } from './InteriorAssets';
 
 // The living B-17 interior around the waist guns (GunnerController owns one):
 //  - the other waist gunner, manning his M2 at the opposite window: tracks the target the
@@ -23,6 +26,11 @@ import { sound } from '../audio/Sound';
 //  - spent brass piling up on the walkway (Brass), sun shafts, frost and breath (InteriorFx)
 // Everything sits inside the fuselage, away from the player's own window, so the hip view
 // over the gun stays clear. Built once per mission; the per-frame path does not allocate.
+// Interior 2.0 (Medium and up, once the Blender assets are in: build(..., high)): the kit of
+// InteriorKit (structure, equipment, radio room, bomb bay) replaces the procedural details, and
+// the crew are skinned CrewActors playing their clips (idle / fire on the gun, hit and down when
+// wounded, a man kneeling to help him, the radio operator sitting at his sets, the tail gunner
+// kneeling at his guns) instead of the posed CrewFigures; the sun shafts are ray-marched.
 
 const A = 1.08, B = 1.12, YC = 0.15;
 const FLOOR_TOP = YC - B * 0.78 + 0.015;
@@ -33,6 +41,8 @@ const FIG_BACK = 0.74, FIG_SIDE = 0.1;    // where the gunner stands behind his 
 const BALL_Y = -1.15;                     // centre of the ball turret's top dome (its top just clears the floor)
 
 type Waist = 'waistL' | 'waistR';
+type Man = CrewFigure | CrewActor;
+const HELP_FROM = 3.5;                     // s after a man goes down until someone kneels by him
 const _v = new THREE.Vector3(), _w = new THREE.Vector3(), _d = new THREE.Vector3(), _q = new THREE.Quaternion();
 
 // Materials shared by every mission (programs compile once; warmLivingInterior pre-renders them)
@@ -58,8 +68,9 @@ interface Station {
   id: Waist; crew: CrewId;
   yaw: THREE.Group; pitch: THREE.Group;
   gun: GunModel | null;
-  man: CrewFigure | null; manLook: string;
-  down: CrewFigure | null; downT: number; downFrom: THREE.Vector3; downYaw0: number;
+  man: Man | null; manLook: string;
+  down: Man | null; downT: number; downFrom: THREE.Vector3; downYaw0: number;
+  helper: CrewActor | null;
   woundT: number;                  // s since the man at the gun was hit (-1 = fine)
   aimYaw: number; aimPitch: number; vYaw: number; vPitch: number;
   cooldown: number; recoilT: number; shots: number; idle: number;
@@ -94,10 +105,15 @@ export class LivingInterior {
   private helper: CrewFigure | null = null;
   private helperPose = newPose();
   private helperTime = 0;
-  private kit = new THREE.Group();
+  private carryKit = new THREE.Group();
   private aidKit: THREE.Mesh | null = null;
   private ammoKit: THREE.Mesh | null = null;
   private bottle: THREE.Mesh | null = null;
+  private high = false;                   // interior 2.0 for this mission
+  private kit: InteriorKit | null = null;
+  private radioActor: CrewActor | null = null;
+  private tailActor: CrewActor | null = null;
+  bombsAboard = true;                     // GunnerController: the bomb bay's load (hidden after bombs away)
 
   refreshCrew() { this.dressCrew(); }
 
@@ -107,7 +123,8 @@ export class LivingInterior {
     if (!f || !this.waist) return;
     const on = task !== 'idle';
     f.root.visible = on;
-    if (this.radioMan) this.radioMan.visible = !on && radioPresent;
+    if (this.radioActor) this.radioActor.root.visible = !on && radioPresent;
+    else if (this.radioMan) this.radioMan.visible = !on && radioPresent;
     if (!on) return;
     this.helperTime += dt;
     const p = this.helperPose, walking = progress < 1;
@@ -120,7 +137,7 @@ export class LivingInterior {
     p.footL.set(.13, .07 + Math.max(0, stride) * .07, stride * .23);
     p.footR.set(-.13, .07 + Math.max(0, -stride) * .07, -stride * .23);
     p.handL.set(.16, walking ? .8 : .55, .28); p.handR.set(-.16, walking ? .8 : .55, .28);
-    f.apply(p); this.kit.position.set(0, walking ? .8 : .55, .32);
+    f.apply(p); this.carryKit.position.set(0, walking ? .8 : .55, .32);
     this.aidKit!.visible = task === 'aid'; this.ammoKit!.visible = task === 'ammo'; this.bottle!.visible = task === 'fire';
   }
 
@@ -139,15 +156,16 @@ export class LivingInterior {
   }
 
   // GunnerController.attach: the waist interior was just built (at the bomber origin)
-  build(bomber: Bomber, waist: THREE.Group, zc: number, leftZ: number, rightZ: number, gunL: GunModel, gunR: GunModel) {
+  build(bomber: Bomber, waist: THREE.Group, zc: number, leftZ: number, rightZ: number, gunL: GunModel, gunR: GunModel, high = false) {
     this.detach();
     this.bomber = bomber;
     this.waist = waist;
+    this.high = high && CrewActor.available();
     this.guns = { waistL: gunL, waistR: gunR };
     this.helper = new CrewFigure(this.lookAt('radio', false));
     this.helper.root.visible = false; waist.add(this.helper.root);
     const M = interiorMats();
-    this.kit.clear(); this.helper.root.add(this.kit);
+    this.carryKit.clear(); this.helper.root.add(this.carryKit);
     this.aidKit = new THREE.Mesh(new THREE.BoxGeometry(.3, .22, .14), M.olive);
     const cross = new THREE.Mesh(new THREE.BoxGeometry(.15, .04, .01), M.sky);
     cross.position.z = .08; this.aidKit.add(cross);
@@ -155,10 +173,12 @@ export class LivingInterior {
     this.ammoKit = new THREE.Mesh(new THREE.BoxGeometry(.34, .25, .16), M.metal);
     this.bottle = new THREE.Mesh(new THREE.CylinderGeometry(.065, .065, .32, 8), M.olive);
     const nozzle = new THREE.Mesh(new THREE.BoxGeometry(.06, .025, .13), M.dark); nozzle.position.set(0, .18, .04); this.bottle.add(nozzle);
-    this.kit.add(this.aidKit, this.ammoKit, this.bottle); this.helperTime = 0;
+    this.carryKit.add(this.aidKit, this.ammoKit, this.bottle); this.helperTime = 0;
     this.statics ??= this.buildStatics(zc);
     waist.add(this.statics);
+    if (this.high) this.kit = new InteriorKit(waist);
     this.shafts ??= new SunShafts(leftZ, rightZ);
+    this.shafts.setVolumetric(this.high);
     waist.add(this.shafts.group);
     this.frost ??= new WindowFrost(leftZ, rightZ);
     waist.add(this.frost.group);
@@ -169,7 +189,7 @@ export class LivingInterior {
     this.breath ??= new BreathFog();
     bomber.root.add(this.breath.points);
     this.dressCrew();
-    this.airframe = cabinAirframe(bomber, zc);
+    this.airframe = cabinAirframe(bomber, zc, this.high ? KIT_FWD_Z : undefined);
     this.cabinOn = false;
     // The cut-down airframe is only for an eye inside the cabin: photo mode, kill cam, theatre and
     // other outside cameras take over without this update running, so decide per render from
@@ -185,8 +205,8 @@ export class LivingInterior {
   }
 
   detach() {
-    this.kit.traverse(o => { if (o instanceof THREE.Mesh) o.geometry.dispose(); });
-    this.kit.removeFromParent(); this.kit.clear();
+    this.carryKit.traverse(o => { if (o instanceof THREE.Mesh) o.geometry.dispose(); });
+    this.carryKit.removeFromParent(); this.carryKit.clear();
     this.helper?.dispose(); this.helper = null;
     this.world.scene.onBeforeRender = () => {};
     this.cabinGeometry(false);
@@ -195,10 +215,15 @@ export class LivingInterior {
     this.brass = null;
     this.breath?.points.removeFromParent();
     if (this.st) {
-      this.st.man?.dispose(); this.st.down?.dispose();
+      this.st.man?.dispose(); this.st.down?.dispose(); this.st.helper?.dispose();
       this.st.yaw.removeFromParent();
       this.st = null;
     }
+    this.radioActor?.dispose(); this.radioActor = null;
+    this.tailActor?.dispose(); this.tailActor = null;
+    if (this.radioMan) this.radioMan.visible = true;
+    if (this.tailMan) this.tailMan.visible = true;
+    this.kit?.undo(); this.kit = null;
     this.statics?.removeFromParent();
     this.shafts?.group.removeFromParent();
     this.frost?.group.removeFromParent();
@@ -211,13 +236,14 @@ export class LivingInterior {
   // GunnerController.setStation (after the player's own guns are on his mount): the other
   // waist gun goes to its crewman
   setStation(id: StationId) {
-    if (this.tailMan) this.tailMan.visible = id !== 'tail';
+    if (this.tailMan) this.tailMan.visible = id !== 'tail' && !this.tailActor;
+    if (this.tailActor) this.tailActor.root.visible = id !== 'tail';
     this.tailGlimpse.visible = id !== 'tail';
     const other: Waist | null = id === 'waistL' ? 'waistR' : id === 'waistR' || id === 'tail' ? 'waistL' : null;
     if (!other || other === this.other || !this.waist) return;
     this.other = other;
     const def = STATIONS[other];
-    if (this.st) { this.st.man?.dispose(); this.st.down?.dispose(); this.st.yaw.removeFromParent(); }
+    if (this.st) { this.st.man?.dispose(); this.st.down?.dispose(); this.st.helper?.dispose(); this.st.yaw.removeFromParent(); }
     const yaw = new THREE.Group(), pitch = new THREE.Group();
     yaw.position.copy(def.pivot);
     yaw.add(pitch);
@@ -228,7 +254,7 @@ export class LivingInterior {
       for (const o of gun.sight) o.visible = true;
     }
     this.st = {
-      id: other, crew: other, yaw, pitch, gun, man: null, manLook: '', down: null, downT: 0, downFrom: new THREE.Vector3(), downYaw0: 0,
+      id: other, crew: other, yaw, pitch, gun, man: null, manLook: '', down: null, downT: 0, downFrom: new THREE.Vector3(), downYaw0: 0, helper: null,
       woundT: -1, aimYaw: 0, aimPitch: 0, vYaw: 0, vPitch: 0, cooldown: 0, recoilT: 0, shots: 0, idle: Math.random() * 10,
     };
     // A wounded man stays beside his empty gun until a real replacement arrives.
@@ -245,7 +271,7 @@ export class LivingInterior {
     return id ? lookOf(manDef(id).look) : lookOf(null, true);
   }
 
-  private newFigure(l: FigureLook) { return new CrewFigure(l); }
+  private newFigure(l: FigureLook): Man { return this.high ? new CrewActor(l) : new CrewFigure(l); }
 
   // put a (fresh) man on the grips of the station gun
   private mount(s: Station, rookie: boolean) {
@@ -254,6 +280,7 @@ export class LivingInterior {
     s.man?.dispose();
     s.man = this.newFigure(this.lookAt(s.crew, rookie));
     s.manLook = key;
+    if (s.man instanceof CrewActor) s.man.play('idle', 0, Math.random());
     s.man.root.position.set(STATIONS[s.id].pivot.x > 0 ? -FIG_SIDE : FIG_SIDE, FLOOR_TOP - STATIONS[s.id].pivot.y, -FIG_BACK);
     s.yaw.add(s.man.root);
   }
@@ -269,17 +296,36 @@ export class LivingInterior {
       s.downYaw0 = s.yaw.rotation.y;
     }
     this.waist!.add(f.root);
-    if (instant) { s.downT = 1; s.downFrom.set(side * 0.34, FLOOR_TOP, wz + 0.42); s.downYaw0 = -side * Math.PI / 2; } else s.downT = 0;
+    if (instant) { s.downT = 1; s.downFrom.set(...downSpot(f, side, wz)); s.downYaw0 = downYaw(f, side); } else s.downT = 0;
+    if (f instanceof CrewActor) f.play(instant ? 'down' : 'hit', instant ? 0 : 0.08);
   }
 
   // Roster looks for the static crew (radio operator, tail gunner): rebuilt each mission
   private dressCrew() {
     const g = this.statics!;
+    if (this.high) {
+      // interior 2.0: the radio operator at his table and the tail gunner at his guns, playing
+      // their clips (low-detail bodies: they are only seen metres away, through doors)
+      if (this.radioMan) this.radioMan.visible = false;
+      if (this.tailMan) this.tailMan.visible = false;
+      this.radioActor?.dispose(); this.tailActor?.dispose();   // refreshCrew: re-dress, don't stack
+      const r = new CrewActor(this.lookAt('radio', false), { far: true });
+      r.root.position.copy(this.radioBase); r.root.rotation.y = Math.PI / 2;
+      r.play('sit', 0, Math.random());
+      g.add(r.root);
+      this.radioActor = r;
+      const t = new CrewActor(this.lookAt('tail', false), { far: true });
+      t.root.position.copy(this.tailBase); t.root.position.y -= 0.02; t.root.rotation.y = Math.PI;
+      t.play('kneel', 0, Math.random());
+      g.add(t.root);
+      this.tailActor = t;
+      return;
+    }
     this.radioMan?.removeFromParent(); this.radioMan?.geometry.dispose();
     this.tailMan?.removeFromParent(); this.tailMan?.geometry.dispose();
     // radio operator: seated at his table on the left, writing in the log
     {
-      const f = this.newFigure(this.lookAt('radio', false));
+      const f = new CrewFigure(this.lookAt('radio', false));
       const p = newPose();
       p.hip.set(0, 0.47, 0); p.lean = 0.32; p.headPitch = 0.25; p.headYaw = 0.2;
       p.handL.set(0.2, 0.74, 0.38); p.handR.set(-0.08, 0.75, 0.42);
@@ -292,7 +338,7 @@ export class LivingInterior {
     }
     // tail gunner: kneeling at his guns, facing aft
     {
-      const f = this.newFigure(this.lookAt('tail', false));
+      const f = new CrewFigure(this.lookAt('tail', false));
       const p = newPose();
       p.hip.set(0, 0.24, 0); p.lean = 0.18; p.headPitch = -0.12;
       p.handL.set(0.13, 0.55, 0.42); p.handR.set(-0.13, 0.55, 0.42);
@@ -316,11 +362,13 @@ export class LivingInterior {
       o.position.set(x, y, z); o.castShadow = shadow; o.receiveShadow = true; g.add(o); return o;
     };
     // --- radio room, through the open door in the forward bulkhead ---
+    const n0 = g.children.length;
     const rLen = 1.7;
     const shell = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, rLen, 24, 1, true).rotateX(Math.PI / 2), M.radioRoom);
     shell.scale.set(A * 0.99, B * 0.99, 1);
     shell.position.set(0, YC, z1 + rLen / 2);
     shell.receiveShadow = true;
+    shell.name = 'radioShell';
     g.add(shell);
     box(1.3, 0.03, rLen, 0, FLOOR_TOP - 0.015, z1 + rLen / 2, M.dark);
     // forward wall (bomb-bay bulkhead) with its own closed door
@@ -355,6 +403,11 @@ export class LivingInterior {
     door.rotation.y = -phi;
     const handle = box(0.025, 0.1, 0.05, 0, 0, 0, M.metal, false);
     g.remove(handle); door.add(handle); handle.position.set(-hx + 0.06, 0.05, 0.03);
+    // everything of the radio room but its shell: replaced by the kit on Medium and up
+    const radio = new THREE.Group();
+    radio.name = 'radioLegacy';
+    for (const o of g.children.slice(n0)) if (o !== shell) radio.add(o);
+    g.add(radio);
 
     // --- ball turret: the top of the ball and its support in the floor, turning with its aim ---
     const bz = STATIONS.ball.pivot.z;
@@ -407,6 +460,7 @@ export class LivingInterior {
     tg.computeVertexNormals();
     const tunnel = new THREE.Mesh(tg, M.wall);
     tunnel.receiveShadow = true;
+    tunnel.name = 'tailTunnel';
     this.tailGlimpse.add(tunnel);
     // formers along the tunnel and the catwalk
     for (let i = 1; i < rings; i += 2) {
@@ -420,6 +474,7 @@ export class LivingInterior {
     const walk = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.025, Math.hypot(pEnd.z - z0, wy1 - wy0)), M.wall);
     walk.position.set(0, (wy0 + wy1) / 2, (z0 + pEnd.z) / 2);
     walk.rotation.x = Math.atan2(wy1 - wy0, Math.abs(pEnd.z - z0));
+    walk.name = 'tailCatwalk';
     this.tailGlimpse.add(walk);
     // tail gunner's compartment: a short cocoon with the window open to the sky behind him
     const tz = zt - 0.3;
@@ -437,7 +492,8 @@ export class LivingInterior {
   // ---------- per frame ----------
   // station: the player's; sunLocal: toward the sun (bomber-local); eyeIn: 0 hip .. 1 eye inside
   // (ADS / free look); cold 0..1; mouth/vent: the player's mask exhaust (bomber-local)
-  update(dt: number, station: StationId, sunLocal: THREE.Vector3, eyeIn: number, cold: number, mouth: THREE.Vector3, vent: THREE.Vector3, ventX: THREE.Vector3, breathRate: number, viewH: number) {
+  update(dt: number, station: StationId, sunLocal: THREE.Vector3, eyeIn: number, cold: number, mouth: THREE.Vector3, vent: THREE.Vector3, ventX: THREE.Vector3, breathRate: number, viewH: number, cam?: THREE.Camera) {
+    this.cam = cam ?? null;
     const b = this.bomber;
     if (!b) return;
     this.brass?.update(dt);
@@ -454,7 +510,12 @@ export class LivingInterior {
     const grow = cold * (0.3 + 0.7 * THREE.MathUtils.smoothstep(this.frostT, 0, 240));
     const own = 0.35 + 0.65 * eyeIn;
     this.frost?.update(grow * (side > 0 ? own : 1), grow * (side < 0 ? own : 1), light);
-    this.shafts?.update(sunLocal, side, own);
+    this.shafts?.update(sunLocal, side, own, dt);
+    if (this.high) {
+      // daylight bouncing round the inside: more of it with the sun pouring through a window
+      interiorLight(THREE.MathUtils.smoothstep(Math.max(sunLocal.x, -sunLocal.x), 0.05, 0.5));
+      if (this.kit?.bombs) this.kit.bombs.visible = this.bombsAboard;
+    }
     this.updateBall(b);
     this.updateGlimpses(dt);
     this.flash.intensity = Math.max(0, this.flash.intensity - dt * 120);
@@ -468,8 +529,20 @@ export class LivingInterior {
     this.ballPitch.rotation.x = -Math.asin(THREE.MathUtils.clamp(bg.cur.y, -1, 1));
   }
 
+  private cam: THREE.Camera | null = null;
+
+  // a clip-driven man in the background: hit once when wounded, then lying still
+  private glimpseActor(a: CrewActor, hurt: boolean, clip: 'sit' | 'kneel', dt: number) {
+    if (hurt && a.clip === clip) a.play('hit', 0.1);
+    else if (hurt && a.clip === 'hit' && a.clipDone) a.play('down', 0.4);
+    else if (!hurt && a.clip !== clip) a.play(clip, 0.5);
+    a.update(dt);
+  }
+
   private updateGlimpses(dt: number) {
     const t = this.world.time, crew = this.world.crew.wounded;
+    if (this.radioActor) this.glimpseActor(this.radioActor, crew.has('radio'), 'sit', dt);
+    if (this.tailActor && this.tailActor.root.visible) this.glimpseActor(this.tailActor, crew.has('tail'), 'kneel', dt);
     if (this.tailMan) {
       const g = this.world.crewGunner('tail');
       const firing = !!g && g.burst > 0 && !!g.target?.alive;
@@ -485,7 +558,6 @@ export class LivingInterior {
       this.radioMan.rotation.set(hurt ? 0.3 : Math.sin(t * 0.4) * 0.015, 0.5 + (hurt ? 0 : Math.sin(t * 0.13) * 0.08), hurt ? -0.35 : 0);
       if (hurt) this.radioMan.position.y -= 0.1;
     }
-    void dt;
   }
 
   private updateGunner(dt: number, s: Station, b: Bomber) {
@@ -509,6 +581,7 @@ export class LivingInterior {
       }
     } else this.mount(s, crewRoster.occupant(s.crew) === null);
     if (s.down) this.animateDown(dt, s);
+    this.updateHelper(dt, s);
 
     // --- aim: the AI gunner's target, or a slow search of the sky ---
     const g = this.world.crewGunner(s.id);
@@ -548,7 +621,52 @@ export class LivingInterior {
       for (const r of s.gun.recoil) r.position.z = -s.recoilT * 0.022;
       s.gun.belt?.tick(dt);
     }
-    if (s.man) this.poseGunner(s, firing);
+    if (s.man instanceof CrewActor) this.poseActor(s, firing, dt);
+    else if (s.man) this.poseGunner(s, firing);
+  }
+
+  // interior 2.0: a crewman kneels by the wounded gunner (out of the player's sight when he
+  // arrives), working on him until the rookie takes the gun
+  private updateHelper(dt: number, s: Station) {
+    // the damage-control helper (assist) is already at work: no second man kneeling
+    const want = this.high && !!s.down && s.woundT >= HELP_FROM && !s.man && !this.helper?.root.visible;
+    if (!want) { if (s.helper) { s.helper.dispose(); s.helper = null; } return; }
+    const side = STATIONS[s.id].pivot.x > 0 ? 1 : -1, wz = STATIONS[s.id].pivot.z;
+    if (!s.helper) {
+      _v.set(-side * 0.2, FLOOR_TOP, downSpot(s.down!, side, wz)[2] - 0.38);   // by his chest
+      if (this.cam && this.waist) {
+        // only appear where the player is not looking
+        this.waist.localToWorld(_w.copy(_v));
+        _d.setFromMatrixPosition(this.cam.matrixWorld);
+        _w.sub(_d).normalize();
+        this.cam.getWorldDirection(_d);
+        if (_w.dot(_d) > 0.45) return;
+      }
+      const h = new CrewActor(lookOf(null, true));
+      h.root.position.copy(_v);
+      h.root.rotation.y = side * Math.PI / 2;
+      h.play('help', 0, Math.random());
+      this.waist!.add(h.root);
+      s.helper = h;
+    }
+    s.helper.update(dt);
+  }
+
+  // interior 2.0: the skinned man on the grips: his clip (fire / idle) under hands IK'd onto
+  // the spade grips, a crouch and lean under a high target, the head down along the gun
+  private poseActor(s: Station, firing: boolean, dt: number) {
+    const a = s.man as CrewActor;
+    a.play(firing ? 'fire' : 'idle', 0.25);
+    a.update(dt);
+    const p = s.aimPitch + STATIONS[s.id].rest.pitch;
+    const cp = Math.cos(p), sp = Math.sin(p);
+    const root = a.root.position;
+    const up = Math.max(0, sp), down = Math.max(0, -sp);
+    for (const side of [1, -1]) {
+      const gx = side * GRIP.x, gy = GRIP.y, gz = GRIP.z;
+      (side > 0 ? this.aimPose.handL : this.aimPose.handR).set(gx - root.x, gy * cp + gz * sp - root.y, -gy * sp + gz * cp - root.z);
+    }
+    a.gunPose(this.aimPose.handL, this.aimPose.handR, 0.06 + 0.3 * up, 0.12 + 0.35 * up - 0.1 * down, -0.15 - p * 0.6);
   }
 
   private crewShot(s: Station, b: Bomber) {
@@ -595,7 +713,7 @@ export class LivingInterior {
     if (firing) { P.hip.x += R() * 0.005; P.hip.z += R() * 0.006; P.headYaw += R() * 0.01; }
     // breathing
     P.hip.y += Math.sin(this.world.time * 1.7 + s.idle) * 0.004;
-    s.man!.apply(P);
+    (s.man as CrewFigure).apply(P);
   }
 
   // the wounded man sliding down beside his gun, then lying still
@@ -605,16 +723,33 @@ export class LivingInterior {
     const wz = STATIONS[s.id].pivot.z;
     s.downT = Math.min(1, s.downT + dt / 0.9);
     const k = s.downT * s.downT * (3 - 2 * s.downT);
+    if (f instanceof CrewActor) {
+      // the clip does the falling; the body slides to where he ends up lying along the walkway
+      const [tx, , tz] = downSpot(f, side, wz), tYaw = downYaw(f, side);
+      f.root.position.set(THREE.MathUtils.lerp(s.downFrom.x, tx, k), FLOOR_TOP, THREE.MathUtils.lerp(s.downFrom.z, tz, k));
+      f.root.rotation.set(0, s.downYaw0 + wrapAngle(tYaw - s.downYaw0) * k, 0);
+      if (f.clip === 'hit' && f.clipDone) f.play('down', 0.5);
+      f.update(dt);
+      return;
+    }
     const tx = side * 0.34, tz = wz + 0.42, tYaw = -side * Math.PI / 2;
     f.root.position.set(THREE.MathUtils.lerp(s.downFrom.x, tx, k), FLOOR_TOP, THREE.MathUtils.lerp(s.downFrom.z, tz, k));
     f.root.rotation.set(0, s.downYaw0 + wrapAngle(tYaw - s.downYaw0) * k, 0);
     if (s.downT < 1 || !f.root.userData.still) {
       lerpPose(this.aimPose, this.slumpPose, k, this.pose);
-      f.apply(this.pose);
+      (f as CrewFigure).apply(this.pose);
       f.root.userData.still = s.downT >= 1;
     }
   }
 }
+
+// Where a wounded waist gunner ends up: the posed figure sits slumped by his gun; the skinned
+// man lies on his back along the walkway, head aft, away from the other window (the left one
+// is the forward one: he lies forward of it, the right gunner lies aft of his)
+function downSpot(f: Man, side: number, wz: number): [number, number, number] {
+  return f instanceof CrewActor ? [side * 0.3, FLOOR_TOP, wz + (side > 0 ? 1.15 : -0.45)] : [side * 0.34, FLOOR_TOP, wz + 0.42];
+}
+function downYaw(f: Man, side: number) { return f instanceof CrewActor ? 0 : -side * Math.PI / 2; }
 
 // The B-17 model has structure (tail-wheel well, the dorsal fin running down into the
 // fuselage, the radio-room hatch) inside the volume of the cabin we build, where it would poke
@@ -623,9 +758,10 @@ export class LivingInterior {
 // geometry with those triangles collapsed, swapped in only while the waist interior is shown
 // (external views of the Sky Queen keep the untouched model). One copy per source geometry.
 type AirframeSwap = { mesh: THREE.Mesh; orig: THREE.BufferGeometry; clean: THREE.BufferGeometry };
-const cleanCache = new WeakMap<THREE.BufferGeometry, THREE.BufferGeometry>();
-export function cabinAirframe(b: Bomber, zc: number): AirframeSwap[] {
-  const zFwd = zc + 3.2 + 1.7, zAft = STATIONS.tail.pivot.z + 0.2;
+const cleanCache = new WeakMap<THREE.BufferGeometry, { zFwd: number; clean: THREE.BufferGeometry }>();
+// zFwdKit: interior 2.0 also clears the bomb bay ahead of the radio room
+export function cabinAirframe(b: Bomber, zc: number, zFwdKit?: number): AirframeSwap[] {
+  const zFwd = zFwdKit ?? zc + 3.2 + 1.7, zAft = STATIONS.tail.pivot.z + 0.2;
   const z0 = zc - 3.2, zt = STATIONS.tail.pivot.z + 0.25;
   const c = new THREE.Vector3();
   const inside = (p: THREE.Vector3) => {
@@ -644,7 +780,8 @@ export function cabinAirframe(b: Bomber, zc: number): AirframeSwap[] {
     const m = o as THREE.Mesh;
     if (!m.isMesh || !o.name.startsWith('airframe') || !m.geometry.index) return;
     const orig = m.geometry;
-    let clean = cleanCache.get(orig);
+    const cached = cleanCache.get(orig);
+    let clean = cached && cached.zFwd === zFwd ? cached.clean : undefined;
     if (!clean) {
       clean = orig.clone();
       const M = new THREE.Matrix4().multiplyMatrices(toLocal, m.matrixWorld);
@@ -664,7 +801,7 @@ export function cabinAirframe(b: Bomber, zc: number): AirframeSwap[] {
         const v = idx.getX(t);
         idx.setX(t + 1, v); idx.setX(t + 2, v);
       }
-      cleanCache.set(orig, clean);
+      cleanCache.set(orig, { zFwd, clean });
     }
     out.push({ mesh: m, orig, clean });
   });
@@ -703,6 +840,7 @@ export function warmLivingInterior(scene: THREE.Scene, at: THREE.Vector3): () =>
   sg.setAttribute('aT', new THREE.BufferAttribute(new Float32Array(sg.getAttribute('position').count), 1));
   sg.setAttribute('aU', new THREE.BufferAttribute(new Float32Array(sg.getAttribute('position').count), 1));
   objs.push(new THREE.Mesh(sg, shaftMaterial()));
+  objs.push(new THREE.Mesh(sg, shaftVolumeMaterial()));
   const fg = box.clone();
   fg.setAttribute('aD', new THREE.BufferAttribute(new Float32Array(fg.getAttribute('position').count), 1));
   objs.push(new THREE.Mesh(fg, frostMaterial()));

@@ -11,7 +11,7 @@ import { Budget, FREQ, GAIN, RATE, fin, freeOnEnd, ok, place, setP, towards } fr
 import { DETAIL, ENGINE_SPECS, RateGate, airLowpass, aspect, blastDuck, blastMix, blastStages, cycloneMix, doppler, engineKindOf, engineRateTrim, soundDelay, thunderLowpass, type AudioDetail, type BlastSize, type DetailCaps, type EngineKind } from './Acoustics';
 import { SYNTH3, type PCM, type Synth3Name } from './Synth3';
 import { FIELD, FIELD_SHOTS, type FieldLoop, type FieldName } from './SynthField';
-import { Cabin } from './Cabin';
+import { Cabin, WAIST_WINDOWS } from './Cabin';
 import { json, take } from '../core/Assets';
 import { AUDIO_MANIFEST, P_LOOPS, P_MENU_MUSIC, P_MISSION_MUSIC, P_REST, P_SFX } from '../core/Preload';
 
@@ -1160,7 +1160,7 @@ export class Sound {
   setCabin(bomber: THREE.Object3D | null) {
     if (!this.cabin || this.mode !== 'bomber') return;
     if (!bomber) { this.cabin.update(null, null, this.maneuver, false); return; }
-    const l = bomber.localToWorld(this.winL.set(1.02, 0.35, -7.44)), r = bomber.localToWorld(this.winR.set(-1.02, 0.35, -7.44));
+    const l = bomber.localToWorld(this.winL.set(...WAIST_WINDOWS[0])), r = bomber.localToWorld(this.winR.set(...WAIST_WINDOWS[1]));
     // the camera far from the cabin (kill cam, photo mode): no window roar
     const near = Math.min(l.distanceTo(this.listenerPos), r.distanceTo(this.listenerPos)) < 25;
     this.cabin.update(near ? l : null, near ? r : null, this.maneuver, this.caps.cabinBed, this.cabinDamage);
