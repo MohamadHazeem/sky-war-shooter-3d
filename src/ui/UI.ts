@@ -1,3 +1,6 @@
+import { hudDetail, hudRuntime, type HudDetail } from './HudDetail';
+import { hudToast } from './HudToast';
+import { BASIC_SETTINGS, graphicsChoice, selectGraphics, type GraphicsChoice } from './SettingsModel';
 import { bombingReport } from './BombingReport';
 import type { BombingResult } from '../game/Bombardier';
 import type { Mission } from '../game/Missions';
@@ -22,6 +25,9 @@ import { t, tx, getLang, setLang, applyDocumentLang, type Lang } from '../i18n';
 import '../i18n/rtl.css';
 
 export interface Settings {
+  hudDetail?: HudDetail;
+  voiceVolume?: number;
+  graphicsMode?: 'auto' | 'manual';
   sensitivity: number;
   invertY: boolean;
   volume: number;
@@ -125,6 +131,7 @@ export class UI {
   private relang: (() => void) | null = null;   // rebuilds the paused screen after a language switch
   // Settings → "Detect best settings": set by game/AutoGraphics.ts (re-runs the graphics benchmark)
   detectGraphics?: () => Promise<{ quality: Settings['quality'] } | null>;
+  openSettings?: (onBack: () => void) => void;
 
   constructor() {
     document.body.insertAdjacentHTML('beforeend', `
@@ -275,9 +282,11 @@ export class UI {
   // ---------------- HUD ----------------
   hud(role: 'gunner' | 'pilot', coop = false) {
     const h = $('#hud');
+    h.dataset.role = role;
+    this.tipUntil = 0;
     h.innerHTML = `
       <div class="hud-tl hud-text">
-        <div class="hud-label" id="hMission"></div>
+        <div class="hud-label" id="hMission"></div><div id="hStatus"></div>
         <div class="objective" id="hObjective"></div>
       </div>
       <div class="hud-tr hud-text">
@@ -367,9 +376,12 @@ export class UI {
     }
   }
 
-  updateCommon(d: { mission: string; objective: string; kills: number; score: number; formation: string }) {
+  updateCommon(d: { round: number; mission: string; objective: string; kills: number; score: number; formation: string }) {
     this.setText('hMission', tx(d.mission));
-    this.setText('hObjective', tx(d.objective));
+    this.setText('hStatus', tx('Score {score} · Round {round}', { score: d.score, round: d.round }));
+    const prompt = hudRuntime.detail === 'standard' ? document.querySelector<HTMLElement>('#evPrompt.show .ev-a') : null;
+    const bonus = hudRuntime.detail === 'standard' ? document.querySelector<HTMLElement>('#objCard.show .oc-t') : null;
+    this.setText('hObjective', prompt?.textContent || bonus?.textContent || tx(d.objective));
     this.setText('hKills', String(d.kills));
     this.setText('hScore', String(d.score));
     this.setText('hFormation', tx(d.formation));
@@ -398,8 +410,8 @@ export class UI {
     d.className = kind;
     d.textContent = tx(text);
     f.prepend(d);
-    while (f.children.length > 5) f.lastChild!.remove();
-    setTimeout(() => d.remove(), 6000);
+    while (f.children.length > (hudRuntime.detail === 'full' ? 5 : 3)) f.lastChild!.remove();
+    setTimeout(() => d.remove(), hudRuntime.detail === 'full' ? 6000 : 2200);
   }
 
   banner(a: string, b: string, ms = 3000) {
@@ -411,9 +423,13 @@ export class UI {
     this.bannerTimer = window.setTimeout(() => e.classList.remove('show'), ms);
   }
 
+  private tipUntil = 0;
+  get tipBusy() { return performance.now() < this.tipUntil; }
   tip(text: string, ms = 5000) {
+    if (this.tipBusy || !hudVisibilityForTips()) return;
     const e = document.getElementById('tip');
     if (!e) return;
+    this.tipUntil = performance.now() + ms;
     text = tx(text);
     e.innerHTML = text;
     e.classList.add('show');
@@ -451,6 +467,9 @@ export class UI {
     const st = $('#settings');
     st.innerHTML = `<div class="screen-center"><div class="box panel">
       <div class="kicker">${t('settings.kicker')}</div><h2 class="h2">${t('common.settings')}</h2>
+      <label class="setting">${tx('Graphics')} <select data-graphics>${(['low', 'medium', 'high', 'auto'] as const).map(q => `<option value="${q}" ${graphicsChoice(s) === q ? 'selected' : ''}>${q === 'auto' ? tx('Auto') : t(`settings.q.${q}`)}</option>`).join('')}</select></label>
+      <label class="setting">${tx('HUD detail')} <select data-k="hudDetail">${(['minimal', 'standard', 'full'] as const).map(q => `<option value="${q}" ${hudDetail(s.hudDetail) === q ? 'selected' : ''}>${tx(q[0].toUpperCase() + q.slice(1))}</option>`).join('')}</select></label>
+      <label class="setting">${tx('Voice volume')} <input type="range" min="0" max="1" step="0.05" data-k="voiceVolume" value="${s.voiceVolume ?? 1}"></label>
       <label class="setting">${t('settings.language')} <select data-lang><option value="en" lang="en">English</option><option value="ar" lang="ar" ${getLang() === 'ar' ? 'selected' : ''}>العربية</option></select></label>
       <label class="setting">${t('settings.difficulty')} <select data-k="difficulty"><option value="recruit" ${s.difficulty === 'recruit' ? 'selected' : ''}>${t('settings.diff.recruit')}</option><option value="veteran" ${s.difficulty === 'veteran' ? 'selected' : ''}>${t('settings.diff.veteran')}</option><option value="ace" ${s.difficulty === 'ace' ? 'selected' : ''}>${t('settings.diff.ace')}</option></select></label>
       <label class="setting">${t('settings.sensitivity')} <input type="range" min="0.3" max="2.5" step="0.05" data-k="sensitivity" value="${s.sensitivity}"></label>
@@ -480,10 +499,10 @@ export class UI {
     st.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-k]').forEach((i) => i.addEventListener('input', () => {
       const k = i.dataset.k as keyof Settings;
       let v: any = i.value;
-      if (k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume' || k === 'fov') v = parseFloat(v);
+      if (k === 'voiceVolume' || k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume' || k === 'fov') v = parseFloat(v);
       if (k === 'weatherEffects' || k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'killCam' || k === 'fpsCounter' || k === 'breathing' || k === 'bookends' || k === 'crewRoom') v = v === 'true';
       (s as any)[k] = v;
-      if (k === 'quality') delete s.gfxAuto;   // the player's choice wins over the first-launch pick
+      if (k === 'quality') { delete s.gfxAuto; s.graphicsMode = 'manual'; st.querySelector<HTMLSelectElement>('[data-graphics]')!.value = graphicsChoice(s); }   // the player's choice wins over the first-launch pick
       if (k === 'fov') { const b = i.closest('label')?.querySelector('.fov-val'); if (b) b.textContent = `${v}°`; }
       onChange(s);
     }));
@@ -498,17 +517,44 @@ export class UI {
       detect.disabled = false;
       detect.textContent = t('settings.detect');
       const sel = st.querySelector<HTMLSelectElement>('[data-k="quality"]');
-      if (r && sel) sel.value = r.quality;
+      if (r && sel) { sel.value = r.quality; st.querySelector<HTMLSelectElement>('[data-graphics]')!.value = 'auto'; }
+    });
+    st.querySelector<HTMLSelectElement>('[data-graphics]')!.addEventListener('change', async e => {
+      const select = e.target as HTMLSelectElement;
+      const previous = graphicsChoice(s);
+      const choice = select.value as GraphicsChoice;
+      if (choice === 'auto') {
+        select.disabled = true;
+        const result = await this.detectGraphics?.();
+        select.disabled = false;
+        if (!result) { select.value = previous; return; }
+        s.quality = result.quality;
+      }
+      selectGraphics(s, choice); onChange(s);
+      st.querySelector<HTMLSelectElement>('[data-k="quality"]')!.value = s.quality;
     });
     // Language: switch now and rebuild this screen (and the paused screen behind it) in place
     st.querySelector<HTMLSelectElement>('[data-lang]')!.addEventListener('change', (e) => {
       const cloud = !!st.querySelector('.cloud');
       setLang((e.target as HTMLSelectElement).value as Lang);
       this.settings(s, onChange, onBack);
-      if (cloud) mountCloudSave(st.querySelector<HTMLElement>('.box')!);
+      if (cloud) mountCloudSave(st.querySelector<HTMLElement>('.settings-advanced')!);
       if ($('#pause').classList.contains('show')) this.relang?.();
     });
     mountAccessibilityPanel(st.querySelector('.box')!);
+    const box = st.querySelector<HTMLElement>('.box')!;
+    const advanced = document.createElement('details'); advanced.className = 'settings-advanced';
+    const summary = document.createElement('summary'); summary.textContent = tx('Advanced'); advanced.append(summary);
+    box.insertBefore(advanced, box.querySelector('[data-back]')!.closest('.row'));
+    for (const row of Array.from(box.children)) {
+      if (row === advanced || row.matches('.kicker, h2, .row')) continue;
+      const control = row.querySelector<HTMLElement>('[data-k]');
+      if (row.querySelector('[data-lang], [data-graphics]') || BASIC_SETTINGS.includes(control?.dataset.k as typeof BASIC_SETTINGS[number])) continue;
+      advanced.append(row);
+    }
+    for (const selector of ['[data-graphics]', '[data-k="difficulty"]', '[data-k="hudDetail"]', '[data-k="volume"]', '[data-k="musicVolume"]', '[data-k="voiceVolume"]', '[data-lang]', '[data-k="sensitivity"]', '[data-k="invertY"]']) {
+      box.insertBefore(box.querySelector(selector)!.closest('.setting')!, advanced);
+    }
     st.classList.add('show');
   }
 
@@ -581,7 +627,7 @@ export class UI {
             <div class="pips">${Array.from({ length: MAX_LEVEL }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</div>
             <button class="btn ${maxed || prog.points < cost ? 'ghost' : ''}" data-u="${u.id}" ${maxed || prog.points < cost ? 'disabled' : ''}>${maxed ? t('common.maxed') : t('common.upgrade', { cost })}</button></div>`;
         }).join('')}</div>
-        <div class="row" style="margin-top:18px"><button class="btn" data-go>${info.next === 'Back' ? t('common.back') : t('hangar.launch', { next: esc(tx(info.next)) })}</button></div>
+        <div class="row" style="margin-top:18px"><button class="btn" data-go>${info.next === 'Back' ? t('common.back') : t('hangar.launch', { next: esc(tx(info.next)) })}</button><button class="btn ghost" data-settings>${t('common.settings')}</button></div>
       </div>`;
       if (role === 'gunner') mountCrewRoster(el.querySelector('.hwrap')!, prog);
       el.querySelectorAll<HTMLButtonElement>('[data-a]').forEach((b) => b.addEventListener('click', () => {
@@ -596,10 +642,15 @@ export class UI {
         if (prog.buy(b.dataset.u as any)) { sound.play('click', null, { gain: 0.6 }); render(); }
       }));
       el.querySelector('[data-go]')!.addEventListener('click', launch);
+      el.querySelector('[data-settings]')!.addEventListener('click', () => {
+        if (!this.openSettings) return;
+        el.classList.remove('show');
+        this.openSettings(() => el.classList.add('show'));
+      });
       mountHangarExtras(el, prog, role, render);
       foldHangar(el);   // phones: collapsible sections (HangarFold.ts)
     };
-    const key = (e: KeyboardEvent) => { if ((e.target as HTMLElement)?.closest('.crewroster')) return; if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); launch(); } };
+    const key = (e: KeyboardEvent) => { if (!el.classList.contains('show') || (e.target as HTMLElement)?.closest('.crewroster')) return; if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); launch(); } };
     const launch = () => { removeEventListener('keydown', key, true); el.classList.remove('show'); onLaunch(); };
     addEventListener('keydown', key, true);
     render();
@@ -607,21 +658,7 @@ export class UI {
   }
 
   // Random field upgrade: a card slides in at the top, holds, and fades (no pause)
-  private toastQ: [string, string, string][] = [];
-  private toastBusy = false;
-  perkToast(label: string, name: string, desc: string) {
-    this.toastQ.push([label, name, desc]);
-    if (!this.toastBusy) this.nextToast();
-  }
-  private nextToast() {
-    const next = this.toastQ.shift();
-    const el = $('#perkToast');
-    if (!next) { this.toastBusy = false; return; }
-    this.toastBusy = true;
-    el.innerHTML = `<div class="k">${esc(tx(next[0]))}</div><div class="t">${esc(tx(next[1]))}</div><div class="d">${esc(tx(next[2]))}</div>`;
-    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
-    setTimeout(() => { el.classList.remove('show'); setTimeout(() => this.nextToast(), 450); }, 3200);
-  }
+  perkToast(label: string, name: string, desc: string) { hudToast(label, name, desc); }
 
   // Between waves: pick one of three perks (click or keys 1-3); the HUD stays visible behind
   perkChoice(cards: PerkDef[], title: string, onPick: (p: PerkDef) => void) {
@@ -727,3 +764,5 @@ function p51Svg() {
       <path data-z="tail" d="M75 90 L50 104 L50 112 L100 112 L100 104 Z" fill="rgba(233,226,207,0.55)"/>
     </g></svg>`;
 }
+
+function hudVisibilityForTips() { return hudRuntime.detail !== 'minimal'; }

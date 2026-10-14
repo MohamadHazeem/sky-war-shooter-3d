@@ -1,3 +1,4 @@
+import { hudRuntime, hudVisibility } from '../ui/HudDetail';
 import { spottingAlpha } from '../render/WeatherPresets';
 import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
@@ -50,8 +51,12 @@ export class GameHud {
   // score pop-ups, the throttled HUD panel refresh, then the 2D overlay
   frame(dt: number) {
     const g = this.g;
+    hudRuntime.inMission = !g.menuMode && (g.state === 'playing' || g.state === 'ending' || g.state === 'paused');
+    hudRuntime.heavy = g.combat.heavyAttack;
+    document.body.classList.toggle('hud-heavy', hudRuntime.heavy);
+    document.body.classList.toggle('hud-mission', hudRuntime.inMission);
     for (const p of this.popups) { p.life -= dt; p.pos.addScaledVector(g.world.formationForward, 75 * dt); }
-    this.popups = this.popups.filter((p) => p.life > 0);
+    for (let i = this.popups.length - 1; i >= 0; i--) if (this.popups[i].life <= 0) this.popups.splice(i, 1);
     this.hudAcc += dt;
     if (!g.menuMode && this.hudAcc > 0.08 && (g.state === 'playing' || g.state === 'ending')) { this.hudAcc = 0; this.updateHud(); }
     this.drawOverlay();
@@ -80,7 +85,7 @@ export class GameHud {
     else if (dir.waveIdx < m.waves.length) objective = 'Scan the sky — more fighters expected';
     if (m.role === 'pilot') objective = g.pilotOps.objective(g.roundIdx, m.rounds ?? 1) ?? objective;
     const mm = Math.floor(w.time / 60), ss = Math.floor(w.time % 60);
-    g.ui.updateCommon({
+    g.ui.updateCommon({ round: g.roundIdx + 1,
       mission: `${m.title.toUpperCase()} · ${mm}:${String(ss).padStart(2, '0')}`,
       objective, kills: g.coop.phase === 'mission' ? g.coop.crewKills : w.stats.kills, score: g.score, formation: `${alive}/${m.bombers} B-17s`,
     });
@@ -99,7 +104,7 @@ export class GameHud {
       for (const id of STATION_ORDER) { const n = this.threats[id] ?? 0; if (n > bn) { bn = n; best = id; } }
       const here = this.threats[g.gunner.station] ?? 0;
       this.idleSeatT = here === 0 && bn > 0 ? this.idleSeatT + 0.08 : 0;
-      if (best && this.idleSeatT > 2.5 && w.time - this.lastSeatTip > 7) {
+      if (hudRuntime.detail === 'full' && best && this.idleSeatT > 2.5 && w.time - this.lastSeatTip > 7) {
         this.lastSeatTip = w.time;
         g.ui.tip(`${bn} fighter${bn > 1 ? 's' : ''} in the ${STATIONS[best].label.toUpperCase()} arc — press <kbd>${STATIONS[best].key}</kbd>`, 2600);
       }
@@ -172,7 +177,8 @@ export class GameHud {
     const cam = g.engine.camera;
     const w = g.world;
     const pl = w.player;
-    if (g.settings.markers && pl) {
+    const visibility = hudVisibility(g.settings.hudDetail);
+    if (visibility.markers && g.settings.markers && pl) {
       for (const a of w.aircraft) {
         ctx.globalAlpha = 1;
         if (a === pl || !a.alive) continue;
@@ -228,7 +234,7 @@ export class GameHud {
     }
     ctx.globalAlpha = 1;
     // Health bars on enemies the player has been hitting
-    for (const f of w.fighters('axis')) {
+    if (visibility.markers) for (const f of w.fighters('axis')) {
       if (!f.alive || w.time - f.lastPlayerHit > 6) continue;
       const p = f.pos.clone().project(cam);
       if (p.z > 1 || Math.abs(p.x) > 1 || Math.abs(p.y) > 1) continue;
@@ -243,7 +249,7 @@ export class GameHud {
     }
     ctx.globalAlpha = 1;
     // Score pop-ups
-    for (const pop of this.popups) {
+    if (visibility.popups) for (const pop of this.popups) {
       const p = pop.pos.clone().project(cam);
       if (p.z > 1) continue;
       const a = Math.min(1, pop.life / 0.6);
@@ -253,11 +259,11 @@ export class GameHud {
     }
     // Radar plot (bottom-left; Tab expands it into the big map)
     this.mapT += ((this.mapOpen ? 1 : 0) - this.mapT) * Math.min(1, (1 / 60) * 9);
-    if (g.mission) Radar.draw(ctx, W, H, w, this.mapT, g.director.incoming, w.time);
-    g.boss.drawHud(ctx, W, H, cam);
+    if (visibility.radar && g.mission) Radar.draw(ctx, W, H, w, this.mapT, g.director.incoming, w.time);
+    if (visibility.extras) g.boss.drawHud(ctx, W, H, cam);
     // Lead indicator aim aid: pip for the enemy nearest the line of fire ('recruit' = only on Recruit difficulty)
     const leadMode = g.settings.leadPip ?? 'recruit';
-    if (pl?.alive && (g.loadout.leadPip || leadMode === 'always' || (leadMode === 'recruit' && g.settings.difficulty === 'recruit'))) this.drawLeadPip(ctx, W, H);
+    if (visibility.markers && pl?.alive && (g.loadout.leadPip || leadMode === 'always' || (leadMode === 'recruit' && g.settings.difficulty === 'recruit'))) this.drawLeadPip(ctx, W, H);
     // Gunner hip reticle: waist guns without the ring sight up (fades as RMB brings the eye down)
     if (g.mission?.role === 'gunner' && ((g.gunner.def.type === 'waist' && g.gunner.ads < 0.6) || g.gunner.def.id === 'top')) {
       const a = g.gunner.def.id === 'top' ? 0.85 : 0.85 * (1 - g.gunner.ads / 0.6);
@@ -297,12 +303,12 @@ export class GameHud {
         ctx.restore();
       }
     }
-    g.coop.draw(ctx, W, H);
-    if (g.mission?.role === 'pilot') { g.pilot.drawOverlay(ctx, W, H); g.pilotOps.drawOverlay(ctx, W, H, cam); } // K-14 reflector sight, padlock, bombers under attack
+    if (visibility.extras) g.coop.draw(ctx, W, H);
+    if (visibility.extras && g.mission?.role === 'pilot') { g.pilot.drawOverlay(ctx, W, H); g.pilotOps.drawOverlay(ctx, W, H, cam); } // K-14 reflector sight, padlock, bombers under attack
     // Hit / kill markers at the aim point
     let hx = W / 2, hy = H / 2;
     if (g.mission?.role === 'pilot') { const gs = g.pilot.gunsight; hx = (gs.x * 0.5 + 0.5) * W; hy = (-gs.y * 0.5 + 0.5) * H; }
-    if (this.hitMarkerT > 0 || this.killMarkerT > 0) {
+    if (visibility.popups && (this.hitMarkerT > 0 || this.killMarkerT > 0)) {
       const kill = this.killMarkerT > 0;
       ctx.strokeStyle = kill ? 'rgba(255,90,60,0.95)' : 'rgba(255,255,255,0.9)';
       ctx.lineWidth = kill ? 2.5 : 1.8;
@@ -311,7 +317,7 @@ export class GameHud {
       for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { ctx.moveTo(hx + sx * b, hy + sy * b); ctx.lineTo(hx + sx * a, hy + sy * a); }
       ctx.stroke();
     }
-    g.feel.draw(ctx, W, H, hx, hy);
+    if (visibility.popups) g.feel.draw(ctx, W, H, hx, hy);
     g.combat.draw(ctx, W, H, hx, hy);
     // Cracked glass sits in front of everything else on the gunner's view
     g.cracks.draw(ctx, W, H);

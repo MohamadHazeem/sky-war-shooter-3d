@@ -24,17 +24,6 @@ const _f = new THREE.Vector3();
 const _r = new THREE.Vector3();
 const _d = new THREE.Vector3();
 
-let blTop = -1, blCheckT = -1e9;
-function hudBlockTop(H: number): number {
-  const now = performance.now();
-  if (now - blCheckT > 250) {
-    blCheckT = now;
-    const r = document.getElementById('hBL')?.getBoundingClientRect();
-    blTop = r && r.height > 0 ? r.top : -1;
-  }
-  return blTop > 0 ? blTop : H - 130;
-}
-
 // Label of the map key (remappable); touch players get a MAP button instead
 const mapKey = () => (document.body.classList.contains('touch') ? '' : keyMap.label('map').toUpperCase() + '  ');
 
@@ -51,7 +40,7 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
   const bigR = Math.min(W, H) * 0.4;
   const R = THREE.MathUtils.lerp(smallR, bigR, e);
   const range = THREE.MathUtils.lerp(SMALL_RANGE, BIG_RANGE, e);
-  const scx = INSET + smallR, scy = Math.max(INSET + smallR, hudBlockTop(H) - 14 - smallR);
+  const scx = H <= 500 ? W - 120 : W - INSET - smallR, scy = H <= 500 ? H - 120 : H - INSET - smallR - 24;
   const cx = THREE.MathUtils.lerp(scx, W / 2, e), cy = THREE.MathUtils.lerp(scy, H / 2, e);
   const k = R / range;
   const toMap = (p: THREE.Vector3, out: { x: number; y: number; clipped: boolean }) => {

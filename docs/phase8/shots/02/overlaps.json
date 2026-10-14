@@ -1,0 +1,4321 @@
+{
+  "results": [
+    {
+      "key": "after-minimal-en-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 634.8125,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 606,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 586,
+          "right": 908.796875,
+          "bottom": 620
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-standard-en-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 53.796875
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 254
+        },
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 634.8125,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 606,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 484,
+          "right": 908.796875,
+          "bottom": 518
+        },
+        {
+          "id": "abilityBar",
+          "left": 592.3203125,
+          "top": 563,
+          "right": 687.6796875,
+          "bottom": 600
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 133.203125,
+          "bottom": 95
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-full-en-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 47.796875
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 16,
+          "top": 108,
+          "right": 346,
+          "bottom": 156
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 306
+        },
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 604.8125,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 492,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 474,
+          "right": 908.796875,
+          "bottom": 508
+        },
+        {
+          "id": "banner",
+          "left": 396.8046875,
+          "top": 205,
+          "right": 883.1953125,
+          "bottom": 244
+        },
+        {
+          "id": "streakMeter",
+          "left": 530,
+          "top": 16,
+          "right": 750,
+          "bottom": 49
+        },
+        {
+          "id": "abilityBar",
+          "left": 480.0234375,
+          "top": 552,
+          "right": 799.9765625,
+          "bottom": 580
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 133.203125,
+          "bottom": 95
+        },
+        {
+          "id": "hudToast",
+          "left": 964,
+          "top": 16,
+          "right": 1264,
+          "bottom": 85
+        },
+        {
+          "id": "radar",
+          "left": 1142.8000000000002,
+          "right": 1258,
+          "top": 558.8,
+          "bottom": 698
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "stress-en-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 47.796875
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 16,
+          "top": 108,
+          "right": 346,
+          "bottom": 156
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 306
+        },
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 604.8125,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 492,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 450,
+          "right": 908.796875,
+          "bottom": 508
+        },
+        {
+          "id": "banner",
+          "left": 396.8046875,
+          "top": 205,
+          "right": 883.1953125,
+          "bottom": 244
+        },
+        {
+          "id": "tip",
+          "left": 371.203125,
+          "top": 516,
+          "right": 908.796875,
+          "bottom": 540
+        },
+        {
+          "id": "streakMeter",
+          "left": 530,
+          "top": 16,
+          "right": 750,
+          "bottom": 49
+        },
+        {
+          "id": "objCard",
+          "left": 16,
+          "top": 330,
+          "right": 346,
+          "bottom": 457.75
+        },
+        {
+          "id": "evPrompt",
+          "left": 440,
+          "top": 338.390625,
+          "right": 840,
+          "bottom": 426.390625
+        },
+        {
+          "id": "spPanel",
+          "left": 470,
+          "top": 60,
+          "right": 810,
+          "bottom": 153.796875
+        },
+        {
+          "id": "abilityBar",
+          "left": 480.0234375,
+          "top": 552,
+          "right": 799.9765625,
+          "bottom": 580
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 133.203125,
+          "bottom": 95
+        },
+        {
+          "id": "hudToast",
+          "left": 964,
+          "top": 16,
+          "right": 1264,
+          "bottom": 85
+        },
+        {
+          "id": "nemCard",
+          "left": 934,
+          "top": 150,
+          "right": 1264,
+          "bottom": 241.6875
+        },
+        {
+          "id": "radar",
+          "left": 1142.8000000000002,
+          "right": 1258,
+          "top": 558.8,
+          "bottom": 698
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-minimal-en-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 641,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 606,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 586,
+          "right": 908.796875,
+          "bottom": 620
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-standard-en-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 53.796875
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 254
+        },
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 619,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 606,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 484,
+          "right": 908.796875,
+          "bottom": 518
+        },
+        {
+          "id": "abilityBar",
+          "left": 592.3203125,
+          "top": 563,
+          "right": 687.6796875,
+          "bottom": 600
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 133.203125,
+          "bottom": 95
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-full-en-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 47.796875
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 16,
+          "top": 108,
+          "right": 346,
+          "bottom": 156
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 306
+        },
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 619,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 606,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 474,
+          "right": 908.796875,
+          "bottom": 508
+        },
+        {
+          "id": "banner",
+          "left": 396.8046875,
+          "top": 205,
+          "right": 883.1953125,
+          "bottom": 244
+        },
+        {
+          "id": "streakMeter",
+          "left": 530,
+          "top": 16,
+          "right": 750,
+          "bottom": 49
+        },
+        {
+          "id": "abilityBar",
+          "left": 480.0234375,
+          "top": 552,
+          "right": 799.9765625,
+          "bottom": 580
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 133.203125,
+          "bottom": 95
+        },
+        {
+          "id": "hudToast",
+          "left": 964,
+          "top": 16,
+          "right": 1264,
+          "bottom": 85
+        },
+        {
+          "id": "radar",
+          "left": 1142.8000000000002,
+          "right": 1258,
+          "top": 558.8,
+          "bottom": 698
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-minimal-en-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 994.8125,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 966,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 942,
+          "right": 1310,
+          "bottom": 980
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-standard-en-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 53.796875
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 254
+        },
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 994.8125,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 966,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 840,
+          "right": 1310,
+          "bottom": 878
+        },
+        {
+          "id": "tip",
+          "left": 610,
+          "top": 888,
+          "right": 1310,
+          "bottom": 912
+        },
+        {
+          "id": "abilityBar",
+          "left": 912.3203125,
+          "top": 923,
+          "right": 1007.6796875,
+          "bottom": 960
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 133.203125,
+          "bottom": 95
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-full-en-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 47.796875
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 16,
+          "top": 108,
+          "right": 346,
+          "bottom": 156
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 306
+        },
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 964.8125,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 852,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 830,
+          "right": 1310,
+          "bottom": 868
+        },
+        {
+          "id": "banner",
+          "left": 595.203125,
+          "top": 205,
+          "right": 1324.796875,
+          "bottom": 244
+        },
+        {
+          "id": "tip",
+          "left": 610,
+          "top": 876,
+          "right": 1310,
+          "bottom": 900
+        },
+        {
+          "id": "streakMeter",
+          "left": 850,
+          "top": 16,
+          "right": 1070,
+          "bottom": 49
+        },
+        {
+          "id": "abilityBar",
+          "left": 800.0234375,
+          "top": 912,
+          "right": 1119.9765625,
+          "bottom": 940
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 133.203125,
+          "bottom": 95
+        },
+        {
+          "id": "hudToast",
+          "left": 1604,
+          "top": 16,
+          "right": 1904,
+          "bottom": 85
+        },
+        {
+          "id": "radar",
+          "left": 1770,
+          "right": 1898,
+          "top": 906,
+          "bottom": 1058
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "stress-en-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 47.796875
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 16,
+          "top": 108,
+          "right": 346,
+          "bottom": 156
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 306
+        },
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 964.8125,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 852,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 830,
+          "right": 1310,
+          "bottom": 868
+        },
+        {
+          "id": "banner",
+          "left": 595.203125,
+          "top": 205,
+          "right": 1324.796875,
+          "bottom": 244
+        },
+        {
+          "id": "tip",
+          "left": 610,
+          "top": 876,
+          "right": 1310,
+          "bottom": 900
+        },
+        {
+          "id": "streakMeter",
+          "left": 850,
+          "top": 16,
+          "right": 1070,
+          "bottom": 49
+        },
+        {
+          "id": "objCard",
+          "left": 16,
+          "top": 330,
+          "right": 346,
+          "bottom": 457.75
+        },
+        {
+          "id": "evPrompt",
+          "left": 760,
+          "top": 507.59375,
+          "right": 1160,
+          "bottom": 595.59375
+        },
+        {
+          "id": "spPanel",
+          "left": 790,
+          "top": 60,
+          "right": 1130,
+          "bottom": 153.796875
+        },
+        {
+          "id": "abilityBar",
+          "left": 800.0234375,
+          "top": 912,
+          "right": 1119.9765625,
+          "bottom": 940
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 133.203125,
+          "bottom": 95
+        },
+        {
+          "id": "hudToast",
+          "left": 1604,
+          "top": 16,
+          "right": 1904,
+          "bottom": 85
+        },
+        {
+          "id": "nemCard",
+          "left": 1574,
+          "top": 150,
+          "right": 1904,
+          "bottom": 241.6875
+        },
+        {
+          "id": "radar",
+          "left": 1770,
+          "right": 1898,
+          "top": 906,
+          "bottom": 1058
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-minimal-en-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 1001,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 966,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 942,
+          "right": 1310,
+          "bottom": 980
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-standard-en-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 53.796875
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 254
+        },
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 979,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 966,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 840,
+          "right": 1310,
+          "bottom": 878
+        },
+        {
+          "id": "abilityBar",
+          "left": 912.3203125,
+          "top": 923,
+          "right": 1007.6796875,
+          "bottom": 960
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 133.203125,
+          "bottom": 95
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-full-en-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 47.796875
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 16,
+          "top": 108,
+          "right": 346,
+          "bottom": 156
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 306
+        },
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 979,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 966,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 830,
+          "right": 1310,
+          "bottom": 868
+        },
+        {
+          "id": "banner",
+          "left": 595.203125,
+          "top": 205,
+          "right": 1324.796875,
+          "bottom": 244
+        },
+        {
+          "id": "streakMeter",
+          "left": 850,
+          "top": 16,
+          "right": 1070,
+          "bottom": 49
+        },
+        {
+          "id": "abilityBar",
+          "left": 800.0234375,
+          "top": 912,
+          "right": 1119.9765625,
+          "bottom": 940
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 133.203125,
+          "bottom": 95
+        },
+        {
+          "id": "hudToast",
+          "left": 1604,
+          "top": 16,
+          "right": 1904,
+          "bottom": 85
+        },
+        {
+          "id": "radar",
+          "left": 1770,
+          "right": 1898,
+          "top": 906,
+          "bottom": 1058
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-minimal-en-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 319,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 320,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 266.40625,
+          "right": 607.6796875,
+          "bottom": 294
+        },
+        {
+          "id": "map",
+          "left": 626.78125,
+          "top": 82,
+          "right": 676,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 684,
+          "top": 82,
+          "right": 728,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 736,
+          "top": 82,
+          "right": 780,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 788,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-standard-en-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 8,
+          "top": 8,
+          "right": 219,
+          "bottom": 39
+        },
+        {
+          "id": "feed",
+          "left": 8,
+          "top": 132,
+          "right": 219,
+          "bottom": 170
+        },
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 319,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 320,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 177.40625,
+          "right": 607.6796875,
+          "bottom": 205
+        },
+        {
+          "id": "tip",
+          "left": 244.765625,
+          "top": 213,
+          "right": 599.234375,
+          "bottom": 236
+        },
+        {
+          "id": "map",
+          "left": 626.78125,
+          "top": 82,
+          "right": 676,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 684,
+          "top": 82,
+          "right": 728,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 736,
+          "top": 82,
+          "right": 780,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 788,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "BUTTON",
+          "left": 355.5,
+          "top": 238,
+          "right": 419.5,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 424.5,
+          "top": 238,
+          "right": 488.5,
+          "bottom": 276
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-full-en-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 8,
+          "top": 8,
+          "right": 219,
+          "bottom": 36
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 8,
+          "top": 78,
+          "right": 219,
+          "bottom": 139
+        },
+        {
+          "id": "feed",
+          "left": 8,
+          "top": 148,
+          "right": 219,
+          "bottom": 186
+        },
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 293,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 320,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 181.40625,
+          "right": 607.6796875,
+          "bottom": 209
+        },
+        {
+          "id": "banner",
+          "left": 261.640625,
+          "top": 120,
+          "right": 582.359375,
+          "bottom": 151
+        },
+        {
+          "id": "tip",
+          "left": 244.765625,
+          "top": 213,
+          "right": 599.234375,
+          "bottom": 236
+        },
+        {
+          "id": "streakMeter",
+          "left": 347,
+          "top": 8,
+          "right": 497,
+          "bottom": 41
+        },
+        {
+          "id": "map",
+          "left": 626.78125,
+          "top": 82,
+          "right": 676,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 684,
+          "top": 82,
+          "right": 728,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 736,
+          "top": 82,
+          "right": 780,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 788,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "BUTTON",
+          "left": 321,
+          "top": 238,
+          "right": 385,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 390,
+          "top": 238,
+          "right": 454,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 459,
+          "top": 238,
+          "right": 523,
+          "bottom": 276
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        },
+        {
+          "id": "hudToast",
+          "left": 599.6875,
+          "top": 8,
+          "right": 836,
+          "bottom": 62.78125
+        },
+        {
+          "id": "radar",
+          "left": 686,
+          "right": 762,
+          "top": 232,
+          "bottom": 332
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "stress-en-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 8,
+          "top": 8,
+          "right": 219,
+          "bottom": 36
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 8,
+          "top": 78,
+          "right": 219,
+          "bottom": 139
+        },
+        {
+          "id": "feed",
+          "left": 8,
+          "top": 148,
+          "right": 219,
+          "bottom": 186
+        },
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 293,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 320,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 161.8125,
+          "right": 607.6796875,
+          "bottom": 209
+        },
+        {
+          "id": "banner",
+          "left": 261.640625,
+          "top": 120,
+          "right": 582.359375,
+          "bottom": 151
+        },
+        {
+          "id": "tip",
+          "left": 244.765625,
+          "top": 213,
+          "right": 599.234375,
+          "bottom": 236
+        },
+        {
+          "id": "streakMeter",
+          "left": 347,
+          "top": 8,
+          "right": 497,
+          "bottom": 41
+        },
+        {
+          "id": "objCard",
+          "left": 8,
+          "top": 232,
+          "right": 219,
+          "bottom": 312.796875
+        },
+        {
+          "id": "evPrompt",
+          "left": 625,
+          "top": 163,
+          "right": 836,
+          "bottom": 214
+        },
+        {
+          "id": "spPanel",
+          "left": 270.0859375,
+          "top": 44,
+          "right": 573.9140625,
+          "bottom": 103.59375
+        },
+        {
+          "id": "map",
+          "left": 626.78125,
+          "top": 82,
+          "right": 676,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 684,
+          "top": 82,
+          "right": 728,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 736,
+          "top": 82,
+          "right": 780,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 788,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "BUTTON",
+          "left": 321,
+          "top": 238,
+          "right": 385,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 390,
+          "top": 238,
+          "right": 454,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 459,
+          "top": 238,
+          "right": 523,
+          "bottom": 276
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        },
+        {
+          "id": "hudToast",
+          "left": 599.6875,
+          "top": 8,
+          "right": 836,
+          "bottom": 62.78125
+        },
+        {
+          "id": "nemCard",
+          "left": 8,
+          "top": 193,
+          "right": 219,
+          "bottom": 225
+        },
+        {
+          "id": "radar",
+          "left": 686,
+          "right": 762,
+          "top": 232,
+          "bottom": 332
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-minimal-en-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 335,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 320,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 266.40625,
+          "right": 607.6796875,
+          "bottom": 294
+        },
+        {
+          "id": "map",
+          "left": 626.78125,
+          "top": 82,
+          "right": 676,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 684,
+          "top": 82,
+          "right": 728,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 736,
+          "top": 82,
+          "right": 780,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 788,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "th-thr",
+          "left": 794,
+          "top": 206,
+          "right": 834,
+          "bottom": 306
+        },
+        {
+          "id": "th-view",
+          "left": 612,
+          "top": 340,
+          "right": 656,
+          "bottom": 384
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        },
+        {
+          "id": "BUTTON",
+          "left": 650.4375,
+          "top": 123,
+          "right": 688.4375,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 694.4375,
+          "top": 123,
+          "right": 740.78125,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 746.78125,
+          "top": 123,
+          "right": 789.015625,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 795.015625,
+          "top": 123,
+          "right": 836,
+          "bottom": 153
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-standard-en-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 8,
+          "top": 8,
+          "right": 219,
+          "bottom": 39
+        },
+        {
+          "id": "feed",
+          "left": 8,
+          "top": 132,
+          "right": 219,
+          "bottom": 170
+        },
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 315,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 320,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 177.40625,
+          "right": 607.6796875,
+          "bottom": 205
+        },
+        {
+          "id": "map",
+          "left": 626.78125,
+          "top": 82,
+          "right": 676,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 684,
+          "top": 82,
+          "right": 728,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 736,
+          "top": 82,
+          "right": 780,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 788,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "BUTTON",
+          "left": 355.5,
+          "top": 238,
+          "right": 419.5,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 424.5,
+          "top": 238,
+          "right": 488.5,
+          "bottom": 276
+        },
+        {
+          "id": "th-thr",
+          "left": 794,
+          "top": 206,
+          "right": 834,
+          "bottom": 306
+        },
+        {
+          "id": "th-view",
+          "left": 612,
+          "top": 340,
+          "right": 656,
+          "bottom": 384
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        },
+        {
+          "id": "BUTTON",
+          "left": 650.4375,
+          "top": 123,
+          "right": 688.4375,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 694.4375,
+          "top": 123,
+          "right": 740.78125,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 746.78125,
+          "top": 123,
+          "right": 789.015625,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 795.015625,
+          "top": 123,
+          "right": 836,
+          "bottom": 153
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-full-en-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 8,
+          "top": 8,
+          "right": 219,
+          "bottom": 36
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 8,
+          "top": 78,
+          "right": 219,
+          "bottom": 139
+        },
+        {
+          "id": "feed",
+          "left": 8,
+          "top": 148,
+          "right": 219,
+          "bottom": 186
+        },
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 315,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 320,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 181.40625,
+          "right": 607.6796875,
+          "bottom": 209
+        },
+        {
+          "id": "banner",
+          "left": 261.640625,
+          "top": 120,
+          "right": 582.359375,
+          "bottom": 151
+        },
+        {
+          "id": "streakMeter",
+          "left": 347,
+          "top": 8,
+          "right": 497,
+          "bottom": 41
+        },
+        {
+          "id": "map",
+          "left": 626.78125,
+          "top": 82,
+          "right": 676,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 684,
+          "top": 82,
+          "right": 728,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 736,
+          "top": 82,
+          "right": 780,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 788,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "BUTTON",
+          "left": 321,
+          "top": 238,
+          "right": 385,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 390,
+          "top": 238,
+          "right": 454,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 459,
+          "top": 238,
+          "right": 523,
+          "bottom": 276
+        },
+        {
+          "id": "th-thr",
+          "left": 794,
+          "top": 206,
+          "right": 834,
+          "bottom": 306
+        },
+        {
+          "id": "th-view",
+          "left": 612,
+          "top": 340,
+          "right": 656,
+          "bottom": 384
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        },
+        {
+          "id": "BUTTON",
+          "left": 650.4375,
+          "top": 123,
+          "right": 688.4375,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 694.4375,
+          "top": 123,
+          "right": 740.78125,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 746.78125,
+          "top": 123,
+          "right": 789.015625,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 795.015625,
+          "top": 123,
+          "right": 836,
+          "bottom": 153
+        },
+        {
+          "id": "hudToast",
+          "left": 599.6875,
+          "top": 8,
+          "right": 836,
+          "bottom": 62.78125
+        },
+        {
+          "id": "radar",
+          "left": 686,
+          "right": 762,
+          "top": 232,
+          "bottom": 332
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-minimal-ar-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 623.8125,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 605,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 584.40625,
+          "right": 908.796875,
+          "bottom": 620
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-standard-ar-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 62.1875
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 257
+        },
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 623.8125,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 605,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 482.40625,
+          "right": 908.796875,
+          "bottom": 518
+        },
+        {
+          "id": "abilityBar",
+          "left": 596.359375,
+          "top": 563,
+          "right": 683.640625,
+          "bottom": 600
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 139.21875,
+          "bottom": 95
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-full-ar-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 54.1875
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 16,
+          "top": 108,
+          "right": 346,
+          "bottom": 165
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 311
+        },
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 589.8125,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 486,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 472.40625,
+          "right": 908.796875,
+          "bottom": 508
+        },
+        {
+          "id": "banner",
+          "left": 396.8046875,
+          "top": 205,
+          "right": 883.1953125,
+          "bottom": 258.59375
+        },
+        {
+          "id": "streakMeter",
+          "left": 530,
+          "top": 16,
+          "right": 750,
+          "bottom": 49
+        },
+        {
+          "id": "abilityBar",
+          "left": 495.0078125,
+          "top": 552,
+          "right": 784.9921875,
+          "bottom": 580
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 139.21875,
+          "bottom": 95
+        },
+        {
+          "id": "hudToast",
+          "left": 964,
+          "top": 16,
+          "right": 1264,
+          "bottom": 100
+        },
+        {
+          "id": "radar",
+          "left": 1142.8000000000002,
+          "right": 1258,
+          "top": 558.8,
+          "bottom": 698
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "stress-ar-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 54.1875
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 16,
+          "top": 108,
+          "right": 346,
+          "bottom": 165
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 311
+        },
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 589.8125,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 486,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 472.40625,
+          "right": 908.796875,
+          "bottom": 508
+        },
+        {
+          "id": "banner",
+          "left": 396.8046875,
+          "top": 205,
+          "right": 883.1953125,
+          "bottom": 258.59375
+        },
+        {
+          "id": "tip",
+          "left": 371.203125,
+          "top": 511,
+          "right": 908.796875,
+          "bottom": 540
+        },
+        {
+          "id": "streakMeter",
+          "left": 530,
+          "top": 16,
+          "right": 750,
+          "bottom": 49
+        },
+        {
+          "id": "objCard",
+          "left": 16,
+          "top": 330,
+          "right": 346,
+          "bottom": 449.875
+        },
+        {
+          "id": "evPrompt",
+          "left": 440,
+          "top": 338.390625,
+          "right": 840,
+          "bottom": 445.390625
+        },
+        {
+          "id": "spPanel",
+          "left": 470,
+          "top": 60,
+          "right": 810,
+          "bottom": 176.796875
+        },
+        {
+          "id": "abilityBar",
+          "left": 495.0078125,
+          "top": 552,
+          "right": 784.9921875,
+          "bottom": 580
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 139.21875,
+          "bottom": 95
+        },
+        {
+          "id": "hudToast",
+          "left": 964,
+          "top": 16,
+          "right": 1264,
+          "bottom": 100
+        },
+        {
+          "id": "nemCard",
+          "left": 932,
+          "top": 150,
+          "right": 1262,
+          "bottom": 255.6875
+        },
+        {
+          "id": "radar",
+          "left": 1142.8000000000002,
+          "right": 1258,
+          "top": 558.8,
+          "bottom": 698
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-minimal-ar-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 630,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 600,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 584.40625,
+          "right": 908.796875,
+          "bottom": 620
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-standard-ar-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 62.1875
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 257
+        },
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 602,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 600,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 482.40625,
+          "right": 908.796875,
+          "bottom": 518
+        },
+        {
+          "id": "abilityBar",
+          "left": 596.359375,
+          "top": 563,
+          "right": 683.640625,
+          "bottom": 600
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 139.21875,
+          "bottom": 95
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-full-ar-1280",
+      "viewport": [
+        1280,
+        720
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 54.1875
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 16,
+          "top": 108,
+          "right": 346,
+          "bottom": 165
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 311
+        },
+        {
+          "id": "hBL",
+          "left": 440,
+          "top": 602,
+          "right": 840,
+          "bottom": 704
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 600,
+          "right": 346,
+          "bottom": 704
+        },
+        {
+          "id": "subs",
+          "left": 371.203125,
+          "top": 472.40625,
+          "right": 908.796875,
+          "bottom": 508
+        },
+        {
+          "id": "banner",
+          "left": 396.8046875,
+          "top": 205,
+          "right": 883.1953125,
+          "bottom": 258.59375
+        },
+        {
+          "id": "streakMeter",
+          "left": 530,
+          "top": 16,
+          "right": 750,
+          "bottom": 49
+        },
+        {
+          "id": "abilityBar",
+          "left": 495.0078125,
+          "top": 552,
+          "right": 784.9921875,
+          "bottom": 580
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 139.21875,
+          "bottom": 95
+        },
+        {
+          "id": "hudToast",
+          "left": 964,
+          "top": 16,
+          "right": 1264,
+          "bottom": 100
+        },
+        {
+          "id": "radar",
+          "left": 1142.8000000000002,
+          "right": 1258,
+          "top": 558.8,
+          "bottom": 698
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-minimal-ar-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 983.8125,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 965,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 939.609375,
+          "right": 1310,
+          "bottom": 980
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-standard-ar-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 62.1875
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 257
+        },
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 983.8125,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 965,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 837.609375,
+          "right": 1310,
+          "bottom": 878
+        },
+        {
+          "id": "abilityBar",
+          "left": 916.359375,
+          "top": 923,
+          "right": 1003.640625,
+          "bottom": 960
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 139.21875,
+          "bottom": 95
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-full-ar-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 54.1875
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 16,
+          "top": 108,
+          "right": 346,
+          "bottom": 165
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 311
+        },
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 949.8125,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 846,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 827.609375,
+          "right": 1310,
+          "bottom": 868
+        },
+        {
+          "id": "banner",
+          "left": 595.203125,
+          "top": 205,
+          "right": 1324.796875,
+          "bottom": 258.59375
+        },
+        {
+          "id": "streakMeter",
+          "left": 850,
+          "top": 16,
+          "right": 1070,
+          "bottom": 49
+        },
+        {
+          "id": "abilityBar",
+          "left": 815.0078125,
+          "top": 912,
+          "right": 1104.9921875,
+          "bottom": 940
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 139.21875,
+          "bottom": 95
+        },
+        {
+          "id": "hudToast",
+          "left": 1604,
+          "top": 16,
+          "right": 1904,
+          "bottom": 100
+        },
+        {
+          "id": "radar",
+          "left": 1770,
+          "right": 1898,
+          "top": 906,
+          "bottom": 1058
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "stress-ar-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 54.1875
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 16,
+          "top": 108,
+          "right": 346,
+          "bottom": 165
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 311
+        },
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 949.8125,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 846,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 827.609375,
+          "right": 1310,
+          "bottom": 868
+        },
+        {
+          "id": "banner",
+          "left": 595.203125,
+          "top": 205,
+          "right": 1324.796875,
+          "bottom": 258.59375
+        },
+        {
+          "id": "tip",
+          "left": 610,
+          "top": 871,
+          "right": 1310,
+          "bottom": 900
+        },
+        {
+          "id": "streakMeter",
+          "left": 850,
+          "top": 16,
+          "right": 1070,
+          "bottom": 49
+        },
+        {
+          "id": "objCard",
+          "left": 16,
+          "top": 330,
+          "right": 346,
+          "bottom": 449.875
+        },
+        {
+          "id": "evPrompt",
+          "left": 760,
+          "top": 507.59375,
+          "right": 1160,
+          "bottom": 614.59375
+        },
+        {
+          "id": "spPanel",
+          "left": 790,
+          "top": 60,
+          "right": 1130,
+          "bottom": 176.796875
+        },
+        {
+          "id": "abilityBar",
+          "left": 815.0078125,
+          "top": 912,
+          "right": 1104.9921875,
+          "bottom": 940
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 139.21875,
+          "bottom": 95
+        },
+        {
+          "id": "hudToast",
+          "left": 1604,
+          "top": 16,
+          "right": 1904,
+          "bottom": 100
+        },
+        {
+          "id": "nemCard",
+          "left": 1572,
+          "top": 150,
+          "right": 1902,
+          "bottom": 255.6875
+        },
+        {
+          "id": "radar",
+          "left": 1770,
+          "right": 1898,
+          "top": 906,
+          "bottom": 1058
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-minimal-ar-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 990,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 960,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 939.609375,
+          "right": 1310,
+          "bottom": 980
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-standard-ar-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 62.1875
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 257
+        },
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 962,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 960,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 837.609375,
+          "right": 1310,
+          "bottom": 878
+        },
+        {
+          "id": "abilityBar",
+          "left": 916.359375,
+          "top": 923,
+          "right": 1003.640625,
+          "bottom": 960
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 139.21875,
+          "bottom": 95
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-full-ar-1920",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 16,
+          "top": 16,
+          "right": 346,
+          "bottom": 54.1875
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 16,
+          "top": 108,
+          "right": 346,
+          "bottom": 165
+        },
+        {
+          "id": "feed",
+          "left": 16,
+          "top": 180,
+          "right": 346,
+          "bottom": 311
+        },
+        {
+          "id": "hBL",
+          "left": 760,
+          "top": 962,
+          "right": 1160,
+          "bottom": 1064
+        },
+        {
+          "id": "hBR",
+          "left": 16,
+          "top": 960,
+          "right": 346,
+          "bottom": 1064
+        },
+        {
+          "id": "subs",
+          "left": 610,
+          "top": 827.609375,
+          "right": 1310,
+          "bottom": 868
+        },
+        {
+          "id": "banner",
+          "left": 595.203125,
+          "top": 205,
+          "right": 1324.796875,
+          "bottom": 258.59375
+        },
+        {
+          "id": "streakMeter",
+          "left": 850,
+          "top": 16,
+          "right": 1070,
+          "bottom": 49
+        },
+        {
+          "id": "abilityBar",
+          "left": 815.0078125,
+          "top": 912,
+          "right": 1104.9921875,
+          "bottom": 940
+        },
+        {
+          "id": "controlsHint",
+          "left": 16,
+          "top": 72,
+          "right": 139.21875,
+          "bottom": 95
+        },
+        {
+          "id": "hudToast",
+          "left": 1604,
+          "top": 16,
+          "right": 1904,
+          "bottom": 100
+        },
+        {
+          "id": "radar",
+          "left": 1770,
+          "right": 1898,
+          "top": 906,
+          "bottom": 1058
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-minimal-ar-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 311,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 319,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 266.40625,
+          "right": 607.6796875,
+          "bottom": 294
+        },
+        {
+          "id": "map",
+          "left": 774.28125,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 722.28125,
+          "top": 82,
+          "right": 766.28125,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 670.28125,
+          "top": 82,
+          "right": 714.28125,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 618.28125,
+          "top": 82,
+          "right": 662.28125,
+          "bottom": 122
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-standard-ar-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 8,
+          "top": 8,
+          "right": 219,
+          "bottom": 46
+        },
+        {
+          "id": "feed",
+          "left": 8,
+          "top": 132,
+          "right": 219,
+          "bottom": 170
+        },
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 311,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 319,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 177.40625,
+          "right": 607.6796875,
+          "bottom": 205
+        },
+        {
+          "id": "map",
+          "left": 774.28125,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 722.28125,
+          "top": 82,
+          "right": 766.28125,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 670.28125,
+          "top": 82,
+          "right": 714.28125,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 618.28125,
+          "top": 82,
+          "right": 662.28125,
+          "bottom": 122
+        },
+        {
+          "id": "BUTTON",
+          "left": 424.5,
+          "top": 238,
+          "right": 488.5,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 355.5,
+          "top": 238,
+          "right": 419.5,
+          "bottom": 276
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-full-ar-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 8,
+          "top": 8,
+          "right": 219,
+          "bottom": 42
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 8,
+          "top": 78,
+          "right": 219,
+          "bottom": 130
+        },
+        {
+          "id": "feed",
+          "left": 8,
+          "top": 148,
+          "right": 219,
+          "bottom": 186
+        },
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 282,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 319,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 181.40625,
+          "right": 607.6796875,
+          "bottom": 209
+        },
+        {
+          "id": "banner",
+          "left": 261.640625,
+          "top": 120,
+          "right": 582.359375,
+          "bottom": 159.59375
+        },
+        {
+          "id": "streakMeter",
+          "left": 347,
+          "top": 8,
+          "right": 497,
+          "bottom": 31
+        },
+        {
+          "id": "map",
+          "left": 774.28125,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 722.28125,
+          "top": 82,
+          "right": 766.28125,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 670.28125,
+          "top": 82,
+          "right": 714.28125,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 618.28125,
+          "top": 82,
+          "right": 662.28125,
+          "bottom": 122
+        },
+        {
+          "id": "BUTTON",
+          "left": 459,
+          "top": 238,
+          "right": 523,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 390,
+          "top": 238,
+          "right": 454,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 321,
+          "top": 238,
+          "right": 385,
+          "bottom": 276
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        },
+        {
+          "id": "hudToast",
+          "left": 599.6875,
+          "top": 8,
+          "right": 836,
+          "bottom": 62.78125
+        },
+        {
+          "id": "radar",
+          "left": 686,
+          "right": 762,
+          "top": 232,
+          "bottom": 332
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "stress-ar-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 8,
+          "top": 8,
+          "right": 219,
+          "bottom": 42
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 8,
+          "top": 78,
+          "right": 219,
+          "bottom": 130
+        },
+        {
+          "id": "feed",
+          "left": 8,
+          "top": 148,
+          "right": 219,
+          "bottom": 186
+        },
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 282,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 319,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 161.8125,
+          "right": 607.6796875,
+          "bottom": 209
+        },
+        {
+          "id": "banner",
+          "left": 261.640625,
+          "top": 120,
+          "right": 582.359375,
+          "bottom": 159.59375
+        },
+        {
+          "id": "tip",
+          "left": 244.765625,
+          "top": 208,
+          "right": 599.234375,
+          "bottom": 236
+        },
+        {
+          "id": "streakMeter",
+          "left": 347,
+          "top": 8,
+          "right": 497,
+          "bottom": 31
+        },
+        {
+          "id": "objCard",
+          "left": 22,
+          "top": 232,
+          "right": 233,
+          "bottom": 308.796875
+        },
+        {
+          "id": "evPrompt",
+          "left": 625,
+          "top": 163,
+          "right": 836,
+          "bottom": 214
+        },
+        {
+          "id": "spPanel",
+          "left": 270.0859375,
+          "top": 44,
+          "right": 573.9140625,
+          "bottom": 116.59375
+        },
+        {
+          "id": "map",
+          "left": 774.28125,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 722.28125,
+          "top": 82,
+          "right": 766.28125,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 670.28125,
+          "top": 82,
+          "right": 714.28125,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 618.28125,
+          "top": 82,
+          "right": 662.28125,
+          "bottom": 122
+        },
+        {
+          "id": "BUTTON",
+          "left": 459,
+          "top": 238,
+          "right": 523,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 390,
+          "top": 238,
+          "right": 454,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 321,
+          "top": 238,
+          "right": 385,
+          "bottom": 276
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        },
+        {
+          "id": "hudToast",
+          "left": 599.6875,
+          "top": 8,
+          "right": 836,
+          "bottom": 62.78125
+        },
+        {
+          "id": "nemCard",
+          "left": 12,
+          "top": 193,
+          "right": 223,
+          "bottom": 225
+        },
+        {
+          "id": "radar",
+          "left": 686,
+          "right": 762,
+          "top": 232,
+          "bottom": 332
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-minimal-ar-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 326,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 314,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 266.40625,
+          "right": 607.6796875,
+          "bottom": 294
+        },
+        {
+          "id": "map",
+          "left": 774.28125,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 722.28125,
+          "top": 82,
+          "right": 766.28125,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 670.28125,
+          "top": 82,
+          "right": 714.28125,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 618.28125,
+          "top": 82,
+          "right": 662.28125,
+          "bottom": 122
+        },
+        {
+          "id": "th-thr",
+          "left": 794,
+          "top": 206,
+          "right": 834,
+          "bottom": 306
+        },
+        {
+          "id": "th-view",
+          "left": 612,
+          "top": 340,
+          "right": 656,
+          "bottom": 384
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        },
+        {
+          "id": "BUTTON",
+          "left": 798,
+          "top": 123,
+          "right": 836,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 752.859375,
+          "top": 123,
+          "right": 792,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 699.46875,
+          "top": 123,
+          "right": 746.859375,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 646.8125,
+          "top": 123,
+          "right": 693.46875,
+          "bottom": 153
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-standard-ar-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 8,
+          "top": 8,
+          "right": 219,
+          "bottom": 46
+        },
+        {
+          "id": "feed",
+          "left": 8,
+          "top": 132,
+          "right": 219,
+          "bottom": 170
+        },
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 302,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 314,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 177.40625,
+          "right": 607.6796875,
+          "bottom": 205
+        },
+        {
+          "id": "map",
+          "left": 774.28125,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 722.28125,
+          "top": 82,
+          "right": 766.28125,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 670.28125,
+          "top": 82,
+          "right": 714.28125,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 618.28125,
+          "top": 82,
+          "right": 662.28125,
+          "bottom": 122
+        },
+        {
+          "id": "BUTTON",
+          "left": 424.5,
+          "top": 238,
+          "right": 488.5,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 355.5,
+          "top": 238,
+          "right": 419.5,
+          "bottom": 276
+        },
+        {
+          "id": "th-thr",
+          "left": 794,
+          "top": 206,
+          "right": 834,
+          "bottom": 306
+        },
+        {
+          "id": "th-view",
+          "left": 612,
+          "top": 340,
+          "right": 656,
+          "bottom": 384
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        },
+        {
+          "id": "BUTTON",
+          "left": 798,
+          "top": 123,
+          "right": 836,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 752.859375,
+          "top": 123,
+          "right": 792,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 699.46875,
+          "top": 123,
+          "right": 746.859375,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 646.8125,
+          "top": 123,
+          "right": 693.46875,
+          "bottom": 153
+        }
+      ],
+      "issues": []
+    },
+    {
+      "key": "after-pilot-full-ar-844",
+      "viewport": [
+        844,
+        390
+      ],
+      "rects": [
+        {
+          "id": "hud-tl hud-text",
+          "left": 8,
+          "top": 8,
+          "right": 219,
+          "bottom": 42
+        },
+        {
+          "id": "hud-tr hud-text",
+          "left": 8,
+          "top": 78,
+          "right": 219,
+          "bottom": 130
+        },
+        {
+          "id": "feed",
+          "left": 8,
+          "top": 148,
+          "right": 219,
+          "bottom": 186
+        },
+        {
+          "id": "hBL",
+          "left": 236.3203125,
+          "top": 302,
+          "right": 607.6796875,
+          "bottom": 384
+        },
+        {
+          "id": "hBR",
+          "left": 8,
+          "top": 314,
+          "right": 219,
+          "bottom": 384
+        },
+        {
+          "id": "subs",
+          "left": 236.3203125,
+          "top": 181.40625,
+          "right": 607.6796875,
+          "bottom": 209
+        },
+        {
+          "id": "banner",
+          "left": 261.640625,
+          "top": 120,
+          "right": 582.359375,
+          "bottom": 159.59375
+        },
+        {
+          "id": "streakMeter",
+          "left": 347,
+          "top": 8,
+          "right": 497,
+          "bottom": 31
+        },
+        {
+          "id": "map",
+          "left": 774.28125,
+          "top": 82,
+          "right": 832,
+          "bottom": 122
+        },
+        {
+          "id": "help",
+          "left": 722.28125,
+          "top": 82,
+          "right": 766.28125,
+          "bottom": 122
+        },
+        {
+          "id": "pause",
+          "left": 670.28125,
+          "top": 82,
+          "right": 714.28125,
+          "bottom": 122
+        },
+        {
+          "id": "full",
+          "left": 618.28125,
+          "top": 82,
+          "right": 662.28125,
+          "bottom": 122
+        },
+        {
+          "id": "BUTTON",
+          "left": 459,
+          "top": 238,
+          "right": 523,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 390,
+          "top": 238,
+          "right": 454,
+          "bottom": 276
+        },
+        {
+          "id": "BUTTON",
+          "left": 321,
+          "top": 238,
+          "right": 385,
+          "bottom": 276
+        },
+        {
+          "id": "th-thr",
+          "left": 794,
+          "top": 206,
+          "right": 834,
+          "bottom": 306
+        },
+        {
+          "id": "th-view",
+          "left": 612,
+          "top": 340,
+          "right": 656,
+          "bottom": 384
+        },
+        {
+          "id": "th-look",
+          "left": 664,
+          "top": 340,
+          "right": 708,
+          "bottom": 384
+        },
+        {
+          "id": "th-zoom",
+          "left": 716,
+          "top": 338,
+          "right": 762,
+          "bottom": 384
+        },
+        {
+          "id": "th-fire",
+          "left": 770,
+          "top": 320,
+          "right": 834,
+          "bottom": 384
+        },
+        {
+          "id": "BUTTON",
+          "left": 798,
+          "top": 123,
+          "right": 836,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 752.859375,
+          "top": 123,
+          "right": 792,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 699.46875,
+          "top": 123,
+          "right": 746.859375,
+          "bottom": 153
+        },
+        {
+          "id": "BUTTON",
+          "left": 646.8125,
+          "top": 123,
+          "right": 693.46875,
+          "bottom": 153
+        },
+        {
+          "id": "hudToast",
+          "left": 599.6875,
+          "top": 8,
+          "right": 836,
+          "bottom": 62.78125
+        },
+        {
+          "id": "radar",
+          "left": 686,
+          "right": 762,
+          "top": 232,
+          "bottom": 332
+        }
+      ],
+      "issues": []
+    }
+  ],
+  "checks": [
+    {
+      "key": "after-minimal-en-1280",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "minimal"
+    },
+    {
+      "key": "after-standard-en-1280",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "standard"
+    },
+    {
+      "key": "after-full-en-1280",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 5,
+      "toastVisible": true,
+      "detail": "full"
+    },
+    {
+      "key": "after-pilot-minimal-en-1280",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "minimal"
+    },
+    {
+      "key": "after-pilot-standard-en-1280",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "standard"
+    },
+    {
+      "key": "after-pilot-full-en-1280",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 5,
+      "toastVisible": true,
+      "detail": "full"
+    },
+    {
+      "key": "after-minimal-en-1920",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "minimal"
+    },
+    {
+      "key": "after-standard-en-1920",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "standard"
+    },
+    {
+      "key": "after-full-en-1920",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 5,
+      "toastVisible": true,
+      "detail": "full"
+    },
+    {
+      "key": "after-pilot-minimal-en-1920",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "minimal"
+    },
+    {
+      "key": "after-pilot-standard-en-1920",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "standard"
+    },
+    {
+      "key": "after-pilot-full-en-1920",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 5,
+      "toastVisible": true,
+      "detail": "full"
+    },
+    {
+      "key": "after-minimal-en-844",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "minimal"
+    },
+    {
+      "key": "after-standard-en-844",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "standard"
+    },
+    {
+      "key": "after-full-en-844",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 5,
+      "toastVisible": true,
+      "detail": "full"
+    },
+    {
+      "key": "after-pilot-minimal-en-844",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "minimal"
+    },
+    {
+      "key": "after-pilot-standard-en-844",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "standard"
+    },
+    {
+      "key": "after-pilot-full-en-844",
+      "lang": "en",
+      "expectedLang": "en",
+      "heavy": true,
+      "feed": 5,
+      "toastVisible": true,
+      "detail": "full"
+    },
+    {
+      "key": "after-minimal-ar-1280",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "minimal"
+    },
+    {
+      "key": "after-standard-ar-1280",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "standard"
+    },
+    {
+      "key": "after-full-ar-1280",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 5,
+      "toastVisible": true,
+      "detail": "full"
+    },
+    {
+      "key": "after-pilot-minimal-ar-1280",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "minimal"
+    },
+    {
+      "key": "after-pilot-standard-ar-1280",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "standard"
+    },
+    {
+      "key": "after-pilot-full-ar-1280",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 5,
+      "toastVisible": true,
+      "detail": "full"
+    },
+    {
+      "key": "after-minimal-ar-1920",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "minimal"
+    },
+    {
+      "key": "after-standard-ar-1920",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "standard"
+    },
+    {
+      "key": "after-full-ar-1920",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 5,
+      "toastVisible": true,
+      "detail": "full"
+    },
+    {
+      "key": "after-pilot-minimal-ar-1920",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "minimal"
+    },
+    {
+      "key": "after-pilot-standard-ar-1920",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "standard"
+    },
+    {
+      "key": "after-pilot-full-ar-1920",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 5,
+      "toastVisible": true,
+      "detail": "full"
+    },
+    {
+      "key": "after-minimal-ar-844",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "minimal"
+    },
+    {
+      "key": "after-standard-ar-844",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "standard"
+    },
+    {
+      "key": "after-full-ar-844",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 5,
+      "toastVisible": true,
+      "detail": "full"
+    },
+    {
+      "key": "after-pilot-minimal-ar-844",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "minimal"
+    },
+    {
+      "key": "after-pilot-standard-ar-844",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 3,
+      "toastVisible": false,
+      "detail": "standard"
+    },
+    {
+      "key": "after-pilot-full-ar-844",
+      "lang": "ar",
+      "expectedLang": "ar",
+      "heavy": true,
+      "feed": 5,
+      "toastVisible": true,
+      "detail": "full"
+    }
+  ],
+  "errors": []
+}

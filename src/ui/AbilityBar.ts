@@ -1,3 +1,4 @@
+import { abilityVisible, hudRuntime } from './HudDetail';
 // HUD for the active abilities: three slots at the bottom centre, each with its key, an
 // icon, a cooldown sweep (dark wedge that shrinks as it recharges), a draining ring while
 // the ability runs and a pulsing glow when it is ready. Also owns the Focus screen tint.
@@ -30,7 +31,7 @@ const ICONS: Record<string, string> = {
     <path d="M16 2.5v4M16 25.5v4M2.5 16h4M25.5 16h4"/><path d="M16 16l5-3.5" stroke-width="1.4"/></g></svg>`,
 };
 
-interface SlotEls { root: HTMLElement; time: HTMLElement; cdQ: number; actQ: number; ready: boolean; active: boolean; secs: number }
+interface SlotEls { touch?: HTMLElement; root: HTMLElement; time: HTMLElement; cdQ: number; actQ: number; ready: boolean; active: boolean; secs: number }
 
 export class AbilityBar {
   private root: HTMLElement;
@@ -71,6 +72,10 @@ export class AbilityBar {
     for (const v of views) {
       const s = this.slots.get(v.id);
       if (!s) continue;
+      if (document.body.classList.contains('touch')) {
+        if (!s.touch?.isConnected) s.touch = document.querySelector<HTMLElement>(`#touchHud [data-ab="${v.id}"]`) ?? undefined;
+        if (s.touch) s.touch.hidden = !abilityVisible(hudRuntime.detail, v.ready);
+      }
       const cdQ = Math.round(v.cd * 240);
       if (cdQ !== s.cdQ) { s.cdQ = cdQ; s.root.style.setProperty('--cd', String(cdQ / 240)); }
       const actQ = Math.round(v.active * 240);

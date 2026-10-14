@@ -9,6 +9,7 @@ import { installShare } from './game/Share';
 import { AutoGraphics } from './game/AutoGraphics';
 import { analytics } from './net/Analytics';
 import './style.css';
+import './ui/cleanHud.css';
 
 async function boot() {
   const ui = new UI();
@@ -64,6 +65,8 @@ async function boot() {
   };
   (window as any).sws.assetsReady = () => isMissionReady();
   if (import.meta.env.DEV) {
+    const { checkHudOverlaps } = await import('./ui/HudOverlap');
+    (window as any).sws.hudOverlaps = checkHudOverlaps;
     const { autoplay } = await import('./dev/autoplay');
     const campaignDev = await import('./game/CampaignState');
     (window as any).sws.secondTour = {

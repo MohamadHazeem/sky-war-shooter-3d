@@ -1,3 +1,4 @@
+import { difficultyBalance } from '../ui/SettingsModel';
 import { secondTourMedal } from './CampaignState';
 import { isSecondTourId } from './SecondTour';
 import * as THREE from 'three';
@@ -74,9 +75,10 @@ export class MissionFlow {
     g.world.aiGunnerFactor = 1;
     g.world.playerFocus = m.role === 'gunner' ? 0.75 : 0.2;
     const diff = g.settings.difficulty;
-    g.world.difficulty = diff === 'recruit' ? 0.8 : diff === 'ace' ? 1.2 : 1;
-    g.world.playerDamageScale *= diff === 'recruit' ? 0.7 : diff === 'ace' ? 1.3 : 1;
-    if (diff === 'recruit') g.world.aiGunnerFactor *= 1.2;
+    const balance = difficultyBalance(diff);
+    g.world.difficulty = balance.enemy;
+    g.world.playerDamageScale *= balance.damage;
+    g.world.aiGunnerFactor *= balance.allies;
     g.worldEvents.reset(); g.trauma = 0;
     g.hud.reset();
     g.prog.perks = []; g.killsSincePerk = 0;

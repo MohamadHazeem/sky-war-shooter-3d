@@ -1,3 +1,4 @@
+import { setHudDetail } from '../ui/HudDetail';
 import { Atmos } from '../render/Atmosphere';
 import { weatherNow } from '../render/WeatherState';
 import type { WeatherPreset } from '../render/WeatherPresets';
@@ -167,6 +168,7 @@ export class Game {
     if (!raw.includes('"quality"')) firstRunGraphics(this.settings);
     this.progress = load<Progress>(PROGRESS_KEY, { unlocked: 0, medals: {}, best: {}, survival: [] });
     this.applySettings();
+    ui.openSettings = (onBack) => { ui.settings(this.settings, (s) => { this.settings = s; this.applySettings(); }, onBack); this.mountCloud(); };
     this.worldEvents.wire();
     this.modes = new ModeRunner(this.world, ui, { comboMult: () => this.combo.scoreMult, setScore: (n) => { this.score = n; } });
     this.pacing = new Pacing(this.world, ui, engine, this.modes, { spawn: (wv) => { this.director.incomingOff = null; this.director.spawnWave(wv); }, score: (n) => { this.score += n; }, adaptive: this.adaptive, station: () => (this.mission?.role === 'gunner' ? this.gunner.station : null) });
@@ -252,6 +254,8 @@ export class Game {
 
   applySettings() {
     const s = this.settings;
+    setHudDetail(s.hudDetail);
+    sound.setVoiceVolume(s.voiceVolume ?? 1);
     weatherNow.effects = s.weatherEffects !== false;
     this.input.sensitivity = s.sensitivity;
     this.input.invertY = s.invertY;
@@ -374,7 +378,7 @@ export class Game {
   }
 
   private mountCloud() {
-    const host = document.querySelector<HTMLElement>('#settings .box');
+    const host = document.querySelector<HTMLElement>('#settings .settings-advanced');
     if (host) mountCloudSave(host);
     mountStatsToggle(host);
   }
