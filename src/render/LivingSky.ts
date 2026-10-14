@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { registerFlipMaterial } from './Flipbooks';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { Atmos, atmosUniforms, skyGLSL } from './Atmosphere';
 import { mulberry } from './Particles';
@@ -308,9 +309,10 @@ export class LivingSky {
       vertexShader: /* glsl */ `
         uniform float uTime; uniform float uSpeed; uniform float uPx;
         attribute vec4 iP;
-        varying vec2 vQ; varying float vA; varying float vFlash; varying vec3 vW; varying float vSeed;
+        varying vec2 vQ; varying float vA; varying float vFlash; varying vec3 vW; varying float vSeed; varying float vAge;
         void main() {
           float age = uTime - iP.w;
+          vAge = age;
           float alive = step(0.0, age) * step(age, 14.0);
           vec3 p = iP.xyz - vec3(0.0, 0.0, uSpeed * max(age, 0.0)) + vec3(0.0, age * 0.8, 0.0);
           vec3 wp = (modelMatrix * vec4(p, 1.0)).xyz;
@@ -330,10 +332,24 @@ export class LivingSky {
         }`,
       fragmentShader: /* glsl */ `
         ${hazeGLSL}
-        uniform vec3 uSunCol;
-        varying vec2 vQ; varying float vA; varying float vFlash; varying vec3 vW; varying float vSeed;
+        uniform vec3 uSunCol; uniform sampler2D tA; uniform float uFlipOn;
+        varying vec2 vQ; varying float vA; varying float vFlash; varying vec3 vW; varying float vSeed; varying float vAge;
         void main() {
           float r = length(vQ);
+          if (uFlipOn > 0.5) {
+            // the simulated 88 mm puff (render/Flipbooks.ts 'flak' block), turned per burst
+            float fr = min(63.0, floor(vAge / 2.7 * 63.0));
+            float an = vSeed * 6.2832, cs = cos(an), sn = sin(an);
+            vec2 q = clamp(0.5 + mat2(cs, sn, -sn, cs) * vQ * 0.3, 0.0, 1.0);
+            vec2 uv = (vec2(0.0, 8.0) + vec2(mod(fr, 8.0), floor(fr / 8.0)) + vec2(q.x, q.y)) / vec2(16.0, 24.0);
+            vec4 t = texture2D(tA, uv);
+            float fa = t.a * vA;
+            if (fa < 0.004 && vFlash < 0.01) discard;
+            vec3 fc = vec3(0.045, 0.04, 0.036) * (0.45 + 0.9 * t.b) + uSunCol * 0.012 * (0.4 + 0.6 * t.b);
+            fc = mix(fc, vec3(9.0, 5.0, 2.0), vFlash * (1.0 - smoothstep(0.0, 0.5, r)));
+            gl_FragColor = vec4(hazed(fc, vW), max(fa, vFlash * vA * (1.0 - smoothstep(0.0, 0.5, r))));
+            return;
+          }
           // soft, slightly lopsided smudge (two overlapping blobs)
           vec2 o = vec2(cos(vSeed * 40.0), sin(vSeed * 40.0)) * 0.28;
           float b1 = 1.0 - smoothstep(0.1, 0.75, length(vQ - o * 0.6));
@@ -346,6 +362,7 @@ export class LivingSky {
         }`,
       transparent: true, depthWrite: false,
     }));
+    registerFlipMaterial(this.flak.material as THREE.ShaderMaterial);   // the simulated flak puff, once loaded
     this.flak.frustumCulled = false;
     this.flak.renderOrder = 6;
     this.group.add(this.flak);

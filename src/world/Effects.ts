@@ -8,11 +8,15 @@ import { heatHaze } from '../render/HeatHaze';
 import { cloudLights } from '../render/CloudLights';
 import { weatherNow } from '../render/WeatherState';
 import { Flares } from './Flares';
+import { FlipbookFX, flipAtlas, loadFlipbooks, type FlipKind, type FlipOpts } from '../render/Flipbooks';
+import { SmokeRibbons } from '../render/SmokeRibbons';
+import { Sparks } from '../render/Sparks';
 
 const _v = new THREE.Vector3();
 const _p = new THREE.Vector3();
 const _d = new THREE.Vector3();
 const R = () => Math.random() * 2 - 1;
+const UP = new THREE.Vector3(0, 1, 0);
 
 // Explosion classes, by what blew up. 'small' covers partial blasts (a wing shearing off,
 // engine fires, explosive rounds, bomber secondaries); 'boss' is a warship (warshipBlast).
@@ -46,16 +50,26 @@ const C_GUN_SMOKE: [number, number, number] = [0.55, 0.55, 0.55];
 const C_WISP0: [number, number, number] = [0.11, 0.07, 0.045];
 const C_WISP1: [number, number, number] = [0.085, 0.08, 0.075];
 const C_TFIRE1: [number, number, number] = [2, 0.4, 0.05];
+const C_SPARK0: [number, number, number] = [30, 18, 6];
+const C_SPARK1: [number, number, number] = [8, 2, 0.5];
 // scratch colours for jittered puffs (spawn copies them)
 const _f0: [number, number, number] = [0, 0, 0];
 const _f1: [number, number, number] = [0, 0, 0];
 
 // Visual effects layer: volumetric fireballs and smoke balls, shock rings, combat light,
 // smoke/fire/flash particles, burning debris, falling drop tanks, parachutes.
+// Effects 2.0 (Medium and up, docs/phase10/06-effects.md): explosions, flak bursts, engine fire and
+// trail smoke are offline-simulated flipbooks relit in game (render/Flipbooks.ts, once its atlases
+// have loaded), smoke trails are continuous ribbon volumes (render/SmokeRibbons.ts) and sparks,
+// fragments and embers are motion-stretched streaks (render/Sparks.ts). Low keeps the sprites.
 export class Effects {
   readonly smoke = new ParticleSystem(9000, false);
   readonly glow = new ParticleSystem(5000, true);
   readonly vol = new VolumeFX(128);
+  readonly flip = new FlipbookFX(2400);
+  readonly ribbons = new SmokeRibbons(40);
+  readonly sparkFx = new Sparks(900);
+  private hiFx = true;   // a tier above Low: Effects 2.0 on (Game.frame -> setQuality)
   readonly flares: Flares;   // parachute flares / target markers (night)
   // false: the older particle-only explosions (A/B comparisons, very weak GPUs)
   volumetric = true;
@@ -81,9 +95,11 @@ export class Effects {
   private lineMat = new THREE.LineBasicMaterial({ color: 0x777777 });
   // reusable particle options for the per-frame emitters (no allocation per spawn)
   private o: ParticleOpts = { pos: new THREE.Vector3(), life: 1, size0: 1, size1: 1, color0: [1, 1, 1] };
+  private fo: FlipOpts = { kind: 'smoke', pos: new THREE.Vector3(), life: 1, size0: 1, size1: 1, albedo: [0.1, 0.1, 0.1] };
+  private alb: [number, number, number] = [0, 0, 0];
 
   constructor(private scene: THREE.Scene) {
-    scene.add(this.smoke.mesh, this.glow.mesh, this.vol.mesh);
+    scene.add(this.smoke.mesh, this.glow.mesh, this.vol.mesh, this.flip.mesh, this.ribbons.mesh, this.sparkFx.tr.mesh);
     const g = new THREE.SphereGeometry(3.4, 18, 8, 0, Math.PI * 2, 0, Math.PI * 0.42);
     this.chuteGeo = g;
     for (let i = 0; i < LIGHTS; i++) {
@@ -112,6 +128,40 @@ export class Effects {
     o.pos = pos; o.vel = vel; o.life = life; o.size0 = s0; o.size1 = s1; o.color0 = c0; o.color1 = c1;
     o.alpha0 = a0; o.alpha1 = a1; o.frame = frame; o.drag = drag; o.rise = rise; o.lit = lit; o.rotVel = rotVel; o.age = age;
     sys.spawn(o);
+  }
+
+  // ---------------- Effects 2.0 ----------------
+  // Graphics tier (Game.frame, every frame): Low keeps the sprite effects; any tier above starts
+  // loading the flipbook atlases (once) and turns on the ribbons and streaks
+  setQuality(q: string) {
+    const low = q === 'low';
+    this.vol.setQuality(low);
+    this.hiFx = !low;
+    this.ribbons.enabled = !low && this.volumetric;
+    if (!low && !flipAtlas.ready && !flipAtlas.failed) loadFlipbooks();
+  }
+  // ribbons and streaks (no assets needed)
+  private get fx2() { return this.hiFx && this.volumetric; }
+  // the simulated flipbooks (once loaded)
+  get flipOn() { return this.hiFx && this.volumetric && flipAtlas.ready; }
+
+  // One flipbook particle: the shared options object filled in (no allocation)
+  private flipbook(kind: FlipKind, pos: THREE.Vector3, vel: THREE.Vector3 | undefined, life: number, play: number, s0: number, s1: number,
+    albedo: [number, number, number], alpha0: number, alpha1: number, heat: number, tau: number, drag: number, rise: number, windK: number,
+    rot?: number, age = 0, f0 = 0, f1 = 63, curve = 1) {
+    const f = this.fo;
+    f.kind = kind; f.pos = pos; f.vel = vel; f.life = life; f.play = play; f.f0 = f0; f.f1 = f1; f.curve = curve; f.size0 = s0; f.size1 = s1;
+    // upright by default (the simulated gas rises), turned a little at random
+    f.rot = rot ?? this.flip.angleOf(UP) + (Math.random() - 0.5) * 0.7; f.rotVel = undefined; f.albedo = albedo; f.alpha0 = alpha0; f.alpha1 = alpha1; f.heat = heat; f.tau = tau;
+    f.drag = drag; f.rise = rise; f.windK = windK; f.age = age; f.soft = undefined;
+    f.delay = this.fDelay; f.fadeIn = this.fFade;
+    this.fDelay = 0; this.fFade = 0.05;
+    this.flip.spawn(f);
+  }
+
+  private grey(g: number): [number, number, number] {
+    this.alb[0] = g; this.alb[1] = g * 0.97; this.alb[2] = g * 0.94;
+    return this.alb;
   }
 
   // ---------------- combat light ----------------
@@ -181,7 +231,8 @@ export class Effects {
     this.glow.spawn({ pos, vel, life: 0.09, size0: 2.6, size1: 3.6, color0: [40, 26, 10], alpha0: 1, alpha1: 0, frame: 1 });
     for (let i = 0; i < 4; i++) {
       _v.set(R(), R(), R()).normalize().multiplyScalar(25 + Math.random() * 35).add(vel);
-      this.glow.spawn({ pos, vel: _v, life: 0.25 + Math.random() * 0.2, size0: 0.35, size1: 0.1, color0: [30, 18, 6], alpha0: 1, alpha1: 0, frame: 1, drag: 2, rise: -9 });
+      if (this.fx2) this.sparkFx.spawn(pos, _v, 0.25 + Math.random() * 0.2, 0.1, C_SPARK0, C_SPARK1, 2, 9);
+      else this.glow.spawn({ pos, vel: _v, life: 0.25 + Math.random() * 0.2, size0: 0.35, size1: 0.1, color0: [30, 18, 6], alpha0: 1, alpha1: 0, frame: 1, drag: 2, rise: -9 });
     }
     // Grey-brown paint and skin puffs plus a tiny dark fragment or two, so each hit
     // reads as material breaking off the airframe. Smoke layer is normal-blended,
@@ -212,7 +263,9 @@ export class Effects {
     const n = heavy ? 10 : 5;
     for (let i = 0; i < n; i++) {
       _v.set(R(), R(), R()).normalize().multiplyScalar(20 + Math.random() * 40).add(vel);
-      this.glow.spawn({ pos, vel: _v, life: 0.15 + Math.random() * 0.2, size0: 0.18, size1: 0.05, color0: [30, 18, 6], color1: [8, 2, 0.5], alpha0: 1, alpha1: 0, frame: 1, drag: 3, rise: -9 });
+      // streaks: torn metal flying off, cooling as it goes
+      if (this.fx2) this.sparkFx.spawn(pos, _v, 0.18 + Math.random() * 0.3, 0.06, C_SPARK0, C_SPARK1, 3, 9);
+      else this.glow.spawn({ pos, vel: _v, life: 0.15 + Math.random() * 0.2, size0: 0.18, size1: 0.05, color0: [30, 18, 6], color1: [8, 2, 0.5], alpha0: 1, alpha1: 0, frame: 1, drag: 3, rise: -9 });
     }
     this.glow.spawn({ pos, vel, life: 0.07, size0: heavy ? 2.5 : 1.0, size1: heavy ? 3.5 : 1.5, color0: [25, 16, 7], alpha0: 1, alpha1: 0, frame: 1 });
     if (heavy) {
@@ -239,7 +292,22 @@ export class Effects {
     if (from && seg > back * 3 + 20) from = undefined;
     else if (from) back = Math.max(back, seg * 0.75);
     _v.copy(vel).multiplyScalar(0.25);
-    if (fire) {
+    const flip = this.flipOn && far < 3500;
+    if (fire && flip) {
+      // simulated flame licks streaming back from the fire (render/Flipbooks.ts 'fire'): about half
+      // a flame apart along the path flown since the last call, each one turning to smoke
+      const s0 = 1.9 * scale, W = s0 * 2.6;
+      const n = far < 2500 ? Math.min(8, Math.max(1, Math.ceil(back / (s0 * 0.55)))) : 1;
+      const rot = this.flip.angleOf(_d.copy(vel).negate());
+      for (let i = 0; i < n; i++) {
+        const t = ((i + Math.random()) / n) * span;
+        this.trailAt(pos, vel, t, span, from);
+        const k = 0.8 + Math.random() * 0.45, life = 0.45 + Math.random() * 0.3;
+        this.flipbook('fire', _p, _v, life, life, W * k, W * k * 1.35, this.grey(0.05), 0.95, 0.6, 1.1 + Math.random() * 0.4, 0.7, 0, 0, 0, rot + (Math.random() - 0.5) * 0.5, t);
+      }
+      // the fire lights what is around it (its own wing and nacelle, a neighbour), flickering
+      if (this.vol.hasCam && far < 260) this.flashLight(pos, (700 + Math.random() * 600) * scale, 0.09, 0xff7428, 26 * scale);
+    } else if (fire) {
       const s0 = 1.9 * scale;
       // flame puffs about a third of their size apart along that path (far away two do: sub-pixel
       // gaps); the denser they are, the fainter each one, so the ribbon keeps its brightness
@@ -256,6 +324,25 @@ export class Effects {
     const dark = Math.min(1, level * 1.3);
     const c = 0.75 - dark * 0.68;
     if (fire) { _f1[0] = 0.07; _f1[1] = 0.065; _f1[2] = 0.06; } else { _f1[0] = c; _f1[1] = c; _f1[2] = c * 0.98; }
+    // a continuous ribbon volume along the whole trail (render/SmokeRibbons.ts)
+    if (this.fx2 && far < 4500) this.ribbons.feed(pos, vel, (0.45 + level * 0.75) * scale, fire ? 0.06 : c, fire ? 0.95 : 0.3 + level * 0.6);
+    if (flip) {
+      // simulated puffs on top of it: oily black / grey smoke, or thin white glycol vapour
+      const glycol = !fire && level < 0.45;
+      const ns = far < 900 ? 2 : 1;
+      for (let i = 0; i < ns; i++) {
+        if (Math.random() < 0.35) continue;   // irregular: no evenly spaced row of puffs
+        const t = ns > 1 ? ((i + Math.random()) / ns) * span : 0;
+        this.trailAt(pos, vel, t, span, from);
+        const k = 0.85 + Math.random() * 0.3, life = 5 + level * 6;
+        const W = (2.6 + level * 3) * scale * k;
+        _p.x += R() * W * 0.25; _p.y += R() * W * 0.25; _p.z += R() * W * 0.25;
+        // faint enough to merge into the ribbon: texture and billow on it, not a row of beads
+        this.flipbook(glycol ? 'wisp' : 'smoke', _p, _v, life, life * 0.85, W, W * 4, fire ? this.grey(0.05) : this.grey(c),
+          (0.13 + level * 0.25) * (ns > 1 ? 0.7 : 1) * (0.7 + Math.random() * 0.6), 0.1, 0, 1, 0.6, 0.4, 1, undefined, t);
+      }
+      return;
+    }
     // near the camera two smoke puffs per call, so the young (still small) trail head is continuous too
     const ns = far < 900 && this.smoke.count < 6000 ? 2 : 1;
     for (let i = 0; i < ns; i++) {
@@ -330,6 +417,7 @@ export class Effects {
     const mid = dist > VOL_MID;
     if (mid) { lobes = Math.min(lobes, 1); embers = Math.ceil(embers / 3); if (r < 25) shock = 0; }
     if (this.vol.free < 24) { lobes = Math.min(lobes, 1); smokeBalls = Math.min(smokeBalls, 1); }
+    if (this.flipOn) { this.flipBlast(pos, vel, r, lobes, shock, smokeBalls, smokeLife, embers, light, range, glowSprite, smokeDelay, mid); return; }
     // flash: a white-hot core for a few frames and a broad warm halo
     this.emit(this.glow, pos, vel, 0.09, r * 1.1, r * 2.4, C_FLASH, undefined, 1, 0, 1, 0, 0, false, 0);
     this.emit(this.glow, pos, vel, 0.16, r * 1.8, r * 3.2, C_HALO, undefined, 0.7, 0, 1, 0, 0, false, 0);
@@ -363,6 +451,73 @@ export class Effects {
       }
     }
   }
+
+  // Effects 2.0 blast: the simulated explosion flipbook (fireball cooling into its own rolling smoke),
+  // simulated fireball lobes thrown out of it, the shock shell, lingering volumetric smoke balls,
+  // and embers as streaks
+  private flipBlast(pos: THREE.Vector3, vel: THREE.Vector3, r: number, lobes: number, shock: number, smokeBalls: number, smokeLife: number,
+    embers: number, light: number, range: number, glowSprite: boolean, smokeDelay: number, mid: boolean) {
+    this.emit(this.glow, pos, vel, 0.09, r * 1.1, r * 2.4, C_FLASH, undefined, 1, 0, 1, 0, 0, false, 0);
+    this.emit(this.glow, pos, vel, 0.16, r * 1.8, r * 3.2, C_HALO, undefined, 0.7, 0, 1, 0, 0, false, 0);
+    if (glowSprite) this.emit(this.glow, pos, vel, 0.75, r * 6, r * 9, C_CLOUDGLOW, undefined, 0.8, 0, 1, 0, 0, false, 0);
+    this.flashLight(pos, light, 0.5, 0xff8a3a, range);
+    cloudLights.flash(pos, 1.0, 0.48, 0.18, 3, 120 + r * 10, 0.7);
+    const W = r * 5.2;
+    const play = 2.6 * Math.pow(r / 5, 0.35);
+    const life = play + smokeLife * 0.7;
+    if (mid) {
+      // at range the whole simulated blast: fire frames in the first second, then its smoke ball rolls on
+      this.flipbook('explosion', pos, vel, life, life, W, W * 1.8, this.grey(0.06), 1, 0.45, 0.9, play * 0.6, 2.2, r * 0.04, 0.7, undefined, 0, 0, 52, 0.5);
+    } else {
+      // close up: the ray-marched fireball (crisp at any size) for the burning second, and the
+      // simulated smoke rising out of it as it cools: the flipbook from its smoke frames on
+      this.fireball(pos, vel, r);
+      this.later2(0.45, 0.6);
+      this.flipbook('explosion', pos, vel, life, life, W * 1.1, W * 1.9, this.grey(0.06), 1, 0.45, 0.35, play * 0.3, 2.2, r * 0.04, 0.7, undefined, 0, 12, 56, 0.6);
+    }
+    for (let i = 0; i < lobes; i++) {
+      _d.set(R(), R() * 0.7, R()).normalize();
+      _p.copy(pos).addScaledVector(_d, r * (0.35 + Math.random() * 0.35));
+      _v.copy(vel).addScaledVector(_d, r * (0.9 + Math.random() * 1.1));
+      if (!mid) {
+        const f = this.fireball(_p, _v, r * (0.45 + Math.random() * 0.25), 1.05 + Math.random() * 0.3, 0.28 + Math.random() * 0.2, Math.random() * 0.12, 2.4 + Math.random() * 0.8);
+        if (f) f.drag = 2.8;
+      }
+      const w = W * (0.45 + Math.random() * 0.2);
+      const lf = play + smokeLife * 0.45;
+      if (!mid) this.later2(0.35 + Math.random() * 0.2, 0.5);
+      this.flipbook('fireball', _p, _v, lf, lf, w, w * 1.7, this.grey(0.06), 0.95, 0.35,
+        mid ? 0.75 + Math.random() * 0.25 : 0.3, play * 0.5, 2.8, r * 0.03, 0.7, undefined, Math.random() * 0.1, mid ? 0 : 10, 56, 0.55);
+    }
+    if (shock > 0) this.shock(pos, vel, r * shock);
+    // the rest of the smoke cloud: simulated puffs that billow up out of the dying fire
+    for (let i = 1; i < smokeBalls; i++) {
+      _d.set(R(), R() * 0.5 + 0.2, R()).normalize();
+      _p.copy(pos).addScaledVector(_d, r * 0.6);
+      const w = r * (3.6 + Math.random());
+      const lf = smokeLife * (0.8 + Math.random() * 0.4);
+      this.later2(smokeDelay + i * 0.25, 0.8);
+      this.flipbook('smoke', _p, _v.copy(vel).multiplyScalar(0.5), lf, lf, w, w * 2.2, this.grey(0.075 + Math.random() * 0.03), 0.9, 0.3, 0, 1, 0.8, 0.25 + r * 0.02, 1, undefined, 0, 4, 60, 0.7);
+    }
+    // burning fragments arcing away, drawn as cooling streaks
+    for (let i = 0; i < embers; i++) {
+      _v.set(R(), R(), R()).normalize().multiplyScalar((30 + Math.random() * 70) * Math.sqrt(r / 5)).add(vel);
+      this.sparkFx.spawn(pos, _v, 0.7 + Math.random() * 1.1, 0.3 * Math.sqrt(r / 5), C_EMBER, C_EMBER1, 1.4, 9);
+    }
+    if (!mid) {
+      // a few smoke wisps torn off the edge
+      for (let i = 0; i < 3; i++) {
+        _v.set(R(), R(), R()).normalize().multiplyScalar(r * (0.6 + Math.random() * 0.8)).add(_p.copy(vel).multiplyScalar(0.6));
+        const w = r * (2 + Math.random());
+        this.flipbook('wisp', pos, _v, 7 + Math.random() * 4, 6, w, w * 3, this.grey(0.08), 0.7, 0, 0, 1, 1.2, 0.4, 1, undefined, 0.15);
+      }
+    }
+  }
+
+  // The next flipbook() starts `delay` s from now, fading in over `fade` s
+  private later2(delay: number, fade: number) { this.fDelay = delay; this.fFade = fade; }
+  private fDelay = 0;
+  private fFade = 0.05;
 
   explosion(pos: THREE.Vector3, vel: THREE.Vector3, scale = 1, kind?: ExplosionKind) {
     if (!this.volumetric) { this.legacyExplosion(pos, vel, scale); return; }
@@ -403,6 +558,11 @@ export class Effects {
   private farBlast(pos: THREE.Vector3, vel: THREE.Vector3, k: number) {
     cloudLights.flash(pos, 1.0, 0.48, 0.18, 2.6, 120 + k * 40, 0.6);
     this.emit(this.glow, pos, vel, 0.12, 8 * k, 16 * k, C_FLASH, undefined, 1, 0, 1, 0, 0, false, 0);
+    if (this.flipOn) {
+      const W = 31 * k;
+      this.flipbook('explosion', pos, vel, 9, 9, W, W * 1.8, this.grey(0.06), 1, 0.4, 1.0, 1.3, 2.2, 0.2, 0.7, undefined, 0, 0, 52, 0.5);
+      return;
+    }
     this.emit(this.glow, pos, vel, 0.8, 9 * k, 15 * k, C_FLAME0, C_FLAME1, 0.95, 0, 2, 0, 0, false, 0.6);
     for (let i = 0; i < 3; i++) {
       _v.set(R(), R(), R()).normalize().multiplyScalar(4 * k).add(vel);
@@ -416,7 +576,20 @@ export class Effects {
     if (this.vol.camDist(pos) > VOL_FAR) { this.farBlast(pos, vel, k * 0.7); return; }
     const r = 4.2 * k;
     this.flashLight(pos, 3500 * k, 0.25, 0xff9944, 60 + 40 * k);
-    this.emit(this.glow, pos, vel, 0.08, r * 1.2, r * 2.2, C_FLASH, undefined, 1, 0, 1, 0, 0, false, 0);
+    // (a secondary pop: under Effects 2.0 its flash no longer outshines the fireball it starts)
+    this.emit(this.glow, pos, vel, 0.08, r * 1.2, r * 2.2, C_FLASH, undefined, this.flipOn ? 0.35 : 1, 0, 1, 0, 0, false, 0);
+    if (this.flipOn) {
+      const W = r * 5.5;
+      if (this.vol.camDist(pos) > VOL_MID) {
+        this.flipbook('fireball', pos, vel, 6, 6, W, W * 1.7, this.grey(0.06), 1, 0.3, 1.0, 0.9, 2.2, r * 0.03, 0.7, undefined, 0, 0, 56, 0.55);
+        return;
+      }
+      // close: the ray-marched fireball, then the simulated smoke rising out of it
+      this.fireball(pos, vel, r, 1.2, 0.3, 0, 2.4);
+      this.later2(0.4, 0.5);
+      this.flipbook('fireball', pos, vel, 7, 7, W, W * 1.9, this.grey(0.07), 0.9, 0.3, 0.3, 0.5, 1.6, r * 0.03, 0.8, undefined, 0, 12, 60, 0.6);
+      return;
+    }
     this.fireball(pos, vel, r, 1.2, 0.3, 0, 2.4);
     this.smokeBall(pos, vel, r * 0.9, 9 + Math.random() * 3, 0.08, 0.2);
   }
@@ -458,6 +631,7 @@ export class Effects {
   private flakBurst(pos: THREE.Vector3, scale: number, core: boolean) {
     // a brief orange glow inside the cloud it bursts in or near (CloudLights; dark skies only)
     cloudLights.flash(pos, 1.0, 0.55, 0.22, 3 * scale, 150 * scale, 0.35);
+    if (this.flipOn) { this.flipFlak(pos, scale, core); return; }
     if (!this.volumetric || this.vol.camDist(pos) > VOL_FAR) { this.legacyFlakBurst(pos, scale, core); return; }
     this.flashLight(pos, 2600 * scale, 0.16, 0xffaa66, 110);
     if (core) this.glow.spawn({ pos, life: 0.1, size0: 5, size1: 11, color0: [40, 22, 8], alpha0: 1, alpha1: 0, frame: 1 });
@@ -494,6 +668,41 @@ export class Effects {
       q.heat0 = 0.5; q.tau = 0.06; q.grey = g + 0.02; q.dens = 1.4;
       q.billow0 = 0.9; q.billow1 = 1.3; q.drag = 1.6; q.rise = 0.2; q.windK = 1;
       q.fadeIn = 0.05; q.fadeOut = 0.5;
+    }
+  }
+
+  // Effects 2.0 flak: the simulated 88 mm burst (an orange heart inside an instantly black, lumpy
+  // puff that keeps billowing), one or two more lumps around it, fragments as streaks. A flipbook
+  // costs one quad at any range, and never drops below a few pixels: the barrage still reads as a
+  // box of black puffs kilometres away.
+  private flipFlak(pos: THREE.Vector3, scale: number, core: boolean) {
+    const dist = this.vol.camDist(pos);
+    if (dist < VOL_FAR) this.flashLight(pos, 2600 * scale, 0.16, 0xffaa66, 110);
+    if (core) this.glow.spawn({ pos, life: 0.1, size0: 5, size1: 11, color0: [40, 22, 8], alpha0: 1, alpha1: 0, frame: 1 });
+    if (dist < 2500) {
+      const nF = Math.round((8 + Math.random() * 7) * scale);
+      for (let i = 0; i < nF; i++) {
+        _v.set(R(), R(), R()).normalize().multiplyScalar((40 + Math.random() * 60) * scale);
+        const hot = 0.6 + Math.random() * 0.6;
+        _f0[0] = 30 * hot; _f0[1] = 18 * hot; _f0[2] = 6 * hot;
+        this.sparkFx.spawn(pos, _v, 0.12 + Math.random() * 0.22, 0.1 * scale, _f0, C_SPARK1, 2.5, 9);
+      }
+    }
+    if (dist < VOL_MID) this.shock(pos, _d.set(0, 0, 0), 22 * scale, 0.3, 0.6);
+    const g = 0.02 + Math.random() * 0.035;
+    const W = 40 * scale;
+    _v.set(R(), R() * 0.5 + 0.5, R()).multiplyScalar(2);
+    // the burst's first frames in a fraction of a second, then the dense puff slowly billows and frays
+    const life = 11 + Math.random() * 5;
+    this.flipbook('flak', pos, _v, life, life, W, W * 1.6, this.grey(g), 1, 0.55, 1.3, 0.35, 1.2, 0.25, 1, undefined, 0, 0, 46, 0.45);
+    const nP = 1 + (Math.random() < 0.5 ? 1 : 0);
+    for (let i = 0; i < nP; i++) {
+      _d.set(R(), R() * 0.6 + 0.2, R()).normalize();
+      _p.copy(pos).addScaledVector(_d, (4 + Math.random() * 2.5) * scale);
+      _v.copy(_d).multiplyScalar((2 + Math.random() * 3) * scale);
+      const w = W * (0.5 + Math.random() * 0.2);
+      const lf = 8 + Math.random() * 4;
+      this.flipbook('flak', _p, _v, lf, lf, w, w * 1.6, this.grey(g + 0.015), 0.9, 0.45, 0.6, 0.25, 1.6, 0.2, 1, undefined, 0, 3, 42, 0.5);
     }
   }
 
@@ -576,6 +785,9 @@ export class Effects {
     this.smoke.rebase(off);
     this.glow.rebase(off);
     this.vol.rebase(off);
+    this.flip.rebase(off);
+    this.ribbons.rebase(off);
+    this.sparkFx.rebase(off);
     this.flares.rebase(off);
     cloudLights.rebase(off);
     for (const l of this.lights) l.light.position.sub(off);
@@ -596,6 +808,9 @@ export class Effects {
       else this.stage(p.pos, p.vel, p.k);
     }
     this.vol.update(dt);
+    this.flip.update(dt);
+    this.ribbons.update(dt);
+    this.sparkFx.update(dt);
     this.flares.update(dt, this.vol.hasCam ? this.vol.camPos : null);
     weatherNow.muzzle = weatherNow.muzzle > 1e-3 ? weatherNow.muzzle * Math.exp(-dt * 22) : 0;
     if (this.steadyFrames > 0 && --this.steadyFrames === 0) this.lights[LIGHTS - 1].light.intensity = 0;
@@ -688,7 +903,7 @@ export class Effects {
   }
 
   clear() {
-    this.smoke.clear(); this.glow.clear(); this.vol.clear();
+    this.smoke.clear(); this.glow.clear(); this.vol.clear(); this.flip.clear(); this.ribbons.clear(); this.sparkFx.clear();
     for (const d of this.debris) {
       d.active = false;
       if (d.pooled) d.mesh.visible = false; else this.scene.remove(d.mesh);

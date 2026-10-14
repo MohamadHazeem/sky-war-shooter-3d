@@ -12,3 +12,6 @@ trailer-out/
 # local TTS environment (tools/voice/chatterbox_*.py)
 .venv-tts/
 tools/voice/.cache/
+
+# Effects 2.0 bake intermediates (tools/fx/bake_flipbooks.py): logs, previews, per-effect atlases, sim cache
+tools/fx/out/

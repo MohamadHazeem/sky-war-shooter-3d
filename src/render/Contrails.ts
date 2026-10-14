@@ -4,9 +4,14 @@ import { Atmos } from './Atmosphere';
 // Condensation trails: one camera-facing ribbon per engine. Each ribbon is a ring
 // buffer of world-space points; the ribbon starts a little behind the engine (the
 // condensation gap), widens and drifts as it ages, and fades out.
+// Effects 2.0: lit as ice crystals: strong forward (Mie / Henyey-Greenstein) scattering, so a trail
+// between the eye and a low sun glows in the sun's own colour (gold at sunset) while one seen
+// down-sun stays a dull pink-grey; the sky light comes from the live sky colours.
 const PTS = 90;           // points per trail
 const INTERVAL = 0.24;    // seconds between points (~22 s, 1.6 km of trail at cruise: long streams, same CPU cost)
 const LIFE = PTS * INTERVAL;
+
+const _tmp = new THREE.Vector3();
 
 interface Trail { emit: () => THREE.Vector3 | null; px: Float32Array; born: Float32Array; head: number; last: number; alive: boolean }
 
@@ -47,11 +52,11 @@ export class Contrails {
     this.geo.setAttribute('aSeed', this.seed);
     this.geo.setIndex(idx);
     this.mat = new THREE.ShaderMaterial({
-      uniforms: { uLife: { value: LIFE }, uSun: { value: new THREE.Vector3() }, uSunCol: { value: new THREE.Color() }, uTime: { value: 0 } },
+      uniforms: { uLife: { value: LIFE }, uSun: { value: new THREE.Vector3() }, uSunCol: { value: new THREE.Color() }, uSky: { value: new THREE.Color() }, uTime: { value: 0 } },
       vertexShader: /* glsl */ `
         attribute vec3 aDir; attribute float aAge; attribute float aSide; attribute float aSeed;
         uniform float uLife; uniform float uTime; uniform vec3 uSun;
-        varying float vAlpha; varying float vSide; varying float vT; varying float vSeed; varying float vNear; varying float vSun;
+        varying float vAlpha; varying float vSide; varying float vT; varying float vSeed; varying float vNear; varying float vSun; varying float vPhase;
         void main() {
           float t = clamp(aAge / uLife, 0.0, 1.0);
           float width = mix(0.4, 7.5, pow(t, 0.6));
@@ -73,13 +78,16 @@ export class Contrails {
           vSide = aSide; vT = t; vSeed = aSeed;
           // how much this edge of the ribbon faces the sun (-1 shadow side .. 1 sun side)
           vSun = dot(side * aSide, uSun);
+          // Henyey-Greenstein forward scattering toward the eye (g = 0.7), normalised to 1 at 90 degrees
+          float cs = dot(normalize(p - cameraPosition), uSun);
+          vPhase = (0.51 / pow(1.49 - 1.4 * cs, 1.5)) / (0.51 / pow(1.49, 1.5));
           vNear = smoothstep(18.0, 70.0, distance(cameraPosition, p));
           // seen end-on a ribbon turns into a flat sheet: fade it out
           vNear *= 1.0 - smoothstep(0.82, 0.97, abs(dot(d, toCam)));
         }`,
       fragmentShader: /* glsl */ `
-        uniform vec3 uSunCol;
-        varying float vAlpha; varying float vSide; varying float vT; varying float vSeed; varying float vNear; varying float vSun;
+        uniform vec3 uSunCol; uniform vec3 uSky;
+        varying float vAlpha; varying float vSide; varying float vT; varying float vSeed; varying float vNear; varying float vSun; varying float vPhase;
         float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vnoise(vec2 p) {
           vec2 i = floor(p), f = fract(p);
@@ -98,7 +106,10 @@ export class Contrails {
           a *= mix(0.8, 1.15, puff) * mix(1.0, mix(0.35, 1.0, gaps), smoothstep(0.15, 0.7, vT));
           // sun-facing edge is a touch brighter than the shadowed edge
           float sunSide = clamp(vSun * 0.5 + 0.5, 0.0, 1.0);
-          vec3 col = (uSunCol * 0.75 + vec3(0.45, 0.5, 0.58)) * mix(0.92, 1.2, sunSide);
+          float ph = min(vPhase, 9.0);
+          vec3 col = uSunCol * (0.45 + 0.4 * ph) * mix(0.8, 1.2, sunSide) + uSky;
+          // thin young trail toward the sun: a bright filament even where it is barely dense
+          a *= 1.0 + 0.25 * smoothstep(1.5, 6.0, ph);
           gl_FragColor = vec4(col, a);
         }`,
       transparent: true,
@@ -129,11 +140,14 @@ export class Contrails {
     u.uTime.value = time;
     u.uSunCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.32);
     u.uSun.value.copy(Atmos.sunDir);
+    u.uSky.value.setRGB(Atmos.horizon.r * 0.55 + Atmos.zenith.r * 0.45, Atmos.horizon.g * 0.55 + Atmos.zenith.g * 0.45, Atmos.horizon.b * 0.55 + Atmos.zenith.b * 0.45)
+      .multiplyScalar(0.8 + Atmos.cloudAmbient * 0.3);
     this.mesh.visible = this.enabled;
     if (!this.enabled) return;
     const P = this.pos.array as Float32Array, D = this.dir.array as Float32Array, A = this.age.array as Float32Array;
-    const tmp = new THREE.Vector3();
-    this.trails.forEach((tr, ti) => {
+    const tmp = _tmp;
+    for (let ti = 0; ti < this.trails.length; ti++) {
+      const tr = this.trails[ti];
       if (time - tr.last >= INTERVAL) {
         const p = tr.emit();
         if (p) {
@@ -166,7 +180,7 @@ export class Contrails {
           A[v + s] = valid ? ageS : -1;
         }
       }
-    });
+    }
     this.geo.setDrawRange(0, this.trails.length * (PTS - 1) * 6);
     this.pos.needsUpdate = this.dir.needsUpdate = this.age.needsUpdate = true;
   }

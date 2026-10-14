@@ -449,7 +449,7 @@ export class Game {
   private frame(dt: number) {
     const w = this.world;
     this.engine.precipitation.velocity.copy(w.player?.vel ?? Atmos.wind);
-    this.world.effects.vol.setQuality(this.engine.quality === 'low');
+    this.world.effects.setQuality(this.engine.quality);   // Effects 2.0 on above Low (lazy-loads the flipbooks)
     this.pilotOps.sea.setQuality(this.engine.quality === 'low');
     syncSurfaceDetail(this.engine.quality);   // follows auto-quality drops (no-op unless the tier changed)
     const playing = !this.menuMode && (this.state === 'playing' || this.state === 'ending');

@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { weatherNow } from '../render/WeatherState';
 import type { Aircraft, HitZone } from './Aircraft';
 import { TracerRenderer } from '../render/Particles';
+import { heatHaze } from '../render/HeatHaze';
 
 export interface HitEvent {
   target: Aircraft;
@@ -187,6 +188,8 @@ export class Ballistics {
       if (pl && ht > 0) { g += r * 0.32 * ht; b += r * 0.08 * ht; }
       const wd = gf ? 0.4 : this.cannon[i] ? 0.3 : pl ? 0.17 : 0.09;
       tr.push(x - this.vx[i] * len, y - this.vy[i] * len, z - this.vz[i] * len, x, y, z, r, g, b, (pl ? wd * hw : wd) * nw);
+      // the player's fresh tracers leave a short heat shimmer in the air behind them (HeatHaze)
+      if (pl && this.age[i] <= 0.0175) heatHaze.emit(_a.set(x, y, z), 0.35, 0.5, 0.16, 'shimmer', _b.set(-this.vx[i], -this.vy[i], -this.vz[i]).multiplyScalar(0.035));
     }
     tr.end(camera, screenH);
   }
