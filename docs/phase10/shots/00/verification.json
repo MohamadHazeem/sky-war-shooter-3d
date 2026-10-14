@@ -1,0 +1,69 @@
+{
+  "check": {
+    "command": "npm run check",
+    "passed": true,
+    "testFiles": 68,
+    "tests": 705,
+    "newTests": 8
+  },
+  "server": {
+    "port": 5300,
+    "stopped": true
+  },
+  "webgpu": {
+    "checked": true,
+    "result": "Explicit unsupported-adapter error; no fallback or mislabeled images"
+  },
+  "sets": [
+    {
+      "directory": "docs/phase10/shots/baseline",
+      "shots": 16,
+      "repeatedPixelsIdentical": true,
+      "errors": [],
+      "stableShaderPrograms": true,
+      "maxJpegBytes": 123373,
+      "nativeResolution": [
+        1920,
+        1080
+      ],
+      "exportResolution": [
+        1920,
+        1080
+      ],
+      "renderMeanMsRange": [
+        5.3716666666169965,
+        12.30499999995033
+      ],
+      "device": {
+        "vendor": "Google Inc. (Apple)",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+      },
+      "browser": "155.0.8059.41"
+    },
+    {
+      "directory": "docs/phase10/shots/00/low",
+      "shots": 16,
+      "repeatedPixelsIdentical": true,
+      "errors": [],
+      "stableShaderPrograms": true,
+      "maxJpegBytes": 110571,
+      "nativeResolution": [
+        1264,
+        711
+      ],
+      "exportResolution": [
+        1920,
+        1080
+      ],
+      "renderMeanMsRange": [
+        3.771666666616996,
+        9.304999999701977
+      ],
+      "device": {
+        "vendor": "Google Inc. (Apple)",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+      },
+      "browser": "155.0.8059.41"
+    }
+  ]
+}
