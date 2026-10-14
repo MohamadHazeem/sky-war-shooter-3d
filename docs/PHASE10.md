@@ -54,10 +54,10 @@ Every graphics goal is judged on fixed camera shots from the capture rig (goal 0
 
 | # | Goal | Spec | Status |
 |---|---|---|---|
-| 00 | Capture rig + reference board | [00](phase10/00-capture-rig.md) | Done — merged |
-| 01 | Renderer 2.0 | [01](phase10/01-renderer.md) | Building (Codex) |
-| 02 | Hero asset pipeline + B-17 | [02](phase10/02-hero-b17.md) | Building (Codex) |
-| 03 | Clouds & sky 2.0 | [03](phase10/03-clouds.md) | Building (Codex) |
-| 04, 06, 07, 08, 09, 10, 11 | Wave B–C goals | specs in docs/phase10 | Building (Claude agents) |
-| 05 | Luftwaffe hero models | [05](phase10/05-luftwaffe-models.md) | Building (2nd Claude account) |
-| 12–13 | Presets & performance, final scorecard | to write | Planned |
+| 00 | Capture rig + reference board | [00](phase10/00-capture-rig.md) | Done — live |
+| 01 | Renderer 2.0 | [01](phase10/01-renderer.md) | Done — live |
+| 02 | Hero asset pipeline + B-17 | [02](phase10/02-hero-b17.md) | Done — live |
+| 03 | Clouds & sky 2.0 | [03](phase10/03-clouds.md) | Done — live |
+| 04, 06, 07, 08, 09, 10, 11 | Wave B–C goals | specs in docs/phase10 | Done — live |
+| 05 | Luftwaffe hero models | [05](phase10/05-luftwaffe-models.md) | Done — live |
+| 12, 12b, 13 | Presets & performance, CPU pass, final scorecard | [12](phase10/12-presets-perf.md), [12b](phase10/12b-cpu-perf.md), [13](phase10/13-final-scorecard.md) | Done — live |
