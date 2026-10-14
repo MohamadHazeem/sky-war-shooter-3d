@@ -11,6 +11,7 @@ import { envRef } from '../render/EnvRef';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { freshEnv, installAircraftLook, retargetEnvMaps, retireEnv, syncAircraftLook } from '../render/AircraftLook';
 import { LivingSky } from '../render/LivingSky';
+import { BomberStream } from '../render/BomberStream';
 import { FpsCounter } from '../render/FpsCounter';
 import { DRS_FAST, DRS_HARD, DRS_SLOW, drsFloor, drsTargetMs, fasterRefreshFrom, refreshFromTimestamps } from '../render/FrameTiming';
 
@@ -55,6 +56,7 @@ export class Engine {
   readonly clouds: CloudRenderer;
   readonly post: PostFX;
   readonly livingSky: LivingSky;   // distant bomber boxes, dogfights and flak (purely visual)
+  readonly bomberStream = new BomberStream();   // the thousand-bomber stream, escorts, gaggles (purely visual)
   readonly heatHaze: HeatHaze = heatHaze;   // screen-space refraction emitters (HeatHaze.ts)
   readonly reversed: boolean;
   private sceneRT: THREE.WebGLRenderTarget;
@@ -170,6 +172,8 @@ export class Engine {
     this.heatHaze.setReversed(this.reversed);
     this.livingSky = new LivingSky();
     this.scene.add(this.livingSky.group);
+    this.scene.add(this.bomberStream.group);
+    this.bomberStream.setQuality(this.quality, this.sceneRT.samples);
 
     this.scene.environment = buildEnvironment(this.renderer, this.sky);
     envRef.tex = this.scene.environment;
@@ -226,6 +230,7 @@ export class Engine {
     this.post.economy = q === 'low';
     this.heatHaze.enabled = p.haze;
     this.livingSky.setQuality(p.particles);
+    this.bomberStream.setQuality(q, this.sceneRT.samples);
     // a new tier gets a fresh chance at the display's full refresh rate
     this.hiGiveUp = false; this.hiMiss = 0;
   }
@@ -328,6 +333,8 @@ export class Engine {
     this.precipitation.update(dt, this.time, this.quality);
     // after the game moved the formation, so the distant boxes stay locked to it
     this.livingSky.update(this.camera, this.time, this.height * this.pixelRatio);
+    this.bomberStream.update(this.renderer, this.camera, this.time, this.height * this.pixelRatio);
+    this.livingSky.boxesOff = this.bomberStream.group.visible;   // the stream draws the other boxes
     if (render) { if (this.renderOverride) this.renderOverride(realDt); else this.render(realDt); }
     if (fixedDt === undefined) {
       this.dynamicResolution(realDt);

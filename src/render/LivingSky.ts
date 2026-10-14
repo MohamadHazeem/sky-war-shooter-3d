@@ -174,6 +174,8 @@ export class LivingSky {
   private static readonly MAX_WRECKS = 3;
   private static readonly MAX_GLOWS = 40;
   private dummy = new THREE.Object3D();
+  // The bomber stream (BomberStream.ts) draws the other boxes and their flak while it is up
+  boxesOff = false;
 
   constructor() {
     this.group.name = 'livingSky';
@@ -472,7 +474,7 @@ export class LivingSky {
     let n = 0, ribbons = 0;
     const E = this.trailEmit.array as Float32Array;
     const trailsOn = this.contrailSrc ? this.contrailSrc.enabled : true;
-    for (let bi = 0; bi < this.boxes.length; bi++) {
+    for (let bi = 0; bi < (this.boxesOff ? 0 : this.boxes.length); bi++) {
       const b = this.boxes[bi];
       const t = time + b.phase;
       _v1.copy(b.off).add(_v2.set(Math.sin(t * 0.011) * 220, Math.sin(t * 0.017) * 60, Math.sin(t * 0.007) * 320));
@@ -596,7 +598,7 @@ export class LivingSky {
 
   // Two barrages, each following one of the distant boxes, on and off in turn
   private updateFlak(time: number, dt: number) {
-    if (dt <= 0 || this.k <= 0) return;
+    if (dt <= 0 || this.k <= 0 || this.boxesOff) return;
     const R = this.rnd;
     const arr = this.flakPos.array as Float32Array;
     const max = Math.min(this.flakMax, Math.round(200 * this.k));

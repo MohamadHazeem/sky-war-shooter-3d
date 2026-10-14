@@ -36,6 +36,7 @@ async function boot() {
   const input = new Input(engine.renderer.domElement);
   const game = new Game(engine, input, ui);
   engine.livingSky.bind(game.world);   // distant boxes, dogfights and flak fly with our formation
+  engine.bomberStream.bind(game.world);   // the bomber stream around our box (render/BomberStream.ts)
   const devices = new DeviceControls(engine, input, game);   // touch, gamepad, accessibility
   installShare(game, engine);                                 // photo mode: Enter / button shares the view
   analytics.install(engine, game, () => devices.pad.connected); // anonymous per-mission stats (opt-out in Settings)
