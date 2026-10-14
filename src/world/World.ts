@@ -331,12 +331,14 @@ export class World implements WorldView {
     const unwarmDestruction = this.destruction.warm(this.scene, at, splitDummies.map((f) => ({ kind: f.kind, model: f.model })));
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     const unwarmTargetSmoke = warmTargetSmoke(this.scene);
+    const unwarmStream = this.engine.bomberStream.warm();   // the stream's near-LOD programs
     this.engine.precipitation.warm(render);
     this.engine.clouds.warmProbe(this.engine.renderer);
     this.ditchingSea.warm(render, this.playerBomber?.root ?? b17.root);
     this.engine.renderer.shadowMap.needsUpdate = true;
     render();
     unwarmTargetSmoke();
+    unwarmStream();
     if (bombs) bombs.count = bombCount;
     this.scene.remove(plainCaster); plainCaster.geometry.dispose(); this.warmKeep.push(plainCaster.material);
     this.wrecks.keepWarm(b17Pieces);   // B-17 wreck programs stay compiled for the set pieces

@@ -36,6 +36,7 @@ async function boot() {
   const input = new Input(engine.renderer.domElement);
   const game = new Game(engine, input, ui);
   engine.livingSky.bind(game.world);   // distant boxes, dogfights and flak fly with our formation
+  engine.bomberStream.bind(game.world);   // the bomber stream around our box (render/BomberStream.ts)
   const devices = new DeviceControls(engine, input, game);   // touch, gamepad, accessibility
   installShare(game, engine);                                 // photo mode: Enter / button shares the view
   analytics.install(engine, game, () => devices.pad.connected); // anonymous per-mission stats (opt-out in Settings)
@@ -157,6 +158,8 @@ async function boot() {
     // Visual QA sweep: NaN / black / blown-white detector and view helpers (src/dev/visualQa.ts)
     const { visualQa } = await import('./dev/visualQa');
     (window as any).sws.vqa = visualQa(engine, game);
+    const { streamShots } = await import('./dev/streamShots');   // bomber stream captures / A-B timing
+    (window as any).sws.streamShots = streamShots(engine, game, (window as any).sws.vqa, (window as any).sws.bench);
     const { hitFeedbackQa } = await import('./dev/hitFeedbackQa');
     (window as any).sws.hitFeedback = hitFeedbackQa(engine, game);
     // Destruction sequences from the gunner seats, saved to docs/phase10/shots/09 (src/dev/destructionQa.ts)
