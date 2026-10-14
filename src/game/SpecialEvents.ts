@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SIGNATURE_IDS } from '../world/PilotMind';
 import type { Engine } from '../core/Engine';
 import type { UI } from '../ui/UI';
 import type { Game } from './Game';
@@ -126,6 +127,8 @@ class AceSquadron extends Special {
     }
     const lp = w.enemyPilot(this.leader);
     if (lp) lp.skill = Math.max(lp.skill, 1.75);
+    // the Staffelkapitän flies his own signature move (world/PilotMind.ts)
+    if (lp) lp.setPersona({ personality: lp.persona.personality, signature: SIGNATURE_IDS[Math.floor(Math.random() * SIGNATURE_IDS.length)], ace: true, q: -1 });
     // the entrance: a schwarm head-on pass out of twelve o'clock high
     c.tactics.companyFront(this.fighters, { schwarm: true, telegraph: false });
     w.callout('sp_ace', 'Navigator', `Yellow noses, twelve o'clock high! That's ${this.ace.last}'s Staffel — ${this.ace.victories} kills!`, 0, 3);
