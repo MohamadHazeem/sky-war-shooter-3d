@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { STREAM_MIN_HALF_PX, STREAM_MIN_COVERAGE } from './StreamReadability';
 import { Atmos, atmosUniforms, skyGLSL } from './Atmosphere';
 import { useSkyEnv } from './AircraftLook';
 import { weatherNow } from './WeatherState';
@@ -155,7 +156,7 @@ float h = max(hR, sDist * uPx * uMinPx);
 vec3 impPos = sC + (sB * q) * h * sVis;
 vec3 objectNormal = vd;
 float ink = hR / h;
-vImpX = vec4(ink * ink, sR2.z, 0.0, sFire);
+vImpX = vec4(max(ink * ink, uMinPx > 3.0 ? ${STREAM_MIN_COVERAGE.toFixed(2)} : 0.0), sR2.z, 0.0, sFire);
 mat3 sMV = mat3(modelViewMatrix);
 vImpBx = sMV * sB[0]; vImpBy = sMV * sB[1]; vImpBz = sMV * sB[2];
 // sun glints: the mirror of the sun off the fuselage (a cylinder: lit when the half vector is
@@ -767,7 +768,7 @@ export class BomberStream {
       return m;
     };
     const range = (a: number, n: number) => Array.from({ length: n }, (_, i) => a + i);
-    if (this.bakes.bomber?.done && !this.bomberImp) this.bomberImp = mk(this.bakes.bomber, false, range(0, L.bombers), 2.0, 1, null);
+    if (this.bakes.bomber?.done && !this.bomberImp) this.bomberImp = mk(this.bakes.bomber, false, range(0, L.bombers), this.tier === 'low' ? 2.0 : STREAM_MIN_HALF_PX, 1, null);
     if (this.bakes.escort?.done && !this.escortImp) this.escortImp = mk(this.bakes.escort, true, range(L.escortFirst, L.escortCount), 1.3, 0.8, null);
     const gStart = L.escortFirst + L.escortCount;
     if (this.bakes.gaggle?.done && !this.gaggleImp) this.gaggleImp = mk(this.bakes.gaggle, true, range(gStart, L.count - gStart), 1.3, 0.5, null);
