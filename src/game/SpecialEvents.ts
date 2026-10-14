@@ -341,9 +341,12 @@ export class SpecialEvents {
   private forced: SpecialId | null = null;   // this round's slot is a nemesis appearance
   private tagList: TagSpec[] = Array.from({ length: 8 }, () => ({ a: null as unknown as Aircraft, label: '', health: 1 }));
 
+  private readonly lessons: string[] = [];
+
   constructor(readonly game: Game, readonly engine: Engine, readonly ui: UI) {
     this.tactics = new Tactics(game.world);
-    this.tactics.hint = (html) => { if (this.game.state === 'playing') this.ui.tip(html, 3400); };
+    this.tactics.lesson = text => { this.lessons.push(text); };
+    this.tactics.hint = (html) => { if (this.game.state === 'playing' && !this.lessons.length) this.ui.tip(html, 3400); };
     this.nemesis = new NemesisRuntime(this);
     setNemesisRuntime(this.nemesis);
   }
@@ -377,6 +380,9 @@ export class SpecialEvents {
       this.hud.hideAll();
       return;
     }
+    if (this.lessons.length && !this.ui.tipBusy && g.settings.hudDetail !== 'minimal') {
+      this.ui.tip(this.lessons.shift()!, 6000);
+    }
     if (roundIdx !== this.roundIdx || roundT0 !== this.roundT0) this.newRound(roundIdx, roundT0);
     this.roundT = w.time - roundT0;
     this.roundLeft = this.roundDur - this.roundT;
@@ -389,7 +395,7 @@ export class SpecialEvents {
       if (e.state !== 'active') this.finish(e);
     } else if (this.slotT >= 0 && this.roundT >= Math.max(SPECIAL_QUIET_START, this.slotT)) {
       if (this.roundLeft < 25) this.slotT = -1;
-      else if (!this.bossUp()) { this.slotT = -1; this.start(this.forced ?? this.pick()); this.forced = null; }
+      else if (!this.bossUp() && w.time >= g.pacing.hushUntil) { this.slotT = -1; this.start(this.forced ?? this.pick()); this.forced = null; }
     }
     this.draw();
   }
@@ -397,6 +403,7 @@ export class SpecialEvents {
   private resetMission(m: unknown) {
     this.stop();
     this.tactics.reset();
+    this.lessons.length = 0;
     this.mission = m;
     this.roundIdx = -1; this.roundT0 = -1; this.slotT = -1;
     this.hadLast = false; this.recent = []; this.log = []; this.bonusMerit = 0; this.forced = null;
@@ -547,7 +554,7 @@ export class SpecialEvents {
     // a mission the scheduler has not seen yet (e.g. just started by sws.special): adopt it first
     if (this.game.mission !== this.mission || this.world.time < this.lastTime - 1e-6) this.resetMission(this.game.mission);
     this.lastTime = this.world.time;
-    if (!name) return `specials: ${SPECIAL_IDS.join(', ')} · tactics: companyFront, schwarm, pincer, comet, jet, standoff, topCover, zerstorer-tactic, bigGun, pfeil, raid`;
+    if (!name) return `specials: ${SPECIAL_IDS.join(', ')} · tactics: sturm, hornisse, airBomb, jetSlash, multiAxis, companyFront, schwarm, pincer, comet, jet, standoff, topCover, zerstorer-tactic, bigGun, pfeil, raid`;
     if ((SPECIAL_IDS as string[]).includes(name)) {
       if (this.bossUp()) return 'boss fight in progress';
       if (this.roundIdx < 0) this.newRound(0, this.world.time);

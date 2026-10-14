@@ -1,3 +1,4 @@
+import { TacticSchedule } from '../world/LuftwaffeTactics';
 import { crewRoster } from './CrewRoster';
 import { isSecondTourId } from './SecondTour';
 import * as THREE from 'three';
@@ -37,11 +38,13 @@ export class Director {
   incoming: Incoming | null = null;
   private seenTypes = new Set<string>();
   private chatterT = 0;
+  private readonly tacticsPlan = new TacticSchedule();
 
   constructor(private g: Game) {}
 
   // New mission (MissionFlow.startMission)
   reset() {
+    this.tacticsPlan.reset();
     this.waveIdx = 0;
     this.waveTimer = 0;
     this.survivalWave = 0;
@@ -76,6 +79,7 @@ export class Director {
       return;
     }
     if (t < r.start || pace.hold) { this.updateIncoming(null, null); return; }
+    if (this.sendTactic(m, g.roundIdx, t, r.duration - t, enemies)) return;
     this.spawnCd -= dt;
     const want = target - enemies;
     if (want <= 0) { this.updateIncoming(null, null); return; }
@@ -108,6 +112,18 @@ export class Director {
     }
     this.groups++;
     this.spawnCd = (THREE.MathUtils.lerp(7, 3.5, ramp) + Math.random() * 3) * pace.gap;
+  }
+
+  private sendTactic(m: Mission, round: number, elapsed: number, remaining: number, enemies: number) {
+    const g = this.g;
+    const id = this.tacticsPlan.next(m, round, elapsed, remaining, enemies,
+      g.state !== 'playing' || !!g.specials.active || g.boss.active || g.world.time < g.pacing.hushUntil);
+    if (!id) return false;
+    g.specials.tactics.launchPack(id);
+    g.pacing.hushUntil = g.world.time + 12;
+    this.spawnCd = 12;
+    this.updateIncoming(null, null);
+    return true;
   }
 
   private spawnPos(from: SpawnFrom): THREE.Vector3 {
@@ -190,6 +206,7 @@ export class Director {
     } else if (m.round) {
       this.director(dt, m, roundDef(m, g.roundIdx), enemies);
     } else if (m.waves.length) {
+      this.sendTactic(m, 0, t, m.duration - t, enemies);
       this.waveTimer += dt;
       const next = m.waves[this.waveIdx];
       // field promotion: every 5 kills, once the kill's slow-motion beat has played
@@ -207,7 +224,7 @@ export class Director {
       if (next) {
         const ready = next.afterClear ? (enemies === 0 && this.waveTimer > 6) || this.waveTimer > 75 : t >= next.at;
         this.updateIncoming(next.afterClear ? (enemies === 0 ? Math.max(0, 6 - this.waveTimer) : 75 - this.waveTimer) : next.at - t, next);
-        if (ready) {
+        if (ready && t >= g.pacing.hushUntil) {
           this.spawnWave(next); this.waveIdx++; this.waveTimer = 0;
           // between waves the gunners restock and the Mustang's guns are topped up
           if (this.waveIdx > 1) {
@@ -231,6 +248,7 @@ export class Director {
         this.updateIncoming(Math.max(0, this.survivalBreak), { at: 0, count: nextN, from: nextFrom, skill: 1 });
         if (this.survivalBreak <= 0) {
           this.survivalWave++;
+          this.sendTactic(m, this.survivalWave - 1, 25, 90, enemies);
           achievements.onSurvivalWave(this.survivalWave);
           const n = Math.min(14, 2 + Math.floor(this.survivalWave * 1.4));
           const skill = Math.min(1.5, 0.75 + this.survivalWave * 0.06);
