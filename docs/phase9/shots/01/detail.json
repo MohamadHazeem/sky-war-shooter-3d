@@ -1,0 +1,20 @@
+{
+  "kills": 1,
+  "damage": 816.6000015735626,
+  "alive": false,
+  "scan": {
+    "ldr": {
+      "black": 0,
+      "white": 0,
+      "blackClusters": [],
+      "whiteClusters": []
+    },
+    "hdr": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    }
+  }
+}

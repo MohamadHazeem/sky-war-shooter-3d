@@ -275,8 +275,8 @@ function texture(id: string, name: string) {
     t = new THREE.CanvasTexture(drawNoseArt(id, name));
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = 8;
-    // a handful of looks at most; drop the oldest (no longer on any aircraft)
-    if (textures.size >= 4) { const [ok, old] = textures.entries().next().value!; textures.delete(ok); old.dispose(); }
+    // Player plus up to 18 formation names, in either language. Keep live squadron textures resident.
+    if (textures.size >= 64) { const [ok, old] = textures.entries().next().value!; textures.delete(ok); old.dispose(); }
     textures.set(k, t);
   }
   return t;

@@ -38,6 +38,7 @@ interface Piece {
   drag: number;    // < 0: the motion's own drag; otherwise this (a steered chunk flies with 0)
   last: THREE.Vector3;  // emitter world position at the last trail emission
   hasLast: boolean;
+  pooled?: boolean;
 }
 
 const R = () => Math.random() * 2 - 1;
@@ -75,7 +76,7 @@ export type BreakKind = 'wingL' | 'wingR' | 'tail' | 'blowup';
 //             the rest of the ship rolls over toward the stump and settles into a flat spin
 //   blowup    a bomb-bay explosion: both wings, the nose section, the tail section and a loose
 //             wingtip, which the caller can steer past the player's gun position
-export type BomberBreak = 'wingFold' | 'blowup';
+export type BomberBreak = 'wingFold' | 'blowup' | 'split';
 
 // A piece handed back to the caller (set pieces track the spinning hulk, steer a chunk).
 // drag < 0: the motion's own air drag; 0 lets a steered piece fly a clean ballistic arc.
@@ -133,7 +134,10 @@ export class Wrecks {
   breakBomber(b: Aircraft, kind: BomberBreak, side: 1 | -1 = 1): WreckPiece[] {
     const specs: Spec[] = [];
     const s = side;
-    if (kind === 'wingFold') {
+    if (kind === 'split') {
+      specs.push({ planes: [P(0, 0, 1, -B17_SPLIT)], kick: new THREE.Vector3(0, -3, 8), spin: 0.25, fire: 0.5, smoke: 0.8, emit: new THREE.Vector3(0, 0, B17_SPLIT), main: true, motion: 'dive', roll: 0.3, life: 26 });
+      specs.push({ planes: [P(0, 0, -1, B17_SPLIT)], kick: new THREE.Vector3(0, 4, -14), spin: 1.1, fire: 0, smoke: 0.5, emit: new THREE.Vector3(0, 0, B17_SPLIT), life: 26 });
+    } else if (kind === 'wingFold') {
       // the panel folds up and back, then flutters away burning
       specs.push({ planes: [P(s, 0, 0, -B17_FOLD)], kick: new THREE.Vector3(9 * s, 9, -6), spin: 0, spinVec: new THREE.Vector3(R() * 0.8, R() * 0.6, 3.2 * s),
         fire: 0.8, smoke: 0.8, emit: new THREE.Vector3(B17_FOLD * s, 0, 0.2), life: 22 });
@@ -155,10 +159,28 @@ export class Wrecks {
     const out: WreckPiece[] = [];
     f.root.updateMatrixWorld(true);
     for (const sp of specs) {
+      // B-17 models/materials are built and compiled during World.prewarm. Reuse the
+      // idle piece with the same clipping-plane count; no model cloning on normal losses.
+      let reuse: Piece | undefined;
+      if (f.kind === 'b17') for (const p of this.warm) if (p.life <= 0 && p.local.length === sp.planes.length) { reuse = p; break; }
+      if (reuse) {
+        const p = reuse;
+        p.root.position.copy(f.pos); p.root.quaternion.copy(f.quat); p.model.scale.copy(f.model.scale);
+        for (let i = 0; i < sp.planes.length; i++) p.local[i].copy(sp.planes[i]);
+        p.vel.copy(sp.kick).applyQuaternion(f.quat).add(f.vel);
+        if (sp.spinVec) p.spin.copy(sp.spinVec); else p.spin.set(R(), R(), R()).normalize().multiplyScalar(sp.spin);
+        p.life = sp.life ?? 14; p.fire = sp.fire; p.smoke = sp.smoke;
+        p.emit.copy(sp.emit).multiplyScalar(f.model.scale.x); p.acc = p.age = 0; p.hasLast = false;
+        p.main = sp.main === true; p.motion = sp.motion ?? 'tumble'; p.roll = sp.roll ?? 0; p.drag = -1;
+        p.root.updateMatrixWorld(true);
+        for (let i = 0; i < p.local.length; i++) p.world[i].copy(p.local[i]).applyMatrix4(p.model.matrixWorld);
+        this.scene.add(p.root); this.pieces.push(p); out.push(p); continue;
+      }
       const root = new THREE.Group();
       root.position.copy(f.root.position);
       root.quaternion.copy(f.root.quaternion);
       const model = f.model.clone(true);
+      for (const name of ['formationDamage', 'formationIdentity']) model.getObjectByName(name)?.removeFromParent();
       const world = sp.planes.map((p) => p.clone());
       const mats: THREE.Material[] = [];
       model.traverse((o) => {
@@ -279,7 +301,7 @@ export class Wrecks {
         }
         p.last.copy(_em); p.hasLast = true;
       }
-      if (p.life <= 0) { p.root.removeFromParent(); for (const m of p.mats) m.dispose(); }
+      if (p.life <= 0) { p.root.removeFromParent(); if (!p.pooled) for (const m of p.mats) m.dispose(); }
       else this.pieces[n++] = p;
     }
     this.pieces.length = n;
@@ -295,12 +317,12 @@ export class Wrecks {
       const p = this.pieces[i];
       this.pieces.splice(i, 1);
       p.root.removeFromParent();
-      this.warm.push(p);
+      p.life = 0; p.pooled = true; this.warm.push(p);
     }
   }
 
   clear() {
-    for (const p of this.pieces) { p.root.removeFromParent(); for (const m of p.mats) m.dispose(); }
+    for (const p of this.pieces) { p.root.removeFromParent(); p.life = 0; if (!p.pooled) for (const m of p.mats) m.dispose(); }
     this.pieces = [];
   }
 
