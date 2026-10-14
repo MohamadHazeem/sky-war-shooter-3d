@@ -48,9 +48,9 @@ export function interiorSkinTextures() {
   }
   // zinc-chromate overspray along the former lines (v) and on the stringer lines (u), patchy
   for (let k = 0; k < 4; k++) for (let i = 0; i < 26; i++) {
-    const y = k * Q + (rnd() - 0.5) * 26, x = rnd() * S, r = 18 + rnd() * 50;
+    const y = k * Q + (rnd() - 0.5) * 18, x = rnd() * S, r = 30 + rnd() * 60;
     const g = col.g.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, `rgba(150,160,70,${0.18 + rnd() * 0.2})`); g.addColorStop(1, 'rgba(150,160,70,0)');
+    g.addColorStop(0, `rgba(150,160,70,${0.06 + rnd() * 0.08})`); g.addColorStop(1, 'rgba(150,160,70,0)');
     col.g.fillStyle = g; col.g.fillRect(x - r, y - r, r * 2, r * 2);
   }
   // grime and oil smears, fingerprints round the middle of the panels, scuffs

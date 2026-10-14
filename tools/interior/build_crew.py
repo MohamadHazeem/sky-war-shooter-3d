@@ -136,8 +136,8 @@ for i, (_, r) in enumerate(SK):
     body.data.skin_vertices[0].data[i].radius = r
 body.data.skin_vertices[0].data[pel].use_root = True
 sub = body.modifiers.new('sub', 'SUBSURF')
-sub.levels = 1
-sub.render_levels = 1
+sub.levels = 2
+sub.render_levels = 2
 bpy.context.view_layer.objects.active = body
 body.select_set(True)
 bpy.ops.object.modifier_apply(modifier='skin')
@@ -289,7 +289,7 @@ for m in list(lod.modifiers):
     if m.type == 'ARMATURE':
         continue
 dec = lod.modifiers.new('dec', 'DECIMATE')
-dec.ratio = 0.28
+dec.ratio = 0.12
 lod.modifiers.move(len(lod.modifiers) - 1, 0)
 bpy.context.view_layer.objects.active = lod
 bpy.ops.object.select_all(action='DESELECT')

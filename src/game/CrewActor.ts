@@ -32,7 +32,7 @@ export function recolour(geo: THREE.BufferGeometry, look: FigureLook): THREE.Buf
   if (!src) return g;
   const col = src.clone();
   g.setAttribute('color', col);
-  const skin = look.skin.clone().multiplyScalar(1.15);
+  const skin = look.skin.clone().lerp(new THREE.Color(0.3, 0.27, 0.25), 0.25);   // cold, a little grey
   const map: [readonly number[], THREE.Color][] = [[KEY.jacket, look.jacket], [KEY.fleece, look.collar], [KEY.trousers, look.trousers], [KEY.helmet, look.helmet], [KEY.skin, skin]];
   for (let i = 0; i < col.count; i++) {
     const r = col.getX(i), gg = col.getY(i), b = col.getZ(i);
@@ -214,7 +214,7 @@ export class CrewActor {
 }
 
 // The player's own forearms and gloved fists on the grips (the static 'fpArm' mesh of crew.glb)
-export function playerArm(look: FigureLook, mirror: boolean): THREE.Mesh | null {
+export function playerArm(look: FigureLook, mirror: boolean): THREE.Object3D | null {
   const a = interiorAssets();
   if (!a) return null;
   let src: THREE.Mesh | null = null;
@@ -224,9 +224,15 @@ export function playerArm(look: FigureLook, mirror: boolean): THREE.Mesh | null 
   const k = lookKey(look, 'fp' + s.geometry.uuid);
   let g = lookCache.get(k);
   if (!g) { g = recolour(s.geometry, look); lookCache.set(k, g); }
-  const m = new THREE.Mesh(g, s.material);
+  // the node carries meshopt's dequantisation (scale / offset): keep it on an inner mesh
+  a.crew.scene.updateMatrixWorld(true);
+  const inner = new THREE.Mesh(g, s.material);
+  inner.matrixAutoUpdate = false;
+  inner.matrix.copy(s.matrixWorld);
+  inner.castShadow = true; inner.receiveShadow = true;
+  const m = new THREE.Group();
+  m.add(inner);
   m.name = 'playerArm';
-  m.castShadow = true; m.receiveShadow = true;
   if (mirror) m.scale.x = -1;
   return m;
 }

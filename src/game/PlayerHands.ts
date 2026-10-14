@@ -28,6 +28,7 @@ function controlYoke(look: FigureLook, y: number, z: number): THREE.Group {
   const post = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.16, 0.04), yokeMat);
   post.position.set(0, y - 0.16, z);
   g.add(bar, post);
+  for (const o of [bar, post]) o.castShadow = o.receiveShadow = true;
   for (const side of [1, -1] as const) {
     const h = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.018, 0.12, 10), yokeMat);
     h.position.set(side * 0.13, y, z);
@@ -35,7 +36,6 @@ function controlYoke(look: FigureLook, y: number, z: number): THREE.Group {
     const arm = playerArm(look, side < 0);
     if (arm) { arm.position.set(side * 0.13, y, z); g.add(arm); }
   }
-  g.traverse((o) => { o.castShadow = o.receiveShadow = true; });
   return g;
 }
 
@@ -44,8 +44,8 @@ export function addPlayerHands(guns: Partial<Record<StationId, GunModel[]>>, tur
   const look = lookOf(null);
   for (const id of ['waistL', 'waistR'] as const) for (const g of guns[id] ?? []) { onGrip(g, 1, look); onGrip(g, -1, look); }
   (guns.tail ?? []).forEach((g, i) => onGrip(g, i === 0 ? -1 : 1, look));   // the outer grip of each twin gun
-  if (turrets.top) turrets.top.add(controlYoke(look, 0.02, 0.2));
-  if (turrets.ball) turrets.ball.add(controlYoke(look, -0.18, 0.22));
+  if (turrets.top) turrets.top.add(controlYoke(look, -0.22, 0.24));     // low: the arms stay under the sight picture
+  if (turrets.ball) turrets.ball.add(controlYoke(look, -0.3, 0.2));
 }
 
 // yoke programs for World.prewarm

@@ -211,7 +211,7 @@ export class SunShafts {
         (V.uPlanes.value as THREE.Vector4[])[4].set(_n.x, _n.y, _n.z, w);
         (V.uPlanes.value as THREE.Vector4[])[5].set(-_n.x, -_n.y, -_n.z, -(w - across));
         V.uLen.value = Math.max(0.05, across);
-        V.uCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.012 * k);
+        V.uCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.035 * k);
         V.uTime.value = this.t;
       }
       s.pos.needsUpdate = true;
