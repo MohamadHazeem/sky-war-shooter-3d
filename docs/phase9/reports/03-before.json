@@ -1,0 +1,299 @@
+{
+  "results": [
+    {
+      "difficulty": "recruit",
+      "skill": 0,
+      "metrics": {
+        "mission": "m1",
+        "role": "gunner",
+        "skill": 0,
+        "difficulty": 0.8,
+        "result": "Mission complete",
+        "success": true,
+        "failCause": null,
+        "stopped": false,
+        "timeout": false,
+        "t": 348,
+        "rounds": [
+          {
+            "idx": 0,
+            "t": 165,
+            "boss": false,
+            "kills": 9,
+            "lost": 2,
+            "complete": true
+          },
+          {
+            "idx": 1,
+            "t": 183,
+            "boss": false,
+            "kills": 10,
+            "lost": 1,
+            "complete": true
+          }
+        ],
+        "boss": [],
+        "dmgTaken": 1008,
+        "hitsTaken": 446,
+        "minHp": 0.91,
+        "endHp": 0.93,
+        "wounds": 1,
+        "bombersLost": 3,
+        "kills": 19,
+        "kpm": 3.27,
+        "accuracy": 0.387,
+        "shots": 2115,
+        "hits": 819,
+        "perks": 0,
+        "extra": {}
+      },
+      "log": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 0 enemies 7 bombers 9 playing\n60s kills 0 enemies 7 bombers 8 playing\n90s kills 2 enemies 17 bombers 8 playing\n120s kills 5 enemies 13 bombers 8 playing\n149s kills 8 enemies 9 bombers 8 playing\n177s kills 12 enemies 10 bombers 7 playing\n206s kills 14 enemies 11 bombers 7 playing\n236s kills 16 enemies 14 bombers 6 playing\n266s kills 18 enemies 29 bombers 6 playing\n296s kills 19 enemies 22 bombers 6 playing\n326s kills 19 enemies 22 bombers 6 playing\nRESULT: Mission complete — perks 0, kills 19, accuracy 39%, bombers lost 3, t=348s"
+    },
+    {
+      "difficulty": "recruit",
+      "skill": 1,
+      "metrics": {
+        "mission": "m1",
+        "role": "gunner",
+        "skill": 1,
+        "difficulty": 0.8,
+        "result": "Mission complete",
+        "success": true,
+        "failCause": null,
+        "stopped": false,
+        "timeout": false,
+        "t": 340,
+        "rounds": [
+          {
+            "idx": 0,
+            "t": 168,
+            "boss": false,
+            "kills": 25,
+            "lost": 1,
+            "complete": true
+          },
+          {
+            "idx": 1,
+            "t": 173,
+            "boss": false,
+            "kills": 40,
+            "lost": 1,
+            "complete": true
+          }
+        ],
+        "boss": [],
+        "dmgTaken": 980,
+        "hitsTaken": 420,
+        "minHp": 0.93,
+        "endHp": 0.97,
+        "wounds": 1,
+        "bombersLost": 2,
+        "kills": 65,
+        "kpm": 11.46,
+        "accuracy": 0.709,
+        "shots": 2285,
+        "hits": 1620,
+        "perks": 0,
+        "extra": {}
+      },
+      "log": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 2 enemies 3 bombers 9 playing\n57s kills 7 enemies 1 bombers 8 playing\n87s kills 9 enemies 18 bombers 8 playing\n116s kills 13 enemies 14 bombers 8 playing\n140s kills 21 enemies 6 bombers 8 playing\n167s kills 25 enemies 2 bombers 8 playing\n196s kills 29 enemies 8 bombers 8 playing\n221s kills 35 enemies 7 bombers 8 playing\n248s kills 40 enemies 15 bombers 8 playing\n272s kills 47 enemies 18 bombers 8 playing\n295s kills 57 enemies 7 bombers 7 playing\n319s kills 64 enemies 1 bombers 7 playing\nRESULT: Mission complete — perks 0, kills 65, accuracy 71%, bombers lost 2, t=340s"
+    },
+    {
+      "difficulty": "veteran",
+      "skill": 0,
+      "metrics": {
+        "mission": "m1",
+        "role": "gunner",
+        "skill": 0,
+        "difficulty": 1,
+        "result": "Mission complete",
+        "success": true,
+        "failCause": null,
+        "stopped": false,
+        "timeout": false,
+        "t": 343,
+        "rounds": [
+          {
+            "idx": 0,
+            "t": 165,
+            "boss": false,
+            "kills": 9,
+            "lost": 0,
+            "complete": true
+          },
+          {
+            "idx": 1,
+            "t": 178,
+            "boss": false,
+            "kills": 10,
+            "lost": 0,
+            "complete": true
+          }
+        ],
+        "boss": [],
+        "dmgTaken": 954,
+        "hitsTaken": 317,
+        "minHp": 0.94,
+        "endHp": 1,
+        "wounds": 1,
+        "bombersLost": 0,
+        "kills": 19,
+        "kpm": 3.32,
+        "accuracy": 0.454,
+        "shots": 1735,
+        "hits": 788,
+        "perks": 0,
+        "extra": {}
+      },
+      "log": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 0 enemies 6 bombers 9 playing\n60s kills 1 enemies 5 bombers 9 playing\n90s kills 2 enemies 15 bombers 9 playing\n119s kills 4 enemies 8 bombers 9 playing\n149s kills 8 enemies 4 bombers 9 playing\n177s kills 10 enemies 0 bombers 9 playing\n207s kills 11 enemies 0 bombers 9 playing\n237s kills 11 enemies 0 bombers 9 playing\n267s kills 11 enemies 15 bombers 9 playing\n297s kills 13 enemies 10 bombers 9 playing\n325s kills 17 enemies 6 bombers 9 playing\nRESULT: Mission complete — perks 0, kills 19, accuracy 45%, bombers lost 0, t=343s"
+    },
+    {
+      "difficulty": "veteran",
+      "skill": 1,
+      "metrics": {
+        "mission": "m1",
+        "role": "gunner",
+        "skill": 1,
+        "difficulty": 1,
+        "result": "Mission complete",
+        "success": true,
+        "failCause": null,
+        "stopped": false,
+        "timeout": false,
+        "t": 356,
+        "rounds": [
+          {
+            "idx": 0,
+            "t": 168,
+            "boss": false,
+            "kills": 22,
+            "lost": 1,
+            "complete": true
+          },
+          {
+            "idx": 1,
+            "t": 188,
+            "boss": false,
+            "kills": 38,
+            "lost": 1,
+            "complete": true
+          }
+        ],
+        "boss": [],
+        "dmgTaken": 3108,
+        "hitsTaken": 944,
+        "minHp": 0.82,
+        "endHp": 0.97,
+        "wounds": 1,
+        "bombersLost": 2,
+        "kills": 60,
+        "kpm": 10.11,
+        "accuracy": 0.691,
+        "shots": 2709,
+        "hits": 1871,
+        "perks": 0,
+        "extra": {}
+      },
+      "log": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 1 enemies 5 bombers 9 playing\n59s kills 6 enemies 2 bombers 8 playing\n87s kills 9 enemies 16 bombers 8 playing\n117s kills 11 enemies 15 bombers 8 playing\n144s kills 17 enemies 8 bombers 8 playing\n171s kills 23 enemies 2 bombers 8 playing\n199s kills 28 enemies 9 bombers 8 playing\n226s kills 33 enemies 7 bombers 8 playing\n255s kills 36 enemies 24 bombers 7 playing\n283s kills 41 enemies 22 bombers 7 playing\n310s kills 48 enemies 13 bombers 7 playing\n335s kills 57 enemies 4 bombers 7 playing\nRESULT: Mission complete — perks 0, kills 60, accuracy 69%, bombers lost 2, t=356s"
+    },
+    {
+      "difficulty": "ace",
+      "skill": 0,
+      "metrics": {
+        "mission": "m1",
+        "role": "gunner",
+        "skill": 0,
+        "difficulty": 1.2,
+        "result": "Mission complete",
+        "success": true,
+        "failCause": null,
+        "stopped": false,
+        "timeout": false,
+        "t": 346,
+        "rounds": [
+          {
+            "idx": 0,
+            "t": 165,
+            "boss": false,
+            "kills": 7,
+            "lost": 1,
+            "complete": true
+          },
+          {
+            "idx": 1,
+            "t": 181,
+            "boss": false,
+            "kills": 16,
+            "lost": 3,
+            "complete": true
+          }
+        ],
+        "boss": [],
+        "dmgTaken": 4535,
+        "hitsTaken": 1275,
+        "minHp": 0.56,
+        "endHp": 0.56,
+        "wounds": 0,
+        "bombersLost": 4,
+        "kills": 23,
+        "kpm": 3.99,
+        "accuracy": 0.325,
+        "shots": 2573,
+        "hits": 836,
+        "perks": 0,
+        "extra": {}
+      },
+      "log": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 0 enemies 5 bombers 9 playing\n60s kills 1 enemies 6 bombers 9 playing\n90s kills 1 enemies 19 bombers 9 playing\n120s kills 3 enemies 15 bombers 9 playing\n150s kills 6 enemies 12 bombers 8 playing\n180s kills 8 enemies 9 bombers 8 playing\n210s kills 10 enemies 10 bombers 8 playing\n238s kills 14 enemies 9 bombers 8 playing\n268s kills 17 enemies 23 bombers 7 playing\n296s kills 21 enemies 16 bombers 7 playing\n326s kills 23 enemies 14 bombers 6 playing\nRESULT: Mission complete — perks 0, kills 23, accuracy 32%, bombers lost 4, t=346s"
+    },
+    {
+      "difficulty": "ace",
+      "skill": 1,
+      "metrics": {
+        "mission": "m1",
+        "role": "gunner",
+        "skill": 1,
+        "difficulty": 1.2,
+        "result": "Mission complete",
+        "success": true,
+        "failCause": null,
+        "stopped": false,
+        "timeout": false,
+        "t": 337,
+        "rounds": [
+          {
+            "idx": 0,
+            "t": 170,
+            "boss": false,
+            "kills": 30,
+            "lost": 1,
+            "complete": true
+          },
+          {
+            "idx": 1,
+            "t": 167,
+            "boss": false,
+            "kills": 32,
+            "lost": 3,
+            "complete": true
+          }
+        ],
+        "boss": [],
+        "dmgTaken": 4331,
+        "hitsTaken": 1025,
+        "minHp": 0.66,
+        "endHp": 0.66,
+        "wounds": 1,
+        "bombersLost": 4,
+        "kills": 62,
+        "kpm": 11.03,
+        "accuracy": 0.67,
+        "shots": 2204,
+        "hits": 1476,
+        "perks": 0,
+        "extra": {}
+      },
+      "log": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 2 enemies 5 bombers 9 playing\n57s kills 8 enemies 3 bombers 8 playing\n85s kills 11 enemies 21 bombers 8 playing\n114s kills 17 enemies 16 bombers 8 playing\n140s kills 25 enemies 7 bombers 8 playing\n169s kills 29 enemies 3 bombers 8 playing\n196s kills 34 enemies 8 bombers 8 playing\n224s kills 40 enemies 4 bombers 7 playing\n253s kills 42 enemies 8 bombers 7 playing\n283s kills 45 enemies 16 bombers 5 playing\n309s kills 53 enemies 8 bombers 5 playing\n335s kills 62 enemies 0 bombers 5 ending\nRESULT: Mission complete — perks 0, kills 62, accuracy 67%, bombers lost 4, t=337s"
+    }
+  ],
+  "errors": []
+}

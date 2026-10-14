@@ -8,7 +8,7 @@ import { Atmos } from '../render/Atmosphere';
 import { GunModel, WAIST_DOOR_TOP, WAIST_DOOR_W, TUNNEL_A, TUNNEL_B, TUNNEL_Y } from './Viewmodels';
 import { CrewFigure, FigureLook, lookOf, newPose, lerpPose, Pose, figureMaterial } from './CrewFigure';
 import { crewRoster, manDef } from './CrewRoster';
-import { Brass, brassGeometry, brassMaterial } from './Brass';
+import { Brass, brassGeometry, brassMaterial, linkGeometry, linkMaterial } from './Brass';
 import { SunShafts, WindowFrost, BreathFog, shaftMaterial, frostMaterial, breathMaterial } from './InteriorFx';
 import { sound } from '../audio/Sound';
 
@@ -650,6 +650,8 @@ export function warmLivingInterior(scene: THREE.Scene, at: THREE.Vector3): () =>
   inst.setMatrixAt(0, new THREE.Matrix4());
   inst.castShadow = true;
   objs.push(inst);
+  const links = new THREE.InstancedMesh(linkGeometry(), linkMaterial(), 1);
+  links.setMatrixAt(0, new THREE.Matrix4()); links.castShadow = true; objs.push(links);
   const sg = box.clone();
   sg.setAttribute('aT', new THREE.BufferAttribute(new Float32Array(sg.getAttribute('position').count), 1));
   sg.setAttribute('aU', new THREE.BufferAttribute(new Float32Array(sg.getAttribute('position').count), 1));

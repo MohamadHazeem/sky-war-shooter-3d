@@ -20,6 +20,10 @@ const MAX_LAYER = 5;
 
 let geo: THREE.CylinderGeometry | null = null;
 let mat: THREE.MeshStandardMaterial | null = null;
+let linkGeo: THREE.TorusGeometry | null = null;
+let linkMat: THREE.MeshStandardMaterial | null = null;
+export function linkGeometry() { return linkGeo ??= new THREE.TorusGeometry(.012, .003, 4, 8, Math.PI * 1.65); }
+export function linkMaterial() { return linkMat ??= new THREE.MeshStandardMaterial({ color: 0x55534e, roughness: .6, metalness: 1 }); }
 export function brassGeometry() { geo ??= new THREE.CylinderGeometry(R, R, 0.099, 8); return geo; }
 export function brassMaterial() { mat ??= new THREE.MeshStandardMaterial({ color: 0xc48a3c, roughness: 0.3, metalness: 1 }); return mat; }
 
@@ -45,14 +49,14 @@ export class Brass {
   private clink = 0;
 
   // zMin/zMax: collection extent; defaults preserve the waist walkway.
-  constructor(zMin: number, zMax: number, private floorTop = FLOOR_TOP, private halfWidth = WALK, private curvedSkin = true) {
-    this.flying = new THREE.InstancedMesh(brassGeometry(), brassMaterial(), FLY_CAP);
+  constructor(zMin: number, zMax: number, private floorTop = FLOOR_TOP, private halfWidth = WALK, private curvedSkin = true, links = false) {
+    this.flying = new THREE.InstancedMesh(links ? linkGeometry() : brassGeometry(), links ? linkMaterial() : brassMaterial(), FLY_CAP);
     this.flying.count = 0;
     this.flying.frustumCulled = false;
     this.flying.castShadow = true;
     this.flying.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    this.flying.name = 'brassFlying';
-    this.pile = new THREE.InstancedMesh(brassGeometry(), brassMaterial(), PILE_CAP);
+    this.flying.name = links ? 'spentLinks' : 'brassFlying';
+    this.pile = new THREE.InstancedMesh(links ? linkGeometry() : brassGeometry(), links ? linkMaterial() : brassMaterial(), PILE_CAP);
     this.pile.count = 0;
     this.pile.frustumCulled = false;
     this.pile.receiveShadow = true;

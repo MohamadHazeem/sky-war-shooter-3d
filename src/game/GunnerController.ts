@@ -1,3 +1,5 @@
+import { GunRecoil, RecoilSpring, barrelCooling } from './GunRecoil';
+import { converge, gunLead, TWIN_CONVERGENCE, M2_TRACER_EVERY } from '../world/Gunnery';
 import { GunnerSurvival, survivalGun, STATION_AMMO, type SurvivalGun } from './GunnerSurvival';
 import { drawSurvival } from './GunnerSurvivalHud';
 import { weatherNow } from '../render/WeatherState';
@@ -15,7 +17,7 @@ import { Atmos } from '../render/Atmosphere';
 import { DustMotes } from './DustMotes';
 import { KeyAim, KEY_AIM_RATE } from './KeyAim';
 import { access } from '../core/Accessibility';
-import { heatHaze } from '../render/HeatHaze';
+import { heatHaze, type HazeHandle } from '../render/HeatHaze';
 import { crewSeatLoadout } from './CrewRoster';
 import { LivingInterior } from './LivingInterior';
 import { Brass } from './Brass';
@@ -25,6 +27,7 @@ import { GunnerGlass } from './GlassFx';
 
 interface StationState extends SurvivalGun {
   def: StationDef;
+  recoil: GunRecoil;
   yaw: number; pitch: number;       // current (relative to rest)
   tYaw: number; tPitch: number;     // target
   vYaw: number; vPitch: number;
@@ -41,6 +44,8 @@ const OVERDRIVE_TRACER: [number, number, number] = [14, 5.5, 1.6]; // white-hot 
 
 // First-person B-17 gunner: heavy, sprung gun traverse, recoil, barrel heat, belts.
 
+const _shotMuzzle = new THREE.Vector3(), _shotDir = new THREE.Vector3(), _shotVel = new THREE.Vector3();
+const _sightPoint = new THREE.Vector3(), _smokeVel = new THREE.Vector3();
 const _pa = new THREE.Vector3();
 const _pb = new THREE.Vector3();
 const _eye = new THREE.Vector3();
@@ -79,7 +84,9 @@ export class GunnerController {
   private lookPitch = 0;
   private cooldown = 0;
   private shotCount = 0;
-  private recoilT = 0;
+  private slides = new Map<GunModel, RecoilSpring>();
+  private barrelHaze = new Map<GunModel, HazeHandle>();
+  private links: Brass | null = null;
   private shake = 0;
   private beltTickT = 0; // time until the next low-ammo belt tick
   zoom = false;
@@ -128,7 +135,7 @@ export class GunnerController {
     for (const id of STATION_ORDER) {
       const def = STATIONS[id];
       const max = STATION_AMMO[id];
-      this.states.set(id, { ...survivalGun(max), def, yaw: 0, pitch: 0, tYaw: 0, tPitch: 0, vYaw: 0, vPitch: 0, ammo: max, maxAmmo: max, baseAmmo: max, heat: 0, overheated: false, reload: 0 });
+      this.states.set(id, { ...survivalGun(max), def, recoil: new GunRecoil(), yaw: 0, pitch: 0, tYaw: 0, tPitch: 0, vYaw: 0, vPitch: 0, ammo: max, maxAmmo: max, baseAmmo: max, heat: 0, overheated: false, reload: 0 });
     }
     this.rig.add(this.gunPivot);
     // Lights live permanently in the scene (intensity 0 when unused) so attaching or
@@ -204,6 +211,13 @@ export class GunnerController {
     this.tailBrass = new Brass(-1.3, 0.4, TAIL_FLOOR, TAIL_HALF_WIDTH, false);
     tail.add(this.tailBrass.flying, this.tailBrass.pile);
     this.guns.tail = tg;
+    for (const id of STATION_ORDER) for (const model of this.guns[id]!) {
+      this.slides.set(model, new RecoilSpring());
+      this.barrelHaze.set(model, heatHaze.attach(model.muzzles[0], new THREE.Vector3(0, .04, -.45), .13, 0,
+        { trail: new THREE.Vector3(0, .12, .5), active: () => this.station === id }));
+    }
+    this.links = new Brass(wl.z - 2, wr.z + 2, undefined, undefined, true, true);
+    bomber.root.add(this.links.flying, this.links.pile);
     this.glassFx.attach(bomber, { top: top.group, ball: ball.group, tail });
     this.living.build(bomber, this.waistInterior, (wl.z + wr.z) / 2, wl.z, wr.z, this.guns.waistL[0], this.guns.waistR[0]);
     this.lookYaw = this.lookPitch = this.look = 0;
@@ -224,6 +238,14 @@ export class GunnerController {
       model.ammoCan.geometry.dispose();
     }
     this.guns = {};
+    this.slides.clear();
+    for (const haze of this.barrelHaze.values()) haze.detach();
+    this.barrelHaze.clear();
+    this.links?.flying.removeFromParent(); this.links?.pile.removeFromParent();
+    this.links?.dispose(); this.links = null;
+    this.cooldown = this.shake = this.shotCount = 0;
+    this.firing = false;
+    for (const s of this.states.values()) s.recoil.reset();
     this.gunPivot.clear();
     this.rig.children.filter((c) => c !== this.gunPivot).forEach((c) => this.rig.remove(c));
     this.muzzleLight.intensity = 0;
@@ -354,6 +376,8 @@ export class GunnerController {
     sound.setTurretTraverse(0);
     this.living.setStation(id); // the other waist gun goes to its crewman
     const s = this.states.get(id)!;
+    s.recoil.reset(); this.cooldown = this.shake = 0;
+    for (const spring of this.slides.values()) spring.reset();
     if (immediate) { s.yaw = s.tYaw = 0; s.pitch = s.tPitch = 0; }
     this.applyModelVisibility(id);
     this.onSwitch?.(def);
@@ -397,7 +421,7 @@ export class GunnerController {
   }
 
   resetAmmo() {
-    for (const s of this.states.values()) { Object.assign(s, survivalGun(s.maxAmmo)); s.heat = 0; s.overheated = false; }
+    for (const s of this.states.values()) { Object.assign(s, survivalGun(s.maxAmmo)); s.heat = 0; s.overheated = false; s.recoil.reset(); }
     this.survival.reset(); this.legacyJammed = false;
   }
 
@@ -426,6 +450,7 @@ export class GunnerController {
     if (s.jam && inp.hit('KeyR')) sound.play('click', null, { gain: .65, rate: .7 });
     const clearing = s.jam;
     if (life.clearJam(s, dt, inp.down('KeyR'), inp.hit('KeyR'))) sound.play('beltTick', null, { gain: .8, rate: .7 });
+    s.recoil.update(dt, this.station);
     const adt = dt * this.aimTimeScale * life.aimScale; // aim/sight time: real time during bullet-time
 
     // Aim: mouse moves the target; the gun follows on a damped spring (heavy mount)
@@ -485,9 +510,11 @@ export class GunnerController {
       if (!before && s.reload) sound.play('click', null, { gain: .5, rate: .7 });
     }
 
+    this.orientGun();
+
     // Fire
     this.cooldown -= dt;
-    s.heat = Math.max(0, s.heat - dt * (s.overheated ? 0.22 : 0.16));
+    s.heat = Math.max(0, s.heat - dt * barrelCooling(this.firing, s.overheated));
     if (s.overheated && s.heat < 0.45) s.overheated = false;
     const trigger = inp.mouse(0) || inp.down('Space');
     const thawed = trigger && !s.jam && s.reload <= 0 ? life.thaw(s, dt) : s.frost === 0;
@@ -510,7 +537,7 @@ export class GunnerController {
           if (s.jam) { sound.play('click', null, { gain: .8 }); this.world.callout('gs_jam', 'Waist', "My gun's jammed! Working the charging handle!", 30, 2); }
           break;
         }
-        this.fireRound(g, def);
+        this.fireRound(g, def, rate);
         if (s.ammo === 100 && def.type === 'waist') this.world.callout('gs_ammo', 'Waist', 'Need ammo at the waist! Pass another can!', 30, 2);
         this.shotCount++;
         if (!this.heatFree) s.heat += W.heat * this.loadout.heat;
@@ -522,16 +549,15 @@ export class GunnerController {
     if (s.ammo === 0 && (inp.mouseHit(0) || inp.hit('Space'))) sound.play('click', null, { gain: 0.6 });
 
     // Recoil animation & lights
-    this.recoilT = Math.max(0, this.recoilT - dt * 14);
     this.shake = Math.max(0, this.shake - dt * 6);
-    for (const g of guns) for (const r of g.recoil) r.position.z = -this.recoilT * 0.022;
+    for (const g of guns) {
+      const slide = this.slides.get(g)!; slide.update(dt, 48, 22);
+      for (const r of g.recoil) r.position.z = -slide.x;
+    }
     this.muzzleLight.intensity = Math.max(0, this.muzzleLight.intensity - dt * 120);
 
-    // Apply gun orientation
-    const sway = this.survival.wound * .006 * access.shake;
-    const yaw = def.rest.yaw + s.yaw + Math.sin(this.world.time * 1.7) * sway, pitch = def.rest.pitch + s.pitch + Math.sin(this.world.time * 2.3) * sway;
-    this.gunPivot.rotation.set(0, 0, 0);
-    this.gunPivot.quaternion.setFromEuler(_ce.set(-pitch, yaw, 0, 'YXZ'));
+    for (const g of guns) this.barrelHaze.get(g)!.strength = Math.max(0, s.heat - .35) * .45;
+    this.links?.update(dt);
 
     sound.setTurretTraverse(def.id === 'ball' ? Math.hypot(s.vYaw, s.vPitch) : 0);
     this.tailBrass?.update(dt);
@@ -550,7 +576,7 @@ export class GunnerController {
       this.dust.update(dt, this.sunLocal, this.engine.renderer.domElement.height);
     }
     this.updateCamera(adt);
-    this.world.playerAimDir.copy(this.aimDirection());
+    this.aimDirection(this.world.playerAimDir);
     this.updateLiving(dt);
     this.interiorDamage.update(dt, this.bomber, this.world.effects, this.cold, this.engine.quality === 'low', this.station === 'waistL' || this.station === 'waistR');
     this.glassFx.update(dt, this.station, this.adsK, Math.max(this.cold, life.chill));
@@ -559,6 +585,14 @@ export class GunnerController {
       this.shaftSun.copy(Atmos.sunDir).applyQuaternion(_q);
       (this.station === 'ball' ? this.ballShafts : this.tailShafts).update(this.shaftSun);
     }
+  }
+
+  private orientGun() {
+    const s = this.state, def = s.def;
+    const sway = this.survival.wound * .006 * access.shake;
+    const yaw = def.rest.yaw + s.yaw + s.recoil.yaw.x + Math.sin(this.world.time * 1.7) * sway;
+    const pitch = def.rest.pitch + s.pitch + s.recoil.pitch.x + Math.sin(this.world.time * 2.3) * sway;
+    this.gunPivot.quaternion.setFromEuler(_ce.set(-pitch, yaw, 0, 'YXZ'));
   }
 
   // Living interior: crew, brass, sun shafts, frost and the gunner's own breath
@@ -622,9 +656,7 @@ export class GunnerController {
       if (!f.alive) continue;
       const d = f.pos.distanceTo(pivot);
       if (d > 1400) continue;
-      const tof = d / (this.loadout.weapon.velocity * this.loadout.velocity);
-      _pb.copy(f.vel).sub(b.vel).multiplyScalar(tof).add(f.pos);
-      _pb.y += 0.5 * 9.81 * tof * tof;
+      gunLead(_pb, pivot, f.pos, f.vel, b.vel, this.loadout.weapon.velocity * this.loadout.velocity);
       const local = b.worldToLocal(_pb).sub(def.pivot);
       const yaw = Math.atan2(local.x, local.z) - def.rest.yaw;
       const pitch = Math.asin(THREE.MathUtils.clamp(local.y / local.length(), -1, 1)) - def.rest.pitch;
@@ -649,36 +681,41 @@ export class GunnerController {
     return out;
   }
 
-  private fireRound(g: GunModel, def: StationDef) {
+  private fireRound(g: GunModel, def: StationDef, rate: number) {
     const b = this.bomber!;
-    const muzzle = g.muzzles[0].getWorldPosition(new THREE.Vector3());
-    const dir = new THREE.Vector3(0, 0, 1).applyQuaternion(g.muzzles[0].getWorldQuaternion(_q));
+    const muzzle = g.muzzles[0].getWorldPosition(_shotMuzzle);
+    const dir = _shotDir;
+    if (def.type === 'waist') dir.set(0, 0, 1).applyQuaternion(this.gunPivot.getWorldQuaternion(_q));
+    else converge(dir, muzzle, this.gunPivot.localToWorld(_sightPoint.set(0, 0, TWIN_CONVERGENCE)));
     const W = this.loadout.weapon;
     const spread = W.spread * this.loadout.spread;
     dir.x += R() * spread; dir.y += R() * spread; dir.z += R() * spread;
     dir.normalize();
-    const vel = dir.clone().multiplyScalar(W.velocity * this.loadout.velocity).add(b.vel);
+    const vel = _shotVel.copy(dir).multiplyScalar(W.velocity * this.loadout.velocity).add(b.vel);
     const od = this.overdrive > 0;
-    const tracer = this.shotCount % (od ? 2 : W.tracerEvery) === 0;
+    const tracer = this.shotCount % (W.cannon ? W.tracerEvery : M2_TRACER_EVERY) === 0;
     this.world.ballistics.fire(muzzle, vel, 'allied', W.damage * this.loadout.damage, tracer, od ? OVERDRIVE_TRACER : W.tracer, b, !!W.cannon, true);
     this.world.stats.shots++;
-    if (this.shotCount % 2 === 0) this.world.effects.playerMuzzle(muzzle, dir, b.vel);
+    this.world.effects.playerMuzzle(muzzle, dir, b.vel);
     if (this.shotCount % 2 === 0) heatHaze.emit(muzzle, 0.3, 1, 0.16, 'shimmer', dir);   // muzzle blast shimmer (HeatHaze.ts)
-    if (this.shotCount % 2 === 0) this.world.effects.gunSmoke(muzzle, b.vel.clone().multiplyScalar(0.9));
+    if (this.shotCount % 2 === 0) this.world.effects.gunSmoke(muzzle, _smokeVel.copy(b.vel).multiplyScalar(0.98), true);
     this.muzzleLight.position.copy(muzzle).addScaledVector(dir, -0.75); // at the window: the flash lights the compartment
-    this.muzzleLight.intensity = 3 + Math.random() * 2;
-    this.recoilT = 1;
+    this.muzzleLight.intensity = (3 + Math.random() * 2) * access.flash;
+    this.slides.get(g)!.v += 1.7 * this.loadout.recoil;
     this.shake = Math.min(1, this.shake + 0.35);
     // Recoil kick disturbs aim (gunner fights it)
     const s = this.state;
-    s.vYaw += R() * 0.09 * this.loadout.recoil;
-    s.vPitch += (0.05 + Math.random() * 0.07) * this.loadout.recoil;
-    sound.playerGun(this.station === 'ball' || this.station === 'tail', !!W.cannon, this.station === 'ball');
+    s.recoil.kick(this.station, this.loadout.recoil, this.survival.difficulty === 'recruit', R(), rate);
+    sound.playerGun(def.type !== 'waist', !!W.cannon, this.station === 'ball');
     g.belt?.advance(1);
     this.ejectCasing(g);
   }
 
   private ejectCasing(g: GunModel) {
+    if (this.links && this.bomber) {
+      g.ejectPort.getWorldPosition(_pa); this.bomber.root.worldToLocal(_pa);
+      this.links.eject(_pa, _pb.set(.7 + R() * .3, -.7, R() * .5), false);
+    }
     const br = this.station === 'tail' ? this.tailBrass : this.living.brass;
     if (!br || !this.bomber) return;
     g.ejectPort.getWorldPosition(_pa);
@@ -731,13 +768,13 @@ export class GunnerController {
     this.eyeLocal.copy(eye);
     // buffeting and gun shake
     const t = this.world.time;
-    const buffet = 0.0025;
-    const shake = this.shake * access.shake;  // 'reduce screen shake' setting
-    eye.x += Math.sin(t * 13.1) * buffet * 0.5 + R() * shake * 0.004;
-    eye.y += Math.sin(t * 17.3) * buffet * 0.4 + R() * shake * 0.004;
-    eye.z += -this.recoilT * 0.012;
+    const buffet = 0.0025 * access.shake;
+    const shake = this.state.recoil.vibration(access.shake);  // 'reduce screen shake' setting
+    eye.x += Math.sin(t * 13.1) * buffet * 0.5 + shake * 0.004;
+    eye.y += Math.sin(t * 17.3) * buffet * 0.4 + shake * 0.003;
+    eye.z -= Math.abs(shake) * .009;
     // airframe vibration from dead / windmilling engines and a shot-up tail (smooth, no jitter)
-    const bz = this.world.bomberDamage.buzz;
+    const bz = this.world.bomberDamage.buzz * access.shake;
     if (bz > 0) {
       eye.x += (Math.sin(t * 71.3) * 0.7 + Math.sin(t * 19.1 + 0.4) * 0.3) * 0.0016 * bz;
       eye.y += (Math.sin(t * 83.9 + 1.3) * 0.7 + Math.sin(t * 23.7) * 0.3) * 0.0019 * bz;
@@ -757,8 +794,8 @@ export class GunnerController {
       this.gunPivot.getWorldQuaternion(_cq);
       cam.quaternion.copy(_cq).multiply(_flip);
     }
-    if (shake > 0) cam.rotateZ(R() * shake * 0.003);
-    if (bz > 0) { cam.rotateZ(Math.sin(t * 57.1) * 0.0012 * bz * access.shake); cam.rotateX(Math.sin(t * 63.7 + 0.7) * 0.0009 * bz * access.shake); }
+    cam.rotateZ(shake * .0025);
+    if (bz > 0) { cam.rotateZ(Math.sin(t * 57.1) * 0.0012 * bz); cam.rotateX(Math.sin(t * 63.7 + 0.7) * 0.0009 * bz); }
     cam.fov = this.fov;
     cam.updateProjectionMatrix();
     this.engine.post.nearFocus = def.type === 'waist' ? 0.42 : def.type === 'tail' ? 0.5 : 0.4;

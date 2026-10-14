@@ -373,3 +373,18 @@ No new shaders are compiled on failure: receiver frost reuses the material warme
 
 Validation: 12 focused unit tests plus scripted real-station browser checks on Low and High.
 This is an initial balance pass; long campaign win rates have not been re-measured.
+
+## Phase 9 goal 03 — gun feel
+
+`GunRecoil.ts` owns the mount springs and firing/idle/overheat cooling (.075/.16/.22 heat/s).
+Recruit angular recoil is ×.55; Ace gunner disables assist, radius boosts and the lead pip.
+The standard M2 now heats during a sustained burst (~15 s to overheat without upgrades).
+Twin guns converge at 300 m without doubling aggregate fire rate; .50 tracer compound fades
+at 1.15–1.55 s while the projectile continues. The ring-sight lead calculation shares the
+ballistics drag (.12/s), gravity and inherited aircraft velocity.
+
+Fresh-profile m1 autoplay, one run per difficulty/skill before and after (all 12 completed):
+Recruit human/precise accuracy 38.7/70.9% → 41.7/78.5%; Veteran 45.4/69.1% → 39.8/76.1%;
+Ace 32.5/67.0% → 21.2/44.1%. Ace's baseline still had assistance. These small seeded samples
+are sanity checks, not a campaign win-rate estimate; earned perks and RNG consumption vary.
+[Report, raw hit/shot counts and screenshots](phase9/reports/03.md).

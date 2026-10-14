@@ -1,0 +1,107 @@
+{
+  "results": [
+    {
+      "difficulty": "recruit",
+      "skill": 0,
+      "metrics": {
+        "shots": 2784,
+        "hits": 1160,
+        "accuracy": 0.4166666666666667,
+        "kills": 32,
+        "bombersLost": 2,
+        "t": 353.0171666666693,
+        "state": "debrief",
+        "success": true,
+        "assist": 1,
+        "hitScale": 1.4
+      },
+      "log": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 1 enemies 7 bombers 9 playing\n58s kills 5 enemies 3 bombers 8 playing\n86s kills 9 enemies 18 bombers 8 playing\n116s kills 9 enemies 17 bombers 8 playing\n146s kills 12 enemies 12 bombers 8 playing\n173s kills 15 enemies 9 bombers 8 playing\n201s kills 19 enemies 8 bombers 8 playing\n229s kills 22 enemies 7 bombers 8 playing\n259s kills 22 enemies 26 bombers 8 playing\n289s kills 24 enemies 24 bombers 7 playing\n317s kills 27 enemies 21 bombers 7 playing\n345s kills 29 enemies 16 bombers 7 playing\nRESULT: Mission complete — perks 0, kills 32, accuracy 42%, bombers lost 2, t=353s"
+    },
+    {
+      "difficulty": "recruit",
+      "skill": 1,
+      "metrics": {
+        "shots": 2498,
+        "hits": 1961,
+        "accuracy": 0.7850280224179343,
+        "kills": 57,
+        "bombersLost": 4,
+        "t": 355.923499999999,
+        "state": "debrief",
+        "success": true,
+        "assist": 1.3,
+        "hitScale": 1.6099999999999999
+      },
+      "log": "0s kills 0 enemies 0 bombers 9 playing\n29s kills 3 enemies 4 bombers 9 playing\n58s kills 7 enemies 3 bombers 8 playing\n85s kills 13 enemies 20 bombers 8 playing\n115s kills 15 enemies 13 bombers 8 playing\n142s kills 22 enemies 7 bombers 8 playing\n168s kills 28 enemies 1 bombers 7 playing\n197s kills 31 enemies 7 bombers 7 playing\n226s kills 35 enemies 4 bombers 6 playing\n254s kills 38 enemies 20 bombers 6 playing\n284s kills 42 enemies 20 bombers 6 playing\n312s kills 47 enemies 15 bombers 5 playing\n338s kills 54 enemies 7 bombers 5 playing\nRESULT: Mission complete — perks 0, kills 57, accuracy 79%, bombers lost 4, t=356s"
+    },
+    {
+      "difficulty": "veteran",
+      "skill": 0,
+      "metrics": {
+        "shots": 2266,
+        "hits": 901,
+        "accuracy": 0.3976169461606355,
+        "kills": 23,
+        "bombersLost": 5,
+        "t": 350.926333333342,
+        "state": "debrief",
+        "success": true,
+        "assist": 1,
+        "hitScale": 1.4
+      },
+      "log": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 1 enemies 6 bombers 9 playing\n60s kills 4 enemies 4 bombers 8 playing\n89s kills 7 enemies 17 bombers 8 playing\n119s kills 7 enemies 17 bombers 8 playing\n148s kills 10 enemies 11 bombers 8 playing\n178s kills 11 enemies 8 bombers 6 playing\n207s kills 15 enemies 11 bombers 5 playing\n237s kills 18 enemies 15 bombers 4 playing\n267s kills 18 enemies 31 bombers 4 playing\n297s kills 19 enemies 23 bombers 4 playing\n326s kills 20 enemies 22 bombers 4 playing\nRESULT: Mission complete — perks 0, kills 23, accuracy 40%, bombers lost 5, t=351s"
+    },
+    {
+      "difficulty": "veteran",
+      "skill": 1,
+      "metrics": {
+        "shots": 2658,
+        "hits": 2024,
+        "accuracy": 0.7614747930775019,
+        "kills": 63,
+        "bombersLost": 4,
+        "t": 355.91433333333447,
+        "state": "debrief",
+        "success": true,
+        "assist": 1,
+        "hitScale": 1.6099999999999999
+      },
+      "log": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 2 enemies 7 bombers 9 playing\n57s kills 8 enemies 6 bombers 9 playing\n85s kills 11 enemies 19 bombers 9 playing\n114s kills 16 enemies 13 bombers 8 playing\n141s kills 21 enemies 8 bombers 8 playing\n169s kills 28 enemies 2 bombers 8 playing\n197s kills 32 enemies 12 bombers 8 playing\n226s kills 36 enemies 10 bombers 7 playing\n254s kills 41 enemies 11 bombers 7 playing\n282s kills 45 enemies 18 bombers 6 playing\n310s kills 50 enemies 14 bombers 6 playing\n336s kills 57 enemies 7 bombers 6 playing\nRESULT: Mission complete — perks 0, kills 63, accuracy 76%, bombers lost 4, t=356s"
+    },
+    {
+      "difficulty": "ace",
+      "skill": 0,
+      "metrics": {
+        "shots": 2226,
+        "hits": 472,
+        "accuracy": 0.21203953279424978,
+        "kills": 12,
+        "bombersLost": 3,
+        "t": 345.93000000001405,
+        "state": "debrief",
+        "success": true,
+        "assist": 0,
+        "hitScale": 1
+      },
+      "log": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 0 enemies 8 bombers 9 playing\n60s kills 0 enemies 7 bombers 9 playing\n90s kills 1 enemies 16 bombers 9 playing\n120s kills 2 enemies 16 bombers 8 playing\n150s kills 3 enemies 14 bombers 8 playing\n180s kills 5 enemies 10 bombers 8 playing\n210s kills 7 enemies 7 bombers 8 playing\n240s kills 9 enemies 5 bombers 8 playing\n270s kills 9 enemies 19 bombers 6 playing\n300s kills 10 enemies 17 bombers 6 playing\n329s kills 12 enemies 15 bombers 6 playing\nRESULT: Mission complete — perks 0, kills 12, accuracy 21%, bombers lost 3, t=346s"
+    },
+    {
+      "difficulty": "ace",
+      "skill": 1,
+      "metrics": {
+        "shots": 2822,
+        "hits": 1244,
+        "accuracy": 0.4408221119773211,
+        "kills": 30,
+        "bombersLost": 1,
+        "t": 345.92516666667865,
+        "state": "debrief",
+        "success": true,
+        "assist": 0,
+        "hitScale": 1
+      },
+      "log": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 1 enemies 4 bombers 9 playing\n60s kills 4 enemies 6 bombers 9 playing\n90s kills 4 enemies 17 bombers 9 playing\n119s kills 7 enemies 13 bombers 9 playing\n146s kills 13 enemies 7 bombers 9 playing\n175s kills 16 enemies 4 bombers 9 playing\n205s kills 19 enemies 13 bombers 9 playing\n235s kills 20 enemies 12 bombers 8 playing\n263s kills 23 enemies 25 bombers 8 playing\n292s kills 26 enemies 19 bombers 8 playing\n322s kills 29 enemies 14 bombers 8 playing\nRESULT: Mission complete — perks 0, kills 30, accuracy 44%, bombers lost 1, t=346s"
+    }
+  ],
+  "errors": []
+}
