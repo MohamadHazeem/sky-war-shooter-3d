@@ -16,7 +16,18 @@ if [ ! -d "$WT" ]; then
   ln -sf "$ROOT/node_modules" "$WT/node_modules"
 fi
 cd "$WT"
-codex exec --dangerously-bypass-approvals-and-sandbox -C . -o "/tmp/codex-$TASK-final.txt" \
-  "You are implementing Phase $PN goal $NN in this repository. Follow AGENTS.md strictly. Your task file is $SPEC — read it and do the work end to end: implement, add tests, run npm run check until it passes, verify in your browser with your own dev server on the port named in the task file (save the screenshots you rely on under docs/$PHASE/shots/$NN/), commit on the current branch ($PHASE/$TASK), and write the report to docs/$PHASE/reports/$NN.md (commit it too). Do not push or deploy." \
-  < /dev/null > "/tmp/codex-$TASK.log" 2>&1
-echo "codex $TASK exit $?"
+# EFFORT=medium|high (default high). A 429 rate-limit failure is retried after a pause (up to 6 times).
+EXTRA=(); [ -n "${EFFORT:-}" ] && EXTRA=(-c "model_reasoning_effort=$EFFORT")
+for attempt in 1 2 3 4 5 6; do
+  set +e
+  codex exec --dangerously-bypass-approvals-and-sandbox "${EXTRA[@]}" -C . -o "/tmp/codex-$TASK-final.txt" \
+    "You are implementing Phase $PN goal $NN in this repository. Follow AGENTS.md strictly. Your task file is $SPEC — read it and do the work end to end: implement, add tests, run npm run check until it passes, verify in your browser with your own dev server on the port named in the task file (save the screenshots you rely on under docs/$PHASE/shots/$NN/), commit on the current branch ($PHASE/$TASK), and write the report to docs/$PHASE/reports/$NN.md (commit it too). Do not push or deploy." \
+    < /dev/null > "/tmp/codex-$TASK.log" 2>&1
+  rc=$?; set -e
+  if [ $rc -ne 0 ] && grep -q "status: 429" "/tmp/codex-$TASK.log" && [ -z "$(git log --oneline main..HEAD -- . ':!docs/'"$PHASE"'/'"$TASK"'.md' 2>/dev/null)" ]; then
+    echo "codex $TASK hit the rate limit (attempt $attempt); retrying in 5 min"; sleep 300; continue
+  fi
+  break
+done
+echo "codex $TASK exit $rc"
+exit $rc
