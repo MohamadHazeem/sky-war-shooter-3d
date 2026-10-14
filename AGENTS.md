@@ -29,8 +29,8 @@ Sky War Shooter 3D: a WWII browser game (Three.js r186 + TypeScript + Vite). Rea
   (`npx vite --port <port> --strictPort`, in the background) and stop it when done. Hidden or
   background tabs do not run requestAnimationFrame: drive frames with `window.sws.step(n, dt, render)`
   and inspect with `sws.game`, `sws.autoplay(mission, steps)`, `sws.bench(n)`, `sws.vqa` (see
-  `docs/ARCHITECTURE.md` and `src/main.ts`). Use computer-use (real mouse/screen) only if nothing else
-  works, since it takes over the player's desktop. Save screenshots you rely on (small JPEGs) under
+  `docs/ARCHITECTURE.md` and `src/main.ts`). NEVER use computer-use (real mouse/keyboard/screen
+  control): it takes over the owner's desktop. Use headless browsers or the browser tool only. Save screenshots you rely on (small JPEGs) under
   `docs/phase6/shots/<task>/` and reference them in your report.
 - No network installs of new dependencies unless the task says so.
 - Every new player-visible string needs Arabic: add it to a table in `src/i18n/ar/*.ts` (register new
