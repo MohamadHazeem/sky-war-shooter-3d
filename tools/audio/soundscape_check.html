@@ -1,0 +1,70 @@
+<!doctype html><meta charset="utf-8"><title>Soundscape verification</title>
+<style>body{margin:16px;background:#182129;color:#eef3e7;font:14px monospace}h1{font:22px sans-serif}button{padding:10px;margin:0 8px 12px 0}iframe{width:960px;height:600px;border:1px solid #687665}pre{white-space:pre-wrap;max-width:960px}#status{color:#bed797}</style>
+<h1>Phase 8 · Gunner soundscape</h1>
+<button id="run">Verify soundscape</button><button id="low">Low / Reduced view</button><button id="ar">Arabic crew call</button><button id="stop">Stop audio</button>
+<div id="status">Waiting for game assets</div><iframe id="game" src="/"></iframe><pre id="results"></pre>
+<script type="module">
+import { masterChain } from '/src/audio/Sound.ts';
+const frame=document.querySelector('iframe'),status=document.querySelector('#status'),output=document.querySelector('#results');
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const results={checks:[],errors:[]};
+let w,s,g,voice;
+// Vite HMR adds timestamps: reuse the game's module instance, including its language state.
+const gameModule=path=>w.eval(`import(${JSON.stringify(w.performance.getEntriesByType('resource').find(e=>e.name.includes(path))?.name??path)})`);
+const check=(ok,name,detail)=>{results.checks.push({name,pass:!!ok,detail});if(!ok)throw Error(name);};
+function display(text){status.textContent=text;output.textContent=JSON.stringify(results,null,2);}
+function peak(){const a=new Float32Array(2048);s.scope.getFloatTimeDomainData(a);let p=0;for(const v of a)p=Math.max(p,Math.abs(v));return 20*Math.log10(Math.max(p,1e-9));}
+async function sample(ms=1000){let p=-180;for(let i=0;i<ms/50;i++){await wait(50);s.meterPoll();p=Math.max(p,peak());}return +p.toFixed(2);}
+for(let i=0;i<180;i++){if(frame.contentWindow.sws?.autoplay)break;await wait(250);}
+w=frame.contentWindow;g=w.sws.game;s=w.swsSound;
+w.addEventListener('error',e=>results.errors.push(e.message));w.addEventListener('unhandledrejection',e=>results.errors.push(String(e.reason)));
+display('Ready · uses sws.step for every simulated frame');
+document.querySelector('#run').onclick=async()=>{
+ try{
+  display('Resuming audio…');w.sws.vqa.freeze();s.init();await s.ctx.resume();
+  display('Loading recorded effects…');
+  while(!s.samplesLoaded)await wait(100);
+  display('Loading crew module…');voice=(await gameModule('/src/audio/Voice.ts')).voice;await voice.load();voice.stop();
+  display('Setting language…');(await gameModule('/src/i18n/index.ts')).setLang('en');
+  display('Verifying live graph…');
+  g.bookends.auto=true;g.settings.quality='medium';g.applySettings();g.startMission(w.sws.survivalMission('gunner'));
+  g.input.locked=true;g.state='playing';g.engine.paused=false;w.sws.step(180,1/60);s.setMusic(false);voice.stop();
+  const b=g.world.playerBomber;
+  s.setDetail('normal');s.setBomberDamage(b.engineDead,b.zones);await wait(800);
+  check(s.b17.srcs.length===4,'Four recorded engine layers',s.engineGains.map(n=>n.gain.value));
+  b.engineDead[0]=true;b.engineDead[3]=true;b.zone('fuselageAft').hp=20;
+  s.setBomberDamage(b.engineDead,b.zones);s.setCabin(b.root);await wait(1500);
+  const gains=s.engineGains.map(n=>+n.gain.value.toFixed(4));
+  check(gains[0]<.01&&gains[3]<.01&&gains[1]>.2&&gains[2]>.2,'Asymmetric dead engines silent',gains);
+  check(s.cabin.leakGain.gain.value>.1,'Damaged skin raises wind',s.cabin.leakGain.gain.value);
+  b.engineDead.fill(false);for(const z of b.zones)z.hp=z.maxHp;
+  s.setBomberDamage(b.engineDead,b.zones);s.setCabin(b.root);await wait(1500);
+  check(s.engineGains.every(n=>n.gain.value>.2)&&s.cabin.leakGain.gain.value<.01,'Repair and mission state restore');
+  s.setDetail('reduced');check(s.cabin.roar.every(r=>r.pan.panningModel==='equalpower')&&!s.breathing.full,'Reduced detail switches off cabin HRTF and breath sample');
+  s.setDetail('normal');s.meterReset();
+  const pos=b.pos.clone();pos.x+=25;s.flakBurst(pos);pos.x+=1500;s.flakBurst(pos);s.playerImpact(true);
+  const burst=setInterval(()=>s.playerGun(false),80);await sample(1200);clearInterval(burst);
+  results.mix=s.stats();check(results.mix.nonFinite===0&&results.mix.peakOutDb<0,'Guns, hits and near/far flak remain finite below clipping',results.mix.peakOutDb);
+  s.setSfxVolume(0);s.setMusicVolume(0);s.setVoiceVolume(0);voice.stop();await wait(2000);
+  check((await sample(300))<-85,'SFX mute includes ambience and wet tails');
+  s.setVoiceVolume(1);await voice.fetchBuf('ss_clear');await voice.fetchBuf('ss_quiet');
+  voice.say('ss_clear',{priority:2});await wait(100);const first=voice.playing;
+  voice.say('ss_quiet',{priority:0,maxDelay:10});check(voice.playing===first&&voice.queue.length===1,'One crew line at a time, next line queued');
+  const vpeak=await sample(1800);check(vpeak>-65,'Voice remains audible with SFX and music muted',vpeak);
+  s.setVolume(0);await wait(500);check((await sample(250))<-85,'Master mute silences voice');
+  voice.stop();s.setVolume(.8);s.setSfxVolume(1);s.setVoiceVolume(1);s.setMusicVolume(1);
+  // Exact type/clock composition and all dynamic semantic mappings in the live resolver.
+  const calls=[['Navigator',"Me 262s, nine o'clock high!"],['Navigator',"He's back — the one who wounded Sgt. Walsh over Berlin!"],['Tail',"Yellow noses, twelve o'clock high! That's Bauer's Staffel — 45 kills!"]];
+  results.calls=calls.map(([speaker,text])=>({text,clips:voice.resolve(speaker,text)}));check(results.calls.every(c=>c.clips?.length),'Live voice resolution');
+  const oc=new OfflineAudioContext(2,32000*4,32000),[input,out]=masterChain(oc);out.connect(oc.destination);
+  for(let i=0;i<36;i++){const src=oc.createBufferSource();src.buffer=s.bufs.get(i%3?'m2inside':'skin')[0];src.connect(input);src.start(i*.077);}
+  const rendered=await oc.startRendering();let max=0,bad=0;for(let c=0;c<2;c++)for(const v of rendered.getChannelData(c)){if(!Number.isFinite(v))bad++;max=Math.max(max,Math.abs(v));}
+  results.offline={peakDb:20*Math.log10(max),nonFinite:bad};check(bad===0&&max<1,'Offline stacked gun/skin mix limiter',results.offline);
+  w.sws.step(60,1/60);g.ui.subtitle('Navigator',"Me 262s, nine o'clock high!");
+  display('PASS · live graph, independent buses, positional effects, crew queue and offline limiter');
+ }catch(e){results.errors.push(String(e));display('FAIL · '+e.message);}
+};
+document.querySelector('#low').onclick=()=>{g.settings.quality='low';g.applySettings();s.setDetail('reduced');w.sws.step(120,1/60);g.ui.subtitle('Radio',"We've got wounded back here. I'm helping them. Keep those fighters off us.");display('Low / Reduced · '+g.state+' · '+s.detail);};
+document.querySelector('#ar').onclick=async()=>{const i18n=await gameModule('/src/i18n/index.ts');i18n.setLang('ar');w.sws.step(1);g.ui.subtitle('Navigator',"Me 262s, nine o'clock high!");display('Arabic · type and clock subtitle');};
+document.querySelector('#stop').onclick=()=>{voice?.stop();s.setMode('menu');s.setVolume(0);display('Stopped');};
+</script>

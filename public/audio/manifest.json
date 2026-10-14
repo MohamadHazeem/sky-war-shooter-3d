@@ -1,9 +1,20 @@
 {
   "loops": {
+    "turret": {
+      "file": "ss_turret.m4a",
+      "gain": 1
+    },
+    "breath": {
+      "file": "ss_breath.m4a",
+      "gain": 1
+    },
+    "holes": {
+      "file": "ss_holes.m4a",
+      "gain": 1
+    },
     "b17_interior": {
-      "file": "loop_b17_interior.wav",
-      "gain": 0.73,
-      "baseRpmHint": "4-engine radial bomber cabin drone (Wright Cyclone-class), ~2100-2300 rpm cruise; 0.7 Hz engine beat. Pitch +/-10% only."
+      "file": "ss_radial.m4a",
+      "gain": 1.1
     },
     "radial_exterior": {
       "file": "loop_radial_exterior.wav",
@@ -27,6 +38,44 @@
     }
   },
   "sfx": {
+    "skin_patter": {
+      "files": [
+        "ss_patter.m4a"
+      ],
+      "gain": 0.28
+    },
+    "flak_far": {
+      "files": [
+        "ss_flak_far.m4a"
+      ],
+      "gain": 1
+    },
+    "flak_near": {
+      "files": [
+        "ss_flak_near.m4a"
+      ],
+      "gain": 1
+    },
+    "skin": {
+      "files": [
+        "ss_skin_1.m4a",
+        "ss_skin_2.m4a"
+      ],
+      "gain": 0.85
+    },
+    "receiver": {
+      "files": [
+        "ss_receiver.m4a"
+      ],
+      "gain": 0.7
+    },
+    "m2_interior": {
+      "files": [
+        "ss_m2_1.m4a",
+        "ss_m2_2.m4a"
+      ],
+      "gain": 0.85
+    },
     "mg50_shot": {
       "files": [
         "mg50_shot_1.mp3",
@@ -129,13 +178,10 @@
     },
     "casing": {
       "files": [
-        "casing_1.mp3",
-        "casing_2.mp3",
-        "casing_3.mp3",
-        "casing_4.mp3"
+        "ss_casing_1.m4a",
+        "ss_casing_2.m4a"
       ],
-      "gain": 0.35,
-      "trim": [0, 0, 1.1, 0]
+      "gain": 0.65
     },
     "glass_crack": {
       "files": [

@@ -75,6 +75,25 @@ class PipelineTests(unittest.TestCase):
             with patch.object(g, 'callout_texts', return_value=[('New.ts', body, rx)]):
                 self.assertFalse(g.check(self.clips))
 
+    def test_dynamic_mapping_requires_real_clip(self):
+        fn, body = next(iter(g.DYNAMIC_CALLOUTS))
+        mapped = {r['clip'] for r in self.cfg['dynamic'] if (r['source'], r['template']) == (fn, body)}
+        reduced = [c for c in self.clips if c['id'] not in mapped]
+        with patch.object(g, 'callout_texts', return_value=[(fn, body, __import__('re').compile('^never$'))]):
+            self.assertFalse(g.check(reduced))
+
+    def test_optional_peak_headroom_invalidates_only_selected_clips(self):
+        c = next(c for c in self.clips if c['id'].startswith('ss_'))
+        self.assertEqual(c['peakDb'], -3)
+        self.assertNotEqual(g.clip_hash(c, self.cfg), g.clip_hash(dict(c, peakDb=-4), self.cfg))
+        with tempfile.TemporaryDirectory() as tmp:
+            raw, cut = Path(tmp, 'raw.wav'), Path(tmp, 'cut.wav')
+            with wave.open(str(raw), 'wb') as w:
+                w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000)
+                w.writeframes(array.array('h', [10000, -10000] * 16000).tobytes())
+            g.trim_normalise(str(raw), str(cut), 16000, -3)
+            self.assertAlmostEqual(g.audio_metrics(cut, 'one two three')['peakDb'], -3, places=1)
+
     def test_selection(self):
         self.assertEqual(len(g.select_clips(self.clips, ['pilot'], 3)), 3)
         self.assertTrue(all(c['role'] == 'pilot' for c in g.select_clips(self.clips, ['pilot'], None)))

@@ -1,0 +1,204 @@
+{
+  "sampleRate": 32000,
+  "totalBytes": 226664,
+  "files": [
+    {
+      "file": "ss_receiver.m4a",
+      "bytes": 5504,
+      "peakDb": -3.063,
+      "rmsDb": -33.903,
+      "lufsI": -36.544,
+      "lufsM": -36.544,
+      "lufsS": -45.294,
+      "seconds": 0.105,
+      "sources": [
+        406226
+      ],
+      "edit": "Close handling transient, high-passed, cropped receiver clack"
+    },
+    {
+      "file": "ss_m2_1.m4a",
+      "bytes": 6409,
+      "peakDb": -3.101,
+      "rmsDb": -16.727,
+      "lufsI": -20.091,
+      "lufsM": -20.091,
+      "lufsS": -28.841,
+      "seconds": 0.22,
+      "sources": [
+        239138,
+        406226
+      ],
+      "edit": "M2 burst round + delayed receiver, interior low-pass"
+    },
+    {
+      "file": "ss_casing_1.m4a",
+      "bytes": 9984,
+      "peakDb": -3.129,
+      "rmsDb": -33.065,
+      "lufsI": -30.231,
+      "lufsM": -28.026,
+      "lufsS": -36.363,
+      "seconds": 0.65,
+      "sources": [
+        318964
+      ],
+      "edit": "Isolated brass bounce, floor ring"
+    },
+    {
+      "file": "ss_skin_1.m4a",
+      "bytes": 7787,
+      "peakDb": -3.004,
+      "rmsDb": -20.014,
+      "lufsI": -18.461,
+      "lufsM": -18.461,
+      "lufsS": -27.211,
+      "seconds": 0.38,
+      "sources": [
+        267893
+      ],
+      "edit": "Short thin-metal strike, heavy low resonance removed"
+    },
+    {
+      "file": "ss_m2_2.m4a",
+      "bytes": 6344,
+      "peakDb": -2.859,
+      "rmsDb": -18.63,
+      "lufsI": -21.73,
+      "lufsM": -21.73,
+      "lufsS": -30.48,
+      "seconds": 0.22,
+      "sources": [
+        239138,
+        406226
+      ],
+      "edit": "M2 burst round + delayed receiver, interior low-pass"
+    },
+    {
+      "file": "ss_casing_2.m4a",
+      "bytes": 10763,
+      "peakDb": -3.126,
+      "rmsDb": -37.313,
+      "lufsI": -34.404,
+      "lufsM": -32.195,
+      "lufsS": -40.605,
+      "seconds": 0.65,
+      "sources": [
+        318964
+      ],
+      "edit": "Isolated brass bounce, floor ring"
+    },
+    {
+      "file": "ss_skin_2.m4a",
+      "bytes": 7730,
+      "peakDb": -3.033,
+      "rmsDb": -20.595,
+      "lufsI": -19.431,
+      "lufsM": -19.431,
+      "lufsS": -28.182,
+      "seconds": 0.38,
+      "sources": [
+        267893
+      ],
+      "edit": "Short thin-metal strike, heavy low resonance removed"
+    },
+    {
+      "file": "ss_flak_near.m4a",
+      "bytes": 12998,
+      "peakDb": -2.914,
+      "rmsDb": -26.931,
+      "lufsI": -26.899,
+      "lufsM": -22.485,
+      "lufsS": -31.222,
+      "seconds": 1.4,
+      "sources": [
+        702245
+      ],
+      "edit": "Artillery crack with short body, mono for positional playback"
+    },
+    {
+      "file": "ss_flak_far.m4a",
+      "bytes": 9582,
+      "peakDb": -2.956,
+      "rmsDb": -26.737,
+      "lufsI": -25.933,
+      "lufsM": -20.784,
+      "lufsS": -29.522,
+      "seconds": 2.133,
+      "sources": [
+        702245
+      ],
+      "edit": "Same burst, distant low-pass body"
+    },
+    {
+      "file": "ss_patter.m4a",
+      "bytes": 12357,
+      "peakDb": -3.009,
+      "rmsDb": -17.883,
+      "lufsI": -15.075,
+      "lufsM": -14.613,
+      "lufsS": -20.622,
+      "seconds": 0.9,
+      "sources": [
+        461779
+      ],
+      "edit": "Small metal impacts, high-pass skin shrapnel"
+    },
+    {
+      "file": "ss_radial.m4a",
+      "bytes": 43699,
+      "peakDb": -9.065,
+      "rmsDb": -20.362,
+      "lufsI": -21.076,
+      "lufsM": -19.932,
+      "lufsS": -20.928,
+      "seconds": 4,
+      "sources": [
+        437863
+      ],
+      "edit": "Interior prop texture; four offset detuned independent engine layers"
+    },
+    {
+      "file": "ss_holes.m4a",
+      "bytes": 34607,
+      "peakDb": -8.898,
+      "rmsDb": -19.684,
+      "lufsI": -19.791,
+      "lufsM": -18.682,
+      "lufsS": -19.805,
+      "seconds": 3,
+      "sources": [
+        481148
+      ],
+      "edit": "High-passed air leak through damaged skin"
+    },
+    {
+      "file": "ss_breath.m4a",
+      "bytes": 51024,
+      "peakDb": -3.093,
+      "rmsDb": -19.941,
+      "lufsI": -18.287,
+      "lufsM": -14.391,
+      "lufsS": -18.167,
+      "seconds": 4.7,
+      "sources": [
+        788056
+      ],
+      "edit": "Masked breath cycle, trimmed and band-limited"
+    },
+    {
+      "file": "ss_turret.m4a",
+      "bytes": 7876,
+      "peakDb": -9.497,
+      "rmsDb": -26.533,
+      "lufsI": -23.8,
+      "lufsM": -23.8,
+      "lufsS": -32.551,
+      "seconds": 0.35,
+      "sources": [
+        322021
+      ],
+      "edit": "Servo section, crossfaded motor loop"
+    }
+  ]
+}

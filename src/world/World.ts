@@ -1,3 +1,4 @@
+import { onContact } from '../game/RadioChatter';
 import { warmAAGuns } from '../game/AADefenceScene';
 import * as THREE from 'three';
 import { DitchingSea } from './DitchingSea';
@@ -1025,9 +1026,7 @@ export class World implements WorldView {
       if (p.state === 'attack' && d < 2200) {
         p.calloutDone = true;
         const clock = this.clockPosition(pl, f.pos);
-        const speakers = ['Pilot', 'Navigator', 'Tail', 'Top Turret', 'Ball Turret', 'Bombardier'];
-        const lines = [`Fighters, ${clock}!`, `Bandit coming in, ${clock}!`, `Here he comes, ${clock}!`, `Fw one-ninety, ${clock}! Get him!`];
-        this.callout('attack', speakers[Math.floor(Math.random() * speakers.length)], lines[Math.floor(Math.random() * lines.length)], 5);
+        onContact(this, f.enemyType, clock);
       }
     }
   }

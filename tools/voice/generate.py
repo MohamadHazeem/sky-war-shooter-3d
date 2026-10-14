@@ -59,7 +59,7 @@ def expand(cfg):
         rate = line.get('rate', roles[role]['rate'] + (boost if line.get('urgent') else 0))
         clips.append(dict(id=cid, role=role, text=text, spoken=spoken(line.get('say', text)), rate=rate, base=base, kind=kind, noTable=bool(line.get('noTable')),
                           exa=line.get('exa', 0.4 if role == 'briefing' else 0.8 if line.get('urgent') or kind == 'clock' else 0.55),
-                          cfg=line.get('cfg', 0.3 if line.get('urgent') or kind == 'clock' else 0.5)))
+                          peakDb=line.get('peakDb'), cfg=line.get('cfg', 0.3 if line.get('urgent') or kind == 'clock' else 0.5)))
 
     for line in cfg['lines']:
         if 'id' not in line:
@@ -104,11 +104,13 @@ def clip_hash(c, cfg):
         ref = Path(HERE, cfg['roles'][c['role']]['ref'])
         ref_hash = hashlib.sha256(ref.read_bytes()).hexdigest()
         key = f"{FORMAT_VERSION}|chatterbox|{ref_hash}|{c['exa']}|{c['cfg']}|{c['spoken']}|{a['sampleRate']}|{bitrate(c, cfg)}"
+    if c.get('peakDb') is not None:
+        key += f"|peakDb={c['peakDb']}"
     return hashlib.sha1(key.encode('utf-8')).hexdigest()[:10]
 
 
-def trim_normalise(src, dst, sr):
-    """Cut leading/trailing silence, short fades, peak to -1 dBFS. Returns duration (s)."""
+def trim_normalise(src, dst, sr, peak_db=None):
+    """Trim/fade and peak-normalise (default -1 dBFS, optional headroom). Returns seconds."""
     with wave.open(src, 'rb') as w:
         a = array.array('h', w.readframes(w.getnframes()))
     if sys.byteorder != 'little':
@@ -122,7 +124,8 @@ def trim_normalise(src, dst, sr):
     s = max(0, first - int(0.025 * sr))
     e = min(len(a), last + int(0.07 * sr))
     seg = a[s:e]
-    g = 0.89 * 32767 / peak
+    target = 0.89 if peak_db is None else 10 ** (min(-1, max(-12, float(peak_db))) / 20)
+    g = target * 32767 / peak
     n = len(seg)
     fi, fo = int(0.004 * sr), int(0.02 * sr)
     out = array.array('h', bytes(2 * n))
@@ -237,7 +240,7 @@ def render(c, cfg, tmp, model=None):
             except subprocess.TimeoutExpired:
                 if attempt == 3:
                     raise
-        dur = trim_normalise(raw, cut, sr)
+        dur = trim_normalise(raw, cut, sr, c.get('peakDb'))
     else:
         import torch
         import torchaudio as ta
@@ -250,7 +253,7 @@ def render(c, cfg, tmp, model=None):
             wav = ta.functional.resample(wav, model.sr, sr).mean(dim=0)
             sf.write(raw, wav.numpy(), sr, subtype='PCM_16')
             try:
-                dur = trim_normalise(raw, cut, sr)
+                dur = trim_normalise(raw, cut, sr, c.get('peakDb'))
                 quality = audio_metrics(cut, c['spoken'])
             except RuntimeError:  # silence is also a failed take
                 quality = dict(durationOK=False, duration=0)
@@ -330,27 +333,17 @@ def callout_texts():
     return out
 
 
-# Existing runtime-only subtitles, not finite recordings. Keep this exact and visible:
-# --check still fails on any NEW missing literal or template (never skip all templates).
-DYNAMIC_CALLOUTS = {
-    ('Director.ts', "${v.label}s coming in — ${v.blurb}!"),
-    ('NemesisRuntime.ts', "He's back — the one who wounded ${wounded.wounded[0]} over ${wounded.place}!"),
-    ('NemesisRuntime.ts', "He's back — the one who shot us down over ${downedUs.place}!"),
-    ('SpecialEvents.ts', "Yellow noses, twelve o'clock high! That's ${this.ace.last}'s Staffel — ${this.ace.victories} kills!"),
-    ('SpecialEvents.ts', "${this.ace.last} is breaking off — the yellow noses are heading home."),
-    ('SpecialEvents.ts', "You got ${a.last}! The whole group saw him go down!"),
-    ('SpecialEvents.ts', "Somebody got ${a.last}! Scratch one Experte!"),
-    ('PilotOps.ts', "Careful, Blue two — that ${f.label} has a rear gunner. Come at him from below!"),
-    ('PilotOps.ts', "He's seen you — he's breaking ${side}! Stay with him!"),
-    ('PilotOps.ts', "Little friends, this is ${b.name}. We've lost two engines and can't keep up — can you cover us?"),
-    ('PilotOps.ts', "${v.label}s in this bunch — ${v.blurb}!"),
-}
+# Exact source templates with voiced semantic equivalents. Names/locations remain in
+# subtitles; finite type/clock clips and contextual sentences keep the radio readable.
+DYNAMIC_CALLOUTS = {(r['source'], r['template']) for r in load().get('dynamic', [])}
 
 
 def check(clips):
     texts = {c['text'] for c in clips}
     prefixes = {c['text'] for c in clips if c['base'].startswith('pfx_')}
-    bad = deferred = 0
+    bad = composed = 0
+    rules = load().get('dynamic', [])
+    ids = {c['id'] for c in clips}
     found = callout_texts()
     print(f'check: {len(found)} callout texts found in src/')
     for fn, body, rx in found:
@@ -359,13 +352,14 @@ def check(clips):
         if not ok and rx is not None:
             ok = body.split('${')[0].strip() in prefixes
         if not ok and (fn, body) in DYNAMIC_CALLOUTS:
-            deferred += 1
-            print(f'  known dynamic subtitle (not recorded): {fn}: {body}')
-            continue
+            mapped = [r for r in rules if (r['source'], r['template']) == (fn, body)]
+            if mapped and all(r['clip'] in ids for r in mapped):
+                composed += 1
+                continue
         if not ok:
             bad += 1
             print(f'  no clip: {fn}: {body}')
-    print(f'check: {deferred} known dynamic subtitles deferred')
+    print(f'check: {composed} dynamic templates have recorded equivalents; 0 deferred')
     print(f'check: {"all other callout texts covered" if not bad else f"{bad} callout texts without a clip"}')
     return bad == 0
 
@@ -441,6 +435,7 @@ def main():
             'version': FORMAT_VERSION,
             'roles': {k: {'speaker': v['speaker'], 'aliases': v.get('aliases', []), 'voice': v['voice']} for k, v in cfg['roles'].items()},
             'clockRoles': cfg['clock']['roles'],
+            'dynamic': cfg.get('dynamic', []),
             'clips': {c['id']: result[c['id']] for c in clips if c['id'] in result},
         })
 

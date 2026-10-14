@@ -1,0 +1,67 @@
+{
+  "loops": {
+    "turret": {
+      "file": "ss_turret.m4a",
+      "gain": 1
+    },
+    "breath": {
+      "file": "ss_breath.m4a",
+      "gain": 1
+    },
+    "holes": {
+      "file": "ss_holes.m4a",
+      "gain": 1
+    },
+    "b17_interior": {
+      "file": "ss_radial.m4a",
+      "gain": 1.1
+    }
+  },
+  "sfx": {
+    "skin_patter": {
+      "files": [
+        "ss_patter.m4a"
+      ],
+      "gain": 0.28
+    },
+    "flak_far": {
+      "files": [
+        "ss_flak_far.m4a"
+      ],
+      "gain": 1
+    },
+    "flak_near": {
+      "files": [
+        "ss_flak_near.m4a"
+      ],
+      "gain": 1
+    },
+    "skin": {
+      "files": [
+        "ss_skin_1.m4a",
+        "ss_skin_2.m4a"
+      ],
+      "gain": 0.85
+    },
+    "receiver": {
+      "files": [
+        "ss_receiver.m4a"
+      ],
+      "gain": 0.7
+    },
+    "m2_interior": {
+      "files": [
+        "ss_m2_1.m4a",
+        "ss_m2_2.m4a"
+      ],
+      "gain": 0.85
+    },
+    "casing": {
+      "files": [
+        "ss_casing_1.m4a",
+        "ss_casing_2.m4a"
+      ],
+      "gain": 0.65
+    }
+  }
+}

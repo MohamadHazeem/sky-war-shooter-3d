@@ -176,6 +176,7 @@ export class Director {
     const t = w.time;
     const enemies = w.activeEnemies().length;
     if (g.onboarding.direct(dt, m)) return;
+    if (g.state === 'playing') Chatter.updateInterphone(w);
     // field promotion: every 5 kills, once the kill's slow-motion beat has played
     if (g.killsSincePerk >= 6 && t - g.worldEvents.lastKillAt > 1.2 && g.state === 'playing' && w.player?.alive) {
       g.killsSincePerk = 0;
@@ -270,25 +271,15 @@ export class Director {
 
     // Crew intercom during lulls in the fighting
     this.chatterT += dt;
-    if (!m.naval && enemies === 0 && this.chatterT > 32 && t > 12) {
+    if (m.role === 'pilot' && !m.naval && enemies === 0 && this.chatterT > 32 && t > 12) {
       this.chatterT = Math.random() * 8;
-      const gunner: [string, string][] = [
-        ['Pilot', 'Pilot to crew, oxygen check. Sound off.'],
-        ['Tail', 'Tail gunner, oxygen okay.'],
-        ['Navigator', 'Navigator to pilot: on course, two-seven minutes to the IP.'],
-        ['Ball Turret', 'Ball turret. Nothing below but cloud. Guns are clear.'],
-        ['Radio', 'Radio to pilot: group says keep it tight, fighters reported ahead.'],
-        ['Top Turret', 'Engineer to pilot: number three\'s running a little hot. Watching it.'],
-        ['Bombardier', 'Bombardier here. Keep your eyes open, they like to come out of the sun.'],
-        ['Pilot', 'Stay off the interphone unless you see fighters. Keep scanning.'],
-      ];
       const pilot: [string, string][] = [
         ['Lead', 'Blue flight, check your fuel. Weave over the big friends.'],
         ['Big Friend', 'Little friends, little friends, thanks for the company.'],
         ['Lead', 'Keep your heads on a swivel. They\'ll come out of the sun.'],
         ['Blue Three', 'Blue Three, engine temps okay. Holding high cover.'],
       ];
-      const lines = m.role === 'gunner' ? gunner : pilot;
+      const lines = pilot;
       const [who, text] = lines[Math.floor(Math.random() * lines.length)];
       w.callout('chatter', who, text, 25, 1);
     }
