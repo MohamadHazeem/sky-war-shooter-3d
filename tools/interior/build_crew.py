@@ -40,8 +40,9 @@ VEST = (0.13, 0.14, 0.085)        # M1 flak vest, olive canvas
 VEST_TAB = (0.45, 0.06, 0.04)     # red quick-release tab
 
 cloth = material('crewCloth', (1, 1, 1), rough=0.85, metal=0.0)
+leather = material('crewLeather', (1, 1, 1), rough=0.65, metal=0.0)
 hard = material('crewHard', (1, 1, 1), rough=0.42, metal=0.25)
-for m in (cloth, hard):
+for m in (cloth, hard, leather):
     use_vertex_colors(m)
 
 # ---------------- rig ----------------
@@ -136,13 +137,41 @@ for i, (_, r) in enumerate(SK):
     body.data.skin_vertices[0].data[i].radius = r
 body.data.skin_vertices[0].data[pel].use_root = True
 sub = body.modifiers.new('sub', 'SUBSURF')
-sub.levels = 2
-sub.render_levels = 2
+sub.levels = 3
+sub.render_levels = 3
 bpy.context.view_layer.objects.active = body
 body.select_set(True)
 bpy.ops.object.modifier_apply(modifier='skin')
 bpy.ops.object.modifier_apply(modifier='sub')
 hull = body.data
+
+# Sewn sheepskin compresses at elbows, knees, cuffs and the waist. Sculpt actual
+# silhouette relief in the bind pose, before skin weights / LODs are generated.
+# Millimetres of relief, not a repeating whole-body displacement.
+for v in hull.vertices:
+    p = v.co.copy()
+    if p.z < 0.24 or p.z > 1.46:
+        continue
+    ax = abs(p.x)
+    fold = 0.0
+    if ax > 0.24 and p.z > 0.95:
+        side = 'L' if p.x > 0 else 'R'
+        a, b, _ = REST['forearm.' + side]
+        along = (p - a).dot((b - a).normalized())
+        around = math.atan2(p.y, abs(p.x) - abs(a.x))
+        elbow = math.exp(-((along - 0.015) / 0.105) ** 2)
+        cuff = math.exp(-((along - 0.205) / 0.06) ** 2)
+        fold = (0.010 * elbow + 0.006 * cuff) * math.sin(along * 100 + 1.7 * math.sin(around))
+    elif p.z < 0.9:
+        around = math.atan2(p.y, ax - 0.10)
+        knee = math.exp(-((p.z - 0.50) / 0.12) ** 2)
+        ankle = math.exp(-((p.z - 0.29) / 0.055) ** 2)
+        fold = (0.011 * knee + 0.007 * ankle) * math.sin(p.z * 95 + 1.4 * math.sin(around))
+    else:
+        waist = math.exp(-((p.z - 1.03) / 0.095) ** 2)
+        fold = 0.009 * waist * math.sin(p.z * 90 + p.x * 13)
+    v.co += v.normal * fold
+hull.update()
 
 
 def body_colour(p):
@@ -160,7 +189,7 @@ def body_colour(p):
 
 
 B = MeshBuilder('crewBody')
-B.add_object_data(hull, Matrix.Identity(4), cloth)
+B.add_object_data(hull, Matrix.Identity(4), leather)
 # per-loop colours by region
 for f in B.bm.faces:
     for l in f.loops:
@@ -223,6 +252,23 @@ for s, n in ((1, 'L'), (-1, 'R')):
 for s in (1, -1):
     add(prim('torus', R=0.075, r=0.007, nu=16, nv=4), trs((s * 0.1, 0.02, 0.16), (0.1, 0, 0), (0.95, 1.05, 1)), hard, BRASS)
 
+# Raised sewn seams, leather pocket flaps and a narrow zipper tape. All are
+# merged into the skinned body, so no additional runtime draw calls or materials.
+SEAM = (0.10, 0.055, 0.028)
+STITCH = (0.37, 0.28, 0.16)
+for side in (-1, 1):
+    seam = [Vector((side * x, -0.055, z)) for x, z in [(0.22,1.40),(0.31,1.30),(0.40,1.205),(0.49,1.11),(0.55,1.045)]]
+    add(prim('tube', pts=seam, r=0.0035, segs=5), Matrix.Identity(4), cloth, SEAM)
+    seam = [Vector((side * 0.17, -0.04, z)) for z in (0.86,0.72,0.55,0.38,0.25)]
+    add(prim('tube', pts=seam, r=0.003, segs=5), Matrix.Identity(4), cloth, SEAM)
+    add(prim('box', size=(0.105,0.012,0.085)), trs((side*0.125,-0.142,1.055), (0,side*0.08,0)), cloth, JACKET)
+    add(prim('box', size=(0.11,0.014,0.022)), trs((side*0.125,-0.15,1.10)), cloth, SEAM)
+    for i in range(10):
+        add(prim('box', size=(0.003,0.002,0.005)), trs((side*0.125-0.045+i*0.01,-0.158,1.10)), cloth, STITCH)
+add(prim('box', size=(0.018,0.01,0.34)), trs((0,-0.165,1.16)), cloth, SEAM)
+for i in range(34):
+    add(prim('box', size=(0.009,0.003,0.0025)), trs((0,-0.172,0.99+i*0.01)), hard, BRASS)
+add(prim('box', size=(0.012,0.005,0.023)), trs((0,-0.176,1.32)), hard, BRASS)
 body_ob = B.finish()
 
 # ---------------- flak vest (own mesh: the game leaves it off some crewmen) ----------------

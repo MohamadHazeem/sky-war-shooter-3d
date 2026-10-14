@@ -118,7 +118,7 @@ function tuneCrew(root: THREE.Object3D) {
     m.side = THREE.FrontSide;
     m.envMap = envRef.tex;
     if (m.name === 'crewHard') { m.roughness = 0.45; m.metalness = 0.15; m.envMapIntensity = 0.25; }
-    else { m.roughness = 0.88; m.metalness = 0; m.envMapIntensity = 0.08; if (mesh.geometry.getAttribute('uv')) { m.normalMap = fabricNormal(); m.normalScale.set(0.5, 0.5); } }
+    else { m.roughness = m.name === 'crewLeather' ? 0.65 : 0.88; m.metalness = 0; m.envMapIntensity = 0.08; if (mesh.geometry.getAttribute('uv')) { m.normalMap = fabricNormal(); m.normalScale.set(0.5, 0.5); } }
     addBounce(m, 0.9);
   });
 }
