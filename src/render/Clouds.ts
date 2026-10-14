@@ -717,6 +717,15 @@ export class CloudRenderer {
     }
   }
 
+  /** Compile the infrequent shadow probe during mission warm-up, without a readback. */
+  warmProbe(renderer: THREE.WebGLRenderer) {
+    if (!this.temporal || !this.shadows) return;
+    const target = renderer.getRenderTarget(), material = this.quad.material;
+    this.quad.material = this.probeMat;
+    renderer.setRenderTarget(this.probeRT); this.quad.render(renderer);
+    this.quad.material = material; renderer.setRenderTarget(target);
+  }
+
   // Dev (gallery): render the shadow map around the camera and read it back synchronously.
   // Returns the transmittance per texel (row-major from -z) and the map's centre / size.
   readShadowMap(renderer: THREE.WebGLRenderer, camera: THREE.PerspectiveCamera, time: number) {

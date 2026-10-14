@@ -1,3 +1,4 @@
+import { BOMB_RUN_TEXT } from './BombRunState';
 import { aircraftMarkerAlpha, liveMarkerTarget, projectAircraft, projectMarker } from '../ui/MarkerProjection';
 import { recordMarker } from '../ui/MarkerAudit';
 import { hudRuntime, hudVisibility } from '../ui/HudDetail';
@@ -86,6 +87,7 @@ export class GameHud {
     else if (m.escortArrive && !dir.escortsSpawned) objective = `Hold out — escort ETA ${Math.max(0, Math.ceil(m.escortArrive - w.time))}s`;
     else if (enemies > 0) objective = `${enemies} enemy fighter${enemies > 1 ? 's' : ''} attacking`;
     else if (dir.waveIdx < m.waves.length) objective = 'Scan the sky — more fighters expected';
+    if (g.bombRun.holding) objective = g.bombRun.clock.releasedAt < 0 ? BOMB_RUN_TEXT.level : BOMB_RUN_TEXT.watch;
     if (m.role === 'pilot') objective = g.pilotOps.objective(g.roundIdx, m.rounds ?? 1) ?? objective;
     const mm = Math.floor(w.time / 60), ss = Math.floor(w.time % 60);
     g.ui.updateCommon({ round: g.roundIdx + 1,
@@ -100,9 +102,10 @@ export class GameHud {
       const crew = w.crewWounded ? `Gunner wounded (${w.crewWounded}/4)` : '';
       // crew shouts when a fighter bores in to point-blank range
       const gp = w.playerGunPos();
-      if (gp && w.fighters('axis').some((f) => f.alive && f.pos.distanceTo(gp) < 170)) Chatter.onEnemyClose();
+      if (!g.bombRun.holding && gp && w.fighters('axis').some((f) => f.alive && f.pos.distanceTo(gp) < 170)) Chatter.onEnemyClose();
       // seat finder: which gun positions have fighters in their field of fire
       g.gunner.threatsByStation(this.threats);
+      if (g.bombRun.holding) for (const id of STATION_ORDER) this.threats[id] = 0;
       let best: StationId | null = null, bn = 0;
       for (const id of STATION_ORDER) { const n = this.threats[id] ?? 0; if (n > bn) { bn = n; best = id; } }
       const here = this.threats[g.gunner.station] ?? 0;

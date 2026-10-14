@@ -63,6 +63,7 @@ export function leadPoint(shooterPos: THREE.Vector3, shooterVel: THREE.Vector3, 
 export type AttackType = 'headon' | 'stern' | 'beam' | 'high';
 
 export interface WorldView {
+  bombRunHold?: boolean;
   bombers(): Bomber[];
   fighters(team: 'allied' | 'axis'): Fighter[];
   formationForward: THREE.Vector3;
@@ -222,6 +223,14 @@ export class EnemyPilot {
     const me = this.me;
     const fm = me.fm;
     me.trigger = false;
+    if (w.bombRunHold && this.state !== 'withdraw') {
+      this.state = 'approach'; this.timer = 0; this.target = null; me.gunAim = null;
+      const side = me.pos.x >= w.formationCenter.x ? 1 : -1;
+      _d.copy(w.formationCenter).addScaledVector(w.formationForward, -1400);
+      _d.x += side * 2600; _d.y += 450;
+      steerTo(fm, _d.sub(me.pos), 1.1, .9); fm.throttle = .7;
+      return;
+    }
     const keepAim = me.gunAim;
     me.gunAim = null;
     this.timer += dt;

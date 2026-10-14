@@ -383,7 +383,7 @@ export class SpecialEvents {
     if (this.lessons.length && !this.ui.tipBusy && g.settings.hudDetail !== 'minimal') {
       this.ui.tip(this.lessons.shift()!, 6000);
     }
-    if (roundIdx !== this.roundIdx || roundT0 !== this.roundT0) this.newRound(roundIdx, roundT0);
+    if (roundIdx !== this.roundIdx) this.newRound(roundIdx, roundT0);
     this.roundT = w.time - roundT0;
     this.roundLeft = this.roundDur - this.roundT;
 

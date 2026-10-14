@@ -239,6 +239,7 @@ export class Sound {
   private wind: { gain: GainNode; filter: BiquadFilterNode; flutter: GainNode } | null = null;
   // Gust stage (see updateWind): its own level and filter, so it never fights the per-frame wind setters
   private gust: { gain: GainNode; filter: BiquadFilterNode; walkG: number; walkF: number } | null = null;
+  bombBayOpen = false;
   private windSpeed = 0;   // player airspeed (m/s), scales gust strength in the fighter
   private whistle: { gain: GainNode; filter: BiquadFilterNode } | null = null;
   private maneuver = 0;    // 0..1 evasive jink / hard manoeuvre (setManeuver)
@@ -1220,7 +1221,7 @@ export class Sound {
     g.walkF = fin(THREE.MathUtils.clamp(g.walkF - 0.35 * g.walkF * h + rand() * sig, -1, 1), 0);
     const t = this.ctx.currentTime;
     // an evasive jink: the slipstream roars up and brightens, and the strain whistle sings
-    const m = this.mode === 'menu' ? 0 : this.maneuver;
+    const m = this.mode === 'menu' ? 0 : Math.max(this.maneuver, this.mode === 'bomber' && this.bombBayOpen ? .8 : 0);
     towards(g.gain.gain, (1 + (0.15 + 0.45 * s) * g.walkG) * (1 + 0.9 * m), GAIN, t, 0.3);
     towards(g.filter.frequency, this.windCut * Math.pow(2, 0.7 + g.walkF * (0.25 + 0.75 * s) + 1.1 * m), FREQ, t, 0.3);
     if (this.whistle) {

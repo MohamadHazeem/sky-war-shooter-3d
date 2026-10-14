@@ -3595,6 +3595,49 @@
       "peakDb": -3
     },
     {
+      "_group": "Phase 9 bomb run"
+    },
+    {
+      "id": "br_ip",
+      "role": "nav",
+      "text": "Initial point inbound. Fighters are pulling back. Hold formation."
+    },
+    {
+      "id": "br_steady",
+      "role": "pilot",
+      "text": "Steady. Straight and level. No evasive action."
+    },
+    {
+      "id": "br_doors",
+      "role": "bombardier",
+      "text": "Bomb bay doors open. Cold air coming through."
+    },
+    {
+      "id": "br_cloud",
+      "role": "bombardier",
+      "text": "Target hidden by overcast. Bombing on the lead ship."
+    },
+    {
+      "id": "br_markers",
+      "role": "bombardier",
+      "text": "Target markers in sight. Smoke from the earlier wave."
+    },
+    {
+      "id": "br_count",
+      "role": "bombardier",
+      "text": "Five seconds. Steady. Three. Two. One."
+    },
+    {
+      "id": "br_rally",
+      "role": "pilot",
+      "text": "Rally point. Close the bays. Fighters coming back!"
+    },
+    {
+      "id": "br_hit",
+      "role": "top",
+      "text": "Flak hit the ship beside us! Her engine is burning!"
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {
