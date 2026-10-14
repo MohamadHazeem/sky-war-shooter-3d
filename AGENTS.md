@@ -13,6 +13,16 @@ Sky War Shooter 3D: a WWII browser game (Three.js r186 + TypeScript + Vite). Rea
 - When done, write a short report to the path given in the task (what changed, files, hook lines,
   test results, anything not done) — this is how your work gets reviewed.
 
+## Speed rules (owner wants fast iteration; the machine is shared by ~10 agents)
+- While iterating, run only the relevant tests (`npx vitest run tests/<file>.test.ts`) and `npx tsc --noEmit`;
+  run the full `npm run check` once before each commit, not after every edit.
+- Screenshots: capture only what the task asks for. For graphics goals use the Phase 10 capture rig
+  (`node tools/visual_rig.mjs --out docs/<phase>/shots/<goal>/after`) instead of ad-hoc angle/size/language sweeps;
+  add Arabic / phone / multi-size captures only for UI work.
+- One dev server per task, stopped when done; don't leave Chrome/Playwright instances running.
+- Heavy offline jobs (Blender bakes, simulations): render at the resolution actually shipped; no exploratory
+  full-quality renders.
+
 ## Hard constraints
 - Visual checks: you MAY use your browser tool (preferred) to verify your work in the running game.
   Start your own dev server from your worktree on the port given in your task

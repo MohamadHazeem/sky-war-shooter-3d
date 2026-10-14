@@ -11,5 +11,7 @@ export default defineConfig({
     // the offline audio-synthesis tests render every generated voice/buffer: ~2 s locally,
     // 8-12 s on GitHub's shared runners, so the 5 s default timed CI out
     testTimeout: 60_000,
+    // persist module transforms across runs (many agents re-run the suite while iterating)
+    fsModuleCache: true,
   },
 });
