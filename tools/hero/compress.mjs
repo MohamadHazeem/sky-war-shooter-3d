@@ -11,6 +11,8 @@ const src=resolve('tools/hero/output'),out=resolve('public/models/hero');mkdirSy
 await MeshoptEncoder.ready;
 const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'meshopt.encoder':MeshoptEncoder});
 const doc=await io.read(src+'/b17.glb');
+// GLTFLoader names unnamed nodes after their mesh. Never let these shadow a pivot.
+doc.getRoot().listMeshes().forEach((m,i)=>m.setName('hero_geometry_'+i));
 for(const n of doc.getRoot().listNodes()) if(n.getMesh()) {
   n.addChild(doc.createNode('').setMesh(n.getMesh()).setExtras({meshOf:n.getName()}));n.setMesh(null);
 }
@@ -18,14 +20,18 @@ for(const m of doc.getRoot().listMaterials()) {
   if(m.getMetallicRoughnessTexture())m.setOcclusionTexture(m.getMetallicRoughnessTexture()).setOcclusionStrength(.55);
   if(/marking|walkway/.test(m.getName()))m.setDoubleSided(true);
 }
-await doc.transform(textureCompress({encoder:sharp,targetFormat:'webp',quality:90}),meshopt({encoder:MeshoptEncoder,level:'high',quantizeTexcoord:14}));
+await doc.transform(textureCompress({encoder:sharp,targetFormat:'webp',quality:90,resize:[256,256]}),meshopt({encoder:MeshoptEncoder,level:'high',quantizeTexcoord:14}));
 await io.write(out+'/b17.glb',doc);
-const ktx=process.env.TOKTX;
-for(const name of ['base','normal','orm']) {
-  if(ktx) execFileSync(ktx,['--t2','--encode','uastc','--uastc_quality','2','--zcmp','18','--genmipmap','--assign_oetf',name==='base'?'srgb':'linear',out+'/'+name+'.ktx2',src+'/'+name+'.png'],{stdio:'inherit'});
-  else await sharp(src+'/'+name+'.png').webp({quality:95,lossless:name!=='base'}).toFile(out+'/'+name+'.webp');
+const ktx=process.env.TOKTX, basis=process.env.BASISU;
+const names=['base','normal','orm','silver','silver-orm'];
+for(const name of names) {
+  const input=src+'/'+name+'-detail.png';
+  await sharp(src+'/'+name+'.png').resize(['base','silver'].includes(name)?2048:1024).png().toFile(input);
+  await sharp(input).webp({quality:95,lossless:!['base','silver'].includes(name)}).toFile(out+'/'+name+'.webp');
+  if(ktx) execFileSync(ktx,['--t2','--encode','uastc','--uastc_quality','2','--zcmp','18','--genmipmap','--assign_oetf',['base','silver'].includes(name)?'srgb':'linear',out+'/'+name+'.ktx2',input],{stdio:'inherit'});
+  else if(basis) execFileSync(basis,['-ktx2','-uastc','-uastc_level','2','-uastc_rdo_l','3.0','-mipmap',...(['base','silver'].includes(name)?['-srgb']:['-linear']),'-file',input,'-output_file',out+'/'+name+'.ktx2'],{stdio:'inherit'});
 }
-if(ktx) {
+if(ktx || basis) {
   for(const f of ['basis_transcoder.js','basis_transcoder.wasm'])copyFileSync('node_modules/three/examples/jsm/libs/basis/'+f,out+'/'+f);
   copyFileSync('tools/hero/BASIS-LICENSE.txt',out+'/BASIS-LICENSE.txt');
   // An interoperable glTF material library accompanies the lazy runtime texture set.
@@ -34,8 +40,8 @@ if(ktx) {
   library.createMaterial('hero_detail').setBaseColorTexture(textures[0]).setNormalTexture(textures[1]).setMetallicRoughnessTexture(textures[2]).setOcclusionTexture(textures[2]);
   await io.write(out+'/detail.gltf',library);
 }
-const files=['b17.glb',...['base','normal','orm'].map(n=>n+(ktx?'.ktx2':'.webp')),...(ktx?['basis_transcoder.js','basis_transcoder.wasm','BASIS-LICENSE.txt','detail.gltf']:[])];
+const files=['b17.glb',...names.map(n=>n+'.webp'),...((ktx||basis)?names.map(n=>n+'.ktx2'):[]),...((ktx||basis)?['basis_transcoder.js','basis_transcoder.wasm','BASIS-LICENSE.txt','detail.gltf']:[])];
 const bytes=Object.fromEntries(files.map(n=>[n,statSync(out+'/'+n).size]));
 if(Object.values(bytes).reduce((a,b)=>a+b,0)>15*1024*1024)throw Error('B-17 download budget exceeded');
-writeFileSync(out+'/manifest.json',JSON.stringify({format:ktx?'ktx2':'webp',files:bytes},null,2)+'\n');
+writeFileSync(out+'/manifest.json',JSON.stringify({format:(ktx||basis)?'ktx2':'webp',fallback:'webp',source:'FlightGear B-17 949abb7615da96104a72c2b1a351a05d60a0bf3c',textureSize:2048,files:bytes},null,2)+'\n');
 console.log(bytes);

@@ -1,9 +1,23 @@
 {
-  "format": "webp",
+  "format": "ktx2",
+  "fallback": "webp",
+  "source": "FlightGear B-17 949abb7615da96104a72c2b1a351a05d60a0bf3c",
+  "textureSize": 2048,
   "files": {
-    "b17.glb": 516252,
-    "base.webp": 71578,
-    "normal.webp": 8448,
-    "orm.webp": 21628
+    "b17.glb": 1109056,
+    "base.webp": 432428,
+    "normal.webp": 461096,
+    "orm.webp": 957680,
+    "silver.webp": 185078,
+    "silver-orm.webp": 520592,
+    "base.ktx2": 2329655,
+    "normal.ktx2": 471079,
+    "orm.ktx2": 596780,
+    "silver.ktx2": 1075409,
+    "silver-orm.ktx2": 590406,
+    "basis_transcoder.js": 57529,
+    "basis_transcoder.wasm": 527333,
+    "BASIS-LICENSE.txt": 11347,
+    "detail.gltf": 1307
   }
 }

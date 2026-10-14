@@ -28,7 +28,7 @@ export function prepareHeroLODs(root: THREE.Object3D) {
 }
 
 /** One merged LOD2 silhouette for LivingSky's existing single instanced stream draw. */
-export function heroStreamGeometry(root: THREE.Object3D): THREE.BufferGeometry {
+export function heroStreamGeometry(root: THREE.Object3D): THREE.BufferGeometry | null {
   root.updateMatrixWorld(true);
   const parts: THREE.BufferGeometry[] = [];
   root.traverse(o => {
@@ -42,6 +42,7 @@ export function heroStreamGeometry(root: THREE.Object3D): THREE.BufferGeometry {
     parts.push(g.index ? g.toNonIndexed() : g);
     if (g.index) g.dispose();
   });
+  if (!parts.length) return null;
   const result = mergeGeometries(parts)!;
   for (const g of parts) g.dispose();
   return result;
@@ -61,7 +62,7 @@ export class HeroB17Controls {
   }
   setGear(retracted: number) {
     const k = THREE.MathUtils.clamp(retracted, 0, 1);
-    for (const o of this.gear) if (o) o.rotation.x = Math.PI / 2 * k;
+    for (const o of this.gear) if (o) o.rotation.x = Math.PI / 2 * k * (o.userData.heroGearSign ?? 1);
     for (const o of this.flaps) if (o) o.rotation.x = -.52 * (1 - k);
   }
   update(dt: number, open: boolean) {

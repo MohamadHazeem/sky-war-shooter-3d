@@ -6,15 +6,16 @@ const materials = new Set<THREE.MeshStandardMaterial>();
 let enabled = false;
 export function enableHeroTextures() { enabled = true; }
 let loading: Promise<void> | null = null;
-let loaded: {base: THREE.Texture; normal: THREE.Texture; orm: THREE.Texture} | null = null;
+let loaded: {base: THREE.Texture; normal: THREE.Texture; orm: THREE.Texture; silver: THREE.Texture; silverOrm: THREE.Texture} | null = null;
 function apply(m: THREE.MeshStandardMaterial) {
   if (!loaded || m.name.endsWith('_low')) return;
   // Keep authored shader features stable: every replaced slot already had a boot texture.
-  if (m.map) m.map = loaded.base;
+  const silver = m.userData.paint === 'silver';
+  if (m.map) m.map = silver ? loaded.silver : loaded.base;
   if (m.normalMap) m.normalMap = loaded.normal;
-  if (m.roughnessMap) m.roughnessMap = loaded.orm;
-  if (m.metalnessMap) m.metalnessMap = loaded.orm;
-  if (m.aoMap) m.aoMap = loaded.orm;
+  if (m.roughnessMap) m.roughnessMap = silver ? loaded.silverOrm : loaded.orm;
+  if (m.metalnessMap) m.metalnessMap = silver ? loaded.silverOrm : loaded.orm;
+  if (m.aoMap) m.aoMap = silver ? loaded.silverOrm : loaded.orm;
 }
 export function registerHeroMaterial(m: THREE.MeshStandardMaterial) {
   if (!/^hero_(skin|neutral_grey)/.test(m.name) || materials.has(m)) return;
@@ -30,16 +31,22 @@ export function loadHeroTextures(renderer: THREE.WebGLRenderer): Promise<void> {
     const loader = manifest.format === 'ktx2' ? new KTX2Loader().setTranscoderPath(assetUrl('models/hero/')).detectSupport(renderer) : null;
     try {
       const read = async (name: string) => {
-        const bytes = await take(`models/hero/${name}.${manifest.format}`, 6);
-        let t: THREE.Texture;
-        if (loader) t = await new Promise<THREE.CompressedTexture>((resolve, reject) => loader.parse(bytes, resolve, reject));
-        else { const bitmap = await createImageBitmap(new Blob([bytes], {type:'image/webp'})); t = new THREE.Texture(bitmap); }
+        let bytes: ArrayBuffer;
+        let compressed = !!loader;
+        try { bytes = await take(`models/hero/${name}.${manifest.format}`, 6); }
+        catch { bytes = await take(`models/hero/${name}.webp`, 6); compressed = false; }
+        let t!: THREE.Texture;
+        if (compressed && loader) {
+          try { t = await new Promise<THREE.CompressedTexture>((resolve, reject) => loader.parse(bytes, resolve, reject)); }
+          catch { bytes = await take(`models/hero/${name}.webp`, 6); compressed = false; }
+        }
+        if (!compressed) { const bitmap = await createImageBitmap(new Blob([bytes], {type:'image/webp'})); t = new THREE.Texture(bitmap); }
         t.flipY = false; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
-        t.colorSpace = name === 'base' ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+        t.colorSpace = (name === 'base' || name === 'silver') ? THREE.SRGBColorSpace : THREE.NoColorSpace;
         t.needsUpdate = true; return t;
       };
-      const [base, normal, orm] = await Promise.all(['base','normal','orm'].map(read));
-      loaded = {base, normal, orm};
+      const [base, normal, orm, silver, silverOrm] = await Promise.all(['base','normal','orm','silver','silver-orm'].map(read));
+      loaded = {base, normal, orm, silver, silverOrm};
       for (const m of materials) apply(m);
     } finally { loader?.dispose(); }
   })().catch(e => { console.warn('B-17 detail textures unavailable; retaining boot textures', e); });
