@@ -366,6 +366,8 @@ export class BomberStream {
   private gaggleRetarget: number[] = [];
   private attackedUntil: number[] = [];   // per group: s of time it is under attack until
   private shown = false;
+  /** Master switch (dev A/B: sws.engine.bomberStream.enabled = false) */
+  enabled = true;
 
   constructor() {
     this.group.name = 'bomberStream';
@@ -801,7 +803,7 @@ export class BomberStream {
   update(renderer: THREE.WebGLRenderer, cam: THREE.PerspectiveCamera, time: number, heightPx: number) {
     const host = this.host;
     const L = this.layout;
-    this.shown = !!host && !!L && (host.livingFormation ? host.livingFormation.ships.length > 0 : true) && weatherNow.night < 0.5;
+    this.shown = this.enabled && !!host && !!L && (host.livingFormation ? host.livingFormation.ships.length > 0 : true) && weatherNow.night < 0.5;
     this.group.visible = this.shown;
     if (!this.shown || !L || !host) return;
     this.bake(renderer);
