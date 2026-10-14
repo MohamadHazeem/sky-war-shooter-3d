@@ -82,6 +82,10 @@ function facts(m: Mission): { text: string; hot?: boolean }[] {
 
 let cleanup: (() => void) | null = null;
 
+/** Leave the briefing sheet: stop the intelligence officer. The sheet's own buttons do this on
+ *  click; Escape/Backspace (onBackKey) and missions started another way call it directly. */
+export function endBriefing() { cleanup?.(); cleanup = null; }
+
 /** Adds the badge, fact strip and briefing voice to the sheet UI.briefing() just rendered in `root` (#briefing). */
 export function decorateBriefing(root: HTMLElement, m: Mission) {
   cleanup?.();

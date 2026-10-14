@@ -1,5 +1,6 @@
 import { warmDustMotes } from '../game/DustMotes';
 import { warmHeroLODs } from './HeroB17';
+import { limitPlayerStraggle } from './FormationRules';
 import { LivingFormation } from './LivingFormation';
 import { FormationDress } from './FormationDress';
 import { onContact } from '../game/RadioChatter';
@@ -66,6 +67,7 @@ const _v2 = new THREE.Vector3();
 const _q = new THREE.Quaternion();
 // Per-bomber phases for the hold-station drift, so a box of B-17s never moves in lockstep
 const holdPhase = new WeakMap<Bomber, { surge: number; yaw: number }>();
+const stragglerHome = new WeakMap<Bomber, THREE.Vector3>();   // the slot the player's ship straggled from
 const R = () => Math.random() * 2 - 1;
 
 export interface WorldEvents {
@@ -464,9 +466,12 @@ export class World implements WorldView {
     const surge = Math.sin(this.time * 0.11 + ph.surge) * 3;
     wob.z += surge;
     if (b.straggling) {
+      let home = b.isPlayer ? stragglerHome.get(b) : undefined;
+      if (b.isPlayer && !home) stragglerHome.set(b, home = b.slot.clone());   // once per straggle
       b.slot.z -= dt * 3.5 * Math.max(1, b.enginesOut);
       b.slot.y -= dt * 2.0 * b.enginesOut;
-    }
+      if (home) limitPlayerStraggle(b.slot, home);
+    } else if (b.isPlayer) stragglerHome.delete(b);
     if (b.isPlayer) wob.multiplyScalar(crewRoster.effects().formation);
     if (b.isPlayer && b.damageControl) {
       const damage = b.damageControl.controls;

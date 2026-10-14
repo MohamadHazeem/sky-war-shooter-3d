@@ -1,5 +1,5 @@
 import { presetFilmLook } from '../render/FilmParams';
-import { hudDetail, hudRuntime, type HudDetail } from './HudDetail';
+import { hudDetail, hudRuntime, statusRepeatsRound, type HudDetail } from './HudDetail';
 import { hudToast } from './HudToast';
 import { BASIC_SETTINGS, graphicsChoice, selectGraphics, type GraphicsChoice } from './SettingsModel';
 import { configureMenuLoadout } from './MenuSections';
@@ -18,7 +18,7 @@ import { playMedalFanfare } from '../audio/Fanfare';
 const medalDelay = (i: number) => 0.8 + i * 0.5;
 import { CREW, CrewId } from '../world/Crew';
 import { briefingMapSvg } from './BriefingMap';
-import { campaignSize, decorateBriefing } from './BriefingExtras';
+import { campaignSize, decorateBriefing, endBriefing } from './BriefingExtras';
 import { mountAccessibilityPanel } from './AccessibilityPanel';
 import { mountHangarExtras } from './CrateUI';
 import { foldHangar } from './HangarFold';
@@ -250,7 +250,7 @@ export class UI {
     b.querySelector('[data-back]')!.addEventListener('click', onBack);
     decorateBriefing(b, m);
     this.show('briefing');
-    onBackKey(b, onBack);
+    onBackKey(b, () => { endBriefing(); onBack(); });   // Escape: the officer stops reading too
   }
 
   // ---------------- HUD ----------------
@@ -352,10 +352,12 @@ export class UI {
 
   updateCommon(d: { round: number; mission: string; objective: string; kills: number; score: number; formation: string }) {
     this.setText('hMission', tx(d.mission));
-    this.setText('hStatus', tx('Score {score} · Round {round}', { score: d.score, round: d.round }));
     const prompt = hudRuntime.detail === 'standard' ? document.querySelector<HTMLElement>('#evPrompt.show .ev-a') : null;
     const bonus = hudRuntime.detail === 'standard' ? document.querySelector<HTMLElement>('#objCard.show .oc-t') : null;
-    this.setText('hObjective', prompt?.textContent || bonus?.textContent || tx(d.objective));
+    const swapped = prompt?.textContent || bonus?.textContent;
+    // the round line ("Round 2/3 — 3:10 · 4 fighters") already names the round: say it once
+    this.setText('hStatus', !swapped && statusRepeatsRound(d.objective) ? tx('Score {n}', { n: d.score }) : tx('Score {score} · Round {round}', { score: d.score, round: d.round }));
+    this.setText('hObjective', swapped || tx(d.objective));
     this.setText('hKills', String(d.kills));
     this.setText('hScore', String(d.score));
     this.setText('hFormation', tx(d.formation));

@@ -154,6 +154,9 @@ async function boot() {
     // Balance harness: queued autoplay runs, one per page load (src/dev/balance.ts, docs/BALANCE.md)
     const { installBalance } = await import('./dev/balance');
     installBalance(engine, game);
+    // Bug sweep: one autoplay job with HUD / marker / frame / leak sampling (src/dev/qaSweep.ts, tools/qa_sweep.mjs)
+    const { runQa } = await import('./dev/qaSweep');
+    (window as any).sws.qa = (job: any, every?: number) => runQa(engine, game, job, every);
     // Before/after screenshot gallery (tools/gallery/README.md)
     const { gallery } = await import('./dev/gallery');
     (window as any).sws.gallery = gallery(engine, game);

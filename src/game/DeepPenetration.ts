@@ -25,7 +25,7 @@ export const DEEP_PENETRATION: Mission[] = [
     "escorts": 0,
     "waves": [],
     "round": {
-      "duration": 210,
+      "duration": 270,
       "start": 7,
       "min": 4,
       "max": 8,
@@ -36,7 +36,7 @@ export const DEEP_PENETRATION: Mission[] = [
       "rockets": 0.3
     },
     "rounds": 1,
-    "duration": 210,
+    "duration": 270,
     "maxBombersLost": 6,
     "boss": false,
     "specials": false,
@@ -92,7 +92,7 @@ export const DEEP_PENETRATION: Mission[] = [
     "escorts": 0,
     "waves": [],
     "round": {
-      "duration": 225,
+      "duration": 285,
       "start": 7,
       "min": 4,
       "max": 8,
@@ -103,7 +103,7 @@ export const DEEP_PENETRATION: Mission[] = [
       "rockets": 0.3
     },
     "rounds": 1,
-    "duration": 225,
+    "duration": 285,
     "maxBombersLost": 6,
     "boss": false,
     "specials": false,
@@ -160,7 +160,7 @@ export const DEEP_PENETRATION: Mission[] = [
     "escorts": 0,
     "waves": [],
     "round": {
-      "duration": 240,
+      "duration": 300,
       "start": 7,
       "min": 4,
       "max": 8,
@@ -171,7 +171,7 @@ export const DEEP_PENETRATION: Mission[] = [
       "rockets": 0.15
     },
     "rounds": 1,
-    "duration": 240,
+    "duration": 300,
     "maxBombersLost": 6,
     "boss": false,
     "specials": false,
@@ -229,7 +229,7 @@ export const DEEP_PENETRATION: Mission[] = [
     "escorts": 0,
     "waves": [],
     "round": {
-      "duration": 255,
+      "duration": 315,
       "start": 7,
       "min": 4,
       "max": 8,
@@ -240,7 +240,7 @@ export const DEEP_PENETRATION: Mission[] = [
       "rockets": 0.15
     },
     "rounds": 1,
-    "duration": 255,
+    "duration": 315,
     "maxBombersLost": 6,
     "boss": false,
     "specials": false,
@@ -298,7 +298,7 @@ export const DEEP_PENETRATION: Mission[] = [
     "escorts": 0,
     "waves": [],
     "round": {
-      "duration": 270,
+      "duration": 330,
       "start": 7,
       "min": 4,
       "max": 8,
@@ -309,7 +309,7 @@ export const DEEP_PENETRATION: Mission[] = [
       "rockets": 0.15
     },
     "rounds": 1,
-    "duration": 270,
+    "duration": 330,
     "maxBombersLost": 6,
     "boss": false,
     "specials": false,

@@ -6,6 +6,7 @@ import { raidMission, nightMission } from '../game/RaidDefence';
 import { strafeMission } from '../game/StrafeOps';
 import { weeklyMission } from '../game/Weekly';
 import { BOSS_TUNING } from '../game/BossBattle';
+import { DEEP_PENETRATION } from '../game/DeepPenetration';
 import { autoplay, lastMetrics, HUMAN, type AutoplayMetrics } from './autoplay';
 
 // Balance harness (dev build only, docs/BALANCE.md). Runs autoplay over a queue of jobs, one
@@ -23,7 +24,7 @@ import { autoplay, lastMetrics, HUMAN, type AutoplayMetrics } from './autoplay';
 export type JobKind = 'campaign' | 'survival' | 'raid' | 'night' | 'strafe' | 'weekly' | 'acehunt';
 export interface Job {
   kind: JobKind;
-  id?: string;                         // campaign mission id (m1..m12) / weekly key (yyyyww)
+  id?: string;                         // campaign mission id (m1..m12, dp1..dp5) / weekly key (yyyyww)
   role?: 'gunner' | 'pilot';
   skill: number;                       // autoplay skill: 1 = near-perfect bot, 0 = human-level
   diff?: 'recruit' | 'veteran' | 'ace';
@@ -41,7 +42,7 @@ const write = (k: string, v: unknown) => localStorage.setItem(k, JSON.stringify(
 
 export function missionFor(j: Job): Mission {
   switch (j.kind) {
-    case 'campaign': { const m = CAMPAIGN.find((c) => c.id === j.id); if (!m) throw new Error(`no mission ${j.id}`); return m; }
+    case 'campaign': { const m = [...CAMPAIGN, ...DEEP_PENETRATION].find((c) => c.id === j.id); if (!m) throw new Error(`no mission ${j.id}`); return m; }
     case 'survival': return survivalMission(j.role ?? 'gunner');
     case 'raid': return raidMission();
     case 'night': return nightMission();
@@ -63,7 +64,7 @@ function cleanProfile() {
   }
 }
 
-export function runJob(engine: Engine, game: Game, j: Job): JobResult {
+export function runJob(engine: Engine, game: Game, j: Job, onStep?: (k: number) => void): JobResult {
   const g = game as any;
   const prevDiff = g.settings.difficulty, prevAssist = g.settings.aimAssist, prevBoss = { ...BOSS_TUNING };
   if (j.boss) Object.assign(BOSS_TUNING, j.boss);
@@ -73,7 +74,7 @@ export function runJob(engine: Engine, game: Game, j: Job): JobResult {
   const t0 = performance.now();
   let log = '';
   try {
-    log = autoplay(engine, game, missionFor(j), j.steps ?? 60000, { skill: j.skill, stopAfterRounds: j.rounds });
+    log = autoplay(engine, game, missionFor(j), j.steps ?? 60000, { skill: j.skill, stopAfterRounds: j.rounds, onStep });
   } finally {
     g.settings.difficulty = prevDiff; g.settings.aimAssist = prevAssist;
     Object.assign(BOSS_TUNING, prevBoss);

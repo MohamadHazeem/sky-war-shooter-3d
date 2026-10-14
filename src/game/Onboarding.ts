@@ -1,4 +1,4 @@
-import { controlsHintVisible, hudRuntime } from '../ui/HudDetail';
+import { controlsHintShown, hudRuntime } from '../ui/HudDetail';
 import { shouldStartFirstFlight } from './MenuModel';
 import type { Engine } from '../core/Engine';
 import type { Input } from '../core/Input';
@@ -19,7 +19,6 @@ import '../ui/onboarding.css';
 // startMission → onMissionStart(m), direct → direct(dt, m), frame → update(dt).
 
 const KEY = 'sws3d.onboarding.v1';
-const HINT_SECONDS = 20;   // "H — controls" reminder at the start of every mission
 
 interface Saved { tutorialDone: boolean; promptDismissed: boolean; missions?: number }
 
@@ -35,6 +34,7 @@ export class Onboarding {
   readonly card = new ControlsCard();
   private hint = new ControlsHint();
   private saved: Saved;
+  private hintT = 0;   // seconds of live play since the mission started (the reminder's own clock)
 
   constructor(private game: Game, private engine: Engine, private input: Input, private ui: UI, host: OnboardingHost) {
     this.saved = { tutorialDone: false, promptDismissed: false };
@@ -93,6 +93,7 @@ export class Onboarding {
   onMissionStart(m: Mission) {
     if (this.card.open) this.card.hide();
     this.hints.onMissionStart();
+    this.hintT = 0;
     if (!m.tutorial) { this.saved.missions = (this.saved.missions ?? 0) + 1; this.save(); }
     if (m.tutorial) this.tutorial.start(); else this.tutorial.stop();
   }
@@ -107,8 +108,12 @@ export class Onboarding {
   // Game.frame(), every frame
   update(dt: number) {
     const g = this.game;
-    const inMission = !!g.mission && (g.state === 'playing' || g.state === 'ending');
-    this.hint.set(hudRuntime.detail !== 'minimal' && controlsHintVisible(this.saved.missions ?? 0) && inMission && g.world.time < HINT_SECONDS && !this.card.open);
+    // own clock of live play, not world.time: photo mode freezes world.time with the state still
+    // 'playing' (the reminder stayed up for as long as the photo session) and kill-cam slow motion
+    // stretched it; it also goes as soon as the mission is ending
+    const playing = !!g.mission && g.state === 'playing' && !g.photo.active && g.input.enabled;
+    if (playing) this.hintT += dt;
+    this.hint.set(controlsHintShown({ missions: this.saved.missions ?? 0, detail: hudRuntime.detail, playing, t: this.hintT, cardOpen: this.card.open }));
     if (this.tutorial.active && g.state !== 'playing' && g.state !== 'paused' && g.state !== 'ending') this.tutorial.stop();
     this.hints.update(dt);
   }

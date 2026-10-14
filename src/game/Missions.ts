@@ -394,6 +394,22 @@ export function roundDef(m: Mission, i: number): Round {
   };
 }
 
+/** How far through the mission (0..1) the formation is, for "return leg" rules (ditching from 0.75).
+ *  Round missions: the rounds fill 0..0.75 and the return leg starts only once the final round has
+ *  run its time (its last fighters being cleared). A round lasts until its last fighter is down, so
+ *  the real mission runs well past `duration` (m1: 210 s nominal, ~6 min flown): time / duration
+ *  reached the return leg in round 1, and a ditch there ended the mission early as a win. */
+export function missionProgress(m: Mission, time: number, roundIdx: number, roundT0: number): number {
+  const n = m.rounds ?? 1;
+  if (m.round && Number.isFinite(n) && n > 0) {
+    const i = Math.min(roundIdx, n - 1);
+    const d = Math.max(1, roundDef(m, i).duration), e = Math.max(0, time - roundT0);
+    if (i < n - 1 || e < d) return 0.75 * (i + Math.min(1, e / d)) / n;
+    return Math.min(1, 0.75 + 0.25 * (e - d) / d);
+  }
+  return Number.isFinite(m.duration) && m.duration > 0 ? Math.min(1, time / m.duration) : 0;
+}
+
 // Battle-group (boss) rounds, BossBattle.ts.
 // Survival: every 3rd round (index 2, 5, 8 ...). Campaign: the final round of missions 5 and 7.
 // A mission can name its own battle-group rounds with `boss` (custom battles, weekly challenge).
