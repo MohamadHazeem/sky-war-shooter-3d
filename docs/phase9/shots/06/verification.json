@@ -1,0 +1,515 @@
+{
+  "links": [
+    {
+      "id": 1,
+      "seat": "tail",
+      "name": "Walsh",
+      "status": "open",
+      "connection": "connected",
+      "ice": [
+        "host",
+        "host",
+        "srflx",
+        "host",
+        "srflx",
+        "host"
+      ]
+    },
+    {
+      "id": 2,
+      "seat": "top",
+      "name": "Baker",
+      "status": "open",
+      "connection": "connected",
+      "ice": [
+        "srflx",
+        "host",
+        "host",
+        "host",
+        "srflx",
+        "host"
+      ]
+    },
+    {
+      "id": 3,
+      "seat": "waistR",
+      "name": "أحمد",
+      "status": "open",
+      "connection": "connected",
+      "ice": [
+        "host",
+        "host",
+        "host",
+        "srflx",
+        "srflx",
+        "host"
+      ]
+    }
+  ],
+  "lateJoin": {
+    "phase": "mission",
+    "run": 1,
+    "snaps": 20,
+    "proxies": 12
+  },
+  "combat": {
+    "crew": 3,
+    "score": 315,
+    "guests": [
+      {
+        "name": "Walsh",
+        "seat": "tail",
+        "input": {
+          "s": "tail",
+          "y": 3.1416,
+          "p": 0,
+          "f": false
+        },
+        "kills": 1,
+        "hits": 1,
+        "shots": 4,
+        "score": 105
+      },
+      {
+        "name": "Baker",
+        "seat": "top",
+        "input": {
+          "s": "top",
+          "y": 0,
+          "p": 0.1396,
+          "f": false
+        },
+        "kills": 1,
+        "hits": 1,
+        "shots": 4,
+        "score": 105
+      },
+      {
+        "name": "أحمد",
+        "seat": "waistR",
+        "input": {
+          "s": "waistR",
+          "y": -1.5708,
+          "p": 0,
+          "f": false
+        },
+        "kills": 1,
+        "hits": 1,
+        "shots": 4,
+        "score": 105
+      }
+    ],
+    "targets": [
+      {
+        "alive": false,
+        "hp": -39.84000015258789,
+        "offset": [
+          2.348601421978884,
+          -6.533095035659244,
+          -222.6480864396569
+        ]
+      },
+      {
+        "alive": false,
+        "hp": -0.9600000381469727,
+        "offset": [
+          -6.4888163653229185,
+          35.47730207523364,
+          177.99758374433821
+        ]
+      },
+      {
+        "alive": false,
+        "hp": -39.84000015258789,
+        "offset": [
+          -205.88466350379423,
+          -1.3945637705419358,
+          -11.216317124389278
+        ]
+      }
+    ]
+  },
+  "shared": [
+    {
+      "score": 315,
+      "kills": 3
+    },
+    {
+      "score": 315,
+      "kills": 3
+    },
+    {
+      "score": 315,
+      "kills": 3
+    },
+    {
+      "score": 315,
+      "kills": 3
+    }
+  ],
+  "pings": [
+    {
+      "t": "mark",
+      "run": 1,
+      "from": 1,
+      "target": -1,
+      "clock": 6,
+      "level": 0
+    },
+    {
+      "t": "mark",
+      "run": 1,
+      "from": 1,
+      "target": -1,
+      "clock": 6,
+      "level": 0
+    },
+    {
+      "t": "mark",
+      "run": 1,
+      "from": 1,
+      "target": -1,
+      "clock": 6,
+      "level": 0
+    },
+    {
+      "t": "mark",
+      "run": 1,
+      "from": 1,
+      "target": -1,
+      "clock": 6,
+      "level": 0
+    }
+  ],
+  "targetPing": {
+    "t": "mark",
+    "run": 1,
+    "from": 1,
+    "target": 64,
+    "clock": 6,
+    "level": 0
+  },
+  "seatChange": {
+    "host": "waistR",
+    "crew": [
+      {
+        "id": 0,
+        "name": "Reed",
+        "seat": "waistR",
+        "ready": true
+      },
+      {
+        "id": 1,
+        "name": "Walsh",
+        "seat": "tail",
+        "ready": true
+      },
+      {
+        "id": 2,
+        "name": "Baker",
+        "seat": "top",
+        "ready": true
+      },
+      {
+        "id": 3,
+        "name": "أحمد",
+        "seat": "ball",
+        "ready": false
+      }
+    ],
+    "aiExcluded": [
+      "tail",
+      "top",
+      "ball"
+    ]
+  },
+  "bandwidth": {
+    "aircraft": 24,
+    "seconds": 10.00000000000033,
+    "snapshots": 597,
+    "bytesPerSecond": [
+      23609,
+      23602,
+      23612
+    ]
+  },
+  "leave": {
+    "seats": [
+      "tail",
+      "ball"
+    ],
+    "phase": "mission",
+    "crew": 3
+  },
+  "rejoin": {
+    "seat": "waistL",
+    "score": 315,
+    "run": 1
+  },
+  "results": [
+    {
+      "role": "host",
+      "result": {
+        "t": "debrief",
+        "v": 2,
+        "run": 1,
+        "crew": {
+          "kills": 3,
+          "hits": 3,
+          "shots": 12,
+          "score": 1490
+        },
+        "host": {
+          "success": true,
+          "title": "Co-op Survival — Gunners",
+          "reason": "The mission is over.",
+          "kills": 0,
+          "accuracy": 0,
+          "bombersLost": 0,
+          "bombersTotal": 12,
+          "time": 23.433333333333284,
+          "score": 1490,
+          "medals": [],
+          "survival": true,
+          "waves": 1,
+          "nextAvailable": false,
+          "coop": true,
+          "personalScore": 235,
+          "rounds": 0,
+          "hits": 0,
+          "merit": 235,
+          "bestStreak": 0,
+          "closestKill": null,
+          "killsByGun": [],
+          "points": 235
+        },
+        "guest": {
+          "success": true,
+          "title": "Co-op Survival — Gunners",
+          "reason": "The mission is over.",
+          "kills": 3,
+          "accuracy": 0.25,
+          "bombersLost": 0,
+          "bombersTotal": 12,
+          "time": 23.433333333333284,
+          "score": 1490,
+          "medals": [],
+          "survival": true,
+          "waves": 1,
+          "nextAvailable": false,
+          "coop": true,
+          "personalScore": 902,
+          "rounds": 12,
+          "hits": 3,
+          "merit": 902,
+          "bestStreak": 3,
+          "closestKill": 210.97140114242973,
+          "killsByGun": [
+            {
+              "label": "Right Waist",
+              "kills": 3
+            }
+          ]
+        }
+      },
+      "points": 235
+    },
+    {
+      "role": "guest",
+      "result": {
+        "t": "debrief",
+        "v": 2,
+        "run": 1,
+        "crew": {
+          "kills": 3,
+          "hits": 3,
+          "shots": 12,
+          "score": 1490
+        },
+        "host": {
+          "success": true,
+          "title": "Co-op Survival — Gunners",
+          "reason": "The mission is over.",
+          "kills": 0,
+          "accuracy": 0,
+          "bombersLost": 0,
+          "bombersTotal": 12,
+          "time": 23.433333333333284,
+          "score": 1490,
+          "medals": [],
+          "survival": true,
+          "waves": 1,
+          "nextAvailable": false,
+          "coop": true,
+          "personalScore": 235,
+          "rounds": 0,
+          "hits": 0,
+          "merit": 235,
+          "bestStreak": 0,
+          "closestKill": null,
+          "killsByGun": []
+        },
+        "guest": {
+          "success": true,
+          "title": "Co-op Survival — Gunners",
+          "reason": "The mission is over.",
+          "kills": 1,
+          "accuracy": 0.25,
+          "bombersLost": 0,
+          "bombersTotal": 12,
+          "time": 23.433333333333284,
+          "score": 1490,
+          "medals": [],
+          "survival": true,
+          "waves": 1,
+          "nextAvailable": false,
+          "coop": true,
+          "personalScore": 340,
+          "rounds": 4,
+          "hits": 1,
+          "merit": 340,
+          "bestStreak": 1,
+          "closestKill": 225.60019946799693,
+          "killsByGun": [
+            {
+              "label": "Tail Gun",
+              "kills": 1
+            }
+          ],
+          "points": 340
+        }
+      },
+      "points": 340
+    },
+    {
+      "role": "guest",
+      "result": {
+        "t": "debrief",
+        "v": 2,
+        "run": 1,
+        "crew": {
+          "kills": 3,
+          "hits": 3,
+          "shots": 12,
+          "score": 1490
+        },
+        "host": {
+          "success": true,
+          "title": "Co-op Survival — Gunners",
+          "reason": "The mission is over.",
+          "kills": 0,
+          "accuracy": 0,
+          "bombersLost": 0,
+          "bombersTotal": 12,
+          "time": 23.433333333333284,
+          "score": 1490,
+          "medals": [],
+          "survival": true,
+          "waves": 1,
+          "nextAvailable": false,
+          "coop": true,
+          "personalScore": 235,
+          "rounds": 0,
+          "hits": 0,
+          "merit": 235,
+          "bestStreak": 0,
+          "closestKill": null,
+          "killsByGun": []
+        },
+        "guest": {
+          "success": true,
+          "title": "Co-op Survival — Gunners",
+          "reason": "The mission is over.",
+          "kills": 0,
+          "accuracy": 0,
+          "bombersLost": 0,
+          "bombersTotal": 12,
+          "time": 23.433333333333284,
+          "score": 1490,
+          "medals": [],
+          "survival": true,
+          "waves": 1,
+          "nextAvailable": false,
+          "coop": true,
+          "personalScore": 235,
+          "rounds": 0,
+          "hits": 0,
+          "merit": 235,
+          "bestStreak": 0,
+          "closestKill": null,
+          "killsByGun": [],
+          "points": 235
+        }
+      },
+      "points": 235
+    },
+    {
+      "role": "guest",
+      "result": {
+        "t": "debrief",
+        "v": 2,
+        "run": 1,
+        "crew": {
+          "kills": 3,
+          "hits": 3,
+          "shots": 12,
+          "score": 1490
+        },
+        "host": {
+          "success": true,
+          "title": "Co-op Survival — Gunners",
+          "reason": "The mission is over.",
+          "kills": 0,
+          "accuracy": 0,
+          "bombersLost": 0,
+          "bombersTotal": 12,
+          "time": 23.433333333333284,
+          "score": 1490,
+          "medals": [],
+          "survival": true,
+          "waves": 1,
+          "nextAvailable": false,
+          "coop": true,
+          "personalScore": 235,
+          "rounds": 0,
+          "hits": 0,
+          "merit": 235,
+          "bestStreak": 0,
+          "closestKill": null,
+          "killsByGun": []
+        },
+        "guest": {
+          "success": true,
+          "title": "Co-op Survival — Gunners",
+          "reason": "The mission is over.",
+          "kills": 1,
+          "accuracy": 0.25,
+          "bombersLost": 0,
+          "bombersTotal": 12,
+          "time": 23.433333333333284,
+          "score": 1490,
+          "medals": [],
+          "survival": true,
+          "waves": 1,
+          "nextAvailable": false,
+          "coop": true,
+          "personalScore": 340,
+          "rounds": 4,
+          "hits": 1,
+          "merit": 340,
+          "bestStreak": 1,
+          "closestKill": 210.97140114242973,
+          "killsByGun": [
+            {
+              "label": "Right Waist",
+              "kills": 1
+            }
+          ],
+          "points": 340
+        }
+      },
+      "points": 340
+    }
+  ],
+  "errors": []
+}

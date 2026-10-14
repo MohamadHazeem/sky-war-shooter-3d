@@ -3,13 +3,14 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
-const shots = 'docs/phase7/shots/04'; fs.mkdirSync(shots, { recursive: true });
+const port = process.env.COOP_PORT ?? '5274';
+const shots = process.env.COOP_SHOTS ?? 'docs/phase7/shots/04'; fs.mkdirSync(shots, { recursive: true });
 const errors = [], report = {};
 const make = async name => {
   const context = await browser.newContext({ viewport: { width: 1200, height: 800 } });
   await context.addInitScript(() => localStorage.setItem('sws3d.settings.v2', JSON.stringify({ quality: 'low', gfxAuto: 'done', volume: 0, radio: false, music: false })));
   const page = await context.newPage(); page.on('pageerror', e => errors.push(name + ': ' + e.message));
-  await page.goto('http://127.0.0.1:5274/'); await page.waitForFunction(() => window.sws?.assetsReady(), null, { timeout: 120000 });
+  await page.goto(`http://127.0.0.1:${port}/`); await page.waitForFunction(() => window.sws?.assetsReady(), null, { timeout: 120000 });
   await page.evaluate(() => { sws.engine.renderer.setAnimationLoop(null); sws.game.input.lock = () => {}; sws.game.coop.screen.menu(); });
   return page;
 };
@@ -99,9 +100,15 @@ try {
   for (const p of pages) await p.evaluate(() => { sws.game.startMenu(); sws.game.coop.screen.menu(); });
   await host.locator('[data-host]').click(); await host.waitForFunction(() => sws.game.coop.code.length === 6, null, { timeout: 45000 });
   await guest.locator('.joinrow input').fill(await host.evaluate(() => sws.game.coop.code)); await guest.locator('[data-join]').click(); await host.waitForFunction(() => sws.game.coop.connected, null, { timeout: 45000 });
+  for (const p of pages) if (await p.locator('[data-ready]').count()) await p.locator('[data-ready]').click();
+  await host.waitForFunction(() => sws.game.coop.partnerReady);
   await host.locator('[data-start]').click(); await guest.waitForFunction(() => sws.game.state === 'playing');
   await guest.evaluate(() => sws.game.coop.devFire = true); await step(12);
   report.gunner = await host.evaluate(() => ({ mode: sws.game.coop.mode, role: sws.game.mission.role, rounds: sws.game.coop.stats.guestRounds, seats: sws.game.world.remoteStations.size }));
   assert.equal(report.gunner.mode, 'gunner'); assert.equal(report.gunner.role, 'gunner'); assert.equal(report.gunner.seats, 1); assert(report.gunner.rounds > 0);
   assert.deepEqual(errors, []); report.errors = errors; fs.writeFileSync(`${shots}/verification.json`, JSON.stringify(report, null, 2) + '\n'); console.log('PASS', JSON.stringify(report));
-} finally { await browser.close(); }
+} finally {
+  for (const context of browser.contexts()) for (const p of context.pages()) await p.evaluate(() => sws.game.coop.leave()).catch(() => {});
+  await new Promise(r => setTimeout(r, 1500));
+  await browser.close();
+}

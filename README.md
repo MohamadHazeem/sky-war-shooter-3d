@@ -47,7 +47,7 @@ English and Arabic (right-to-left) under Settings → Language.
   You lead a wingman with orders on keys 1–4.
 * **Custom Battle**: pick role, seat, enemy types, numbers, skill, rounds, weather, time of day,
   weather fronts, boss round, special events, flak and escorts.
-* **Co-op (beta)**: two players crew one B-17 or fly two P-51 escorts over the internet (6-character room code). P-51 co-op supports Survival, campaign escort sorties and saved Custom Battle escort settings.
+* **Co-op (beta)**: up to four players crew one B-17 or two players fly P-51 escorts over the internet (6-character room code). P-51 co-op supports Survival, campaign escort sorties and saved Custom Battle escort settings.
 * **Training**: a 2-minute gunnery course.
 
 ### Progression
@@ -95,6 +95,8 @@ system in nine short illustrated chapters, with a controls reference that follow
 | C (hold) | Free look |
 | M | Toggle mouse aim / direct stick |
 | Z / X / G | Abilities |
+
+In B-17 co-op, press U or the Ping target button to share a target or clock-direction callout.
 
 Keys are remappable (Settings → Controls). Settings also cover difficulty, aim assist, lead
 indicator, field of view, volumes, radio voices, graphics quality (Low/Medium/High/Ultra, with

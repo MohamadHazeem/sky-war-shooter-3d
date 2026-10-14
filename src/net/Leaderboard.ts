@@ -35,12 +35,11 @@ export function cleanName(n: string) {
   return n.replace(/[^\p{L}\p{N} ._'-]/gu, '').trim().slice(0, 20) || 'Gunner';
 }
 
-// Keep both full callsigns, within the co-op-only 43-character rules limit.
-export function crewName(host: string, guest: string) { return `${cleanName(host)} + ${cleanName(guest)}`; }
+// Up to four full callsigns (89 characters including separators).
+export function crewName(...names: string[]) { return names.slice(0, 4).map(cleanName).join(' + '); }
 export function cleanScoreName(name: string, mode: string) {
   if (mode !== 'coop-gunner' && mode !== 'coop-pilot') return cleanName(name);
-  const [host = '', guest = ''] = name.split(' + ');
-  return crewName(host, guest);
+  return crewName(...name.split(' + ').slice(0, mode === 'coop-pilot' ? 2 : 4));
 }
 
 type Fb = {

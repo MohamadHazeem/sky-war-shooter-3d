@@ -1,0 +1,151 @@
+{
+  "connection": {
+    "state": "connected",
+    "channels": [
+      "state",
+      "events"
+    ],
+    "ice": [
+      "host",
+      "srflx",
+      "host",
+      "host",
+      "host",
+      "srflx"
+    ]
+  },
+  "localFlight": {
+    "correction": 0,
+    "localMovement": 2.367646483432852,
+    "knownOwn": true
+  },
+  "combat": {
+    "snapsSent": 34,
+    "snapsRecv": 0,
+    "inputsSent": 0,
+    "inputsRecv": 50,
+    "guestRounds": 24,
+    "guestHits": 1,
+    "guestKills": 1,
+    "killsRecv": 0,
+    "score": 105,
+    "kills": 0,
+    "targetAlive": false,
+    "targetHP": -2
+  },
+  "aircraft": {
+    "total": 26,
+    "enemies": 12
+  },
+  "bandwidth": [
+    {
+      "role": "host",
+      "bytesPerSimSecond": 23912,
+      "snapshots": 190,
+      "inputs": 0
+    },
+    {
+      "role": "guest",
+      "bytesPerSimSecond": 3017,
+      "snapshots": 0,
+      "inputs": 300
+    }
+  ],
+  "damage": {
+    "engine": 0.25,
+    "fire": true
+  },
+  "result": {
+    "t": "debrief",
+    "v": 2,
+    "run": 1,
+    "crew": {
+      "kills": 1,
+      "hits": 1,
+      "shots": 24,
+      "score": 1818
+    },
+    "host": {
+      "success": true,
+      "title": "Co-op Survival — Pilots",
+      "reason": "The bombers made it through. Outstanding work, Blue Leader.",
+      "kills": 0,
+      "accuracy": 0,
+      "bombersLost": 0,
+      "bombersTotal": 12,
+      "time": 19.233333333333523,
+      "score": 1818,
+      "medals": [],
+      "survival": true,
+      "waves": 3,
+      "nextAvailable": false,
+      "coop": true,
+      "personalScore": 857,
+      "rounds": 0,
+      "hits": 0,
+      "merit": 857,
+      "bestStreak": 0,
+      "closestKill": null,
+      "points": 857
+    },
+    "guest": {
+      "success": true,
+      "title": "Co-op Survival — Pilots",
+      "reason": "The bombers made it through. Outstanding work, Blue Leader.",
+      "kills": 1,
+      "accuracy": 0.041666666666666664,
+      "bombersLost": 0,
+      "bombersTotal": 12,
+      "time": 19.233333333333523,
+      "score": 1818,
+      "medals": [],
+      "survival": true,
+      "waves": 3,
+      "nextAvailable": false,
+      "coop": true,
+      "personalScore": 961,
+      "rounds": 24,
+      "hits": 1,
+      "merit": 961,
+      "bestStreak": 1,
+      "closestKill": 220.82194551431465
+    }
+  },
+  "campaign": {
+    "mission": "m4",
+    "role": "pilot",
+    "partner": "Blue One"
+  },
+  "fallback": {
+    "state": "playing",
+    "ai": true,
+    "alive": true,
+    "remote": null
+  },
+  "custom": {
+    "id": "custom-pilot",
+    "role": "pilot",
+    "round": {
+      "duration": 120,
+      "start": 6,
+      "min": 3,
+      "max": 8,
+      "skill": [
+        0.9,
+        1.1
+      ],
+      "rockets": 0.15
+    }
+  },
+  "hostLeft": {
+    "state": "menu",
+    "notice": "غادر المضيف اللعبة. انتهت الجلسة التعاونية."
+  },
+  "gunner": {
+    "mode": "gunner",
+    "role": "gunner",
+    "rounds": 8,
+    "seats": 1
+  },
+  "errors": []
+}
