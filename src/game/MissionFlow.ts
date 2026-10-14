@@ -66,6 +66,7 @@ export class MissionFlow {
     this.endTimer = 0;
     g.endResult = null;
     this.bailT = -1;
+    this.bailCine.stop();
     g.score = 0;
     g.damageT = 0;
     g.cracks.clear();
@@ -137,6 +138,7 @@ export class MissionFlow {
     g.ui.hud(m.role, g.coop.phase === 'mission');
     if (aa) g.aa.mountHud();
     crewRoster.beginMission(g.world, g.ui, m.role);
+    g.b17Damage.reset();
     g.ui.fadeTo(1);
     setTimeout(() => g.ui.fade(false), 50);
     g.input.lock();
@@ -235,7 +237,8 @@ export class MissionFlow {
     const g = this.g;
     this.bailT = 0;
     g.ui.banner('BAIL OUT! BAIL OUT!', 'Crew, abandon the aircraft', 3000);
-    this.bailCine.start(g.engine, g.world, g.gunner, g.ui);
+    g.b17Damage.abandon();
+    this.bailCine.start(g.engine, g.world, g.gunner, g.ui, g.b17Damage.escape);
   }
 
   private updateBailOut(dt: number) {
@@ -298,6 +301,7 @@ export class MissionFlow {
       rounds: w.stats.shots, hits: w.stats.hits, bestStreak: g.tally.bestStreak,
       closestKill: g.tally.closestKill === Infinity ? null : g.tally.closestKill,
       killsByGun: m.role === 'gunner' ? g.tally.killsByGun() : undefined,
+      escape: g.b17Damage.escape.length ? g.b17Damage.escape : undefined,
       merit, ditched: g.ditching.ditched, points: g.prog.points, bombing: g.bombardier.result ?? undefined,
     };
     // the crew-room scene first after a story mission (CrewRoomScene.ts); `then` runs once the map is up

@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import type { EscapeEntry } from './B17DamageRules';
+import { bailOutCanopy } from './BailOutCanopy';
 import type { Engine } from '../core/Engine';
 import type { Input } from '../core/Input';
 import type { UI } from '../ui/UI';
@@ -24,7 +26,7 @@ const FADE = 0.35;               // s, fade to black before the jump (and back a
 const OPEN = 1.05;               // s after the jump the canopy opens
 const SKIP_AFTER = 0.6;          // s before a key can skip (no accidental skip while firing)
 const BELL_STRIKES = 5, BELL_GAP = 0.62;
-const CREW = [0.9, 1.6, 2.3, 3.0, 3.6, 4.3, 5.0, 5.7]; // crew exit times (chutes from the live bomber)
+
 const TICK = 0.035;
 
 const C_SMOKE: [number, number, number] = [0.06, 0.055, 0.05];
@@ -70,6 +72,7 @@ body.sws-cine #hudCanvas, body.sws-cine #hud > :not(#subs):not(#banner):not(#tip
 
 export class BailOutCinematic {
   private t = -1;
+  private canopy = bailOutCanopy();
   private out: BailFrame = { jolt: 0, flash: 0, done: false };
   private engine: Engine | null = null;
   private world: World | null = null;
@@ -79,6 +82,7 @@ export class BailOutCinematic {
   private rollDir = 1;
   private bell = 0;
   private crew = 0;
+  private manifest: EscapeEntry[] = [];
   private acc = 0;
   private lightT = 0;
   private sparkT = 0.5;
@@ -92,9 +96,10 @@ export class BailOutCinematic {
 
   get active() { return this.t >= 0; }
 
-  start(engine: Engine, world: World, gunner: GunnerController, ui: UI) {
+  start(engine: Engine, world: World, gunner: GunnerController, ui: UI, manifest: readonly EscapeEntry[]) {
     this.engine = engine; this.world = world; this.gunner = gunner; this.ui = ui;
     this.b = world.playerBomber;
+    this.manifest = manifest.filter(m => m.escaped && !m.player).sort((a, b) => a.at - b.at);
     this.t = 0;
     this.bell = 0; this.crew = 0; this.acc = 0; this.lightT = 0; this.sparkT = 0.5;
     this.outside = false; this.opened = false; this.hint = false;
@@ -113,6 +118,7 @@ export class BailOutCinematic {
   stop() {
     if (this.t < 0) return;
     this.t = -1;
+    this.canopy.removeFromParent(); this.canopy.visible = false;
     cineDom(false);
     this.ui?.fadeTo(0);
   }
@@ -133,7 +139,7 @@ export class BailOutCinematic {
     // alarm strikes jolt the camera and flash red
     if (this.bell < BELL_STRIKES && t >= this.bell * BELL_GAP) { this.bell++; o.jolt = 0.4; o.flash = 0.55; }
     // crew going out of the hatches
-    while (this.crew < CREW.length && t >= CREW[this.crew]) { this.crew++; if (b) this.releaseChute(b); }
+    while (this.crew < this.manifest.length && t >= this.manifest[this.crew].at) { this.crew++; if (b) this.releaseChute(b); }
 
     if (b) {
       // the ship rolls over, nose dropping, faster as it goes
@@ -269,6 +275,7 @@ export class BailOutCinematic {
     const eng = this.engine!, cam = eng.camera;
     // fade back in from the black of the jump
     if (u < FADE + 0.1) this.ui?.fadeTo(Math.max(0, 1 - u / FADE));
+    if (u >= OPEN) { if (this.canopy.parent !== cam) cam.add(this.canopy); this.canopy.visible = true; }
     // free fall, then the canopy snaps open and the descent settles to ~6 m/s
     if (u < OPEN) {
       this.camVel.y -= 9.81 * dt;

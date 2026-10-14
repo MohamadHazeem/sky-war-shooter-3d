@@ -106,6 +106,7 @@ export class WorldEvents {
       else if (b.isPlayer) w.callout('playerdown', 'Pilot', 'We\'ve had it! Bail out! Bail out!', 0, 3);
     };
     w.events.playerHit = (zone, heavy) => {
+      g.b17Damage.hit(zone, heavy);
       if (heavy && g.mission?.role === 'gunner') {
         const life = g.gunner.survival, before = life.oxygen;
         life.hit(zone.includes('engine') || zone.includes('fuselage') || zone === 'top');

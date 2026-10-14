@@ -339,6 +339,6 @@ export class GameHud {
     g.combat.draw(ctx, W, H, hx, hy);
     // Cracked glass sits in front of everything else on the gunner's view
     g.cracks.draw(ctx, W, H);
-    if (g.mission?.role === 'gunner') g.gunner.drawSurvival(ctx, W, H);
+    if (g.mission?.role === 'gunner') { g.gunner.drawSurvival(ctx, W, H); g.b17Damage.draw(ctx, W, H); }
   }
 }

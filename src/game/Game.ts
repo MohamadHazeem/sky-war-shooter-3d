@@ -8,6 +8,7 @@ import { AADefence } from './AADefence';
 import { BombRun } from './BombRun';
 import { Bombardier } from './Bombardier';
 import * as THREE from 'three';
+import { B17DamageCrew } from './B17DamageCrew';
 import { Engine, lowerQuality } from '../core/Engine';
 import { Input } from '../core/Input';
 import { UI, Settings, Progress, PauseInfo } from '../ui/UI';
@@ -132,6 +133,7 @@ export class Game {
   readonly cine: Cinematics;       // kill cam, mission fly-by, best-moment replay (Cinematics.ts)
   readonly ditching: Ditching;
   readonly formationReturn = new FormationReturn(this);
+  readonly b17Damage: B17DamageCrew;
   readonly bookends: Bookends;     // take-off / landing scenes at Deenethorpe (Bookends.ts)
   readonly distantBattle = new DistantBattle();
   readonly bombardier: Bombardier;
@@ -162,6 +164,7 @@ export class Game {
     this.cine = new Cinematics(engine, input, ui, this);
     this.bookends = new Bookends(engine, ui, this);
     this.ditching = new Ditching(this);
+    this.b17Damage = new B17DamageCrew(this);
     this.abilities = new Abilities(engine, input, ui, this);
     this.boss = new BossBattle(this.world, ui, { score: (n) => { this.score += n; }, slowmo: (s) => { this.slowmo = Math.max(this.slowmo, s); }, perk: (l) => this.awardPerk(l), merit: (n) => this.prog.earn(n) });
     this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: true, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 65 });
@@ -555,6 +558,7 @@ export class Game {
       this.midRound.update(dt, this.roundIdx, this.roundT0);
       this.specials.update(dt, this.roundIdx, this.roundT0);
     }
+    this.b17Damage.update(dt);
     this.cracks.update(dt);
     this.ui.redVignette(Math.min(0.35, this.damageT * 0.45 + (this.mission?.role === 'gunner' && !this.menuMode ? w.crewWounded * 0.05 : 0)));
     if (this.mission?.role === 'pilot' && !this.menuMode) { /* pilot sets exposure/vignette */ }

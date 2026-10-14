@@ -195,6 +195,7 @@ export class Fighter extends Aircraft {
 
 // B-17G: four engines, five gun stations. Flies in formation kinematically.
 export class Bomber extends Aircraft {
+  damageControl: import('../game/B17DamageRules').B17DamageRules | null = null;
   slot = new THREE.Vector3();      // offset within the formation (formation frame)
   wobblePhase = Math.random() * 100;
   wobbleAmp = 1;

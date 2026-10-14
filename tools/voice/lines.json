@@ -3821,6 +3821,58 @@
       "text": "Flak hit the ship beside us! Her engine is burning!"
     },
     {
+      "group": "Phase 9 B-17 damage and crew"
+    },
+    {
+      "id": "dc_fuselage",
+      "role": "radio",
+      "text": "Fire in the fuselage! Waist gunners, get the extinguisher!",
+      "urgent": true,
+      "peakDb": -3
+    },
+    {
+      "id": "dc_bombBay",
+      "role": "top",
+      "text": "Fire in the bomb bay! Get forward with the extinguisher!",
+      "urgent": true,
+      "peakDb": -3
+    },
+    {
+      "id": "dc_runaway",
+      "role": "pilot",
+      "text": "Runaway propeller! Engineer, feather that engine!",
+      "urgent": true,
+      "peakDb": -3
+    },
+    {
+      "id": "dc_controls",
+      "role": "pilot",
+      "text": "Control cables hit. Help me hold her steady!",
+      "urgent": true,
+      "peakDb": -3
+    },
+    {
+      "id": "dc_fireOut",
+      "role": "radio",
+      "text": "Cabin fire is out. Keep those guns covered.",
+      "urgent": false,
+      "peakDb": -3
+    },
+    {
+      "id": "dc_aid",
+      "role": "radio",
+      "text": "Coming aft with the first aid kit. I will take his gun.",
+      "urgent": false,
+      "peakDb": -3
+    },
+    {
+      "id": "dc_ammo",
+      "role": "radio",
+      "text": "Bringing another ammunition can down the catwalk.",
+      "urgent": false,
+      "peakDb": -3
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {
