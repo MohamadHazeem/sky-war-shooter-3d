@@ -245,14 +245,14 @@ vec3 farCropMean(float s) {
   return s < 0.5 ? vec3(0.14, 0.135, 0.07) : s < 1.5 ? vec3(0.15, 0.125, 0.08) : s < 2.5 ? vec3(0.64, 0.66, 0.69) : vec3(0.125, 0.12, 0.07);
 }
 vec3 farMeadow(float s) { return s < 0.5 ? vec3(0.085, 0.125, 0.048) : s < 1.5 ? vec3(0.1, 0.12, 0.058) : s < 2.5 ? vec3(0.66, 0.68, 0.71) : vec3(0.095, 0.145, 0.05); }
-vec3 farHeath(float s) { return s > 1.5 && s < 2.5 ? vec3(0.5, 0.5, 0.5) : vec3(0.15, 0.13, 0.1); }
+vec3 farHeath(float s) { return s > 1.5 && s < 2.5 ? vec3(0.5, 0.5, 0.5) : vec3(0.13, 0.125, 0.095); }
 vec3 farWood(float conifer, float s) {
-  vec3 dec = s < 0.5 ? vec3(0.05, 0.075, 0.038) : s < 1.5 ? vec3(0.13, 0.085, 0.038) : s < 2.5 ? vec3(0.17, 0.165, 0.16) : vec3(0.075, 0.1, 0.045);
+  vec3 dec = s < 0.5 ? vec3(0.05, 0.075, 0.038) : s < 1.5 ? vec3(0.085, 0.078, 0.04) : s < 2.5 ? vec3(0.17, 0.165, 0.16) : vec3(0.075, 0.1, 0.045);
   vec3 con = s > 1.5 && s < 2.5 ? vec3(0.07, 0.08, 0.075) : vec3(0.035, 0.05, 0.036);
   return mix(dec, con, conifer);
 }
 vec3 farRoof(float h, float s) {
-  vec3 r = h < 0.45 ? vec3(0.20, 0.095, 0.065) : h < 0.7 ? vec3(0.14, 0.095, 0.075) : h < 0.88 ? vec3(0.12, 0.12, 0.13) : vec3(0.21, 0.18, 0.15);
+  vec3 r = h < 0.45 ? vec3(0.165, 0.1, 0.075) : h < 0.7 ? vec3(0.13, 0.1, 0.085) : h < 0.88 ? vec3(0.12, 0.12, 0.13) : vec3(0.21, 0.18, 0.15);
   return s > 1.5 && s < 2.5 ? mix(r, vec3(0.55, 0.56, 0.6), 0.55) : r;
 }
 
@@ -273,8 +273,8 @@ float farLowShadow(vec2 xz) {
   float base = farRemap(n.r, -(1.0 - fbm), 1.0, 0.0, 1.0);
   float topH = clamp(cov * 1.05, 0.05, 1.0);
   base = farRemap(base * (1.0 - smoothstep(topH * 0.25, topH, 0.3)), 1.0 - cov * 0.85, 1.0, 0.0, 1.0);
-  float od = clamp(base, 0.0, 1.0) * uFarLow.w * (uFarLow.y - uFarLow.x) * 0.0016;
-  return mix(1.0, max(exp(-od), 0.28), smoothstep(0.0, 0.1, cov));
+  float od = clamp(base, 0.0, 1.0) * uFarLow.w * (uFarLow.y - uFarLow.x) * 0.0009;
+  return mix(1.0, max(exp(-od), 0.42), smoothstep(0.0, 0.15, cov));
 }
 
 // Water: sun glint (Cox-Munk slope distribution), swell, sky reflection. Writes farSpec.
@@ -283,7 +283,10 @@ vec3 farWater(vec3 base, vec2 p, vec2 xz, float rough, float fw, float shadow) {
   // swell: two trains along the wind, faded once a wave is a few pixels long
   vec2 w1 = normalize(vec2(0.92, 0.39)), w2 = normalize(vec2(0.55, -0.83));
   float a1 = 0.05 * rough * (1.0 - smoothstep(18.0, 60.0, fw)), a2 = 0.035 * rough * (1.0 - smoothstep(10.0, 34.0, fw));
-  vec2 sl = w1 * a1 * cos(dot(p, w1) * 0.0349 + 2.0 * fn(p / 900.0)) + w2 * a2 * cos(dot(p, w2) * 0.066 + 3.0 * fn(p / 500.0 + 7.0));
+  vec2 q = vec2(dot(p, w1), dot(p, vec2(-w1.y, w1.x)));   // along / across the wind
+  vec2 sl = (vec2(fn(q / vec2(120.0, 260.0)), fn(q / vec2(120.0, 260.0) + 17.0)) - 0.5) * 2.0 * a1
+    + (vec2(fn(q / vec2(38.0, 70.0) + 5.0), fn(q / vec2(38.0, 70.0) + 11.0)) - 0.5) * 2.0 * a2;
+  sl = vec2(sl.x * w1.x - sl.y * w1.y, sl.x * w1.y + sl.y * w1.x);
   vec3 n = normalize(vec3(-sl.x, 1.0, -sl.y));
   // rougher in gusty patches and wind lanes; the footprint widens the lobe at range
   float patches = mix(0.45, 1.7, fn(vec2(dot(p, w1) / 5200.0, dot(p, vec2(-w1.y, w1.x)) / 1600.0)));
@@ -333,7 +336,7 @@ vec3 terrain(vec2 xz, float dist) {
   if (uFarQuality < 0.5) return mix(water, grass, step(0.5, Ln.r));
   float coast = (Ln.r * 2.0 - 1.0) * ${GRID.COAST_RANGE}.0;
   // sub-texel shoreline detail: stable in world space, within ~60 m of the mapped coast
-  coast += (fn(rel / 230.0) - 0.5) * 70.0 + (fn(rel / 61.0 + 3.0) - 0.5) * 22.0;
+  if (abs(coast) < 250.0) coast += (fn(rel / 230.0) - 0.5) * 70.0 + (fn(rel / 61.0 + 3.0) - 0.5) * 22.0;
   float land = smoothstep(-fw * 0.5, fw * 0.5, coast);
   float urban = Cv.r, forest = Cv.g, meadow = Cv.b, heath = Cv.a;
   // the bombing target: its streets are this town pattern (TargetGround adds the works, docks
@@ -348,71 +351,80 @@ vec3 terrain(vec2 xz, float dist) {
   bool detail = uFarQuality > 1.5;
 
   // ---- fields: irregular farm blocks (jittered Voronoi on lightly warped ground), each
-  // ploughed in one direction and split into strips; neighbouring strips often share a crop
-  vec2 warp = (vec2(fn(rel / 2100.0), fn(rel / 2100.0 + 7.3)) - 0.5) * 700.0;
-  vec2 pw = rel + warp;
+  // ploughed in one direction and split into strips; neighbouring strips often share a crop.
+  // Beyond the distance where a block is a few pixels, only the regional mean is shaded.
   float bsz = mix(560.0, 780.0, lowland);
-  vec2 gq = pw / bsz, gi = floor(gq);
-  vec2 c1 = vec2(0.0), c2 = vec2(0.0), s1 = vec2(0.0), s2 = vec2(0.0);
-  float d1 = 1e9, d2 = 1e9;
-  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
-    vec2 c = gi + vec2(float(x), float(y));
-    vec2 sp = c + 0.15 + 0.7 * vec2(fh(c + 0.5), fh(c + 9.7));
-    vec2 dv = sp - gq;
-    float dd = dot(dv, dv);
-    if (dd < d1) { d2 = d1; c2 = c1; s2 = s1; d1 = dd; c1 = c; s1 = sp; }
-    else if (dd < d2) { d2 = dd; c2 = c; s2 = sp; }
-  }
-  // distance (m) to the block's border: the bisector of the two nearest sites
-  float blockEdge = abs(dot(gq - (s1 + s2) * 0.5, normalize(s2 - s1))) * bsz;
-  vec2 cell = c1;
-  float h1 = fh(cell), h2 = fh(cell + 17.3), h3 = fh(cell + 41.9), h4 = fh(cell + 77.1);
-  float ang = (h1 - 0.5) * 3.14159;
-  vec2 lp = mat2(cos(ang), sin(ang), -sin(ang), cos(ang)) * ((gq - s1) * bsz);
-  float sw = lowland > 0.5 ? mix(34.0, 70.0, h3) : mix(22.0, 75.0, h3 * h3);
-  float sl = lowland > 0.5 ? mix(500.0, 1100.0, h4) : mix(180.0, 520.0, h4);
-  float sid = floor(lp.x / sw);
-  float gsz = 1.0 + floor(fh(cell + 3.3) * 3.99);   // 1-4 strips per field
-  float grp = floor((sid + floor(h2 * 5.0)) / gsz);
-  float sub = floor((lp.y + fh(vec2(grp, h1 * 97.0)) * sl) / sl);
-  vec2 fid = cell * 7.0 + vec2(grp, sub * 13.0);
-  float fhash = fh(fid);
-  float gx0 = grp * gsz - floor(h2 * 5.0);   // the field's first strip
-  float stripEdge = min(lp.x - gx0 * sw, (gx0 + gsz) * sw - lp.x);
-  // field colours, faded to the block's tone once strips are sub-pixel, and to the region's
-  // mean once blocks are
   float farFade = smoothstep(bsz * 0.12, bsz * 0.45, fw);
-  vec3 fieldC = mix(farCrop(fhash, season) * (0.95 + 0.1 * fh(vec2(sid, h3 * 50.0))), farCrop(h4, season), smoothstep(sw * 0.3, sw * 0.8, fw));
-  fieldC *= 0.9 + 0.2 * fn(rel / 130.0 + fhash * 31.0) * (1.0 - smoothstep(10.0, 40.0, fw));
-  fieldC = mix(fieldC, farCropMean(season), farFade);
-  // land cover per field: meadows and heath by the mapped shares
-  float isMeadow = step(fh(fid + 5.0), meadow * 1.1);
-  float isHeath = step(fh(fid + 9.0), heath * 1.2) * (1.0 - isMeadow);
-  vec3 alb = mix(fieldC, farMeadow(season) * (0.88 + 0.24 * fhash), isMeadow * (1.0 - farFade));
-  alb = mix(alb, farMeadow(season), meadow * farFade * 0.85);
-  alb = mix(alb, farHeath(season), isHeath * (1.0 - farFade * 0.6));
-  // parcel boundaries: ditches in the polders; block borders: hedges or lanes on some sides
-  if (detail) {
-    float fieldEdge = fh(vec2(grp, h1 * 97.0) + 0.37) < 0.6 ? stripEdge : 99.0;   // field (not strip) borders
-    float ditch = lowland > 0.4 ? farLine(fieldEdge, 1.3, fw) * 0.6 : 0.0;
-    float edgeH = fh(c1 + c2 * 3.1);
-    float hedge = farLine(blockEdge, 3.5, fw) * step(edgeH, 0.3 + 0.3 * meadow);
-    float lane = farLine(blockEdge, 2.5, fw) * step(0.75, edgeH);
-    vec3 hedgeC = season > 1.5 && season < 2.5 ? vec3(0.2, 0.19, 0.18) : vec3(0.045, 0.065, 0.035);
-    alb = mix(alb, hedgeC, hedge * 0.8);
-    alb = mix(alb, season > 1.5 && season < 2.5 ? vec3(0.45, 0.45, 0.46) : vec3(0.24, 0.21, 0.16), lane * 0.7);
-    if (ditch > 0.001) alb = mix(alb, farWater(water, rel, xz, 0.2, fw, 1.0), ditch * land);
-    farSpec *= ditch * land;
+  vec3 alb = mix(mix(farCropMean(season), farMeadow(season), meadow * 0.85), farHeath(season), heath * 0.4);
+  vec2 pw = rel, fid = vec2(0.0);
+  float h1 = 0.0;
+  if (farFade < 0.999) {
+    pw += (vec2(fn(rel / 2100.0), fn(rel / 2100.0 + 7.3)) - 0.5) * 700.0;
+    // nearest two sites among the 2×2 cells around this point (sites jittered in the cell's middle half)
+    vec2 gq = pw / bsz, gi = floor(gq - 0.5);
+    vec2 c1 = vec2(0.0), c2 = vec2(0.0), s1 = vec2(0.0), s2 = vec2(0.0);
+    float d1 = 1e9, d2 = 1e9;
+    for (int y = 0; y <= 1; y++) for (int x = 0; x <= 1; x++) {
+      vec2 c = gi + vec2(float(x), float(y));
+      vec2 sp = c + 0.25 + 0.5 * vec2(fh(c + 0.5), fh(c + 9.7));
+      vec2 dv = sp - gq;
+      float dd = dot(dv, dv);
+      if (dd < d1) { d2 = d1; c2 = c1; s2 = s1; d1 = dd; c1 = c; s1 = sp; }
+      else if (dd < d2) { d2 = dd; c2 = c; s2 = sp; }
+    }
+    // distance (m) to the block's border: the bisector of the two nearest sites
+    float blockEdge = abs(dot(gq - (s1 + s2) * 0.5, normalize(s2 - s1))) * bsz;
+    vec2 cell = c1;
+    h1 = fh(cell);
+    float h2 = fh(cell + 17.3), h3 = fh(cell + 41.9), h4 = fh(cell + 77.1);
+    float ang = (h1 - 0.5) * 3.14159;
+    vec2 lp = mat2(cos(ang), sin(ang), -sin(ang), cos(ang)) * ((gq - s1) * bsz);
+    float sw = lowland > 0.5 ? mix(34.0, 70.0, h3) : mix(22.0, 75.0, h3 * h3);
+    float sl = lowland > 0.5 ? mix(500.0, 1100.0, h4) : mix(180.0, 520.0, h4);
+    float sid = floor(lp.x / sw);
+    float gsz = 1.0 + floor(fh(cell + 3.3) * 3.99);   // 1-4 strips per field
+    float grp = floor((sid + floor(h2 * 5.0)) / gsz);
+    float sub = floor((lp.y + fh(vec2(grp, h1 * 97.0)) * sl) / sl);
+    fid = cell * 7.0 + vec2(grp, sub * 13.0);
+    float fhash = fh(fid);
+    float gx0 = grp * gsz - floor(h2 * 5.0);   // the field's first strip
+    float stripEdge = min(lp.x - gx0 * sw, (gx0 + gsz) * sw - lp.x);
+    // field colours, faded to the block's tone once strips are sub-pixel
+    vec3 fieldC = mix(farCrop(fhash, season) * (0.95 + 0.1 * fh(vec2(sid, h3 * 50.0))), farCrop(h4, season), smoothstep(sw * 0.3, sw * 0.8, fw));
+    if (fw < 40.0) fieldC *= 0.9 + 0.2 * fn(rel / 130.0 + fhash * 31.0) * (1.0 - smoothstep(10.0, 40.0, fw));
+    // land cover per field: meadows and heath by the mapped shares
+    float isMeadow = step(fh(fid + 5.0), meadow * 1.1);
+    float isHeath = step(fh(fid + 9.0), heath * 1.2) * (1.0 - isMeadow);
+    if (isMeadow > 0.5) fieldC = farMeadow(season) * (0.86 + 0.24 * fhash + 0.16 * (fn(rel / 260.0 + 3.0) - 0.5));
+    fieldC = mix(fieldC, farHeath(season), isHeath);
+    // parcel boundaries: ditches in the polders; block borders: hedges or lanes on some sides
+    if (detail) {
+      float fieldEdge = fh(vec2(grp, h1 * 97.0) + 0.37) < 0.6 ? stripEdge : 99.0;   // field (not strip) borders
+      float ditch = lowland > 0.4 ? farLine(fieldEdge, 1.3, fw) * 0.6 : 0.0;
+      float edgeH = fh(c1 + c2 * 3.1);
+      float hedge = farLine(blockEdge, 3.5, fw) * step(edgeH, 0.3 + 0.3 * meadow);
+      float lane = farLine(blockEdge, 2.5, fw) * step(0.75, edgeH);
+      vec3 hedgeC = season > 1.5 && season < 2.5 ? vec3(0.2, 0.19, 0.18) : vec3(0.045, 0.065, 0.035);
+      fieldC = mix(fieldC, hedgeC, hedge * 0.8);
+      fieldC = mix(fieldC, season > 1.5 && season < 2.5 ? vec3(0.45, 0.45, 0.46) : vec3(0.24, 0.21, 0.16), lane * 0.7);
+      if (ditch > 0.001) { fieldC = mix(fieldC, farWater(water, rel, xz, 0.2, fw, 1.0), ditch * land); farSpec *= ditch * land; }
+    }
+    alb = mix(fieldC, alb, farFade);
   }
 
   // ---- woods: the mapped share, with organic edges and whole fields of farm woodland
-  float wn = forest + (fn(rel / 380.0) - 0.5) * 0.42 + (fn(rel / 95.0 + 5.0) - 0.5) * 0.14;
-  float woodE = max(0.05, fw / 250.0);
-  float wood = smoothstep(0.5 - woodE, 0.5 + woodE, wn);
-  wood = max(wood, step(fh(fid + 11.0), forest * 0.22) * (1.0 - smoothstep(bsz * 0.15, bsz * 0.5, fw)));
-  float conifer = smoothstep(0.35, 0.65, fn(rel / 1300.0 + 2.0) + (Rf.b - 0.3) * 0.8);
-  vec3 woodC = farWood(conifer, season) * (0.8 + 0.4 * fn(rel / 14.0) * (1.0 - smoothstep(3.0, 12.0, fw)) + 0.15 * (fn(rel / 160.0) - 0.5));
-  alb = mix(alb, woodC, wood);
+  float wood = step(fh(fid + 11.0), forest * 0.22) * (1.0 - smoothstep(bsz * 0.15, bsz * 0.5, fw)) * step(0.001, fid.x * fid.x + fid.y * fid.y);
+  if (forest > 0.02) {
+    float wn = forest + (fn(rel / 380.0) - 0.5) * 0.42 + (fn(rel / 95.0 + 5.0) - 0.5) * 0.14;
+    float woodE = max(0.05, fw / 250.0);
+    wood = max(wood, smoothstep(0.5 - woodE, 0.5 + woodE, wn));
+  }
+  if (wood > 0.0) {
+    float conifer = smoothstep(0.35, 0.65, fn(rel / 1300.0 + 2.0) + (Rf.b - 0.3) * 0.8);
+    float crowns = fw < 12.0 ? fn(rel / 14.0) * (1.0 - smoothstep(3.0, 12.0, fw)) : 0.0;
+    vec3 woodC = farWood(conifer, season) * (0.8 + 0.4 * crowns + 0.15 * (fn(rel / 160.0) - 0.5));
+    alb = mix(alb, woodC, wood);
+  }
 
   // ---- roads: the farm blocks' lanes become roads in places; villages sit where they cross
   vec2 rc = floor(pw / vec2(2300.0, 1900.0));
@@ -420,7 +432,7 @@ vec3 terrain(vec2 xz, float dist) {
   vec2 rj = (vec2(fh(rc + 3.0), fh(rc + 8.0)) - 0.5) * vec2(900.0, 700.0);
   float road = 0.0;
   float vil = 0.0;
-  {
+  if (fw < 80.0) {
     vec2 q = rf - rj;
     float rx = farLine(q.x + 60.0 * sin(q.y / 400.0 + h1), 4.5, fw) * step(0.35, fh(rc + 21.0));
     float ry = farLine(q.y + 50.0 * sin(q.x / 520.0), 4.0, fw) * step(0.3, fh(rc + 33.0));
@@ -453,7 +465,7 @@ vec3 terrain(vec2 xz, float dist) {
     blockT = mix(garden, blockT, builtB);
     vec3 streetC = season > 1.5 && season < 2.5 ? vec3(0.32, 0.32, 0.33) : vec3(0.075, 0.072, 0.07);
     vec3 townC = mix(blockT, streetC, street);
-    vec3 townMean = mix(mix(farRoof(0.3, season), farRoof(0.8, season), 0.35), streetC, 0.3);
+    vec3 townMean = mix(mix(farRoof(0.3, season), farRoof(0.8, season), 0.5), streetC, 0.35);
     townC = mix(townC, mix(townMean, garden, (1.0 - urban) * 0.4), smoothstep(tb.y * 0.18, tb.y * 0.6, fw));
     alb = mix(alb, townC, town * (1.0 - wood * 0.8));
   }
@@ -486,7 +498,7 @@ vec3 terrain(vec2 xz, float dist) {
     alb = mix(alb, farMeadow(season) * 0.85, bank * (1.0 - riverW) * 0.6);
   }
   // shores: sand and dunes on the seaward side, a muddy margin elsewhere
-  float sand = (1.0 - smoothstep(25.0 + 160.0 * heath, 60.0 + 200.0 * heath, coast)) * land;
+  float sand = (1.0 - smoothstep(10.0 + 180.0 * heath * seaNear, 35.0 + 220.0 * heath * seaNear, coast)) * land * smoothstep(0.3, 0.8, seaNear);
   alb = mix(alb, season > 1.5 && season < 2.5 ? vec3(0.6, 0.6, 0.6) : vec3(0.36, 0.33, 0.26), sand * 0.85 * (1.0 - urban) * seaNear);
 
   // ---- water: depth tint, tidal flats, glint and reflections
@@ -496,7 +508,7 @@ vec3 terrain(vec2 xz, float dist) {
   // the city on its river: TargetGround reads these (docks, works and bridges follow the water)
   if (uTgt.w > 0.0 && uFarMapped > 0.5) {
     if (uFarCityWater > 0.5 && uFarCityWater < 1.5 && hw > 0.5 && abs(side) < 1500.0) { tgtRiverV = side; tgtRiverW = max(hw, 45.0); }
-    else if (uFarCityWater > 1.5 && abs(coast) < 1500.0) { tgtRiverV = -coast - 60.0; tgtRiverW = 90.0; }
+    else if (uFarCityWater > 1.5) tgtRiverW = -1.0;   // harbour shore: the real coast is the water
     tgtLand = land * (1.0 - riverW);
   }
 
@@ -533,7 +545,7 @@ vec3 farAerial(vec3 g, vec3 skyCol, float t, vec3 d) {
   vec3 T = exp(-(aer + ray));
   float cs = max(dot(d, uSunDir), 0.0);
   // short paths look down through dim, mostly back-scattering air; long ones end in the sky's colour
-  vec3 airC = uHorizon * 0.3 + uSunColor * (0.006 + 0.04 * pow(cs, 10.0));
+  vec3 airC = uHorizon * 0.3 + uSunColor * (0.006 + 0.025 * pow(cs, 24.0));
   vec3 newC = g * T + mix(airC, skyCol, smoothstep(0.25, 0.95, 1.0 - T.g)) * (1.0 - T);
   return mix(oldC, newC, smoothstep(1500.0, 4000.0, uCamAlt));
 }
