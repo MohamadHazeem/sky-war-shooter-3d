@@ -144,6 +144,7 @@ export class Fighter extends Aircraft {
   fireRockets = false;    // set by the AI when it wants to launch
   rocketTubes: THREE.Object3D[] = [];
   gunAim: THREE.Vector3 | null = null; // world direction guns are laid on (AI), overrides boresight
+  rollTrim = 0;           // roll from lost structure (a wingtip shot off: destruction/Destruction.ts)
 
   enemyType = '';          // EnemyType for axis aircraft (score, radio)
 
@@ -177,7 +178,7 @@ export class Fighter extends Aircraft {
       const eng = this.zone('engine')!;
       this.fm.thrustScale = eng.hp > 0 ? 0.55 + 0.45 * (eng.hp / eng.maxHp) : 0;
       const wl = this.zone('wingL')!, wr = this.zone('wingR')!;
-      this.fm.rollBias = ((1 - wl.hp / wl.maxHp) - (1 - wr.hp / wr.maxHp)) * -0.25;
+      this.fm.rollBias = ((1 - wl.hp / wl.maxHp) - (1 - wr.hp / wr.maxHp)) * -0.25 + this.rollTrim;
       if (!this.kinematic) this.fm.step(dt);
       this.vel.copy(this.fm.vel);
     } else if (this.falling) {

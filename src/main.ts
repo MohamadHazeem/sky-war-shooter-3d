@@ -159,6 +159,9 @@ async function boot() {
     (window as any).sws.vqa = visualQa(engine, game);
     const { hitFeedbackQa } = await import('./dev/hitFeedbackQa');
     (window as any).sws.hitFeedback = hitFeedbackQa(engine, game);
+    // Destruction sequences from the gunner seats, saved to docs/phase10/shots/09 (src/dev/destructionQa.ts)
+    const { destructionQa } = await import('./dev/destructionQa');
+    (window as any).sws.destruction = destructionQa(engine, game);
     const { seaQa } = await import('./dev/seaQa');
     (window as any).sws.sea = seaQa(engine, game);
   }

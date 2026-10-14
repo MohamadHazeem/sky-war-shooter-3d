@@ -89,6 +89,14 @@ plays and `Cinematics.drama()` gives them a short drama shot. Their losses go th
 `World.scriptedLoss` and are left out of `world.combatLosses`, which the mission's loss limit uses.
 Trigger one with `sws.drama('flakHit')` (or `collision`, `bombBay`, `straggler`, `littleFriends`).
 
+Enemy aircraft break up where they are hit (`world/destruction/`, owned by `World.destruction`).
+`World.onHit` books every round on an axis fighter to a structural part (the failure model). It decides
+whether a wingtip, wing or tail comes off, or a tank catches fire and cooks off.
+`FighterDeath.startFighterDeath` asks `destruction.plan()` before it picks an ending at random. Pieces are the real
+mesh cut along the part boundaries and fly flat-plate physics. The parts contract for new models is in
+[phase10/09-parts-contract.md](phase10/09-parts-contract.md). To play the captured sequences:
+`sws.destruction.capture('wing' | 'tail' | 'fuel' | 'engine' | 'all')`. For frame times: `sws.destruction.perf()`.
+
 A bigger system belongs in its own class that takes the `Game` (or a small host interface) in its
 constructor, like `MidRound`, `SpecialEvents`, `SkillRuntime` or `CoopSession`. Create it in the
 `Game` constructor and call it from one of the places above.

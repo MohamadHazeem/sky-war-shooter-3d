@@ -73,6 +73,7 @@ const CONNECT_TIMEOUT_MS = 25000;
 
 // snapshot aircraft flags
 export const F_ALIVE = 1, F_PB = 2, F_BURN = 4, F_SMOKE = 8, F_ENG0 = 16; // F_ENG0 << i: engine i dead
+export const F_PARTS = 8;   // flags >> F_PARTS: an enemy's structural part state (destruction/FailureModel.ts bits())
 
 // [id, kind, x, y, z, qx, qy, qz, qw, flags, structure 0..1]
 export type SnapAircraft = [number, string, number, number, number, number, number, number, number, number, number];
@@ -403,7 +404,7 @@ export class CoopSession {
         this.renderLobby(this.lobbyStatus);
         break;
       case 'start': if (this.role === 'guest' && (this.phase === 'lobby' || this.phase === 'mission')) this.startGuestMission(m); break;
-      case 'k': if (this.role === 'guest' && this.phase === 'mission' && m.run === this.run) this.onKill(Number(m.id), m.g === 1, m.h === 1); break;
+      case 'k': if (this.role === 'guest' && this.phase === 'mission' && m.run === this.run) this.onKill(Number(m.id), m.g === 1, m.h === 1, Number.isInteger(m.d) ? m.d : -1); break;
       case 'h': if (this.role === 'guest' && this.phase === 'mission' && m.run === this.run && Array.isArray(m.l)) this.onHits(m.l); break;
       case 'bump':
         if (this.role === 'guest' && m.s in STATIONS) {
@@ -689,7 +690,11 @@ export class CoopSession {
     if (this.flying) this.pilots.hostTick(dt); else this.remoteGun(dt);
     // kills: anything alive last frame that is not now
     for (const [id, a] of this.tracked) {
-      if (!a.alive) { link.sendEvent({ t: 'k', run: this.run, id, g: this.guestKills.has(id) ? 1 : 0, h: a.lastAttacker === w.playerFighter ? 1 : 0 }); this.tracked.delete(id); this.guestKills.delete(id); }
+      if (!a.alive) {
+        // d: the ending that played (wing or tail off where it failed, the tank exploding, ...): the guest plays the same
+        link.sendEvent({ t: 'k', run: this.run, id, g: this.guestKills.has(id) ? 1 : 0, h: a.lastAttacker === w.playerFighter ? 1 : 0, d: a instanceof Fighter ? w.destruction.deathCode(a) : -1 });
+        this.tracked.delete(id); this.guestKills.delete(id);
+      }
       else if (a.remove) this.tracked.delete(id);
     }
     for (const a of w.aircraft) if (a.alive && !a.remove && !this.tracked.has(a.id) && kindOf(a)) this.tracked.set(a.id, a);
@@ -759,6 +764,7 @@ export class CoopSession {
         if (z.engine !== undefined && z.hp < z.maxHp * 0.65) f |= F_SMOKE;
       }
       if (ac instanceof Bomber) ac.engineDead.forEach((d, i) => { if (d) f |= F_ENG0 << i; });
+      if (ac instanceof Fighter && ac.team === 'axis') f |= w.destruction.bits(ac) << F_PARTS;   // parts shot off / burning
       const fr = ac instanceof Fighter ? ac.structureFrac : ac.integrity;
       const p = ac.pos, q = ac.quat;
       a.push([ac.id, kind, r2(p.x + o.x), r2(p.y + o.y), r2(p.z + o.z), r4(q.x), r4(q.y), r4(q.z), r4(q.w), f, r2(fr)]);
@@ -918,6 +924,7 @@ export class CoopSession {
     updateExhausts(w.aircraft, w.effects.glow);
     updateBomberDeath(dt);
     updateFighterDeath(dt);
+    w.destruction.update(dt, true);   // pieces and hulks fly; the host decides what fails
     w.ballistics.update(dt, []);   // tracers fly; nothing can be hit here
     w.effects.update(dt);
     w.wrecks.update(dt);
@@ -999,6 +1006,7 @@ export class CoopSession {
       const last = tr.s[tr.s.length - 1];
       this.flags.set(a, last.f);
       if (a instanceof Fighter && Number.isFinite(a.maxStructure)) a.structure = Math.max(1e-3, last.fr) * a.maxStructure;
+      if (a instanceof Fighter && a.team === 'axis') w.destruction.applyBits(a, last.f >>> F_PARTS);
       if (a instanceof Bomber) for (let i = 0; i < a.engineDead.length; i++) a.engineDead[i] = !!(last.f & (F_ENG0 << i));
       if (!(last.f & F_ALIVE)) {
         const due = this.pendingDeath.get(id);
@@ -1051,7 +1059,7 @@ export class CoopSession {
     }
   }
 
-  private onKill(id: number, byGuest: boolean, byHost = false) {
+  private onKill(id: number, byGuest: boolean, byHost = false, death = -1) {
     this.stats.killsRecv++;
     this.pendingDeath.delete(id);
     const a = this.proxies.get(id);
@@ -1060,6 +1068,7 @@ export class CoopSession {
     // the full local death: fireball / wing off / spin, kill feed, and our score when it was ours
     const g = this.game, score = g.score, kills = g.world.stats.kills;
     if (!byGuest) a.playerDamage = -1; // proxy has no damage ledger; 0 >= 0 is not an assist
+    if (a instanceof Fighter && death >= 0) g.world.destruction.forceDeath(a, death);
     g.world.killAircraft(a, byGuest, '');
     if (this.flying && a.team === 'axis' && byHost) this.ui.feed(tx('{name} destroyed {target}', { name: tx('Blue One'), target: tx(a.label) }), 'mine');
     g.score = score; g.world.stats.kills = kills; // authoritative totals come from the host

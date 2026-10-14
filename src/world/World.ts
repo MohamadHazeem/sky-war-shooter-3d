@@ -18,13 +18,14 @@ import { AI_EXTRA, dirFromYawPitch, inArc, STATIONS, STATION_ORDER, StationDef }
 import { sound } from '../audio/Sound';
 import { playRicochet } from '../audio/Ricochet';
 import { Contrails } from '../render/Contrails';
-import { Wrecks, BreakKind } from './Wrecks';
+import { Wrecks } from './Wrecks';
 import { attachEngineHaze, updateExhausts } from './Exhaust';
 import { heatHaze } from '../render/HeatHaze';
 import { WingVapor } from './WingVapor';
 import { makeDropTank } from './Props';
 import { startBomberDeath, updateBomberDeath, clearBomberDeath } from './BomberDeath';
 import { startFighterDeath, updateFighterDeath, clearFighterDeath, rebaseFighterDeath, deathOwned } from './FighterDeath';
+import { Destruction } from './destruction/Destruction';
 import { hitSounds } from '../audio/HitSounds';
 import { setup as setupDamageLook, update as updateDamageLook } from './DamageLook';
 import { update as updateDamageStages, stageOf, damageStage, impact as panelImpact, warmDamageStages } from './DamageStages';
@@ -154,6 +155,7 @@ export class World implements WorldView {
   listener: THREE.Vector3 | null = null; // camera position (set by the game)
   readonly livingFormation = new LivingFormation(this);
   readonly bomberDamage = new PlayerBomberDamage(this); // visible damage on the player's own B-17
+  readonly destruction = new Destruction(this);          // enemy aircraft breaking up where they are hit (destruction/)
 
   constructor(private engine: Engine) {
     this.scene = engine.scene;
@@ -259,6 +261,7 @@ export class World implements WorldView {
     this.effects.clear();
     this.contrails.clear();
     this.wrecks.clear();
+    this.destruction.clear();
     clearBomberDeath();
     clearFighterDeath();
     for (const r of this.rockets) r.obj.removeFromParent();
@@ -289,18 +292,11 @@ export class World implements WorldView {
 
   prewarm(render: (scene?: THREE.Scene) => void, camera: THREE.Camera) {
     const fwd = camera.getWorldDirection(new THREE.Vector3());
-    const kinds: BreakKind[] = ['wingL', 'tail', 'blowup'];
     const dummies: Fighter[] = [];
-    // every enemy model that loaded, so the first kill of a new type doesn't stall either
+    // every enemy model that loaded: split into its structural parts now, so the first kill of a
+    // new type doesn't stall (the pieces reuse the aircraft's own materials: nothing new to compile)
     const models = [...new Set(Object.values(ENEMY_VARIANTS).map((v) => v.model))].filter((m) => hasModel(m as ModelKind));
-    models.forEach((m, j) => kinds.forEach((k, i) => {
-      const f = new Fighter(m as ModelKind, 'axis', ENEMY_VARIANTS.fw190.params);
-      f.setScale(ENEMY_SCALE);
-      f.root.position.copy(camera.position).addScaledVector(fwd, 60 + i * 15 + j * 40);
-      this.scene.add(f.root);
-      dummies.push(f);
-      this.wrecks.break(f, k);
-    }));
+    const splitDummies = models.map((m) => new Fighter(m as ModelKind, 'axis', ENEMY_VARIANTS.fw190.params));
     // B-17 break-ups of the formation set pieces (one, two and three clip planes on its materials)
     const b17 = new Bomber();
     b17.root.position.copy(camera.position).addScaledVector(fwd, 45);   // close: inside the shadow frustum, so the clipped shadow-depth programs compile too
@@ -332,6 +328,7 @@ export class World implements WorldView {
     const unwarmAA = warmAAGuns(this.scene, at);
     const unwarmInteriorDamage = warmInteriorDamage(this.scene, at);
     const unwarmDamage = warmDamageStages(this.scene, at);
+    const unwarmDestruction = this.destruction.warm(this.scene, at, splitDummies.map((f) => ({ kind: f.kind, model: f.model })));
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     const unwarmTargetSmoke = warmTargetSmoke(this.scene);
     this.engine.precipitation.warm(render);
@@ -349,6 +346,7 @@ export class World implements WorldView {
     unwarmTurrets();
     unwarmGlass();
     unwarmDamage();
+    unwarmDestruction();
     unwarmInteriorDamage();
     unwarmAA();
     unwarmBoss();
@@ -653,6 +651,8 @@ export class World implements WorldView {
       }
     }
 
+    // hit location: the structural part it landed on (a wingtip can come off, a tank catch fire)
+    if (t instanceof Fighter && t.team === 'axis') this.destruction.onHit(t, e);
     if (z.hp <= 0 && !(z as any).destroyed) {
       (z as any).destroyed = true;
       if (z.engine !== undefined) {
@@ -678,6 +678,9 @@ export class World implements WorldView {
     if (wasAlive && !t.alive && t instanceof Fighter && t.team === 'axis' && e.shooter instanceof Bomber && !e.shooter.isPlayer) this.livingFormation.gunnerKill();
     if (wasAlive && !t.alive && e.playerShot) this.events.hitMarker?.(true);
   }
+
+  /** Wreckage striking an aircraft (destruction/Destruction.ts): booked like a heavy round. */
+  debrisHit(e: HitEvent) { if (!e.target.remove) this.onHit(e); }
 
   // The player's own gunner is tracked by the gunner wound above, so he is left out here
   private woundCrewman() {
@@ -816,6 +819,7 @@ export class World implements WorldView {
     this.bomberDamage.update(dt);
     updateBomberDeath(dt);
     updateFighterDeath(dt);
+    this.destruction.update(dt);
     this.ballistics.update(dt, this.aircraft);
     this.effects.update(dt);
     this.wrecks.update(dt);
@@ -1094,6 +1098,7 @@ export class World implements WorldView {
     // rockets are scene children (shifted by the engine); nothing else to do
     this.contrails.rebase(off);
     rebaseFighterDeath(off);
+    this.destruction.rebase(off);
     this.wingVapor.rebase(off);
     for (const p of this.pilots.values()) if (p instanceof EnemyPilot) p.setupPoint.sub(off);
   }

@@ -68,7 +68,7 @@ describe('living formation transitions', () => {
 describe('combat casualty sequencing', () => {
   it('uses damage cause and supports four distinct airborne endings', () => {
     expect(lossKind('tail', 0)).toBe('split'); expect(lossKind('all engines', 0)).toBe('glide');
-    expect(lossKind('wingR', 0.99)).toBe('spin'); expect(lossKind('ditch', 0)).toBe('ditch');
+    expect(lossKind('wingR', 0.99)).toBe('fold'); expect(lossKind('cockpit', 0.99)).toBe('spin'); expect(lossKind('ditch', 0)).toBe('ditch');
     expect([0.1, 0.4, 0.7, 0.9].map(r => lossKind('fire', r))).toEqual(['explode', 'split', 'spin', 'glide']);
   });
   it.each(['spin', 'split', 'explode', 'glide'] as const)('%s releases the exact crew count once, even with large simulation steps', kind => {
@@ -93,6 +93,14 @@ describe('combat casualty sequencing', () => {
     system.update(2.5, true); expect(parachute.mock.calls.length).toBe(1);
     expect(parachute.mock.calls[0][0].toArray()).toEqual([13, 18, 25]);
     expect(ships[0].crewBailed).toBe(1);
+  });
+  it('a neighbour whose wing is shot through loses it on that side (wingFold), and chutes come from the hulk', () => {
+    const {system, ships, w, parachute} = fixture(); ships[2].alive = false; system.beginLoss(ships[2], 'wingR');
+    const brk = w.wrecks.breakBomber as ReturnType<typeof vi.fn>;
+    expect(brk).toHaveBeenCalledWith(ships[2], 'wingFold', -1);
+    expect(ships[2].remove).toBe(true);
+    system.update(LOSS_PROFILES.fold.duration, true);
+    expect(parachute).toHaveBeenCalledTimes(LOSS_PROFILES.fold.chutes);
   });
   it('gates chutes and water landings by simulation age and the return route', () => {
     expect(chutesDue('glide', 2.49)).toBe(0); expect(chutesDue('glide', 2.5)).toBe(1); expect(chutesDue('glide', 80)).toBe(5);

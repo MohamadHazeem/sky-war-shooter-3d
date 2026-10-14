@@ -45,6 +45,10 @@ export class LivingFormation {
     const s = this.ship(b); if (!s || b.isPlayer) return false;
     if (s.loss) return true;
     s.status = 'lost'; s.loss = forced ?? lossKind(cause, Math.random()); s.age = s.emitted = 0;
+    // where it failed: the wing that was shot away, or the one a fire burned through
+    const wl = b.zone('wingL'), wr = b.zone('wingR');
+    const side: 1 | -1 = cause === 'wingL' ? 1 : cause === 'wingR' ? -1 : (wl?.hp ?? 1) <= (wr?.hp ?? 1) ? 1 : -1;
+    if (!forced && cause === 'fire' && ((wl && wl.hp <= 0) || (wr && wr.hp <= 0)) && Math.random() < 0.55) s.loss = 'fold';
     b.vel.copy(this.w.formationForward).multiplyScalar(64); b.vel.y = -4;
     b.spin.set(0.025, 0.07, (s.slot % 2 ? -1 : 1) * 0.38);
     b.ditched = s.loss === 'ditch';
@@ -54,9 +58,13 @@ export class LivingFormation {
       b.root.rotation.z = 0.025; b.root.rotation.x = 0.07;
       for (const z of b.zones) z.burning = false;
     } else {
-      const wing = b.zone(s.slot % 2 ? 'wingL' : 'wingR'); if (wing) wing.burning = true;
+      const wing = b.zone(s.loss === 'fold' ? (side > 0 ? 'wingL' : 'wingR') : s.slot % 2 ? 'wingL' : 'wingR'); if (wing) wing.burning = true;
       this.w.effects.explosion(b.pos, b.vel, s.loss === 'explode' ? 1.5 : 0.5);
-      if (s.loss !== 'spin') {
+      if (s.loss === 'fold') {
+        // the outer panel folds up and off on the side that failed; the rest rolls over into a flat spin
+        const pieces = this.w.wrecks.breakBomber(b, 'wingFold', side);
+        s.wreck = pieces[1]; b.falling = false; b.remove = true;
+      } else if (s.loss !== 'spin') {
         const pieces = this.w.wrecks.breakBomber(b, s.loss === 'split' ? 'split' : 'blowup');
         s.wreck = pieces[s.loss === 'split' ? 0 : 3]; b.falling = false; b.remove = true;
       }

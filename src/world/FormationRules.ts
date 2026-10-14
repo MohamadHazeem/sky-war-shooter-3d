@@ -1,10 +1,11 @@
 /** Formation policy, independent of renderer, wall clock and random-number source. */
 export type FormationStatus = 'station' | 'damaged' | 'straggler' | 'lost';
-export type FormationLoss = 'spin' | 'split' | 'explode' | 'glide' | 'ditch';
+export type FormationLoss = 'spin' | 'split' | 'explode' | 'glide' | 'ditch' | 'fold';
 export const LOSS_PROFILES = {
   spin: { chutes: 4, duration: 30 }, split: { chutes: 3, duration: 26 },
   explode: { chutes: 0, duration: 20 }, glide: { chutes: 5, duration: 55 },
   ditch: { chutes: 0, duration: 18 },
+  fold: { chutes: 3, duration: 30 },   // the wing that was shot through folds up and off where it was hit
 } as const;
 export function formationStatus(previous: FormationStatus, alive: boolean, engines: number, integrity: number, straggling: boolean): FormationStatus {
   if (previous === 'lost' || !alive) return 'lost';
@@ -15,7 +16,8 @@ export function lossKind(cause: string, roll: number): FormationLoss {
   if (cause === 'ditch') return 'ditch';
   if (cause === 'tail' || cause === 'fuselageAft') return 'split';
   if (cause === 'all engines') return 'glide';
-  if (cause === 'cockpit' || cause.startsWith('wing')) return 'spin';
+  if (cause.startsWith('wing')) return 'fold';
+  if (cause === 'cockpit') return 'spin';
   return roll < 0.3 ? 'explode' : roll < 0.6 ? 'split' : roll < 0.8 ? 'spin' : 'glide';
 }
 export interface FormationMember {

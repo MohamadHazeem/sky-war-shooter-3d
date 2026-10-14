@@ -4,6 +4,7 @@ import type { World } from './World';
 import type { ParticleOpts, ParticleSystem } from '../render/Particles';
 import { sound } from '../audio/Sound';
 import { Atmos } from '../render/Atmosphere';
+import { TAIL, WING_L, WING_R } from './destruction/Parts';
 
 // How a shot-down enemy fighter dies. One of six endings is picked at random, weighted by
 // what killed it (the zone that was shot away, or the last zone hit when the structure
@@ -18,9 +19,13 @@ import { Atmos } from '../render/Atmosphere';
 //   limp        cockpit hit: the fighter flies on dead for a moment, slowly drops a wing
 //               and falls into a spin
 //
-// The first three replace the aircraft with Wrecks pieces at once. The last three keep the
-// aircraft on its `falling` path (Fighter.update integrates gravity and the body-rate
-// `spin`); the sequences here steer that spin and velocity every frame. Scoring is
+// The damage decides first (World.destruction.plan, destruction/FailureModel.ts): a wing or the tail
+// that was shot or burned through comes off where it failed, a tank that cooks off blows up; only
+// when nothing structural gave way is the ending picked at random by cause. The first three are
+// physical (destruction/Destruction.ts): the parts separate from the real mesh and fly as rigid
+// bodies, the rest falls as a hulk with its own flight physics, or the burning part shatters. The
+// last three keep the aircraft on its `falling` path (Fighter.update integrates gravity and the
+// body-rate `spin`); the sequences here steer that spin and velocity every frame. Scoring is
 // untouched: World.killAircraft credits the kill before calling startFighterDeath.
 // All emitters are throttled to fixed ticks, thinned with distance and capped against the
 // particle pools; the per-frame path allocates nothing.
@@ -57,7 +62,7 @@ interface Seq {
   dir: 1 | -1;      // roll / spin direction
   phase: number;    // engineFire: end of the roll-over; limp: start of the spin
   boomAt: number;   // engineFire: timed explosion (Infinity: wait for the cloud deck)
-  jumpAt: number;   // bailout: pilot leaves
+  jumpAt: number;   // bailout (and an engine fire the pilot gets out of): pilot leaves
   canopy: boolean;  // bailout: canopy gone
   jumped: boolean;
 }
@@ -106,9 +111,16 @@ function emit(sys: ParticleSystem, pos: THREE.Vector3, vel: THREE.Vector3 | unde
 // True while a scripted death owns this fighter's trails (World/DamageStages skip their
 // generic falling fire for it).
 export function deathOwned(f: Fighter) { return owned.has(f); }
+// A falling hulk (Destruction) owns its trails too
+export function claimDeath(f: Fighter) { owned.add(f); }
 // The scripted ending a downed fighter is flying ('bailout': the pilot jumps and lives), or null
-// for the instant ones (fireball, wing or tail shot away). Read by game/NemesisRuntime.ts.
-export function deathKindOf(f: Fighter): string | null { for (const s of active) if (s.f === f) return s.kind; return null; }
+// for the instant ones (fireball, wing or tail shot away; 'bailout' when that pilot will get out).
+// Read by game/NemesisRuntime.ts.
+export function deathKindOf(f: Fighter): string | null {
+  for (const s of active) if (s.f === f) return s.jumped || s.kind === 'bailout' || s.jumpAt > 0 ? 'bailout' : s.kind;
+  return bailing.has(f) ? 'bailout' : null;
+}
+const bailing = new WeakSet<Fighter>();
 
 function pick(cause: string): DeathKind {
   const base = cause === 'wingL' || cause === 'wingR' ? W_WING : cause === 'tail' ? W_TAIL : cause === 'engine' ? W_ENGINE
@@ -134,10 +146,6 @@ const _wts = [0, 0, 0, 0, 0, 0];
 function shake(w: World, pos: THREE.Vector3, k: number) {
   if (w.player) w.events.shake?.(Math.max(0, 1 - pos.distanceTo(w.player.pos) / 300) * k);
 }
-// Bf 110 / Ju 88 go up in a bigger, two-stage blast (Effects 'heavy')
-const blastKind = (f: Fighter) => (f.enemyType === 'bf110' || f.enemyType === 'ju88' ? 'heavy' : 'fighter');
-// the twins and the He 111 go up in a multi-stage boom (Sound.explode stages)
-const blastSound = (f: Fighter) => (f.enemyType === 'bf110' || f.enemyType === 'ju88' || f.enemyType === 'he111' || f.enemyType === 'me410' ? 'heavy' : undefined);
 function debrisSound(w: World, pos: THREE.Vector3) {
   if (w.player && pos.distanceTo(w.player.pos) < 500) sound.play('debris', pos, { gain: 0.7, ref: 40 });
 }
@@ -152,39 +160,45 @@ function later(w: World, t: number, chute: boolean, pos: THREE.Vector3, vel: THR
 export function startFighterDeath(f: Fighter, cause: string, w: World) {
   const fx = w.effects;
   const sc = f.model.scale.x;
-  const kind = pick(cause);
+  const d = w.destruction;
+  // the damage decides (or, on a co-op guest, the host did)
+  let kind: DeathKind, part = -1, bail = false;
+  const forced = d.forcedDeath(f);
+  if (forced) { kind = KINDS[forced.kind] ?? 'fireball'; part = forced.part; bail = forced.bail; }
+  else {
+    const plan = d.plan(f, cause);
+    kind = plan.kind ?? pick(cause);
+    part = plan.part; bail = plan.bail;
+    if (plan.kind) last = KINDS.indexOf(plan.kind);
+  }
+  if (kind === 'wing' && !(part >= WING_L)) part = cause === 'wingL' ? WING_L : cause === 'wingR' ? WING_R : Math.random() < 0.5 ? WING_L : WING_R;
+  if (kind === 'tail') part = TAIL;
+  if (kind === 'engineFire' && !forced) bail = Math.random() < 0.5;
+  d.record(f, KINDS.indexOf(kind), part, bail);
 
   if (kind === 'fireball') {
-    w.wrecks.break(f, 'blowup');
-    f.remove = true;
-    fx.explosion(f.pos, f.vel, 1.5, blastKind(f));
-    // fuel tanks and ammunition going up a beat later: two more blasts in the cloud of wreckage
+    // the tank goes up: the burning part shatters, the others are thrown off whole (Destruction)
+    d.explode(f);
+    // fuel and ammunition going up a beat later: two more blasts in the cloud of wreckage
     for (let i = 0; i < 2; i++) {
       const t = i === 0 ? 0.15 + Math.random() * 0.15 : 0.4 + Math.random() * 0.3;
       _p.set(R(), R() * 0.6, R()).multiplyScalar(2.2 * sc).add(f.pos);
       later(w, t, false, _p, f.vel, 0.55 + Math.random() * 0.2);
     }
-    sound.play('explosion', f.pos, { gain: 1.6, ref: 160, reverb: 0.75, size: blastSound(f) });
-    shake(w, f.pos, 1);
-    debrisSound(w, f.pos);
     return;
   }
 
   if (kind === 'wing' || kind === 'tail') {
-    const side = cause === 'wingL' ? 1 : cause === 'wingR' ? -1 : Math.random() < 0.5 ? 1 : -1;
-    const brk = kind === 'tail' ? 'tail' : side > 0 ? 'wingL' : 'wingR';
-    if (kind === 'tail') _l.set(0, 0.2, -4.3 * sc);
-    else _l.set(1.05 * sc * side, -0.2, 0);
-    f.localToWorld(_l, _p);
-    w.wrecks.break(f, brk);
-    f.remove = true;
-    fx.explosion(_p, f.vel, 0.5);
+    // the part tears away where it failed; the rest falls as a hulk with its own flight physics
+    d.jointWorld(f, part, _p);
+    d.separate(f, part, bail);
+    if (bail) bailing.add(f);
+    fx.explosion(_p, f.vel, 0.4, 'small');
     fx.sparks(_p, f.vel, true);
     fx.spawnDebris(_p, f.vel, 5, false);
-    sound.play('explosion', f.pos, { gain: 1.0, ref: 100, reverb: 0.6 });
+    sound.play('hitHeavy', _p, { gain: 1.1, ref: 90 });
     shake(w, f.pos, 0.7);
     debrisSound(w, f.pos);
-    if (Math.random() < 0.35) later(w, 1.5 + Math.random() * 1.5, true, f.pos, f.vel, 1);
     return;
   }
 
@@ -197,6 +211,7 @@ export function startFighterDeath(f: Fighter, cause: string, w: World) {
   if (kind === 'engineFire') {
     s.phase = 0.9 + Math.random() * 0.4;
     s.boomAt = Math.random() < 0.7 ? 3.2 + Math.random() * 2.3 : Infinity;
+    if (bail) s.jumpAt = 1.1 + Math.random() * 1.1;   // he gets out of the burning aircraft first
     const eng = f.zone('engine');
     if (eng) eng.burning = true;
     f.localToWorld(_l.copy(ENG).multiplyScalar(sc), _p);
@@ -271,14 +286,34 @@ function fly(f: Fighter, dt: number, follow: number, cruise: number) {
   f.vel.lerp(_v, 1 - Math.exp(-follow * dt));
 }
 
+// The pilot leaves: up and out of the cockpit, his chute opens below (scaled like the fighters)
+function jump(f: Fighter, w: World) {
+  const pilot = f.model.getObjectByName('pilot');
+  if (pilot) pilot.visible = false;
+  f.bailedOut = true;
+  const sc = f.model.scale.x;
+  f.localToWorld(_l.copy(COCKPIT).multiplyScalar(sc), _p);
+  _p.addScaledVector(f.up(_v), 1.2 * sc);
+  _v.multiplyScalar(7).addScaledVector(f.vel, 0.35);
+  _v.y += 4;
+  w.effects.parachute(_p, _v, CHUTE_SCALE);
+}
+
+// Canopy off and out: a pilot leaving a falling aircraft (the engine-fire ending, a hulk that lost a wing or its tail)
+export function ejectPilot(f: Fighter, w: World) {
+  if (f.bailedOut) return;
+  bailing.add(f);
+  f.localToWorld(_l.copy(COCKPIT).multiplyScalar(f.model.scale.x), _p);
+  glassBurst(f, w.effects, _p, 6);
+  w.effects.spawnDebris(_p, f.vel, 2, false);
+  sound.play('glass', _p, { gain: 0.7, ref: 60 });
+  jump(f, w);
+}
+
 function boom(s: Seq) {
-  const { f, w } = s;
-  w.wrecks.break(f, 'blowup');
-  w.effects.explosion(f.pos, f.vel, 1.3, blastKind(f));
-  sound.play('explosion', f.pos, { gain: 1.5, ref: 150, reverb: 0.75, size: blastSound(f) });
-  shake(w, f.pos, 0.9);
-  debrisSound(w, f.pos);
-  f.remove = true;
+  // the fire reached the tank: Destruction blows it apart (shards and whole parts, blast and sound)
+  s.w.destruction.explode(s.f);
+  s.f.remove = true;
 }
 
 // Per frame, from World.update (after the aircraft have moved)
@@ -309,6 +344,7 @@ export function updateFighterDeath(dt: number) {
       if (t < s.phase) { steer(f, -0.25, 0.35, 2.9 * s.dir, 0); fly(f, dt, 1, 150); }
       else { steer(f, -0.85, 1.1, 0.5 * s.dir, 0); fly(f, dt, 1.4, 150); }
       const cloud = t > 1.2 && f.pos.y < Atmos.lowTop + 60; // just before it vanishes into the deck
+      if (s.jumpAt > 0 && !s.jumped && t > s.jumpAt) { s.jumped = true; ejectPilot(f, s.w); }
       if (t >= s.boomAt || cloud || t > 12) { boom(s); owned.delete(f); continue; }
     } else if (s.kind === 'bailout') {
       if (t < s.jumpAt + 0.3) { steer(f, -0.05, 0.2, 0, 0); fly(f, dt, 1.2, 140); }
@@ -319,17 +355,7 @@ export function updateFighterDeath(dt: number) {
         glassBurst(f, s.w.effects, _p, 6);
         s.w.effects.spawnDebris(_p, f.vel, 2, false); // the canopy frame tumbling away
       }
-      if (!s.jumped && t > s.jumpAt) {
-        s.jumped = true;
-        const pilot = f.model.getObjectByName('pilot');
-        if (pilot) pilot.visible = false;
-        const sc = f.model.scale.x;
-        f.localToWorld(_l.copy(COCKPIT).multiplyScalar(sc), _p);
-        _p.addScaledVector(f.up(_v), 1.2 * sc);
-        _v.multiplyScalar(7).addScaledVector(f.vel, 0.35);
-        _v.y += 4;
-        s.w.effects.parachute(_p, _v, CHUTE_SCALE);
-      }
+      if (!s.jumped && t > s.jumpAt) { s.jumped = true; jump(f, s.w); }
     } else {
       if (t < 0.7) { f.spin.set(0, 0, 0); fly(f, dt, 1.5, 150); }
       else if (t < s.phase) {
