@@ -1,11 +1,13 @@
 # Hero aircraft: named-parts contract
 
 The hero models built by `tools/hero/luftwaffe` (Bf 109 G-6, Fw 190 A-8, Me 262 A-1a, Bf 110 G-2, Ju 88 A-4)
-share one node layout. Game code finds parts by name, so these names are the contract with
+share one node layout. Since goal 05b their surfaces are the FlightGear shapes, cut into these parts by planes at
+the joints and hinge lines (`airframe.py`). Game code finds parts by name, so these names are the contract with
 `world/HeroLook.ts`, `Wrecks.ts`, `FighterDeath.ts`, `DamageStages.ts` and Phase 10 goal 09 (physical
 destruction). The model frame is the game's: metres, +X left wing, +Y up, +Z nose. Every type keeps the
-anchor points of the FlightGear model it replaces (prop hubs, pilot eye, gun muzzles, fans), so the gun
-offsets and other code written for the old models still line up.
+anchor points of the FlightGear model it is built from (prop hubs, pilot eye, gun muzzles, fans), so the gun
+offsets and other code written for the old models still line up. Exception: the Me 262 is scaled to its
+published span / length (x 1.19, z 0.849) and its anchors moved with it.
 
 ## Structure
 
@@ -40,13 +42,14 @@ gear_left / gear_right / gear_tail / gear_nose   undercarriage, posed down; hidd
 eye_pilot, eye_gunner, muzzle_*, exhaust_left/right   empty markers as before
 ```
 
-Every `part_*` and `ctl_*` node has `<name>_lod0` and `<name>_lod1` children (a decimated copy at ~38 %);
+Every `part_*` and `ctl_*` node has a `<name>_lod0` child (`part_fuselage` also `_lod1` / `_lod2`);
 `HeroLook.prepareHero` turns them into one `HeroLOD` per node. Parts other than `part_fuselage` have an empty
 LOD2 level: far away the whole airframe is the single merged mesh under `part_fuselage`.
 
 All opaque meshes share one material, `hero_<kind>` (one 2048 atlas: base colour; ORM = occlusion /
-roughness / metalness; tangent-space normal). The glass is `hero_<kind>_glass`. Control surfaces have a 7 mm
-hinge gap, so each part is a closed shell that can be separated without holes.
+roughness / metalness; tangent-space normal), plus the same maps as `<kind>_{base,normal,orm}.ktx2` that
+`HeroLook.enableHeroKtx2` swaps in. The glass is `hero_<kind>_glass`. Parts and control surfaces are cut from the
+FlightGear skin without caps: a separated part is open at its cut, like a torn panel.
 
 ## Using the parts
 

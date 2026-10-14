@@ -10,9 +10,13 @@
 // the named nodes (the same isolateNamedMeshes as tools/compress_models.mjs so pivots keep their
 // transforms), WebP textures and meshopt geometry. The ace livery's base colour is written next to the
 // model as a WebP that the game loads only when an ace flies that type (world/HeroLook.ts).
-// KTX2/Basis is not used: no Basis encoder is installed on this machine (see docs/phase10/reports/05.md).
-import { readdirSync, readFileSync, statSync, mkdirSync, writeFileSync } from 'node:fs';
+// KTX2 (goal 05b): with a Basis Universal encoder (BASISU=/path/to/basisu, or basisu on PATH) the same maps are
+// also written as <kind>_{base,normal,orm}.ktx2 (UASTC, Zstandard, mipmaps); world/HeroLook.ts swaps them in
+// for the embedded WebP once the renderer can transcode them, and keeps the WebP on any failure.
+import { readdirSync, readFileSync, statSync, mkdirSync, writeFileSync, existsSync, rmSync, mkdtempSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { tmpdir } from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
@@ -48,9 +52,34 @@ async function png(kind, map, size = TEX[map] ?? TEX.base) {
   return sharp(readFileSync(join(SRC, `${kind}_${map}.png`))).resize(size, size).png().toBuffer();
 }
 
+function findBasisu() {
+  for (const c of [process.env.BASISU, 'basisu']) {
+    if (!c) continue;
+    try { execFileSync(c, ['-version'], { stdio: 'ignore' }); return c; } catch { /* next */ }
+  }
+  return null;
+}
+const BASISU = findBasisu();
+// UASTC 4x4 (+ RDO, Zstandard) with mipmaps; colour in sRGB, normal / ORM linear
+async function ktx2(kind, map, name) {
+  const dir = mkdtempSync(join(tmpdir(), 'herok-'));
+  const src = join(dir, `${kind}_${name}.png`);
+  writeFileSync(src, await png(kind, map));
+  const args = ['-ktx2', '-uastc', '-uastc_level', '2', '-uastc_rdo_l', name === 'base' ? '0.6' : '1.0', '-mipmap',
+    '-ktx2_zstandard_level', '12', '-output_path', dir];
+  if (name !== 'base') args.push('-linear');
+  if (name === 'normal') args.push('-normal_map');
+  execFileSync(BASISU, [...args, src], { stdio: 'ignore' });
+  const out = readFileSync(join(dir, `${kind}_${name}.ktx2`));
+  rmSync(dir, { recursive: true, force: true });
+  writeFileSync(join(OUT, `${kind}_${name}.ktx2`), out);
+  return out.length;
+}
+
 const want = process.argv.slice(2);
 const kinds = want.length ? want : readdirSync(SRC).filter((f) => f.endsWith('.glb')).map((f) => f.slice(0, -4));
 mkdirSync(OUT, { recursive: true });
+if (!BASISU) console.log('no Basis encoder (BASISU): WebP only');
 for (const kind of kinds) {
   const doc = await io.read(join(SRC, `${kind}.glb`));
   const root = doc.getRoot();
@@ -80,5 +109,11 @@ for (const kind of kinds) {
   await io.write(dst, doc);
   const ace = await sharp(await png(kind, 'ace')).webp({ quality: Q, effort: 6 }).toBuffer();
   writeFileSync(join(OUT, `${kind}_ace.webp`), ace);
-  console.log(`${kind.padEnd(8)} ${(statSync(dst).size / 1048576).toFixed(2)} MB  + ace ${(ace.length / 1048576).toFixed(2)} MB`);
+  let k = '';
+  if (BASISU) {
+    let n = 0;
+    for (const [map, name] of [[process.env.HERO_BASE ?? 'base', 'base'], ['normal', 'normal'], ['orm', 'orm']]) n += await ktx2(kind, map, name);
+    k = `  + ktx2 ${(n / 1048576).toFixed(2)} MB`;
+  }
+  console.log(`${kind.padEnd(8)} ${(statSync(dst).size / 1048576).toFixed(2)} MB  + ace ${(ace.length / 1048576).toFixed(2)} MB${k}`);
 }

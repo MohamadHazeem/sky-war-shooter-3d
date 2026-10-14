@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { assetUrl } from '../core/Assets';
+import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
+import { assetUrl, take } from '../core/Assets';
 import { useSkyEnv } from '../render/AircraftLook';
 import type { Fighter } from './Aircraft';
 
@@ -12,6 +13,8 @@ import type { Fighter } from './Aircraft';
 //                  preset pins every aircraft to the far level (one merged mesh per airframe)
 //   animateControls  ailerons, elevators and rudder(s) follow the flight model's stick inputs
 //   applyHeroAce   swaps the base colour for the ace livery (<kind>_ace.webp, loaded on first use)
+//   enableHeroKtx2 once the renderer exists: the shared skins swap their embedded WebP maps for the
+//                  GPU-compressed <kind>_{base,normal,orm}.ktx2 (Basis UASTC); WebP stays on any failure
 //   partSide       which break-up piece a named part belongs to (Wrecks.cut)
 
 export const HERO_KINDS: ReadonlySet<string> = new Set(['bf109', 'fw190', 'me262', 'bf110', 'ju88']);
@@ -36,8 +39,50 @@ export function syncHeroLod(quality: string) {
 }
 export const heroLodFarOnly = () => farOnly;
 
-interface Skin { mat: THREE.MeshStandardMaterial; normal: THREE.Texture | null; orm: THREE.Texture | null }
+interface Skin { mat: THREE.MeshStandardMaterial; normal: THREE.Texture | null; orm: THREE.Texture | null; kind: string }
 const skins: Skin[] = [];
+
+// ---------------------------------------------------------------- KTX2 (goal 05b)
+let ktx2: KTX2Loader | null = null;
+const ktx2Kinds = new Set<string>();
+const P_KTX2 = 8;   // background download priority (core/Assets.ts): after the mission files
+export function enableHeroKtx2(renderer: THREE.WebGLRenderer) {
+  if (ktx2) return;
+  try {
+    ktx2 = new KTX2Loader().setTranscoderPath(assetUrl('models/basis/')).detectSupport(renderer);
+  } catch (e) {
+    console.warn('KTX2 unavailable, hero aircraft keep their WebP textures', e);
+    return;
+  }
+  for (const s of skins) upgradeKind(s.kind);
+}
+function upgradeKind(kind: string) {
+  if (!ktx2 || ktx2Kinds.has(kind)) return;
+  ktx2Kinds.add(kind);
+  const loader = ktx2;
+  const read = async (name: string, like: THREE.Texture | null, srgb: boolean) => {
+    const bytes = await take(`models/${kind}_${name}.ktx2`, P_KTX2);
+    const t = await new Promise<THREE.CompressedTexture>((res, rej) => loader.parse(bytes, res, rej));
+    t.flipY = false;
+    t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    t.anisotropy = 8;
+    if (like) { t.wrapS = like.wrapS; t.wrapT = like.wrapT; t.channel = like.channel; }
+    return t;
+  };
+  void (async () => {
+    const own = skins.filter((s) => s.kind === kind);
+    if (!own.length) return;
+    const ref = own[0];
+    const [base, normal, orm] = await Promise.all([read('base', ref.mat.map, true), read('normal', ref.normal, false), read('orm', ref.orm, false)]);
+    for (const s of skins) {
+      if (s.kind !== kind) continue;
+      const old = [s.mat.map, s.normal, s.orm];
+      s.mat.map = base; s.normal = normal; s.orm = orm;
+      liteSkin(s, farOnly);
+      for (const t of old) if (t && t !== base && t !== normal && t !== orm) t.dispose();
+    }
+  })().catch((e) => console.warn(`${kind}: KTX2 textures unavailable, keeping WebP`, e));
+}
 function liteSkin(s: Skin, lite: boolean) {
   const m = s.mat;
   m.normalMap = lite ? null : s.normal;
@@ -110,9 +155,10 @@ export function prepareHero(root: THREE.Object3D, kind: string) {
         useSkyEnv(mat, 0.75);
         for (const t of [mat.map, mat.normalMap, mat.roughnessMap]) if (t) t.anisotropy = 8;
         if (!skins.some((s) => s.mat === mat)) {
-          const s: Skin = { mat, normal: mat.normalMap, orm: mat.roughnessMap };
+          const s: Skin = { mat, normal: mat.normalMap, orm: mat.roughnessMap, kind };
           skins.push(s);
           if (farOnly) liteSkin(s, true);
+          upgradeKind(kind);
         }
       }
     }

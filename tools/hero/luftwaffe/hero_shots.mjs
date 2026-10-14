@@ -1,6 +1,7 @@
 // Phase 10 goal 05 captures: turntables of the Luftwaffe models and in-game views from the B-17 gun
 // stations (waist at 150 m, tail view of a diving Bf 109, head-on wedge of Fw 190s), plus a bench.
-// Needs this worktree's Vite (npx vite --port 5305 --strictPort) and an installed Playwright + Chrome:
+// Needs this worktree's Vite (npx vite --port 5305 --strictPort) and Playwright's bundled headless shell
+// (never channel 'chrome': it takes over the owner's mouse):
 //   PLAYWRIGHT_MODULE=/path/to/playwright-core/index.mjs node tools/hero/luftwaffe/hero_shots.mjs after [--no-turntables] [--no-game] [--quality high]
 import fs from 'node:fs/promises';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
@@ -10,17 +11,18 @@ const qi = process.argv.indexOf('--quality');
 const quality = qi > 0 ? process.argv[qi + 1] : 'high';
 const PORT = process.env.PORT ?? 5305;
 const URL = `http://127.0.0.1:${PORT}`;
-const shots = 'docs/phase10/shots/05';
+const shots = process.env.SHOTS ?? 'docs/phase10/shots/05b';
 const KINDS = ['bf109', 'fw190', 'me262', 'bf110', 'ju88'];
 await fs.mkdir(shots, { recursive: true });
-const browser = await chromium.launch({ headless: true, channel: 'chrome', args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ headless: true, args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] });
 const out = { tag, turntables: {}, game: {}, errors: [] };
 try {
   if (!flag('--no-turntables')) {
     const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
     page.on('pageerror', (e) => out.errors.push(e.message));
     for (const kind of KINDS) {
-      const variants = tag === 'before' ? [['', 'lod=0']] : [['', 'lod=0'], ['-close', 'lod=0&close=1'], ['-lod1', 'lod=1'], ['-lod2', 'lod=2'], ['-ace', 'lod=0&ace=1']];
+      const variants = tag === 'before' ? [['', 'lod=0']] : [['', 'lod=0'], ['-close', 'lod=0&close=1'], ['-lod1', 'lod=1'], ['-lod2', 'lod=2'],
+        ['-ace', 'lod=0&ace=1'], ['-ktx2', 'lod=0&ktx2=1'], ['-pilot', 'lod=0&pilot=1']];
       for (const [sfx, qs] of variants) {
         await page.goto(`${URL}/tools/hero/luftwaffe/turntable.html?kind=${kind}&${qs}`);
         const r = await page.waitForFunction(() => window.ready, null, { timeout: 60000 }).then((h) => h.jsonValue());

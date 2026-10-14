@@ -202,6 +202,15 @@ def paint(m, maps, size):
     S = ((maps['pcoord'][..., 0] - 0.5) * 40).astype(np.float32)
     T = ((maps['pcoord'][..., 1] - 0.5) * 8).astype(np.float32)
     sid = np.rint(maps['pcoord'][..., 2] * 64).astype(np.int32)
+    # surfaces measured on a FlightGear shape (fg.py) carry their map: exact S / T per texel instead of
+    # the per-vertex values interpolated over long source triangles
+    for k, s in enumerate(m.surfs):
+        mp = getattr(s, 'mapper', None) if s is not None else None
+        if mp is None:
+            continue
+        sel = (pos[..., 3] > 0.5) & (sid == k)
+        if sel.any():
+            S[sel], T[sel] = mp.st(P[sel].astype(np.float64))
     ao_map = maps['ao']
     ao = np.where(ao_map[..., 3] > 0.5, ao_map[..., 0], 1.0).astype(np.float32)
 
@@ -620,17 +629,17 @@ def paint(m, maps, size):
         expo = np.zeros((H, W), np.float32)
         for (x0, x1, z0, z1) in info.get('walkway', []):
             ax_ = np.abs(P[..., 0])
-            expo = np.maximum(expo, ((ax_ >= x0) & (ax_ <= x1) & (P[..., 2] <= z1) & (P[..., 2] >= z0) & lift & (up > 0.3)) * 0.7)
+            expo = np.maximum(expo, ((ax_ >= x0) & (ax_ <= x1) & (P[..., 2] <= z1) & (P[..., 2] >= z0) & lift & (up > 0.3)) * 0.5)
         le_ = lift & (T < 0.05)
         expo = np.maximum(expo, le_ * 0.45)
         expo = np.maximum(expo, seam * 0.22)
         expo = np.maximum(expo, (valid & (cls == FRAME)) * 0.5)
         expo = np.maximum(expo, (valid & (cls == BLADE) & (np.linalg.norm(P - np.array((info.get('spinner') or {}).get('hubs', [(0, 0, 0)])[0], np.float32), axis=-1) > 1.2)) * 0.35)
-        thr = 0.79 - 0.2 * expo * wear
+        thr = 0.815 - 0.2 * expo * wear       # 05b: fewer isolated chips (read as snow at gun range)
         chip = sstep(0.0, 0.015, cn - thr) * (skinm | (valid & (cls == BLADE)))
         primer = sstep(0.0, 0.015, cn - (thr - 0.03)) * (1 - chip) * (skinm) * 0.8
         col = mix(col, RLM['primer'], primer * 0.6)
-        col = mix(col, RLM['alu'] * (0.92 + 0.16 * chipn2[..., None]), chip)
+        col = mix(col, RLM['alu'] * (0.8 + 0.14 * chipn2[..., None]), chip)
         metal = metal + (0.88 - metal) * chip
         rough = rough + (0.32 - rough) * chip
         rough = np.where(skinm, rough + seam * 0.08, rough)

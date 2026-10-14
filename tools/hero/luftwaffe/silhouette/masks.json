@@ -1,0 +1,147 @@
+{
+ "bf109": {
+  "ppm": 67.39,
+  "source": "https://archive.org/details/USANJOR194501/page/n55",
+  "publication": "U.S. Army-Navy Journal of Recognition, January 1945, p. 15",
+  "title": "ME-109G6, 'New and revised airplane silhouettes'",
+  "span_m": 9.957,
+  "length_m": 9.119,
+  "topLengthCheck_m": 8.621,
+  "views": {
+   "front": {
+    "w": 673,
+    "h": 143,
+    "width_m": 9.809,
+    "height_m": 1.944
+   },
+   "top": {
+    "w": 683,
+    "h": 593,
+    "width_m": 9.957,
+    "height_m": 8.621
+   },
+   "side": {
+    "w": 618,
+    "h": 159,
+    "width_m": 8.992,
+    "height_m": 2.181
+   }
+  }
+ },
+ "fw190": {
+  "ppm": 76.93,
+  "source": "https://archive.org/details/Fm30-30/page/n112",
+  "publication": "War Department FM 30-30 / Navy BuAer 3, Aircraft Recognition Pictorial Manual, April 1943",
+  "title": "Focke-Wulf F.W. 190 (F.W. 190A-3)",
+  "span_m": 10.516,
+  "length_m": 8.865,
+  "topLengthCheck_m": 8.722,
+  "views": {
+   "front": {
+    "w": 820,
+    "h": 196,
+    "width_m": 10.503,
+    "height_m": 2.392
+   },
+   "top": {
+    "w": 821,
+    "h": 683,
+    "width_m": 10.516,
+    "height_m": 8.722
+   },
+   "side": {
+    "w": 693,
+    "h": 185,
+    "width_m": 8.852,
+    "height_m": 2.249
+   }
+  }
+ },
+ "me262": {
+  "ppm": 53.807,
+  "source": "https://archive.org/details/USANJOR194501/page/n55",
+  "publication": "U.S. Army-Navy Journal of Recognition, January 1945, p. 15",
+  "title": "ME-262 (revised silhouette)",
+  "span_m": 12.675,
+  "length_m": 10.592,
+  "topLengthCheck_m": 11.17,
+  "views": {
+   "front": {
+    "w": 692,
+    "h": 188,
+    "width_m": 12.638,
+    "height_m": 3.271
+   },
+   "top": {
+    "w": 694,
+    "h": 613,
+    "width_m": 12.675,
+    "height_m": 11.17
+   },
+   "side": {
+    "w": 612,
+    "h": 175,
+    "width_m": 11.151,
+    "height_m": 3.029
+   }
+  }
+ },
+ "bf110": {
+  "ppm": 51.296,
+  "source": "https://archive.org/details/Fm30-30/page/n114",
+  "publication": "War Department FM 30-30 / Navy BuAer 3, Aircraft Recognition Pictorial Manual, April 1943",
+  "title": "Messerschmitt Me. 110",
+  "span_m": 16.434,
+  "length_m": 12.294,
+  "topLengthCheck_m": 12.223,
+  "views": {
+   "front": {
+    "w": 845,
+    "h": 132,
+    "width_m": 16.239,
+    "height_m": 2.339
+   },
+   "top": {
+    "w": 855,
+    "h": 639,
+    "width_m": 16.434,
+    "height_m": 12.223
+   },
+   "side": {
+    "w": 636,
+    "h": 143,
+    "width_m": 12.165,
+    "height_m": 2.554
+   }
+  }
+ },
+ "ju88": {
+  "ppm": 41.706,
+  "source": "https://archive.org/details/Fm30-30/page/n118",
+  "publication": "War Department FM 30-30 / Navy BuAer 3, Aircraft Recognition Pictorial Manual, April 1943",
+  "title": "Junkers Ju. 88 (Ju 88A-6)",
+  "span_m": 20.117,
+  "length_m": 14.326,
+  "topLengthCheck_m": 14.386,
+  "views": {
+   "front": {
+    "w": 846,
+    "h": 173,
+    "width_m": 19.997,
+    "height_m": 3.86
+   },
+   "top": {
+    "w": 851,
+    "h": 612,
+    "width_m": 20.117,
+    "height_m": 14.386
+   },
+   "side": {
+    "w": 621,
+    "h": 163,
+    "width_m": 14.602,
+    "height_m": 3.621
+   }
+  }
+ }
+}

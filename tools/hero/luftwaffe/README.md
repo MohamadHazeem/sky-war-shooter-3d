@@ -1,40 +1,42 @@
-# Luftwaffe hero models (Phase 10 goal 05)
+# Luftwaffe hero models (Phase 10 goals 05 / 05b)
 
-Bf 109 G-6, Fw 190 A-8, Me 262 A-1a, Bf 110 G-2 and Ju 88 A-4, built from scratch in Blender
-(headless, Python) and finished with glTF Transform. Own work: nothing third-party goes in
-(see `public/models/CREDITS.md`).
+Bf 109 G-6, Fw 190 A-8, Me 262 A-1a, Bf 110 G-2 and Ju 88 A-4. Since goal 05b the **shapes are the FlightGear
+models** (GPL, `tools/convert_models/output/<kind>.glb`, already in the repository) - the from-scratch lofts of
+goal 05 were out of proportion. Everything else is ours: parts and hinged controls, UV atlas, bakes, paint,
+markings, weathering, ace liveries, props, crew, gear, LODs, KTX2. See `public/models/CREDITS.md`.
 
 ## Rebuild
 
 ```
-sh tools/hero/luftwaffe/build.sh                 # all five: Blender bake + finish -> public/models/<kind>.glb
+sh tools/hero/luftwaffe/build.sh                 # all five: Blender + finish -> public/models/<kind>.glb (+ ace, ktx2)
 sh tools/hero/luftwaffe/build.sh bf109 fw190     # some
-BLENDER=/path/to/blender sh tools/hero/luftwaffe/build.sh
+BLENDER=/path/to/blender BASISU=/path/to/basisu sh tools/hero/luftwaffe/build.sh
 ```
 
-About 70-90 s per type on an M5 Pro (Cycles on Metal). Intermediates go to `tools/hero/out/` (not committed).
+About 25-30 s per type on an M5 Pro. Intermediates go to `tools/hero/luftwaffe/out/` (not committed).
+Without a Basis encoder (`BASISU` or `basisu` on PATH) only the WebP textures are written. The validated encoder
+is Basis Universal 2.50.0 (Homebrew bottle `basis_universal`, extracted locally); no npm dependency.
 
 ## Pipeline
 
 | Step | File | What |
 |---|---|---|
-| Shape | `types/<kind>.py`, `geom.py`, `parts.py` | Fuselage, nacelles and canopies are lofted through cross-section stations (super-ellipse halves, monotone-cubic between stations). Wings, tailplanes and fins are NACA 4-digit sections swept along a planform (`chord(e)`, `le(e)`, rounded tips), split into the named structural parts with the control surfaces cut out on their hinge lines (7 mm gap). Cockpit cut-out + tub, instrument panel, seat, head armour, gunsight, pilot / crew figures, canopy frames, propellers with ogive spinners, exhaust stubs, radiators, guns, undercarriage. Frame and anchor points match the FlightGear models they replace. |
-| Assembly | `model.py` | Node tree in the game frame with paint classes and per-surface panel-line layouts (`Surf`): see `docs/phase10/hero-parts.md`. |
-| UV + bakes | `build.py` | One shared atlas over every opaque mesh (Smart UV + pack, low-priority islands - pilot, interior, gear, blades - at 45 % density). Cycles bakes position, normal, paint class / node and surface-coordinate maps (emission) and ambient occlusion (48 samples, gear and blades hidden). |
-| Paint | `paint.py` | numpy, per texel from the baked maps: RLM camouflage (splinter regions in plan view, soft blotches, side mottles, sprayed demarcations), Balkenkreuz (no Hakenkreuz), unit bands, yellow under-cowl, numbers / codes (stencil font), fuel triangle, spinner spirals; panel lines, access hatches, rivet rows and fabric rib tapes (height field -> tangent-space normal map in the atlas's own UV frame); exhaust staining, gun soot, oil streaks, streaks aft of seams, sun fading, chipping to aluminium and primer at walkways / leading edges / seams / blade tips; baked AO in the ORM map and lightly in the colour. A second base colour carries the ace livery (kill bars on the rudder, emblem, Kommandeur chevrons, white spinner, band). |
-| LODs | `build.py` | LOD0 as built (26-44k triangles, separate parts); LOD1 = the whole airframe merged and decimated to 40 %; LOD2 = merged and decimated to 2.6-4.2k triangles. All share the atlas. |
-| Finish | `finish.mjs` | Attaches the PBR set (base 2048, normal + ORM 1024), glass material, keeps pivots off quantized nodes, WebP textures, meshopt geometry. Writes `public/models/<kind>.glb` and `<kind>_ace.webp`. |
-
-KTX2/Basis: not used. No Basis encoder (toktx / basisu) is installed on this machine and the task rules forbid
-network installs; `finish.mjs` is where a `toktx` step would go (gltf-transform `toktx()`).
+| Source shape | `fg.py` | Imports the converted FlightGear glb; welds its loose panels; **visibility pass** (BVH rays from both sides of every face: faces nobody can see are deleted, faces seen only from behind are flipped, open sheets get a reversed copy 2 mm off); **curved refinement** (edges over 9-20 cm split on the PN-triangle curve through the end normals, bulge capped at 12 mm; source vertices never move, so the silhouette cannot shrink). The Me 262 is scaled to its published span / length first. |
+| Parts | `airframe.py`, `types/<kind>.py` | Plane cuts at the part joints and along each hinge line (`fg.Hinge`), then every face goes to a node of `docs/phase10/hero-parts.md` (`part_*`, `ctl_*`, nacelles, interior), a paint class (by source material / region) and a panel-line layout (`Surf`). Panel coordinates are measured on the FlightGear surface (`BodyMap`: station + angle round the sliced section centre; `LiftMap`: span + chord fraction between the sliced leading / trailing edges) and recomputed per texel in the painter. |
+| Detail | `parts.py`, `types/<kind>.py` | Pilot and crew figures (lofted torso, leather helmet with ear cups, goggles on the brow, harness), propellers with ogive spinners, cooling fan, gun barrels at the source muzzles, gear for parked aircraft. |
+| UV + bakes | `build.py` | Smart UV atlas over every opaque mesh; Cycles bakes of position / normal / class / surface coordinates / AO on **one joined proxy** (a multi-object bake spreads each object's margin over the others' islands). |
+| Paint | `paint.py` | Camouflage, markings, panel lines, rivets, fabric ribs, weathering, AO, ace livery (unchanged from goal 05). |
+| LODs | `build.py` | LOD0 = parts; LOD1 = merged airframe, 40 % capped at 10-13k triangles; LOD2 = merged, 2.6-4.2k. |
+| Finish | `finish.mjs` | PBR set (base 2048, normal + ORM 1024) embedded as WebP, meshopt; `<kind>_ace.webp`; with basisu also `<kind>_{base,normal,orm}.ktx2` (UASTC, Zstandard, mipmaps). |
 
 ## QA
 
-- `turntable.html` (served by Vite): `/tools/hero/luftwaffe/turntable.html?kind=bf109&lod=0&close=1&ace=1`, or one
-  view with `&cam=x,y,z&at=x,y,z&fov=30`.
-- `hero_shots.mjs`: turntables + in-game captures (waist 150 m, tail view of a diving 109, head-on wedge of
-  190s) + bench into `docs/phase10/shots/05/`.
-- `HERO_DEBUG=1` dumps the paint masks (`dbg_*.png`, `dbg_node` = one colour per node; `HERO_BASE=dbg_node`
-  in finish.mjs puts it on the model). `HERO_UVCHECK=1` reports UV-island overlap between objects.
-- `tests/heroModels.test.ts` checks the node contract, LOD levels, materials and the size budget of the
-  shipped files.
+- `silhouette/` - the shape gate: `extract.mjs` pulls the outline masks out of public-domain US recognition
+  three-views (`refs.json`: FM 30-30 1943, Journal of Recognition Jan 1945; page scans cached in `out/refs/`),
+  `check.mjs [kind] [--set label=dir] [--gate]` projects GLBs (top / side / front), registers them at the
+  captioned span by translation only and reports raw and boundary-tolerant IoU + overlay sheets.
+  `tests/heroModels.test.ts` runs the same gate on the shipped files.
+- `preview.py` - Blender renders of a fresh build (`--close`, `--pilot`, `--dbg node`, `--lod 1`).
+- `turntable.html`, `hero_shots.mjs` (turntables + in-game rig shots, Playwright headless shell only),
+  `hero_bench.mjs`.
+- `HERO_DEBUG=1` dumps the paint masks; `HERO_UVCHECK=1` reports UV-island overlap between objects.

@@ -58,6 +58,7 @@ class Model:
 
     def add(self, name, mesh, cls=SKIN, surf=None):
         m = Mesh(mesh.verts, mesh.faces, mesh.attr).fill_attr()
+        m.fixed = getattr(mesh, 'fixed', False)
         if surf is not None:
             sid = self.surf(surf).sid
             m.attr = [(a[0], a[1], float(sid)) if a[2] else a for a in m.attr]

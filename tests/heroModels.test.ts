@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { statSync, existsSync } from 'node:fs';
+import { statSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as THREE from 'three';
 import { NodeIO } from '@gltf-transform/core';
@@ -48,14 +48,50 @@ describe('hero model files (docs/phase10/hero-parts.md contract)', async () => {
       expect(skin.getMetallicRoughnessTexture()).toBe(skin.getOcclusionTexture());
       const glass = doc.getRoot().listMaterials().find((m) => m.getName() === `hero_${kind}_glass`)!;
       expect(glass.getAlphaMode()).toBe('BLEND');
-      // budget: <= ~8 MB per type, ace livery included (lazy)
-      const bytes = statSync(file).size + statSync(join(MODELS, `${kind}_ace.webp`)).size;
+      // budget: <= ~8 MB per type, ace livery and KTX2 maps included (lazy)
+      const bytes = statSync(file).size + statSync(join(MODELS, `${kind}_ace.webp`)).size +
+        ['base', 'normal', 'orm'].reduce((a, n) => a + statSync(join(MODELS, `${kind}_${n}.ktx2`)).size, 0);
       expect(bytes).toBeLessThan(8 * 1024 * 1024);
     });
   }
+  it('KTX2 maps (UASTC + Zstandard, full mip chain) next to each model, WebP fallback embedded', async () => {
+    for (const kind of HERO_KINDS) {
+      for (const [name, size] of [['base', 2048], ['normal', 1024], ['orm', 1024]] as const) {
+        const file = join(MODELS, `${kind}_${name}.ktx2`);
+        expect(existsSync(file), file).toBe(true);
+        // KTX2 header: identifier, vkFormat, typeSize, width, height, depth, layers, faces, levels, supercompression
+        const b = readFileSync(file);
+        expect(b.subarray(1, 7).toString()).toBe('KTX 20');
+        const u32 = (o: number) => b.readUInt32LE(o);
+        expect(u32(20)).toBe(size);
+        expect(u32(40)).toBe(Math.log2(size) + 1);   // full mip chain
+        expect(u32(44)).toBe(2);                      // Zstandard
+        expect(u32(12)).toBe(0);                      // VK_FORMAT_UNDEFINED: Basis Universal payload
+      }
+      const doc = await io.read(join(MODELS, `${kind}.glb`));
+      expect(doc.getRoot().listTextures().every((t) => t.getMimeType() === 'image/webp')).toBe(true);
+    }
+    expect(existsSync(join(MODELS, 'basis', 'basis_transcoder.wasm'))).toBe(true);
+  });
   it('the old FlightGear-only types keep their models', () => {
     for (const k of ['he111', 'do335', 'me163', 'p51d', 'b17']) expect(existsSync(join(MODELS, `${k}.glb`))).toBe(true);
   });
+});
+
+// Goal 05b: the shapes come from the FlightGear models; every type must keep matching the public-domain
+// US recognition three-views (tools/hero/luftwaffe/silhouette, boundary-tolerant IoU, translation-only
+// registration at the captioned span).
+describe('silhouette gate vs the public-domain three-views', async () => {
+  // @ts-expect-error plain .mjs tool module
+  const sil = await import('../tools/hero/luftwaffe/silhouette/check.mjs');
+  for (const kind of HERO_KINDS) {
+    it(`${kind}: top / side / front outlines`, async () => {
+      const r = await sil.measure(kind, join(MODELS, `${kind}.glb`));
+      for (const view of ['top', 'side', 'front'] as const) {
+        expect(r[view].tolerant, `${kind} ${view}`).toBeGreaterThanOrEqual(sil.GATE[view]);
+      }
+    }, 30000);
+  }
 });
 
 function lodAt(dist: number, scale = 6, fov = 62) {

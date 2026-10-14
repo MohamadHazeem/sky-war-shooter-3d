@@ -1,0 +1,354 @@
+{
+ "_method": {
+  "references": "tools/hero/luftwaffe/silhouette/refs.json",
+  "scale": "uniform per sheet from captioned span",
+  "registration": "translation only",
+  "open_m": 0.04,
+  "tolerance_m": 0.06,
+  "gate": {
+   "top": 0.88,
+   "side": 0.85,
+   "front": 0.75
+  }
+ },
+ "bf109": {
+  "reference": "https://archive.org/details/USANJOR194501/page/n55",
+  "publication": "U.S. Army-Navy Journal of Recognition, January 1945, p. 15",
+  "ppm": 67.39,
+  "legacy": {
+   "file": "tools/convert_models/output/bf109.glb",
+   "top": {
+    "iou": 0.9144,
+    "tolerant": 0.9796,
+    "extra": 0.0604,
+    "missing": 0.0253
+   },
+   "side": {
+    "iou": 0.9124,
+    "tolerant": 0.9862,
+    "extra": 0.0782,
+    "missing": 0.0093
+   },
+   "front": {
+    "iou": 0.764,
+    "tolerant": 0.9126,
+    "extra": 0.1772,
+    "missing": 0.0589
+   }
+  },
+  "v05": {
+   "file": "tools/hero/luftwaffe/out/v05/bf109.glb",
+   "top": {
+    "iou": 0.7715,
+    "tolerant": 0.8572,
+    "extra": 0.1249,
+    "missing": 0.1037
+   },
+   "side": {
+    "iou": 0.8205,
+    "tolerant": 0.9239,
+    "extra": 0.0644,
+    "missing": 0.1151
+   },
+   "front": {
+    "iou": 0.727,
+    "tolerant": 0.898,
+    "extra": 0.1831,
+    "missing": 0.0898
+   }
+  },
+  "hero": {
+   "file": "public/models/bf109.glb",
+   "top": {
+    "iou": 0.9074,
+    "tolerant": 0.975,
+    "extra": 0.0655,
+    "missing": 0.0271
+   },
+   "side": {
+    "iou": 0.9,
+    "tolerant": 0.982,
+    "extra": 0.0877,
+    "missing": 0.0123
+   },
+   "front": {
+    "iou": 0.7588,
+    "tolerant": 0.9133,
+    "extra": 0.1828,
+    "missing": 0.0585
+   }
+  }
+ },
+ "fw190": {
+  "reference": "https://archive.org/details/Fm30-30/page/n112",
+  "publication": "War Department FM 30-30 / Navy BuAer 3, Aircraft Recognition Pictorial Manual, April 1943",
+  "ppm": 76.93,
+  "legacy": {
+   "file": "tools/convert_models/output/fw190.glb",
+   "top": {
+    "iou": 0.9164,
+    "tolerant": 0.9798,
+    "extra": 0.0344,
+    "missing": 0.0492
+   },
+   "side": {
+    "iou": 0.9588,
+    "tolerant": 0.9984,
+    "extra": 0.0324,
+    "missing": 0.0088
+   },
+   "front": {
+    "iou": 0.7383,
+    "tolerant": 0.9483,
+    "extra": 0.0746,
+    "missing": 0.1872
+   }
+  },
+  "v05": {
+   "file": "tools/hero/luftwaffe/out/v05/fw190.glb",
+   "top": {
+    "iou": 0.847,
+    "tolerant": 0.9257,
+    "extra": 0.0981,
+    "missing": 0.0549
+   },
+   "side": {
+    "iou": 0.8108,
+    "tolerant": 0.9245,
+    "extra": 0.0733,
+    "missing": 0.1159
+   },
+   "front": {
+    "iou": 0.7597,
+    "tolerant": 0.9577,
+    "extra": 0.074,
+    "missing": 0.1663
+   }
+  },
+  "hero": {
+   "file": "public/models/fw190.glb",
+   "top": {
+    "iou": 0.9118,
+    "tolerant": 0.977,
+    "extra": 0.0391,
+    "missing": 0.0492
+   },
+   "side": {
+    "iou": 0.9466,
+    "tolerant": 0.9974,
+    "extra": 0.0469,
+    "missing": 0.0065
+   },
+   "front": {
+    "iou": 0.7468,
+    "tolerant": 0.9565,
+    "extra": 0.0823,
+    "missing": 0.1708
+   }
+  }
+ },
+ "me262": {
+  "reference": "https://archive.org/details/USANJOR194501/page/n55",
+  "publication": "U.S. Army-Navy Journal of Recognition, January 1945, p. 15",
+  "ppm": 53.807,
+  "legacy": {
+   "file": "tools/convert_models/output/me262.glb",
+   "top": {
+    "iou": 0.7461,
+    "tolerant": 0.8128,
+    "extra": 0.0893,
+    "missing": 0.1646
+   },
+   "side": {
+    "iou": 0.8307,
+    "tolerant": 0.8888,
+    "extra": 0.1495,
+    "missing": 0.0198
+   },
+   "front": {
+    "iou": 0.6174,
+    "tolerant": 0.7598,
+    "extra": 0.1078,
+    "missing": 0.2748
+   }
+  },
+  "v05": {
+   "file": "tools/hero/luftwaffe/out/v05/me262.glb",
+   "top": {
+    "iou": 0.7238,
+    "tolerant": 0.7975,
+    "extra": 0.1341,
+    "missing": 0.1421
+   },
+   "side": {
+    "iou": 0.7617,
+    "tolerant": 0.8484,
+    "extra": 0.0574,
+    "missing": 0.1808
+   },
+   "front": {
+    "iou": 0.5931,
+    "tolerant": 0.73,
+    "extra": 0.1912,
+    "missing": 0.2158
+   }
+  },
+  "hero": {
+   "file": "public/models/me262.glb",
+   "top": {
+    "iou": 0.8605,
+    "tolerant": 0.924,
+    "extra": 0.0373,
+    "missing": 0.1022
+   },
+   "side": {
+    "iou": 0.8853,
+    "tolerant": 0.9563,
+    "extra": 0.0486,
+    "missing": 0.0661
+   },
+   "front": {
+    "iou": 0.7887,
+    "tolerant": 0.9636,
+    "extra": 0.1198,
+    "missing": 0.0915
+   }
+  }
+ },
+ "bf110": {
+  "reference": "https://archive.org/details/Fm30-30/page/n114",
+  "publication": "War Department FM 30-30 / Navy BuAer 3, Aircraft Recognition Pictorial Manual, April 1943",
+  "ppm": 51.296,
+  "legacy": {
+   "file": "tools/convert_models/output/bf110.glb",
+   "top": {
+    "iou": 0.9468,
+    "tolerant": 0.9907,
+    "extra": 0.0262,
+    "missing": 0.027
+   },
+   "side": {
+    "iou": 0.8971,
+    "tolerant": 0.9714,
+    "extra": 0.0817,
+    "missing": 0.0213
+   },
+   "front": {
+    "iou": 0.7636,
+    "tolerant": 0.9172,
+    "extra": 0.0609,
+    "missing": 0.1754
+   }
+  },
+  "v05": {
+   "file": "tools/hero/luftwaffe/out/v05/bf110.glb",
+   "top": {
+    "iou": 0.8022,
+    "tolerant": 0.8616,
+    "extra": 0.071,
+    "missing": 0.1268
+   },
+   "side": {
+    "iou": 0.7667,
+    "tolerant": 0.8746,
+    "extra": 0.0549,
+    "missing": 0.1784
+   },
+   "front": {
+    "iou": 0.662,
+    "tolerant": 0.8503,
+    "extra": 0.0553,
+    "missing": 0.2827
+   }
+  },
+  "hero": {
+   "file": "public/models/bf110.glb",
+   "top": {
+    "iou": 0.9416,
+    "tolerant": 0.9876,
+    "extra": 0.0326,
+    "missing": 0.0258
+   },
+   "side": {
+    "iou": 0.8943,
+    "tolerant": 0.9712,
+    "extra": 0.0852,
+    "missing": 0.0205
+   },
+   "front": {
+    "iou": 0.7678,
+    "tolerant": 0.9175,
+    "extra": 0.0709,
+    "missing": 0.1612
+   }
+  }
+ },
+ "ju88": {
+  "reference": "https://archive.org/details/Fm30-30/page/n118",
+  "publication": "War Department FM 30-30 / Navy BuAer 3, Aircraft Recognition Pictorial Manual, April 1943",
+  "ppm": 41.706,
+  "legacy": {
+   "file": "tools/convert_models/output/ju88.glb",
+   "top": {
+    "iou": 0.9112,
+    "tolerant": 0.9629,
+    "extra": 0.0218,
+    "missing": 0.0669
+   },
+   "side": {
+    "iou": 0.7985,
+    "tolerant": 0.8809,
+    "extra": 0.0103,
+    "missing": 0.1912
+   },
+   "front": {
+    "iou": 0.6852,
+    "tolerant": 0.859,
+    "extra": 0.0842,
+    "missing": 0.2306
+   }
+  },
+  "v05": {
+   "file": "tools/hero/luftwaffe/out/v05/ju88.glb",
+   "top": {
+    "iou": 0.6556,
+    "tolerant": 0.7133,
+    "extra": 0.1422,
+    "missing": 0.2022
+   },
+   "side": {
+    "iou": 0.7284,
+    "tolerant": 0.8199,
+    "extra": 0.0347,
+    "missing": 0.237
+   },
+   "front": {
+    "iou": 0.6854,
+    "tolerant": 0.8761,
+    "extra": 0.0879,
+    "missing": 0.2267
+   }
+  },
+  "hero": {
+   "file": "public/models/ju88.glb",
+   "top": {
+    "iou": 0.9116,
+    "tolerant": 0.9633,
+    "extra": 0.0247,
+    "missing": 0.0638
+   },
+   "side": {
+    "iou": 0.8031,
+    "tolerant": 0.8862,
+    "extra": 0.0118,
+    "missing": 0.1851
+   },
+   "front": {
+    "iou": 0.6789,
+    "tolerant": 0.857,
+    "extra": 0.0894,
+    "missing": 0.2317
+   }
+  }
+ }
+}

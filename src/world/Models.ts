@@ -112,7 +112,7 @@ export function instantiate(k: ModelKind): THREE.Object3D {
 // (roughly the converted models' bounding boxes and prop_N pivots).
 const EXTRA_PLACEHOLDERS: Partial<Record<ModelKind, { span: number; len: number; col: number; props: [number, number][] }>> = {
   bf110: { span: 16.3, len: 12.5, col: 0x6b6a52, props: [[2.35, 2.4], [-2.35, 2.4]] },
-  me262: { span: 10.5, len: 12.5, col: 0x5a5840, props: [] },
+  me262: { span: 12.6, len: 10.6, col: 0x5a5840, props: [] },
   bf109: { span: 9.8, len: 8.9, col: 0x5d6b4a, props: [[0, 2.4]] },
   ju88: { span: 20.0, len: 14.3, col: 0x4f6040, props: [[2.79, 2.9], [-2.76, 2.9]] },
   me163: { span: 8.8, len: 5.9, col: 0x5b5a45, props: [] },

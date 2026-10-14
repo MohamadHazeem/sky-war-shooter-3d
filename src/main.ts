@@ -3,6 +3,7 @@ import { Input } from './core/Input';
 import { UI } from './ui/UI';
 import { Game } from './game/Game';
 import { essentialsRequested, loadEssentials, loadInBackground, isMissionReady } from './core/Preload';
+import { enableHeroKtx2 } from './world/HeroLook';
 import { CAMPAIGN, survivalMission } from './game/Missions';
 import { DeviceControls } from './game/DeviceControls';
 import { installShare } from './game/Share';
@@ -30,6 +31,7 @@ async function boot() {
     throw e;
   }
   engineUp = true;
+  enableHeroKtx2(engine.renderer);   // hero aircraft: GPU-compressed textures (world/HeroLook.ts)
   ui.loading(0.1, 'Loading aircraft…');
   await essentials;
   ui.loading(0.9, 'Forming up over England…');

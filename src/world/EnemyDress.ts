@@ -36,20 +36,21 @@ const ZONES: Partial<Record<EnemyType, { radius: number; zones: ZoneDef[] }>> = 
       ['wingR', -2.5, -0.3, -0.55, 1.45, 150, { critical: true }],
     ],
   },
-  // Me 262 A-1a: nacelles at x +-1.86 under the wing, cockpit z -0.9, tail -6.4, span +-6.3
+  // Me 262 A-1a (FlightGear shape scaled to the published span / length): nacelles at x +-2.21 under the
+  // wing, cockpit z -0.72, tail -6.1, span +-6.28
   me262: {
     radius: 8,
     zones: [
-      ['engine', 1.86, -0.86, 0.0, 0.7, 120, { engine: 0 }],
-      ['engine2', -1.86, -0.86, 0.0, 0.7, 120, { engine: 1 }],
-      ['cockpit', 0, 0.5, -0.9, 0.6, 95, { critical: true }],
-      ['fuselage', 0, 0.1, -2.9, 0.75, 170, { critical: true }],
-      ['tail', 0, 0.75, -6.3, 1.2, 120, { critical: true }],
-      ['wingL', 3.4, -0.1, -0.5, 1.6, 150, { critical: true }],
-      ['wingR', -3.4, -0.1, -0.5, 1.6, 150, { critical: true }],
+      ['engine', 2.21, -0.86, -0.3, 0.75, 120, { engine: 0 }],
+      ['engine2', -2.21, -0.86, -0.3, 0.75, 120, { engine: 1 }],
+      ['cockpit', 0, 0.55, -0.75, 0.6, 95, { critical: true }],
+      ['fuselage', 0, 0.1, -2.6, 0.75, 170, { critical: true }],
+      ['tail', 0, 0.75, -6.1, 1.2, 120, { critical: true }],
+      ['wingL', 3.9, -0.2, -1.1, 1.7, 150, { critical: true }],
+      ['wingR', -3.9, -0.2, -1.1, 1.7, 150, { critical: true }],
     ],
   },
-  // Bf 110 G-2: engines at x +-2.35, crew z 1.2 / -0.6, twin fins at x +-2.14 z -7.4, span +-8.1
+  // Bf 110 G-2: engines at x +-2.35, crew z 1.2 / -0.6, twin fins at x +-2.25 z -7.9, span +-8.2
   bf110: {
     radius: 9,
     zones: [
@@ -58,10 +59,10 @@ const ZONES: Partial<Record<EnemyType, { radius: number; zones: ZoneDef[] }>> = 
       ['cockpit', 0, 0.55, 0.6, 0.85, 110, { critical: true }],
       ['fuselage', 0, 0.15, -2.6, 0.8, 190, { critical: true }],
       ['tail', 0, 0.45, -7.3, 1.8, 140, { critical: true }],
-      ['wingL', 4.6, -0.05, 0.4, 1.9, 170, { critical: true }],
-      ['wingR', -4.6, -0.05, 0.4, 1.9, 170, { critical: true }],
-      ['wingLtip', 6.9, 0.2, 0.0, 1.2, 110],
-      ['wingRtip', -6.9, 0.2, 0.0, 1.2, 110],
+      ['wingL', 4.6, -0.05, -0.6, 1.9, 170, { critical: true }],
+      ['wingR', -4.6, -0.05, -0.6, 1.9, 170, { critical: true }],
+      ['wingLtip', 6.9, 0.15, -0.55, 1.2, 110],
+      ['wingRtip', -6.9, 0.15, -0.55, 1.2, 110],
     ],
   },
   // Ju 88 A-4: engines at x +-2.78, glazed nose z 1..3.8, tail -9.3, span +-10
@@ -74,10 +75,10 @@ const ZONES: Partial<Record<EnemyType, { radius: number; zones: ZoneDef[] }>> = 
       ['fuselage', 0, 0.2, -2.0, 0.95, 230, { critical: true }],
       ['fuselageAft', 0, 0.3, -5.8, 0.8, 200],
       ['tail', 0, 1.0, -9.0, 1.9, 170, { critical: true }],
-      ['wingL', 5.4, 0.2, 0.5, 2.3, 210, { critical: true }],
-      ['wingR', -5.4, 0.2, 0.5, 2.3, 210, { critical: true }],
-      ['wingLtip', 8.6, 0.55, -0.1, 1.5, 130],
-      ['wingRtip', -8.6, 0.55, -0.1, 1.5, 130],
+      ['wingL', 5.4, 0.2, -1.05, 2.3, 210, { critical: true }],
+      ['wingR', -5.4, 0.2, -1.05, 2.3, 210, { critical: true }],
+      ['wingLtip', 8.6, 0.55, -1.15, 1.5, 130],
+      ['wingRtip', -8.6, 0.55, -1.15, 1.5, 130],
     ],
   },
   // He 111 H (he111.glb): nose +4.1, tail -12.9, props at x +-2.68 z 3.16, span +-11.3

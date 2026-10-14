@@ -31,9 +31,31 @@ def canopy(m, stations, phi0, frames_z, rails_phi, node='glass', frame_node='par
     return body
 
 
+def _cap(center, rx, ry, rz, keep, seg=20, rings=14):
+    """Part of an ellipsoid: quads whose centre direction (phi round Y from +Z = forward, theta from the
+    top) passes keep(theta, phi). Used for the helmet shell."""
+    cx, cy, cz = center
+    m = Mesh()
+    for i in range(rings + 1):
+        th = math.pi * i / rings
+        for j in range(seg):
+            ph = 2 * math.pi * j / seg
+            m.verts.append((cx + rx * math.sin(th) * math.sin(ph), cy + ry * math.cos(th), cz + rz * math.sin(th) * math.cos(ph)))
+    for i in range(rings):
+        for j in range(seg):
+            j2 = (j + 1) % seg
+            th = math.pi * (i + 0.5) / rings
+            ph = 2 * math.pi * (j + 0.5) / seg
+            if keep(th, (ph + math.pi) % (2 * math.pi) - math.pi):
+                m.faces.append((i * seg + j, (i + 1) * seg + j, (i + 1) * seg + j2, i * seg + j2))
+    return m
+
+
 def pilot(m, head, node='pilot', lean=0.0, vest=False, facing=1):
-    """Seated pilot: head centre 'head' (x, y, z). Leather helmet, goggles on the forehead, flight
-    jacket, arms to the stick and throttle. facing -1 turns him round (rear gunner). ~2.5k tris."""
+    """Seated airman, head centre 'head' (x, y, z), real proportions (head 16 x 22 x 20 cm, shoulders
+    46 cm): lofted torso with sloping shoulders, neck, leather flying helmet with ear cups and chin strap,
+    goggles pushed up on the brow with their strap, jacket collar, parachute harness, arms on the stick
+    and throttle. facing -1 turns him round (rear gunner)."""
     hx, hy, hz = head
     m.node(node)
     if facing < 0:
@@ -43,28 +65,64 @@ def pilot(m, head, node='pilot', lean=0.0, vest=False, facing=1):
             def add(self, name, mesh, cls=SKIN, surf=None):
                 return outer.add(name, mesh.transformed(lambda v: (2 * hx - v[0], v[1], 2 * hz - v[2])), cls, surf)
         m = _Turn()
-    # head + helmet + goggles
-    m.add(node, ellipsoid((hx, hy, hz), 0.085, 0.105, 0.095, 14, 10), FACE)
-    m.add(node, ellipsoid((hx, hy + 0.025, hz - 0.008), 0.095, 0.1, 0.105, 14, 8), HELMET)
-    for s in (1, -1):
-        m.add(node, revolve([(0, 0.026), (0.022, 0.028), (0.03, 0.02)], (hx + s * 0.04, hy + 0.06, hz + 0.075),
-                            (s * 0.25, 0.25, 1), 10, cap1=True), GUNMETAL)
-    # neck, torso, shoulders (leaning forward a touch), life vest or leather jacket
-    tz = hz - 0.03 - lean
-    m.add(node, tube([(hx, hy - 0.16, tz + 0.01), (hx, hy - 0.07, hz)], 0.05, 8), FACE)
-    m.add(node, ellipsoid((hx, hy - 0.37, tz - 0.03), 0.205, 0.27, 0.135, 16, 10), SUIT)
-    m.add(node, ellipsoid((hx, hy - 0.2, tz - 0.01), 0.235, 0.085, 0.13, 16, 8), SUIT)
+    # head: skull + jaw (face forward = +z)
+    m.add(node, ellipsoid((hx, hy, hz), 0.078, 0.1, 0.094, 24, 16), FACE)
+    m.add(node, ellipsoid((hx, hy - 0.058, hz + 0.02), 0.06, 0.056, 0.068, 18, 10), FACE)
+    m.add(node, ellipsoid((hx, hy - 0.012, hz + 0.086), 0.011, 0.02, 0.013, 8, 6), FACE)         # nose
+    # helmet shell: over the crown, down the back to the nape, over the ears, open face
+    def keep(th, ph):
+        front = math.cos(ph)                      # 1 = forward
+        lim = 1.05 + 0.85 * (1 - max(front, 0)) + 0.6 * max(-front, 0)   # brow high, sides/back low
+        return th < lim and not (front > 0.55 and th > 0.95)
+    m.add(node, _cap((hx, hy + 0.012, hz - 0.006), 0.086, 0.104, 0.1, keep), HELMET)
+    for sd in (1, -1):    # ear cups (radio earphones under the leather)
+        m.add(node, revolve([(-0.012, 0.0), (-0.012, 0.034), (0.008, 0.036), (0.016, 0.026), (0.018, 0.0)],
+                            (hx + sd * 0.082, hy - 0.022, hz - 0.004), (sd, 0, 0), 14), HELMET)
+        m.add(node, tube([(hx + sd * 0.08, hy - 0.05, hz + 0.01), (hx + sd * 0.058, hy - 0.1, hz + 0.045),
+                          (hx, hy - 0.115, hz + 0.06)], 0.006, 5), HELMET)                     # chin strap
+    # goggles pushed up on the helmet brow: two lens cups, bridge, elastic strap round the helmet
+    gy, gz = hy + 0.07, hz + 0.062
+    for sd in (1, -1):
+        c = (hx + sd * 0.034, gy, gz)
+        ax = (sd * 0.2, 0.8, 0.75)
+        m.add(node, revolve([(-0.008, 0.0), (-0.008, 0.02), (0.004, 0.022), (0.011, 0.019)], c, ax, 14), PANEL)
+        m.add(node, revolve([(0.0, 0.0), (0.0, 0.016), (0.012, 0.0)], c, ax, 14), GUNMETAL)
+    strap = [(hx + 0.089 * math.sin(a), gy - 0.012 - 0.03 * (1 - math.cos(a)), hz + 0.004 + 0.101 * math.cos(a))
+             for a in [math.pi * (k / 12 - 0.0) * 2 for k in range(13)]]
+    m.add(node, tube(strap, 0.011, 4, 0.004, cap=False), SUIT)
+    # neck and collar
+    m.add(node, tube([(hx, hy - 0.08, hz - 0.012), (hx, hy - 0.2, hz - 0.03)], 0.05, 12), FACE)
+    m.add(node, revolve([(0.0, 0.072), (0.035, 0.08), (0.075, 0.068)], (hx, hy - 0.225, hz - 0.03), (0, 1, 0.15), 18), SUIT)
+    # torso: lofted along its height (local z up), mapped so x = across, y = front/back depth
+    tz = hz - 0.035 - lean
+    sy0 = hy - 0.235                              # shoulder line
+    torso = Body([
+        Section(-0.62, 0.0, 0.17, 0.12, 0.12, 2.6, 2.6),
+        Section(-0.35, 0.0, 0.185, 0.125, 0.12, 2.8, 2.8),
+        Section(-0.12, 0.0, 0.215, 0.12, 0.11, 3.0, 3.0),
+        Section(-0.02, 0.0, 0.228, 0.11, 0.1, 3.2, 3.0),
+        Section(0.035, 0.0, 0.2, 0.09, 0.085, 2.8, 2.6),
+        Section(0.07, 0.0, 0.12, 0.07, 0.065, 2.2, 2.2),
+        Section(0.085, 0.0, 0.06, 0.055, 0.055, 2.0, 2.0),
+    ])
+    t = loft(torso, rings=16, seg=22, cap0='fan', cap1=None)
+    t = t.transformed(lambda v: (hx + v[0], sy0 + v[2], tz + v[1] - 0.005))
+    m.add(node, t, SUIT)
     if vest:
-        m.add(node, ellipsoid((hx, hy - 0.3, tz + 0.04), 0.19, 0.17, 0.11, 14, 8), HELMET)
+        m.add(node, ellipsoid((hx, sy0 - 0.12, tz + 0.1), 0.18, 0.13, 0.05, 14, 8), HELMET)
+    # parachute harness: straps over the shoulders and down the chest
+    for sd in (1, -1):
+        m.add(node, tube([(hx + sd * 0.11, sy0 - 0.3, tz + 0.118), (hx + sd * 0.12, sy0 - 0.06, tz + 0.11),
+                          (hx + sd * 0.125, sy0 + 0.055, tz + 0.0), (hx + sd * 0.12, sy0 - 0.06, tz - 0.11)], 0.018, 4, 0.005), SEAT)
     # arms: shoulder -> elbow -> hand (right on the stick, left on the throttle)
-    for s in (1, -1):
-        sh = (hx + s * 0.2, hy - 0.2, tz - 0.02)
-        el = (hx + s * 0.24, hy - 0.42, tz + 0.18)
-        ha = (hx + s * 0.06, hy - 0.42, tz + 0.36) if s < 0 else (hx + 0.24, hy - 0.33, tz + 0.33)
-        m.add(node, tube([sh, el], 0.055, 8), SUIT)
-        m.add(node, tube([el, ha], 0.045, 8), SUIT)
-        m.add(node, ellipsoid(ha, 0.04, 0.035, 0.05, 8, 6), HELMET)
-    # parachute pack / seat back is part of the seat
+    for sd in (1, -1):
+        sh = (hx + sd * 0.205, sy0 - 0.03, tz - 0.01)
+        el = (hx + sd * 0.235, sy0 - 0.27, tz + 0.15)
+        ha = (hx + sd * 0.07, sy0 - 0.27, tz + 0.36) if sd < 0 else (hx + 0.25, sy0 - 0.17, tz + 0.33)
+        m.add(node, ellipsoid(sh, 0.062, 0.06, 0.065, 12, 8), SUIT)
+        m.add(node, tube([sh, el], 0.052, 10), SUIT)
+        m.add(node, tube([el, ha], 0.043, 10), SUIT)
+        m.add(node, ellipsoid(ha, 0.04, 0.034, 0.05, 10, 6), HELMET)     # leather gauntlet
 
 
 def cockpit_fittings(m, za, zb, floor_y, sill_y, width, panel_z, node='interior', armour=None, revi=True,
@@ -310,3 +368,18 @@ def annular_cowl(m, node, cx, cy, z_front, r_out, r_in, depth=0.35, fan=None, fa
             bl.merge(tube([p0, p1], 0.035, 4, 0.006, up_hint=(0, 0, 1)))
         bl.merge(revolve([(-0.05, fr * 0.36), (0.03, fr * 0.36)], (cx, cy, fz), (0, 0, 1), 20, cap0=True, cap1=True))
         m.add(fan, bl, FANMETAL)
+
+
+def annular_fan(m, node, centre, fr, blades=12):
+    """Fw 190 cooling fan: 'blades' flat blades round a hub, its own node at 'centre' (spins about Z)."""
+    cx, cy, fz = centre
+    m.node(node, None, centre)
+    bl = Mesh()
+    for k in range(blades):
+        a = 2 * math.pi * k / blades
+        c, s = math.cos(a), math.sin(a)
+        p0 = (cx + c * fr * 0.35, cy + s * fr * 0.35, fz)
+        p1 = (cx + c * fr, cy + s * fr, fz)
+        bl.merge(tube([p0, p1], 0.035, 4, 0.006, up_hint=(0, 0, 1)))
+    bl.merge(revolve([(-0.05, fr * 0.36), (0.03, fr * 0.36)], (cx, cy, fz), (0, 0, 1), 20, cap0=True, cap1=True))
+    m.add(node, bl, FANMETAL)

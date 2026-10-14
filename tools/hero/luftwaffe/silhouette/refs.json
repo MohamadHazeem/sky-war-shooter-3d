@@ -1,0 +1,41 @@
+{
+  "_comment": "Public-domain three-view references for the silhouette gate (US War Department / Navy Department publications, US federal government works). Page images come from the Internet Archive scans; crop = [x0, y0, x1, y1] in pixels of the page image as served at page/n<N>_w1600.jpg (full scan width). Span/length are the drawing captions (feet+inches -> metres). The three largest dark blobs inside the crop, ordered top to bottom, are the front, top and side views (side: nose left).",
+  "bf109": {
+    "title": "ME-109G6, 'New and revised airplane silhouettes'",
+    "publication": "U.S. Army-Navy Journal of Recognition, January 1945, p. 15",
+    "archive": "USANJOR194501", "page": 55,
+    "url": "https://archive.org/details/USANJOR194501/page/n55",
+    "crop": [110, 2000, 850, 3176], "span_m": 9.957, "length_m": 9.119, "ink": 105
+  },
+  "fw190": {
+    "title": "Focke-Wulf F.W. 190 (F.W. 190A-3)",
+    "publication": "War Department FM 30-30 / Navy BuAer 3, Aircraft Recognition Pictorial Manual, April 1943",
+    "archive": "Fm30-30", "page": 112,
+    "url": "https://archive.org/details/Fm30-30/page/n112",
+    "crop": [1880, 280, 2900, 1470], "span_m": 10.516, "length_m": 8.865, "ink": 110,
+    "note": "A-3 drawing; the A-8 nose is ~0.1 m longer"
+  },
+  "me262": {
+    "title": "ME-262 (revised silhouette)",
+    "publication": "U.S. Army-Navy Journal of Recognition, January 1945, p. 15",
+    "archive": "USANJOR194501", "page": 55,
+    "url": "https://archive.org/details/USANJOR194501/page/n55",
+    "crop": [1655, 330, 2400, 1495], "span_m": 12.675, "length_m": 10.592, "ink": 105
+  },
+  "bf110": {
+    "title": "Messerschmitt Me. 110",
+    "publication": "War Department FM 30-30 / Navy BuAer 3, Aircraft Recognition Pictorial Manual, April 1943",
+    "archive": "Fm30-30", "page": 114,
+    "url": "https://archive.org/details/Fm30-30/page/n114",
+    "crop": [1880, 280, 2900, 1500], "span_m": 16.434, "length_m": 12.294, "ink": 110,
+    "note": "Me 110 C/D drawing; the G-2 has larger fins and a longer nose"
+  },
+  "ju88": {
+    "title": "Junkers Ju. 88 (Ju 88A-6)",
+    "publication": "War Department FM 30-30 / Navy BuAer 3, Aircraft Recognition Pictorial Manual, April 1943",
+    "archive": "Fm30-30", "page": 118,
+    "url": "https://archive.org/details/Fm30-30/page/n118",
+    "crop": [1860, 400, 2900, 1520], "split": [1311], "span_m": 20.117, "length_m": 14.326, "ink": 110,
+    "note": "A-6 = A-4 airframe (long-span wing)"
+  }
+}

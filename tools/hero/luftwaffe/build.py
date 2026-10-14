@@ -36,6 +36,7 @@ KINDS = argv or ['bf109', 'fw190', 'me262', 'bf110', 'ju88']
 os.makedirs(OUT, exist_ok=True)
 
 LOD1_RATIO = 0.4
+LOD1_TRIS = {'bf109': 10000, 'fw190': 10000, 'me262': 11000, 'bf110': 13000, 'ju88': 13000}
 LOD2_TRIS = {'bf109': 2600, 'fw190': 2600, 'me262': 3000, 'bf110': 3600, 'ju88': 4200}
 
 
@@ -75,18 +76,30 @@ def reset():
 
 
 def make_mesh_object(name, node, meshes, order_index, local_M_inv):
-    verts, faces, attr, fcls = [], [], [], []
+    verts, faces, attr, fcls, ffix = [], [], [], [], []
     for mesh, cls in meshes:
         o = len(verts)
         for v in mesh.verts:
             verts.append(local_M_inv @ C(v))
         attr.extend(mesh.attr)
+        fx = getattr(mesh, 'fixed', False)
         for f in mesh.faces:
             faces.append(tuple(i + o for i in f))
             fcls.append(cls)
+            ffix.append(fx)
     me = bpy.data.meshes.new(name)
     me.from_pydata([tuple(v) for v in verts], [], faces)
+    fa = me.attributes.new('fixed', 'INT', 'FACE')
+    fa.data.foreach_set('value', [1 if x else 0 for x in ffix])
+    fc = me.attributes.new('fcls', 'INT', 'FACE')
+    fc.data.foreach_set('value', fcls)
     me.validate(clean_customdata=False)
+    ffix = [0] * len(me.polygons)
+    me.attributes['fixed'].data.foreach_get('value', ffix)
+    fcls = [0] * len(me.polygons)
+    me.attributes['fcls'].data.foreach_get('value', fcls)
+    me.attributes.remove(me.attributes['fixed'])
+    me.attributes.remove(me.attributes['fcls'])
     # attributes for the bakes: per-vertex surface coords, per-face paint class + node index
     pc = me.color_attributes.new('pcoord', 'FLOAT_COLOR', 'POINT')
     flat = []
@@ -104,7 +117,10 @@ def make_mesh_object(name, node, meshes, order_index, local_M_inv):
     # consistent outward normals, smooth with sharp creases
     bm = bmesh.new()
     bm.from_mesh(me)
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.faces.ensure_lookup_table()
+    own = [f for f in bm.faces if not (f.index < len(ffix) and ffix[f.index])]
+    if own:     # our own parts; FlightGear-derived faces keep the winding fg.cull_hidden gave them
+        bmesh.ops.recalc_face_normals(bm, faces=own)
     bm.to_mesh(me)
     bm.free()
     for p in me.polygons:
@@ -148,7 +164,7 @@ def build_objects(m):
     return objs, lod0, opaque, glass
 
 
-LOW_PRIORITY = ('interior', 'pilot', 'crew', 'gear_', 'blades_')
+LOW_PRIORITY = ('interior', 'gear_', 'blades_')   # crew figures keep full density (faces, straps)
 
 
 def unwrap(objs):
@@ -271,6 +287,23 @@ def bake(objs, kind, size, samples=1, hide=()):
     return a.reshape(size, size, 4)
 
 
+def bake_proxy(objs, name):
+    """One joined copy of objs (world space, same UVs and attributes): a multi-object bake extends each
+    object's margin over the other objects' islands; one object keeps every island intact."""
+    bm = bmesh.new()
+    for o in objs:
+        me = o.data.copy()
+        me.transform(o.matrix_world)
+        bm.from_mesh(me)
+        bpy.data.meshes.remove(me)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.scene.collection.objects.link(ob)
+    return ob
+
+
 def save_png(arr, path, size):
     """arr: (H, W, 3|4) floats 0..1 (already in the file's colour space)."""
     h, w = arr.shape[:2]
@@ -308,7 +341,7 @@ def tri_count(ob):
     return sum(len(p.vertices) - 2 for p in ob.data.polygons)
 
 
-def merged_lod(objs, lod0, name, target_tris=None, ratio=None):
+def merged_lod(objs, lod0, name, target_tris=None, ratio=None, cap=None):
     """The whole airframe (every part + control surface at LOD0) merged into one mesh under part_fuselage,
     decimated to a ratio or a triangle target: one draw call per aircraft past LOD0."""
     bm = bmesh.new()
@@ -327,6 +360,8 @@ def merged_lod(objs, lod0, name, target_tris=None, ratio=None):
     tmp.parent = host
     total = tri_count(tmp)
     r = ratio if ratio is not None else min(1.0, target_tris / max(1, total))
+    if cap:
+        r = min(r, cap / max(1, total))
     out = decimated_copy(tmp, name, r, host)
     bpy.data.objects.remove(tmp)
     for p in out.data.polygons:
@@ -336,7 +371,7 @@ def merged_lod(objs, lod0, name, target_tris=None, ratio=None):
 
 
 def make_lods(m, objs, lod0):
-    merged_lod(objs, lod0, 'part_fuselage_lod1', ratio=LOD1_RATIO)
+    merged_lod(objs, lod0, 'part_fuselage_lod1', ratio=LOD1_RATIO, cap=LOD1_TRIS.get(m.kind))
     merged_lod(objs, lod0, 'part_fuselage_lod2', target_tris=LOD2_TRIS.get(m.kind, 3000))
 
 
@@ -386,9 +421,18 @@ for kind in KINDS:
         print(f'  UV overlap {frac * 100:.2f}% of the atlas; worst {worst}')
     hide = [o for o in bpy.context.scene.objects if o.type == 'MESH' and (o.name.startswith('gear_') or o.name.startswith('blades_'))]
     maps = {}
+    originals = [o for o in bpy.context.scene.objects if o.type == 'MESH']
+    for o in originals:
+        o.hide_render = True
+    proxy = bake_proxy(opaque, '_bake_all')
     for k in ('pos', 'nrm', 'pinfo', 'pcoord'):
-        maps[k] = bake(opaque, k, SIZE)
-    maps['ao'] = bake([o for o in opaque if o not in hide], 'ao', SIZE, AO_SAMPLES, hide=glass + hide)
+        maps[k] = bake([proxy], k, SIZE)
+    bpy.data.objects.remove(proxy)
+    proxy = bake_proxy([o for o in opaque if o not in hide], '_bake_ao')
+    maps['ao'] = bake([proxy], 'ao', SIZE, AO_SAMPLES)
+    bpy.data.objects.remove(proxy)
+    for o in originals:
+        o.hide_render = False
     tex = paint.paint(m, maps, SIZE)
     base = os.path.join(OUT, kind)
     for k, arr in tex.items():
