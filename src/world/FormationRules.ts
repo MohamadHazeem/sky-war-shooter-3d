@@ -40,6 +40,15 @@ export function chutesDue(kind: FormationLoss, age: number): number {
 export function companionDitchDue(campaign: boolean, progress: number, engines: number, integrity: number, controllable: boolean): boolean {
   return campaign && controllable && progress >= 0.75 && progress < 0.96 && (engines >= 2 || integrity < 0.4);
 }
+/** How far the player's straggling B-17 may fall behind / below the slot she left (m). Unlimited, a
+ *  ship on three engines sank ~6 m/s: minutes later the fighters and the battle group were kilometres
+ *  above her, nothing could reach anything, the round could not be cleared and the mission stalled
+ *  (sweep: m12 at 29 min). AI stragglers still drop away for good. */
+export const PLAYER_STRAGGLE = { back: 700, drop: 350 };
+export function limitPlayerStraggle(slot: { y: number; z: number }, home: { y: number; z: number }) {
+  slot.z = Math.max(slot.z, home.z - PLAYER_STRAGGLE.back);
+  slot.y = Math.max(slot.y, home.y - PLAYER_STRAGGLE.drop);
+}
 /** The return-leg ditch is staged, but counts as a combat loss: never let it be the loss that fails
  *  the mission after the bombs are away (the player could do nothing about it). */
 export const companionDitchAllowed = (combatLosses: number, maxLost: number | undefined) =>

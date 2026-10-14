@@ -5,7 +5,7 @@ import { STATIONS, STATION_ORDER } from '../src/world/B17Layout';
 import { PHRASES } from '../src/i18n/phrases';
 import { CAMPAIGN, missionProgress, roundDef, survivalMission } from '../src/game/Missions';
 import { DEEP_PENETRATION } from '../src/game/DeepPenetration';
-import { companionDitchAllowed } from '../src/world/FormationRules';
+import { companionDitchAllowed, limitPlayerStraggle, PLAYER_STRAGGLE } from '../src/world/FormationRules';
 
 // Phase 9 goal 7: the bug sweep's fixes (docs/phase9/reports/07.md)
 describe('top-left status line', () => {
@@ -79,5 +79,14 @@ describe('return-leg progress (ditching)', () => {
     expect(companionDitchAllowed(5, 6)).toBe(true);
     expect(companionDitchAllowed(6, 6)).toBe(false);
     expect(companionDitchAllowed(40, undefined)).toBe(true);
+  });
+});
+
+describe("player straggler drift", () => {
+  it('stays within reach of the fight', () => {
+    const home = { y: 10, z: -40 }, slot = { y: 10, z: -40 };
+    for (let i = 0; i < 6000; i++) { slot.z -= 0.05 * 3.5 * 3; slot.y -= 0.05 * 2 * 3; limitPlayerStraggle(slot, home); }   // 5 min on three engines
+    expect(slot.z).toBe(-40 - PLAYER_STRAGGLE.back);
+    expect(slot.y).toBe(10 - PLAYER_STRAGGLE.drop);
   });
 });
