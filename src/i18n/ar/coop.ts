@@ -16,6 +16,17 @@ const patterns: Pattern[] = [
 
 const table: PhraseTable = {
   phrases: {
+    'Up to four gunners crew one B-17, or two pilots fly Mustangs. Share one room code.': 'حتى أربعة رماة في بي-١٧ واحدة، أو طياران في موستانغ. شاركوا رمز غرفة واحداً.',
+    'Crew connected — pick a seat and ready up': 'اتصل الطاقم — اختر موقعك وأكّد استعدادك',
+    'Crew member left — AI has the gun': 'غادر أحد أفراد الطاقم — تولّى الرامي الآلي المدفع',
+    'Crew full or unavailable. Try again shortly.': 'الطاقم مكتمل أو غير متاح. حاول مجدداً بعد قليل.',
+    'That crew slot is occupied.': 'مكان الطاقم هذا مشغول.',
+    'That gun is crewed': 'يشغل أحد أفراد الطاقم هذا المدفع',
+    'Open crew slot · AI covering': 'مكان شاغر في الطاقم · يغطيه الرامي الآلي',
+    'Ready': 'جاهز',
+    'Not ready': 'غير جاهز',
+    'Ping target': 'حدّد الهدف',
+
     'Blue One': 'الأزرق واحد',
     'Leave co-op': 'مغادرة التعاون',
     'B-17 crew or P-51 escort · online': 'طاقم بي-١٧ أو مرافقة بي-٥١ · عبر الإنترنت',

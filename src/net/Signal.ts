@@ -6,8 +6,9 @@
 //
 // The host creates the room under a fresh 6-character code and trickles its candidates; the
 // guest reads the offer, writes its answer (claiming the one guest slot) and trickles its own.
-// Rooms are readable/writable for 2 hours only (rules). Once the peers are connected the host
-// deletes the room and its candidates. `expiresAt` is there for a Firestore TTL policy to purge
+// Rooms are readable/writable for 2 hours only (rules). Pilot rooms close after connection;
+// B-17 rooms retain three adjacent-code documents for late join, replacing a departed slot.
+// The host deletes all three rooms and their candidates on leave. `expiresAt` is there for a Firestore TTL policy to purge
 // abandoned rooms (TTL needs billing on the project, so it is not configured yet).
 import { fbConnect } from './Leaderboard';
 
@@ -51,7 +52,7 @@ function toCandidate(d: any): RTCIceCandidateInit | null {
 }
 
 // Host: create the room (retrying on a code clash) and wait for the answer in the background.
-export async function hostSignal(pc: RTCPeerConnection, onError: (e: unknown) => void): Promise<Signalling> {
+export async function hostSignal(pc: RTCPeerConnection, onError: (e: unknown) => void, fixedCode?: string): Promise<Signalling> {
   const { db, uid, fs } = await fbConnect();
   const unsubs: (() => void)[] = [];
   let code = '';
@@ -65,7 +66,7 @@ export async function hostSignal(pc: RTCPeerConnection, onError: (e: unknown) =>
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
   for (let attempt = 0; ; attempt++) {
-    code = makeCode();
+    code = fixedCode ?? makeCode();
     try {
       // an existing code makes this an update, which the rules refuse: try another code
       await fs.setDoc(fs.doc(db, 'coop_rooms', code), {
@@ -74,7 +75,7 @@ export async function hostSignal(pc: RTCPeerConnection, onError: (e: unknown) =>
       });
       break;
     } catch (e) {
-      if (attempt >= 3) throw e;
+      if (fixedCode || attempt >= 3) throw e;
     }
   }
   ready = true;
@@ -114,17 +115,20 @@ export async function hostSignal(pc: RTCPeerConnection, onError: (e: unknown) =>
   };
 }
 
-export class RoomError extends Error {}
+export class RoomError extends Error {
+  constructor(message: string, readonly host?: string) { super(message); }
+}
 
 // Guest: read the offer, answer it and trade candidates.
-export async function joinSignal(pc: RTCPeerConnection, code: string, onError: (e: unknown) => void): Promise<Signalling> {
+export async function joinSignal(pc: RTCPeerConnection, code: string, onError: (e: unknown) => void, expectedHost?: string): Promise<Signalling> {
   const { db, uid, fs } = await fbConnect();
   const room = fs.doc(db, 'coop_rooms', code);
   let snap;
   try { snap = await fs.getDoc(room); } catch { throw new RoomError('That room has expired or does not exist.'); }
   const d = snap.data() as any;
   if (!snap.exists() || !d?.offer?.sdp) throw new RoomError('No game with that code. Check it and try again.');
-  if (d.guest) throw new RoomError('That game already has two gunners.');
+  if (expectedHost && d.host !== expectedHost) throw new RoomError('No game with that code. Check it and try again.');
+  if (d.guest) throw new RoomError('That crew slot is occupied.', d.host);
   const unsubs: (() => void)[] = [];
   let ready = false;
   const early: RTCIceCandidate[] = [];
@@ -139,7 +143,7 @@ export async function joinSignal(pc: RTCPeerConnection, code: string, onError: (
   try {
     await fs.updateDoc(room, { guest: uid, answer: { type: 'answer', sdp: answer.sdp ?? '' } });
   } catch {
-    throw new RoomError('Could not join that game (it may have just been taken or expired).');
+    throw new RoomError('Could not join that game (it may have just been taken or expired).', d.host);
   }
   ready = true;
   early.splice(0).forEach(put);

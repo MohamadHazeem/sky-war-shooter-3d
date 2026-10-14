@@ -1,4 +1,4 @@
-// Online co-op: two B-17 gunners or two locally flown P-51s with host-authoritative combat.
+// Online co-op: up to four B-17 gunners or two locally flown P-51s with host-authoritative combat.
 // Pilot flight/damage/respawns live in CoopPilot.ts; transport, proxies and results are shared.
 //
 // Host-authoritative. The host runs the whole battle (AI, ballistics, damage, director) exactly
@@ -7,7 +7,7 @@
 // from that station with that aim, so the guest's hits and kills happen in the host's world.
 // The AI crewman at the guest's seat stands down (World.remoteStations).
 //
-// The host streams snapshots at 20 Hz: every aircraft's id, type, absolute position (the
+// The host streams snapshots at up to 20 Hz per guest (27 KB/s payload budget): every aircraft's id, type, absolute position (the
 // floating-origin offsets of each side are tracked here), quaternion, alive/damage flags and
 // structure, the player bomber's zone health, the host's gun aim, and a sample of the tracers
 // fired since the last snapshot. Kills, the guest's hits and the end of the mission go over the
@@ -52,7 +52,7 @@ import { disposeOwned } from '../render/Dispose';
 import { applyWeather, Weather } from '../render/Weather';
 import { sound } from '../audio/Sound';
 import { fetchIceServers } from '../net/Ice';
-import { emptyGunnerScore, mergeCrew, buildCoopDebrief, isCoopDebrief, type CoopDebrief } from '../net/CoopResult';
+import { emptyGunnerScore, crewDebriefs, mergeCrew, buildCoopDebrief, isCoopDebrief, type CoopDebrief } from '../net/CoopResult';
 import { cleanName, savedName, crewName } from '../net/Leaderboard';
 import { mountLeaderboard } from '../ui/LeaderboardPanel';
 import { achievements } from './Achievements';
@@ -62,12 +62,22 @@ import { CoopPilot } from './CoopPilot';
 import { coopBoard, packAircraft, unpackAircraft, type CoopMode } from '../net/CoopPilot';
 import { buildCustomMission, loadConfig } from './CustomBattle';
 import { CombatTally } from './CombatTally';
+import { freeSeat, canTakeSeat, crewCode, snapshotInterval, type CrewSeat } from '../net/Crew';
+import { CrewPings } from './CrewPings';
+import { makeCode } from '../net/Signal';
+
+interface CrewPeer {
+  id: number; run: number; link: CoopLink; signal: Signalling | null; seat: StationId; name: string; ready: boolean;
+  owner: Aircraft; score: ReturnType<typeof emptyGunnerScore>; tally: CombatTally;
+  inp: RemoteInput | null; age: number; wall: number; seq: number; cd: number; shots: number;
+  hits: number[]; streak: number; lastKill: number;
+}
+
 
 
 export const SNAP_HZ = 20;
 export const INPUT_HZ = 30;
 const TRACERS_PER_SNAP = 40;
-const MAX_SNAP_CHARS = 14000;       // keep a snapshot inside one comfortable data-channel message
 const INPUT_STALE = 0.75;           // s without guest input (sim and wall clock) -> trigger released
 const CONNECT_TIMEOUT_MS = 25000;
 
@@ -103,13 +113,48 @@ export class CoopSession {
   mode: CoopMode = 'gunner';
   scenario = 'survival';
   readonly pilots: CoopPilot;
+  readonly pings: CrewPings;
+  readonly peers: CrewPeer[] = [];
+  roster: CrewSeat[] = [];
+  private departed: CrewPeer[] = [];
+  private myId = 0;
+  private myReady = false;
+  private inputSeq = 0;
+  private snapInterval = 1 / SNAP_HZ;
+  private roomIce: RTCIceServer[] = [];
+  private crewNames: string[] = [];
+  broadcast(m: unknown) {
+    if (this.role === 'host' && this.mode === 'gunner') { for (const p of this.peers) p.link.sendEvent(m); }
+    else this.link?.sendEvent(m);
+  }
+  pingTarget(id: number) { return this.role === 'host' ? this.game.world.aircraft.find(a => a.id === id) : this.proxies.get(id); }
+  targetId(a: Aircraft) { if (this.role === 'host') return a.id; for (const [id, proxy] of this.proxies) if (proxy === a) return id; return -1; }
+  get epoch() { return this.run; }
+  get localId() { return this.myId; }
+  get activeCrew(): CrewSeat[] {
+    return [{ id: 0, name: this.myName, seat: this.hostSeat, ready: this.myReady }, ...this.peers.filter(p => p.link.status === 'open').map(p => ({ id: p.id, name: p.name, seat: p.seat, ready: p.ready }))];
+  }
+  private refreshCrew() {
+    this.roster = this.activeCrew;
+    this.connected = this.roster.length > 1;
+    this.partnerReady = this.myReady && this.roster.every(p => p.ready);
+    this.link = this.peers.find(p => p.link.status === 'open')?.link ?? this.peers[0]?.link ?? null;
+    this.game.world.remoteStations.clear();
+    if (this.phase === 'mission') for (const p of this.peers) if (p.link.status === 'open') this.game.world.remoteStations.add(p.seat);
+  }
+  private aggregateGuests() {
+    const total = this.guestScore; total.kills = total.hits = total.shots = total.score = 0;
+    for (const p of this.peers) { total.kills += p.score.kills; total.hits += p.score.hits; total.shots += p.score.shots; total.score += p.score.score; }
+    for (const p of this.departed) { total.kills += p.score.kills; total.hits += p.score.hits; total.shots += p.score.shots; total.score += p.score.score; }
+    return total;
+  }
   get flying() { return this.mode === 'pilot' && this.phase === 'mission' && this.connected; }
   get partnerPlane(): Fighter | null { return this.role === 'host' ? this.pilots.remote : this.proxies.get(this.pilots.hostId) as Fighter ?? null; }
   beforeWorld(dt: number) { if (this.flying && this.role === 'host') this.pilots.beforeWorld(dt); }
   afterPilot() { if (this.flying) this.pilots.spectate(this.partnerPlane); }
   onMissionStart() { if (this.flying) this.pilots.start(this.role === 'host'); }
   onRound() { if (this.flying && this.role === 'host') this.pilots.reviveHost(); }
-  draw(ctx: CanvasRenderingContext2D, W: number, H: number) { if (this.flying) this.pilots.draw(ctx, W, H, this.partnerPlane); }
+  draw(ctx: CanvasRenderingContext2D, W: number, H: number, extras = true) { if (this.flying) { if (extras) this.pilots.draw(ctx, W, H, this.partnerPlane); } else this.pings.draw(ctx, W, H); }
   get partnerSurvives() { return this.flying && !!this.partnerPlane?.alive; }
   role: 'host' | 'guest' | null = null;
   phase: 'idle' | 'lobby' | 'mission' | 'debrief' = 'idle';
@@ -143,11 +188,6 @@ export class CoopSession {
   private connectTimer: ReturnType<typeof setTimeout> | null = null;
   // host
   private hosting = false;      // host wrappers installed
-  private inp: RemoteInput | null = null;
-  private inAge = 99;
-  private inWall = 0;
-  private gunCd = 0;
-  private gunShots = 0;
   private snapAcc = 0;
   private tracers: number[][] = [];
   private tracerSeen = 0;
@@ -158,7 +198,6 @@ export class CoopSession {
   private lastT = 0;
   private endSent = false;
   private sentWx = '';
-  private lastBump = -99;
   // guest
   private puppeting = false;    // guest wrappers installed
   private tracks = new Map<number, Track>();
@@ -178,13 +217,16 @@ export class CoopSession {
   private hostState = 'playing';
 
   constructor(private game: Game, private engine: Engine, private ui: UI) {
+    this.pings = new CrewPings(game, this);
     this.pilots = new CoopPilot(game, m => this.link?.sendEvent({ ...m, run: this.run }), this.origin);
     this.screen = new CoopScreen({
-      mode: (mode, scenario) => { if (this.role === 'guest') return; this.mode = mode; this.scenario = mode === 'gunner' ? 'survival' : scenario; this.sendLobby(); this.renderLobby(this.lobbyStatus); },
+      mode: (mode, scenario) => { if (this.role === 'guest' || (this.role === 'host' && mode !== this.mode)) return; this.mode = mode; this.scenario = mode === 'gunner' ? 'survival' : scenario; this.sendLobby(); this.renderLobby(this.lobbyStatus); },
       host: () => { void this.host(); },
       join: (c) => { void this.join(c); },
       seat: (s) => this.pickSeat(s),
       start: () => this.startHostMission(),
+      ready: () => this.toggleReady(),
+      ping: () => this.pings.mark(),
       leave: () => { this.leave(); this.screen.menu(); },
       back: () => { this.leave(); this.game.startMenu(); },
     });
@@ -206,26 +248,35 @@ export class CoopSession {
   // Game.frame(), right after world.update(dt)
   update(dt: number) {
     const link = this.link;
-    this.screen.setPing(link?.rtt ?? -1, !!link && link.status === 'open', this.phase === 'mission');
-    if (this.phase !== 'mission' || !link) return;
+    this.pings.update(dt);
+    this.screen.setPing(link?.rtt ?? -1, !!link && link.status === 'open', this.phase === 'mission', this.mode === 'gunner');
+    if (this.phase !== 'mission' || (!link && this.role !== 'host')) return;
     if (this.role === 'host') this.hostTick(dt);
     else this.guestTick(dt);
   }
 
   get partnerSeat(): StationId | null {
     if (!this.connected || this.mode === 'pilot') return null;
-    return this.role === 'host' ? this.guestSeat : this.role === 'guest' ? this.hostSeat : null;
+    return this.role === 'host' ? this.peers.find(p => p.link.status === 'open')?.seat ?? null : this.role === 'guest' ? this.hostSeat : null;
   }
 
   // ---------------- session ----------------
 
-  private newLink(role: 'host' | 'guest', iceServers?: RTCIceServer[]) {
+  private newLink(role: 'host' | 'guest', iceServers?: RTCIceServer[], slot = 0) {
     const link = new CoopLink(role, iceServers);
-    this.link = link;
+    if (role === 'host' && this.mode === 'gunner') {
+      const seat = freeSeat(this.activeCrew, 'waistR')!;
+      const peer: CrewPeer = { id: slot + 1, run: 0, link, signal: null, seat, name: 'Gunner', ready: false,
+        owner: Object.freeze({ remoteGunner: slot + 1 }) as unknown as Aircraft, score: emptyGunnerScore(), tally: new CombatTally(),
+        inp: null, age: 99, wall: 0, seq: -1, cd: 0, shots: 0, hits: [], streak: 0, lastKill: -99 };
+      this.peers.push(peer);
+    }
+    this.link ??= link;
+    if (role === 'guest' || this.mode === 'pilot') this.link = link;
     link.onOpen = () => this.onOpen(link);
     link.onClose = (why) => this.onLinkClosed(link, why);
-    link.onEvent = (m) => { if (this.link === link) this.onEvent(m); };
-    link.onState = (m) => { if (this.link === link) { if (role === 'host') this.onInput(m); else this.onSnap(m); } };
+    link.onEvent = (m) => { const peer = this.peers.find(p => p.link === link); if (peer || this.link === link) this.onEvent(m, peer); };
+    link.onState = (m) => { const peer = this.peers.find(p => p.link === link); if (peer || this.link === link) { if (role === 'host') this.onInput(m, peer); else this.onSnap(m); } };
     if (role === 'host') link.pingInfo = () => this.game.state;
     else link.onPingInfo = (x) => { this.hostState = String(x); };
     return link;
@@ -239,19 +290,37 @@ export class CoopSession {
     const attempt = this.connectionAttempt;
     const ice = await fetchIceServers();
     if (attempt !== this.connectionAttempt) return;
-    const link = this.newLink('host', ice);
+    this.roomIce = ice;
     try {
-      const sig = await hostSignal(link.pc, (e) => console.warn('Co-op: signalling', e));
-      if (this.link !== link) { void sig.close(); return; }
-      this.signal = sig;
-      this.code = sig.code;
+      if (this.mode === 'gunner') {
+        const code = makeCode();
+        for (let slot = 0; slot < 3; slot++) {
+          await this.offerSlot(slot, code, attempt);
+          if (attempt !== this.connectionAttempt) return;
+        }
+        this.code = code;
+        this.refreshCrew();
+      } else {
+        const link = this.newLink('host', ice);
+        const sig = await hostSignal(link.pc, e => console.warn('Co-op: signalling', e));
+        if (attempt !== this.connectionAttempt) { void sig.close(); return; }
+        this.signal = sig; this.code = sig.code;
+      }
       this.renderLobby('Waiting for your partner to join…');
     } catch (e) {
-      if (this.link !== link) return;
+      if (attempt !== this.connectionAttempt) return;
       console.warn('Co-op: hosting failed', e);
       this.leave();
       this.screen.menu('Could not create a game. Check your connection and try again.');
     }
+  }
+
+  private async offerSlot(slot: number, code: string, attempt: number) {
+    const link = this.newLink('host', this.roomIce, slot);
+    const peer = this.peers.find(p => p.link === link)!;
+    const sig = await hostSignal(link.pc, e => console.warn('Co-op: signalling', e), crewCode(code, slot));
+    if (attempt !== this.connectionAttempt) { link.close(); await sig.close(); return; }
+    peer.signal = sig;
   }
 
   private async join(input: string) {
@@ -263,26 +332,41 @@ export class CoopSession {
     const attempt = this.connectionAttempt;
     const ice = await fetchIceServers();
     if (attempt !== this.connectionAttempt) return;
-    const link = this.newLink('guest', ice);
-    try {
-      const sig = await joinSignal(link.pc, code, (e) => console.warn('Co-op: signalling', e));
-      if (this.link !== link) { void sig.close(); return; }
-      this.signal = sig;
-      this.screen.busy('Connecting to the host…');
-      this.connectTimer = setTimeout(() => {
-        if (this.link !== link || this.connected) return;
-        this.leave();
-        this.screen.menu('Could not connect to the host. Try another network or try again.', code);
-      }, CONNECT_TIMEOUT_MS);
-    } catch (e) {
-      if (this.link !== link) return;
-      console.warn('Co-op: join failed', e);
-      this.leave();
-      this.screen.menu(e instanceof RoomError ? e.message : 'Could not reach the game server. Check your connection.', code);
+    let lastError: unknown, expectedHost: string | undefined;
+    for (let slot = 0; slot < 3; slot++) {
+      const link = this.newLink('guest', ice);
+      try {
+        const sig = await joinSignal(link.pc, crewCode(code, slot), e => console.warn('Co-op: signalling', e), expectedHost);
+        if (attempt !== this.connectionAttempt) { void sig.close(); return; }
+        this.signal = sig;
+        if (!this.connected) this.screen.busy('Connecting to the host…');
+        this.connectTimer = setTimeout(() => {
+          if (this.link !== link || this.connected) return;
+          this.leave(); this.screen.menu('Could not connect to the host. Try another network or try again.', code);
+        }, CONNECT_TIMEOUT_MS);
+        return;
+      } catch (e) {
+        if (attempt !== this.connectionAttempt) return;
+        this.link = null; link.close('local', false); lastError = e;
+        if (slot === 0) {
+          if (!(e instanceof RoomError) || !e.host) break;
+          expectedHost = e.host;
+        }
+      }
     }
+    console.warn('Co-op: join failed', lastError);
+    this.leave();
+    this.screen.menu('Crew full or unavailable. Try again shortly.', code);
   }
 
   private onOpen(link: CoopLink) {
+    const peer = this.peers.find(p => p.link === link);
+    if (peer) {
+      peer.seat = freeSeat(this.activeCrew.filter(p => p.id !== peer.id), peer.seat)!;
+      this.refreshCrew(); this.sendLobby();
+      this.renderLobby('Crew connected — pick a seat and ready up');
+      return;
+    }
     if (this.link !== link) return;
     this.connected = true;
     if (this.connectTimer) { clearTimeout(this.connectTimer); this.connectTimer = null; }
@@ -300,6 +384,8 @@ export class CoopSession {
     const link = this.link;
     this.link = null;
     link?.close('local', true);
+    for (const p of this.peers) { p.link.close('local', true); void p.signal?.close(); }
+    this.peers.length = 0;
     this.reset();
   }
 
@@ -316,6 +402,7 @@ export class CoopSession {
     this.mission = null;
     this.endWhy = '';
     this.code = '';
+    this.roster = []; this.departed = []; this.myId = 0; this.myReady = false; this.pings.reset();
     this.run = 0; this.rewardedRun = 0; this.result = null; this.partnerReady = true;
     this.engine.paused = false;
     this.screen.waiting(null);
@@ -324,7 +411,22 @@ export class CoopSession {
   }
 
   private onLinkClosed(link: CoopLink, why: 'left' | 'lost' | 'local') {
-    if (why === 'local' || this.link !== link) return;
+    if (why === 'local') return;
+    const peer = this.peers.find(p => p.link === link);
+    if (peer) {
+      this.peers.splice(this.peers.indexOf(peer), 1); this.departed.push(peer);
+      this.refreshCrew(); this.sendLobby(); this.renderLobby('Crew connected — pick a seat and ready up');
+      this.ui.tip('Crew member left — AI has the gun', 3000);
+      const attempt = this.connectionAttempt, code = this.code;
+      void (async () => {
+        await peer.signal?.close();
+        if (attempt !== this.connectionAttempt || !code) return;
+        try { await this.offerSlot(peer.id - 1, code, attempt); }
+        catch (e) { console.warn('Co-op: replacement slot unavailable', e); }
+      })();
+      return;
+    }
+    if (this.link !== link) return;
     const role = this.role, phase = this.phase, ended = !!this.endWhy;
     if (phase === 'debrief') { this.connected = false; this.screen.toast('Partner disconnected'); return; }
     if (role === 'host') {
@@ -355,28 +457,62 @@ export class CoopSession {
       role: this.role, code: this.code, status, connected: this.connected && this.partnerReady,
       mine: this.role === 'host' ? this.hostSeat : this.guestSeat,
       partner: this.partnerSeat,
+      crew: this.mode === 'gunner' ? this.roster : undefined, myId: this.myId, ready: this.myReady,
     });
   }
   private lobbyStatus = '';
 
-  private sendLobby() { this.link?.sendEvent({ t: 'lobby', mode: this.mode, scenario: this.scenario, hs: this.hostSeat, gs: this.guestSeat, name: this.myName }); }
-
-  private pickSeat(s: StationId) {
-    if (this.phase !== 'lobby' || !(s in STATIONS)) return;
-    if (this.role === 'host') {
-      if (this.connected && s === this.guestSeat) return;
-      this.hostSeat = s;
-      this.sendLobby();
-    } else {
-      if (s === this.hostSeat) return;
-      this.guestSeat = s;   // optimistic; the host's lobby message confirms
-      this.link?.sendEvent({ t: 'seat', s });
-    }
+  private sendLobby() {
+    if (this.role === 'host' && this.mode === 'gunner') {
+      this.refreshCrew();
+      for (const p of this.peers) p.link.sendEvent({ t: 'lobby', mode: this.mode, scenario: this.scenario, hs: this.hostSeat, gs: p.seat, name: this.myName, crew: this.roster, id: p.id });
+    } else this.link?.sendEvent({ t: 'lobby', mode: this.mode, scenario: this.scenario, hs: this.hostSeat, gs: this.guestSeat, name: this.myName });
+  }
+  private toggleReady() {
+    if (this.phase !== 'lobby') return;
+    this.myReady = !this.myReady;
+    if (this.role === 'host') this.sendLobby();
+    else this.link?.sendEvent({ t: 'crewReady', ready: this.myReady });
     this.renderLobby(this.lobbyStatus);
   }
 
-  private onEvent(m: any) {
+  private pickSeat(s: StationId) {
+    if (this.phase !== 'lobby' || !(s in STATIONS)) return;
+    if (this.mode === 'gunner') {
+      if (!canTakeSeat(this.roster, this.myId, s)) return;
+      if (this.role === 'host') { this.hostSeat = s; this.myReady = false; this.sendLobby(); }
+      else this.link?.sendEvent({ t: 'seat', s });
+    } else if (this.role === 'host') { this.hostSeat = s; this.sendLobby(); }
+    else this.link?.sendEvent({ t: 'seat', s });
+    this.renderLobby(this.lobbyStatus);
+  }
+
+  private onEvent(m: any, peer?: CrewPeer) {
+    if (m.t === 'mark') { this.pings.receive(m, peer?.id); return; }
+    if (peer) {
+      if (m.t === 'hello') {
+        peer.name = cleanName(String(m.name ?? 'Gunner')); this.crewNames[peer.id] = peer.name; this.sendLobby();
+        if (this.phase === 'mission' && !this.endWhy) { this.sendStart(peer); if (this.sentWx) peer.link.sendEvent({ t: 'wx', w: this.sentWx }); }
+        else if (this.phase === 'debrief') peer.link.sendEvent({ t: 'crewWait' });
+      } else if (m.t === 'crewReady' && this.phase === 'lobby') { peer.ready = m.ready === true; this.sendLobby(); }
+      else if (m.t === 'ready' && m.run === this.run) { peer.ready = false; this.sendLobby(); }
+      else if (m.t === 'seat' && (this.phase === 'lobby' || this.phase === 'mission')) {
+        if (canTakeSeat(this.roster, peer.id, m.s)) { peer.seat = m.s; peer.inp = null; peer.ready = false; }
+        this.sendLobby(); peer.link.sendEvent({ t: 'seatAck', s: peer.seat, run: this.run });
+      }
+      this.renderLobby('Crew connected — pick a seat and ready up');
+      return;
+    }
     switch (m.t) {
+      case 'crewWait':
+        if (this.role === 'guest') this.renderLobby('Waiting for the host…');
+        break;
+      case 'seatAck':
+        if (this.role === 'guest' && m.run === this.run && m.s in STATIONS) {
+          this.guestSeat = m.s;
+          if (this.phase === 'mission') this.reqStation0?.call(this.game.gunner, m.s);
+        }
+        break;
       case 'pd': if (this.flying && this.role === 'guest' && m.run === this.run) this.pilots.guestDamage(m.d); break;
       case 'revive': if (this.flying && this.role === 'guest' && m.run === this.run) { this.pilots.reviveGuest(m); if (this.game.world.playerFighter) this.bind(this.pilots.guestId, this.game.world.playerFighter); } break;
       // ---- to the host ----
@@ -398,6 +534,10 @@ export class CoopSession {
         if (this.role !== 'guest') break;
         this.mode = m.mode === 'pilot' ? 'pilot' : 'gunner';
         this.scenario = typeof m.scenario === 'string' ? m.scenario : 'survival';
+        if (Array.isArray(m.crew)) {
+          this.roster = m.crew; this.myId = m.id;
+          this.myReady = this.roster.find(p => p.id === this.myId)?.ready ?? false;
+        }
         this.partnerName = cleanName(String(m.name ?? 'Gunner'));
         if (m.hs in STATIONS) this.hostSeat = m.hs;
         if (m.gs in STATIONS) this.guestSeat = m.gs;
@@ -444,7 +584,10 @@ export class CoopSession {
     this.hostScore = emptyGunnerScore(); this.guestScore = emptyGunnerScore();
     this.guestTally.reset(); this.guestStreak = 0; this.guestLastKill = -99;
     this.stats.guestKills = this.stats.guestHits = this.stats.guestRounds = 0;
-    this.devFire = false;
+    this.devFire = false; this.inputSeq = 0; this.pings.reset(); this.departed = [];
+    for (const p of this.peers) { p.run = 0; p.score = emptyGunnerScore(); p.tally.reset(); p.inp = null; p.seq = -1; p.age = 99; p.cd = 0; p.shots = 0; p.hits = []; p.streak = 0; p.lastKill = -99; }
+    this.crewNames = [this.myName];
+    for (const p of this.peers) if (p.link.status === 'open') this.crewNames[p.id] = p.name;
   }
 
   private readHostScore() {
@@ -459,6 +602,7 @@ export class CoopSession {
     if (this.role === 'guest' || this.result) return true;
     const g = this.game, w = g.world, r = g.endResult;
     if (!r) return true;
+    if (this.mode === 'gunner') this.guestScore = this.aggregateGuests();
     const host = this.readHostScore(), crew = mergeCrew(host, this.guestScore);
     if (r.success) g.score += 500 + w.bombers().filter(b => b.alive).length * 50 + Math.round((crew.shots ? crew.hits / crew.shots : 0) * 300);
     const result = buildCoopDebrief(this.run, {
@@ -468,7 +612,14 @@ export class CoopSession {
     }, host, this.guestScore, w.combatLosses, w.crewWounded > 0);
     const tally = (t: CombatTally) => ({ bestStreak: t.bestStreak, closestKill: Number.isFinite(t.closestKill) ? t.closestKill : null, killsByGun: this.mode === 'gunner' ? t.killsByGun() : undefined });
     Object.assign(result.host, tally(g.tally)); Object.assign(result.guest, tally(this.guestTally));
-    this.link?.sendEvent(result);
+    if (this.mode === 'gunner') {
+      const members = [{ score: host, tally: g.tally }, ...this.peers.filter(p => p.link.status === 'open' && p.run === this.run), ...this.departed.filter(p => p.run === this.run)];
+      const personal = crewDebriefs(this.run, result.host, members.map(p => p.score), w.combatLosses, w.crewWounded > 0);
+      personal.forEach((d, i) => Object.assign(d, tally(members[i].tally)));
+      result.host = personal[0];
+      let i = 1;
+      for (const p of this.peers) if (p.link.status === 'open' && p.run === this.run) p.link.sendEvent({ ...result, guest: personal[i++] });
+    } else this.link?.sendEvent(result);
     this.presentDebrief(result);
     return true;
   }
@@ -494,7 +645,7 @@ export class CoopSession {
     g.service.onDebrief(this.mission, d, d.medals);
     const box = document.querySelector<HTMLElement>('#debrief .box');
     if (box && this.scenario !== 'custom') mountLeaderboard(box, coopBoard(this.mode), 'CREW LEADERBOARD', this.role === 'host' ? {
-      name: this.mode === 'pilot' ? crewName('Blue One', 'Blue Two') : crewName(this.myName, this.partnerName), mode: coopBoard(this.mode), score: result.crew.score,
+      name: this.mode === 'pilot' ? crewName('Blue One', 'Blue Two') : crewName(...this.crewNames.filter(Boolean)), mode: coopBoard(this.mode), score: result.crew.score,
       kills: result.crew.kills, rounds: d.waves ?? 0,
     } : undefined);
   }
@@ -504,6 +655,8 @@ export class CoopSession {
     this.teardownHost(); this.teardownGuest();
     this.phase = 'lobby'; this.mission = null;
     this.game.state = 'paused'; this.engine.paused = true;
+    this.myReady = false;
+    if (this.mode === 'gunner' && this.role === 'host') { for (const p of this.peers) p.ready = false; this.sendLobby(); }
     if (this.role === 'guest') this.link.sendEvent({ t: 'ready', run: this.run });
     this.renderLobby(this.role === 'host' && !this.partnerReady ? 'Waiting for your partner to return…' : this.role === 'host' ? (this.mode === 'pilot' ? 'Partner connected — ready to fly' : 'Partner connected — pick your guns and start') : 'Connected — waiting for the host to start');
   }
@@ -511,7 +664,7 @@ export class CoopSession {
   // ---------------- mission start ----------------
 
   private coopMission(station: StationId, weather?: Weather): Mission {
-    if (this.mode === 'gunner') return { ...survivalMission('gunner'), station, weather, title: 'Co-op Survival — Gunners' };
+    if (this.mode === 'gunner') return { ...survivalMission('gunner'), specials: false, midRound: false, boss: false, station, weather, title: 'Co-op Survival — Gunners' };
     const campaign = CAMPAIGN.find(m => m.id === this.scenario && m.role === 'pilot' && m.bombers > 0 && !m.naval);
     const base = this.scenario === 'custom' ? buildCustomMission({ ...loadConfig(), role: 'pilot' }) : campaign ?? survivalMission('pilot');
     return { ...base, escorts: 0, specials: false, midRound: false, boss: false, weather: base.weather ?? weather, title: campaign?.title ?? (this.scenario === 'custom' ? base.title : 'Co-op Survival — Pilots') };
@@ -526,10 +679,16 @@ export class CoopSession {
     this.mission = m;
     this.phase = 'mission';
     this.screen.hide();
-    this.link.sendEvent({ t: 'start', run: this.run, mode: this.mode, scenario: this.scenario, custom: this.scenario === 'custom' ? loadConfig() : undefined, w: m.weather, hs: this.hostSeat, gs: this.guestSeat });
+    if (this.mode === 'gunner') { for (const p of this.peers) if (p.link.status === 'open') this.sendStart(p); }
+    else this.link.sendEvent({ t: 'start', run: this.run, mode: this.mode, scenario: this.scenario, custom: this.scenario === 'custom' ? loadConfig() : undefined, w: m.weather, hs: this.hostSeat, gs: this.guestSeat });
     this.installHost();
     this.engine.paused = false;
     this.game.startMission(m);
+  }
+
+  private sendStart(p: CrewPeer) {
+    p.run = this.run;
+    p.link.sendEvent({ t: 'start', run: this.run, mode: 'gunner', scenario: this.scenario, w: this.mission?.weather, hs: this.hostSeat, gs: p.seat });
   }
 
   private startGuestMission(msg: any) {
@@ -560,7 +719,13 @@ export class CoopSession {
     const req0 = Object.getPrototypeOf(g).requestStation as (id: StationId) => void;
     this.reqStation0 = req0;
     (g as any).requestStation = (id: StationId) => {
-      if (this.connected && id === this.partnerSeat) { g.onNotice?.(`PARTNER is on the ${STATIONS[id].label.toUpperCase()}`); return; }
+      if (g.transition > 0) return;
+      if (this.mode === 'gunner' && this.phase === 'mission') {
+        if (!canTakeSeat(this.roster, this.myId, id)) { this.ui.tip('That gun is crewed', 2200); return; }
+        if (this.role === 'guest') { this.link?.sendEvent({ t: 'seat', s: id }); return; }
+        this.hostSeat = id; this.sendLobby();
+      }
+      if (this.connected && this.mode === 'pilot' && id === this.partnerSeat) { g.onNotice?.(`PARTNER is on the ${STATIONS[id].label.toUpperCase()}`); return; }
       req0.call(g, id);
     };
   }
@@ -578,24 +743,27 @@ export class CoopSession {
     const w = this.game.world, bal = w.ballistics;
     this.wrapCommon();
     w.remoteStations.clear();
-    if (this.mode === 'gunner') w.remoteStations.add(this.guestSeat);
-    this.inp = null; this.inAge = 99; this.gunCd = 0; this.snapAcc = 0;
+    if (this.mode === 'gunner') this.refreshCrew();
+    this.snapAcc = 0; this.snapInterval = 1 / SNAP_HZ;
     this.tracers = []; this.tracerSeen = 0; this.hits = []; this.pbHits = [];
     this.tracked.clear(); this.guestKills.clear(); this.lastT = 0; this.endSent = false; this.sentWx = '';
     this.kill0 = w.events.kill;
     w.events.kill = (victim, byPlayer, cause) => {
-      if (victim.team === 'axis' && victim.lastAttacker === REMOTE) {
+      const peer = this.peers.find(p => p.owner === victim.lastAttacker) ?? this.departed.find(p => p.owner === victim.lastAttacker);
+      if (victim.team === 'axis' && (victim.lastAttacker === REMOTE || peer)) {
+        const ledger = peer?.score ?? this.guestScore;
         if (byPlayer) w.stats.kills--; // the world may credit an earlier host assist
-        this.guestScore.kills++; this.stats.guestKills++;
+        ledger.kills++; this.stats.guestKills++;
         this.guestKills.add(victim.id);
         const base = victim instanceof Fighter ? ENEMY_VARIANTS[victim.enemyType as EnemyType]?.score ?? 100 : 100;
         const points = Math.round(base * (1 + this.game.roundIdx * 0.1) * this.game.loadout.scoreMult);
-        this.guestScore.score += points; this.game.score += points;
+        ledger.score += points; this.game.score += points;
         this.game.killsSincePerk++;
         this.guestStreak = w.time - this.guestLastKill < 9 ? this.guestStreak + 1 : 1;
         this.guestLastKill = w.time;
+        if (peer) { peer.streak = w.time - peer.lastKill < 9 ? peer.streak + 1 : 1; peer.lastKill = w.time; peer.tally.recordKill(peer.streak, victim.pos.distanceTo(w.playerBomber!.pos), STATIONS[peer.seat]); }
         this.guestTally.recordKill(this.guestStreak, victim.pos.distanceTo(this.mode === 'pilot' && this.pilots.remote ? this.pilots.remote.pos : w.playerBomber!.pos), this.mode === 'pilot' ? null : STATIONS[this.guestSeat]);
-        this.ui.feed(tx(this.mode === 'pilot' ? '{name} destroyed {target}' : '{name} (partner) destroyed {target}', { name: this.mode === 'pilot' ? tx('Blue Two') : this.partnerName, target: tx(victim.label) }), 'mine');
+        this.ui.feed(tx(this.mode === 'pilot' ? '{name} destroyed {target}' : '{name} (partner) destroyed {target}', { name: this.mode === 'pilot' ? tx('Blue Two') : peer?.name ?? this.partnerName, target: tx(victim.label) }), 'mine');
         return;
       }
       const before = this.game.score;
@@ -612,20 +780,21 @@ export class CoopSession {
     const hit0 = bal.onHit;
     (bal as any).__coopHit0 = hit0;
     bal.onHit = (e: HitEvent) => {
-      if (e.shooter !== REMOTE) {
+      const peer = this.peers.find(p => p.owner === e.shooter) ?? this.departed.find(p => p.owner === e.shooter);
+      if (e.shooter !== REMOTE && !peer) {
         if (e.target === w.playerBomber && this.pbHits.length < 16) this.pbHits.push(Math.max(0, w.playerBomber.zones.indexOf(e.zone)), e.cannon ? 1 : 0);
         if (e.playerShot && e.target.alive && e.target.team === 'axis') { this.hostScore.score += 5; this.game.score += 5; }
         hit0?.(e);
         return;
       }
       // REMOTE stays the last attacker, including delayed fire/structural deaths.
-      const t = e.target;
+      const t = e.target, ledger = peer?.score ?? this.guestScore, hits = peer?.hits ?? this.hits;
       if (t.alive && t.team === 'axis') {
-        this.stats.guestHits++; this.guestScore.hits++;
-        this.guestScore.score += 5; this.game.score += 5;
+        this.stats.guestHits++; ledger.hits++;
+        ledger.score += 5; this.game.score += 5;
       }
       hit0?.(e);
-      if (this.hits.length < 64) { const l = t.worldToLocal(e.point, _v); this.hits.push(t.id, r2(l.x), r2(l.y), r2(l.z)); }
+      if (hits.length < 64) { const l = t.worldToLocal(e.point, _v); hits.push(t.id, r2(l.x), r2(l.y), r2(l.z)); }
     };
   }
 
@@ -654,30 +823,15 @@ export class CoopSession {
     else { const j = Math.floor(Math.random() * this.tracerSeen); if (j < max) this.tracers[j] = rec; }
   }
 
-  private onInput(m: any) {
-    if (this.flying && this.role === 'host' && m.run === this.run && m.t === 'pi') { if (this.pilots.input(m.d)) this.stats.inputsRecv++; return; }
-    if (this.role !== 'host' || this.phase !== 'mission' || m.run !== this.run || m.t !== 'i' || !(m.s in STATIONS) || !Number.isFinite(m.y) || !Number.isFinite(m.p)) return;
-    this.stats.inputsRecv++;
-    const s = m.s as StationId;
-    const def = STATIONS[s];
-    // keep the aim inside the station's field of fire
-    let ry = wrapAngle(m.y - def.rest.yaw);
-    if (def.yaw[1] - def.yaw[0] < Math.PI * 1.99) ry = THREE.MathUtils.clamp(ry, def.yaw[0], def.yaw[1]);
-    const p = THREE.MathUtils.clamp(m.p, def.pitch[0], def.pitch[1]);
-    this.inp = { s, y: def.rest.yaw + ry, p, f: m.f === 1 };
-    this.inAge = 0;
-    this.inWall = performance.now();
-    if (this.phase !== 'mission' || !this.hosting || s === this.guestSeat) return;
-    const w = this.game.world;
-    if (s === this.game.gunner.station) {
-      // both took the same gun at once: the host keeps it, the guest goes back
-      this.inp.f = false;
-      if (w.time - this.lastBump > 0.5) { this.lastBump = w.time; this.link?.sendEvent({ t: 'bump', s: this.guestSeat }); }
-      return;
+  private onInput(m: any, peer?: CrewPeer) {
+    if (peer) {
+      if (this.phase !== 'mission' || m.run !== this.run || m.t !== 'i' || m.s !== peer.seat || !Number.isFinite(m.y) || !Number.isFinite(m.p) || !Number.isSafeInteger(m.seq) || m.seq <= peer.seq) return;
+      const def = STATIONS[peer.seat]; let ry = wrapAngle(m.y - def.rest.yaw);
+      if (def.yaw[1] - def.yaw[0] < Math.PI * 1.99) ry = THREE.MathUtils.clamp(ry, def.yaw[0], def.yaw[1]);
+      peer.inp = { s: peer.seat, y: def.rest.yaw + ry, p: THREE.MathUtils.clamp(m.p, def.pitch[0], def.pitch[1]), f: m.f === 1 };
+      peer.seq = m.seq; peer.age = 0; peer.wall = performance.now(); this.stats.inputsRecv++; return;
     }
-    w.remoteStations.delete(this.guestSeat);
-    this.guestSeat = s;
-    w.remoteStations.add(s);
+    if (this.flying && this.role === 'host' && m.run === this.run && m.t === 'pi') { if (this.pilots.input(m.d)) this.stats.inputsRecv++; return; }
   }
 
   private hostTick(dt: number) {
@@ -685,56 +839,67 @@ export class CoopSession {
     if (!this.hosting) return;
     if (w.time < this.lastT) { this.tracked.clear(); this.guestKills.clear(); this.endSent = false; } // mission restarted
     this.lastT = w.time;
-    this.hostSeat = g.gunner.station;
-    this.screen.markPartner(this.connected && this.mode === 'gunner' ? this.guestSeat : null);
-    if (this.flying) this.pilots.hostTick(dt); else this.remoteGun(dt);
+    if (g.gunner.transition <= 0) this.hostSeat = g.gunner.station;
+    this.screen.markPartner(this.mode === 'gunner' ? this.roster : null, this.myId);
+    if (this.flying) this.pilots.hostTick(dt); else { for (const p of this.peers) if (p.link.status === 'open') this.remoteGun(dt, p); this.guestScore = this.aggregateGuests(); }
     // kills: anything alive last frame that is not now
     for (const [id, a] of this.tracked) {
       if (!a.alive) {
-        // d: the ending that played (wing or tail off where it failed, the tank exploding, ...): the guest plays the same
-        link.sendEvent({ t: 'k', run: this.run, id, g: this.guestKills.has(id) ? 1 : 0, h: a.lastAttacker === w.playerFighter ? 1 : 0, d: a instanceof Fighter ? w.destruction.deathCode(a) : -1 });
+        // d: the ending that played (wing or tail off where it failed, the tank exploding, ...): every guest plays the same
+        const d = a instanceof Fighter ? w.destruction.deathCode(a) : -1;
+        if (this.mode === 'gunner') { for (const p of this.peers) p.link.sendEvent({ t: 'k', run: this.run, id, g: a.lastAttacker === p.owner ? 1 : 0, d }); }
+        else link?.sendEvent({ t: 'k', run: this.run, id, g: this.guestKills.has(id) ? 1 : 0, h: a.lastAttacker === w.playerFighter ? 1 : 0, d });
         this.tracked.delete(id); this.guestKills.delete(id);
       }
       else if (a.remove) this.tracked.delete(id);
     }
     for (const a of w.aircraft) if (a.alive && !a.remove && !this.tracked.has(a.id) && kindOf(a)) this.tracked.set(a.id, a);
+    for (const p of this.peers) if (p.hits.length) { p.link.sendEvent({ t: 'h', run: this.run, l: p.hits }); p.hits.length = 0; }
     if (this.hits.length) { link.sendEvent({ t: 'h', run: this.run, l: this.hits }); this.hits = []; }
     // weather changes between rounds
     const wk = (g as any).weatherKey;
-    if (typeof wk === 'string' && wk && wk !== this.sentWx) { this.sentWx = wk; link.sendEvent({ t: 'wx', w: wk }); }
+    if (typeof wk === 'string' && wk && wk !== this.sentWx) { this.sentWx = wk; this.broadcast({ t: 'wx', w: wk }); }
     // snapshots at 20 Hz of real time (slow-motion slows the world, not the stream)
     this.snapAcc += dt / Math.max(0.05, this.engine.timeScale);
-    if (this.snapAcc >= 1 / SNAP_HZ) {
-      this.snapAcc = Math.min(this.snapAcc - 1 / SNAP_HZ, 1 / SNAP_HZ);
-      if (link.sendState(this.buildSnap())) this.stats.snapsSent++;
+    if (this.snapAcc >= this.snapInterval) {
+      this.snapAcc %= this.snapInterval;
+      const snap = this.buildSnap();
+      this.snapInterval = snapshotInterval(JSON.stringify(snap).length + 160);
+      if (this.mode === 'gunner') {
+        for (const p of this.peers) if (p.link.status === 'open') {
+          snap.guest = p.score;
+          snap.host = { kills: this.crewKills - p.score.kills, hits: this.hostScore.hits + this.guestScore.hits - p.score.hits, shots: this.hostScore.shots + this.guestScore.shots - p.score.shots, score: this.game.score - p.score.score };
+          if (p.link.sendState(snap)) this.stats.snapsSent++;
+        }
+      } else if (link?.sendState(snap)) this.stats.snapsSent++;
       this.tracers = []; this.tracerSeen = 0; this.pbHits = [];
     }
     if ((g.state === 'ending' || g.state === 'debrief') && !this.endSent) {
       this.endSent = true;
       const why = (g as any).endResult?.reason;
-      link.sendEvent({ t: 'end', run: this.run, why: typeof why === 'string' ? why : 'The mission is over.' });
+      this.broadcast({ t: 'end', run: this.run, why: typeof why === 'string' ? why : 'The mission is over.' });
       this.endWhy = 'ended';
     }
   }
 
   // The guest's gun, fired here with the guest's aim: real rounds in the host's world
-  private remoteGun(dt: number) {
-    const w = this.game.world, pb = w.playerBomber, inp = this.inp;
-    this.inAge += dt;
-    if (!pb || !pb.alive || !inp || inp.s !== this.guestSeat) return;
-    const def = STATIONS[this.guestSeat];
+  private remoteGun(dt: number, peer: CrewPeer) {
+    const w = this.game.world, pb = w.playerBomber, inp = peer.inp;
+    peer.age += dt;
+    if (!pb || !pb.alive || !inp || inp.s !== peer.seat) return;
+    const def = STATIONS[peer.seat];
     const local = dirFromYawPitch(inp.y, inp.p, _remoteDir);
-    const tg = pb.guns.get(this.guestSeat);
+    const tg = pb.guns.get(peer.seat);
     if (tg) { if (!tg.want) tg.want = new THREE.Vector3(); tg.want.copy(local); }   // swing the visible gun / turret on the ship
-    const live = this.inAge < INPUT_STALE || performance.now() - this.inWall < INPUT_STALE * 1000;
+    const live = peer.age < INPUT_STALE && performance.now() - peer.wall < INPUT_STALE * 1000;
     const state = this.game.state;
-    if (!inp.f || !live || (state !== 'playing' && state !== 'ending')) { if (this.gunCd < 0) this.gunCd = 0; return; }
+    if (!inp.f || !live || (state !== 'playing' && state !== 'ending')) { if (peer.cd < 0) peer.cd = 0; return; }
     const lo = this.game.gunner.loadout, W = lo.weapon;
     const rate = W.rate * lo.rate;
-    this.gunCd -= dt;
+    peer.cd -= dt;
     let n = 0;
-    while (this.gunCd <= 0 && n++ < 8) {
-      this.gunCd += 1 / rate;
+    while (peer.cd <= 0 && n++ < 8) {
+      peer.cd += 1 / rate;
       const pivot = pb.localToWorld(_v.copy(def.pivot));
       const dir = _v2.copy(local).applyQuaternion(pb.quat);
       const sp = W.spread * lo.spread;
@@ -742,11 +907,11 @@ export class CoopSession {
       dir.normalize();
       const muzzle = pivot.addScaledVector(dir, 1.3);
       const vel = _remoteVel.copy(dir).multiplyScalar(W.velocity * lo.velocity).add(pb.vel);
-      this.gunShots++;
-      w.ballistics.fire(muzzle, vel, 'allied', W.damage * lo.damage, this.gunShots % W.tracerEvery === 0, W.tracer, REMOTE, !!W.cannon, false);
-      this.stats.guestRounds++; this.guestScore.shots++;
-      if (this.gunShots % 2 === 0) w.effects.muzzleFlash(muzzle, dir, 0.8, pb.vel);
-      if (this.gunShots % 3 === 0) sound.play('m2far', muzzle, { gain: 0.55, ref: 8 });
+      peer.shots++;
+      w.ballistics.fire(muzzle, vel, 'allied', W.damage * lo.damage, peer.shots % W.tracerEvery === 0, W.tracer, peer.owner, !!W.cannon, false);
+      this.stats.guestRounds++; peer.score.shots++;
+      if (peer.shots % 2 === 0) w.effects.muzzleFlash(muzzle, dir, 0.8, pb.vel);
+      if (peer.shots % 3 === 0) sound.play('m2far', muzzle, { gain: 0.55, ref: 8 });
     }
   }
 
@@ -779,8 +944,9 @@ export class CoopSession {
       z: pb ? pb.zones.map((z) => r2(Math.max(0, z.hp) / z.maxHp)) : [],
       ph: this.pbHits, tr: this.tracers.flat(),
     };
-    if (this.mode === 'pilot') { msg.a = packAircraft(a); msg.pi = [this.pilots.hostId, this.pilots.guestId]; delete msg.ha; delete msg.hs; delete msg.ph; delete msg.z; }
-    const budget = this.mode === 'pilot' ? 1400 : MAX_SNAP_CHARS;
+    msg.a = packAircraft(a);
+    if (this.mode === 'pilot') { msg.pi = [this.pilots.hostId, this.pilots.guestId]; delete msg.ha; delete msg.hs; delete msg.ph; delete msg.z; }
+    const budget = 1400;
     while (msg.tr.length && JSON.stringify(msg).length > budget) msg.tr.splice(-10);
     return msg;
   }
@@ -819,7 +985,7 @@ export class CoopSession {
   }
 
   private onSnap(m: any) {
-    if (this.mode === 'pilot' && typeof m.a === 'string') { const rows = unpackAircraft(m.a); if (!rows) return; m.a = rows; }
+    if (typeof m.a === 'string') { const rows = unpackAircraft(m.a); if (!rows) return; m.a = rows; }
     if (this.role !== 'guest' || this.phase !== 'mission' || m.run !== this.run || m.t !== 's' || typeof m.tm !== 'number' || !Array.isArray(m.a)) return;
     if (m.tm <= this.latestTm) return; // same-run late or duplicate unreliable packet
     if (m.host && m.guest && Number.isFinite(m.score)) {
@@ -876,7 +1042,7 @@ export class CoopSession {
       }
       return;
     }
-    this.screen.markPartner(this.hostSeat);
+    this.screen.markPartner(this.roster, this.myId);
     this.screen.waiting(this.hostState === 'paused' ? 'Waiting for the host…' : null);
     // our gun, to the host
     this.inAcc += dt / Math.max(0.05, this.engine.timeScale);
@@ -884,7 +1050,7 @@ export class CoopSession {
       this.inAcc = Math.min(this.inAcc - 1 / INPUT_HZ, 1 / INPUT_HZ);
       const st = gun.state, def = gun.def;
       const fire = (gun.firing || this.devFire) && gun.transition <= 0 && g.state === 'playing' && this.hostState === 'playing' && !this.endWhy;
-      if (link.sendState({ t: 'i', run: this.run, s: gun.station, y: r4(def.rest.yaw + st.yaw), p: r4(def.rest.pitch + st.pitch), f: fire ? 1 : 0 })) this.stats.inputsSent++;
+      if (link.sendState({ t: 'i', run: this.run, seq: ++this.inputSeq, s: gun.station, y: r4(def.rest.yaw + st.yaw), p: r4(def.rest.pitch + st.pitch), f: fire ? 1 : 0 })) this.stats.inputsSent++;
     }
     this.guestSeat = gun.station;
   }
@@ -1027,7 +1193,7 @@ export class CoopSession {
       if (Array.isArray(m.z)) pb.zones.forEach((z, i) => { const f = Number(m.z[i]); if (Number.isFinite(f)) z.hp = f * z.maxHp; });
       // the partner's gun swings on our ship
       const tg = pb.guns.get(this.hostSeat);
-      if (tg && Array.isArray(m.ha)) tg.want = dirFromYawPitch(Number(m.ha[0]) || 0, Number(m.ha[1]) || 0, new THREE.Vector3());
+      if (tg && Array.isArray(m.ha)) { tg.want ??= new THREE.Vector3(); dirFromYawPitch(Number(m.ha[0]) || 0, Number(m.ha[1]) || 0, tg.want); }
     }
   }
 

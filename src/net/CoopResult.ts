@@ -43,3 +43,20 @@ export function isCoopDebrief(x: any): x is CoopDebrief {
   return x?.t === 'debrief' && x.v === 2 && Number.isSafeInteger(x.run) && x.run > 0 &&
     x.crew && ['kills', 'hits', 'shots', 'score'].every(k => n(x.crew[k])) && d(x.host) && d(x.guest) && x.host.score === x.guest.score;
 }
+
+// Personal combat credit plus an equal share of crew bonuses. Includes departed members so
+// reconnects cannot redistribute their earned points to the remaining players.
+export function crewDebriefs(run: number, common: DebriefData, members: readonly GunnerScore[], losses: number, wounded: boolean): DebriefData[] {
+  const base = members.reduce((sum, p) => sum + p.score, 0);
+  const shared = Math.max(0, common.score - base), factor = common.success ? 1 : .5;
+  let assigned = 0, points = 0;
+  return members.map((p, i) => {
+    const share = Math.min(common.score - points, p.score + Math.floor(shared / members.length) + (i < shared % members.length ? 1 : 0));
+    points += share;
+    const d = buildCoopDebrief(run, common, p, emptyGunnerScore(), losses, wounded).host;
+    d.personalScore = share;
+    d.merit = i === members.length - 1 ? Math.round(common.score * factor) - assigned : Math.floor(share * factor);
+    assigned += d.merit;
+    return d;
+  });
+}
