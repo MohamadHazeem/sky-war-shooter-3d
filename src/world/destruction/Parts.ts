@@ -63,6 +63,7 @@ const TWIN = [0.34, 0.06, 0.1, 0.2, 0.04, 0.2, 0.04];    // engines in the wings
 const fuel = (core: number, wings: number, nose = 0.25) => [core, nose, 0, wings, 0, wings, 0];
 
 const KINDS: Record<string, KindSpec> = {
+  b17: { shares: { root: 0.14, tip: 0.62, tail: 0.29, tailX: 0.38, nose: 0.19 }, mass: 25400, massShare: [0.32, 0.06, 0.10, 0.21, 0.05, 0.21, 0.05], fuel: fuel(0, 1.5, 0) },
   // Fw 190 A: fuel in two tanks under the cockpit floor
   fw190: { shares: { root: 0.12, tip: 0.6, tail: 0.31, tailX: 0.42, nose: 0.2 }, mass: 4300, massShare: SINGLE, fuel: fuel(1, 0) },
   // Bf 109 G: the L-shaped tank under and behind the pilot

@@ -143,4 +143,6 @@ barrel and two FDL 131 barbette blisters (`src/world/EnemyDress.ts`). No He 219 
 * Made for this game: generated from scratch by the Blender scripts in `tools/interior/` (`sh tools/interior/build.sh`).
   No third-party models, textures or reference images are used. Same licence as the game (GPL v2 or later).
 * `crew.glb`: skinned B-17 crewman (sheepskin B-3 jacket, flak helmet, A-14 mask, Mae West, flak vest), rig and clips.
+  Goal 13 adds original sculpted garment folds, stitched seams and pockets in `build_crew.py`;
+  cloth/leather normal and roughness maps are original procedural work in `src/render/CrewFabric.ts`.
 * `b17_interior.glb`: waist, radio room and bomb bay structure and equipment, ambient occlusion baked in Cycles.

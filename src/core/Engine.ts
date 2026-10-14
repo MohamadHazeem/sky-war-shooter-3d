@@ -481,6 +481,7 @@ export class Engine {
     this.temporal.enabled=true;this.post.economy=false;this.post.temporal=true;
     for (const quality of ['low', 'medium', 'high']) {
       syncSurfaceDetail(quality);
+      softDepth.want(); // compile the depth-copy pass before the first damage trail
       this.render(1/60);
     }
     syncSurfaceDetail(this.quality);

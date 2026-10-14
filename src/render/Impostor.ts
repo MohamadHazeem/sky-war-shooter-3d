@@ -266,6 +266,7 @@ export function mergeForInstancing(source: THREE.Object3D, skip: RegExp): { geom
   root.traverse((obj) => {
     const mesh = obj as THREE.Mesh;
     if (!mesh.isMesh || skip.test(mesh.name)) return;
+    for (let a: THREE.Object3D | null = obj; a; a = a.parent) if (!a.visible) return;
     for (let a: THREE.Object3D | null = obj; a && a !== root; a = a.parent) if (/^prop_\d+$/.test(a.name)) return;
     const src = mesh.geometry;
     const g = new THREE.BufferGeometry();

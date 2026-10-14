@@ -27,6 +27,17 @@ describe('interior 2.0 assets', () => {
     expect(j.skins.length).toBeGreaterThan(0);
     expect(j.extensionsUsed).toContain('EXT_meshopt_compression');
   });
+  it('retains sculpted clothing and a cheaper skinned LOD after compression', () => {
+    const j = gltfJson('public/models/crew.glb');
+    expect(j.materials.map((m: {name: string}) => m.name)).toContain('crewLeather');
+    const triangles = (name: string) => {
+      const node = j.nodes.find((n: {name: string}) => n.name === name);
+      return j.meshes[node.mesh].primitives.reduce((n: number, p: {indices: number}) => n + j.accessors[p.indices].count / 3, 0);
+    };
+    expect(triangles('crewBody')).toBeGreaterThan(9000);
+    expect(triangles('crewBodyLod')).toBeLessThan(triangles('crewBody') * 0.35);
+    expect(triangles('crewBody')).toBeLessThan(24000);
+  });
   it('ships the kit with its four parts and materials', () => {
     const j = gltfJson('public/models/b17_interior.glb');
     const nodes = j.nodes.map((n: { name?: string }) => n.name);

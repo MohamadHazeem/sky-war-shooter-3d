@@ -1,7 +1,10 @@
 import * as THREE from 'three';
+import { StreamTracers } from './StreamTracers';
+import { STREAM_MIN_HALF_PX, STREAM_MIN_COVERAGE } from './StreamReadability';
 import { Atmos, atmosUniforms, skyGLSL } from './Atmosphere';
 import { useSkyEnv } from './AircraftLook';
 import { weatherNow } from './WeatherState';
+import { cloudOcclusionUniforms, cloudOcclusionGLSL } from './CloudOcclusion';
 import { hasModel, instantiate, type ModelKind } from '../world/Models';
 import { IMPOSTOR_FRAG_GLSL, IMPOSTOR_VERT_GLSL, ImpostorBake, mergeForInstancing, type ImpostorAtlas } from './Impostor';
 import {
@@ -51,10 +54,21 @@ export interface StreamModelSource {
   nearSkip: RegExp;
 }
 
-const fromCache = (k: ModelKind) => () => (hasModel(k) ? instantiate(k) : null);
+const fromCache = (k: ModelKind, level = 0) => () => {
+  if (!hasModel(k)) return null;
+  const root = instantiate(k);
+  root.traverse(o => {
+    const lod = o as THREE.LOD;
+    if (!lod.isLOD) return;
+    lod.autoUpdate = false;
+    for (let i = 0; i < lod.levels.length; i++) lod.levels[i].object.visible = i === Math.min(level, lod.levels.length - 1);
+  });
+  return root;
+};
 export const DEFAULT_STREAM_MODELS: StreamModelSource = {
-  bomber: fromCache('b17'), near: fromCache('b17'), escort: fromCache('p51d'), gaggle: fromCache('fw190'),
+  bomber: fromCache('b17', 1), near: fromCache('b17', 2), escort: fromCache('p51d'), gaggle: fromCache('fw190'),
   propRadius: { bomber: 1.77, escort: 1.7, gaggle: 1.65 },
+  isSkin: m => !!m.userData.surf || m.name === 'GD-L' || /^hero_(skin|neutral_grey)/.test(m.name),
   hide: /^crew$/,
   nearSkip: /^(crew|interior|gun_.*|turret_.*_guns)$/,
 };
@@ -85,6 +99,7 @@ const U = {
 
 const hazeGLSL = /* glsl */ `
 ${skyGLSL}
+${cloudOcclusionGLSL}
 uniform float uHaze;
 vec3 hazed(vec3 col, vec3 wp) {
   vec3 d = wp - cameraPosition;
@@ -153,7 +168,7 @@ float h = max(hR, sDist * uPx * uMinPx);
 vec3 impPos = sC + (sB * q) * h * sVis;
 vec3 objectNormal = vd;
 float ink = hR / h;
-vImpX = vec4(ink * ink, sR2.z, 0.0, sFire);
+vImpX = vec4(max(ink * ink, uMinPx > 3.0 ? ${STREAM_MIN_COVERAGE.toFixed(2)} : 0.0), sR2.z, 0.0, sFire);
 mat3 sMV = mat3(modelViewMatrix);
 vImpBx = sMV * sB[0]; vImpBy = sMV * sB[1]; vImpBz = sMV * sB[2];
 // sun glints: the mirror of the sun off the fuselage (a cylinder: lit when the half vector is
@@ -305,7 +320,7 @@ const inst = (arr: Float32Array, size: number, dynamic = false) => {
   return a;
 };
 const shaderMat = (o: { uniforms?: Record<string, THREE.IUniform>; vertexShader: string; fragmentShader: string; blending?: THREE.Blending }) => new THREE.ShaderMaterial({
-  uniforms: { ...atmosUniforms, ...U, ...(o.uniforms ?? {}) },
+  uniforms: { ...atmosUniforms, ...cloudOcclusionUniforms, ...U, ...(o.uniforms ?? {}) },
   vertexShader: o.vertexShader, fragmentShader: o.fragmentShader,
   transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: o.blending ?? THREE.NormalBlending,
 });
@@ -343,6 +358,7 @@ export class BomberStream {
   private escortImp: THREE.Mesh | null = null;
   private gaggleImp: THREE.Mesh | null = null;
   private near: THREE.Mesh | null = null;
+  readonly tracers = new StreamTracers();
   private trails: THREE.Mesh;
   private field: THREE.Mesh;
   private smoke: THREE.Mesh;
@@ -373,6 +389,7 @@ export class BomberStream {
     this.group.name = 'bomberStream';
     this.group.userData.noRebase = true;
     this.group.visible = false;
+    this.group.add(this.tracers.renderer.mesh);
 
     // --- contrails: one ribbon per engine (or pair) of every bomber, one per fighter ---
     this.trails = new THREE.Mesh(ribbonStrip(26), shaderMat({
@@ -399,12 +416,12 @@ export class BomberStream {
           p.y += sin(sd * 2.3 + age * 0.17) * age * 0.08 - age * 0.3;
           vec3 wp = (modelMatrix * vec4(p, 1.0)).xyz;
           vec3 dirW = normalize(mat3(modelMatrix) * vec3(0.0, 0.0, -1.0));
-          float width = mix(0.5, 6.0 * iRib.z, pow(t, 0.6));
+          float width = mix(0.5, 3.5 * iRib.z, pow(t, 0.6));
           float dist = distance(cameraPosition, wp);
           float thin;
           wp = faceCamera(wp, dirW, aSide, width * step(40.0, dist), 1.1, thin);
           gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0);
-          vA = ok * smoothstep(0.6, 2.4, age) * (1.0 - smoothstep(0.3, 1.0, t)) * mix(0.5, 0.1, sqrt(t)) * thin
+          vA = ok * smoothstep(0.6, 2.4, age) * (1.0 - smoothstep(0.3, 1.0, t)) * mix(0.34, 0.06, sqrt(t)) * thin
              * (1.0 - smoothstep(30000.0, 42000.0, dist)) * smoothstep(60.0, 180.0, dist);
           vSide = aSide; vT = t; vW = wp; vSeed = sd;
           vSun = dot(normalize(cross(dirW, normalize(cameraPosition - wp))) * aSide, uSunDir);
@@ -418,7 +435,7 @@ export class BomberStream {
           float a = vA * edge * (0.85 + 0.15 * sin(vT * 140.0 + vSeed));
           if (a < 0.002) discard;
           vec3 col = (uStreamSun * 0.22 + uHorizon * 0.78) * mix(0.9, 1.15, clamp(vSun * 0.5 + 0.5, 0.0, 1.0));
-          gl_FragColor = vec4(hazed(col, vW), a);
+          gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));
     this.trails.renderOrder = 7;
@@ -447,14 +464,18 @@ export class BomberStream {
           vec3 p2 = fieldAt(g, age + 3.0);
           vec3 wp = (modelMatrix * vec4(p, 1.0)).xyz;
           vec3 dirW = normalize(mat3(modelMatrix) * (p2 - p) + 1e-4);
-          float width = mix(30.0, 380.0 * iF1.y, pow(k, 0.75));
+          float width = mix(65.0, 850.0 * iF1.y, pow(k, 0.65));
           float dist = distance(cameraPosition, wp);
           float nearK = smoothstep(width * 0.5 + 120.0, width * 0.9 + 600.0, dist);
           float thin;
-          wp = faceCamera(wp, dirW, aSide, width * step(0.001, nearK), 1.0, thin);
+          // Old camera-facing bands stood upright like white fences. A spreading
+          // wake is a horizontal ice sheet, advected with its squadron's air mass.
+          vec3 sheetSide = normalize(mat3(modelMatrix) * vec3(1.0, 0.0, 0.0));
+          wp += sheetSide * aSide * width;
+          thin = 1.0;
           gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0);
           vA = uOn * smoothstep(0.0, 0.08, k) * (1.0 - smoothstep(0.5, 1.0, k)) * thin * nearK
-             * (1.0 - smoothstep(30000.0, 44000.0, dist)) * mix(0.14, 0.08, k);
+             * (1.0 - smoothstep(30000.0, 44000.0, dist)) * mix(0.38, 0.22, k);
           vSide = aSide; vAge = age; vW = wp; vSeed = iF1.x;
           vSun = dot(normalize(cross(dirW, normalize(cameraPosition - wp))) * aSide, uSunDir);
         }`,
@@ -464,14 +485,21 @@ export class BomberStream {
         uniform vec3 uStreamSun;
         varying float vA; varying float vSide; varying float vAge; varying vec3 vW; varying float vSeed; varying float vSun;
         void main() {
-          float edge = pow(max(1.0 - vSide * vSide, 0.0), 0.7);
+          float edge = pow(max(1.0 - vSide * vSide, 0.0), 1.8);
           // wispy streaks along the band, like spreading cirrus
           float n1 = snoise(vec2(vSide * 3.5 + vSeed * 7.0, vAge * 0.012));
           float n2 = snoise(vec2(vSide * 11.0 + vSeed * 3.0, vAge * 0.045 + 5.0));
-          float a = vA * edge * mix(0.45, 1.25, n1) * mix(0.7, 1.15, n2);
+          float density = edge * mix(0.45, 1.25, n1) * mix(0.7, 1.15, n2);
+          float slant = min(3.0, 1.0 / max(0.18, abs(normalize(cameraPosition - vW).y)));
+          float a = 1.0 - exp(-vA * density * slant);
           if (a < 0.002) discard;
-          vec3 col = (uStreamSun * 0.2 + uHorizon * 0.8) * mix(0.92, 1.1, clamp(vSun * 0.5 + 0.5, 0.0, 1.0));
-          gl_FragColor = vec4(hazed(col, vW), a);
+          // Beer attenuation through the sheet; a bounded forward lobe retains
+          // amber sunset lighting without bleaching the whole horizon white.
+          float mu = dot(normalize(vW - cameraPosition), uSunDir);
+          float phase = min(3.0, 0.51 / pow(max(0.09, 1.49 - 1.4 * mu), 1.5));
+          float transmission = exp(-density * 1.2);
+          vec3 col = uHorizon * 0.62 + uStreamSun * 0.16 * (0.4 + 0.6 * transmission) * (0.7 + phase);
+          gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));
     this.field.renderOrder = 6;
@@ -519,7 +547,7 @@ export class BomberStream {
           float a = vA * edge * mix(0.95, 0.45, vT);
           if (a < 0.002) discard;
           vec3 col = mix(vec3(0.025, 0.022, 0.02), vec3(0.15, 0.15, 0.16) + uStreamSun * 0.03, smoothstep(0.0, 0.5, vT));
-          gl_FragColor = vec4(hazed(col, vW), a);
+          gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));
     this.smoke.renderOrder = 7;
@@ -561,6 +589,7 @@ export class BomberStream {
         }`,
       fragmentShader: /* glsl */ `
         ${hazeGLSL}
+        ${noiseGLSL}
         uniform vec3 uStreamSun;
         varying vec2 vQ; varying float vA; varying float vFlash; varying vec3 vW; varying float vSeed; varying float vKind;
         void main() {
@@ -572,15 +601,16 @@ export class BomberStream {
             col = vec3(0.78, 0.76, 0.7) * (uStreamSun * 0.2 + uHorizon * 0.5) * (0.85 + 0.25 * vQ.y);
           } else {
             vec2 o = vec2(cos(vSeed * 40.0), sin(vSeed * 40.0)) * 0.28;
-            float b1 = 1.0 - smoothstep(0.1, 0.75, length(vQ - o * 0.6));
-            float b2 = 1.0 - smoothstep(0.05, 0.55, length(vQ + o));
+            float erosion = (snoise(vQ * 12.0 + vSeed * 19.0) - 0.5) * 0.12;
+            float b1 = 1.0 - smoothstep(0.34, 0.57, length(vQ - o * 0.6) + erosion);
+            float b2 = 1.0 - smoothstep(0.20, 0.43, length(vQ + o) - erosion);
             a = clamp(b1 + b2 * 0.7, 0.0, 1.0) * vA;
             col = vec3(0.045, 0.04, 0.036) + uStreamSun * 0.012 * (0.6 + 0.4 * vQ.y);
             col = mix(col, vec3(9.0, 5.0, 2.0), vFlash * (1.0 - smoothstep(0.0, 0.7, r)));
             a = max(a, vFlash * vA * (1.0 - r));
           }
           if (a < 0.004) discard;
-          gl_FragColor = vec4(hazed(col, vW), a);
+          gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));
     this.puffs.renderOrder = 6;
@@ -685,6 +715,7 @@ export class BomberStream {
     this.barrages = [];
     this.wrecks = [];
     this.nGlows = 0;
+    this.tracers.clear();
     this.attackedUntil = L.groups.map(() => -1);
     this.gaggleKill = L.gaggles.map(() => 20 + this.rnd() * 20);
     this.gaggleRetarget = L.gaggles.map((g) => g.period * (2.5 + this.rnd() * 1.5));
@@ -752,7 +783,7 @@ export class BomberStream {
       return m;
     };
     const range = (a: number, n: number) => Array.from({ length: n }, (_, i) => a + i);
-    if (this.bakes.bomber?.done && !this.bomberImp) this.bomberImp = mk(this.bakes.bomber, false, range(0, L.bombers), 2.0, 1, null);
+    if (this.bakes.bomber?.done && !this.bomberImp) this.bomberImp = mk(this.bakes.bomber, false, range(0, L.bombers), this.tier === 'low' ? 2.0 : STREAM_MIN_HALF_PX, 1, null);
     if (this.bakes.escort?.done && !this.escortImp) this.escortImp = mk(this.bakes.escort, true, range(L.escortFirst, L.escortCount), 1.3, 0.8, null);
     const gStart = L.escortFirst + L.escortCount;
     if (this.bakes.gaggle?.done && !this.gaggleImp) this.gaggleImp = mk(this.bakes.gaggle, true, range(gStart, L.count - gStart), 1.3, 0.5, null);
@@ -830,6 +861,7 @@ export class BomberStream {
       this.gaggles(time, dt);
       this.losses(time, dt, camL);
     }
+    this.tracers.update(time, this.group.matrixWorld, cam, heightPx);
     this.writeGlows(time);
   }
 
@@ -945,6 +977,8 @@ export class BomberStream {
           fighterPos(d, i, time + 0.1, V, top, _v2);
           _v2.sub(_v1).multiplyScalar(4);   // ~40 m ahead along the flight path
           this.glow(_v1.x + _v2.x, _v1.y + _v2.y, _v1.z + _v2.z, time, 0.07 + R() * 0.08, 7 + R() * 6, 30, 20, 9);
+          groupCentre(L.groups[gg.target], time, _v3);
+          this.tracers.emit(_v1.x, _v1.y, _v1.z, _v3.x, _v3.y, _v3.z, time, false);
         }
       }
       if (attacking) {
@@ -953,7 +987,12 @@ export class BomberStream {
         const g = L.groups[gg.target];
         if (R() < dt * 14) {
           const i = g.first + Math.floor(R() * g.count);
-          if (!this.lost(i)) { bomberPose(d, i, time, V, _pose); this.glow(_pose.p.x, _pose.p.y, _pose.p.z, time, 0.06, 5 + R() * 4, 22, 16, 7); }
+          if (!this.lost(i)) {
+            bomberPose(d, i, time, V, _pose);
+            this.glow(_pose.p.x, _pose.p.y, _pose.p.z, time, 0.06, 5 + R() * 4, 22, 16, 7);
+            fighterPos(d, gg.first, time, V, top, _v3);
+            this.tracers.emit(_pose.p.x, _pose.p.y, _pose.p.z, _v3.x, _v3.y, _v3.z, time, true);
+          }
         }
         this.gaggleKill[k] -= dt;
         if (this.gaggleKill[k] <= 0) {

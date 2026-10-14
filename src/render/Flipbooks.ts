@@ -220,7 +220,7 @@ export class FlipbookFX {
         varying vec2 vUv0; varying vec2 vUv1; varying float vBlend;
         varying vec3 vL; varying vec3 vUp; varying vec3 vAlb;
         varying float vAlpha; varying float vHeat; varying float vDist; varying float vSoft;
-        varying vec2 vQ; varying vec3 vDet;
+        varying vec2 vQ; varying vec3 vDet; varying float vFlak;
         void main() {
           vec4 mv = viewMatrix * vec4(iA.xyz, 1.0);
           float dist = max(-mv.z, 0.01);
@@ -232,6 +232,7 @@ export class FlipbookFX {
           mv.xy += (ax * position.x + ay * position.y) * grow;
           gl_Position = projectionMatrix * mv;
           float kind = floor(iB.y / ${FRAMES}.0 + 1e-3);
+          vFlak = 1.0 - step(0.5, abs(kind - 2.0));
           float fr = clamp(iB.y - kind * ${FRAMES}.0, 0.0, ${FRAMES - 1}.0);
           float f0 = floor(fr), f1 = min(f0 + 1.0, ${FRAMES - 1}.0);
           vBlend = fr - f0;
@@ -253,7 +254,7 @@ export class FlipbookFX {
           // detail: a seed per particle, the playback time, and how magnified a baked texel is
           vQ = q - 0.5;
           float px = grow / (dist * uPx);   // quad width on screen (px)
-          vDet = vec3(fract(iB.x * 0.1591) * 7.3, fr * 0.02, smoothstep(160.0, 520.0, px));
+          vDet = vec3(fract(iB.x * 0.1591) * 7.3, fr * 0.02, mix(smoothstep(160.0, 520.0, px), smoothstep(12.0, 48.0, px), vFlak));
         }`,
       fragmentShader: /* glsl */ `
         uniform sampler2D tA; uniform sampler2D tB; uniform sampler2D tDetail;
@@ -262,7 +263,7 @@ export class FlipbookFX {
         varying vec2 vUv0; varying vec2 vUv1; varying float vBlend;
         varying vec3 vL; varying vec3 vUp; varying vec3 vAlb;
         varying float vAlpha; varying float vHeat; varying float vDist; varying float vSoft;
-        varying vec2 vQ; varying vec3 vDet;
+        varying vec2 vQ; varying vec3 vDet; varying float vFlak;
         // linear HDR blackbody-ish ramp: dark red -> orange -> yellow -> white
         vec3 fireRamp(float T) {
           vec3 c = vec3(0.9, 0.08, 0.0) * smoothstep(0.0, 0.25, T);
@@ -282,6 +283,10 @@ export class FlipbookFX {
                   + texture2D(tDetail, vQ * 3.1 - vDet.x * 1.7 + vec2(vDet.y * 0.7, 0.0)).r * 0.35 - 0.5;
           float dk = vDet.z;
           float alpha = min(1.0, a.a * (1.0 + n * 0.7 * dk * (1.0 - a.a * 0.5))) * vAlpha;
+          // Flak holds an optically dense centre and breaks at the perimeter. The
+          // old magnification-only detail never activated on ordinary 20–80 px bursts.
+          float flakDensity = smoothstep(0.08 + n * 0.16 * dk, 0.72, a.a);
+          alpha = mix(alpha, (1.0 - exp(-flakDensity * 3.8)) * vAlpha, vFlak);
           vec4 b = mix(texture2D(tB, vUv0), texture2D(tB, vUv1), vBlend);
           // (min: WebP keeps no colour under a fully transparent pixel; B.a = max(opacity, flame) bounds it)
           float eb = min(b.b, b.a);

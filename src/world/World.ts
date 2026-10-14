@@ -304,8 +304,6 @@ export class World implements WorldView {
     b17.root.position.copy(camera.position).addScaledVector(fwd, 45);   // close: inside the shadow frustum, so the clipped shadow-depth programs compile too
     this.scene.add(b17.root);
     const unwarmHero = warmHeroLODs(b17.model);
-    const b17Pieces = [];
-    for (let i = 0; i < 3; i++) b17Pieces.push(...this.wrecks.breakBomber(b17, 'wingFold', 1), ...this.wrecks.breakBomber(b17, 'blowup'), ...this.wrecks.breakBomber(b17, 'split'));
     // the Mustangs of the 'little friends' set piece (gunner missions may have no escort)
     const p51 = new Fighter('p51d', 'allied', P51_PARAMS);
     p51.root.position.copy(camera.position).addScaledVector(fwd, 70);
@@ -333,7 +331,7 @@ export class World implements WorldView {
     const unwarmAA = warmAAGuns(this.scene, at);
     const unwarmInteriorDamage = warmInteriorDamage(this.scene, at);
     const unwarmDamage = warmDamageStages(this.scene, at);
-    const unwarmDestruction = this.destruction.warm(this.scene, at, splitDummies.map((f) => ({ kind: f.kind, model: f.model })));
+    const unwarmDestruction = this.destruction.warm(this.scene, at, [...splitDummies, b17, p51].map((f) => ({ kind: f.kind, model: f.model })));
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     const unwarmTargetSmoke = warmTargetSmoke(this.scene);
     const unwarmStream = this.engine.bomberStream.warm();   // the stream's near-LOD programs
@@ -347,7 +345,6 @@ export class World implements WorldView {
     unwarmStream();
     if (bombs) bombs.count = bombCount;
     this.scene.remove(plainCaster); plainCaster.geometry.dispose(); this.warmKeep.push(plainCaster.material);
-    this.wrecks.keepWarm(b17Pieces);   // B-17 wreck programs stay compiled for the set pieces
     unwarmHero(); b17.root.removeFromParent();
     unwarmFormation();
     unwarm();
@@ -662,7 +659,7 @@ export class World implements WorldView {
     }
 
     // hit location: the structural part it landed on (a wingtip can come off, a tank catch fire)
-    if (t instanceof Fighter && t.team === 'axis') this.destruction.onHit(t, e);
+    if (t instanceof Fighter) this.destruction.onHit(t, e);
     if (z.hp <= 0 && !(z as any).destroyed) {
       (z as any).destroyed = true;
       if (z.engine !== undefined) {
@@ -743,13 +740,8 @@ export class World implements WorldView {
     if (a instanceof Fighter) {
       a.spin.set(R() * 0.6, R() * 0.4, (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 2.5));
       // axis fighters get varied endings (fireball, wing/tail shot away, engine fire, bail-out, dead pilot)
-      if (a.team === 'axis') { startFighterDeath(a, cause, this); if (credited) hitSounds.onKill(a); } else {
-        // engine or pilot hit: goes down burning in a spin
-        this.effects.explosion(a.localToWorld(new THREE.Vector3(0, 0, 1.2)), a.vel, 0.35);
-        this.effects.spawnDebris(a.pos, a.vel, 5, true);
-        a.zones.forEach((z) => { if (z.engine !== undefined) z.burning = true; });
-        if (Math.random() < 0.5) setTimeout(() => this.effects.parachute(a.pos.clone(), a.vel.clone().multiplyScalar(0.3)), 1500 + Math.random() * 2500);
-      }
+      startFighterDeath(a, cause, this);
+      if (a.team === 'axis' && credited) hitSounds.onKill(a);
       if (a.team === 'axis') {
         if (credited) this.stats.kills++;
         this.events.kill?.(a, credited, cause);
@@ -765,6 +757,7 @@ export class World implements WorldView {
       a.zones.forEach((z) => { if (z.engine !== undefined && Math.random() < 0.5) z.burning = true; });
       this.effects.explosion(a.localToWorld(new THREE.Vector3(R() * 6, 0, 2)), a.vel, 0.8);
       // the stricken bomber breaks up over the next few seconds: secondary blasts and a burning wing
+      this.destruction.separate(a, cause === 'tail' ? 2 : cause === 'wingR' ? 5 : 3, false);
       startBomberDeath(a, this.effects, (pos, k) => { if (this.player) this.events.shake?.(Math.max(0, 1 - pos.distanceTo(this.player.pos) / 300) * k); });
       sound.play('explosion', a.pos, { gain: 1.6, ref: 200, reverb: 0.8 });
       this.stats.bombersLost++;

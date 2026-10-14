@@ -189,7 +189,7 @@ export class LivingInterior {
     this.breath ??= new BreathFog();
     bomber.root.add(this.breath.points);
     this.dressCrew();
-    this.airframe = cabinAirframe(bomber, zc, this.high ? KIT_FWD_Z : undefined);
+    this.airframe = cabinAirframe(bomber, zc, this.high ? KIT_FWD_Z : undefined, !this.high);
     this.cabinOn = false;
     // The cut-down airframe is only for an eye inside the cabin: photo mode, kill cam, theatre and
     // other outside cameras take over without this update running, so decide per render from
@@ -760,8 +760,8 @@ function downYaw(f: Man, side: number) { return f instanceof CrewActor ? 0 : -si
 type AirframeSwap = { mesh: THREE.Mesh; orig: THREE.BufferGeometry; clean: THREE.BufferGeometry };
 const cleanCache = new WeakMap<THREE.BufferGeometry, { zFwd: number; clean: THREE.BufferGeometry }>();
 // zFwdKit: interior 2.0 also clears the bomb bay ahead of the radio room
-export function cabinAirframe(b: Bomber, zc: number, zFwdKit?: number): AirframeSwap[] {
-  const zFwd = zFwdKit ?? zc + 3.2 + 1.7, zAft = STATIONS.tail.pivot.z + 0.2;
+export function cabinAirframe(b: Bomber, zc: number, zFwdKit?: number, clearLowHero = false): AirframeSwap[] {
+  const zFwd = zFwdKit ?? zc + 3.2 + 1.7, zAft = STATIONS.tail.pivot.z - 0.6;
   const z0 = zc - 3.2, zt = STATIONS.tail.pivot.z + 0.25;
   const c = new THREE.Vector3();
   const inside = (p: THREE.Vector3) => {
@@ -778,7 +778,13 @@ export function cabinAirframe(b: Bomber, zc: number, zFwdKit?: number): Airframe
   const out: AirframeSwap[] = [];
   b.model.traverse((o) => {
     const m = o as THREE.Mesh;
-    if (!m.isMesh || !o.name.startsWith('airframe') || !m.geometry.index) return;
+    if (!m.isMesh || !m.geometry.index) return;
+    // The hero's decimated core/tail skins can bridge window holes. Cut only
+    // LOD2 while inside the cabin; keep the detailed skins and exterior intact.
+    let lowSkin = false;
+    for (let a = clearLowHero ? o.parent : null; a && a !== b.model; a = a.parent)
+      if (/^part_(core|tail)_hero_skin_lod_LOD2$/.test(a.name)) lowSkin = true;
+    if (!o.name.startsWith('airframe') && !lowSkin) return;
     const orig = m.geometry;
     const cached = cleanCache.get(orig);
     let clean = cached && cached.zFwd === zFwd ? cached.clean : undefined;

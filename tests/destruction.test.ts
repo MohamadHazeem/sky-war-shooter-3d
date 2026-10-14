@@ -5,7 +5,7 @@ import {
 } from '../src/world/destruction/Parts';
 import { Structure, planEnding, encodePlan, decodePlan, mulberry, EV_DETACH, EV_EXPLODE, EV_IGNITE, type Plan } from '../src/world/destruction/FailureModel';
 import { Body } from '../src/world/destruction/Aero';
-import { splitOf } from '../src/world/destruction/Split';
+import { splitOf, sourceMeshes } from '../src/world/destruction/Split';
 import { Destruction } from '../src/world/destruction/Destruction';
 import type { Fighter } from '../src/world/Aircraft';
 import type { World } from '../src/world/World';
@@ -190,6 +190,17 @@ function model() {
 }
 
 describe('mesh split', () => {
+  it('splits one hero LOD, excluding attached props, without duplicating hidden skins', () => {
+    const g = new THREE.Group(), part = new THREE.Group(); part.name = 'part_wingL'; g.add(part);
+    const lod = new THREE.LOD(); part.add(lod);
+    for(let i=0;i<3;i++) lod.addLevel(new THREE.Mesh(new THREE.BoxGeometry(2,0.2,1)),i*100);
+    const prop = new THREE.Mesh(new THREE.BoxGeometry()); prop.name = 'prop_1'; part.add(prop);
+    expect(sourceMeshes(g)).toHaveLength(1);
+    const split = splitOf('test_lod_hero', g);
+    expect(split.parts[WING_L].tris).toBe(12);
+    expect(split.parts.reduce((n,p)=>n+p.tris,0)).toBe(12);
+  });
+
   it('gives every triangle to exactly one part, sharing the vertex buffers', () => {
     const m = model();
     const s = splitOf('test_plain', m);
@@ -230,7 +241,7 @@ describe('mesh split', () => {
 });
 
 // A minimal world and enemy for the runtime
-function rig() {
+function rig(kind = 'fw190', team = 'axis') {
   const scene = new THREE.Scene();
   const effects = {
     smoke: { count: 0, spawn: vi.fn() }, glow: { count: 0, spawn: vi.fn() },
@@ -246,7 +257,7 @@ function rig() {
   const zones = [zone('engine', 0, 0, 1.15, 0.9, 290), zone('cockpit', 0, 0.6, -1.3, 0.6, 210), zone('fuselage', 0, 0.1, -3.4, 0.75, 370), zone('tail', 0, 0.55, -5.75, 1.05, 260),
     zone('wingL', 2.6, -0.3, -0.25, 1.45, 330), zone('wingR', -2.6, -0.3, -0.25, 1.45, 330)];
   const f = {
-    id: 42, kind: 'fw190', team: 'axis', enemyType: 'fw190', root, model: mdl, pos: root.position, quat: root.quaternion, vel: new THREE.Vector3(0, 0, 140),
+    id: 42, kind, team, enemyType: 'fw190', root, model: mdl, pos: root.position, quat: root.quaternion, vel: new THREE.Vector3(0, 0, 140),
     zones, alive: true, falling: false, remove: false, spin: new THREE.Vector3(), rollTrim: 0, playerDamage: 0, damageTaken: 0, structure: 460, maxStructure: 460,
     pilotKilled: false, bailedOut: false, radius: 42,
     zone: (n: string) => zones.find((z) => z.name === n),
@@ -263,6 +274,28 @@ const hitAt = (d: Destruction, f: Fighter, x: number, y: number, z: number, dmg 
   d.onHit(f, { target: f, zone: f.zones[0], point: new THREE.Vector3(x, y, z).multiplyScalar(6).add(f.pos), damage: dmg, cannon: false, shooter: null, bulletVel: new THREE.Vector3(), playerShot: true });
 
 describe('destruction runtime', () => {
+  it.each(['p51d', 'b17'])('uses physical Allied %s hulks and frees their pieces on reset', kind => {
+    const {d, f} = rig(kind, 'allied');
+    f.alive = false; f.falling = true;
+    d.separate(f, WING_R, false);
+    expect(d.counts()).toMatchObject({pieces:1, hulks:1});
+    expect(f.falling).toBe(false); // no second gravity/position integration by Aircraft.update
+    const before = f.quat.clone();
+    for (let i=0;i<60;i++) d.update(1/60);
+    expect(before.angleTo(f.quat)).toBeGreaterThan(0.2);
+    expect(Number.isFinite(f.pos.y)).toBe(true);
+    const off = new THREE.Vector3(10000,0,10000), body = d.hulkBody(f)!;
+    const old = body.pos.clone(); d.rebase(off);
+    expect(body.pos.distanceTo(old.sub(off))).toBeLessThan(1e-6);
+    d.clear(); expect(d.counts()).toMatchObject({pieces:0,hulks:0,tracked:0});
+  });
+  it('books Allied fighter hits by structural location', () => {
+    const {d,f} = rig('p51d','allied');
+    for(let i=0;i<6;i++) hitAt(d,f,4.6,0,0.6);
+    expect(d.structure(f)!.attached(WING_L_TIP)).toBe(false);
+    expect(f.alive).toBe(true);
+  });
+
   // the runtime rolls eject impulses and spins with Math.random: seed it so a lifting panel can't balloon by chance
   beforeEach(() => { vi.spyOn(Math, 'random').mockImplementation(mulberry(9)); });
   afterEach(() => { vi.restoreAllMocks(); });

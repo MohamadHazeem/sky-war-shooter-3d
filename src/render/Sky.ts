@@ -49,13 +49,17 @@ export class SkyDome {
 
         // High cirrus: thin ice filaments on a spherical shell ~11 km up. Noise is stretched along the
         // wind axis and domain-warped so the filaments curl; only the noise peaks show.
-        float cirrus(vec2 xz) {
+        float cirrus(vec2 xz, float footprintM) {
           vec2 q = vec2(0.921 * xz.x - 0.389 * xz.y, 0.389 * xz.x + 0.921 * xz.y) * vec2(0.00028, 0.00048);
           q += (vec2(vnoise(q * 1.7 + 3.1), vnoise(q * 1.7 - 7.4)) - 0.5) * 0.9;
-          float n = 0.0, a = 0.5;
-          for (int i = 0; i < 3; i++) { n += a * vnoise(q); q = q * 2.1 + 9.2; a *= 0.5; }
-          float footprint = max(length(dFdx(q)), length(dFdy(q)));
-          return smoothstep(0.49, 0.78, n / 0.875) * (1.0 - smoothstep(0.5, 2.0, footprint));
+          float n = 0.0, a = 0.5, footprint = footprintM * 0.00048;
+          for (int i = 0; i < 3; i++) {
+            // Filter each octave before thresholding, avoiding thin aliasing streaks.
+            float resolved = 1.0 - smoothstep(0.35, 1.0, footprint);
+            n += a * mix(0.5, vnoise(q), resolved);
+            q = q * 2.1 + 9.2; footprint *= 2.1; a *= 0.5;
+          }
+          return smoothstep(0.50, 0.80, n / 0.875);
         }
 
         ${FAR_TERRAIN_GLSL}
@@ -83,13 +87,18 @@ export class SkyDome {
           // Faint cirrus above the horizon, fading toward the horizon and the zenith. Skipped
           // when the camera is already above the layer (it would sit behind the viewer).
           float cirAlt = 11000.0 - uCamAlt;
+          float radius = 6360000.0 + uCamAlt;
+          float shell = max(0.0, cirAlt) * (2.0 * radius + max(0.0, cirAlt));
+          // Rationalized intersection avoids subtracting two Earth-sized floats.
+          float tc = shell / max(1.0, sqrt(radius * radius * d.y * d.y + shell) + radius * max(d.y, 0.0));
+          vec2 cirXZ = uGroundXZ + d.xz * tc;
+          // Derivatives must be evaluated outside the horizon's divergent branch.
+          float cirFootprint = max(length(dFdx(cirXZ)), length(dFdy(cirXZ)));
           if (uCirrus > 0.0 && d.y > 0.03 && cirAlt > 0.0) {
             // Spherical shell intersection stays finite at the horizon; a plane's 1/y
             // projection stretched tiny filaments into enormous straight streaks.
-            float radius = 6360000.0 + uCamAlt;
-            float tc = -radius * d.y + sqrt(radius * radius * d.y * d.y + cirAlt * (2.0 * radius + cirAlt));
             float band = smoothstep(0.03, 0.2, d.y) * (1.0 - smoothstep(0.5, 0.95, d.y));
-            float cir = cirrus(uGroundXZ + d.xz * tc) * band;
+            float cir = cirrus(cirXZ, cirFootprint) * band;
             // Sun-tinted ice, brighter in the forward-scattering lobe toward the sun
             float forward = pow(max(dot(d, uSunDir), 0.0), 6.0);
             col = mix(col, uSunColor * (0.07 + 0.08 * forward), cir * 0.23);

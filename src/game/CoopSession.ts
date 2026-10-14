@@ -929,7 +929,7 @@ export class CoopSession {
         if (z.engine !== undefined && z.hp < z.maxHp * 0.65) f |= F_SMOKE;
       }
       if (ac instanceof Bomber) ac.engineDead.forEach((d, i) => { if (d) f |= F_ENG0 << i; });
-      if (ac instanceof Fighter && ac.team === 'axis') f |= w.destruction.bits(ac) << F_PARTS;   // parts shot off / burning
+      if (ac instanceof Fighter) f |= w.destruction.bits(ac) << F_PARTS;   // parts shot off / burning
       const fr = ac instanceof Fighter ? ac.structureFrac : ac.integrity;
       const p = ac.pos, q = ac.quat;
       a.push([ac.id, kind, r2(p.x + o.x), r2(p.y + o.y), r2(p.z + o.z), r4(q.x), r4(q.y), r4(q.z), r4(q.w), f, r2(fr)]);
@@ -1172,7 +1172,7 @@ export class CoopSession {
       const last = tr.s[tr.s.length - 1];
       this.flags.set(a, last.f);
       if (a instanceof Fighter && Number.isFinite(a.maxStructure)) a.structure = Math.max(1e-3, last.fr) * a.maxStructure;
-      if (a instanceof Fighter && a.team === 'axis') w.destruction.applyBits(a, last.f >>> F_PARTS);
+      if (a instanceof Fighter) w.destruction.applyBits(a, last.f >>> F_PARTS);
       if (a instanceof Bomber) for (let i = 0; i < a.engineDead.length; i++) a.engineDead[i] = !!(last.f & (F_ENG0 << i));
       if (!(last.f & F_ALIVE)) {
         const due = this.pendingDeath.get(id);
