@@ -161,6 +161,10 @@ async function boot() {
     (window as any).sws.hitFeedback = hitFeedbackQa(engine, game);
     const { seaQa } = await import('./dev/seaQa');
     (window as any).sws.sea = seaQa(engine, game);
+    // Enemy AI 2.0 sequences from the gunner seats; #ai11 runs them unattended (src/dev/aiQa.ts)
+    const { aiQa, aiAuto } = await import('./dev/aiQa');
+    (window as any).sws.aiQa = aiQa(engine, game);
+    void aiAuto(engine, game);
   }
 }
 

@@ -458,8 +458,8 @@ export class EnemyPilot {
       return;
     }
     this.state = 'withdraw'; this.timer = 0; this.wing = null; this.evasion = null;
-    // home: away from the bombers and down, without a hard turn
-    this.breakDir.copy(this.me.pos).sub(w.formationCenter).setY(0).normalize().multiplyScalar(0.7).addScaledVector(this.me.forward(_t).setY(0).normalize(), 0.3).setY(-0.15).normalize();
+    // he carries on the way he was going, nose down, and only slowly turns for home (withdraw)
+    this.breakDir.copy(this.me.forward(_t)).setY(-0.15).normalize();
     AI_STATS.limp++;
     if (this.me.pos.distanceTo(w.formationCenter) < 2500) this.call(w, 'ai_limp', AI_CALLS.limp[0], AI_CALLS.limp[1], 30);
   }
@@ -467,8 +467,9 @@ export class EnemyPilot {
   // Wingman: hold the slot on the leader and start the run `delay` s after his (true: flown)
   private flyWing(w: WorldView): boolean {
     const link = this.wing!, L = link.leader, me = this.me, fm = me.fm;
-    if (!L.me.alive || L.me.remove || L.state === 'withdraw' || L.state === 'dogfight' || L.state === 'evade' || L.override || !L.target?.alive) { this.wing = null; return false; }
-    if (L.state !== 'approach' && L.state !== 'attack' && L.state !== 'duel') return false;
+    if (!L.me.alive || L.me.remove || L.state === 'withdraw' || L.state === 'dogfight' || L.state === 'evade' || L.override) { this.wing = null; return false; }
+    // the leader is between runs (or has not picked his bomber yet): fly on alone for now
+    if (!L.target?.alive || (L.state !== 'approach' && L.state !== 'attack' && L.state !== 'duel')) return false;
     this.target = L.target; this.attack = L.attack; this.station = L.station; this.fromArc = L.fromArc;
     const s = wingSlot(link.i, _slot);
     const lf = L.me.forward(_t).setY(0);
@@ -717,9 +718,14 @@ export class EnemyPilot {
         // limping home: trailing smoke, power down with the engine, a damaged airframe that
         // wallows; still a target for a determined gunner
         const e = this.engineZone ? Math.max(0, this.engineZone.hp) / this.engineZone.maxHp : 1;
-        steerTo(fm, this.breakDir, 0.6, 0.4);
+        // a gentle turn for home over ~10 s (away from the bombers): a damaged aircraft is not
+        // thrown about, and he stays in the gunners' reach for a while
+        const home = _u.copy(me.pos).sub(w.formationCenter).setY(0);
+        if (home.lengthSq() > 1) home.normalize().setY(-0.15);
+        _d.copy(this.breakDir).lerp(home, THREE.MathUtils.clamp(this.timer / 10, 0, 1));
+        steerTo(fm, _d, 0.6, 0.4);
         fm.roll = THREE.MathUtils.clamp(fm.roll + Math.sin(this.timer * 2.1) * 0.25 * (1 - e), -1, 1);
-        fm.throttle = Math.min(0.55, limpThrottle(e));
+        fm.throttle = Math.min(0.45, limpThrottle(e));
         break;
       }
     }

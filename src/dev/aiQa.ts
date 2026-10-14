@@ -165,3 +165,44 @@ export function aiQa(engine: Engine, game: Game) {
 
   return { run, start, track };
 }
+
+// Unattended mode: open the dev build at  /#ai11?runs=2&tag=after&shots=1&sink=5320&port=5319
+// and the page measures and captures on its own (no console needed), posting JSON results to
+// a local sink (POST <sink>/?file=<name>.json) and frames to tools/gallery/save-server.mjs.
+//   runs=<reps>  human-level autoplay (skill 0) on m3 and 3 survival rounds, per difficulty
+//   dump=1       post the ai11.* runs kept in localStorage
+//   shots=1      every scenario above, one frame a second
+export async function aiAuto(engine: Engine, game: Game) {
+  if (!location.hash.startsWith('#ai11')) return;
+  const q = new URLSearchParams(location.hash.slice(location.hash.indexOf('?') + 1));
+  const sink = `http://127.0.0.1:${q.get('sink') ?? 5320}/`;
+  const post = (file: string, data: unknown) => fetch(`${sink}?file=${encodeURIComponent(file)}`, { method: 'POST', body: JSON.stringify(data, null, 1) }).catch(() => null);
+  const tag = q.get('tag') ?? 'after';
+  if (q.has('dump')) {
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i)!; if (k.startsWith('ai11.')) await post(`${k}.json`, JSON.parse(localStorage.getItem(k)!)); }
+  }
+  const reps = Number(q.get('runs') ?? 0);
+  if (reps > 0) {
+    const { runJob } = await import('./balance');
+    const out: unknown[] = [];
+    for (let rep = 0; rep < reps; rep++) for (const diff of ['recruit', 'veteran', 'ace'] as const) for (const kind of ['campaign', 'survival'] as const) {
+      for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i)!; if (k.startsWith('sws3d.') && k !== 'sws3d.settings.v2') localStorage.removeItem(k); }
+      const job = { kind, id: kind === 'campaign' ? 'm3' : undefined, diff, rounds: kind === 'survival' ? 3 : undefined };
+      let x: any = null, err: string | null = null;
+      try { x = runJob(engine, game, { ...job, role: 'gunner', skill: 0, steps: kind === 'survival' ? 40000 : 30000 }); } catch (e) { err = String(e); }
+      out.push({ tag, job, err, realMs: x?.realMs, success: x?.success, t: x?.t, acc: x?.accuracy, kills: x?.kills, kpm: x?.kpm, hitsTaken: x?.hitsTaken, dmg: x?.dmgTaken, minHp: x?.minHp, lost: x?.bombersLost, spawned: game.world.stats.enemiesSpawned, fail: x?.failCause, ai: x?.extra?.ai ?? null });
+      await post(`runs-${tag}.json`, out);
+      await new Promise((r) => setTimeout(r, 30));
+    }
+  }
+  if (q.has('shots')) {
+    const qa = aiQa(engine, game);
+    const res: Record<string, unknown> = {};
+    const plan: [Scenario, number][] = [['rotte', 14], ['evade', 13], ['zoom', 14], ['splitS', 14], ['corkscrew', 10], ['limp', 10], ['weak', 20]];
+    for (const [name, seconds] of plan) {
+      res[name] = await qa.run(name, { port: Number(q.get('port') ?? 5319), dir: 'ai11', every: 1, seconds });
+      await post('sequences.json', res);
+    }
+  }
+  await post('done.json', { done: true, tag });
+}
