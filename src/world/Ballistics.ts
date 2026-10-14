@@ -49,6 +49,8 @@ export class Ballistics {
   private team: Uint8Array; private tracer: Uint8Array; private cannon: Uint8Array; private player: Uint8Array;
   private col: Float32Array;
   private owner: (Aircraft | null)[];
+  private readonly allied: Aircraft[] = [];
+  private readonly axis: Aircraft[] = [];
   readonly tracers: TracerRenderer;
   onHit?: (e: HitEvent) => void;
   // Near-miss callback for "bullets cracking past" audio
@@ -105,11 +107,14 @@ export class Ballistics {
   // ON FIRE (GameFeel): 0..1 makes the player's own tracers burn hotter, whiter and wider
   playerTracerHeat = 0;
 
-  clear() { this.n = 0; this.owner.fill(null); }
+  clear() { this.n = 0; this.owner.fill(null); this.allied.length = this.axis.length = 0; }
 
   update(dt: number, aircraft: Aircraft[]) {
     const L = this.listener;
     const driftX = windDrift(weatherNow.windX, dt), driftZ = windDrift(weatherNow.windZ, dt);
+    const dragK = Math.exp(-BULLET_DRAG * dt);
+    this.allied.length = this.axis.length = 0;
+    for (const ac of aircraft) if (!ac.remove) (ac.team === 'allied' ? this.allied : this.axis).push(ac);
     let i = 0;
     while (i < this.n) {
       this.age[i] += dt;
@@ -119,19 +124,22 @@ export class Ballistics {
       this.vy[i] -= BULLET_GRAVITY * dt;
       this.vx[i] += driftX; this.vz[i] += driftZ;
       // light drag
-      const dragK = Math.exp(-BULLET_DRAG * dt);
       this.vx[i] *= dragK; this.vy[i] *= dragK; this.vz[i] *= dragK;
       const bx = ax + this.vx[i] * dt, by = ay + this.vy[i] * dt, bz = az + this.vz[i] * dt;
       let hitT = 2, hitAc: Aircraft | null = null, hitZone: HitZone | null = null;
       const team = this.team[i];
       const pl = this.player[i] === 1;
       const hs = pl ? this.playerHitScale : 1;
-      for (const ac of aircraft) {
+      const minX = Math.min(ax, bx), maxX = Math.max(ax, bx), minY = Math.min(ay, by), maxY = Math.max(ay, by), minZ = Math.min(az, bz), maxZ = Math.max(az, bz);
+      for (const ac of team === 0 ? this.axis : this.allied) {
         if (ac.remove || ac === this.owner[i]) continue;
-        if ((ac.team === 'allied' ? 0 : 1) === team) continue;
         const p = ac.root.position;
         // Bullets move relative to the target during the frame; test in target frame
         const r0 = ac.radius * hs + 2;
+        // Conservative segment AABB rejects distant aircraft before quadratic sphere tests.
+        // Include the near-miss radius so evasion receives exactly the same player passes.
+        const broad = pl ? Math.max(r0, NEAR_MISS_R) : r0;
+        if (p.x < minX - broad || p.x > maxX + broad || p.y < minY - broad || p.y > maxY + broad || p.z < minZ - broad || p.z > maxZ + broad) continue;
         // the player's rounds: one wider test first, so a close miss is felt (EnemyPilot evasion)
         if (pl && r0 < NEAR_MISS_R) {
           if (segSphere(ax, ay, az, bx, by, bz, p.x, p.y, p.z, NEAR_MISS_R) < 0) continue;

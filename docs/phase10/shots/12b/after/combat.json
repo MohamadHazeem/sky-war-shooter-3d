@@ -1,0 +1,305 @@
+{
+  "browser": "153.0.8010.12",
+  "results": [
+    {
+      "tier": "low",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1074,
+        604
+      ],
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+      "frames": 1800,
+      "samples": 1680,
+      "mean": 5.187857142818116,
+      "p50": 5,
+      "p95": 7.5,
+      "warmCalls": 0,
+      "refreshCalls": 1,
+      "retainedBefore": [
+        4,
+        0
+      ],
+      "retainedAfter": [
+        4,
+        0
+      ],
+      "initialPrograms": 248,
+      "finalPrograms": 248,
+      "compileCalls": 0,
+      "compileEvents": [],
+      "compiled": [],
+      "gpuPasses": {},
+      "cpu": {},
+      "peakEnemies": 10,
+      "stream": {
+        "tier": "low",
+        "shown": true,
+        "bombers": 162,
+        "groups": 8,
+        "escorts": 8,
+        "gaggleFighters": 6,
+        "baked": {
+          "bomber": false,
+          "escort": false,
+          "gaggle": false,
+          "near": false
+        },
+        "impostors": 0,
+        "nearInstances": 0,
+        "ribbons": 170,
+        "fieldBands": 24,
+        "wrecks": 0,
+        "barrages": 0
+      },
+      "log": "0s kills 0 enemies 3 bombers 18 playing\nenemy AI: {\"extend\":0,\"zoom\":0,\"dive\":0,\"reattack\":0,\"jink\":2,\"break\":0,\"splitS\":0,\"weakGun\":0,\"straggler\":0,\"engine\":0,\"schwarm\":1,\"signature\":0,\"limp\":8,\"press\":5}\nRESULT: TIMEOUT (playing) \u2014 perks 0, kills 4, accuracy 46%, bombers lost 0, t=28s",
+      "menuMs": 703.9000000059605,
+      "method": "Fixed-step autoplay (3 rendered 1/60 s frames per bot step; slow motion may shorten world time); every frame rendered and GPU fenced; timing after 120 frames; shader checks from first gameplay frame; fixed DRS 1",
+      "cpuThrottle": 1,
+      "errors": []
+    },
+    {
+      "tier": "medium",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1490,
+        838
+      ],
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+      "frames": 1800,
+      "samples": 1680,
+      "mean": 8.495773809527357,
+      "p50": 8.299999997019768,
+      "p95": 12,
+      "warmCalls": 0,
+      "refreshCalls": 1,
+      "retainedBefore": [
+        4,
+        0
+      ],
+      "retainedAfter": [
+        4,
+        0
+      ],
+      "initialPrograms": 264,
+      "finalPrograms": 264,
+      "compileCalls": 0,
+      "compileEvents": [],
+      "compiled": [],
+      "gpuPasses": {},
+      "cpu": {},
+      "peakEnemies": 8,
+      "stream": {
+        "tier": "medium",
+        "shown": true,
+        "bombers": 375,
+        "groups": 17,
+        "escorts": 12,
+        "gaggleFighters": 11,
+        "baked": {
+          "bomber": true,
+          "escort": true,
+          "gaggle": true,
+          "near": true
+        },
+        "impostors": 375,
+        "nearInstances": 0,
+        "ribbons": 762,
+        "fieldBands": 51,
+        "wrecks": 1,
+        "barrages": 1
+      },
+      "log": "0s kills 0 enemies 4 bombers 18 playing\nenemy AI: {\"extend\":0,\"zoom\":0,\"dive\":0,\"reattack\":0,\"jink\":0,\"break\":0,\"splitS\":0,\"weakGun\":0,\"straggler\":0,\"engine\":0,\"schwarm\":1,\"signature\":0,\"limp\":7,\"press\":4}\nRESULT: TIMEOUT (playing) \u2014 perks 0, kills 5, accuracy 27%, bombers lost 0, t=29s",
+      "menuMs": 1108,
+      "method": "Fixed-step autoplay (3 rendered 1/60 s frames per bot step; slow motion may shorten world time); every frame rendered and GPU fenced; timing after 120 frames; shader checks from first gameplay frame; fixed DRS 1",
+      "cpuThrottle": 1,
+      "errors": []
+    },
+    {
+      "tier": "high",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+      "frames": 1800,
+      "samples": 1680,
+      "mean": 9.030059523871612,
+      "p50": 8.600000008940697,
+      "p95": 13.5,
+      "warmCalls": 0,
+      "refreshCalls": 1,
+      "retainedBefore": [
+        4,
+        0
+      ],
+      "retainedAfter": [
+        4,
+        0
+      ],
+      "initialPrograms": 265,
+      "finalPrograms": 265,
+      "compileCalls": 0,
+      "compileEvents": [],
+      "compiled": [],
+      "gpuPasses": {},
+      "cpu": {},
+      "peakEnemies": 13,
+      "stream": {
+        "tier": "high",
+        "shown": true,
+        "bombers": 678,
+        "groups": 26,
+        "escorts": 16,
+        "gaggleFighters": 26,
+        "baked": {
+          "bomber": true,
+          "escort": true,
+          "gaggle": true,
+          "near": true
+        },
+        "impostors": 678,
+        "nearInstances": 0,
+        "ribbons": 2754,
+        "fieldBands": 78,
+        "wrecks": 1,
+        "barrages": 2
+      },
+      "log": "0s kills 0 enemies 3 bombers 18 playing\nenemy AI: {\"extend\":0,\"zoom\":0,\"dive\":0,\"reattack\":0,\"jink\":0,\"break\":0,\"splitS\":0,\"weakGun\":0,\"straggler\":0,\"engine\":0,\"schwarm\":2,\"signature\":0,\"limp\":3,\"press\":2}\nRESULT: TIMEOUT (playing) \u2014 perks 0, kills 1, accuracy 34%, bombers lost 0, t=30s",
+      "menuMs": 1092.2000000029802,
+      "method": "Fixed-step autoplay (3 rendered 1/60 s frames per bot step; slow motion may shorten world time); every frame rendered and GPU fenced; timing after 120 frames; shader checks from first gameplay frame; fixed DRS 1",
+      "cpuThrottle": 1,
+      "errors": []
+    },
+    {
+      "tier": "ultra",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+      "frames": 1800,
+      "samples": 1680,
+      "mean": 11.012023809436887,
+      "p50": 10.899999991059303,
+      "p95": 13.400000005960464,
+      "warmCalls": 0,
+      "refreshCalls": 1,
+      "retainedBefore": [
+        4,
+        0
+      ],
+      "retainedAfter": [
+        4,
+        0
+      ],
+      "initialPrograms": 265,
+      "finalPrograms": 265,
+      "compileCalls": 0,
+      "compileEvents": [],
+      "compiled": [],
+      "gpuPasses": {},
+      "cpu": {},
+      "peakEnemies": 11,
+      "stream": {
+        "tier": "ultra",
+        "shown": true,
+        "bombers": 996,
+        "groups": 34,
+        "escorts": 24,
+        "gaggleFighters": 38,
+        "baked": {
+          "bomber": true,
+          "escort": true,
+          "gaggle": true,
+          "near": true
+        },
+        "impostors": 996,
+        "nearInstances": 0,
+        "ribbons": 4046,
+        "fieldBands": 102,
+        "wrecks": 1,
+        "barrages": 3
+      },
+      "log": "0s kills 0 enemies 2 bombers 18 playing\nenemy AI: {\"extend\":0,\"zoom\":0,\"dive\":0,\"reattack\":0,\"jink\":1,\"break\":0,\"splitS\":0,\"weakGun\":0,\"straggler\":0,\"engine\":0,\"schwarm\":1,\"signature\":0,\"limp\":3,\"press\":2}\nRESULT: TIMEOUT (playing) \u2014 perks 0, kills 1, accuracy 43%, bombers lost 0, t=30s",
+      "menuMs": 1124.5,
+      "method": "Fixed-step autoplay (3 rendered 1/60 s frames per bot step; slow motion may shorten world time); every frame rendered and GPU fenced; timing after 120 frames; shader checks from first gameplay frame; fixed DRS 1",
+      "cpuThrottle": 1,
+      "errors": []
+    },
+    {
+      "tier": "cinematic",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+      "frames": 1800,
+      "samples": 1680,
+      "mean": 11.45833333343977,
+      "p50": 11.199999988079071,
+      "p95": 14,
+      "warmCalls": 0,
+      "refreshCalls": 1,
+      "retainedBefore": [
+        4,
+        0
+      ],
+      "retainedAfter": [
+        4,
+        0
+      ],
+      "initialPrograms": 265,
+      "finalPrograms": 265,
+      "compileCalls": 0,
+      "compileEvents": [],
+      "compiled": [],
+      "gpuPasses": {},
+      "cpu": {},
+      "peakEnemies": 9,
+      "stream": {
+        "tier": "ultra",
+        "shown": true,
+        "bombers": 996,
+        "groups": 34,
+        "escorts": 24,
+        "gaggleFighters": 38,
+        "baked": {
+          "bomber": true,
+          "escort": true,
+          "gaggle": true,
+          "near": true
+        },
+        "impostors": 996,
+        "nearInstances": 0,
+        "ribbons": 4046,
+        "fieldBands": 102,
+        "wrecks": 1,
+        "barrages": 3
+      },
+      "log": "0s kills 0 enemies 2 bombers 18 playing\nenemy AI: {\"extend\":0,\"zoom\":0,\"dive\":0,\"reattack\":0,\"jink\":0,\"break\":0,\"splitS\":0,\"weakGun\":0,\"straggler\":0,\"engine\":0,\"schwarm\":2,\"signature\":0,\"limp\":5,\"press\":3}\nRESULT: TIMEOUT (playing) \u2014 perks 0, kills 2, accuracy 30%, bombers lost 0, t=30s",
+      "menuMs": 31251.29999999702,
+      "method": "Fixed-step autoplay (3 rendered 1/60 s frames per bot step; slow motion may shorten world time); every frame rendered and GPU fenced; timing after 120 frames; shader checks from first gameplay frame; fixed DRS 1",
+      "cpuThrottle": 1,
+      "errors": []
+    }
+  ]
+}

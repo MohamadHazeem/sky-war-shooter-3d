@@ -82,13 +82,12 @@ describe('last-resort tier fallback', () => {
 });
 
 describe('quality presets', () => {
-  it('keeps hull-occluding shadows and volumetric clouds on Low', () => {
-    expect(QUALITY.low.shadows).toBe(1024);
-    expect(QUALITY.low.shadowRange / QUALITY.low.shadows).toBeLessThanOrEqual(QUALITY.medium.shadowRange / QUALITY.medium.shadows);
-    expect(QUALITY.low.cloudSteps).toBeGreaterThanOrEqual(32);
+  it('keeps reduced volumetric clouds and neutral shadow slots on Low', () => {
+    expect(QUALITY.low.shadows).toBe(1);
+    expect(QUALITY.low.cloudSteps).toBe(20);
     expect(QUALITY.low.cloudTemporal).toBe(false);
     expect(QUALITY.low.haze).toBe(false);
-    expect(QUALITY.medium.temporal).toBe(true);
+    expect(QUALITY.medium.temporal).toBe(false);
     expect(QUALITY.low.temporal).toBe(false);
   });
   it('orders the tiers and steps down one at a time', () => {

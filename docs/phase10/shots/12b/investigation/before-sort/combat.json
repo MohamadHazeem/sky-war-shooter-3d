@@ -1,0 +1,354 @@
+{
+  "browser": "153.0.8010.12",
+  "results": [
+    {
+      "tier": "low",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1192,
+        670
+      ],
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+      "frames": 5400,
+      "samples": 5280,
+      "mean": 7.261268939402406,
+      "p50": 7.799999997019768,
+      "p95": 10.200000002980232,
+      "warmCalls": 0,
+      "refreshCalls": 1,
+      "retainedBefore": [
+        3,
+        0
+      ],
+      "retainedAfter": [
+        3,
+        0
+      ],
+      "initialPrograms": 246,
+      "finalPrograms": 247,
+      "compileCalls": 2,
+      "compileEvents": [
+        {
+          "frame": 0,
+          "time": 0.016666666666666666,
+          "calls": 2
+        }
+      ],
+      "compiled": [
+        "#define SHADER_NAME ",
+        "#define SHADER_NAME "
+      ],
+      "gpuPasses": {
+        "sky": {
+          "samples": 176,
+          "mean": 0.12925278977272728
+        },
+        "opaque": {
+          "samples": 176,
+          "mean": 0.9395473636363634
+        },
+        "clouds": {
+          "samples": 176,
+          "mean": 1.5296015397727267
+        },
+        "haze": {
+          "samples": 176,
+          "mean": 0
+        },
+        "transparent": {
+          "samples": 176,
+          "mean": 2.5783186420454536
+        },
+        "temporal": {
+          "samples": 176,
+          "mean": 0
+        },
+        "post": {
+          "samples": 176,
+          "mean": 2.3972412045454554
+        }
+      },
+      "cpu": {
+        "game": 1.0396780304130957,
+        "render": 1.6234659090271275,
+        "world": 0.7143181819186518,
+        "effects": 0.11725378774783828,
+        "ballistics": 0.20725378809835424,
+        "contrails": 0.054621212260628285,
+        "gunner": 0.06990530290499782,
+        "hud": 0.11142045461544485,
+        "submission": 0.42261363644943095,
+        "post": 0.02388257577055783,
+        "draw": 1.144640151442339,
+        "clouds": 0.023674242398842717,
+        "temporal": 0.0006060606150916128,
+        "stream": 0.0008522727188061584,
+        "sky": 0.0006628787878787879
+      },
+      "peakEnemies": 16,
+      "stream": {
+        "tier": "low",
+        "shown": true,
+        "bombers": 162,
+        "groups": 8,
+        "escorts": 8,
+        "gaggleFighters": 6,
+        "baked": {
+          "bomber": false,
+          "escort": false,
+          "gaggle": false,
+          "near": false
+        },
+        "impostors": 0,
+        "nearInstances": 0,
+        "ribbons": 170,
+        "fieldBands": 24,
+        "wrecks": 0,
+        "barrages": 0
+      },
+      "log": "0s kills 0 enemies 2 bombers 18 playing\n30s kills 3 enemies 5 bombers 18 playing\n59s kills 5 enemies 0 bombers 18 playing\nenemy AI: {\"extend\":0,\"zoom\":1,\"dive\":0,\"reattack\":0,\"jink\":1,\"break\":0,\"splitS\":0,\"weakGun\":0,\"straggler\":0,\"engine\":0,\"schwarm\":3,\"signature\":0,\"limp\":23,\"press\":5}\nRESULT: TIMEOUT (playing) — perks 0, kills 7, accuracy 27%, bombers lost 0, t=89s",
+      "menuMs": 722.7999999970198,
+      "method": "Fixed-step autoplay (3 rendered 1/60 s frames per bot step; slow motion may shorten world time); every frame rendered and GPU fenced; timing after 120 frames; shader checks from first gameplay frame; fixed DRS 1",
+      "cpuThrottle": 1,
+      "errors": []
+    },
+    {
+      "tier": "medium",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1632,
+        918
+      ],
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+      "frames": 5400,
+      "samples": 5280,
+      "mean": 11.776590909089215,
+      "p50": 11.599999994039536,
+      "p95": 16.5,
+      "warmCalls": 0,
+      "refreshCalls": 1,
+      "retainedBefore": [
+        3,
+        0
+      ],
+      "retainedAfter": [
+        3,
+        0
+      ],
+      "initialPrograms": 263,
+      "finalPrograms": 264,
+      "compileCalls": 2,
+      "compileEvents": [
+        {
+          "frame": 0,
+          "time": 0.016666666666666666,
+          "calls": 2
+        }
+      ],
+      "compiled": [
+        "#define SHADER_NAME ",
+        "#define SHADER_NAME "
+      ],
+      "gpuPasses": {
+        "sky": {
+          "samples": 176,
+          "mean": 0.16993417045454548
+        },
+        "opaque": {
+          "samples": 176,
+          "mean": 1.864361954545454
+        },
+        "clouds": {
+          "samples": 176,
+          "mean": 1.6098576931818174
+        },
+        "haze": {
+          "samples": 176,
+          "mean": 1.493190312499999
+        },
+        "transparent": {
+          "samples": 176,
+          "mean": 2.9352499943181813
+        },
+        "temporal": {
+          "samples": 176,
+          "mean": 2.108029607954545
+        },
+        "post": {
+          "samples": 176,
+          "mean": 1.844777681818183
+        }
+      },
+      "cpu": {
+        "game": 1.9518371211985748,
+        "render": 4.1734659090271276,
+        "world": 1.5160037879211208,
+        "effects": 0.8052083333954215,
+        "ballistics": 0.2563068181671428,
+        "contrails": 0.06009469697477691,
+        "gunner": 0.12736742424524644,
+        "hud": 0.11761363642572453,
+        "submission": 0.8985416667564123,
+        "post": 0.06602272720951023,
+        "draw": 3.1411363634817078,
+        "clouds": 0.046950757638974626,
+        "temporal": 0.8339015151063601,
+        "stream": 0.014545454477157556,
+        "sky": 0.012140151547888915
+      },
+      "peakEnemies": 14,
+      "stream": {
+        "tier": "medium",
+        "shown": true,
+        "bombers": 375,
+        "groups": 17,
+        "escorts": 12,
+        "gaggleFighters": 11,
+        "baked": {
+          "bomber": true,
+          "escort": true,
+          "gaggle": true,
+          "near": true
+        },
+        "impostors": 375,
+        "nearInstances": 0,
+        "ribbons": 762,
+        "fieldBands": 51,
+        "wrecks": 2,
+        "barrages": 1
+      },
+      "log": "0s kills 0 enemies 4 bombers 18 playing\n28s kills 4 enemies 4 bombers 18 playing\n58s kills 6 enemies 3 bombers 18 playing\nenemy AI: {\"extend\":0,\"zoom\":0,\"dive\":0,\"reattack\":0,\"jink\":0,\"break\":0,\"splitS\":2,\"weakGun\":0,\"straggler\":0,\"engine\":0,\"schwarm\":6,\"signature\":0,\"limp\":21,\"press\":6}\nRESULT: TIMEOUT (playing) — perks 0, kills 9, accuracy 23%, bombers lost 0, t=87s",
+      "menuMs": 1108.5,
+      "method": "Fixed-step autoplay (3 rendered 1/60 s frames per bot step; slow motion may shorten world time); every frame rendered and GPU fenced; timing after 120 frames; shader checks from first gameplay frame; fixed DRS 1",
+      "cpuThrottle": 1,
+      "errors": []
+    },
+    {
+      "tier": "high",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+      "frames": 5400,
+      "samples": 5280,
+      "mean": 13.265284090957632,
+      "p50": 12.700000002980232,
+      "p95": 19.200000002980232,
+      "warmCalls": 0,
+      "refreshCalls": 1,
+      "retainedBefore": [
+        3,
+        0
+      ],
+      "retainedAfter": [
+        3,
+        0
+      ],
+      "initialPrograms": 263,
+      "finalPrograms": 265,
+      "compileCalls": 4,
+      "compileEvents": [
+        {
+          "frame": 0,
+          "time": 0.016666666666666666,
+          "calls": 2
+        },
+        {
+          "frame": 1475,
+          "time": 24.55249999999989,
+          "calls": 2
+        }
+      ],
+      "compiled": [
+        "#define SHADER_NAME ",
+        "#define SHADER_NAME ",
+        "#define SHADER_NAME ",
+        "#define SHADER_NAME "
+      ],
+      "gpuPasses": {
+        "sky": {
+          "samples": 176,
+          "mean": 0.25206076704545466
+        },
+        "opaque": {
+          "samples": 176,
+          "mean": 2.028410488636364
+        },
+        "clouds": {
+          "samples": 176,
+          "mean": 1.4697147272727262
+        },
+        "haze": {
+          "samples": 176,
+          "mean": 1.4480978125000001
+        },
+        "transparent": {
+          "samples": 176,
+          "mean": 2.5655598977272738
+        },
+        "temporal": {
+          "samples": 176,
+          "mean": 1.6929505227272714
+        },
+        "post": {
+          "samples": 176,
+          "mean": 2.0561057897727277
+        }
+      },
+      "cpu": {
+        "game": 2.175946969767524,
+        "render": 5.325075757579708,
+        "world": 1.6628787878477438,
+        "effects": 0.8622537877467094,
+        "ballistics": 0.3013446970391228,
+        "contrails": 0.06535984863611785,
+        "gunner": 0.14206439382537747,
+        "hud": 0.14003787893011715,
+        "submission": 1.3091477273709395,
+        "post": 0.08874999987751697,
+        "draw": 3.8341477272241855,
+        "clouds": 0.06333333335986191,
+        "temporal": 1.0531060606156561,
+        "stream": 0.01871212117486831,
+        "sky": 0.016231060606625044
+      },
+      "peakEnemies": 19,
+      "stream": {
+        "tier": "high",
+        "shown": true,
+        "bombers": 678,
+        "groups": 26,
+        "escorts": 16,
+        "gaggleFighters": 26,
+        "baked": {
+          "bomber": true,
+          "escort": true,
+          "gaggle": true,
+          "near": true
+        },
+        "impostors": 678,
+        "nearInstances": 0,
+        "ribbons": 2754,
+        "fieldBands": 78,
+        "wrecks": 2,
+        "barrages": 2
+      },
+      "log": "0s kills 0 enemies 2 bombers 18 playing\n30s kills 2 enemies 7 bombers 18 playing\n58s kills 6 enemies 5 bombers 18 playing\nenemy AI: {\"extend\":0,\"zoom\":0,\"dive\":0,\"reattack\":0,\"jink\":3,\"break\":0,\"splitS\":0,\"weakGun\":0,\"straggler\":0,\"engine\":0,\"schwarm\":3,\"signature\":0,\"limp\":22,\"press\":8}\nRESULT: TIMEOUT (playing) — perks 0, kills 7, accuracy 31%, bombers lost 0, t=88s",
+      "menuMs": 1119.800000011921,
+      "method": "Fixed-step autoplay (3 rendered 1/60 s frames per bot step; slow motion may shorten world time); every frame rendered and GPU fenced; timing after 120 frames; shader checks from first gameplay frame; fixed DRS 1",
+      "cpuThrottle": 1,
+      "errors": []
+    }
+  ]
+}

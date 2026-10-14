@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 /** Shade the distant sky/terrain at its own pixel budget; aircraft and interiors retain the
- * main resolution and depth edges. Low uses the original inexpensive shader directly.
+ * main resolution and depth edges. Low also shades its simplified terrain at half size.
  * Both materials stay alive and are warmed before play; no defines change with the preset. */
 export class SkyCache {
   scale = 1;

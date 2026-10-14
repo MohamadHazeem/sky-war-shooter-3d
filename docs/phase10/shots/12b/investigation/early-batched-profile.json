@@ -1,0 +1,118 @@
+{
+  "device": {
+    "vendor": "Google Inc. (Apple)",
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+  },
+  "gpuTimerAvailable": true,
+  "disjoint": false,
+  "groups": {
+    "sky + terrain cache": {
+      "cpu": {
+        "n": 120,
+        "mean": 0.0008333332836627961,
+        "p95": 0
+      },
+      "gpu": {
+        "n": 120,
+        "mean": 0,
+        "p95": 0
+      }
+    },
+    "pose + batch preparation": {
+      "cpu": {
+        "n": 120,
+        "mean": 2.6191666670143605,
+        "p95": 3.2000000029802322
+      },
+      "gpu": {
+        "n": 120,
+        "mean": 0,
+        "p95": 0
+      }
+    },
+    "layer classification": {
+      "cpu": {
+        "n": 120,
+        "mean": 0.02333333430190881,
+        "p95": 0.10000000894069672
+      },
+      "gpu": {
+        "n": 120,
+        "mean": 0,
+        "p95": 0
+      }
+    },
+    "opaque + shadows + terrain": {
+      "cpu": {
+        "n": 120,
+        "mean": 1.127499999726812,
+        "p95": 1.4000000059604645
+      },
+      "gpu": {
+        "n": 120,
+        "mean": 1.1051762666666667,
+        "p95": 2.907
+      }
+    },
+    "clouds": {
+      "cpu": {
+        "n": 120,
+        "mean": 0.05249999935428302,
+        "p95": 0.10000000894069672
+      },
+      "gpu": {
+        "n": 120,
+        "mean": 1.4061356250000006,
+        "p95": 2.138249
+      }
+    },
+    "haze": {
+      "cpu": {
+        "n": 120,
+        "mean": 0.002499999850988388,
+        "p95": 0
+      },
+      "gpu": {
+        "n": 120,
+        "mean": 0,
+        "p95": 0
+      }
+    },
+    "transparent effects + stream": {
+      "cpu": {
+        "n": 120,
+        "mean": 1.004166667163372,
+        "p95": 1.2000000029802322
+      },
+      "gpu": {
+        "n": 120,
+        "mean": 1.453218925,
+        "p95": 2.46925
+      }
+    },
+    "velocity + AO + TAA": {
+      "cpu": {
+        "n": 120,
+        "mean": 0,
+        "p95": 0
+      },
+      "gpu": {
+        "n": 120,
+        "mean": 0,
+        "p95": 0
+      }
+    },
+    "post + bloom + film": {
+      "cpu": {
+        "n": 120,
+        "mean": 0.07166666649281979,
+        "p95": 0.20000000298023224
+      },
+      "gpu": {
+        "n": 120,
+        "mean": 1.7251599499999997,
+        "p95": 4.766416
+      }
+    }
+  }
+}

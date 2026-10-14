@@ -1,3 +1,4 @@
+import { DepthSort } from './DepthSort';
 import * as THREE from 'three';
 import { Atmos } from './Atmosphere';
 import { mulberry } from './Particles';
@@ -137,6 +138,7 @@ export class VolumeFX {
   hasCam = false;
   private slots: Vol[] = [];
   private order: Int32Array;
+  private readonly depthSort: DepthSort;
   private keys: Float32Array;
   private iA: THREE.InstancedBufferAttribute;
   private iB: THREE.InstancedBufferAttribute;
@@ -157,6 +159,7 @@ export class VolumeFX {
 
   constructor(readonly max = 128) {
     for (let i = 0; i < max; i++) this.slots.push(blank());
+    this.depthSort = new DepthSort(max);
     this.order = new Int32Array(max);
     this.keys = new Float32Array(max);
     this.uniforms.tNoise.value = makeFireNoise();
@@ -339,14 +342,8 @@ export class VolumeFX {
       this.keys[n] = this.hasCam ? s.pos.distanceToSquared(this.camPos) : 0;
       n++;
     }
-    // back to front (insertion sort: the order barely changes from frame to frame)
-    const o = this.order, k = this.keys;
-    for (let i = 1; i < n; i++) {
-      const oi = o[i], ki = k[i];
-      let j = i - 1;
-      while (j >= 0 && k[j] < ki) { o[j + 1] = o[j]; k[j + 1] = k[j]; j--; }
-      o[j + 1] = oi; k[j + 1] = ki;
-    }
+    const o = this.order;
+    this.depthSort.sort(o, this.keys, n);
     const A = this.iA.array as Float32Array, B = this.iB.array as Float32Array, C = this.iC.array as Float32Array;
     for (let m = 0; m < n; m++) {
       const s = this.slots[o[m]];

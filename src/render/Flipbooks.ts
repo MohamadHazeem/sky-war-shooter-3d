@@ -1,3 +1,4 @@
+import { DepthSort } from './DepthSort';
 import * as THREE from 'three';
 import { Atmos } from './Atmosphere';
 import { assetUrl } from '../core/Assets';
@@ -176,7 +177,8 @@ export class FlipbookFX {
   private alb: Float32Array; private a0: Float32Array; private a1: Float32Array;
   private heat: Float32Array; private tau: Float32Array; private drag: Float32Array; private rise: Float32Array;
   private windK: Float32Array; private soft: Float32Array; private fadeIn: Float32Array;
-  private order: Int32Array; private keys: Float32Array;
+  private order: Int32Array;
+  private readonly depthSort: DepthSort; private keys: Float32Array;
   private iA: THREE.InstancedBufferAttribute; private iB: THREE.InstancedBufferAttribute; private iC: THREE.InstancedBufferAttribute;
   private geo: THREE.InstancedBufferGeometry;
   private attrs: THREE.InstancedBufferAttribute[];
@@ -188,6 +190,7 @@ export class FlipbookFX {
     this.fr0 = F(1); this.fr1 = F(1); this.curve = F(1); this.kind = F(1); this.s0 = F(1); this.s1 = F(1); this.rot = F(1); this.rotVel = F(1);
     this.alb = F(3); this.a0 = F(1); this.a1 = F(1); this.heat = F(1); this.tau = F(1); this.drag = F(1); this.rise = F(1);
     this.windK = F(1); this.soft = F(1); this.fadeIn = F(1);
+    this.depthSort = new DepthSort(max);
     this.order = new Int32Array(max); this.keys = new Float32Array(max);
     const geo = new THREE.InstancedBufferGeometry();
     const base = new THREE.PlaneGeometry(1, 1);
@@ -405,7 +408,7 @@ export class FlipbookFX {
       this.rot[i] += this.rotVel[i] * dt;
       i++;
     }
-    // back to front (insertion sort on the previous order: it barely changes between frames)
+    // Stable back-to-front sort; pool compaction and new particles rebuild the input order.
     const n = this.n, o = this.order, ks = this.keys;
     const cx = this.camPos.x, cy = this.camPos.y, cz = this.camPos.z;
     for (let m = 0; m < n; m++) {
@@ -413,12 +416,7 @@ export class FlipbookFX {
       const x = this.pos[m * 3] - cx, y = this.pos[m * 3 + 1] - cy, z = this.pos[m * 3 + 2] - cz;
       ks[m] = this.hasCam ? x * x + y * y + z * z : 0;
     }
-    for (let m = 1; m < n; m++) {
-      const oi = o[m], ki = ks[m];
-      let j = m - 1;
-      while (j >= 0 && ks[j] < ki) { o[j + 1] = o[j]; ks[j + 1] = ks[j]; j--; }
-      o[j + 1] = oi; ks[j + 1] = ki;
-    }
+    this.depthSort.sort(o, ks, n);
     const A = this.iA.array as Float32Array, B = this.iB.array as Float32Array, C = this.iC.array as Float32Array;
     for (let m = 0; m < n; m++) {
       const k = o[m];

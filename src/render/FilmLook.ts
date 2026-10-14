@@ -86,6 +86,8 @@ class ObjectMotionBlur {
   private quad = new FullScreenQuad();
   private prev = new Map<THREE.Object3D, { m: THREE.Matrix4; f: number }>();
   private seen: THREE.Object3D[] = [];
+  private velocityScene = new THREE.Scene();
+  private velocityProxies = new WeakMap<THREE.Mesh, THREE.Mesh>();
   private frame = 0;
   private hasPrev = false;
   private prevVP = new THREE.Matrix4();
@@ -224,7 +226,16 @@ class ObjectMotionBlur {
 
   private enable = (o: THREE.Object3D) => {
     const m = o as THREE.Mesh;
-    if (m.isMesh && !(m as THREE.InstancedMesh).isInstancedMesh && !(m as THREE.SkinnedMesh).isSkinnedMesh) o.layers.enable(VEL_LAYER);
+    if (!m.isMesh || (m as THREE.InstancedMesh).isInstancedMesh || (m as THREE.SkinnedMesh).isSkinnedMesh) return;
+    let draw = m;
+    if (m.children.length) {
+      let proxy = this.velocityProxies.get(m);
+      if (!proxy) { proxy = m.clone(false); this.velocityProxies.set(m, proxy); }
+      proxy.geometry = m.geometry; proxy.material = m.material; proxy.matrixWorld.copy(m.matrixWorld);
+      proxy.onBeforeRender = m.onBeforeRender; proxy.onAfterRender = m.onAfterRender;
+      draw = proxy;
+    }
+    draw.layers.enable(VEL_LAYER); this.velocityScene.children.push(draw);
   };
   private disable = (o: THREE.Object3D) => { o.layers.disable(VEL_LAYER); };
 
@@ -241,7 +252,16 @@ class ObjectMotionBlur {
     this.lastCount = 0;
     let out = src;
     if (heroes.length) {
-      for (let i = 0; i < heroes.length; i++) heroes[i].traverse(this.enable);
+      // The film pass only needs the chosen heroes and the unchanged light slots.
+      // Traversing the entire formation again costs CPU even when its layers do not match.
+      this.velocityScene.children.length = 0;
+      this.velocityScene.matrixWorldAutoUpdate = false;
+      this.velocityScene.overrideMaterial = this.velMat;
+      for (const o of scene.children) if ((o as THREE.Light).isLight) this.velocityScene.children.push(o);
+      for (let i = 0; i < heroes.length; i++) {
+        if (heroes[i].userData.submissionCulled) heroes[i].updateMatrixWorld(true);
+        heroes[i].traverseVisible(this.enable);
+      }
       const prevRT = r.getRenderTarget(), prevAuto = r.shadowMap.autoUpdate, prevOverride = scene.overrideMaterial;
       const prevBg = scene.background, prevMask = cam.layers.mask, prevAlpha = r.getClearAlpha();
       r.getClearColor(this.clear);
@@ -254,13 +274,13 @@ class ObjectMotionBlur {
       scene.overrideMaterial = this.velMat;
       scene.background = null;
       r.shadowMap.autoUpdate = false;
-      r.render(scene, cam);
+      r.render(this.velocityScene, cam);
       r.shadowMap.autoUpdate = prevAuto;
       scene.overrideMaterial = prevOverride;
       scene.background = prevBg;
       cam.layers.mask = prevMask;
       r.setClearColor(this.clear, prevAlpha);
-      for (let i = 0; i < heroes.length; i++) heroes[i].traverse(this.disable);
+      for (const o of this.velocityScene.children) if (!(o as THREE.Light).isLight) this.disable(o);
       // remember this frame's matrices
       const seen = this.seen;
       this.lastCount = seen.length;
@@ -291,6 +311,7 @@ class ObjectMotionBlur {
       }
       r.setRenderTarget(prevRT);
     }
+    this.velocityScene.children.length = 0;
     // forget objects not seen for a few seconds (removed aircraft)
     if ((this.frame & 255) === 0) for (const [o, e] of this.prev) if (this.frame - e.f > 240) this.prev.delete(o);
     this.prevVP.copy(this.curVP);

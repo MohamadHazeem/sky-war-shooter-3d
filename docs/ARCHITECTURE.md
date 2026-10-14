@@ -228,3 +228,44 @@ Playwright/Chrome and creates 16 isolated 1080p fixtures; `--quality ultra` sele
 shadow attenuation on the GPU, with and without reversed depth. Existing renderer smoke/perf
 scripts accept `RENDERER_OUTPUT` so new runs do not overwrite goal 01 evidence.
 See [the 01b report](phase10/reports/01b.md) for measured budgets and remaining limits.
+
+
+### Goal 12b CPU submission
+
+`Engine.render` prepares a render-only scene with `AircraftSubmission` before the opaque pass.
+Gameplay retains the original hierarchy for animation, raycasts, damage and film cameras.
+A cached flat traversal is invalidated by attachment/removal events. Visible matrices and LOD selection run once; hidden pools and inactive LODs are skipped. Authored
+aircraft static nodes have `matrixAutoUpdate=false`; mechanical pivots retain their live transforms.
+Whole-aircraft spheres reject off-screen roots before traversal, retaining off-camera casters
+when a sun cascade refreshes. Aircraft and attached interior parts share `BatchedMesh` draws by material, vertex layout and
+shadow/culling state. The main-camera multi-draw list is reused for temporal velocity; shadow
+cameras and each new pose rebuild it. Fighter soot uses a shared surface plus an instance tint; ace livery changes
+fall back to the owned material. Individual visibility, material and geometry swaps remain independent.
+Skinned meshes, custom callbacks, partial draw ranges and mirrored transforms use the ordinary
+path. Transparent prop sweeps share a sorted batch; other transparent objects retain sorting.
+`TemporalFrame` reads each batch instance's previous matrix for object velocity. `World.reset`
+releases submission buffers; source geometries/materials remain owned by their existing systems.
+
+Low uses a compact B-17 beyond 120 m; Medium does so beyond 350 m. Player aircraft, falling ships,
+open bomb bays and near aircraft retain the articulated model; Medium film shots also use it.
+Compact ships retain per-instance damage tint and the world smoke/fire effects. Film velocity
+submits only its selected heroes instead of traversing the whole formation again.
+Low keeps the three shadow shader slots with neutral one-pixel maps but stops refreshing them,
+disables the distant bomber stream and film passes, uses one bloom level, 20-step/.18-scale
+clouds and a 0.65 MP main image with half-size background shading. Low caps legacy smoke/glow pools at 512/256 new particles.
+Medium retains cloud shadows and full effects but omits heat haze, screen-space AO and TAA;
+its clouds use 28 steps at .24 scale, its main image is 1.25 MP and its close shadow map is 1024. High, Ultra and Cinematic retain their visual budgets.
+
+Detached structural pieces use the same batch path and fighter damage material/tint binding.
+Flipbook/volume depth ordering uses a stable merge sort with persistent scratch arrays; the
+old insertion sort rebuilt its input order every frame and grew quadratically in combat.
+
+Bullet collision uses persistent opposing-team lists and a conservative segment AABB before
+sphere/zone tests, preserving the wider player near-miss checks.
+
+CPU verification uses port 5312 and the bundled headless shell: `tools/cpu_profile.mjs`,
+`tools/presets_profile.mjs`, `tools/presets_perf.mjs`, `tools/submission_compare.mjs` and
+`tools/submission_validate.mjs`. The preset tools accept `PERF_OUTPUT`; combat also accepts
+`PERF_CPU=4`, `PERF_BREAKDOWN=1` and `PERF_STEPS` (600 = 1,800 rendered frames,
+1,800 = 5,400 frames). The bot advances three 1/60 s frames per step. `PLAYWRIGHT_EXECUTABLE`, when needed, must identify an
+already-installed **headless shell**, never the desktop Chrome application.

@@ -2,10 +2,11 @@
 import fs from 'node:fs/promises';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 const stage = process.argv[2] ?? 'after';
-const browser = await chromium.launch({ headless: true, args: ['--use-angle=metal', '--enable-gpu', '--disable-frame-rate-limit', '--disable-gpu-vsync'] });
+const out = process.env.PERF_OUTPUT ?? `docs/phase10/shots/12/${stage}`;
+const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE, args: ['--use-angle=metal', '--enable-gpu', '--disable-frame-rate-limit', '--disable-gpu-vsync'] });
 try {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await page.goto('http://127.0.0.1:5312/tools/visual-rig.html?shot=formation-chase&quality=high');
+  await page.goto(`http://127.0.0.1:5312/tools/visual-rig.html?shot=formation-chase&quality=${process.env.PERF_TIER ?? 'high'}`);
   await page.waitForFunction(() => window.visualRig?.ready || window.visualRig?.error, null, { timeout: 180000 });
   const result = await page.evaluate(async () => {
     const rig = window.visualRig; if (rig.error) throw Error(rig.error);
@@ -25,9 +26,11 @@ try {
       };
       restore.push(() => obj[key] = orig);
     }
+    if(e.submission) wrap(e.submission, 'prepare', 'pose + batch preparation');
+    wrap(e, 'sortLayers', 'layer classification');
     wrap(e.clouds, 'render', 'clouds'); wrap(e.temporal, 'render', 'velocity + AO + TAA');
     wrap(e.post, 'render', 'post + bloom + film'); wrap(e.heatHaze, 'render', 'haze');
-    wrap(r, 'render', (_, cam) => cam.layers.mask === 1 ? 'opaque + shadows + terrain' : 'transparent effects + stream', scene => scene === e.scene);
+    wrap(r, 'render', (_, cam) => cam.layers.mask === 1 ? 'opaque + shadows + terrain' : 'transparent effects + stream', scene => scene === e.scene || scene === e.submission?.scene);
     if (e.skyCache) wrap(e.skyCache, 'renderBackground', 'sky + terrain cache');
     try { await rig.benchmark(120); } finally { restore.reverse().forEach(f => f()); }
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -42,7 +45,7 @@ try {
     iframe.remove();
     return { device: rig.metadata.deviceInfo, gpuTimerAvailable: !!ext, disjoint, groups };
   });
-  await fs.mkdir(`docs/phase10/shots/12/${stage}`, { recursive: true });
-  await fs.writeFile(`docs/phase10/shots/12/${stage}/profile.json`, JSON.stringify(result, null, 2)+'\n');
+  await fs.mkdir(out, { recursive: true });
+  await fs.writeFile(`${out}/profile.json`, JSON.stringify(result, null, 2)+'\n');
   console.log(JSON.stringify(result));
 } finally { await browser.close(); }

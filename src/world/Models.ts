@@ -1,3 +1,4 @@
+import { compactBomber } from './CompactBomber';
 import * as THREE from 'three';
 import { markOwned } from '../render/Dispose';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -98,6 +99,9 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
       }
       else if (hero) prepareHero(root, k);
       else prepareAircraftSurface(root, k, skins);
+      // Authored aircraft nodes are static except these explicit mechanical pivots.
+      root.traverse(o => { if (k !== 'p51d_cockpit' && o !== root && !/^(pilot|prop_\d+|fan_\d+|ctl_.*|turret_.*|gun_.*|flap_[LR]|bomb_bay_[LR]|gear_.*)$/.test(o.name)) { o.updateMatrix(); o.matrixAutoUpdate = false; } });
+      if (k === 'b17') compact = compactBomber(root);
       cache.set(k, root);
     } catch (e) {
       console.warn(`Model ${k} unavailable, using placeholder`, e);
@@ -107,6 +111,13 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
   })();
   pending.set(k, p);
   return p;
+}
+
+let compact: THREE.Group | null = null;
+export function instantiateCompactBomber() {
+  const root = compact?.clone(true) ?? null;
+  if (root) for (const part of root.children) part.userData.batchTint = new THREE.Color();
+  return root;
 }
 
 let streamGeometry: THREE.BufferGeometry | null = null;
@@ -207,10 +218,12 @@ function propDiscTexture() {
 
 export interface PropInfo { node: THREE.Object3D; blades: THREE.Object3D[]; disc: THREE.Mesh; base: THREE.Quaternion; layered: boolean; }
 
+let heroDiscMaterial: THREE.MeshBasicMaterial | null = null;
 const discGeos = new Map<number, THREE.CircleGeometry>(); // one disc geometry per size, shared
 
 export function setupProps(root: THREE.Object3D, radius: number): PropInfo[] {
   const props: PropInfo[] = [];
+  const layered = !!root.getObjectByName('B17G_HERO');
   const nodes: THREE.Object3D[] = [];
   root.traverse((o) => { if (/^prop_\d+$/.test(o.name)) nodes.push(o); });
   nodes.sort((a, b) => a.name.localeCompare(b.name));
@@ -219,8 +232,10 @@ export function setupProps(root: THREE.Object3D, radius: number): PropInfo[] {
     if (!geo) discGeos.set(radius, geo = new THREE.CircleGeometry(radius, 48));
     const disc = new THREE.Mesh(
       geo,
-      markOwned(new THREE.MeshBasicMaterial({ map: propDiscTexture(), transparent: true, depthWrite: false, side: THREE.DoubleSide })),
+      layered ? (heroDiscMaterial ??= new THREE.MeshBasicMaterial({ map: propDiscTexture(), transparent: true, opacity: .55, depthWrite: false, side: THREE.DoubleSide }))
+        : markOwned(new THREE.MeshBasicMaterial({ map: propDiscTexture(), transparent: true, depthWrite: false, side: THREE.DoubleSide })),
     );
+    disc.userData.formationPropSweep = layered;
     disc.position.z = 0.05;
     disc.renderOrder = 5;
     disc.castShadow = false;
@@ -230,7 +245,7 @@ export function setupProps(root: THREE.Object3D, radius: number): PropInfo[] {
     // primitives of a multi-material prop; a single-mesh prop (formerly the node itself) has none.
     // A hero prop keeps its spinner (spinner_N) visible while the disc shows.
     const blades = node.children.flatMap((c) => c === disc || c.name.startsWith('spinner_') ? [] : c.userData.meshOf ? ((c as THREE.Mesh).isMesh ? [] : c.children) : [c]);
-    props.push({ node, blades, disc, base: node.quaternion.clone(), layered: !!root.getObjectByName('B17G_HERO') });
+    props.push({ node, blades, disc, base: node.quaternion.clone(), layered });
   }
   return props;
 }

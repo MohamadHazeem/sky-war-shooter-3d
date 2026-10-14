@@ -1,0 +1,78 @@
+[
+  {
+    "multiDraw": true,
+    "stations": [
+      {
+        "id": "waistL",
+        "programs": 245,
+        "compiles": 0
+      },
+      {
+        "id": "waistR",
+        "programs": 245,
+        "compiles": 0
+      },
+      {
+        "id": "top",
+        "programs": 245,
+        "compiles": 0
+      },
+      {
+        "id": "ball",
+        "programs": 245,
+        "compiles": 0
+      },
+      {
+        "id": "tail",
+        "programs": 245,
+        "compiles": 0
+      },
+      {
+        "id": "waistL",
+        "programs": 245,
+        "compiles": 0
+      }
+    ],
+    "compiles": 0,
+    "invalidated": true,
+    "errors": []
+  },
+  {
+    "multiDraw": false,
+    "stations": [
+      {
+        "id": "waistL",
+        "programs": 245,
+        "compiles": 0
+      },
+      {
+        "id": "waistR",
+        "programs": 245,
+        "compiles": 0
+      },
+      {
+        "id": "top",
+        "programs": 245,
+        "compiles": 0
+      },
+      {
+        "id": "ball",
+        "programs": 245,
+        "compiles": 0
+      },
+      {
+        "id": "tail",
+        "programs": 245,
+        "compiles": 0
+      },
+      {
+        "id": "waistL",
+        "programs": 245,
+        "compiles": 0
+      }
+    ],
+    "compiles": 0,
+    "invalidated": true,
+    "errors": []
+  }
+]

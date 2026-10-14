@@ -140,4 +140,17 @@ describe('Ballistics', () => {
     for (let i = 0; i < 20; i++) b.update(DT, []);
     expect(near.length).toBeGreaterThan(0);
   });
+  it('keeps player evasion passes outside the hit radius and tests reversed segments', () => {
+    const near = target(new THREE.Vector3(29, 0, 100)); near.fireNear = 0;
+    const far = target(new THREE.Vector3(31, 0, 100)); far.fireNear = 0;
+    b.fire(new THREE.Vector3(0, 0, 120), new THREE.Vector3(0, 0, -800), 'allied', 1, false, RED, null, false, true);
+    for (let i=0;i<5;i++) b.update(DT, [near, far]);
+    expect(near.fireNear).toBeGreaterThan(0); expect(far.fireNear).toBe(0); expect(hits).toHaveLength(0);
+    b.clear();
+    const ally = target(new THREE.Vector3(0, 0, 100), 'allied');
+    b.fire(new THREE.Vector3(0, 0, 120), new THREE.Vector3(0, 0, -800), 'axis', 1, false, RED, null);
+    for(let i=0;i<5;i++) b.update(DT,[ally]);
+    expect(hits).toHaveLength(1); expect(hits[0].target).toBe(ally);
+  });
+
 });

@@ -1,3 +1,4 @@
+import { AircraftSubmission } from '../src/render/AircraftSubmission';
 import { Engine } from '../src/core/Engine';
 import { describe, expect, it } from 'vitest';
 import * as T from 'three';
@@ -15,9 +16,9 @@ describe('renderer temporal contracts', () => {
   const e=Object.create(Engine.prototype) as Engine;
   const camera=new T.PerspectiveCamera(62,16/9,.03,260000),scene=new T.Scene(),temporal=new TemporalFrame(true);
   temporal.setSize(64,64);const projection=camera.projectionMatrix.clone();
-  Object.assign(e,{camera,scene,temporal,quality:'high',cascades:{update(){}},post:{jitter:new T.Vector2()},
+  Object.assign(e,{submission:new AircraftSubmission(),camera,scene,temporal,quality:'high',cascades:{update(){}},post:{jitter:new T.Vector2()},
    skyCache:{renderBackground(){}},sky:{mesh:{material:{uniforms:{uGroundXZ:{value:new T.Vector2()}}}}},sceneRT:{},hdrRT:{},
-   renderer:{domElement:{height:1080},setRenderTarget(){},clear(){},render(){}},
+   renderer:{shadowMap:{needsUpdate:false},domElement:{height:1080},setRenderTarget(){},clear(){},render(){}},
    clouds:{sunShadow:1,groundShadowTexture:null,groundShadowBox:new T.Vector3(),render(){throw new Error('pass failed');}}});
   expect(()=>e.render(1/60)).toThrow('pass failed');
   expect(scene.matrixWorldAutoUpdate).toBe(true);expect(camera.projectionMatrix.equals(projection)).toBe(true);
@@ -90,6 +91,15 @@ describe('stable cascades and material audit',()=>{
   expect(cascades.lights[0].position.distanceTo(positions[0])).toBeLessThan(.001);
   cascades.quality(1024,24,false);expect(cascades.lights).toHaveLength(3);expect(cascades.lights.every(l=>l.castShadow)).toBe(true);expect(cascadeUniform.value.z).toBe(0);expect(cascades.lights[2].shadow.mapSize.x).toBe(1);
   expect(Atmos.sunDir.length()).toBeCloseTo(1);
+ });
+ it('Low retains shadow shader slots but stops refreshing its neutral one-pixel maps',()=>{
+  const scene=new T.Scene(),sun=new T.DirectionalLight(),camera=new T.PerspectiveCamera();
+  scene.add(sun,sun.target);camera.updateMatrixWorld();
+  const cascades=new SunCascades(scene,sun);cascades.quality(1,24,false);cascades.update(camera,4);
+  for(const l of cascades.lights)l.shadow.needsUpdate=false;
+  cascades.update(camera,4);
+  expect(cascades.lights.every(l=>l.castShadow && l.shadow.mapSize.x===1 && !l.shadow.needsUpdate)).toBe(true);
+  expect(cascadeUniform.value.z).toBe(-1);
  });
  it('uses depth-convention-correct PCF bias and staggers expensive cascades',()=>{
   const scene=new T.Scene(),sun=new T.DirectionalLight(),camera=new T.PerspectiveCamera();
