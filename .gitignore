@@ -21,3 +21,6 @@ tools/fx/out/
 
 # B-17 interior 2.0 Blender build intermediates (tools/interior/)
 tools/interior/out/
+
+# Python bytecode caches (Blender build scripts)
+__pycache__/
