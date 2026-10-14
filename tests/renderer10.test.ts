@@ -16,7 +16,7 @@ describe('renderer temporal contracts', () => {
   const camera=new T.PerspectiveCamera(62,16/9,.03,260000),scene=new T.Scene(),temporal=new TemporalFrame(true);
   temporal.setSize(64,64);const projection=camera.projectionMatrix.clone();
   Object.assign(e,{camera,scene,temporal,quality:'high',cascades:{update(){}},post:{jitter:new T.Vector2()},
-   sky:{mesh:{material:{uniforms:{uGroundXZ:{value:new T.Vector2()}}}}},sceneRT:{},hdrRT:{},
+   skyCache:{renderBackground(){}},sky:{mesh:{material:{uniforms:{uGroundXZ:{value:new T.Vector2()}}}}},sceneRT:{},hdrRT:{},
    renderer:{domElement:{height:1080},setRenderTarget(){},clear(){},render(){}},
    clouds:{sunShadow:1,groundShadowTexture:null,groundShadowBox:new T.Vector3(),render(){throw new Error('pass failed');}}});
   expect(()=>e.render(1/60)).toThrow('pass failed');

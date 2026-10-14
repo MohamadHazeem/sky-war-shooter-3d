@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { deviceTiers, frameStats, MIN_FRAMES, MENU_TO_MISSION, PICK_SCALE, PIXEL_SHARE, needsRecoveryProbe, pickQuality, pickTargetMs, type FrameStats } from '../src/render/QualityPick';
-import { drsAbsorb } from '../src/render/FrameTiming';
+import { DRS_SLOW, drsAbsorb } from '../src/render/FrameTiming';
 
 // steady frames around a median (p90 a little above it)
 const st = (p50: number, p90 = p50 * 1.1, n = 90): FrameStats => ({ p50, p90, n });
@@ -61,7 +61,7 @@ describe('graphics preset pick', () => {
   });
 
   it('the hold limit is what dynamic resolution can absorb', () => {
-    const limit = pickTargetMs(60) * 1.14 * drsAbsorb(PICK_SCALE, PIXEL_SHARE.high);
+    const limit = pickTargetMs(60) * DRS_SLOW * drsAbsorb(PICK_SCALE, PIXEL_SHARE.high);
     const justIn = limit / MENU_TO_MISSION - 0.05, justOut = limit / MENU_TO_MISSION + 0.05;
     expect(pickQuality({ tier: 'high', stats: st(justIn, justIn), refreshHz: 60 }).quality).toBe('high');
     expect(pickQuality({ tier: 'high', stats: st(justOut, justOut), refreshHz: 60 }).quality).toBe('medium');
@@ -70,7 +70,7 @@ describe('graphics preset pick', () => {
   it('uses measured recovery before dropping a tier, even when the model predicts a drop', () => {
     expect(needsRecoveryProbe(st(24), 60)).toBe(true);
     expect(needsRecoveryProbe(st(8), 60)).toBe(false);
-    expect(pickQuality({ tier: 'high', stats: st(24), refreshHz: 60, recovered: st(14) }).quality).toBe('high');
+    expect(pickQuality({ tier: 'high', stats: st(24), refreshHz: 60, recovered: st(13) }).quality).toBe('high');
     // CPU-bound: fewer pixels do not save it, even when the optimistic estimate would hold.
     expect(pickQuality({ tier: 'high', stats: st(17), refreshHz: 60, recovered: st(17) }).quality).toBe('medium');
     expect(pickQuality({ tier: 'high', stats: st(24), refreshHz: 60, recovered: st(4, 5, 2) }).quality).toBe('low');
@@ -78,7 +78,7 @@ describe('graphics preset pick', () => {
 
   it('checks exact hold boundaries for every tier and refresh rate', () => {
     for (const tier of ['medium', 'high', 'ultra'] as const) for (const hz of [50, 60, 144]) {
-      const limit = pickTargetMs(hz) * 1.14 * drsAbsorb(PICK_SCALE, PIXEL_SHARE[tier]) / MENU_TO_MISSION;
+      const limit = pickTargetMs(hz) * DRS_SLOW * drsAbsorb(PICK_SCALE, PIXEL_SHARE[tier]) / MENU_TO_MISSION;
       expect(pickQuality({ tier, stats: st(limit - 0.01), refreshHz: hz }).quality).toBe(tier);
       expect(pickQuality({ tier, stats: st(limit + 0.01), refreshHz: hz }).quality).not.toBe(tier);
     }

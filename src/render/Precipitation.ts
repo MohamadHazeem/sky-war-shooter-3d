@@ -22,7 +22,7 @@ export class Precipitation {
     geo.setAttribute('seed', new THREE.InstancedBufferAttribute(seeds, 3));
     geo.instanceCount = 0;
     this.mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({
-      uniforms: this.uniforms, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+      uniforms: this.uniforms, transparent: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true,
       vertexShader: `attribute vec3 seed;
         uniform float uTime, uRain, uSnow; uniform vec3 uFlow, uOffset;
         varying vec2 vUv; varying float vAlpha;

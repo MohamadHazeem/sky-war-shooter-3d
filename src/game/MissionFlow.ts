@@ -37,6 +37,7 @@ export class MissionFlow {
   private bailCine = new BailOutCinematic();
   private scoreBanked = 0;     // score already paid out as merit at round ends
   private roundKills0 = 0;
+
   private prewarmed = false;
 
   constructor(private g: Game) {}
@@ -132,7 +133,12 @@ export class MissionFlow {
     g.applyLoadout(true);
     g.coop.onMissionStart();
     if (aa) g.aa.start();
-    if (!this.prewarmed) { this.prewarmed = true; g.world.prewarm(scene => scene ? g.engine.renderStudio(scene, g.world.ditchingSea.camera, 1 / 60) : g.engine.render(1 / 60), g.engine.camera); }
+    // New player materials and optional interior assets can appear after the tutorial.
+    // Warm each mission behind its fade; renderer programs remain cached between missions.
+    if (!this.prewarmed) {
+      this.prewarmed = true;
+      g.world.prewarm(scene => scene ? g.engine.renderStudio(scene, g.world.ditchingSea.camera, 1 / 60) : g.engine.render(1 / 60), g.engine.camera);
+    } else g.world.warmMission(g.engine.camera);
     g.state = 'playing';
     g.distantBattle.reset();
     g.ui.hud(m.role, g.coop.phase === 'mission');

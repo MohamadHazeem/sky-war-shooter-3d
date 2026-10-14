@@ -178,6 +178,7 @@ export class HeatHaze {
   private seed = 0;
   private time = 0;
   private cand: { d: number; i: number }[] = [];
+  private readonly clearColor = new THREE.Color();
   count = 0;          // emitters drawn last frame (dev)
 
   constructor(reversed: boolean) {
@@ -362,7 +363,7 @@ export class HeatHaze {
     u.uNear.value = camera.near;
     // offsets are in uv units; 'reduce motion' halves the constant shimmer
     u.uGain.value.set(0.01 * (calm ? 0.5 : 1) * this.gain, 0.02 * this.gain);
-    const prevClear = renderer.getClearColor(new THREE.Color()), prevAlpha = renderer.getClearAlpha();
+    const prevClear = renderer.getClearColor(this.clearColor), prevAlpha = renderer.getClearAlpha();
     renderer.setRenderTarget(this.rt);
     renderer.setClearColor(0x000000, 0);
     renderer.clear(true, false, false);

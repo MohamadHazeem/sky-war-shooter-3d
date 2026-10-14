@@ -1,0 +1,130 @@
+{
+  "dir": "dist",
+  "files": 1552,
+  "bytes": 69854767,
+  "transferBytes": 66553355,
+  "groups": {
+    "terrain/": {
+      "files": 104,
+      "size": 16905344,
+      "gz": 16904411
+    },
+    "audio/": {
+      "files": 89,
+      "size": 15304297,
+      "gz": 15277502
+    },
+    "audio/voice/": {
+      "files": 1308,
+      "size": 13906137,
+      "gz": 13742335
+    },
+    "models/hero/": {
+      "files": 16,
+      "size": 10000156,
+      "gz": 9950107
+    },
+    "models/": {
+      "files": 14,
+      "size": 5944626,
+      "gz": 5938390
+    },
+    "assets/": {
+      "files": 9,
+      "size": 4912197,
+      "gz": 1914330
+    },
+    "fx/": {
+      "files": 2,
+      "size": 2606682,
+      "gz": 2606682
+    },
+    "(root)": {
+      "files": 6,
+      "size": 180416,
+      "gz": 124686
+    },
+    "icons/": {
+      "files": 4,
+      "size": 94912,
+      "gz": 94912
+    }
+  },
+  "largest": [
+    {
+      "path": "assets/index-zMZPN0uL.js",
+      "size": 3468889,
+      "gz": 1129818
+    },
+    {
+      "path": "audio/music_tension.mp3",
+      "size": 2545937,
+      "gz": 2545937
+    },
+    {
+      "path": "models/hero/base.ktx2",
+      "size": 2257842,
+      "gz": 2257842
+    },
+    {
+      "path": "audio/music_menu.mp3",
+      "size": 1870933,
+      "gz": 1870933
+    },
+    {
+      "path": "models/hero/silver.ktx2",
+      "size": 1559870,
+      "gz": 1559870
+    },
+    {
+      "path": "models/p51d_cockpit.glb",
+      "size": 1477316,
+      "gz": 1477316
+    },
+    {
+      "path": "audio/loop_b17_interior.wav",
+      "size": 1411278,
+      "gz": 1411278
+    },
+    {
+      "path": "audio/music_combat.m4a",
+      "size": 1351420,
+      "gz": 1351420
+    },
+    {
+      "path": "fx/fx_a.webp",
+      "size": 1334080,
+      "gz": 1334080
+    },
+    {
+      "path": "models/hero/b17.glb",
+      "size": 1292780,
+      "gz": 1292780
+    },
+    {
+      "path": "fx/fx_b.webp",
+      "size": 1272602,
+      "gz": 1272602
+    },
+    {
+      "path": "models/p51d.glb",
+      "size": 1154240,
+      "gz": 1154240
+    },
+    {
+      "path": "audio/loop_merlin.wav",
+      "size": 1058478,
+      "gz": 1058478
+    },
+    {
+      "path": "audio/loop_wind.wav",
+      "size": 1058478,
+      "gz": 1058478
+    },
+    {
+      "path": "models/hero/orm.webp",
+      "size": 952402,
+      "gz": 952402
+    }
+  ]
+}

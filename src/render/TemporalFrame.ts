@@ -19,6 +19,7 @@ export class TemporalFrame {
   enabled = true;
   readonly jitter = new T.Vector2();
   ao = .6;
+  aoSlices = 3;
   private velocity = rt(true);
   private aoHistory = [rt(), rt()];
   private colorHistory = [rt(), rt()];
@@ -74,9 +75,9 @@ export class TemporalFrame {
     const common = () => ({ tDepth: { value: null }, invProj: { value: new T.Matrix4() }, reversed: { value: reversed ? 1 : 0 },
       tMotion: { value: this.velocity.texture }, tHistory: { value: null }, valid: { value: 0 }, texel: { value: new T.Vector2() } });
     this.ambient = new T.ShaderMaterial({
-      uniforms: { ...common(), frame: { value: 0 } }, vertexShader: vert, depthTest: false, depthWrite: false,
+      uniforms: { ...common(), frame: { value: 0 }, slices: { value: 3 } }, vertexShader: vert, depthTest: false, depthWrite: false,
       fragmentShader: /* glsl */ `${reconstruct}
-        uniform sampler2D tMotion,tHistory;uniform float valid,frame;uniform vec2 texel;
+        uniform sampler2D tMotion,tHistory;uniform float valid,frame,slices;uniform vec2 texel;
         // Cosine-weighted horizon integral on a view-aligned slice. Integrate both
         // sides of the projected normal's hemisphere, then normalize by the open arc.
         float arc(float h,float n){return .25*(cos(n)+2.*h*sin(n)-cos(2.*h-n));}
@@ -92,7 +93,8 @@ export class TemporalFrame {
           float visibility=0.;vec3 v=normalize(-p);
           float angle=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)+frame*.125;
           for(int slice=0;slice<3;slice++){
-            float a=(float(slice)+angle)*1.04719755;vec2 dir=vec2(cos(a)*texel.x/texel.y,sin(a));
+            if(float(slice)>=slices)break;
+            float a=(float(slice)+angle)*3.14159265/slices;vec2 dir=vec2(cos(a)*texel.x/texel.y,sin(a));
             vec3 tangent=normalize(vec3(cos(a),sin(a),0.)-v*dot(vec3(cos(a),sin(a),0.),v));
             float normalAngle=atan(dot(n,tangent),max(.001,dot(n,v)));
             vec2 horizon=vec2(-1.);
@@ -114,7 +116,7 @@ export class TemporalFrame {
             float h0=clamp(-acos(clamp(horizon.x,-1.,1.)),lo,hi),h1=clamp(acos(clamp(horizon.y,-1.,1.)),lo,hi);
             visibility+=clamp((arc(h0,normalAngle)+arc(h1,normalAngle))/max(.001,arc(lo,normalAngle)+arc(hi,normalAngle)),0.,1.);
           }
-          float ao=clamp(visibility/3.,.15,1.);vec4 motion=texture2D(tMotion,vUv);vec2 prev=vUv+motion.xy;vec2 history=texture2D(tHistory,prev).rg;
+          float ao=clamp(visibility/slices,.15,1.);vec4 motion=texture2D(tMotion,vUv);vec2 prev=vUv+motion.xy;vec2 history=texture2D(tHistory,prev).rg;
           bool accept=valid>.5&&motion.a>.5&&all(greaterThan(prev,vec2(0.)))&&all(lessThan(prev,vec2(1.)))&&abs(history.g-motion.z)<max(${HISTORY_DEPTH_ABS},motion.z*${HISTORY_DEPTH_REL});
           if(accept)ao=mix(ao,clamp(history.r,ao-.15,ao+.15),.85);
           gl_FragColor=vec4(ao,d,0.,1.);}`,
@@ -189,6 +191,7 @@ export class TemporalFrame {
     const next = 1 - this.index, a=this.ambient.uniforms, u=this.resolve.uniforms;
     a.tDepth.value=u.tDepth.value=depth;a.invProj.value.copy(camera.projectionMatrixInverse);u.invProj.value.copy(camera.projectionMatrixInverse);
     a.valid.value=u.valid.value=this.valid?1:0;a.frame.value=this.frame%8;
+    a.slices.value=this.aoSlices;
     a.tHistory.value=this.aoHistory[this.index].texture;
     this.quad.material=this.ambient;r.setRenderTarget(this.aoHistory[next]);this.quad.render(r);
     u.tColor.value=src.texture;u.tHistory.value=this.colorHistory[this.index].texture;u.tAO.value=this.aoHistory[next].texture;u.aoStrength.value=this.ao;u.camWorld.value.copy(camera.matrixWorld);

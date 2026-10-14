@@ -165,3 +165,12 @@ export class DustMotes {
     return zMask * yMask;
   }
 }
+
+// Keep one program owner alive across gunner attach/detach and seat changes.
+let warmDust: DustMotes | undefined;
+export function warmDustMotes(scene: THREE.Scene, at: THREE.Vector3) {
+  warmDust ??= new DustMotes(new THREE.Vector3(), 0, 0, 1);
+  const points = warmDust.points;
+  points.position.copy(at); scene.add(points);
+  return () => scene.remove(points);
+}

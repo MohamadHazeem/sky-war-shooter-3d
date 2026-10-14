@@ -97,15 +97,22 @@ const U = {
   uA2C: { value: 1 },
 };
 
-const hazeGLSL = /* glsl */ `
+// Distant ribbons need slowly varying aerial perspective, not two atmosphere LUT reads
+// at every overlapping fragment. Interpolate it from their existing segmented vertices.
+const hazeVertexGLSL = /* glsl */ `
 ${skyGLSL}
-${cloudOcclusionGLSL}
 uniform float uHaze;
-vec3 hazed(vec3 col, vec3 wp) {
-  vec3 d = wp - cameraPosition;
-  float dist = length(d);
-  return mix(col, skyRadiance(d / max(dist, 1.0)), 1.0 - exp(-dist / (26000.0 * max(uHaze, 0.05))));
+varying vec4 vStreamHaze;
+void streamHaze(vec3 wp) {
+  vec3 d = wp - cameraPosition; float dist = length(d);
+  vStreamHaze = vec4(skyRadiance(d / max(dist, 1.0)), 1.0 - exp(-dist / (26000.0 * max(uHaze, 0.05))));
 }
+`;
+const hazeGLSL = /* glsl */ `
+${cloudOcclusionGLSL}
+uniform vec3 uHorizon;
+varying vec4 vStreamHaze;
+vec3 hazed(vec3 col, vec3 wp) { return mix(col, vStreamHaze.rgb, vStreamHaze.a); }
 `;
 
 const ribbonVert = /* glsl */ `
@@ -321,8 +328,11 @@ const inst = (arr: Float32Array, size: number, dynamic = false) => {
 };
 const shaderMat = (o: { uniforms?: Record<string, THREE.IUniform>; vertexShader: string; fragmentShader: string; blending?: THREE.Blending }) => new THREE.ShaderMaterial({
   uniforms: { ...atmosUniforms, ...cloudOcclusionUniforms, ...U, ...(o.uniforms ?? {}) },
-  vertexShader: o.vertexShader, fragmentShader: o.fragmentShader,
-  transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: o.blending ?? THREE.NormalBlending,
+  vertexShader: o.fragmentShader.includes('hazed(') ? hazeVertexGLSL + o.vertexShader
+    .replaceAll('uniform vec3 uSunDir;', '')
+    .replace('gl_Position = projectionMatrix', 'streamHaze(wp); gl_Position = projectionMatrix') : o.vertexShader,
+  fragmentShader: o.fragmentShader,
+  transparent: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true, blending: o.blending ?? THREE.NormalBlending,
 });
 
 // Bomber engine positions (model metres, just behind the nacelles) for 1, 2 and 4 ribbons
@@ -392,7 +402,7 @@ export class BomberStream {
     this.group.add(this.tracers.renderer.mesh);
 
     // --- contrails: one ribbon per engine (or pair) of every bomber, one per fighter ---
-    this.trails = new THREE.Mesh(ribbonStrip(26), shaderMat({
+    this.trails = new THREE.Mesh(ribbonStrip(16), shaderMat({
       vertexShader: /* glsl */ `
         ${STREAM_GLSL}
         ${ribbonVert}
@@ -441,7 +451,7 @@ export class BomberStream {
     this.trails.renderOrder = 7;
 
     // --- the contrail field: one wide, long-lived band per squadron ---
-    this.field = new THREE.Mesh(ribbonStrip(36), shaderMat({
+    this.field = new THREE.Mesh(ribbonStrip(24), shaderMat({
       vertexShader: /* glsl */ `
         ${STREAM_GLSL}
         ${ribbonVert}
@@ -482,7 +492,7 @@ export class BomberStream {
       fragmentShader: /* glsl */ `
         ${hazeGLSL}
         ${noiseGLSL}
-        uniform vec3 uStreamSun;
+        uniform vec3 uStreamSun; uniform vec3 uSunDir;
         varying float vA; varying float vSide; varying float vAge; varying vec3 vW; varying float vSeed; varying float vSun;
         void main() {
           float edge = pow(max(1.0 - vSide * vSide, 0.0), 1.8);

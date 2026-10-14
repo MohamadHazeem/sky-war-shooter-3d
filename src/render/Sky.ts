@@ -11,6 +11,7 @@ export const skyGround = { uGroundHaze: { value: 24000 } };
 // procedural terrain/cirrus shader behind cockpit and aircraft pixels.
 export class SkyDome {
   readonly mesh: THREE.Mesh;
+  readonly material: THREE.ShaderMaterial;
   readonly cirrus = { value: 1 };
 
   constructor() {
@@ -112,6 +113,7 @@ export class SkyDome {
       depthWrite: false,
       depthTest: true,
     });
+    this.material = mat;
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = 1000;
@@ -131,7 +133,7 @@ export function disposeEnvironment(texture: THREE.Texture) {
 export function buildEnvironment(renderer: THREE.WebGLRenderer, sky: SkyDome): THREE.Texture {
   let capture=captures.get(renderer);
   if(!capture){
-    const scene=new THREE.Scene(),dome=sky.mesh.clone(),source=sky.mesh.material as THREE.ShaderMaterial;
+    const scene=new THREE.Scene(),dome=sky.mesh.clone(),source=sky.material;
     dome.material=new THREE.ShaderMaterial({vertexShader:source.vertexShader,fragmentShader:source.fragmentShader,
       side:source.side,depthWrite:false,depthTest:false,
       uniforms:{...source.uniforms,...atmosUniforms,uSunDisk:{value:0},uFarMapped:{value:0},uFarQuality:{value:0},uTgt:{value:new THREE.Vector4()},uGroundHaze:{value:24000}}});

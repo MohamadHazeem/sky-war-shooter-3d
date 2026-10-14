@@ -1,0 +1,722 @@
+[
+  {
+    "shot": "waist-fw190",
+    "metrics": {
+      "luminanceMean": 0.3538949511926606,
+      "histogram": [
+        0.015694926697530864,
+        0.11501157407407407,
+        0.39479697145061726,
+        0.1410132137345679,
+        0.018813657407407407,
+        0.00870900848765432,
+        0.005534336419753086,
+        0.002191840277777778,
+        0.0011429398148148147,
+        0.002184124228395062,
+        0.028728298611111112,
+        0.043483314043209875,
+        0.07756896219135802,
+        0.08497492283950617,
+        0.05786506558641975,
+        0.002286844135802469
+      ],
+      "contrastRms": 0.29820227924903264,
+      "colourfulness": 16.452671147051586,
+      "sharpness": 0.003985681581825013,
+      "edgeAliasingEstimate": 0.07867820613690008,
+      "edgeDensity": 0.006147211941938592,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 217,
+      "programsAfter": 217,
+      "mean": 16.059999999900658,
+      "p50": 15.799999997019768,
+      "p95": 18.700000002980232,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "tail-bf109",
+    "metrics": {
+      "luminanceMean": 0.18405615597421882,
+      "histogram": [
+        0,
+        0.14008439429012345,
+        0.18548177083333334,
+        0.6744309413580247,
+        0.0000028935185185185184,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "contrastRms": 0.03561342693514291,
+      "colourfulness": 15.425678483966557,
+      "sharpness": 0.002129662013528275,
+      "edgeAliasingEstimate": 0,
+      "edgeDensity": 0,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 218,
+      "programsAfter": 218,
+      "mean": 19.795000000049672,
+      "p50": 19.600000008940697,
+      "p95": 25.700000002980232,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "top-formation",
+    "metrics": {
+      "luminanceMean": 0.6197947259335358,
+      "histogram": [
+        0.005081983024691358,
+        0.019225501543209875,
+        0.0071011766975308645,
+        0.004676890432098765,
+        0.004125192901234568,
+        0.015762442129629628,
+        0.041380208333333335,
+        0.14478636188271604,
+        0.1303954475308642,
+        0.13005979938271606,
+        0.11038242669753086,
+        0.1251634837962963,
+        0.123725887345679,
+        0.10052324459876544,
+        0.03755787037037037,
+        0.00005208333333333334
+      ],
+      "contrastRms": 0.1724846608072183,
+      "colourfulness": 49.183131130932125,
+      "sharpness": 0.006790934718212211,
+      "edgeAliasingEstimate": 0.09549878345498783,
+      "edgeDensity": 0.007951232441028359,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 218,
+      "programsAfter": 218,
+      "mean": 15.956666666766008,
+      "p50": 15.799999997019768,
+      "p95": 20.299999997019768,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "ball-europe",
+    "metrics": {
+      "luminanceMean": 0.4911311751888607,
+      "histogram": [
+        0.03658854166666667,
+        0.09216097608024691,
+        0.019559702932098764,
+        0.013149112654320987,
+        0.00236352237654321,
+        0.00677758487654321,
+        0.054369212962962966,
+        0.16058159722222223,
+        0.14006799768518519,
+        0.2269873649691358,
+        0.1884813850308642,
+        0.054973476080246914,
+        0.0025670331790123456,
+        0.00017216435185185184,
+        0.0007436342592592593,
+        0.00045669367283950616
+      ],
+      "contrastRms": 0.1929912570125084,
+      "colourfulness": 16.810200102623917,
+      "sharpness": 0.007307485082854257,
+      "edgeAliasingEstimate": 0.08132511364343982,
+      "edgeDensity": 0.015533922356505404,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 218,
+      "programsAfter": 218,
+      "mean": 15.286666666716338,
+      "p50": 15,
+      "p95": 18.200000002980232,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "b17-beauty",
+    "metrics": {
+      "luminanceMean": 0.5871765116226203,
+      "histogram": [
+        0.00044077932098765435,
+        0.017472993827160496,
+        0.01943142361111111,
+        0.009037905092592592,
+        0.057004243827160496,
+        0.12051263503086419,
+        0.09770206404320987,
+        0.0825511188271605,
+        0.05693287037037037,
+        0.06722800925925926,
+        0.06558497299382716,
+        0.08054349922839506,
+        0.11168933256172839,
+        0.1350347222222222,
+        0.06616753472222223,
+        0.012665895061728395
+      ],
+      "contrastRms": 0.221878616875558,
+      "colourfulness": 14.819016642101769,
+      "sharpness": 0.006587972284095137,
+      "edgeAliasingEstimate": 0.10293008996331106,
+      "edgeDensity": 0.019246432102085313,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 217,
+      "programsAfter": 217,
+      "mean": 16.923333333432673,
+      "p50": 16.599999994039536,
+      "p95": 20.900000005960464,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "formation-chase",
+    "metrics": {
+      "luminanceMean": 0.6797737273023103,
+      "histogram": [
+        0.000014467592592592593,
+        0.00039207175925925927,
+        0.0006081211419753087,
+        0.0006500771604938272,
+        0.026059992283950617,
+        0.034877989969135804,
+        0.023913483796296296,
+        0.023738425925925927,
+        0.040205439814814815,
+        0.12443335262345678,
+        0.19023244598765432,
+        0.1894507137345679,
+        0.17554060570987653,
+        0.13152150848765432,
+        0.038356481481481484,
+        0.000004822530864197531
+      ],
+      "contrastRms": 0.14319508379414622,
+      "colourfulness": 23.863017896475213,
+      "sharpness": 0.004193411460216908,
+      "edgeAliasingEstimate": 0.14725337935001437,
+      "edgeDensity": 0.006726626568723992,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 216,
+      "programsAfter": 216,
+      "mean": 19.10333333313465,
+      "p50": 18.799999997019768,
+      "p95": 23.799999997019768,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "cloud-flythrough",
+    "metrics": {
+      "luminanceMean": 0.6461887583042566,
+      "histogram": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.00007282021604938271,
+        0.0002570408950617284,
+        0.0009866898148148148,
+        0.03551793981481482,
+        0.20816454475308643,
+        0.653275462962963,
+        0.10171248070987654,
+        0.000003375771604938272,
+        0.000004822530864197531,
+        0.000004822530864197531,
+        0
+      ],
+      "contrastRms": 0.03817548167972625,
+      "colourfulness": 8.818916327759878,
+      "sharpness": 0.0012300756399098768,
+      "edgeAliasingEstimate": 0.1793416572077185,
+      "edgeDensity": 0.0008521941338863728,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 216,
+      "programsAfter": 216,
+      "mean": 11.575,
+      "p50": 11.099999994039536,
+      "p95": 14.799999997019768,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "sunset",
+    "metrics": {
+      "luminanceMean": 0.5756917652568229,
+      "histogram": [
+        0.00008342978395061729,
+        0.0006669560185185185,
+        0.0020346257716049383,
+        0.03592447916666667,
+        0.049423225308641974,
+        0.03732445987654321,
+        0.058117283950617285,
+        0.09455102237654321,
+        0.12651765046296296,
+        0.172470100308642,
+        0.1530010609567901,
+        0.14827064043209875,
+        0.09642843364197531,
+        0.02515817901234568,
+        0.000025559413580246914,
+        0.0000028935185185185184
+      ],
+      "contrastRms": 0.1554584193012562,
+      "colourfulness": 30.884619366905326,
+      "sharpness": 0.003861463842311561,
+      "edgeAliasingEstimate": 0.1854878899631217,
+      "edgeDensity": 0.00485247658642564,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 217,
+      "programsAfter": 217,
+      "mean": 18.86999999980132,
+      "p50": 18.599999994039536,
+      "p95": 22.200000002980232,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "overcast-rain",
+    "metrics": {
+      "luminanceMean": 0.2809725271904235,
+      "histogram": [
+        0.01406057098765432,
+        0.5534066358024692,
+        0.1186352237654321,
+        0.01277199074074074,
+        0.0050419560185185185,
+        0.0013228202160493828,
+        0.00027295524691358026,
+        0.00002218364197530864,
+        0.009586226851851851,
+        0.06980034722222223,
+        0.06324701003086419,
+        0.09696228780864198,
+        0.05238088348765432,
+        0.0024889081790123455,
+        0,
+        0
+      ],
+      "contrastRms": 0.2627979952531579,
+      "colourfulness": 6.857617064707852,
+      "sharpness": 0.0035670654247888633,
+      "edgeAliasingEstimate": 0.06382978723404255,
+      "edgeDensity": 0.003955302852964107,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 217,
+      "programsAfter": 217,
+      "mean": 15.528333333631357,
+      "p50": 15.099999994039536,
+      "p95": 18.399999991059303,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "night-flak",
+    "metrics": {
+      "luminanceMean": 0.08849801539772022,
+      "histogram": [
+        0.2550612461419753,
+        0.5944627700617284,
+        0.12136188271604938,
+        0.025123939043209878,
+        0.0009307484567901234,
+        0.000667920524691358,
+        0.0006389853395061729,
+        0.000630787037037037,
+        0.000584008487654321,
+        0.0004287229938271605,
+        0.00010657793209876543,
+        0,
+        4.822530864197531e-7,
+        0,
+        0.0000014467592592592592,
+        4.822530864197531e-7
+      ],
+      "contrastRms": 0.043172973529407126,
+      "colourfulness": 13.711027334332664,
+      "sharpness": 0.0026754879223145895,
+      "edgeAliasingEstimate": 0.030646235842771485,
+      "edgeDensity": 0.0029038442564436905,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 204,
+      "programsAfter": 204,
+      "mean": 13.553333333383003,
+      "p50": 13.400000005960464,
+      "p95": 17.399999991059303,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "explosion-close",
+    "metrics": {
+      "luminanceMean": 0.6497257050903544,
+      "histogram": [
+        0.000003858024691358025,
+        0.00003809799382716049,
+        0.00016300154320987654,
+        0.002737750771604938,
+        0.01771604938271605,
+        0.037163869598765435,
+        0.039555844907407406,
+        0.051783854166666664,
+        0.1391136188271605,
+        0.14688994984567902,
+        0.12974199459876543,
+        0.1212914737654321,
+        0.1498876350308642,
+        0.12890287422839505,
+        0.032876639660493825,
+        0.0021334876543209875
+      ],
+      "contrastRms": 0.1516138140835898,
+      "colourfulness": 48.960960484351,
+      "sharpness": 0.0035727561523120543,
+      "edgeAliasingEstimate": 0.19941324851941214,
+      "edgeDensity": 0.017639741459196247,
+      "blackFraction": 0,
+      "whiteFraction": 0.00005304783950617284
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 216,
+      "programsAfter": 216,
+      "mean": 14.39500000004967,
+      "p50": 14.299999997019768,
+      "p95": 18,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "flak-barrage",
+    "metrics": {
+      "luminanceMean": 0.6732493547857243,
+      "histogram": [
+        0.000013020833333333334,
+        0.0006958912037037037,
+        0.004632040895061728,
+        0.004410204475308642,
+        0.027782118055555555,
+        0.035612461419753084,
+        0.02447241512345679,
+        0.02418499228395062,
+        0.04061101466049383,
+        0.12490837191358024,
+        0.18822337962962962,
+        0.18696711033950617,
+        0.17254918981481482,
+        0.1275072337962963,
+        0.03742476851851852,
+        0.000005787037037037037
+      ],
+      "contrastRms": 0.15068665447901686,
+      "colourfulness": 23.84397071159256,
+      "sharpness": 0.004345969129459888,
+      "edgeAliasingEstimate": 0.09199360472266634,
+      "edgeDensity": 0.011797713682117078,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 216,
+      "programsAfter": 216,
+      "mean": 19.398333333432674,
+      "p50": 19.399999991059303,
+      "p95": 23,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "damaged-neighbour",
+    "metrics": {
+      "luminanceMean": 0.6189033689977512,
+      "histogram": [
+        0.00003279320987654321,
+        0.00019145447530864197,
+        0.0005970293209876543,
+        0.032198109567901236,
+        0.07717640817901235,
+        0.08004050925925926,
+        0.06195457175925926,
+        0.06864390432098766,
+        0.06877314814814815,
+        0.05595389660493827,
+        0.0703882137345679,
+        0.10003279320987654,
+        0.1715552662037037,
+        0.15071132330246914,
+        0.059730902777777775,
+        0.002019675925925926
+      ],
+      "contrastRms": 0.20755040617548637,
+      "colourfulness": 20.196057814792034,
+      "sharpness": 0.00267253275220136,
+      "edgeAliasingEstimate": 0.12105221705914783,
+      "edgeDensity": 0.006140924471030236,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 216,
+      "programsAfter": 216,
+      "mean": 13.60499999995033,
+      "p50": 13.5,
+      "p95": 16,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "waist-interior",
+    "metrics": {
+      "luminanceMean": 0.15520715181309838,
+      "histogram": [
+        0.0008830054012345679,
+        0.5683540702160493,
+        0.16720775462962964,
+        0.12055314429012345,
+        0.07944685570987654,
+        0.04009548611111111,
+        0.015052083333333334,
+        0.004701485339506173,
+        0.001193576388888889,
+        0.0006134259259259259,
+        0.00031394675925925926,
+        0.00007330246913580247,
+        0.0007233796296296296,
+        0.0007788387345679012,
+        0.000008680555555555556,
+        9.645061728395062e-7
+      ],
+      "contrastRms": 0.08557462710056253,
+      "colourfulness": 9.439707931029428,
+      "sharpness": 0.003215802556712789,
+      "edgeAliasingEstimate": 0.0611956470532812,
+      "edgeDensity": 0.010266472690128283,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 219,
+      "programsAfter": 219,
+      "mean": 18.508333333581685,
+      "p50": 18.700000002980232,
+      "p95": 20.700000002980232,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "bomb-run",
+    "metrics": {
+      "luminanceMean": 0.6052820036197946,
+      "histogram": [
+        0.00002652391975308642,
+        0.0005902777777777778,
+        0.0010619212962962963,
+        0.001019483024691358,
+        0.010592206790123456,
+        0.029112172067901235,
+        0.07586082175925926,
+        0.15614438657407406,
+        0.15851369598765433,
+        0.14966869212962963,
+        0.11416039737654321,
+        0.07943769290123456,
+        0.11397569444444444,
+        0.09518711419753087,
+        0.01464891975308642,
+        0
+      ],
+      "contrastRms": 0.1473409789782726,
+      "colourfulness": 19.050411343725848,
+      "sharpness": 0.003012907103381002,
+      "edgeAliasingEstimate": 0.15597295266716754,
+      "edgeDensity": 0.006437402906939627,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 216,
+      "programsAfter": 216,
+      "mean": 15.85,
+      "p50": 16.200000002980232,
+      "p95": 19.099999994039536,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  },
+  {
+    "shot": "p51-cockpit",
+    "metrics": {
+      "luminanceMean": 0.5021427005128573,
+      "histogram": [
+        0.04245563271604938,
+        0.19836998456790123,
+        0.04760947145061729,
+        0.02261670524691358,
+        0.013201195987654322,
+        0.013361786265432099,
+        0.010209297839506172,
+        0.011982060185185186,
+        0.05147762345679013,
+        0.14210262345679012,
+        0.1217674575617284,
+        0.08051842206790123,
+        0.09662519290123457,
+        0.09881221064814814,
+        0.04759741512345679,
+        0.001292920524691358
+      ],
+      "contrastRms": 0.2942985181189581,
+      "colourfulness": 32.5471323499722,
+      "sharpness": 0.00838501675240747,
+      "edgeAliasingEstimate": 0.09779009450721239,
+      "edgeDensity": 0.03403214542049638,
+      "blackFraction": 0,
+      "whiteFraction": 0
+    },
+    "metricsSource": "PNG",
+    "metricsSize": [
+      1920,
+      1080
+    ],
+    "frameMs": {
+      "samples": 60,
+      "programsBefore": 204,
+      "programsAfter": 204,
+      "mean": 13.470000000049671,
+      "p50": 13.5,
+      "p95": 16,
+      "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+    }
+  }
+]

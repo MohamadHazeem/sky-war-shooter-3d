@@ -22,6 +22,8 @@ export function deviceInfo(): DeviceInfo {
   const saveData = !!(navigator as { connection?: { saveData?: boolean } }).connection?.saveData;
   return {
     touch: isTouchDevice(),
+    cores: navigator.hardwareConcurrency,
+    memoryGB: (navigator as { deviceMemory?: number }).deviceMemory,
     shortSide: scr ? Math.min(scr.width, scr.height) : Math.min(innerWidth, innerHeight),
     reducedData: reducedData || saveData,
   };
@@ -42,7 +44,8 @@ export interface BenchResult { quality: Quality; from: Quality; start: FrameStat
 // Frames per phase: a few warm-up frames (shader programs, render targets) are not timed;
 // After MIN_FRAMES valid samples, stop at `frames` or `ms`. Very slow devices must
 // not keep High just because the time budget expired before enough samples arrived.
-const WARM = 8;
+// Three stream atlases take 24 frame slots to bake; measuring them would under-pick the GPU.
+const WARM = 32;
 const START_PHASE = { frames: 90, ms: 1400 };
 const RECOVERY_PHASE = { frames: 48, ms: 900 };
 const UPPER_PHASE = { frames: 60, ms: 900 };
@@ -173,7 +176,7 @@ export class AutoGraphics {
     s.quality = q;
     s.graphicsMode = 'auto';
     delete s.gfxAuto;
-    this.engine.renderScale = scale;
+    this.engine.resetDynamicResolution(scale);
     this.game.applySettings();   // applies the preset (if the run ended on another), saves
     this.engine.resize();
     const name = t(`settings.q.${q}`);

@@ -1,0 +1,309 @@
+{
+  "drs": [
+    {
+      "tier": "high",
+      "scale": 0.55,
+      "target": 16.666666666666668,
+      "windows": [
+        {
+          "frame": 60,
+          "scale": 0.92,
+          "ms": 19.100000008940697
+        },
+        {
+          "frame": 120,
+          "scale": 0.92,
+          "ms": 19.19999998807907
+        },
+        {
+          "frame": 180,
+          "scale": 0.8400000000000001,
+          "ms": 17.299999997019768
+        },
+        {
+          "frame": 240,
+          "scale": 0.8400000000000001,
+          "ms": 20.200000002980232
+        },
+        {
+          "frame": 300,
+          "scale": 0.7600000000000001,
+          "ms": 17.099999994039536
+        },
+        {
+          "frame": 360,
+          "scale": 0.6800000000000002,
+          "ms": 17.5
+        },
+        {
+          "frame": 420,
+          "scale": 0.6800000000000002,
+          "ms": 19.600000008940697
+        },
+        {
+          "frame": 480,
+          "scale": 0.6000000000000002,
+          "ms": 20
+        },
+        {
+          "frame": 540,
+          "scale": 0.6000000000000002,
+          "ms": 17.099999994039536
+        },
+        {
+          "frame": 600,
+          "scale": 0.6000000000000002,
+          "ms": 16.400000005960464
+        },
+        {
+          "frame": 660,
+          "scale": 0.55,
+          "ms": 12.700000002980232
+        },
+        {
+          "frame": 720,
+          "scale": 0.55,
+          "ms": 14.099999994039536
+        }
+      ],
+      "renderSize": [
+        1056,
+        594
+      ],
+      "mean": 16.341111111144226,
+      "p95": 19.799999997019768,
+      "method": "720 frozen-scene frames; real GPU-fenced render cost fed to DRS; last 180 measured; simulation excluded"
+    },
+    {
+      "tier": "ultra",
+      "scale": 1,
+      "target": 16.666666666666668,
+      "windows": [
+        {
+          "frame": 60,
+          "scale": 1,
+          "ms": 16.5
+        },
+        {
+          "frame": 120,
+          "scale": 1,
+          "ms": 16.100000008940697
+        },
+        {
+          "frame": 180,
+          "scale": 1,
+          "ms": 16.099999994039536
+        },
+        {
+          "frame": 240,
+          "scale": 1,
+          "ms": 13.5
+        },
+        {
+          "frame": 300,
+          "scale": 1,
+          "ms": 15.799999997019768
+        },
+        {
+          "frame": 360,
+          "scale": 1,
+          "ms": 15.900000005960464
+        },
+        {
+          "frame": 420,
+          "scale": 1,
+          "ms": 17.5
+        },
+        {
+          "frame": 480,
+          "scale": 1,
+          "ms": 16.400000005960464
+        },
+        {
+          "frame": 540,
+          "scale": 1,
+          "ms": 17
+        },
+        {
+          "frame": 600,
+          "scale": 1,
+          "ms": 14.600000008940697
+        },
+        {
+          "frame": 660,
+          "scale": 1,
+          "ms": 18
+        },
+        {
+          "frame": 720,
+          "scale": 1,
+          "ms": 15.399999991059303
+        }
+      ],
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "mean": 15.468333333233993,
+      "p95": 18.299999997019768,
+      "method": "720 frozen-scene frames; real GPU-fenced render cost fed to DRS; last 180 measured; simulation excluded"
+    },
+    {
+      "tier": "cinematic",
+      "scale": 0.92,
+      "target": 16.666666666666668,
+      "windows": [
+        {
+          "frame": 60,
+          "scale": 0.92,
+          "ms": 16.099999994039536
+        },
+        {
+          "frame": 120,
+          "scale": 0.92,
+          "ms": 20.900000005960464
+        },
+        {
+          "frame": 180,
+          "scale": 0.92,
+          "ms": 16.799999997019768
+        },
+        {
+          "frame": 240,
+          "scale": 0.92,
+          "ms": 16
+        },
+        {
+          "frame": 300,
+          "scale": 0.92,
+          "ms": 16.900000005960464
+        },
+        {
+          "frame": 360,
+          "scale": 0.92,
+          "ms": 17.799999997019768
+        },
+        {
+          "frame": 420,
+          "scale": 0.92,
+          "ms": 17.200000002980232
+        },
+        {
+          "frame": 480,
+          "scale": 0.92,
+          "ms": 17.5
+        },
+        {
+          "frame": 540,
+          "scale": 0.92,
+          "ms": 18.600000008940697
+        },
+        {
+          "frame": 600,
+          "scale": 0.92,
+          "ms": 16.700000002980232
+        },
+        {
+          "frame": 660,
+          "scale": 0.92,
+          "ms": 17.100000008940697
+        },
+        {
+          "frame": 720,
+          "scale": 0.92,
+          "ms": 16
+        }
+      ],
+      "renderSize": [
+        1766,
+        993
+      ],
+      "mean": 16.63722222223878,
+      "p95": 18.5,
+      "method": "720 frozen-scene frames; real GPU-fenced render cost fed to DRS; last 180 measured; simulation excluded"
+    }
+  ],
+  "lowStress": [
+    {
+      "stress": "cpu4",
+      "timing": {
+        "samples": 120,
+        "programsBefore": 228,
+        "programsAfter": 228,
+        "mean": 47.34499999992549,
+        "p50": 46.1000000089407,
+        "p95": 56.5,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "renderSize": [
+        1264,
+        711
+      ],
+      "temporal": false,
+      "haze": false,
+      "cloudTemporal": false,
+      "errors": [],
+      "method": "CDP CPU 4x slowdown; fill4 is 4x Low pixel budget (GPU workload proxy, not GPU frequency throttling)"
+    },
+    {
+      "stress": "cpu4-fill4",
+      "timing": {
+        "samples": 120,
+        "programsBefore": 228,
+        "programsAfter": 228,
+        "mean": 51.8858333333085,
+        "p50": 52.29999999701977,
+        "p95": 59,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "renderSize": [
+        2529,
+        1423
+      ],
+      "temporal": false,
+      "haze": false,
+      "cloudTemporal": false,
+      "errors": [],
+      "method": "CDP CPU 4x slowdown; fill4 is 4x Low pixel budget (GPU workload proxy, not GPU frequency throttling)"
+    }
+  ],
+  "auto": [
+    {
+      "weak": false,
+      "pick": {
+        "quality": "high",
+        "from": "high",
+        "start": {
+          "p50": 12.5,
+          "p90": 13.800000011920929,
+          "n": 90
+        },
+        "scale": 1,
+        "refreshHz": 60
+      },
+      "cores": 18,
+      "memoryGB": 32
+    },
+    {
+      "weak": true,
+      "pick": {
+        "quality": "low",
+        "from": "high",
+        "start": {
+          "p50": 24.700000002980232,
+          "p90": 26,
+          "n": 57
+        },
+        "recovered": {
+          "p50": 22.80000001192093,
+          "p90": 26.700000002980232,
+          "n": 40
+        },
+        "scale": 0.8,
+        "refreshHz": 60
+      },
+      "cores": 2,
+      "memoryGB": 4
+    }
+  ]
+}

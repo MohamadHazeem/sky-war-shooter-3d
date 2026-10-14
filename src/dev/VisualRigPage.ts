@@ -27,9 +27,10 @@ async function boot() {
   await preload.loadEssentials(() => {});
   preload.loadInBackground();
   while (!preload.isMissionReady()) await new Promise(r => setTimeout(r, 30));
-  const { loadInteriorAssets } = await import('../game/InteriorAssets');
-  const { loadFlipbooks } = await import('../render/Flipbooks');
-  if (options.quality !== 'low') await Promise.all([loadInteriorAssets(), loadFlipbooks()]);
+  if (options.quality !== 'low') {
+    const [{ loadInteriorAssets }, { loadFlipbooks }] = await Promise.all([import('../game/InteriorAssets'), import('../render/Flipbooks')]);
+    await Promise.all([loadInteriorAssets(), loadFlipbooks()]);
+  }
   // Loading and decodes cannot consume the scene's random stream or clock.
   Math.random = seededRandom(options.seed);
   let tick = 0;
@@ -49,6 +50,7 @@ async function boot() {
   engine.bomberStream.bind(game.world);
   game.bookends.auto = true;
   engine.setQuality(options.quality);
+  game.world.effects.setQuality(options.quality);
   // No Engine.start(), auto graphics, live input, director, or wall-clock animation loop.
   Math.random = seededRandom(options.seed);
   const facts = setupRigShot(engine, game, shot, () => { tick++; engine.frame(RIG_DT, false); });

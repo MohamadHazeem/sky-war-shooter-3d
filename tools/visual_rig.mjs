@@ -29,7 +29,7 @@ export function referenceCamera(reference, metadata) {
 export async function captureRig(argv) {
   const args = parseArgs(argv, { out: 'docs/phase10/shots/baseline', url: 'http://127.0.0.1:5300', backend: 'webgl2', quality: 'high', seed: '19431008', shots: '', 'camera-from': '', 'verify-repeat': false, help: false }, ['verify-repeat', 'help']);
   if (args.help) {
-    console.log('node tools/visual_rig.mjs --out docs/phase10/shots/<goal>/after [--url http://127.0.0.1:5300] [--backend webgl2|webgpu] [--quality low|medium|high|ultra|cinematic] [--seed uint32] [--shots id,id] [--camera-from baseline/manifest.json] [--verify-repeat]\nStart Vite separately. Uses installed Playwright/Chrome; PLAYWRIGHT_MODULE can name an existing module path. No dependency downloads. Each shot uses a new isolated page. PNGs are ignored by git; commit JPEGs and metadata only.');
+    console.log('node tools/visual_rig.mjs --out docs/phase10/shots/<goal>/after [--url http://127.0.0.1:5300] [--backend webgl2|webgpu] [--quality low|medium|high|ultra|cinematic] [--seed uint32] [--shots id,id] [--camera-from baseline/manifest.json] [--verify-repeat]\nStart Vite separately. Uses an existing Playwright bundled headless shell; PLAYWRIGHT_MODULE can name an existing module path. No dependency downloads. Each shot uses a new isolated page. PNGs are ignored by git; commit JPEGs and metadata only.');
     return;
   }
   if (!['webgl2', 'webgpu'].includes(args.backend) || !['low', 'medium', 'high', 'ultra', 'cinematic'].includes(args.quality)) throw new Error('Invalid backend or quality');
@@ -47,7 +47,7 @@ export async function captureRig(argv) {
     try { ({ chromium } = await import(path.isAbsolute(candidate) ? pathToFileURL(candidate).href : candidate)); break; } catch { /* try the next existing installation */ }
   }
   if (!chromium) throw new Error('Use an existing Playwright installation: set PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs. No packages were installed.');
-  const browser = await chromium.launch({ headless: true, args: ['--autoplay-policy=no-user-gesture-required', ...(process.platform === 'darwin' ? ['--use-gl=angle', '--use-angle=metal'] : [])] });
+  const browser = await chromium.launch({ headless: true, args: ['--autoplay-policy=no-user-gesture-required', ...(process.platform === 'darwin' ? ['--use-gl=angle', '--use-angle=metal'] : []), '--enable-gpu', '--disable-frame-rate-limit', '--disable-gpu-vsync'] });
   const manifest = { version: 1, complete: false, seed: Number(args.seed), backend: args.backend, quality: args.quality, cameraReference: args['camera-from'] || null,
     browser: browser.version(), platform: `${process.platform}/${process.arch}`,
     revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
