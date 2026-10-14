@@ -3,7 +3,10 @@ import { markOwned } from '../render/Dispose';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { NOW, assetUrl, request, take } from '../core/Assets';
-import { prepareAircraftSurface, tuneAircraftMaterial } from '../render/AircraftLook';
+import { prepareAircraftSurface, tuneAircraftMaterial, useSkyEnv } from '../render/AircraftLook';
+
+import { registerHeroMaterial } from './HeroTextures';
+import { prepareHeroLODs, heroStreamGeometry } from './HeroB17';
 
 export type ModelKind =
   | 'b17' | 'fw190' | 'p51d' | 'p51d_cockpit'
@@ -17,7 +20,7 @@ export type ModelKind =
   | 'do335'; // Do 335 Pfeil: prop_1 (nose, tractor), prop_2 (behind the tail, pusher; also spins about local +Z)
 
 const FILES: Record<ModelKind, string> = {
-  b17: 'models/b17.glb',
+  b17: 'models/hero/b17.glb',
   fw190: 'models/fw190.glb',
   p51d: 'models/p51d.glb',
   p51d_cockpit: 'models/p51d_cockpit.glb',
@@ -77,12 +80,18 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
             if (mat.transparent && mat.opacity < 0.9) { m.castShadow = false; mat.depthWrite = false; }
             if (mat.map) mat.map.anisotropy = 8;
             // per-part roughness / metalness / sky reflection (render/AircraftLook.ts)
-            if (tuneAircraftMaterial(mat, k)) skins.add(mat);
+            if (k === 'b17') { useSkyEnv(mat, /glass/.test(mat.name) ? 1.3 : .65); registerHeroMaterial(mat); }
+            else if (tuneAircraftMaterial(mat, k)) skins.add(mat);
           }
         }
       });
       // panel lines, rivets and weathering on the skins (render/SurfaceDetail.ts)
-      prepareAircraftSurface(root, k, skins);
+      if (k === 'b17') {
+        prepareHeroLODs(root);
+        const stripes = root.getObjectByName('invasion_markings');
+        if (stripes) stripes.visible = false;
+      }
+      else prepareAircraftSurface(root, k, skins);
       cache.set(k, root);
     } catch (e) {
       console.warn(`Model ${k} unavailable, using placeholder`, e);
@@ -92,6 +101,12 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
   })();
   pending.set(k, p);
   return p;
+}
+
+let streamGeometry: THREE.BufferGeometry | null = null;
+export function b17StreamGeometry() {
+  const root = cache.get('b17');
+  return root ? (streamGeometry ??= heroStreamGeometry(root)) : null;
 }
 
 export function hasModel(k: ModelKind) { return !!cache.get(k); }

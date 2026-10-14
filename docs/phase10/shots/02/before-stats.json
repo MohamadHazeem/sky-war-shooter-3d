@@ -1,0 +1,43 @@
+{
+  "formation": {
+    "ldr": {
+      "black": 0,
+      "white": 0,
+      "blackClusters": [],
+      "whiteClusters": []
+    },
+    "hdr": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    }
+  },
+  "waist": {
+    "ldr": {
+      "black": 0,
+      "white": 0,
+      "blackClusters": [],
+      "whiteClusters": []
+    },
+    "hdr": {
+      "nan": 0,
+      "hot": 0,
+      "neg": 0,
+      "nanBox": null,
+      "hotBox": null
+    }
+  },
+  "perf": {
+    "avg": 10.35,
+    "p50": 10.4,
+    "p95": 11.4,
+    "max": 13.2,
+    "calls": 1,
+    "tris": 1,
+    "programs": 117,
+    "w": 2022,
+    "h": 1137
+  }
+}

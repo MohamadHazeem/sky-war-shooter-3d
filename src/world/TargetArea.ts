@@ -1,3 +1,4 @@
+import { Bomber } from './Aircraft';
 import { bombingOvercast } from '../game/BombRunState';
 import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
@@ -143,6 +144,7 @@ export class TargetArea {
       this.fall(dt);
       this.landings(clock, dt, mission);
     }
+    for (const a of w.aircraft) if (a instanceof Bomber) a.bayOpen = clock > -16 && clock < 10 && !w.bombRunHold;
     this.radio(clock, mission);
     this.draw();
     this.sync(clock, dt, mission);

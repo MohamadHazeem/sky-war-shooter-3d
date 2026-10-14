@@ -1,6 +1,6 @@
 # 3D model credits and licences
 
-The aircraft models in this folder are converted from FlightGear flight-simulator
+The legacy aircraft models in this folder are converted from FlightGear flight-simulator
 aircraft (AC3D models and textures) with `tools/convert_models/convert_ac.py`.
 They are derivative works and remain under the original licence (GNU GPL v2).
 If you redistribute them, you must also make the corresponding source available: the
@@ -9,6 +9,15 @@ Conversion changes: format conversion to glTF, re-orientation and re-centring,
 gear retracted, props/turrets split into pivot nodes, parts merged, some parts decimated
 or dropped, crew figures posed, textures
 resized and re-encoded (JPEG/PNG), and the cockpit textures packed into atlases.
+
+## hero/b17.glb — original Phase 10 B-17G exterior
+
+* Authoring source: `tools/hero/build.py`, `compress.mjs`, `render.py`; see `tools/hero/README.md` for the complete rebuild and source decision.
+* Licence: original project work, GPL-2.0-or-later. No third-party mesh, livery, photograph or texture pixels are incorporated.
+* Reference facts: [National Park Service B-17G 44-83690](https://www.nps.gov/articles/b17g-flying-fortress-no-4483690.htm), [NASM B-17G archive catalogue](https://airandspace.si.edu/collection-archive-item/boeing-b-17g-flying-fortress/sova-nasm-xxxx-0356-ref620). Reference images remain at their source; linked museum photographs are not relicensed or included.
+* Original assets: ring-loft exterior, airfoil wings, late-G gun mounts/glazing, radial engines, gear/flaps/bay pivots, three LODs, vector US insignia, fictional serial/group marks, and procedurally generated/baked PBR textures.
+* Runtime download format is recorded in `hero/manifest.json`. Meshopt compression uses the existing meshoptimizer dependency; the optional Basis build uses Khronos KTX tools and Three.js's bundled Basis decoder (its upstream licence must accompany copied decoder files).
+* This replaces the runtime B-17. The legacy model below remains available for historical comparison; it is not a source for this hero.
 
 ## b17.glb — Boeing B-17G Flying Fortress
 * Source: https://github.com/FGMEMBERS/B-17 (commit `949abb7615da96104a72c2b1a351a05d60a0bf3c`)

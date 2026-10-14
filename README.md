@@ -192,8 +192,8 @@ Headless browser tabs don't fire `requestAnimationFrame`, so the dev build expos
 
 ## Credits and licence
 
-* **Aircraft models:** from the FlightGear open-source hangar, converted with `tools/convert_models`. Authors are listed in [public/models/CREDITS.md](public/models/CREDITS.md):
-  * B-17G: Emmanuel Baranger et al.
+* **Aircraft models:** the runtime B-17G is original project geometry and baked PBR textures, rebuilt with [tools/hero](tools/hero/README.md). Other aircraft and the retained legacy B-17 are converted from FlightGear with `tools/convert_models`. Full sources and authors are listed in [public/models/CREDITS.md](public/models/CREDITS.md):
+  * Legacy B-17G: Emmanuel Baranger et al.
   * Fw 190 A-8: Detlef Faber.
   * P-51D: Jim Wilson, Hal V. Engel et al.
   * Bf 109, Bf 110, Ju 88, Me 262, Me 163, He 111 and Do 335: see CREDITS.md (Emmanuel Baranger and others).

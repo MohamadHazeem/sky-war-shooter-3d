@@ -1,0 +1,41 @@
+// Preserve mechanical pivots and LOD names while compressing mesh buffers.
+import {NodeIO, Document} from '@gltf-transform/core';
+import {ALL_EXTENSIONS, KHRTextureBasisu} from '@gltf-transform/extensions';
+import {meshopt,textureCompress} from '@gltf-transform/functions';
+import {MeshoptEncoder} from 'meshoptimizer';
+import sharp from 'sharp';
+import {mkdirSync,writeFileSync,statSync,copyFileSync,readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {execFileSync} from 'node:child_process';
+const src=resolve('tools/hero/output'),out=resolve('public/models/hero');mkdirSync(out,{recursive:true});
+await MeshoptEncoder.ready;
+const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'meshopt.encoder':MeshoptEncoder});
+const doc=await io.read(src+'/b17.glb');
+for(const n of doc.getRoot().listNodes()) if(n.getMesh()) {
+  n.addChild(doc.createNode('').setMesh(n.getMesh()).setExtras({meshOf:n.getName()}));n.setMesh(null);
+}
+for(const m of doc.getRoot().listMaterials()) {
+  if(m.getMetallicRoughnessTexture())m.setOcclusionTexture(m.getMetallicRoughnessTexture()).setOcclusionStrength(.55);
+  if(/marking|walkway/.test(m.getName()))m.setDoubleSided(true);
+}
+await doc.transform(textureCompress({encoder:sharp,targetFormat:'webp',quality:90}),meshopt({encoder:MeshoptEncoder,level:'high',quantizeTexcoord:14}));
+await io.write(out+'/b17.glb',doc);
+const ktx=process.env.TOKTX;
+for(const name of ['base','normal','orm']) {
+  if(ktx) execFileSync(ktx,['--t2','--encode','uastc','--uastc_quality','2','--zcmp','18','--genmipmap','--assign_oetf',name==='base'?'srgb':'linear',out+'/'+name+'.ktx2',src+'/'+name+'.png'],{stdio:'inherit'});
+  else await sharp(src+'/'+name+'.png').webp({quality:95,lossless:name!=='base'}).toFile(out+'/'+name+'.webp');
+}
+if(ktx) {
+  for(const f of ['basis_transcoder.js','basis_transcoder.wasm'])copyFileSync('node_modules/three/examples/jsm/libs/basis/'+f,out+'/'+f);
+  copyFileSync('tools/hero/BASIS-LICENSE.txt',out+'/BASIS-LICENSE.txt');
+  // An interoperable glTF material library accompanies the lazy runtime texture set.
+  const library=new Document();library.createExtension(KHRTextureBasisu).setRequired(true);
+  const textures=['base','normal','orm'].map(n=>library.createTexture(n).setImage(readFileSync(out+'/'+n+'.ktx2')).setMimeType('image/ktx2').setURI(n+'.ktx2'));
+  library.createMaterial('hero_detail').setBaseColorTexture(textures[0]).setNormalTexture(textures[1]).setMetallicRoughnessTexture(textures[2]).setOcclusionTexture(textures[2]);
+  await io.write(out+'/detail.gltf',library);
+}
+const files=['b17.glb',...['base','normal','orm'].map(n=>n+(ktx?'.ktx2':'.webp')),...(ktx?['basis_transcoder.js','basis_transcoder.wasm','BASIS-LICENSE.txt','detail.gltf']:[])];
+const bytes=Object.fromEntries(files.map(n=>[n,statSync(out+'/'+n).size]));
+if(Object.values(bytes).reduce((a,b)=>a+b,0)>15*1024*1024)throw Error('B-17 download budget exceeded');
+writeFileSync(out+'/manifest.json',JSON.stringify({format:ktx?'ktx2':'webp',files:bytes},null,2)+'\n');
+console.log(bytes);

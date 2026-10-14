@@ -1,3 +1,4 @@
+import { registerHeroMaterial } from './HeroTextures';
 import * as THREE from 'three';
 import type { Bomber, HitZone } from './Aircraft';
 import type { HitEvent } from './Ballistics';
@@ -120,7 +121,8 @@ export function skinVoidMaterial(src: THREE.MeshStandardMaterial, mesh: THREE.Ob
 
 function makeVoidMat(src: THREE.MeshStandardMaterial, xf: THREE.Matrix4) {
   const m = src.clone();
-  m.name = 'GD-L-damage';
+  registerHeroMaterial(m);
+  m.name = src.name.startsWith('hero_') ? src.name + '_damage' : 'GD-L-damage';
   const uVoidM = { value: xf.clone() };
   m.userData.voidM = uVoidM.value;
   m.customProgramCacheKey = () => 'sws-player-voids-2' + surfaceKey(m);   // + panel lines / weathering (SurfaceDetail.ts)
@@ -360,7 +362,13 @@ export class PlayerBomberDamage {
     // airframe skin meshes (GD-L: skin, engine: nacelles)
     const meshes: THREE.Mesh[] = [];
     const af = b.model.getObjectByName('airframe');
-    af?.traverse((o) => { if ((o as THREE.Mesh).isMesh) meshes.push(o as THREE.Mesh); });
+    af?.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh) return;
+      const mat = m.material as THREE.Material;
+      if (mat.name?.startsWith('hero_') && !/^hero_(skin|neutral_grey)/.test(mat.name)) return;
+      meshes.push(m);
+    });
     if (!meshes.length) return; // placeholder model: no visible damage
     const key = meshes.map((m) => m.geometry.uuid).join();
     let g = grids.get(key);

@@ -1,3 +1,4 @@
+import { HeroB17Controls } from './HeroB17';
 import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -618,6 +619,8 @@ export function makeGear(): Gear {
   const { metal, tyre } = gearMats;
   const group = new THREE.Group();
   group.name = 'bk_gear';
+  let hero: HeroB17Controls | null = null;
+  let owner: THREE.Object3D | null = null;
   const legs: THREE.Group[] = [];
   for (const x of [3.02, -3.02]) {
     // pivot at the nacelle; the leg hangs down to the axle
@@ -641,6 +644,12 @@ export function makeGear(): Gear {
     group, legs, tail,
     // 0 = down, 1 = up (the main legs swing forward into the nacelles, the tail wheel up and in)
     set(retract: number) {
+      if (group.parent !== owner) {
+        owner = group.parent;
+        hero = owner?.getObjectByName('B17G_HERO') ? new HeroB17Controls(owner) : null;
+      }
+      group.visible = !hero;
+      if (hero) { hero.setGear(retract); return; }
       const k = THREE.MathUtils.clamp(retract, 0, 1);
       for (const l of legs) { l.rotation.x = -k * 1.45; l.visible = k < 0.999; }
       tail.position.y = 0.05 + k * 0.45;

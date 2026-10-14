@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { instantiate, ModelKind, PropInfo, setupProps } from './Models';
+import { HeroB17Controls } from './HeroB17';
 import { FlightModel, FlightParams } from './FlightModel';
 
 export type Team = 'allied' | 'axis';
@@ -195,6 +196,7 @@ export class Fighter extends Aircraft {
 
 // B-17G: four engines, five gun stations. Flies in formation kinematically.
 export class Bomber extends Aircraft {
+  readonly controls: HeroB17Controls;
   slot = new THREE.Vector3();      // offset within the formation (formation frame)
   wobblePhase = Math.random() * 100;
   wobbleAmp = 1;
@@ -205,12 +207,14 @@ export class Bomber extends Aircraft {
   crewBailed = 0;
   scripted = false;                // lost in a formation set piece (World.scriptedLoss): not a combat loss
   bombsAway = false;
+  bayOpen = false;
   name = '';
   // Animated gun positions (driven by the AI crews): desired + current aim, model frame
   guns = new Map<string, { yaw?: THREE.Object3D; pitch?: THREE.Object3D; single?: THREE.Object3D; rest: THREE.Vector3; qy: THREE.Quaternion; qp: THREE.Quaternion; cur: THREE.Vector3; want: THREE.Vector3 | null }>();
 
   constructor() {
     super('b17', 'allied', 1.77);
+    this.controls = new HeroB17Controls(this.model);
     const find = (n: string) => this.model.getObjectByName(n) ?? undefined;
     const turret = (key: string, y: string, p: string, rest: THREE.Vector3) => {
       const yaw = find(y), pitch = find(p);
@@ -226,6 +230,8 @@ export class Bomber extends Aircraft {
     single('waistL', 'gun_waist_left', new THREE.Vector3(1, 0, 0));
     single('waistR', 'gun_waist_right', new THREE.Vector3(-1, 0, 0));
     single('tail', 'gun_tail', new THREE.Vector3(0, 0, -1));
+    single('cheekL', 'gun_cheek_left', new THREE.Vector3(1, 0, .3).normalize());
+    single('cheekR', 'gun_cheek_right', new THREE.Vector3(-1, 0, .3).normalize());
     this.radius = 18;
     const H = (name: string, x: number, y: number, z: number, r: number, hp: number, extra: Partial<HitZone> = {}) =>
       this.zones.push({ name, offset: new THREE.Vector3(x, y, z), radius: r, hp, maxHp: hp, ...extra });
@@ -259,6 +265,7 @@ export class Bomber extends Aircraft {
       if (this.root.position.y < WRECK_FLOOR.bomber || this.fallTime > 75) this.remove = true;
       rpm = 0.4;
     }
+    this.controls.update(dt, this.bayOpen);
     this.animateGuns(dt);
     this.updateProps(dt, rpm);
   }
@@ -267,6 +274,12 @@ export class Bomber extends Aircraft {
 
   // Swing turrets and flexible guns toward their crews' targets
   animateGuns(dt: number) {
+    // The cheek mounts follow the chin crew's visible target without adding AI firepower.
+    const chin = this.guns.get('chin')?.want;
+    if (chin && Math.abs(chin.x) > .25) {
+      const cheek = this.guns.get(chin.x > 0 ? 'cheekL' : 'cheekR');
+      if (cheek) cheek.want = chin;
+    }
     const k = 1 - Math.exp(-dt * 3);
     for (const g of this.guns.values()) {
       const want = g.want ?? g.rest;

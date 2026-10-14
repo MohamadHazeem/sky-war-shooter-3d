@@ -1,3 +1,5 @@
+import { loadHeroTextures } from '../world/HeroTextures';
+import { setHeroQuality } from '../world/HeroB17';
 import { beginMarkerFrame } from '../ui/MarkerAudit';
 import { Precipitation } from '../render/Precipitation';
 import * as THREE from 'three';
@@ -207,6 +209,8 @@ export class Engine {
   setQuality(q: Quality) {
     if (!QUALITY[q]) q = 'high';
     this.quality = q;
+    setHeroQuality(q === 'low');
+    if (q !== 'low') void loadHeroTextures(this.renderer);
     const p = QUALITY[q];
     const maxSamples = (this.renderer.capabilities as { maxSamples?: number }).maxSamples ?? 4;
     this.sceneRT.samples = Math.min(p.msaa, maxSamples);
