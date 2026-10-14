@@ -73,6 +73,17 @@ async function boot() {
   };
   (window as any).visualRig = {
     ready: true, shots, metadata, engine, game,
+    lockCamera: async (pose: typeof metadata.camera) => {
+      if (JSON.stringify(pose) === JSON.stringify(metadata.camera)) return;
+      engine.camera.position.fromArray(pose.position);
+      engine.camera.quaternion.fromArray(pose.quaternion);
+      engine.camera.fov = pose.fov;
+      engine.camera.updateProjectionMatrix(); engine.camera.updateMatrixWorld(true);
+      engine.post.resetHistory(); engine.clouds.resetHistory();
+      for (let i = 0; i < RIG_SETTLE; i++) await adapter.render(RIG_DT);
+      await adapter.sync();
+      metadata.camera = { position: engine.camera.position.toArray(), quaternion: engine.camera.quaternion.toArray(), fov: engine.camera.fov };
+    },
     // Serialize immediately after rendering (WebGL drawing buffers need not be preserved).
     png: async () => { await adapter.render(0); await adapter.sync(); return canvas.toDataURL('image/png'); },
     benchmark: async (n = 60) => {
