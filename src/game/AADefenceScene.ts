@@ -46,7 +46,7 @@ export class AABattlefield {
   readonly cases: { mesh: THREE.Mesh; vel: THREE.Vector3; ttl: number }[] = [];
   private craterIndex = 0;
   private owned: THREE.BufferGeometry[] = [];
-  constructor(quality: 'low' | 'medium' | 'high' | 'ultra') {
+  constructor(quality: 'low' | 'medium' | 'high' | 'ultra' | 'cinematic') {
     this.base = new Airbase(quality);
     this.group.name = 'aa-defence';
     for (const obj of this.base.group.children) {

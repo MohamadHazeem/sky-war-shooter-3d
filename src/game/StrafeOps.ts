@@ -280,7 +280,7 @@ export class StrafeOps {
     if (!this.active) { this.deactivate(); return; }
     // the countryside is built once per session and kept (it costs ~0.1-0.3 s to build)
     if (!shared || shared.world !== w) {
-      const q = (w as unknown as { engine?: { quality?: 'low' | 'medium' | 'high' | 'ultra' } }).engine?.quality ?? 'high';
+      const q = (w as unknown as { engine?: { quality?: 'low' | 'medium' | 'high' | 'ultra' | 'cinematic' } }).engine?.quality ?? 'high';
       const cs = new Countryside(q);
       shared = { cs, gt: new GroundTargets(w, cs), world: w };
     }

@@ -335,9 +335,10 @@ export class World implements WorldView {
     const unwarmTargetSmoke = warmTargetSmoke(this.scene);
     const unwarmStream = this.engine.bomberStream.warm();   // the stream's near-LOD programs
     this.engine.precipitation.warm(render);
-    this.engine.clouds.warmProbe(this.engine.renderer);
+    this.engine.clouds.warmProbe(this.engine.renderer);   // in-cloud probe (glass condensation, sun dimming)
     this.ditchingSea.warm(render, this.playerBomber?.root ?? b17.root);
     this.engine.renderer.shadowMap.needsUpdate = true;
+    this.engine.warmRenderer();
     render();
     unwarmTargetSmoke();
     unwarmStream();
