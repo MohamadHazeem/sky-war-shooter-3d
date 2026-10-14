@@ -1,3 +1,5 @@
+import { aircraftMarkerAlpha, projectMarker } from '../ui/MarkerProjection';
+import { recordMarker } from '../ui/MarkerAudit';
 import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import type { Input } from '../core/Input';
@@ -518,7 +520,7 @@ export class PilotController {
     const p = this.plane;
     if (!p || !p.alive) return;
     const cam = this.engine.camera;
-    const toScr = (v: THREE.Vector3) => { const s = v.project(cam); return { x: (s.x * 0.5 + 0.5) * W, y: (-s.y * 0.5 + 0.5) * H, ok: s.z < 1 }; };
+    const toScr = (v: THREE.Vector3) => { const s = projectMarker(v, cam); return { x: (s.x * 0.5 + 0.5) * W, y: (-s.y * 0.5 + 0.5) * H, ok: s.front }; };
     const ppr = H / (2 * Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2)); // pixels per radian
     const g = this.gunsight;
     const sx = (g.x * 0.5 + 0.5) * W, sy = (-g.y * 0.5 + 0.5) * H;
@@ -587,7 +589,7 @@ export class PilotController {
     const t = this.padlock;
     ctx.save();
     ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
-    if (!t) {
+    if (!t || aircraftMarkerAlpha(t, this.world, this.engine.camera) <= 0) {
       if (this.padNote) { ctx.fillStyle = 'rgba(255,220,150,0.8)'; ctx.fillText(tx(this.padNote), W / 2, H * 0.62); }
       ctx.restore();
       return;
@@ -599,6 +601,7 @@ export class PilotController {
     const bfm = this.world.enemyPilot(t)?.state === 'dogfight' ? DogfightAI.of(t) : undefined;
     const note = !t.alive ? 'SPLASHED' : bfm ? bfm.label : '';
     if (s.ok && s.x > 0 && s.x < W && s.y > 0 && s.y < H) {
+      recordMarker('padlock', t, 'world', s.x, s.y);
       const r = THREE.MathUtils.clamp(5200 / d, 16, 44);
       ctx.beginPath();
       ctx.moveTo(s.x, s.y - r); ctx.lineTo(s.x + r, s.y); ctx.lineTo(s.x, s.y + r); ctx.lineTo(s.x - r, s.y); ctx.closePath();
@@ -613,6 +616,7 @@ export class PilotController {
       const ang = Math.atan2(ey, ex);
       const rr = Math.min(W, H) * 0.36;
       const x = W / 2 + Math.cos(ang) * rr, y = H / 2 + Math.sin(ang) * rr;
+      recordMarker('padlock-arrow', t, 'edge', x, y);
       ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
       ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-6, -10); ctx.lineTo(-6, 10); ctx.closePath(); ctx.fill();
       ctx.restore();

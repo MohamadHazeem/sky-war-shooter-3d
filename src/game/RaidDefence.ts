@@ -1,3 +1,5 @@
+import { aircraftMarkerAlpha, projectAircraft, projectMarker } from '../ui/MarkerProjection';
+import { recordMarker } from '../ui/MarkerAudit';
 import * as THREE from 'three';
 import type { World } from '../world/World';
 import { makeGun, type Fighter } from '../world/Aircraft';
@@ -757,8 +759,8 @@ export class RaidDefence {
     ctx.save();
     ctx.font = isAr() ? `600 12px ${CANVAS_MONO}` : '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
     // the field
-    const fp = local(this.anchorAbs, _p).project(cam);
-    if (fp.z < 1) {
+    const fp = projectMarker(local(this.anchorAbs, _p), cam);
+    if (fp.front) {
       const x = THREE.MathUtils.clamp((fp.x * 0.5 + 0.5) * W, 40, W - 40), y = THREE.MathUtils.clamp((-fp.y * 0.5 + 0.5) * H, 40, H - 40);
       ctx.strokeStyle = 'rgba(140,210,255,0.85)'; ctx.fillStyle = 'rgba(140,210,255,0.9)'; ctx.lineWidth = 1.6;
       ctx.beginPath(); ctx.moveTo(x, y - 9); ctx.lineTo(x + 9, y); ctx.lineTo(x, y + 9); ctx.lineTo(x - 9, y); ctx.closePath(); ctx.stroke();
@@ -768,12 +770,14 @@ export class RaidDefence {
     // the raiders: day, always; night, only when coned or close
     const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 170);
     for (const r of this.raiders) {
-      if (!r.f.alive || !r.p.inbound) continue;
+      if (!r.p.inbound || aircraftMarkerAlpha(r.f, w, cam) <= 0) continue;
       const coned = this.lights.coned.has(r.f);
       if (def.night && !this.spotted(r.f)) continue;
-      const s = _t.copy(r.f.pos).project(cam);
-      if (s.z > 1 || Math.abs(s.x) > 1 || Math.abs(s.y) > 1) continue;
+      const s = projectAircraft(r.f, cam);
+      if (!s.on) continue;
       const x = (s.x * 0.5 + 0.5) * W, y = (-s.y * 0.5 + 0.5) * H;
+      recordMarker('raid-raider', r.f, 'world', x, y);
+      ctx.globalAlpha = aircraftMarkerAlpha(r.f, w, cam);
       const near = r.p.toGo() < 2000;
       ctx.fillStyle = near ? `rgba(255,80,60,${pulse})` : coned ? 'rgba(220,235,255,0.95)' : 'rgba(255,170,90,0.9)';
       ctx.beginPath(); ctx.moveTo(x, y - 26); ctx.lineTo(x + 6, y - 36); ctx.lineTo(x - 6, y - 36); ctx.closePath(); ctx.fill();

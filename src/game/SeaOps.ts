@@ -1,3 +1,5 @@
+import { markerAtmosphereAlpha, projectMarker, shownObject } from '../ui/MarkerProjection';
+import { recordMarker } from '../ui/MarkerAudit';
 import * as THREE from 'three';
 import type { World } from '../world/World';
 import type { Input } from '../core/Input';
@@ -296,27 +298,38 @@ export class SeaOps {
     if (this.controls) this.controls.style.display = this.input?.active ? 'flex' : 'none';
     ctx.save(); ctx.font = `12px ${CANVAS_MONO}`; ctx.textAlign = 'center';
     for (const s of this.sea.ships) {
-      const c = s.combat; if (c.resolved) continue;
+      const c = s.combat; if (c.resolved || !c.alive || c.depth > 3 || !shownObject(s.root)) continue;
+      s.root.getWorldPosition(_p);
+      const alpha = markerAtmosphereAlpha(_p, camera, 6000);
+      if (alpha <= 0) continue;
+      ctx.globalAlpha = alpha;
       if (s.salvoT >= 0) {
-        _v.copy(s.salvo).add(this.sea.root.position).project(camera);
-        const sx = (_v.x * .5 + .5) * W, sy = (-_v.y * .5 + .5) * H;
+        _v.copy(s.salvo).add(this.sea.root.position);
+        const salvo = projectMarker(_v, camera);
+        const sx = (salvo.x * .5 + .5) * W, sy = (-salvo.y * .5 + .5) * H;
         ctx.fillStyle = '#ffb294'; ctx.fillText(tx('SALVO — BREAK AWAY'), W / 2, H * .3);
-        ctx.strokeStyle = '#ff654f'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sx, sy, 25 + s.salvoT * 12, 0, Math.PI * 2); ctx.stroke(); ctx.fillStyle = '#ffb294'; ctx.fillText(tx('SALVO — BREAK AWAY'), sx, sy - 70);
+        if (salvo.on) {
+          recordMarker('sea-salvo', null, 'forecast', sx, sy, _v, null, 6000, s.index);
+          ctx.strokeStyle = '#ff654f'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sx, sy, 25 + s.salvoT * 12, 0, Math.PI * 2); ctx.stroke(); ctx.fillStyle = '#ffb294'; ctx.fillText(tx('SALVO — BREAK AWAY'), sx, sy - 70);
+        }
       }
-      _p.copy(s.root.position).add(this.sea.root.position); _p.y += c.spec.beam + 12; _p.project(camera);
-      const behind = _p.z < -1 || _p.z > 1;
-      if (behind || Math.abs(_p.x) > .94 || Math.abs(_p.y) > .8) {
+      s.root.getWorldPosition(_p);
+      const projection = projectMarker(_p, camera);
+      const behind = !projection.front;
+      if (!projection.on || Math.abs(projection.x) > .94 || Math.abs(projection.y) > .8) {
         if (!c.alive) continue;
-        const dx = _p.x * (behind ? -1 : 1), dy = -_p.y * (behind ? -1 : 1);
+        const dx = projection.x * (behind ? -1 : 1), dy = -projection.y * (behind ? -1 : 1);
         const edge = Math.max(Math.abs(dx) / .88, Math.abs(dy) / .7, .001);
         const ex = W * (.5 + dx / edge * .5), ey = H * (.5 + dy / edge * .5);
+        recordMarker('sea-arrow', null, 'edge', ex, ey, _p, s.root, 6000, s.index, c);
         ctx.fillStyle = '#e7bf77'; ctx.fillText(tx(c.spec.label), ex, ey - 12);
         ctx.save(); ctx.translate(ex, ey); ctx.rotate(Math.atan2(dy, dx));
         ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(-5, -4); ctx.lineTo(-5, 4); ctx.closePath(); ctx.fill(); ctx.restore();
         continue;
       }
-      const x = (_p.x * .5 + .5) * W, y = (-_p.y * .5 + .5) * H;
+      const x = (projection.x * .5 + .5) * W, y = (-projection.y * .5 + .5) * H;
       if (x < 30 || x > W - 30 || y < 30 || y > H - 100) continue;
+      recordMarker('sea-ship', null, 'world', x, y, _p, s.root, 6000, s.index, c);
       ctx.fillStyle = '#f0d292'; ctx.strokeStyle = '#e7bf77'; ctx.strokeRect(x - 7, y, 14, 14);
       ctx.fillText(tx(c.spec.label), x, y - 18);
       if (c.spec.length >= 75) { ctx.fillStyle = '#172124'; ctx.fillRect(x - 40, y - 11, 80, 4); ctx.fillStyle = '#e7bf77'; ctx.fillRect(x - 40, y - 11, 80 * c.hp / c.spec.hp, 4); }
@@ -325,13 +338,16 @@ export class SeaOps {
       if (this.world.playerFighter && s.root.position.distanceTo(_v.copy(this.world.playerFighter.pos).sub(this.sea.root.position)) < 1400) {
         for (const p of c.parts) {
           if (p.hp <= 0 || p.kind === 'hull' || p.kind === 'magazine' && !c.armourOpen) continue;
-          s.partPosition(p, _v).add(this.sea.root.position).project(camera); if (_v.z < -1 || _v.z > 1) continue;
-          const px = (_v.x * .5 + .5) * W, py = (-_v.y * .5 + .5) * H;
+          s.partPosition(p, _v).add(this.sea.root.position);
+          const part = projectMarker(_v, camera); if (!part.on || markerAtmosphereAlpha(_v, camera, 6000) <= 0) continue;
+          const px = (part.x * .5 + .5) * W, py = (-part.y * .5 + .5) * H;
+          recordMarker('sea-part', null, 'world', px, py, _v, s.root, 6000, s.index, p);
           ctx.strokeStyle = p.kind === 'magazine' ? '#ff704e' : '#ffe2a4'; ctx.strokeRect(px - 5, py - 5, 10, 10);
         }
       }
 
     }
+    ctx.globalAlpha = 1;
     const pf = this.world.playerFighter;
     if (pf && pf.pos.y - this.sea.groundAt(pf.pos.x, pf.pos.z) < pullOutHeight(pf.vel) + 25) { ctx.fillStyle = '#ff8e63'; ctx.fillText(tx('PULL UP'), W / 2, H * .65); }
     ctx.fillStyle = '#e5dfbe'; ctx.fillText(tx('R: HVAR rocket · N: 500 lb bomb · Low and level: skip bombing'), W / 2, H - 105);

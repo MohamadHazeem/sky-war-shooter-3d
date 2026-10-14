@@ -1,3 +1,5 @@
+import { aircraftMarkerAlpha, projectAircraft } from '../ui/MarkerProjection';
+import { recordMarker } from '../ui/MarkerAudit';
 import * as THREE from 'three';
 import type { World } from '../world/World';
 import { Bomber, Fighter } from '../world/Aircraft';
@@ -396,9 +398,11 @@ export class PilotOps {
     ctx.font = isAr() ? `600 12px ${CANVAS_MONO}` : '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
     const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 160);
     const mark = (b: Bomber, label: string, col: string) => {
-      const p = _v.copy(b.pos).project(cam);
-      if (p.z > 1) return;
-      const x = THREE.MathUtils.clamp((p.x * 0.5 + 0.5) * W, 30, W - 30), y = THREE.MathUtils.clamp((-p.y * 0.5 + 0.5) * H, 40, H - 30);
+      if (aircraftMarkerAlpha(b, this.world, cam) <= 0) return;
+      const p = projectAircraft(b, cam);
+      if (!p.on) return;
+      const x = (p.x * .5 + .5) * W, y = (-p.y * .5 + .5) * H;
+      recordMarker('bomber-under-attack', b, 'world', x, y);
       ctx.fillStyle = col;
       ctx.beginPath(); ctx.moveTo(x, y - 30); ctx.lineTo(x + 7, y - 42); ctx.lineTo(x - 7, y - 42); ctx.closePath(); ctx.fill();
       ctx.fillText(tx(label), x, y - 48);

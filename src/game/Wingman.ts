@@ -1,3 +1,5 @@
+import { recordMarker } from '../ui/MarkerAudit';
+import { aircraftMarkerAlpha, projectAircraft } from '../ui/MarkerProjection';
 import * as THREE from 'three';
 import type { Input } from '../core/Input';
 import type { World } from '../world/World';
@@ -452,9 +454,10 @@ export class Wingman {
     if (!touch) ctx.fillText(keys, tx0, y + (rtl ? 29 : 27));
     // tag on the aircraft
     if (alive) {
-      const s = _p.copy(f!.pos).project(cam);
-      if (s.z < 1 && Math.abs(s.x) < 1 && Math.abs(s.y) < 1) {
+      const s = projectAircraft(f!, cam);
+      if (s.on && aircraftMarkerAlpha(f!, this.world, cam) > 0) {
         const sx = (s.x * 0.5 + 0.5) * W, sy = (-s.y * 0.5 + 0.5) * H;
+        recordMarker('wingman', f!, 'world', sx, sy);
         ctx.strokeStyle = 'rgba(120,200,255,0.85)'; ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.arc(sx, sy, 9, 0, Math.PI * 2); ctx.stroke();
         ctx.fillStyle = 'rgba(120,200,255,0.95)'; ctx.textAlign = 'center';

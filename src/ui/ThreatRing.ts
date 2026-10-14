@@ -1,3 +1,5 @@
+import { liveMarkerTarget } from './MarkerProjection';
+import { recordMarker } from './MarkerAudit';
 import * as THREE from 'three';
 import type { World } from '../world/World';
 
@@ -80,7 +82,7 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
   // Threat dots
   const pr = R * 0.8;
   for (const f of world.fighters('axis')) {
-    if (!f.alive || f.falling || f.remove) continue;
+    if (!liveMarkerTarget(f) || !world.spotted(f)) continue;
     _to.subVectors(f.pos, origin);
     const d = _to.length();
     if (d > RANGE) continue;
@@ -88,6 +90,7 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
     const right = _to.x * rx + _to.z * rz;   // across the nose
     const th = Math.atan2(right, ahead);     // clockwise from 12 o'clock
     const x = cx + Math.sin(th) * pr, y = cy - Math.cos(th) * pr;
+    recordMarker('threat-dial', f, 'radar', x, y);
     // Dot size: high = larger, low = smaller
     const rad = 4 + THREE.MathUtils.clamp(_to.y / ALT_SCALE, -1, 1) * 2.2;
     const near = d < CLOSE;

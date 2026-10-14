@@ -65,6 +65,13 @@ async function boot() {
   };
   (window as any).sws.assetsReady = () => isMissionReady();
   if (import.meta.env.DEV) {
+    const { markerCapture, captureMarkerAudit } = await import('./ui/MarkerAudit');
+    markerCapture.enabled = true;
+    (window as any).sws.markerAuditRun = async (progress?: (s: string) => void) => {
+      const { runMarkerScenarios } = await import('./dev/MarkerScenarios');
+      return runMarkerScenarios((window as any).sws, progress);
+    };
+    (window as any).sws.markerAudit = () => captureMarkerAudit(engine.camera, innerWidth, innerHeight, game.world.aircraft, game.world.spotted);
     const { checkHudOverlaps } = await import('./ui/HudOverlap');
     (window as any).sws.hudOverlaps = checkHudOverlaps;
     const { autoplay } = await import('./dev/autoplay');
