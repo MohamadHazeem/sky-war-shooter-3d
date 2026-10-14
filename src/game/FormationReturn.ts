@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import type { Game } from './Game';
 import type { Bomber } from '../world/Aircraft';
-import { companionDitchDue, FORMATION_RADIO } from '../world/FormationRules';
+import { missionProgress } from './Missions';
+import { companionDitchAllowed, companionDitchDue, FORMATION_RADIO } from '../world/FormationRules';
 import { CamSnapshot, cineLens, HudHider } from './CineShared';
 import { sound } from '../audio/Sound';
 
@@ -20,10 +21,11 @@ export class FormationReturn {
     const g = this.g, m = g.mission;
     if (this.used || !m || g.state !== 'playing' || g.endResult || g.coop.role || g.boss.active || g.midRound.setPieces.busy || g.midRound.event || !g.world.player?.alive || g.engine.renderOverride) return false;
     if (m.bombsAway && !g.director.bombsDropped) return false;
+    if (!companionDitchAllowed(g.world.combatLosses, m.maxBombersLost)) return false;
     const campaign = m.number > 0 && m.role === 'gunner' && !m.tutorial && Number.isFinite(m.duration);
     for (const s of g.world.livingFormation.ships) {
       const b = s.b;
-      if (b.isPlayer || b.scripted || !companionDitchDue(campaign, g.world.time / m.duration, b.enginesOut, b.integrity, b.alive && !b.remove && (b.zone('cockpit')?.hp ?? 0) > 0)) continue;
+      if (b.isPlayer || b.scripted || !companionDitchDue(campaign, missionProgress(m, g.world.time, g.roundIdx, g.roundT0), b.enginesOut, b.integrity, b.alive && !b.remove && (b.zone('cockpit')?.hp ?? 0) > 0)) continue;
       this.begin(b); return this.active;
     }
     return false;

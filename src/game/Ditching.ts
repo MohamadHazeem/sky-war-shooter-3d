@@ -6,6 +6,7 @@ import { sound, type LoopEmitter } from '../audio/Sound';
 import { voice } from '../audio/Voice';
 import { tx } from '../i18n';
 import { achievements } from './Achievements';
+import { missionProgress } from './Missions';
 import { coastDistanceKm, shouldDitch, ditchSuccess, DITCH_TEXT, DITCH_RADIO, type DitchState } from './DitchingRules';
 
 export const DITCH_DURATION = 31;
@@ -49,7 +50,8 @@ export class Ditching {
   eligible(ending: boolean): boolean {
     const g = this.g, m = g.mission, b = g.world.playerBomber;
     if (!m || !b || this.ditched || g.endResult) return false;
-    const progress = Math.min(1, g.world.time / m.duration);
+    if (!ending && g.boss.active) return false;   // no ditching out of a battle-group fight
+    const progress = missionProgress(m, g.world.time, g.roundIdx, g.roundT0);
     // A structurally destroyed ship or dead pilots must retain the bail-out ending.
     const r = this.rules;
     r.controllable = !b.remove && b.alive;

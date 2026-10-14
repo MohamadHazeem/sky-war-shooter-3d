@@ -17,7 +17,7 @@ import { playMedalFanfare } from '../audio/Fanfare';
 const medalDelay = (i: number) => 0.8 + i * 0.5;
 import { CREW, CrewId } from '../world/Crew';
 import { briefingMapSvg } from './BriefingMap';
-import { campaignSize, decorateBriefing } from './BriefingExtras';
+import { campaignSize, decorateBriefing, endBriefing } from './BriefingExtras';
 import { mountAccessibilityPanel } from './AccessibilityPanel';
 import { mountHangarExtras } from './CrateUI';
 import { foldHangar } from './HangarFold';
@@ -248,7 +248,7 @@ export class UI {
     b.querySelector('[data-back]')!.addEventListener('click', onBack);
     decorateBriefing(b, m);
     this.show('briefing');
-    onBackKey(b, onBack);
+    onBackKey(b, () => { endBriefing(); onBack(); });   // Escape: the officer stops reading too
   }
 
   // ---------------- HUD ----------------

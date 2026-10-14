@@ -22,6 +22,7 @@ import { mountShare, shareStamp } from './Share';
 import { analytics } from '../net/Analytics';
 import { mountCampaignReport, prepareCampaignMission, campaignMeritMult } from '../ui/CampaignMap';
 import { crewRoomScene } from '../ui/CrewRoomScene';
+import { endBriefing } from '../ui/BriefingExtras';
 
 // Bail-out sequence when a gunner's B-17 is shot down (before the debrief): BailOutCinematic.ts
 const BAIL_SEQ_TIME = BAIL_TOTAL;
@@ -43,6 +44,7 @@ export class MissionFlow {
 
   startMission(m: Mission) {
     const g = this.g;
+    endBriefing();   // no briefing narration under the mission's radio (co-op starts, quick starts)
     // Models and gameplay sounds stream in behind the menu: wait for them (loading screen)
     if (!isMissionReady()) { whenMissionReady(g.ui, () => g.startMission(m)); return; }
     if (g.bookends.takeoff(m, () => g.startMission(m))) return; // take-off scene first (Bookends.ts)

@@ -26,6 +26,7 @@ export interface AutoplayOpts {
   skill?: number;
   aimErr?: number;          // override of the human aim-error sigma (rad) at skill 0 (calibration)
   stopAfterRounds?: number; // endless modes: stop once this many rounds are complete
+  onStep?: (k: number) => void; // after every step (3 frames): QA sampling (src/dev/qaSweep.ts)
 }
 
 export interface AutoplayMetrics {
@@ -312,6 +313,7 @@ export function autoplay(engine: Engine, game: Game, mission: Mission, maxSteps 
     } else if (bossRec) bossRec = null;
     if (w.player) minHp = Math.min(minHp, w.player.integrity);
     wounds = Math.max(wounds, w.crewWounded);
+    opts.onStep?.(k);
     if (opts.stopAfterRounds && ri >= opts.stopAfterRounds) { stopped = true; break; }
     if (game.state === 'debrief') break;
   }

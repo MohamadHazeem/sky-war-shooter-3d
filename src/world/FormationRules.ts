@@ -40,6 +40,10 @@ export function chutesDue(kind: FormationLoss, age: number): number {
 export function companionDitchDue(campaign: boolean, progress: number, engines: number, integrity: number, controllable: boolean): boolean {
   return campaign && controllable && progress >= 0.75 && progress < 0.96 && (engines >= 2 || integrity < 0.4);
 }
+/** The return-leg ditch is staged, but counts as a combat loss: never let it be the loss that fails
+ *  the mission after the bombs are away (the player could do nothing about it). */
+export const companionDitchAllowed = (combatLosses: number, maxLost: number | undefined) =>
+  maxLost === undefined || combatLosses + 1 <= maxLost;
 export const FORMATION_RADIO = {
   damage: 'Number two is feathered. We are holding station.',
   straggler: 'We are dropping back. Keep those fighters off us!',

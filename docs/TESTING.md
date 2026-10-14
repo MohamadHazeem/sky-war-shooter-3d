@@ -63,3 +63,18 @@ mission to the debrief.
 
 Other hooks on `window.sws`: `step(n, dt, render)` advances the simulation manually and `shot(q)` returns a
 JPEG data URL of the current frame.
+
+## Bug sweep (`tools/qa_sweep.mjs`)
+
+The Phase 9 bug sweep (`docs/phase9/reports/07.md`) runs autoplay jobs through `sws.qa(job)` (`src/dev/qaSweep.ts`,
+dev build only) from the shell with an existing Playwright install. On top of the balance metrics (`src/dev/balance.ts`)
+each run samples, every 100 steps while the mission is live: one GPU-synced rendered frame (frame spikes), HUD panel
+overlaps (`sws.hudOverlaps`) and the markers drawn in that frame (false markers); it also reports shader programs,
+GPU geometries/textures and JS heap from the first in-mission sample to the end, a frozen-clock (stuck) check, the game
+states seen, and whether any B-17 loss was counted twice. Every job starts from a wiped profile.
+
+```
+npx vite --port 5297 --strictPort &
+PLAYWRIGHT_MODULE=/abs/path/playwright/index.mjs node tools/qa_sweep.mjs campaign out.jsonl   # or difficulty, survival, highar, ace, smoke
+node tools/qa_sweep.mjs --report out.jsonl                                                    # Markdown table
+```
