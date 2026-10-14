@@ -1,4 +1,4 @@
-import { hudDetail, hudRuntime, type HudDetail } from './HudDetail';
+import { hudDetail, hudRuntime, statusRepeatsRound, type HudDetail } from './HudDetail';
 import { hudToast } from './HudToast';
 import { BASIC_SETTINGS, graphicsChoice, selectGraphics, type GraphicsChoice } from './SettingsModel';
 import { configureMenuLoadout } from './MenuSections';
@@ -350,10 +350,12 @@ export class UI {
 
   updateCommon(d: { round: number; mission: string; objective: string; kills: number; score: number; formation: string }) {
     this.setText('hMission', tx(d.mission));
-    this.setText('hStatus', tx('Score {score} · Round {round}', { score: d.score, round: d.round }));
     const prompt = hudRuntime.detail === 'standard' ? document.querySelector<HTMLElement>('#evPrompt.show .ev-a') : null;
     const bonus = hudRuntime.detail === 'standard' ? document.querySelector<HTMLElement>('#objCard.show .oc-t') : null;
-    this.setText('hObjective', prompt?.textContent || bonus?.textContent || tx(d.objective));
+    const swapped = prompt?.textContent || bonus?.textContent;
+    // the round line ("Round 2/3 — 3:10 · 4 fighters") already names the round: say it once
+    this.setText('hStatus', !swapped && statusRepeatsRound(d.objective) ? tx('Score {n}', { n: d.score }) : tx('Score {score} · Round {round}', { score: d.score, round: d.round }));
+    this.setText('hObjective', swapped || tx(d.objective));
     this.setText('hKills', String(d.kills));
     this.setText('hScore', String(d.score));
     this.setText('hFormation', tx(d.formation));

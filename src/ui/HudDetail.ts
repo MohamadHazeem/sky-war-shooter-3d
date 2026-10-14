@@ -7,6 +7,13 @@ const full = { status: true, feed: true, objective: true, abilities: true, toast
 export const hudVisibility = (detail?: string) => detail === 'minimal' ? minimal : detail === 'full' ? full : standard;
 export const abilityVisible = (detail: HudDetail, ready: boolean) => detail === 'full' || (detail === 'standard' && ready);
 export const controlsHintVisible = (missions: number) => missions > 0 && missions <= 2;
+/** The "H — controls" reminder: early missions only, live play only (not paused, ending, cut-scenes or photo
+ *  mode), for the first seconds the player actually has control; never over Minimal or the open card. */
+export const CONTROLS_HINT_SECONDS = 12;
+export const controlsHintShown = (o: { missions: number; detail: HudDetail; playing: boolean; t: number; cardOpen: boolean }) =>
+  o.detail !== 'minimal' && controlsHintVisible(o.missions) && o.playing && o.t < CONTROLS_HINT_SECONDS && !o.cardOpen;
+/** The top-left status line leaves the round out when the objective line under it already starts with it. */
+export const statusRepeatsRound = (objective: string) => /^Round \d/.test(objective);
 export const hudRuntime = { detail: 'standard' as HudDetail, inMission: false, heavy: false };
 export function setHudDetail(value?: string) {
   hudRuntime.detail = hudDetail(value);

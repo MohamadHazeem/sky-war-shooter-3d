@@ -6,7 +6,7 @@ export type PackTactic = typeof PACK_IDS[number];
 export const STURM = { distance: 3800, closing: 285, fireRange: 900, armour: 1.55, spacing: 65 };
 export const AIR_BOMB = { warning: 8, fuse: 4.5, height: 420, radius: 105, damage: 85 };
 export const PACK = {
-  sturm: { count: 8, speaker: 'Navigator', radio: 'Wedge at twelve! Armoured Focke-Wulfs, level! Open fire early!', tip: 'New tactic: Sturm wedge — top turret, chin or nose; fire early.', cue: 'STURM WEDGE' },
+  sturm: { count: 8, speaker: 'Navigator', radio: 'Wedge at twelve! Armoured Focke-Wulfs, level! Open fire early!', tip: 'New tactic: Sturm wedge — top turret; fire early as they close head-on.', cue: 'STURM WEDGE' },
   hornisse: { count: 2, speaker: 'Navigator', radio: 'Me 410s at one kilometre! Keep firing at the heavy cannon ships!', tip: 'New tactic: Me 410 stand-off — hold sustained fire at long range.', cue: 'BIG GUN' },
   airBomb: { count: 3, speaker: 'Top Turret', radio: 'Fighters holding high at twelve! Air bombs! Top turret, stop them dropping!', tip: 'New tactic: air bombs — top turret; hit the high fighters before release.', cue: 'AIR BOMBS' },
   jetSlash: { count: 2, speaker: 'Tail', radio: 'Jets slashing in from six! Tail gunner, take the brief shot!', tip: 'New tactic: jet slash — tail gun; lead early, the pass is brief.', cue: 'JET' },

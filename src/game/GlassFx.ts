@@ -205,7 +205,9 @@ const FRAG = /* glsl */ `
       mat2 toScr = mat2(duvy.y, -duvx.y, -duvy.x, duvx.x);
       float sc = scratches(uv0, 0.012, toScr, rs, px0) + 0.7 * scratches(uv0 + 0.37, 0.0055, toScr, rs, px0);
       float g2 = gk * gk;
-      col += uSunCol * uGlint * (sc * (2.0 + 10.0 * g2) * gk + uDust * dust * 0.8 * g2 * gk + 0.06 * g2 * g2);
+      // scratches: a faint sparkle, bright only right beside the sun. At (2 + 10 g2) the field
+      // read as snow across a quarter of the top-turret view (where fighters attack out of the sun)
+      col += uSunCol * uGlint * (sc * (0.08 + 1.2 * g2 * g2) * gk + uDust * dust * 0.8 * g2 * gk + 0.06 * g2 * g2);
      }
     }
 

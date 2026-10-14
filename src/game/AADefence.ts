@@ -54,7 +54,6 @@ export class AADefence {
   private recoil = 0;
   private blastShake = 0;
   private smokeTime = 0;
-  private savedCirrus = 1;
   private hits = 0;
   private incomingText = '';
   private hitT = 0;
@@ -84,9 +83,6 @@ export class AADefence {
   }
   start() {
     this.active = true;
-    // The sky dome's stretched cirrus plane fans into dark radial lines from ground level.
-    // Keep volumetric weather clouds; suppress only this decorative high-altitude layer.
-    this.savedCirrus = this.g.engine.sky.cirrus.value; this.g.engine.sky.cirrus.value = 0;
     this.field = new AABattlefield(this.g.engine.quality);
     this.field.show(this.g.engine.scene);
     this.mounts = [aaMount(0), aaMount(1), aaMount(0)];
@@ -165,7 +161,6 @@ export class AADefence {
   release() {
     if (!this.active) return;
     this.active = false; this.choosing = false;
-    this.g.engine.sky.cirrus.value = this.savedCirrus;
     this.field?.dispose(); this.field = null; this.lights.clear();
     this.panel?.remove(); this.panel = null; document.body.classList.remove('aa-mode');
     this.raiders.length = this.targets.length = 0;
