@@ -23,6 +23,7 @@ describe('visual rig fixture contract', () => {
     expect(values.every(v => v >= 0 && v < 1)).toBe(true);
   });
   it('keeps backend selection explicit and rejects invalid inputs', () => {
+    expect(rigOptions('?quality=cinematic').quality).toBe('cinematic');
     expect(rigOptions('').backend).toBe('webgl2');
     expect(rigOptions('?backend=webgpu&quality=low&seed=0')).toMatchObject({ backend: 'webgpu', quality: 'low', seed: 0 });
     for (const q of ['?backend=auto', '?quality=cinema', '?seed=NaN', '?seed=-1', '?seed=1.2', '?seed=4294967296']) expect(() => rigOptions(q)).toThrow();

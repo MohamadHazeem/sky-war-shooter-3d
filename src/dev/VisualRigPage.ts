@@ -27,6 +27,9 @@ async function boot() {
   await preload.loadEssentials(() => {});
   preload.loadInBackground();
   while (!preload.isMissionReady()) await new Promise(r => setTimeout(r, 30));
+  const { loadInteriorAssets } = await import('../game/InteriorAssets');
+  const { loadFlipbooks } = await import('../render/Flipbooks');
+  if (options.quality !== 'low') await Promise.all([loadInteriorAssets(), loadFlipbooks()]);
   // Loading and decodes cannot consume the scene's random stream or clock.
   Math.random = seededRandom(options.seed);
   let tick = 0;
@@ -35,10 +38,15 @@ async function boot() {
   const ui = new UI();
   const adapter = await createRigBackend(document.getElementById('app')!, options.backend);
   const engine = adapter.engine;
+  const { enableHeroTextures, loadHeroTextures } = await import('../world/HeroTextures');
+  enableHeroTextures();
+  if (options.quality !== 'low') await loadHeroTextures(engine.renderer);
+  Math.random = seededRandom(options.seed);
   const input = new Input(engine.renderer.domElement);
   input.lock = () => {};
   const game = new Game(engine, input, ui);
   engine.livingSky.bind(game.world);
+  engine.bomberStream.bind(game.world);
   game.bookends.auto = true;
   engine.setQuality(options.quality);
   // No Engine.start(), auto graphics, live input, director, or wall-clock animation loop.
@@ -60,6 +68,7 @@ async function boot() {
     backendActual: adapter.backend, deviceInfo: adapter.deviceInfo, seedDefault: RIG_SEED, dt: RIG_DT, steps: RIG_STEPS,
     settleFrames: RIG_SETTLE, time: engine.time, worldTime: game.world.time,
     viewport: [innerWidth, innerHeight], renderSize: [canvas.width, canvas.height],
+    stream: engine.bomberStream.stats(),
     camera: { position: engine.camera.position.toArray(), quaternion: engine.camera.quaternion.toArray(), fov: engine.camera.fov }, ...facts,
   };
   (window as any).visualRig = {

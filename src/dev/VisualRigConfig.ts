@@ -2,7 +2,7 @@ import type { StationId } from '../world/B17Layout';
 import type { Weather } from '../render/Weather';
 
 export interface RigShot { id: string; label: string; pillars: number[]; station?: StationId; weather: keyof typeof RIG_WEATHER }
-export const RIG_VERSION = 1;
+export const RIG_VERSION = 2;
 export const RIG_SEED = 19431008;
 export const RIG_DT = 1 / 60;
 export const RIG_STEPS = 360;
@@ -33,7 +33,7 @@ export function rigOptions(search: string) {
   const quality = p.get('quality') ?? 'high';
   const seed = Number(p.get('seed') ?? RIG_SEED);
   if (!['webgl2', 'webgpu'].includes(backend)) throw new Error(`Unknown backend: ${backend}`);
-  if (!['low', 'medium', 'high', 'ultra'].includes(quality)) throw new Error(`Unknown quality: ${quality}`);
+  if (!['low', 'medium', 'high', 'ultra', 'cinematic'].includes(quality)) throw new Error(`Unknown quality: ${quality}`);
   if (!Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new Error('Seed must be a uint32');
-  return { backend: backend as 'webgl2' | 'webgpu', quality: quality as 'low' | 'medium' | 'high' | 'ultra', seed, shot: p.get('shot') ?? 'waist-fw190' };
+  return { backend: backend as 'webgl2' | 'webgpu', quality: quality as 'low' | 'medium' | 'high' | 'ultra' | 'cinematic', seed, shot: p.get('shot') ?? 'waist-fw190' };
 }
