@@ -12,6 +12,7 @@ import aa from './ar/aa';
 import crewRoles from './ar/crewRoles';
 import squadron from './ar/squadron';
 import secondTour from './ar/secondTour';
+import cinema from './ar/cinema';
 // Arabic phrase tables, keyed by the exact English text shown by the game.
 // One file per area under ./ar/ so they can be maintained independently.
 import type { PhraseTable, Pattern } from './types';
@@ -44,7 +45,7 @@ import ditching from './ar/ditching';
 import sea from './ar/sea';
 
 // manual first: its generic words (Low, Close, Zoom...) never override another screen's wording
-const TABLES: PhraseTable[] = [b17Damage, deepPenetration, bombRun, formation, soundscape, luftwaffe, gunnerSurvival, cleanHud, menu, weather, aa, sea, ditching, squadron, secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles, bombardier];
+const TABLES: PhraseTable[] = [cinema, b17Damage, deepPenetration, bombRun, formation, soundscape, luftwaffe, gunnerSurvival, cleanHud, menu, weather, aa, sea, ditching, squadron, secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles, bombardier];
 
 export const PHRASES: Record<string, string> = Object.assign({}, ...TABLES.map((t) => t.phrases));
 export const PATTERNS: Pattern[] = TABLES.flatMap((t) => t.patterns ?? []);

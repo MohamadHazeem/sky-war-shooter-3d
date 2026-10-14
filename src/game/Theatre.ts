@@ -7,7 +7,11 @@ import type { Aircraft } from '../world/Aircraft';
 import { Ballistics } from '../world/Ballistics';
 import { instantiate, type ModelKind } from '../world/Models';
 import { Atmos } from '../render/Atmosphere';
-import { CamSnapshot, HudHider, ModelReveal } from './CineShared';
+import { CamSnapshot, CineOverlay, HudHider, ModelReveal } from './CineShared';
+import { reelSegments, type ReelSegment } from './CineDirectorRules';
+import { wingTipOf } from './CombatDirector';
+import type { HeroCollector } from '../render/FilmLook';
+import { access } from '../core/Accessibility';
 import { GUNNER_HIDDEN } from './PhotoMode';
 import {
   Recorder, type ClipData, type EntityMeta, findFrame, samplePose, sampleCamera, sliceClip, markLabel,
@@ -36,6 +40,13 @@ import type { TheatreAxes, TheatrePad } from '../core/Gamepad';
 //
 // Saved moments: 15 s around the playhead, up to 5, in IndexedDB (MomentStore); the title
 // menu gets a "Theatre" entry that lists and plays them.
+//
+// Combat film (Phase 10 goal 10, debrief "▶ Combat film"): the recording's best moments
+// (reelSegments: kills, multi-kills, boss / ace kills, close calls) cut together by the
+// director camera, slowed through each moment, on newsreel B&W (Kodachrome when that is the
+// player's film look), with a title card; any key or click ends it. The director's camera
+// language includes a long lens from a neighbouring B-17 and a wing-tip camera; every
+// director shot focuses the film look's DOF on its subject.
 
 const MAX_SAVED = 5;
 const MOMENT_BEFORE = 10, MOMENT_AFTER = 5;
@@ -64,7 +75,7 @@ interface Proxy {
   trailT: number;
 }
 
-const enum Shot { Chase, Flyby, Pov, Orbit, Victim }
+const enum Shot { Chase, Flyby, Pov, Orbit, Victim, Tele, Wing }
 
 export interface SavedMoment { key?: number; title: string; created: number; duration: number; thumb: string; clip: ClipData }
 
@@ -157,7 +168,15 @@ export class Theatre implements TheatreControl, TheatrePad {
   // cameras
   private orbit = { yaw: 0.6, pitch: 0.18, dist: 0 };
   private free = { pos: new THREE.Vector3(), yaw: 0, pitch: 0, vel: new THREE.Vector3(), mul: 1 };
-  private dir = { kind: Shot.Chase, subject: -1, start: -1, end: -1, side: 1, seq: 0, anchor: new THREE.Vector3(), cam: new THREE.Vector3(), look: new THREE.Vector3(), cut: true };
+  private dir = { kind: Shot.Chase, subject: -1, start: -1, end: -1, side: 1, seq: 0, platform: -1, anchor: new THREE.Vector3(), cam: new THREE.Vector3(), look: new THREE.Vector3(), cut: true };
+  // combat film
+  private reel: ReelSegment[] | null = null;
+  private reelIdx = 0;
+  private reelT = 0;
+  private overlay = new CineOverlay();
+  private savedHeroes: HeroCollector | undefined;
+  private heroD = new Float64Array(10);
+  private heroA: THREE.Object3D[] = [];
   private keys = new Set<string>();
   private drag: { id: number; x: number; y: number } | null = null;
   // touch: every finger down on the canvas; two of them pinch (orbit distance, else the FOV)
@@ -223,7 +242,73 @@ export class Theatre implements TheatreControl, TheatrePad {
     b.textContent = tx('Replay theatre');
     b.addEventListener('click', () => this.openLive());
     row.prepend(b);
+    const f = document.createElement('button');
+    f.className = 'btn ghost';
+    f.dataset.reel = '1';
+    f.textContent = tx('▶ Combat film');
+    f.addEventListener('click', () => this.openReel());
+    row.prepend(f);
   }
+
+  // ---------------- combat film ----------------
+
+  /** The mission-end combat film: the best moments of the recording, cut by the director. */
+  openReel(): boolean {
+    if (this.active || this.rec.frames < 12 || !this.openLive()) return false;
+    const c = this.clip!;
+    const marks: { t: number; type: number }[] = [];
+    for (let i = 0; i < c.mkN; i++) marks.push({ t: c.mkT[i], type: c.mkType[i] });
+    this.reel = reelSegments(marks, this.t0, this.t1, 4);
+    this.reelIdx = 0;
+    this.reelT = 0;
+    this.setMode('director');
+    this.seek(this.reel[0].a);
+    this.playing = true;
+    this.speed = 1;
+    (document.getElementById('theatre') as HTMLElement | null)?.style.setProperty('display', 'none');
+    const film = this.engine.post.film;
+    film.setShot(film.lookName === 'kodachrome' ? 'reelColour' : 'reel');
+    this.overlay.show(true, tx('COMBAT FILM'), tx(this.title), tx('CLICK TO SKIP'));
+    this.overlay.setCard(true, tx('COMBAT FILM'), tx(this.title));
+    this.overlay.setFade(0);
+    return true;
+  }
+
+  private reelFrame(real: number): boolean {
+    const r = this.reel!;
+    this.reelT += real;
+    if (this.reelT > 2.6) this.overlay.setCard(false);
+    let seg = r[this.reelIdx];
+    if (this.t >= seg.b - 1e-3 || (!this.playing && this.t >= this.t1 - 1e-3)) {
+      // hard cut to the next moment, or the end of the film
+      if (++this.reelIdx >= r.length) { this.close(); return false; }
+      seg = r[this.reelIdx];
+      this.seek(seg.a);
+      this.playing = true;
+    }
+    // slow through each moment (not with Reduce motion)
+    this.speed = !access.prefs.reduceMotion && Math.abs(this.t - seg.t) < 0.8 ? 0.4 : 1;
+    // the last half second dips to black
+    const last = this.reelIdx === r.length - 1;
+    this.overlay.setFade(last ? THREE.MathUtils.clamp((this.t - (seg.b - 0.45)) / 0.45, 0, 1) : 0);
+    return true;
+  }
+
+  // per-object motion blur in the theatre: the nearest proxies
+  private collectHeroes: HeroCollector = (out, cam) => {
+    const cp = cam.getWorldPosition(_p), d = this.heroD, a = this.heroA, cap = 8;
+    let n = 0;
+    for (const px of this.proxies) {
+      if (!px.present || !px.root.visible) continue;
+      const dd = px.root.position.distanceToSquared(cp);
+      if (dd > 1200 * 1200 || dd < 4) continue;
+      if (n === cap && dd >= d[cap - 1]) continue;
+      let i = n < cap ? n++ : cap - 1;
+      while (i > 0 && d[i - 1] > dd) { d[i] = d[i - 1]; a[i] = a[i - 1]; i--; }
+      d[i] = dd; a[i] = px.root;
+    }
+    for (let i = 0; i < n; i++) out.push(a[i]);
+  };
 
   // ---------------- library ----------------
 
@@ -271,6 +356,8 @@ export class Theatre implements TheatreControl, TheatrePad {
     this.snap.capture(e);
     const p = e.post;
     this.post = { exposure: p.exposure, motionBlur: p.motionBlur, damageFlash: p.damageFlash, desat: p.desat, flash: p.flash, zoomPulse: p.zoomPulse };
+    this.savedHeroes = p.film.heroes;
+    p.film.heroes = this.collectHeroes;   // per-object motion blur on the proxies
     this.hud.hide(this.ui.canvas);
     this.shownLayers = Array.from(document.querySelectorAll('.layer.show'));
     for (const l of this.shownLayers) l.classList.remove('show');
@@ -396,6 +483,10 @@ export class Theatre implements TheatreControl, TheatrePad {
     this.hiddenObjs.length = 0;
     const p = e.post, s = this.post;
     p.exposure = s.exposure; p.motionBlur = s.motionBlur; p.damageFlash = s.damageFlash; p.desat = s.desat; p.flash = s.flash; p.zoomPulse = s.zoomPulse;
+    if (this.reel) { this.reel = null; this.overlay.show(false); this.overlay.setFade(0); }
+    p.film.setShot(null);
+    p.film.heroes = this.savedHeroes;
+    e.camera.up.set(0, 1, 0);
     this.snap.restore(e);
     this.hud.restore();
     this.screen.close();
@@ -615,6 +706,7 @@ export class Theatre implements TheatreControl, TheatrePad {
   private onFrame = (dt: number) => {
     if (!this.active || !this.clip) return;
     const real = Math.min(0.1, Math.max(0, dt));
+    if (this.reel && !this.reelFrame(real)) return;
     if (this.playing && !this.jumped) {
       this.t += real * this.speed;
       if (this.t >= this.t1) { this.t = this.t1; this.playing = false; }
@@ -867,10 +959,46 @@ export class Theatre implements TheatreControl, TheatrePad {
         fov = d.kind === Shot.Victim ? 42 : 48;
         break;
       }
+      case Shot.Tele: {
+        // a long lens from a neighbouring B-17's waist window, panned by hand
+        const pf = this.byId.get(d.platform);
+        if (!pf || !pf.present) { d.end = Math.min(d.end, t + 0.01); d.look.copy(pos); fov = cam.fov; break; }
+        pf.root.updateMatrixWorld();
+        _a.copy(pos);
+        pf.root.worldToLocal(_a);
+        d.cam.set(Math.sign(_a.x || 1) * 1.1, 0.6, -7.2);
+        pf.root.localToWorld(d.cam);
+        if (d.cut) d.look.copy(pos);
+        else d.look.addScaledVector(px.vel, this.pdt).lerp(pos, 1 - Math.exp(-real * 4.5));
+        fov = THREE.MathUtils.clamp(THREE.MathUtils.radToDeg(2 * Math.atan((r * 2.5 + 10) / Math.max(1, d.cam.distanceTo(pos)))), 4, 22);
+        break;
+      }
+      case Shot.Wing: {
+        // rigid wing-tip camera on the subject, looking back inboard (and past it at the nearest fighter)
+        const big = px.meta.kind === 'b17';
+        const tip = wingTipOf(px.meta.kind, px.root, px.model ?? px.root, big);
+        px.root.updateMatrixWorld();
+        d.cam.set(d.side * (tip.x - 0.4), big ? 0.75 : 0.3, tip.z - (big ? 1.2 : 0.5));
+        px.root.localToWorld(d.cam);
+        d.look.set(0, 0.8, big ? -3 : -1);
+        px.root.localToWorld(d.look);
+        let bd = 600 * 600, foe: Proxy | null = null;
+        for (const o of this.proxies) {
+          if (!o.present || o.meta.team !== 1) continue;
+          const dd = o.root.position.distanceToSquared(pos);
+          if (dd < bd) { bd = dd; foe = o; }
+        }
+        if (foe) d.look.lerp(foe.root.position, 0.4);
+        fov = 64;
+        break;
+      }
     }
     cam.position.copy(d.cam);
-    cam.up.copy(UP);
+    if (d.kind === Shot.Wing) cam.up.set(0, 1, 0).applyQuaternion(px.root.quaternion);
+    else cam.up.copy(UP);
     cam.lookAt(d.look);
+    // the film look's focus follows the director's subject
+    this.engine.post.film.focusTarget = d.kind === Shot.Wing ? d.cam.distanceTo(d.look) : d.cam.distanceTo(pos);
     if (d.cut) { d.cut = false; this.engine.post.resetHistory(); }
     return { fov, pov: false };
   }
@@ -898,9 +1026,29 @@ export class Theatre implements TheatreControl, TheatrePad {
       d.anchor.normalize().applyAxisAngle(UP, d.side * 0.5);
       return;
     }
-    const order = [Shot.Chase, Shot.Flyby, Shot.Orbit, Shot.Pov];
+    const order = [Shot.Chase, Shot.Tele, Shot.Flyby, Shot.Wing, Shot.Orbit, Shot.Pov];
     let kind = order[d.seq % order.length];
-    if (!pl && (kind === Shot.Chase || kind === Shot.Pov || kind === Shot.Orbit)) kind = Shot.Flyby;
+    if (kind === Shot.Tele) {
+      // long lens: the player (or, every other time, the fighter nearest them) from another B-17
+      let subj = pl;
+      if (pl && d.seq % 2 === 1) {
+        let bd = 900 * 900;
+        for (const px of this.proxies) {
+          if (!px.present || px.meta.team !== 1 || !(px.flags & F_ALIVE)) continue;
+          const dd = px.root.position.distanceToSquared(pl.root.position);
+          if (dd < bd) { bd = dd; subj = px; }
+        }
+      }
+      let pf: Proxy | null = null, pd = Infinity;
+      if (subj) for (const px of this.proxies) {
+        if (!px.present || px === subj || px === this.player || px.meta.kind !== 'b17' || !(px.flags & F_ALIVE)) continue;
+        const dd = px.root.position.distanceTo(subj.root.position);
+        if (dd > 80 && dd < 700 && dd < pd) { pd = dd; pf = px; }
+      }
+      if (subj && pf) { d.kind = Shot.Tele; d.subject = subj.id; d.platform = pf.id; d.end = t + 4; return; }
+      kind = Shot.Flyby;
+    }
+    if (!pl && (kind === Shot.Chase || kind === Shot.Pov || kind === Shot.Orbit || kind === Shot.Wing)) kind = Shot.Flyby;
     d.kind = kind;
     d.end = t + (kind === Shot.Pov ? 3.5 : kind === Shot.Flyby ? 4 : 5);
     if (kind === Shot.Flyby) {
@@ -943,6 +1091,7 @@ export class Theatre implements TheatreControl, TheatrePad {
 
   private onKey = (e: KeyboardEvent) => {
     if (!this.active) return;
+    if (this.reel) { e.preventDefault(); e.stopPropagation(); this.close(); return; }   // combat film: any key ends it
     const tag = (e.target as HTMLElement | null)?.tagName;
     if ((tag === 'INPUT' || tag === 'SELECT') && e.code !== 'Escape') return;
     const code = e.code;
@@ -985,6 +1134,7 @@ export class Theatre implements TheatreControl, TheatrePad {
 
   private onDown = (e: PointerEvent) => {
     if (!this.active || (e.button !== 0 && e.button !== 2)) return;
+    if (this.reel) { this.close(); return; }
     if (e.pointerType === 'touch') {
       this.fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (this.fingers.size >= 2) {

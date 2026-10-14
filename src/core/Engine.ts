@@ -180,6 +180,7 @@ export class Engine {
 
     window.addEventListener('resize', () => this.resize());
     this.resize();
+    this.post.film.prewarm(this.renderer, this.scene, this.camera);   // film look passes (FilmLook.ts): compiled up front
   }
 
   // Re-derive sun light and the sky environment map after the atmosphere changed
@@ -433,7 +434,7 @@ export class Engine {
     r.shadowMap.autoUpdate = true;
     r.autoClear = true;
     cam.layers.set(0);
-    this.post.render(r, cam, this.sceneRT, this.sceneRT.depthTexture!, this.time, dt);
+    this.post.render(r, cam, this.sceneRT, this.sceneRT.depthTexture!, this.time, dt, this.scene);
   }
 
   // Another scene (own camera and lights, no sky or clouds) through the same MSAA target and

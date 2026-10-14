@@ -1,13 +1,15 @@
 import * as THREE from 'three';
 import type { Engine } from '../core/Engine';
 import { GUNNER_HIDDEN } from './PhotoMode';
+import { hudRuntime } from '../ui/HudDetail';
 
 // Shared pieces for the cinematic cameras (Cinematics.ts kill cam / fly-by, Replay.ts):
 //   CamSnapshot  everything a cinematic changes on the camera and post stack, saved on entry
 //                and put back exactly on exit (parent, pose, FOV, near/far, zoom, DOF)
 //   ModelReveal  shows the parts of the player's B-17 the gunner view hides from inside
 //   HudHider     hides the HUD layer, the 2D overlay canvas and the ability bar
-//   CineOverlay  letterbox bars, caption, skip hint, fade and the title card (DOM)
+//   CineOverlay  letterbox bars (or a 4:3 pillarbox for 16 mm gun-camera film), caption, skip
+//                hint, fade and the title card (DOM); HUD detail Minimal drops the captions
 
 export class CamSnapshot {
   saved = false;
@@ -109,6 +111,10 @@ const CSS = `
 #cine .cb { position: absolute; left: 0; right: 0; height: 0; background: #000; transition: height .32s cubic-bezier(.2,.7,.2,1); }
 #cine .cb.t { top: 0; } #cine .cb.b { bottom: 0; }
 #cine.on .cb { height: 10.5vh; }
+#cine .cp { position: absolute; top: 0; bottom: 0; width: 0; background: #000; transition: width .32s cubic-bezier(.2,.7,.2,1); }
+#cine .cp.l { left: 0; } #cine .cp.r { right: 0; }
+#cine.on.academy .cb { height: 0; }
+#cine.on.academy .cp { width: max(0px, calc((100vw - 133.333vh) / 2)); }
 #cine .cap, #cine .hint, #cine .tag { position: absolute; opacity: 0; transition: opacity .3s; white-space: nowrap; }
 #cine.on .cap, #cine.on .hint, #cine.on .tag { opacity: 1; }
 #cine .cap { left: 4vw; bottom: 3.4vh; font: 600 17px/1 Oswald, "Arial Narrow", "Noto Kufi Arabic", sans-serif; letter-spacing: 4px; color: #f1e6c8; }
@@ -143,7 +149,7 @@ export class CineOverlay {
     }
     const r = document.createElement('div');
     r.id = 'cine';
-    r.innerHTML = '<div class="cb t"></div><div class="cb b"></div><div class="tag"></div><div class="cap"></div><div class="hint"></div><div class="card"><div class="a"></div><div class="b"></div></div><div class="fd"></div>';
+    r.innerHTML = '<div class="cb t"></div><div class="cb b"></div><div class="cp l"></div><div class="cp r"></div><div class="tag"></div><div class="cap"></div><div class="hint"></div><div class="card"><div class="a"></div><div class="b"></div></div><div class="fd"></div>';
     document.body.appendChild(r);
     this.root = r;
     this.tag = r.querySelector('.tag')!; this.cap = r.querySelector('.cap')!; this.hint = r.querySelector('.hint')!;
@@ -152,11 +158,14 @@ export class CineOverlay {
     this.fade = 0; this.cardOn = false;
   }
 
-  /** Letterbox in (with its texts) or out. */
-  show(on: boolean, tag = '', caption = '', hint = '') {
+  /** Letterbox in (with its texts) or out. academy: a 4:3 pillarbox instead (16 mm film). */
+  show(on: boolean, tag = '', caption = '', hint = '', academy = false) {
     this.ensure();
+    // HUD detail Minimal: picture only (the skip hint stays: it is how to get the gun back)
+    if (hudRuntime.detail === 'minimal') { tag = ''; caption = ''; }
     if (on) { this.tag.textContent = tag; this.cap.textContent = caption; this.hint.textContent = hint; }
     this.root!.classList.toggle('on', on);
+    this.root!.classList.toggle('academy', on && academy);
     if (!on) this.setCard(false);
   }
 

@@ -50,6 +50,8 @@ export interface Settings {
   difficulty: 'recruit' | 'veteran' | 'ace';
   fov: number;   // base field of view in degrees (gunner and P-51 views); zoom scales from it
   killCam?: boolean;   // cinematic kill cam on special kills (Cinematics.ts); undefined = on
+  cineDirector?: 'off' | 'rare' | 'often';   // combat director shots (CombatDirector.ts); undefined = rare
+  filmLook?: 'off' | 'film' | 'kodachrome' | 'newsreel';   // film pass in play (render/FilmLook.ts); undefined = off
   audioDetail?: 'normal' | 'reduced';   // Sound.setDetail: Reduced for weak devices; undefined = normal
   breathing?: boolean;  // oxygen-mask breathing (Sound.setBreathing); undefined = on
   bookends?: boolean;  // take-off and landing scenes around B-17 and P-51 campaign missions (Bookends.ts, FighterBookends.ts); undefined = on
@@ -461,6 +463,8 @@ export class UI {
       <label class="setting">${t('settings.aimAssist')} <select data-k="aimAssist"><option value="off" ${s.aimAssist === 'off' ? 'selected' : ''}>${t('common.off')}</option><option value="low" ${s.aimAssist === 'low' ? 'selected' : ''}>${t('settings.low')}</option><option value="high" ${s.aimAssist === 'high' || !s.aimAssist ? 'selected' : ''}>${t('settings.high')}</option></select></label>
       <label class="setting">${t('settings.leadPip')} <select data-k="leadPip"><option value="off" ${s.leadPip === 'off' ? 'selected' : ''}>${t('common.off')}</option><option value="recruit" ${s.leadPip === 'recruit' || !s.leadPip ? 'selected' : ''}>${t('settings.recruitOnly')}</option><option value="always" ${s.leadPip === 'always' ? 'selected' : ''}>${t('settings.always')}</option></select></label>
       <label class="setting">${t('settings.killCam')} <select data-k="killCam"><option value="true">${t('common.on')}</option><option value="false" ${s.killCam === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
+      <label class="setting">${tx('Combat director')} <select data-k="cineDirector">${(['off', 'rare', 'often'] as const).map((v) => `<option value="${v}" ${(s.cineDirector ?? 'rare') === v ? 'selected' : ''}>${v === 'off' ? t('common.off') : tx(v === 'rare' ? 'Rare' : 'Often')}</option>`).join('')}</select></label>
+      <label class="setting">${tx('Film look')} <select data-k="filmLook">${(['off', 'film', 'kodachrome', 'newsreel'] as const).map((v) => `<option value="${v}" ${(s.filmLook ?? 'off') === v ? 'selected' : ''}>${v === 'off' ? t('common.off') : tx(v === 'film' ? 'Film' : v === 'kodachrome' ? 'Kodachrome' : 'Newsreel B&W')}</option>`).join('')}</select></label>
       <label class="setting">${t('settings.bookends')} <select data-k="bookends"><option value="true">${t('common.on')}</option><option value="false" ${s.bookends === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
       <label class="setting">${t('settings.crewRoom')} <select data-k="crewRoom"><option value="true">${t('common.on')}</option><option value="false" ${s.crewRoom === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
       <label class="setting">${t('settings.flightMode')} <select data-k="flightMode"><option value="mouseAim">${t('settings.mouseAim')}</option><option value="direct" ${s.flightMode === 'direct' ? 'selected' : ''}>${t('settings.direct')}</option></select></label>

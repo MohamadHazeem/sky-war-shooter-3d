@@ -3,6 +3,7 @@ import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { Atmos } from './Atmosphere';
 import { mulberry } from './Particles';
 import { access } from '../core/Accessibility';
+import { FilmLook } from './FilmLook';
 
 // Procedural lens dirt: faint smudges, specks and a fingerprint-ish swirl
 function makeDirt(): THREE.Texture {
@@ -421,6 +422,9 @@ void main() {
 
 export class PostFX {
   private bloom = new Bloom();
+  // Film look (FilmLook.ts): per-object motion blur, bokeh DOF and the film pass (grain, weave,
+  // halation, lens ghosts, period grades). Off in play unless Settings "Film look" is on.
+  readonly film: FilmLook;
   private finalMat: THREE.ShaderMaterial;
   private quad: FullScreenQuad;
   private prevViewProj = new THREE.Matrix4();
@@ -463,6 +467,7 @@ export class PostFX {
   private fwd = new THREE.Vector3();
 
   constructor(reversed: boolean) {
+    this.film = new FilmLook(reversed);
     this.finalMat = new THREE.ShaderMaterial({
       uniforms: {
         tColor: { value: null }, tBloom: { value: null }, tDepth: { value: null },
@@ -492,15 +497,19 @@ export class PostFX {
   setSize(w: number, h: number) {
     this.bloom.setSize(w, h);
     this.finalMat.uniforms.uRes.value.set(w, h);
+    this.film.setSize(w, h);
   }
 
-  resetHistory() { this.hasPrev = false; }
+  resetHistory() { this.hasPrev = false; this.film.resetHistory(); }
 
   render(renderer: THREE.WebGLRenderer, camera: THREE.PerspectiveCamera, hdr: THREE.WebGLRenderTarget,
-    depth: THREE.Texture, time: number, dt: number) {
-    const bloomTex = this.bloom.render(renderer, hdr.texture, hdr.width, hdr.height, this.economy ? 3 : 6);
+    depth: THREE.Texture, time: number, dt: number, scene?: THREE.Scene) {
+    // film look: per-object motion blur and DOF on the HDR scene first (no-ops when off)
+    const film = this.film, fp = film.resolve(this.economy);
+    const src = film.pre(renderer, scene, camera, hdr.texture, depth, dt);
+    const bloomTex = this.bloom.render(renderer, src, hdr.width, hdr.height, this.economy ? 3 : 6);
     const u = this.finalMat.uniforms;
-    u.tColor.value = hdr.texture;
+    u.tColor.value = src;
     u.tBloom.value = bloomTex;
     u.tDepth.value = depth;
     u.uInvProj.value.copy(camera.projectionMatrixInverse);
@@ -524,8 +533,10 @@ export class PostFX {
     u.uDamageFlash.value = this.damageFlash * access.flash;   // 'reduce flashes' setting
     u.uDesat.value = this.desat;
     u.uVignette.value = this.vignette;
-    u.uGrain.value = this.grain;
-    u.uGrainDark.value = this.grainDark;
+    // Reduce motion: no crawling grain; with the film pass on, its emulsion grain replaces this one
+    const noGrain = access.prefs.reduceMotion || fp.on;
+    u.uGrain.value = noGrain ? 0 : this.grain;
+    u.uGrainDark.value = noGrain ? 0 : this.grainDark;
     u.uChroma.value = this.chroma;
     u.uFlash.value = this.flash * access.flash;
     u.uHypoxia.value = this.hypoxia;
@@ -545,8 +556,9 @@ export class PostFX {
     u.uShafts.value = this.economy ? 0 : this.shafts;
     u.tHaze.value = this.hazeTex;
     u.uHazeOn.value = this.hazeTex ? 1 : 0;
-    renderer.setRenderTarget(null);
+    renderer.setRenderTarget(film.target());
     this.quad.render(renderer);
+    film.present(renderer, bloomTex, time);
     this.prevViewProj.copy(curVP);
     this.hasPrev = true;
   }
