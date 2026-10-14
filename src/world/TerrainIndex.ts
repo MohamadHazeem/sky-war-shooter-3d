@@ -166,6 +166,14 @@ export const TERRAIN_PLACES: Record<string, TerrainPlace> = {
     "river": 1,
     "riverAngle": -1.255
   },
+  "Merseburg": {
+    "lon": 12.04188,
+    "lat": 51.32144,
+    "bearing": 1.77078,
+    "at": 1,
+    "river": 1,
+    "riverAngle": -1.255
+  },
   "Misburg": {
     "lon": 9.84,
     "lat": 52.39,
