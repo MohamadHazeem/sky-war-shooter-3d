@@ -6,10 +6,10 @@
 // Desktop is untouched: nothing is wrapped unless the touch / small-screen layout is on.
 // UI.hangar() calls foldHangar() after the panel and its extras have been mounted.
 
-type FoldKey = 'aircraft' | 'weapon' | 'upgrades' | 'crew' | 'mod' | 'cosmetics' | 'skills';
+type FoldKey = 'aircraft' | 'weapon' | 'upgrades' | 'crew' | 'decisions' | 'mod' | 'cosmetics' | 'skills';
 
 const OPEN_BY_DEFAULT: Record<FoldKey, boolean> = {
-  aircraft: true, weapon: true, upgrades: true, crew: false, mod: false, cosmetics: false, skills: false,
+  aircraft: true, weapon: true, upgrades: true, crew: false, decisions: false, mod: false, cosmetics: false, skills: false,
 };
 const chosen = new Map<FoldKey, boolean>();   // the player's own open / closed choice this session
 
@@ -35,7 +35,7 @@ function mark(el: Element | null, key: FoldKey) {
 }
 
 // a section that is its own block (crew roster, skill tree, the extras box, the launch row)
-const STOP = ['row', 'hx', 'crewroster', 'sk-hangar', 'hint-hangar', 'hcoll'];
+const STOP = ['row', 'hx', 'crewroster', 'crewdec', 'sk-hangar', 'hint-hangar', 'hcoll'];
 const stops = (el: Element) => el.tagName === 'DETAILS' || STOP.some((c) => el.classList.contains(c));
 
 // wraps each .hsec heading and the blocks after it (up to the next heading) in a fold
@@ -75,6 +75,7 @@ export function foldHangar(host: HTMLElement) {
   group(wrap.querySelector(':scope > .hx'), wrap.querySelector('.bcust') ? ['mod', 'cosmetics'] : ['mod']);
   // the crew roster and the skill tree redraw their own insides: the fold is the block itself
   mark(wrap.querySelector(':scope > .crewroster'), 'crew');
+  mark(wrap.querySelector(':scope > .crewdec'), 'decisions');
   mark(wrap.querySelector(':scope > .sk-hangar'), 'skills');
   if (!host.dataset.foldWired) {
     host.dataset.foldWired = '1';

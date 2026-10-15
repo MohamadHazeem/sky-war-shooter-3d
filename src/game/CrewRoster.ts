@@ -21,6 +21,7 @@ import type { World } from '../world/World';
 import { VOICE_LINES } from '../audio/voiceLines';
 import { tx } from '../i18n';
 import { crewStories } from './CrewStories';
+import { crewDecisions } from './CrewDecisions';
 import { roleStat, roleMultiplier, roleEffects, NEUTRAL_EFFECTS, POSITION_WEIGHTS, ROLE_STATS, type RoleStat, type CrewEffects } from './CrewRoles';
 
 export type ManId = 'brenner' | 'doyle' | 'stern' | 'kessler' | 'mendez' | 'gallo' | 'reilly' | 'price' | 'walsh' | 'dawson';
@@ -207,14 +208,16 @@ export class CrewRoster {
 
   // ---------- queries ----------
   level(id: ManId) { return levelOf(this.men[id].xp); }
-  stat(id: ManId, s: Stat) { return Math.min(100, manDef(id).base[s] + STAT_PER_LEVEL * (this.level(id) - 1)); }
-  // morale and fatigue (CrewStories) lean on it: exactly 1 in the normal band
-  roleStat(id: ManId, stat: RoleStat) { return Math.min(100, Math.round(roleStat(id, stat, this.level(id)) * crewStories.mult(id))); }
+  // fatigue / a rested man's bonus (CrewDecisions.ts) scale every skill
+  stat(id: ManId, s: Stat) { return Math.min(100, Math.round((manDef(id).base[s] + STAT_PER_LEVEL * (this.level(id) - 1)) * crewDecisions.skillMult(id))); }
+  roleStat(id: ManId, stat: RoleStat) { return Math.min(100, Math.round(roleStat(id, stat, this.level(id)) * crewStories.mult(id) * crewDecisions.skillMult(id))); }
+  /** Skill of the replacement standing in at a position: a rookie, or a depot veteran (CrewDecisions). */
+  rookieSkill(c: CrewId) { return crewDecisions.replacementSkill(c); }
   effects(): Readonly<CrewEffects> {
     if (!this.active) return NEUTRAL_EFFECTS;
     return this.effectCache ??= roleEffects((p, s) => {
       const id = this.occ[p];
-      return id ? this.roleStat(id, s) * (this.wounded.has(id) ? 0.7 : 1) : ROOKIE_SKILL;
+      return id ? this.roleStat(id, s) * (this.wounded.has(id) ? 0.7 : 1) : this.rookieSkill(p);
     });
   }
   recommend() {
@@ -265,7 +268,7 @@ export class CrewRoster {
 
   // Effective gun skill 0..100 at a station (specialist bonus, wounded penalty, rookies)
   effSkill(station: StationId, s: Stat, id: ManId | null): number {
-    if (!id) return ROOKIE_SKILL;
+    if (!id) return this.rookieSkill(POST_CREW[station]);
     let v = this.stat(id, s) + (manDef(id).specialty === station ? SPECIALIST_BONUS : 0);
     if (this.wounded.has(id)) v *= 0.7;
     return Math.min(100, v);
@@ -277,7 +280,7 @@ export class CrewRoster {
     if (k) return k;
     const id = this.occ[POST_CREW[station]];
     const n = (s: Stat) => Math.max(0.05, Math.min(1, this.effSkill(station, s, id) / 100));
-    const a = id ? Math.min(100, this.roleStat(id, 'gunnery') + (manDef(id).specialty === station ? 6 : 0)) * (this.wounded.has(id) ? 0.7 : 1) : ROOKIE_SKILL;
+    const a = id ? Math.min(100, this.roleStat(id, 'gunnery') + (manDef(id).specialty === station ? 6 : 0)) * (this.wounded.has(id) ? 0.7 : 1) : this.rookieSkill(POST_CREW[station]);
     const gun = roleMultiplier(a), d = n('disc');
     // skill 50 reproduces the old AI gunner exactly
     k = { spread: 2 - gun, leadC: 0.9, leadW: 0.7 * (2 - gun), react: 2 - gun, burst: 1.25 - 0.5 * d, engage: 0.75 + 0.5 * d };
@@ -315,6 +318,15 @@ export class CrewRoster {
     this.save();
     if (!this.active) this.placeAll();
     this.emit('change');
+  }
+
+  // A 48-hour pass (CrewDecisions): he misses the next mission like a lightly wounded man
+  setLeave(id: ManId, on: boolean): boolean {
+    const st = this.men[id];
+    if (this.active || st.dead || (on ? st.rest > 0 : st.rest !== 1)) return false;
+    st.rest = on ? 1 : 0;
+    this.save(); this.placeAll(); this.emit('change');
+    return true;
   }
 
   private note(t: string) { this.notes.unshift(t); this.notes.length = Math.min(this.notes.length, 4); }

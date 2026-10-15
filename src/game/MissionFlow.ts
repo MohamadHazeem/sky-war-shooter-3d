@@ -16,6 +16,8 @@ import { achievements } from './Achievements';
 import { isMissionReady, whenMissionReady } from '../core/Preload';
 import { queueCrate } from './Loot';
 import { crewRoster } from './CrewRoster';
+import { crewDecisions } from './CrewDecisions';
+import { beginCrewDecisions, endCrewDecisions } from './CrewDecisionHooks';
 import { BailOutCinematic, BAIL_TOTAL } from './BailOutCinematic';
 import { leaderboardMode } from './Modes';
 import { mountShare, shareStamp } from './Share';
@@ -129,6 +131,7 @@ export class MissionFlow {
     g.prog.role = m.role;
     g.pilotOps.start(m);
     if (aa) Chatter.detachRadioChatter(); else Chatter.attachRadioChatter(g.world, m.role);
+    beginCrewDecisions(g.world, m, !!g.coop.role); // between-mission decisions: ground crew, volunteer (CrewDecisions.ts)
     g.abilities.reset(m.role);
     g.baseDamageScale = g.world.playerDamageScale;
     g.berserkT = 0;
@@ -299,8 +302,9 @@ export class MissionFlow {
     }
     g.saveProgress();
     // merit for the Armory: the mission score (half if it failed)
-    const merit = Math.round((g.score - this.scoreBanked) * (r.success ? 1 : 0.5) * g.loadout.scoreMult * campaignMeritMult(m, g.progress));
+    const merit = Math.round((g.score - this.scoreBanked) * (r.success ? 1 : 0.5) * g.loadout.scoreMult * campaignMeritMult(m, g.progress) * crewDecisions.meritMult());
     g.prog.earn(merit);
+    endCrewDecisions(w); // fatigue, leave and the next break's ground-crew shifts
     const idx = CAMPAIGN.findIndex((c) => c.id === m.id);
     const d: DebriefData = {
       success: r.success, title: m.title, reason: r.reason, kills: w.stats.kills, accuracy: acc,
