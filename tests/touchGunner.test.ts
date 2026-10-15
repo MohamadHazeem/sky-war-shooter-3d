@@ -134,4 +134,8 @@ describe('Arabic for the touch gunner', () => {
       expect(PHRASES[en], en).toBeDefined();
     }
   });
+  it('the install card uses the Arabic game name of the title screen', () => {
+    expect(touchGunner.phrases['Install Sky War']).toBe('ثبّت حرب السماء');
+    expect(touchGunner.phrases['Install Sky War']).not.toMatch(/[A-Za-z]/);
+  });
 });

@@ -18,7 +18,7 @@ export default { phrases: {
   'Phone performance mode': 'وضع أداء الهاتف',
   'Phone performance mode renders fewer pixels and effects so a phone stays smooth and cool.': 'يرسم وضع أداء الهاتف بكسلات ومؤثرات أقل ليبقى الهاتف سلسًا وباردًا.',
   // install card
-  'Install Sky War': 'ثبّت Sky War',
+  'Install Sky War': 'ثبّت حرب السماء',
   'Play full screen from your home screen, even offline.': 'العب بملء الشاشة من شاشتك الرئيسية، حتى دون اتصال.',
   'Tap Share, then “Add to Home Screen” to play full screen, even offline.': 'اضغط «مشاركة» ثم «إضافة إلى الشاشة الرئيسية» لتلعب بملء الشاشة، حتى دون اتصال.',
   'Install': 'تثبيت',
