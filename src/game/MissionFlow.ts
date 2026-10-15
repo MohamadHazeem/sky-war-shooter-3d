@@ -57,6 +57,7 @@ export class MissionFlow {
     g.aa.release();
     g.formationReturn.reset();
     g.ditching.reset();
+    g.limping.reset();
     if (!g.coop.role) prepareCampaignMission(m, g.progress); // campaign state: formation size, enemy count/skill, P-51 escort
     sound.init();
     g.photo.exit();
@@ -226,8 +227,9 @@ export class MissionFlow {
   }
 
   finish(success: boolean, reason: string, bailOut = false) {
-    this.g.bombardier.leave();
     const g = this.g;
+    if (!g.endResult && g.limping.intercept(success, reason)) return;   // a badly damaged ship flies the return leg first (LimpingHome.ts)
+    g.bombardier.leave();
     if (g.endResult) return;
     if (g.ditching.begin(success, () => g.showDebrief())) return;
     g.endResult = { success, reason };
@@ -270,7 +272,7 @@ export class MissionFlow {
     const g = this.g;
     if (g.state === 'debrief') return; // outcome/merit must be paid only once
     if (g.coop.showDebrief()) return;
-    if (!g.ditching.ditched && g.endResult?.success && g.bookends.landing(g.mission!, () => g.showDebrief())) return; // landing scene first
+    if (!g.ditching.ditched && !g.limping.interned && g.endResult?.success && g.bookends.landing(g.mission!, () => g.showDebrief())) return; // landing scene first
     const m = g.mission!;
     const w = g.world;
     const r = g.endResult!;
@@ -340,7 +342,7 @@ export class MissionFlow {
     mountShare(host, g.engine, () => shareStamp(g), () => ({ title: m.title, kills: d.kills, score: d.score, success: d.success, survival, waves: d.waves, role: m.role }));
     analytics.missionEnd(m, d);
     g.service.onDebrief(m, d, medals);
-    mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers, score: g.score, ditched: g.ditching.ditched }, g.prog, g.progress, toMap);
+    mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers, score: g.score, ditched: g.ditching.ditched, interned: g.limping.interned ?? undefined }, g.prog, g.progress, toMap);
     g.specials.nemesis.onDebrief(m); // named Experten: this mission's ace outcomes (NemesisRuntime.ts)
     crewRoomScene.capture(g, m, d); // the outcome the crew-room scene talks about
     tour = g.tour.debrief(m, r.success, w.stats.kills, merit);

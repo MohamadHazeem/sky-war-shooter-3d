@@ -23,6 +23,7 @@ import {
 import { isSecondTourId, SECOND_TOUR_LENGTH } from '../game/SecondTour';
 import { isRaidId, raidEnemyType, sideRaidById, type SideRaid } from '../game/SideRaids';
 import { tx, isAr } from '../i18n';
+import { LIMP_TEXT } from '../game/LimpingHomeRules';
 import { loadNemesis, mostWanted, reportLines, aceName, bounty, MOST_WANTED_MULT } from '../game/Nemesis';
 import { showNemesisScreen } from './NemesisScreen';
 import { onBackKey } from './serviceCommon';
@@ -408,11 +409,11 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
       ${modChips(d, next)}
       <button class="btn" data-go="${next.id}">${tx('Brief the crew')}</button>
     </div>` : `<div class="cm-op-card sel">
-      <span class="tag">${tx('Tour complete')}</span>
-      <div class="num">${esc(tx(CAMPAIGN[CAMPAIGN.length - 1].date))}</div>
-      <div class="t">${tx('Twenty-five missions')}</div>
-      <div class="tg">${esc(tx("The Sky Queen's crew is going home."))}</div>
-      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-summary>${tx('Campaign summary')}</button><button class="btn ghost" data-newtour style="margin-top:8px">${tx('Begin a new tour')}</button><button class="btn" data-secondtour>${tx('Volunteer for a second tour')}</button></div>
+      <span class="tag">${tx(d.interned ? LIMP_TEXT.tourEnded : 'Tour complete')}</span>
+      <div class="num">${esc(tx(d.interned ? campaignDate(d) : CAMPAIGN[CAMPAIGN.length - 1].date))}</div>
+      <div class="t">${d.interned ? tx(d.interned === 'Sweden' ? LIMP_TEXT.Sweden : LIMP_TEXT.Switzerland) : tx('Twenty-five missions')}</div>
+      <div class="tg">${esc(tx(d.interned ? LIMP_TEXT.newTourOnly : "The Sky Queen's crew is going home."))}</div>
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-summary>${tx('Campaign summary')}</button><button class="btn ghost" data-newtour style="margin-top:8px">${tx('Begin a new tour')}</button>${d.interned ? '' : `<button class="btn" data-secondtour>${tx('Volunteer for a second tour')}</button>`}</div>
     </div>`;
 
   const raidCard = (r: SideRaid, k: number) => {
@@ -527,8 +528,8 @@ export function showCampaignSummary(progress: ProgressLike, onPick: (m: Mission)
   const stat = (k: string, v: string | number) => `<div class="stat"><div class="hud-label">${esc(tx(k))}</div><div class="v">${v}</div></div>`;
   root.innerHTML = `<div class="cm cm-sum"><div class="cm-card" style="padding:24px 26px">
     <div class="kicker">${tx('401ST BOMB SQUADRON · TOUR OF DUTY')}${d.tour > 1 ? ` ${d.tour}` : ''} · ${esc(tx(CAMPAIGN[0].date))} – ${esc(tx(CAMPAIGN[CAMPAIGN.length - 1].date))}</div>
-    <h2 style="font-size:34px;margin:4px 0 10px;letter-spacing:3px;text-transform:uppercase">${tx(d.complete ? 'Tour complete' : 'Tour in progress')}</h2>
-    <p class="verdict">${esc(verdict(d))}</p>
+    <h2 style="font-size:34px;margin:4px 0 10px;letter-spacing:3px;text-transform:uppercase">${tx(d.interned ? LIMP_TEXT.tourEnded : d.complete ? 'Tour complete' : 'Tour in progress')}</h2>
+    <p class="verdict">${esc(verdict(d))}</p>${d.interned ? `<p class="cm-note">${esc(tx(LIMP_TEXT.newTourOnly))}</p>` : ''}
     <div class="stats">
       ${stat('Story operations', `${d.storyDone.length}/${CAMPAIGN.length}`)}
       ${stat('Side raids', `${t.raidWins}/${t.raids}`)}
@@ -543,7 +544,7 @@ export function showCampaignSummary(progress: ProgressLike, onPick: (m: Mission)
     </div>
     <div class="hud-label">${tx('Operations log')}</div>
     <ol>${d.history.map((h) => `<li><span class="${h.success ? 'ok' : 'fail'}">${h.success ? '✓' : '✗'}</span> ${h.kind === 'raid' ? '◆ ' : ''}${esc(tx(h.title))} · ${tx(`${h.kills} kills`)}${h.lost ? ` · ${tx(`${h.lost} lost`)}` : ''}</li>`).join('') || `<li>${tx('No sorties recorded.')}</li>`}</ol>
-    <div class="cm-foot"><button class="btn" data-map>${tx('Campaign map')}</button><button class="btn ghost" data-back>${tx('Main menu')}</button>${d.complete ? `<button class="btn" data-secondtour>${tx('Volunteer for a second tour')}</button><button class="btn ghost" data-newtour>${tx('Begin a new tour')}</button>` : ''}</div>
+    <div class="cm-foot"><button class="btn" data-map>${tx('Campaign map')}</button><button class="btn ghost" data-back>${tx('Main menu')}</button>${d.complete ? `${d.interned ? '' : `<button class="btn" data-secondtour>${tx('Volunteer for a second tour')}</button>`}<button class="btn ghost" data-newtour>${tx('Begin a new tour')}</button>` : ''}</div>
   </div></div>`;
   root.querySelector('[data-map]')!.addEventListener('click', () => showCampaignMap(progress, onPick, onBack));
   root.querySelector('[data-back]')!.addEventListener('click', onBack);
