@@ -1,0 +1,72 @@
+{
+  "method": "Fixed 20 pixels/metre, same origin in every view. Cyan: registered GPL source (Me 410 baseline is the old Bf 110 stand-in); orange: new model; grey: overlap. IoU documents intended changes, not a claim of agreement with an independent recognition drawing.",
+  "me410": {
+    "published": {
+      "span": 16.35,
+      "length": 12.48
+    },
+    "measured": {
+      "span": 16.342721939086914,
+      "length": 12.540184159369494
+    },
+    "spanError": 0.0004451413402499771,
+    "lengthError": 0.004822448667427315,
+    "views": {
+      "top": {
+        "iou": 0.6592088316467342
+      },
+      "side": {
+        "iou": 0.6131766301276981
+      },
+      "front": {
+        "iou": 0.5710195992072231
+      }
+    }
+  },
+  "me163": {
+    "published": {
+      "span": 9.3,
+      "length": 5.7
+    },
+    "measured": {
+      "span": 9.300000190734863,
+      "length": 5.700064214387637
+    },
+    "spanError": 2.0509125064904765e-8,
+    "lengthError": 0.000011265682041461389,
+    "views": {
+      "top": {
+        "iou": 0.9967545112293912
+      },
+      "side": {
+        "iou": 0.9930114358322745
+      },
+      "front": {
+        "iou": 0.9804839968774395
+      }
+    }
+  },
+  "ju88g": {
+    "published": {
+      "span": 20.08,
+      "length": 15.5
+    },
+    "measured": {
+      "span": 20.05474090576172,
+      "length": 15.940661076010755
+    },
+    "spanError": 0.001257923019834628,
+    "lengthError": 0.02842974683940347,
+    "views": {
+      "top": {
+        "iou": 0.9712269938650306
+      },
+      "side": {
+        "iou": 0.7754656024325352
+      },
+      "front": {
+        "iou": 0.9112541447240101
+      }
+    }
+  }
+}

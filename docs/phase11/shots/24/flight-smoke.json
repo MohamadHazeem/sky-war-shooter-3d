@@ -1,0 +1,126 @@
+{
+  "method": "75 s per type; real World.update, Tactics, EnemyPilot, FlightModel and Ballistics; allied gun damage suppressed, enemy durable to isolate tactics",
+  "results": [
+    {
+      "kind": "me163",
+      "model": "me163",
+      "hero": "me163",
+      "fuel": 0,
+      "throttle": 0,
+      "thrustScale": 0,
+      "climb": 1432.9496614508726,
+      "minRange": 26.500624731404113,
+      "shellFrames": 0,
+      "obliqueFrames": 0,
+      "shots": [
+        {
+          "oblique": false,
+          "count": 27,
+          "ammo": 33
+        },
+        {
+          "oblique": false,
+          "count": 27,
+          "ammo": 33
+        }
+      ],
+      "position": [
+        154.7744838032516,
+        7532.361229872227,
+        2878.8521556659675
+      ],
+      "shot": null
+    },
+    {
+      "kind": "me410",
+      "model": "me410",
+      "hero": "me410",
+      "fuel": 32,
+      "throttle": 0.55,
+      "thrustScale": 1,
+      "state": "approach",
+      "climb": 33.59179315154779,
+      "minRange": 655.9245995241483,
+      "shellFrames": 173,
+      "obliqueFrames": 0,
+      "shots": [
+        {
+          "oblique": false,
+          "count": 0,
+          "ammo": 350
+        },
+        {
+          "oblique": false,
+          "count": 0,
+          "ammo": 350
+        },
+        {
+          "oblique": false,
+          "count": 0,
+          "ammo": 1000
+        },
+        {
+          "oblique": false,
+          "count": 0,
+          "ammo": 1000
+        }
+      ],
+      "position": [
+        2076.4256604354973,
+        7914.300382174472,
+        5032.205152492208
+      ],
+      "shot": null
+    },
+    {
+      "kind": "ju88g",
+      "model": "ju88g",
+      "hero": "ju88g",
+      "fuel": 32,
+      "throttle": 0.25,
+      "thrustScale": 1,
+      "climb": 0,
+      "minRange": 170.93837827217178,
+      "shellFrames": 0,
+      "obliqueFrames": 24,
+      "shots": [
+        {
+          "oblique": false,
+          "count": 0,
+          "ammo": 200
+        },
+        {
+          "oblique": false,
+          "count": 0,
+          "ammo": 200
+        },
+        {
+          "oblique": false,
+          "count": 0,
+          "ammo": 200
+        },
+        {
+          "oblique": false,
+          "count": 0,
+          "ammo": 200
+        },
+        {
+          "oblique": true,
+          "count": 4,
+          "ammo": 96
+        },
+        {
+          "oblique": true,
+          "count": 4,
+          "ammo": 96
+        }
+      ],
+      "position": [
+        141.8935229086218,
+        7281.497532017532,
+        2410.552215064922
+      ]
+    }
+  ],
+  "errors": []
+}

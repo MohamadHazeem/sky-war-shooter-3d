@@ -1,0 +1,440 @@
+[
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-DRU_Q7IA.js"
+    ],
+    "shot": "me410",
+    "worldTime": 5.999999999999984,
+    "formation": 18,
+    "quality": "high",
+    "kind": "bf110",
+    "scale": 5.1,
+    "pose": {
+      "position": [
+        243.45665863789387,
+        7640.256503643918,
+        387.8880606913014
+      ],
+      "quaternion": [
+        -0.005622228629469061,
+        -0.006097212214028144,
+        0.014872471476507857,
+        0.9998550015580439
+      ]
+    },
+    "camera": {
+      "position": [
+        314.8566586378939,
+        7670.856503643919,
+        469.48806069130137
+      ],
+      "quaternion": [
+        -0.12307099055987925,
+        0.3281796191366096,
+        0.04317097244485899,
+        0.9355682423020381
+      ],
+      "fov": 42
+    },
+    "perf": {
+      "mean": 6.953333333134651,
+      "p95": 9,
+      "programsBefore": 248,
+      "programsAfter": 248,
+      "method": "30 frozen full-render frames plus gl.finish; shared machine"
+    },
+    "errors": []
+  },
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-DRU_Q7IA.js"
+    ],
+    "shot": "me163",
+    "worldTime": 5.999999999999984,
+    "formation": 18,
+    "quality": "high",
+    "kind": "me163",
+    "scale": 6.6000000000000005,
+    "pose": {
+      "position": [
+        243.45665863789387,
+        7640.256503643918,
+        387.8880606913014
+      ],
+      "quaternion": [
+        -0.005622228629469061,
+        -0.006097212214028144,
+        0.014872471476507857,
+        0.9998550015580439
+      ]
+    },
+    "camera": {
+      "position": [
+        296.25665863789385,
+        7669.956503643918,
+        453.8880606913014
+      ],
+      "quaternion": [
+        -0.1476888929187884,
+        0.2956384327871398,
+        0.04631755786330134,
+        0.9426773529692788
+      ],
+      "fov": 42
+    },
+    "perf": {
+      "mean": 6.913333332538604,
+      "p95": 9.400000005960464,
+      "programsBefore": 248,
+      "programsAfter": 248,
+      "method": "30 frozen full-render frames plus gl.finish; shared machine"
+    },
+    "errors": []
+  },
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-DRU_Q7IA.js"
+    ],
+    "shot": "ju88g",
+    "worldTime": 5.999999999999984,
+    "formation": 18,
+    "quality": "high",
+    "kind": "ju88",
+    "scale": 4.5,
+    "pose": {
+      "position": [
+        243.45665863789387,
+        7640.256503643918,
+        387.8880606913014
+      ],
+      "quaternion": [
+        -0.005622228629469061,
+        -0.006097212214028144,
+        0.014872471476507857,
+        0.9998550015580439
+      ]
+    },
+    "camera": {
+      "position": [
+        306.45665863789384,
+        7667.256503643918,
+        459.8880606913014
+      ],
+      "quaternion": [
+        -0.12307099055987787,
+        0.3281796191366095,
+        0.04317097244485847,
+        0.9355682423020385
+      ],
+      "fov": 42
+    },
+    "perf": {
+      "mean": 5.430000000198683,
+      "p95": 6.699999988079071,
+      "programsBefore": 248,
+      "programsAfter": 248,
+      "method": "30 frozen full-render frames plus gl.finish; shared machine"
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5424",
+    "scripts": [
+      "http://127.0.0.1:5424/@vite/client",
+      "http://127.0.0.1:5424/src/main.ts?t=1792064620280"
+    ],
+    "shot": "me410",
+    "worldTime": 5.999999999999984,
+    "formation": 18,
+    "quality": "high",
+    "kind": "me410",
+    "scale": 5.1,
+    "pose": {
+      "position": [
+        243.45665863789387,
+        7640.256503643918,
+        387.8880606913014
+      ],
+      "quaternion": [
+        -0.005622228629469061,
+        -0.006097212214028144,
+        0.014872471476507857,
+        0.9998550015580439
+      ]
+    },
+    "camera": {
+      "position": [
+        314.8566586378939,
+        7670.856503643919,
+        469.48806069130137
+      ],
+      "quaternion": [
+        -0.12307099055987925,
+        0.3281796191366096,
+        0.04317097244485899,
+        0.9355682423020381
+      ],
+      "fov": 42
+    },
+    "perf": {
+      "mean": 7.52333333392938,
+      "p95": 8.800000011920929,
+      "programsBefore": 264,
+      "programsAfter": 264,
+      "method": "30 frozen full-render frames plus gl.finish; shared machine"
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5424",
+    "scripts": [
+      "http://127.0.0.1:5424/@vite/client",
+      "http://127.0.0.1:5424/src/main.ts?t=1792064620280"
+    ],
+    "shot": "me163",
+    "worldTime": 5.999999999999984,
+    "formation": 18,
+    "quality": "high",
+    "kind": "me163",
+    "scale": 6.6000000000000005,
+    "pose": {
+      "position": [
+        243.45665863789387,
+        7640.256503643918,
+        387.8880606913014
+      ],
+      "quaternion": [
+        -0.005622228629469061,
+        -0.006097212214028144,
+        0.014872471476507857,
+        0.9998550015580439
+      ]
+    },
+    "camera": {
+      "position": [
+        296.25665863789385,
+        7669.956503643918,
+        453.8880606913014
+      ],
+      "quaternion": [
+        -0.1476888929187884,
+        0.2956384327871398,
+        0.04631755786330134,
+        0.9426773529692788
+      ],
+      "fov": 42
+    },
+    "perf": {
+      "mean": 7.323333332935969,
+      "p95": 8.900000005960464,
+      "programsBefore": 264,
+      "programsAfter": 264,
+      "method": "30 frozen full-render frames plus gl.finish; shared machine"
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5424",
+    "scripts": [
+      "http://127.0.0.1:5424/@vite/client",
+      "http://127.0.0.1:5424/src/main.ts?t=1792064620280"
+    ],
+    "shot": "ju88g",
+    "worldTime": 5.999999999999984,
+    "formation": 18,
+    "quality": "high",
+    "kind": "ju88g",
+    "scale": 4.5,
+    "pose": {
+      "position": [
+        243.45665863789387,
+        7640.256503643918,
+        387.8880606913014
+      ],
+      "quaternion": [
+        -0.005622228629469061,
+        -0.006097212214028144,
+        0.014872471476507857,
+        0.9998550015580439
+      ]
+    },
+    "camera": {
+      "position": [
+        306.45665863789384,
+        7667.256503643918,
+        459.8880606913014
+      ],
+      "quaternion": [
+        -0.12307099055987787,
+        0.3281796191366095,
+        0.04317097244485847,
+        0.9355682423020385
+      ],
+      "fov": 42
+    },
+    "perf": {
+      "mean": 8.109999999403954,
+      "p95": 9.200000017881393,
+      "programsBefore": 264,
+      "programsAfter": 264,
+      "method": "30 frozen full-render frames plus gl.finish; shared machine"
+    },
+    "errors": []
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5424",
+    "scripts": [
+      "http://127.0.0.1:5424/@vite/client",
+      "http://127.0.0.1:5424/src/main.ts?t=1792064620280"
+    ],
+    "shot": "me410",
+    "worldTime": 5.999999999999984,
+    "formation": 18,
+    "quality": "low",
+    "kind": "me410",
+    "scale": 5.1,
+    "pose": {
+      "position": [
+        243.45665863789387,
+        7640.256503643918,
+        387.8880606913014
+      ],
+      "quaternion": [
+        -0.005622228629469061,
+        -0.006097212214028144,
+        0.014872471476507857,
+        0.9998550015580439
+      ]
+    },
+    "camera": {
+      "position": [
+        314.8566586378939,
+        7670.856503643919,
+        469.48806069130137
+      ],
+      "quaternion": [
+        -0.12307099055987925,
+        0.3281796191366096,
+        0.04317097244485899,
+        0.9355682423020381
+      ],
+      "fov": 42
+    },
+    "perf": {
+      "mean": 0.8966666658719381,
+      "p95": 1.4000000059604645,
+      "programsBefore": 249,
+      "programsAfter": 249,
+      "method": "30 frozen full-render frames plus gl.finish; shared machine"
+    },
+    "errors": []
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5424",
+    "scripts": [
+      "http://127.0.0.1:5424/@vite/client",
+      "http://127.0.0.1:5424/src/main.ts?t=1792064620280"
+    ],
+    "shot": "me163",
+    "worldTime": 5.999999999999984,
+    "formation": 18,
+    "quality": "low",
+    "kind": "me163",
+    "scale": 6.6000000000000005,
+    "pose": {
+      "position": [
+        243.45665863789387,
+        7640.256503643918,
+        387.8880606913014
+      ],
+      "quaternion": [
+        -0.005622228629469061,
+        -0.006097212214028144,
+        0.014872471476507857,
+        0.9998550015580439
+      ]
+    },
+    "camera": {
+      "position": [
+        296.25665863789385,
+        7669.956503643918,
+        453.8880606913014
+      ],
+      "quaternion": [
+        -0.1476888929187884,
+        0.2956384327871398,
+        0.04631755786330134,
+        0.9426773529692788
+      ],
+      "fov": 42
+    },
+    "perf": {
+      "mean": 0.7600000003973643,
+      "p95": 1.2000000178813934,
+      "programsBefore": 249,
+      "programsAfter": 249,
+      "method": "30 frozen full-render frames plus gl.finish; shared machine"
+    },
+    "errors": []
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5424",
+    "scripts": [
+      "http://127.0.0.1:5424/@vite/client",
+      "http://127.0.0.1:5424/src/main.ts?t=1792064620280"
+    ],
+    "shot": "ju88g",
+    "worldTime": 5.999999999999984,
+    "formation": 18,
+    "quality": "low",
+    "kind": "ju88g",
+    "scale": 4.5,
+    "pose": {
+      "position": [
+        243.45665863789387,
+        7640.256503643918,
+        387.8880606913014
+      ],
+      "quaternion": [
+        -0.005622228629469061,
+        -0.006097212214028144,
+        0.014872471476507857,
+        0.9998550015580439
+      ]
+    },
+    "camera": {
+      "position": [
+        306.45665863789384,
+        7667.256503643918,
+        459.8880606913014
+      ],
+      "quaternion": [
+        -0.12307099055987787,
+        0.3281796191366095,
+        0.04317097244485847,
+        0.9355682423020385
+      ],
+      "fov": 42
+    },
+    "perf": {
+      "mean": 0.65,
+      "p95": 1.2999999821186066,
+      "programsBefore": 249,
+      "programsAfter": 249,
+      "method": "30 frozen full-render frames plus gl.finish; shared machine"
+    },
+    "errors": []
+  }
+]
