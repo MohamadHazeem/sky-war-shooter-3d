@@ -11,6 +11,12 @@ python3 tools/voice/generate.py --check   # verify callout coverage; report know
 - `lines.json` is the source: roles (voice, words per minute, subtitle speaker), the clock set
   ("nine o'clock low!" for every hour x high/level/low, per role) and every line. A line's `text`
   must equal the subtitle text in the game, because that is how `World.callout` finds its clip.
+- **New lines go in their own file** `lines.d/<goal>.json`, not in `lines.json` (so parallel goals never
+  conflict). Each file is a JSON array: a `{"group": "..."}` header, then line objects exactly as in
+  `lines.json` → `lines`. `generate.py` loads `lines.d/*.json` in sorted filename order and inserts them
+  just before the `briefings (tools/voice/briefings.mjs)` group; ids must stay unique across all files.
+  Existing clips keep their ids and hashes, so adding a file renders only its new lines.
+  `briefings.mjs` / `crewroom.mjs` still rewrite their own groups inside `lines.json`.
 - Output: `public/audio/voice/<id>.m4a` (mono AAC, 16 kHz, 24 kbps), `manifest.json`
   (id -> file, role, text, duration) and `src/audio/voiceLines.ts` (named lines for game code).
 - Runtime: `src/audio/Voice.ts` plays them through the radio chain; `src/game/RadioChatter.ts`

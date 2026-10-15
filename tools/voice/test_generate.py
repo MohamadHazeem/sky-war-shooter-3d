@@ -176,6 +176,34 @@ class PipelineTests(unittest.TestCase):
                     self.assertEqual(g.main(), 1)
                 self.assertEqual(json.loads((out / 'manifest.json').read_text())['clips'][clips[1]['id']], original[clips[1]['id']])
 
+    def test_lines_d_groups_sorted_before_briefings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = dict(roles={}, lines=[{'group': 'old'}, {'id': 'x'}, {'group': g.BRIEFINGS_GROUP}, {'id': 'brief'}])
+            Path(tmp, 'lines.json').write_text(json.dumps(base))
+            self.assertEqual(g.load(tmp), base)  # no lines.d: unchanged
+            Path(tmp, 'lines.d').mkdir()
+            Path(tmp, 'lines.d', 'b-goal.json').write_text(json.dumps([{'group': 'b'}, {'id': 'b1'}]))
+            Path(tmp, 'lines.d', 'a-goal.json').write_text(json.dumps([{'group': 'a'}, {'id': 'a1'}, {'id': 'a2'}]))
+            Path(tmp, 'lines.d', 'notes.txt').write_text('ignored')
+            order = [l.get('id', l.get('group')) for l in g.load(tmp)['lines']]
+            self.assertEqual(order, ['old', 'x', 'a', 'a1', 'a2', 'b', 'b1', g.BRIEFINGS_GROUP, 'brief'])
+            Path(tmp, 'lines.d', 'c-bad.json').write_text(json.dumps([{'id': 'no header'}]))
+            with self.assertRaises(SystemExit):
+                g.load(tmp)
+
+    def test_shipped_lines_d_keeps_existing_hashes(self):
+        """Every clip in lines.json renders with the same id and hash whatever lines.d adds."""
+        with open(Path(g.HERE, 'lines.json'), encoding='utf-8') as f:
+            plain = json.load(f)
+        merged = g.load()
+        before = {c['id']: g.clip_hash(c, plain) for c in g.expand(plain)}
+        after = {c['id']: g.clip_hash(c, merged) for c in g.expand(merged)}
+        self.assertEqual({k: after[k] for k in before}, before)
+        at = next(i for i, l in enumerate(plain['lines']) if l.get('group') == g.BRIEFINGS_GROUP)
+        tail = len(plain['lines']) - at
+        self.assertEqual(merged['lines'][:at], plain['lines'][:at])
+        self.assertEqual(merged['lines'][-tail:], plain['lines'][at:])
+
 
 if __name__ == '__main__':
     unittest.main()

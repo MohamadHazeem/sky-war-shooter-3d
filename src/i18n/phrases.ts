@@ -49,5 +49,15 @@ import sea from './ar/sea';
 // manual first: its generic words (Low, Close, Zoom...) never override another screen's wording
 const TABLES: PhraseTable[] = [renderer, cinema, b17Damage, deepPenetration, bombRun, formation, soundscape, luftwaffe, enemyAi, gunnerSurvival, cleanHud, menu, weather, aa, sea, ditching, squadron, secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles, bombardier];
 
-export const PHRASES: Record<string, string> = Object.assign({}, ...TABLES.map((t) => t.phrases));
-export const PATTERNS: Pattern[] = TABLES.flatMap((t) => t.patterns ?? []);
+// Any ./ar/*.ts table not listed above is picked up automatically and goes FIRST (lowest
+// precedence), like a newly prepended table: a new goal only adds its file, no edit here.
+export function withDiscovered(explicit: PhraseTable[], modules: Record<string, { default?: unknown }>): PhraseTable[] {
+  const known = new Set<unknown>(explicit);
+  const found = Object.keys(modules).sort().map((k) => modules[k].default)
+    .filter((t): t is PhraseTable => !!t && typeof t === 'object' && 'phrases' in t && !known.has(t));
+  return [...found, ...explicit];
+}
+
+export const ALL_TABLES = withDiscovered(TABLES, import.meta.glob<{ default?: unknown }>('./ar/*.ts', { eager: true }));
+export const PHRASES: Record<string, string> = Object.assign({}, ...ALL_TABLES.map((t) => t.phrases));
+export const PATTERNS: Pattern[] = ALL_TABLES.flatMap((t) => t.patterns ?? []);
