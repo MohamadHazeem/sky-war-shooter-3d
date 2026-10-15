@@ -1,6 +1,6 @@
 {
   "b17": {
-    "artifactSha256": "a973ac36a15fe4049d16ed24164d6b286e21b798674062e57895a1f68c753060",
+    "artifactSha256": "c7d2f818703a0d2956d449691197af4b43d4bf8bf00ebc0af15d5c8cef23a489",
     "reliefVertices": 1364112,
     "bakeSize": 1024,
     "triangles": {
@@ -8,61 +8,61 @@
       "1": 35804,
       "2": 24967
     },
-    "glbBytes": 1378848
+    "glbBytes": 1394272
   },
   "bf109": {
-    "artifactSha256": "b5f77f4d5713a8c0d75de292b27602e3ea3ea07ee6842def8d388df27b58af99",
+    "artifactSha256": "25d2b0d5f949378c858064d8114dddfb163420bb5c553191fe1e93a38cbd4f36",
     "reliefVertices": 2281148,
     "bakeSize": 1024,
     "triangles": {
       "0": 51341,
-      "1": 10000,
-      "2": 2599
+      "1": 9999,
+      "2": 2600
     },
-    "glbBytes": 2269588
+    "glbBytes": 2345672
   },
   "fw190": {
-    "artifactSha256": "89481e03f5c619f25cbec788ce42e225ad0d2e2041a71bf2a0055576246cf022",
+    "artifactSha256": "7cf1e238403908d4c800150eaf7c0f31f3cd4733a322e531afd856d819b2692f",
     "reliefVertices": 2038215,
     "bakeSize": 1024,
     "triangles": {
       "0": 46470,
-      "1": 10000,
+      "1": 9999,
       "2": 2600
     },
-    "glbBytes": 2122916
+    "glbBytes": 2204604
   },
   "me262": {
-    "artifactSha256": "355779f468e2b0e353b6fac159e14a1652786ab49b3cea72c288c7ff47dd8546",
+    "artifactSha256": "6575e352350bb7aad3cb9f09eb7a57870c73af10a41d33bb45c3e3b46d23ad56",
     "reliefVertices": 2733536,
     "bakeSize": 1024,
     "triangles": {
       "0": 60888,
       "1": 11000,
-      "2": 3000
+      "2": 2999
     },
-    "glbBytes": 2124896
+    "glbBytes": 2221036
   },
   "bf110": {
-    "artifactSha256": "8c142867313932ca2acd488f2865e7c54e96eb106991d5cbced9f1ea22934496",
+    "artifactSha256": "1b2401119e485fb161f6966f1f63b3578749b1131abbe0c92668707c73ac51a8",
     "reliefVertices": 3999868,
     "bakeSize": 1024,
     "triangles": {
       "0": 91647,
       "1": 13000,
-      "2": 3600
+      "2": 3599
     },
-    "glbBytes": 2684360
+    "glbBytes": 2724160
   },
   "ju88": {
-    "artifactSha256": "bda884f4bfb12f92b381d14e64544622e76ddee0fc514a6a47ada8f8522d2afe",
+    "artifactSha256": "9329b1b6ad020114a2d6e9fbdbe3b7641f249bcc0981d6a62950a8d62aa47ffe",
     "reliefVertices": 2274846,
     "bakeSize": 1024,
     "triangles": {
       "0": 57667,
       "1": 13000,
-      "2": 4199
+      "2": 4200
     },
-    "glbBytes": 2370568
+    "glbBytes": 2443360
   }
 }

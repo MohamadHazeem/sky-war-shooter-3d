@@ -1,0 +1,13 @@
+{
+  "live": {
+    "primitives": 84,
+    "geometryAndTransforms": "1209c4032d1301e2533d83db58c24cd25384567d795f0ef43afff5e9f2c5b3dc"
+  },
+  "revised": {
+    "primitives": 84,
+    "geometryAndTransforms": "1209c4032d1301e2533d83db58c24cd25384567d795f0ef43afff5e9f2c5b3dc"
+  },
+  "identical": true,
+  "scope": "All hero_skin/hero_glass primitives, including Low: position/index buffers and world transforms. Materials intentionally differ.",
+  "conclusion": "No new skin/glass geometry obstruction. Camera-only replay was invalid because the independently simulated bomber pose differed. Gunner views must derive the camera from the locked bomber and production gun mount."
+}

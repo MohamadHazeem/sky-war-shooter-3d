@@ -1,9 +1,18 @@
 {
   "quality": "high",
+  "seed": 19431008,
+  "complete": true,
   "views": [
     {
       "kind": "b17",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
       "subject": {
+        "kind": "b17",
         "position": [
           110,
           7620,
@@ -14,7 +23,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "parts": {
+          "count": 42,
+          "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+        }
       },
       "modelRange": 15,
       "camera": {
@@ -45,15 +63,22 @@
         "samples": 45,
         "programsBefore": 246,
         "programsAfter": 246,
-        "mean": 6.784444444709354,
-        "p50": 6.600000023841858,
+        "mean": 7.457777778307597,
+        "p50": 7.5,
         "p95": 8.899999976158142,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "fw190",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
       "subject": {
+        "kind": "fw190",
         "position": [
           110,
           7680,
@@ -64,7 +89,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          6,
+          6,
+          6
+        ],
+        "parts": {
+          "count": 31,
+          "sha256": "6d83c8b480b2d09c595b547dbca5c013af7b36a43bfd8f624b01829857ea0eb6"
+        }
       },
       "modelRange": 17.029386365926403,
       "camera": {
@@ -95,15 +129,22 @@
         "samples": 45,
         "programsBefore": 246,
         "programsAfter": 246,
-        "mean": 6.4866666661368475,
-        "p50": 5.5,
-        "p95": 11.099999994039536,
+        "mean": 4.146666667196485,
+        "p50": 4.0999999940395355,
+        "p95": 5.4000000059604645,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "bf109",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
       "subject": {
+        "kind": "bf109",
         "position": [
           110,
           7680,
@@ -114,7 +155,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          6.300000000000001,
+          6.300000000000001,
+          6.300000000000001
+        ],
+        "parts": {
+          "count": 31,
+          "sha256": "6d83c8b480b2d09c595b547dbca5c013af7b36a43bfd8f624b01829857ea0eb6"
+        }
       },
       "modelRange": 17.029386365926403,
       "camera": {
@@ -145,15 +195,22 @@
         "samples": 45,
         "programsBefore": 246,
         "programsAfter": 246,
-        "mean": 5.028888889153799,
-        "p50": 4.700000017881393,
-        "p95": 9.400000005960464,
+        "mean": 4.435555556085375,
+        "p50": 4.300000011920929,
+        "p95": 6,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "me262",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
       "subject": {
+        "kind": "me262",
         "position": [
           110,
           7680,
@@ -164,7 +221,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          6,
+          6,
+          6
+        ],
+        "parts": {
+          "count": 28,
+          "sha256": "bfee6939339f7cf9241da7bba866f6ad262d2a003224b406da32c1ae21a846a5"
+        }
       },
       "modelRange": 17.029386365926403,
       "camera": {
@@ -195,15 +261,22 @@
         "samples": 45,
         "programsBefore": 246,
         "programsAfter": 246,
-        "mean": 6.91555555595292,
-        "p50": 6.199999988079071,
-        "p95": 12.599999994039536,
+        "mean": 5.120000000132455,
+        "p50": 4.9000000059604645,
+        "p95": 7.300000011920929,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "bf110",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
       "subject": {
+        "kind": "bf110",
         "position": [
           110,
           7680,
@@ -214,7 +287,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          5.1,
+          5.1,
+          5.1
+        ],
+        "parts": {
+          "count": 46,
+          "sha256": "768e58b7f5b449170904e00d5b91190fe380ea6cfa4b1bec2828f6f0be134f5d"
+        }
       },
       "modelRange": 17.029386365926406,
       "camera": {
@@ -245,15 +327,22 @@
         "samples": 45,
         "programsBefore": 246,
         "programsAfter": 246,
-        "mean": 4.7688888880941604,
-        "p50": 4.600000023841858,
-        "p95": 6.5999999940395355,
+        "mean": 5.431111111243566,
+        "p50": 5.5,
+        "p95": 7.4000000059604645,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "ju88",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
       "subject": {
+        "kind": "ju88",
         "position": [
           110,
           7680,
@@ -264,7 +353,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          4.5,
+          4.5,
+          4.5
+        ],
+        "parts": {
+          "count": 42,
+          "sha256": "42a225bec8e1537f2db431b3556243238f14ce763c3b5d9e3e27484ae898a8c0"
+        }
       },
       "modelRange": 17.029386365926403,
       "camera": {
@@ -295,9 +393,1721 @@
         "samples": 45,
         "programsBefore": 246,
         "programsAfter": 246,
-        "mean": 5.322222222884496,
-        "p50": 5.5,
-        "p95": 7.0999999940395355,
+        "mean": 4.195555555158191,
+        "p50": 4,
+        "p95": 5.199999988079071,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "b17-30m",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
+      "subject": {
+        "kind": "b17",
+        "position": [
+          110,
+          7620,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "parts": {
+          "count": 42,
+          "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+        }
+      },
+      "modelRange": 30,
+      "camera": {
+        "position": [
+          130,
+          7630,
+          412
+        ],
+        "quaternion": [
+          -0.15622985705189124,
+          0.3771722397422857,
+          0.06471252563850327,
+          0.9105743365364628
+        ],
+        "fov": 46
+      },
+      "textures": [
+        {
+          "name": "hero_skin_damage",
+          "compressed": true,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 246,
+        "programsAfter": 246,
+        "mean": 18.6288888891538,
+        "p50": 18.399999976158142,
+        "p95": 28.599999994039536,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "fw190-30m",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
+      "subject": {
+        "kind": "fw190",
+        "position": [
+          110,
+          7680,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          6,
+          6,
+          6
+        ],
+        "parts": {
+          "count": 31,
+          "sha256": "6d83c8b480b2d09c595b547dbca5c013af7b36a43bfd8f624b01829857ea0eb6"
+        }
+      },
+      "modelRange": 29.999999999999982,
+      "camera": {
+        "position": [
+          236.83956741517594,
+          7732.849819756323,
+          500.26960346391127
+        ],
+        "quaternion": [
+          -0.13588333844051426,
+          0.3982017046688445,
+          0.059775313802214465,
+          0.9052060718935405
+        ],
+        "fov": 20
+      },
+      "textures": [
+        {
+          "name": "hero_fw190",
+          "compressed": false,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 246,
+        "programsAfter": 246,
+        "mean": 6.0200000001324545,
+        "p50": 5.600000023841858,
+        "p95": 9.300000011920929,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "b17-dusk",
+      "weather": {
+        "sunEl": 10,
+        "sunAz": 55,
+        "low": 0.15,
+        "mood": "dusk"
+      },
+      "fixture": false,
+      "glow": {
+        "count": 0,
+        "alpha": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible": true,
+        "night": 0
+      },
+      "subject": {
+        "kind": "b17",
+        "position": [
+          110,
+          7620,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "parts": {
+          "count": 42,
+          "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+        }
+      },
+      "modelRange": 15,
+      "camera": {
+        "position": [
+          120,
+          7625,
+          402
+        ],
+        "quaternion": [
+          -0.15622985705189124,
+          0.3771722397422857,
+          0.06471252563850327,
+          0.9105743365364628
+        ],
+        "fov": 46
+      },
+      "textures": [
+        {
+          "name": "hero_skin_damage",
+          "compressed": true,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 246,
+        "programsAfter": 246,
+        "mean": 6.273333332935969,
+        "p50": 6.399999976158142,
+        "p95": 7.5,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "b17-beauty",
+      "weather": {
+        "sunEl": 24,
+        "sunAz": 245,
+        "low": 0.45,
+        "high": 0.12,
+        "contrails": true
+      },
+      "fixture": true,
+      "aircraft": [
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7620,
+            295
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7620,
+            390
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7620,
+            295
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7642,
+            200
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7642,
+            200
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7642,
+            200
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7664,
+            105
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7664,
+            105
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7664,
+            105
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7686,
+            10
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7686,
+            10
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7686,
+            10
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7708,
+            -85
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7708,
+            -85
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7708,
+            -85
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7730,
+            -180
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7730,
+            -180
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7730,
+            -180
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        }
+      ],
+      "subject": {
+        "kind": "b17",
+        "position": [
+          110,
+          7620,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "parts": {
+          "count": 42,
+          "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+        }
+      },
+      "modelRange": 31.63858403911275,
+      "camera": {
+        "position": [
+          129,
+          7628,
+          414
+        ],
+        "quaternion": [
+          -0.120389371265317,
+          0.32591820222524126,
+          0.04188571626922501,
+          0.9367653449595702
+        ],
+        "fov": 45
+      },
+      "textures": [
+        {
+          "name": "hero_skin_damage",
+          "compressed": true,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 246,
+        "programsAfter": 246,
+        "mean": 9.122222222222222,
+        "p50": 9,
+        "p95": 10.700000017881393,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "waist-fw190",
+      "weather": {
+        "sunEl": 40,
+        "sunAz": 140,
+        "low": 0.55,
+        "high": 0.2,
+        "contrails": true
+      },
+      "fixture": true,
+      "aircraft": [
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7620,
+            295
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7620,
+            390
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7620,
+            295
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7642,
+            200
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7642,
+            200
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7642,
+            200
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7664,
+            105
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7664,
+            105
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7664,
+            105
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7686,
+            10
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7686,
+            10
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7686,
+            10
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7708,
+            -85
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7708,
+            -85
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7708,
+            -85
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7730,
+            -180
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7730,
+            -180
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7730,
+            -180
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "fw190",
+          "position": [
+            260.38,
+            7620.391872902266,
+            383.26007518416907
+          ],
+          "quaternion": [
+            0.17926290024638059,
+            -0.5697462737651714,
+            -0.17893825644277292,
+            0.7818152572744914
+          ],
+          "scale": [
+            6,
+            6,
+            6
+          ],
+          "parts": {
+            "count": 31,
+            "sha256": "6d83c8b480b2d09c595b547dbca5c013af7b36a43bfd8f624b01829857ea0eb6"
+          }
+        }
+      ],
+      "subject": {
+        "kind": "b17",
+        "position": [
+          110,
+          7620,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "parts": {
+          "count": 42,
+          "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+        }
+      },
+      "modelRange": 6.761993115538119,
+      "camera": {
+        "position": [
+          110.38000000000001,
+          7620.391872902266,
+          383.260075184169
+        ],
+        "quaternion": [
+          3.6348718330908554e-181,
+          0.7071067811865476,
+          -3.634871833090855e-181,
+          -0.7071067811865475
+        ],
+        "fov": 35.64516129032259
+      },
+      "textures": [
+        {
+          "name": "hero_skin_damage",
+          "compressed": true,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 247,
+        "programsAfter": 247,
+        "mean": 11.33333333267106,
+        "p50": 10.299999982118607,
+        "p95": 15.900000005960464,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "tail-bf109",
+      "weather": {
+        "sunEl": 40,
+        "sunAz": 140,
+        "low": 0.55,
+        "high": 0.2,
+        "contrails": true
+      },
+      "fixture": true,
+      "aircraft": [
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7620,
+            295
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7620,
+            390
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7620,
+            295
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7642,
+            200
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7642,
+            200
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7642,
+            200
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7664,
+            105
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7664,
+            105
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7664,
+            105
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7686,
+            10
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7686,
+            10
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7686,
+            10
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7708,
+            -85
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7708,
+            -85
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7708,
+            -85
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            25,
+            7730,
+            -180
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            110,
+            7730,
+            -180
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "b17",
+          "position": [
+            195,
+            7730,
+            -180
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "parts": {
+            "count": 42,
+            "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+          }
+        },
+        {
+          "kind": "bf109",
+          "position": [
+            110.00007518416908,
+            7620.541872902266,
+            194.59999999999997
+          ],
+          "quaternion": [
+            0.2898180165059249,
+            0.007768648834896016,
+            0.19013653108338102,
+            0.9379729553411601
+          ],
+          "scale": [
+            6.300000000000001,
+            6.300000000000001,
+            6.300000000000001
+          ],
+          "parts": {
+            "count": 31,
+            "sha256": "6d83c8b480b2d09c595b547dbca5c013af7b36a43bfd8f624b01829857ea0eb6"
+          }
+        }
+      ],
+      "subject": {
+        "kind": "b17",
+        "position": [
+          110,
+          7620,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "parts": {
+          "count": 42,
+          "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+        }
+      },
+      "modelRange": 15.409530370775864,
+      "camera": {
+        "position": [
+          110.00007518416903,
+          7620.541872902266,
+          374.59999999999997
+        ],
+        "quaternion": [
+          6.29527855500967e-197,
+          1.2246467991473532e-16,
+          -5.14048504384504e-181,
+          -1
+        ],
+        "fov": 64.99999999999997
+      },
+      "textures": [
+        {
+          "name": "hero_skin_damage",
+          "compressed": true,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 249,
+        "programsAfter": 249,
+        "mean": 14.728888889153799,
+        "p50": 14.400000005960464,
+        "p95": 19.099999994039536,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     }

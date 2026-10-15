@@ -138,8 +138,7 @@ for x0,y0,x1,y1,kind in mark_boxes+[(270,186,356,232,0)]:
     atlas[region]=(.245,.25,.09);olive[region]=True
 # Original image values are sRGB. Keep markings, neutral grey and existing localized stains.
 base=atlas.copy();lum=np.mean(atlas,axis=2);fade=.008*(noise-.5)
-panel_tone=.014*np.sin(np.floor(u*28)*12.989+np.floor(v*34)*7.23)
-for c,k in enumerate([.305,.315,.185]):base[:,:,c]=np.where(olive,k*(.58+.48*np.clip(lum/.19,0,1.2))+fade+panel_tone,atlas[:,:,c])
+panel_tone=np.zeros((S,S),np.float32)
 # Sparse panel boundaries in original UV charts. Metre-scale texture islands, not a checker overlay.
 seam=np.zeros((S,S),np.float32);rivets=np.zeros_like(seam)
 # Fuselage longitudinal charts, wings and stabilisers use different spacing/layout.
@@ -147,6 +146,7 @@ for x0,x1,y0,y1,nx,ny,length,width in [(0.02,.98,.65,.87,26,4,22,6),(.01,.88,.46
     region=(u>x0)&(u<x1)&(v>y0)&(v<y1)
     a=(u-x0)/(x1-x0)*nx;b=(v-y0)/(y1-y0)*ny
     da=np.minimum(a%1,1-a%1);db=np.minimum(b%1,1-b%1)
+    panel_tone=np.where(region,.028*np.sin(np.floor(a)*12.989+np.floor(b)*7.23),panel_tone)
     seam=np.maximum(seam,region*np.maximum(np.exp(-(da/.022)**2),np.exp(-(db/.018)**2)))
     # 45 mm pitch, 16 mm edge offset, 5 mm heads filtered to atlas texel footprint.
     sm=(u-x0)/(x1-x0)*length;tm=(v-y0)/(y1-y0)*width
@@ -154,6 +154,7 @@ for x0,x1,y0,y1,nx,ny,length,width in [(0.02,.98,.65,.87,26,4,22,6),(.01,.88,.46
     along=np.abs((tm+.0225)%.045-.0225)
     footprint=max(.0025,length/((x1-x0)*S)*.45)
     rivets=np.maximum(rivets,region*np.exp(-(row/footprint)**2-(along/footprint)**2)*min(1,.005/footprint))
+for c,k in enumerate([.305,.315,.185]):base[:,:,c]=np.where(olive,k*(.58+.48*np.clip(lum/.19,0,1.2))+fade+panel_tone,atlas[:,:,c])
 # Larger slotted access-panel fasteners share the skin relief bake.
 au=(u*26+.12)%1;av=(v*24+.12)%1
 fasteners=np.exp(-(np.minimum(au,1-au)/.045)**2-(np.minimum(av,1-av)/.045)**2)*seam
@@ -183,12 +184,13 @@ height+=fabric*(.0006*rib-.00035*np.sin(ph*np.pi)**2)
 for cx,cy in [(.32,.71),(.61,.52),(.23,.34)]:
     height-=.00065*np.exp(-((u-cx)/.009)**2-((v-cy)/.006)**2)
 scan_color,scan_rough=scan_variation(u*3.1,v*2.7)
-base*=1+scan_color[:,:,None]*olive[:,:,None]*.045
+base*=1+scan_color[:,:,None]*olive[:,:,None]*.08
 leading=((u<.43)&(abs(v-(.571+.17*u))<.003))|((u>.46)&(u<.88)&(abs(v-(.64-.17*(u-.46)))<.003))
 chip=(noise>.82)&((seam>.65)|leading)&olive
-# Seams and rivet highlights remain visible without bleaching entire panels.
-base*=1-.22*seam[:,:,None]
-base+=.055*rivets[:,:,None]*olive[:,:,None]
+# Dark seam/rivet recesses and brighter service fasteners survive downsampling.
+base*=1-.48*seam[:,:,None]
+base-=.085*rivets[:,:,None]*olive[:,:,None]
+base+=.045*fasteners[:,:,None]*olive[:,:,None]
 base[chip]=(.48,.50,.46)
 # Directional soot fans behind the four turbos in the underside UV chart.
 soot=np.zeros_like(seam)
@@ -203,7 +205,7 @@ base*=1-(soot+oil)[:,:,None]
 walkway=(((u>.397)&(u<.416))|((u>.478)&(u<.497)))&(v>.475)&(v<.613)
 scuff=.075+.035*noise+.025*(np.sin(v*910+u*230)**8)
 for c in range(3):base[:,:,c]=np.where(walkway,scuff,base[:,:,c])
-orm=np.stack((1-.16*seam,np.clip(.54+.05*(curvature(height)-.5)+.075*scan_rough+.025*(noise-.5)-chip*.22-oil*.35+soot*.15+fabric*.16,0,1),np.where(chip,.78,.04)),axis=-1)
+orm=np.stack((1-.16*seam,np.clip(.50+panel_tone*3+.10*(curvature(height)-.5)+.10*scan_rough+.025*(noise-.5)-chip*.22-oil*.35+soot*.15+fabric*.16,0,1),np.where(chip,.78,.04)),axis=-1)
 silver=base.copy();painted=(olive|((np.max(atlas,axis=2)-np.min(atlas,axis=2)<.08)&(lum>.25)))&~walkway
 for c,k in enumerate([.60,.625,.65]):silver[:,:,c]=np.where(painted,k*(.80+.20*np.clip(lum/.3,0,1))+.012*np.sin(u*700)+panel_tone,base[:,:,c])
 silver*=1-(.2*seam+soot+oil)[:,:,None]

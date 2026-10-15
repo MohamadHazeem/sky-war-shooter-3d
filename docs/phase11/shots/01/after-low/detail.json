@@ -1,9 +1,17 @@
 {
   "quality": "low",
+  "seed": 19431008,
   "views": [
     {
       "kind": "b17",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
       "subject": {
+        "kind": "b17",
         "position": [
           110,
           7620,
@@ -14,7 +22,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "parts": {
+          "count": 42,
+          "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+        }
       },
       "modelRange": 15,
       "camera": {
@@ -45,15 +62,22 @@
         "samples": 45,
         "programsBefore": 238,
         "programsAfter": 238,
-        "mean": 2.9133333332008786,
-        "p50": 2.7999999821186066,
-        "p95": 4.699999988079071,
+        "mean": 4.117777778042687,
+        "p50": 3.7000000178813934,
+        "p95": 6.200000017881393,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "fw190",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
       "subject": {
+        "kind": "fw190",
         "position": [
           110,
           7680,
@@ -64,7 +88,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          6,
+          6,
+          6
+        ],
+        "parts": {
+          "count": 31,
+          "sha256": "6d83c8b480b2d09c595b547dbca5c013af7b36a43bfd8f624b01829857ea0eb6"
+        }
       },
       "modelRange": 17.029386365926403,
       "camera": {
@@ -86,12 +119,13 @@
         "samples": 45,
         "programsBefore": 238,
         "programsAfter": 238,
-        "mean": 2.693333333068424,
-        "p50": 2,
-        "p95": 4.899999976158142,
+        "mean": 1.3822222219573126,
+        "p50": 1.2000000178813934,
+        "p95": 2.300000011920929,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     }
   ],
-  "errors": []
+  "errors": [],
+  "complete": true
 }

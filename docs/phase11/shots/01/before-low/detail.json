@@ -1,20 +1,50 @@
 {
   "quality": "low",
+  "seed": 19431008,
   "views": [
     {
       "kind": "b17",
-      "modelRange": 14.69693845669911,
-      "camera": {
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
+      "subject": {
+        "kind": "b17",
         "position": [
-          113.1764368678905,
-          7625.919839802159,
-          398.33195896372956
+          110,
+          7620,
+          390
         ],
         "quaternion": [
-          -0.149356789111335,
-          0.3760081222215034,
-          0.0615494686614085,
-          0.9124264926432756
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "parts": {
+          "count": 42,
+          "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+        }
+      },
+      "modelRange": 15,
+      "camera": {
+        "position": [
+          120,
+          7625,
+          402
+        ],
+        "quaternion": [
+          -0.15622985705189124,
+          0.3771722397422857,
+          0.06471252563850327,
+          0.9105743365364628
         ],
         "fov": 46
       },
@@ -32,40 +62,70 @@
         "samples": 45,
         "programsBefore": 235,
         "programsAfter": 235,
-        "mean": 3.022222222222222,
-        "p50": 3,
-        "p95": 3.5999999940395355,
+        "mean": 2.5555555555555554,
+        "p50": 2.4000000059604645,
+        "p95": 3.4000000059604645,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "fw190",
-      "modelRange": 17.02938636592636,
-      "camera": {
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
+      "subject": {
+        "kind": "fw190",
         "position": [
-          173.73639143785263,
-          7716.240071011695,
-          445.6307483973329
+          110,
+          7680,
+          390
         ],
         "quaternion": [
-          -0.15919288167679968,
-          0.39456657668718903,
-          0.0696141302477813,
-          0.9022908155659316
+          0,
+          0,
+          0,
+          1
         ],
-        "fov": 30
+        "scale": [
+          6,
+          6,
+          6
+        ],
+        "parts": {
+          "count": 31,
+          "sha256": "6d83c8b480b2d09c595b547dbca5c013af7b36a43bfd8f624b01829857ea0eb6"
+        }
+      },
+      "modelRange": 17.029386365926403,
+      "camera": {
+        "position": [
+          182,
+          7710,
+          450
+        ],
+        "quaternion": [
+          -0.13588333844051473,
+          0.39820170466884447,
+          0.05977531380221468,
+          0.9052060718935404
+        ],
+        "fov": 20
       },
       "textures": [],
       "frameMs": {
         "samples": 45,
         "programsBefore": 235,
         "programsAfter": 235,
-        "mean": 4.222222222222222,
-        "p50": 4.199999988079071,
-        "p95": 4.899999976158142,
+        "mean": 1.895555555820465,
+        "p50": 1.699999988079071,
+        "p95": 3.5999999940395355,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     }
   ],
-  "errors": []
+  "errors": [],
+  "complete": true
 }

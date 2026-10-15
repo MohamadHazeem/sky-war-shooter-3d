@@ -1,9 +1,17 @@
 {
   "quality": "high",
+  "seed": 19431008,
   "views": [
     {
       "kind": "fw190",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
       "subject": {
+        "kind": "fw190",
         "position": [
           110,
           7680,
@@ -14,7 +22,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          6,
+          6,
+          6
+        ],
+        "parts": {
+          "count": 31,
+          "sha256": "6d83c8b480b2d09c595b547dbca5c013af7b36a43bfd8f624b01829857ea0eb6"
+        }
       },
       "modelRange": 17.029386365926403,
       "camera": {
@@ -45,15 +62,22 @@
         "samples": 45,
         "programsBefore": 246,
         "programsAfter": 246,
-        "mean": 4.331111111243566,
-        "p50": 4.199999988079071,
-        "p95": 6.600000023841858,
+        "mean": 4.331111110581292,
+        "p50": 4.299999982118607,
+        "p95": 5.600000023841858,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "bf109",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
       "subject": {
+        "kind": "bf109",
         "position": [
           110,
           7680,
@@ -64,7 +88,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          6.300000000000001,
+          6.300000000000001,
+          6.300000000000001
+        ],
+        "parts": {
+          "count": 31,
+          "sha256": "6d83c8b480b2d09c595b547dbca5c013af7b36a43bfd8f624b01829857ea0eb6"
+        }
       },
       "modelRange": 17.029386365926403,
       "camera": {
@@ -95,15 +128,22 @@
         "samples": 45,
         "programsBefore": 246,
         "programsAfter": 246,
-        "mean": 6.268888889418708,
-        "p50": 6.299999982118607,
-        "p95": 9.700000017881393,
+        "mean": 4.315555555290646,
+        "p50": 4.100000023841858,
+        "p95": 5.5,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "me262",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
       "subject": {
+        "kind": "me262",
         "position": [
           110,
           7680,
@@ -114,7 +154,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          6,
+          6,
+          6
+        ],
+        "parts": {
+          "count": 28,
+          "sha256": "bfee6939339f7cf9241da7bba866f6ad262d2a003224b406da32c1ae21a846a5"
+        }
       },
       "modelRange": 17.029386365926403,
       "camera": {
@@ -145,15 +194,22 @@
         "samples": 45,
         "programsBefore": 246,
         "programsAfter": 246,
-        "mean": 4.788888888888889,
-        "p50": 4.4000000059604645,
-        "p95": 7.199999988079071,
+        "mean": 4.153333333465788,
+        "p50": 4.0999999940395355,
+        "p95": 4.800000011920929,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "bf110",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
       "subject": {
+        "kind": "bf110",
         "position": [
           110,
           7680,
@@ -164,7 +220,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          5.1,
+          5.1,
+          5.1
+        ],
+        "parts": {
+          "count": 46,
+          "sha256": "768e58b7f5b449170904e00d5b91190fe380ea6cfa4b1bec2828f6f0be134f5d"
+        }
       },
       "modelRange": 17.029386365926406,
       "camera": {
@@ -195,15 +260,22 @@
         "samples": 45,
         "programsBefore": 246,
         "programsAfter": 246,
-        "mean": 4.482222221957313,
-        "p50": 4.300000011920929,
-        "p95": 6.5,
+        "mean": 4.582222221957313,
+        "p50": 4.4000000059604645,
+        "p95": 5.899999976158142,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "ju88",
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
       "subject": {
+        "kind": "ju88",
         "position": [
           110,
           7680,
@@ -214,7 +286,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          4.5,
+          4.5,
+          4.5
+        ],
+        "parts": {
+          "count": 42,
+          "sha256": "42a225bec8e1537f2db431b3556243238f14ce763c3b5d9e3e27484ae898a8c0"
+        }
       },
       "modelRange": 17.029386365926403,
       "camera": {
@@ -245,12 +326,13 @@
         "samples": 45,
         "programsBefore": 246,
         "programsAfter": 246,
-        "mean": 4.597777777910233,
-        "p50": 4.399999976158142,
-        "p95": 6.800000011920929,
+        "mean": 4.506666665607028,
+        "p50": 4.4000000059604645,
+        "p95": 5.700000017881393,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     }
   ],
-  "errors": []
+  "errors": [],
+  "complete": true
 }

@@ -81,3 +81,24 @@ rig scene for six 15–17 m model-space detail views; `DETAIL_BASELINE=/path/to/
 serves preserved baseline assets, `DETAIL_QUALITY=low` exercises Low, and
 `DETAIL_FALLBACK=1` aborts KTX2 to exercise fallback. All pages and contexts close in `finally`.
 `HERO_SILHOUETTE_OUT=docs/phase11/shots/01` preserves the historical goal-02c gate.
+
+### Review revision: pose-locked evidence
+
+`detail-qa.mjs` now captures the three production rig fixtures as well as close views,
+30 m B-17/Fw 190 views, and a lit dusk B-17. It locks every bomber pose, animated
+model pivots, gunner aim and target pose before deriving the camera. Do not replay
+a world-space camera onto a separately simulated bomber: model construction consumes
+random numbers, so the eye can otherwise land inside the cabin wall.
+
+```sh
+DETAIL_BASELINE=/path/to/live/models tools/heavy.sh node tools/hero/detail-qa.mjs before
+tools/heavy.sh node tools/hero/detail-qa.mjs after
+node tools/hero/detail-compare.mjs
+```
+
+`before/detail.json` and `after/detail.json` are the authoritative capture records;
+the obsolete camera-only fixture manifests/contact sheets were removed. The comparison
+gate checks completion, presets, seed, weather, range, camera, aircraft and articulated
+part poses. Close daylight pairs use matched frontal light; dusk uses the production
+dusk weather with the low sun facing the visible aircraft surfaces. No extra light or
+exposure override is added.

@@ -1,8 +1,13 @@
 {
   "quality": "high",
+  "seed": 19431008,
   "views": [
     {
       "kind": "b17",
+      "weather": {
+        "mood": "night"
+      },
+      "fixture": false,
       "glow": {
         "count": 144,
         "alpha": [
@@ -19,6 +24,7 @@
         "night": 1
       },
       "subject": {
+        "kind": "b17",
         "position": [
           110,
           7620,
@@ -29,7 +35,16 @@
           0,
           0,
           1
-        ]
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "parts": {
+          "count": 42,
+          "sha256": "631869d29e948a38301eaa6c16a9c58a93f2d4af998ecdb8e06f03d9a2a4efc8"
+        }
       },
       "modelRange": 15,
       "camera": {
@@ -60,12 +75,13 @@
         "samples": 45,
         "programsBefore": 246,
         "programsAfter": 246,
-        "mean": 8.9355555554231,
-        "p50": 8.699999988079071,
-        "p95": 14,
+        "mean": 7.560000000397364,
+        "p50": 7.5999999940395355,
+        "p95": 8.699999988079071,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     }
   ],
-  "errors": []
+  "errors": [],
+  "complete": true
 }

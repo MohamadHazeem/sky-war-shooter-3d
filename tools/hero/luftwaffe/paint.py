@@ -467,6 +467,7 @@ def paint(m, maps, size):
     height = np.zeros((H, W), np.float32)
     seam = np.zeros((H, W), np.float32)
     rivet = np.zeros((H, W), np.float32)
+    panel_finish = np.zeros((H, W), np.float32)
     texel = np.maximum(tm_ref, 1e-4)
     def line_px(F, gF, v0):
         return np.abs(F - v0) / gF
@@ -478,6 +479,10 @@ def paint(m, maps, size):
             continue
         Ss, Ts, gSs, gTs = S[sel], T[sel], gS[sel], gT[sel]
         Pk = P[sel]
+        # Finish changes follow the measured sheet stations, not a second arbitrary grid.
+        sb = sorted(set(ln[0] if isinstance(ln, tuple) else ln for ln in s.lines_s))
+        tb = sorted(set(ln[0] if isinstance(ln, tuple) else ln for ln in s.lines_t))
+        panel_finish[sel] = np.sin(np.searchsorted(sb, Ss)*12.989 + np.searchsorted(tb, Ts)*7.233 + k)
         dmin = np.full(Ss.shape, 99.0, np.float32)
         rv = np.zeros(Ss.shape, np.float32)
         if s.kind == 'body':
@@ -588,17 +593,17 @@ def paint(m, maps, size):
         pc = pc + sun * 0.05
         col = np.where(skinm[..., None], pc, col)
         scan_color, scan_rough = scan_variation(P[..., 2] * .37 + P[..., 0] * .19, P[..., 1] * .5 + P[..., 0] * .23)
-        col *= 1 + (skinm * scan_color * .045)[..., None]
+        col *= 1 + (skinm * scan_color * .08)[..., None]
         # Sheet-to-sheet finish changes interrupt the reflection without painting a dark grid.
-        panel = np.sin(np.floor(S / .58) * 12.989 + np.floor(T / .42) * 7.233)
-        rough = np.where(skinm, .49 + panel * .075 + (lowf - .5) * .14 + scan_rough * .075, rough)
-        col *= 1 + (skinm * panel * .022)[...,None]
-        col += (skinm * rivet * .055)[...,None]
+        panel = panel_finish
+        rough = np.where(skinm, .48 + panel * .14 + (lowf - .5) * .14 + scan_rough * .075, rough)
+        col *= 1 + (skinm * panel * .10)[...,None]
+        col += (skinm * rivet * .11)[...,None]
         rough = np.where(skinm, rough - rivet * .08, rough)
         for k, surface in enumerate(m.surfs):
             if surface and surface.fabric:
                 rough = np.where((sid == k) & skinm, .76 + .04 * scan_rough, rough)
-        col = np.where(skinm[..., None], col * (1 - 0.32 * seam)[..., None], col)
+        col = np.where(skinm[..., None], col * (1 - 0.55 * seam)[..., None], col)
         # streaks aft of the seams (dirt drawn back by the airflow): stretched noise
         streak = fbm(flatP, (22, 22, 0.45), 3, seed + 41).reshape(H, W)
         dirt = sstep(0.58, 0.85, streak) * 0.05
