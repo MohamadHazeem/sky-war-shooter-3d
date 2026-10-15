@@ -11,7 +11,7 @@ import { prepareHeroLODs, heroStreamGeometry } from './HeroB17';
 import { isHero, prepareHero } from './HeroLook';
 
 export type ModelKind =
-  | 'b17' | 'fw190' | 'p51d' | 'p51d_cockpit'
+  | 'b17' | 'fw190' | 'p51d' | 'p51d_cockpit' | 'p47d' | 'spitfire9'
   // Extra enemy types (see public/models/CREDITS.md). Same frame as the others: metres, +Z nose, +X left wing.
   // fw190, bf109, me262, bf110 and ju88 are the hero models (tools/hero/luftwaffe, world/HeroLook.ts):
   // named parts with three LODs, hinged control surfaces, baked PBR maps; the node names below still hold.
@@ -27,6 +27,8 @@ const FILES: Record<ModelKind, string> = {
   b17: 'models/hero/b17.glb',
   fw190: 'models/fw190.glb',
   p51d: 'models/p51d.glb',
+  p47d: 'models/p47d.glb',
+  spitfire9: 'models/spitfire9.glb',
   p51d_cockpit: 'models/p51d_cockpit.glb',
   bf110: 'models/bf110.glb',
   me262: 'models/me262.glb',
@@ -39,7 +41,7 @@ const FILES: Record<ModelKind, string> = {
 
 // The models the menu shows (formation + escorts) and the default enemy: loaded before the
 // menu appears. The rest load in the background (see core/Preload.ts).
-export const ESSENTIAL_MODELS: readonly ModelKind[] = ['b17', 'fw190', 'p51d'];
+export const ESSENTIAL_MODELS: readonly ModelKind[] = ['b17', 'fw190', 'p51d', 'p47d', 'spitfire9'];
 export const ALL_MODELS = Object.keys(FILES) as ModelKind[];
 export const modelPath = (k: ModelKind) => FILES[k];
 
@@ -137,6 +139,8 @@ export function instantiate(k: ModelKind): THREE.Object3D {
 // Placeholder sizes for the extra enemy types: span, length, colour, prop positions [x, z]
 // (roughly the converted models' bounding boxes and prop_N pivots).
 const EXTRA_PLACEHOLDERS: Partial<Record<ModelKind, { span: number; len: number; col: number; props: [number, number][] }>> = {
+  p47d: { span: 12.43, len: 11.0, col: 0x535441, props: [[0, 4.354]] },
+  spitfire9: { span: 11.23, len: 9.46, col: 0x434d40, props: [[0, 2.11]] },
   bf110: { span: 16.3, len: 12.5, col: 0x6b6a52, props: [[2.35, 2.4], [-2.35, 2.4]] },
   me262: { span: 12.6, len: 10.6, col: 0x5a5840, props: [] },
   bf109: { span: 9.8, len: 8.9, col: 0x5d6b4a, props: [[0, 2.4]] },
@@ -179,8 +183,10 @@ function placeholder(k: ModelKind): THREE.Object3D {
 
 // Translucent spinning-propeller disc with faint blade streaks.
 let discTex: THREE.Texture | null = null;
-function propDiscTexture() {
-  if (discTex) return discTex;
+let escortDiscTex: THREE.Texture | null = null;
+function propDiscTexture(softSweep = false) {
+  const cached = softSweep ? escortDiscTex : discTex;
+  if (cached) return cached;
   const S = 256;
   const c = document.createElement('canvas');
   c.width = c.height = S;
@@ -201,7 +207,13 @@ function propDiscTexture() {
         alpha = (0.05 + 0.1 * Math.pow(streak, 6) + 0.035 * Math.pow(band, 3)) * (1 - Math.pow(r, 6)) * inner;
         // Fine radial striations that fade out toward hub and rim, like motion streaks.
         alpha += 0.02 * Math.pow(0.5 + 0.5 * Math.cos(a * 17 + r * 2), 4) * 4 * r * (1 - r) * inner;
-        if (r > 0.9) {
+        if (softSweep) {
+          // Four broad paddle-blade shadows, with a continuous fade to a transparent rim.
+          // A narrow yellow tip band reads as a wire hoop on the large P-47 prop.
+          const blade = Math.pow(0.5 + 0.5 * Math.cos(a * 4), 5);
+          const edge = THREE.MathUtils.smoothstep(r, 0.68, 1);
+          alpha = (0.07 + 0.34 * blade) * (1 - edge) * inner;
+        } else if (r > 0.9) {
           ring = Math.exp(-Math.pow((r - 0.955) / 0.014, 2)); // thin yellow tip ring
           alpha += 0.16 * ring;
         }
@@ -211,9 +223,11 @@ function propDiscTexture() {
       img.data[i + 3] = Math.min(255, alpha * 255 * 1.6);
     }
   g.putImageData(img, 0, 0);
-  discTex = new THREE.CanvasTexture(c);
-  discTex.colorSpace = THREE.SRGBColorSpace;
-  return discTex;
+  const texture = new THREE.CanvasTexture(c);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  if (softSweep) escortDiscTex = texture;
+  else discTex = texture;
+  return texture;
 }
 
 export interface PropInfo { node: THREE.Object3D; blades: THREE.Object3D[]; disc: THREE.Mesh; base: THREE.Quaternion; layered: boolean; }
@@ -221,7 +235,7 @@ export interface PropInfo { node: THREE.Object3D; blades: THREE.Object3D[]; disc
 let heroDiscMaterial: THREE.MeshBasicMaterial | null = null;
 const discGeos = new Map<number, THREE.CircleGeometry>(); // one disc geometry per size, shared
 
-export function setupProps(root: THREE.Object3D, radius: number): PropInfo[] {
+export function setupProps(root: THREE.Object3D, radius: number, softSweep = false): PropInfo[] {
   const props: PropInfo[] = [];
   const layered = !!root.getObjectByName('B17G_HERO');
   const nodes: THREE.Object3D[] = [];
@@ -233,7 +247,7 @@ export function setupProps(root: THREE.Object3D, radius: number): PropInfo[] {
     const disc = new THREE.Mesh(
       geo,
       layered ? (heroDiscMaterial ??= new THREE.MeshBasicMaterial({ map: propDiscTexture(), transparent: true, opacity: .55, depthWrite: false, side: THREE.DoubleSide }))
-        : markOwned(new THREE.MeshBasicMaterial({ map: propDiscTexture(), transparent: true, depthWrite: false, side: THREE.DoubleSide })),
+        : markOwned(new THREE.MeshBasicMaterial({ map: propDiscTexture(softSweep), transparent: true, depthWrite: false, side: THREE.DoubleSide })),
     );
     disc.userData.formationPropSweep = layered;
     disc.position.z = 0.05;

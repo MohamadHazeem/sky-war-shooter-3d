@@ -1,0 +1,20 @@
+[
+  {
+    "kind": "p47d",
+    "archive": "P47",
+    "url": "https://mirrors.ibiblio.org/flightgear/ftp/Aircraft-2020/P47.zip",
+    "sha256": "7e208e705060cc15625d645eee4bcf113d3356595b67bb4d79d2291e9727d510",
+    "model": "Models/p47d-30.ac",
+    "author": "Syd Adams",
+    "license": "GPL-2.0-or-later"
+  },
+  {
+    "kind": "spitfire9",
+    "archive": "spitfireIX",
+    "url": "https://mirrors.ibiblio.org/flightgear/ftp/Aircraft-2020/spitfireIX.zip",
+    "sha256": "a45c71fd6717c2732d4fdfd2e576ec073644033cfac3b441353c5c7e2ab84d5a",
+    "model": "Models/spitfire9.ac",
+    "author": "Detlef Faber",
+    "license": "GPL-2.0"
+  }
+]

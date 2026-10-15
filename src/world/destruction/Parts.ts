@@ -70,6 +70,8 @@ const KINDS: Record<string, KindSpec> = {
   bf109: { shares: { root: 0.12, tip: 0.6, tail: 0.31, tailX: 0.42, nose: 0.22 }, mass: 3400, massShare: SINGLE, fuel: fuel(1, 0) },
   // P-51D: wing tanks and the fuselage tank behind the pilot
   p51d: { shares: { root: 0.11, tip: 0.6, tail: 0.3, tailX: 0.4, nose: 0.2 }, mass: 4600, massShare: SINGLE, fuel: fuel(0.6, 1) },
+  p47d: { shares: { root: 0.13, tip: 0.54, tail: 0.18, tailX: 0.4, nose: 0.22 }, mass: 6500, massShare: SINGLE, fuel: fuel(1, 0) },
+  spitfire9: { shares: { root: 0.12, tip: 0.5, tail: 0.18, tailX: 0.3, nose: 0.22 }, mass: 3400, massShare: SINGLE, fuel: fuel(1, 0) },
   bf110: { shares: { root: 0.1, tip: 0.62, tail: 0.28, tailX: 0.44, nose: 0.16 }, mass: 7800, massShare: TWIN, fuel: fuel(0.4, 1, 0) },
   ju88: { shares: { root: 0.1, tip: 0.64, tail: 0.28, tailX: 0.4, nose: 0.14 }, mass: 11000, massShare: TWIN, fuel: fuel(0.6, 1, 0) },
   he111: { shares: { root: 0.09, tip: 0.64, tail: 0.27, tailX: 0.36, nose: 0.12 }, mass: 12000, massShare: TWIN, fuel: fuel(0.4, 1, 0) },

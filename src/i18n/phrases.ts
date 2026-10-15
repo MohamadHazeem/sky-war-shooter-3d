@@ -1,3 +1,4 @@
+import escorts from './ar/escorts';
 import mastery from './ar/mastery';
 import touchGunner from './ar/touchGunner';
 import crewDecisions from './ar/crewDecisions';
@@ -56,7 +57,7 @@ import ditching from './ar/ditching';
 import sea from './ar/sea';
 
 // manual first: its generic words (Low, Close, Zoom...) never override another screen's wording
-const TABLES: PhraseTable[] = [replayStudio, mastery, touchGunner, crewDecisions, coopLobbies, spatialAudio, score, crewStories, seasons, renderer, cinema, b17Damage, deepPenetration, bombRun, formation, soundscape, luftwaffe, enemyAi, gunnerSurvival, cleanHud, menu, weather, aa, sea, ditching, squadron, secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles, bombardier];
+const TABLES: PhraseTable[] = [escorts, replayStudio, mastery, touchGunner, crewDecisions, coopLobbies, spatialAudio, score, crewStories, seasons, renderer, cinema, b17Damage, deepPenetration, bombRun, formation, soundscape, luftwaffe, enemyAi, gunnerSurvival, cleanHud, menu, weather, aa, sea, ditching, squadron, secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles, bombardier];
 
 // Any ./ar/*.ts table not listed above is picked up automatically and goes FIRST (lowest
 // precedence), like a newly prepended table: a new goal only adds its file, no edit here.

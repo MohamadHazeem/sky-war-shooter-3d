@@ -1,3 +1,4 @@
+import { isEscortKind } from '../world/EscortTypes';
 // Online co-op: up to four B-17 gunners or two locally flown P-51s with host-authoritative combat.
 // Pilot flight/damage/respawns live in CoopPilot.ts; transport, proxies and results are shared.
 //
@@ -103,10 +104,10 @@ const _v2 = new THREE.Vector3();
 const ZERO = new THREE.Vector3();
 const _remoteDir = new THREE.Vector3(), _remoteVel = new THREE.Vector3();
 
-// Kind code of an aircraft in snapshots ('B' bomber, 'P' allied fighter, else the enemy type)
+// Snapshot kinds: B bomber, P legacy/player Mustang, explicit escort or enemy kind.
 export function kindOf(a: Aircraft): string | null {
   if (a instanceof Bomber) return 'B';
-  if (a instanceof Fighter) return a.team === 'allied' ? 'P' : (a.enemyType || 'fw190');
+  if (a instanceof Fighter) return a.team === 'allied' ? (a.kind === 'p51d' ? 'P' : a.kind) : (a.enemyType || 'fw190');
   return null;
 }
 
@@ -1375,8 +1376,8 @@ export class CoopSession {
         for (const [k, v] of this.proxies) if (v === w.playerBomber) this.proxies.delete(k);
         a = w.playerBomber;
       } else { const b = new Bomber(); b.root.position.copy(pos); w.add(b); a = b; }
-    } else if (tr.kind === 'P') {
-      a = w.spawnEscort(pos.clone(), new THREE.Vector3());
+    } else if (tr.kind === 'P' || isEscortKind(tr.kind)) {
+      a = w.spawnEscort(pos.clone(), new THREE.Vector3(), tr.kind === 'P' ? 'p51d' : tr.kind);
     } else if (tr.kind in ENEMY_VARIANTS) {
       a = w.spawnEnemy(pos.clone(), 'beam', 1, false, false, tr.kind as EnemyType);
     }

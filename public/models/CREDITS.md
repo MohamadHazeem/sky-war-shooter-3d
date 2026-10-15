@@ -146,3 +146,15 @@ barrel and two FDL 131 barbette blisters (`src/world/EnemyDress.ts`). No He 219 
   Goal 13 adds original sculpted garment folds, stitched seams and pockets in `build_crew.py`;
   cloth/leather normal and roughness maps are original procedural work in `src/render/CrewFabric.ts`.
 * `b17_interior.glb`: waist, radio room and bomb bay structure and equipment, ambient occlusion baked in Cycles.
+
+## Phase 11 escort fighters
+
+- **P-47D Thunderbolt** (`p47d.glb`, associated WebP/KTX2): FlightGear P-47D-30 by **Syd Adams**,
+  from the [official FGAddon distribution](https://svn.code.sf.net/p/flightgear/fgaddon/trunk/Aircraft/P47/),
+  GPLv2+ under the [official hangar terms](https://wiki.flightgear.org/Hangars).
+- **Spitfire Mk IX** (`spitfire9.glb`, associated WebP/KTX2): FlightGear model by **Detlef Faber**,
+  [official source](https://svn.code.sf.net/p/flightgear/fgaddon/trunk/Aircraft/spitfireIX/), GPLv2
+  (source README retained in `tools/hero/escorts/Spitfire-LICENSE.txt`).
+- Original shapes retained; new named structural/control parts, UV atlas, baked PBR wear,
+  USAAF/RAF markings, crew/props and LODs by this project. Pinned archive hashes, conversion
+  inputs and rebuild instructions: `tools/hero/escorts/README.md` and `sources.json`.

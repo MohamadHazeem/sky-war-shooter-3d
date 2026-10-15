@@ -1,3 +1,4 @@
+import { ESCORT_TYPES, type EscortKind } from './EscortTypes';
 import { warmDustMotes } from '../game/DustMotes';
 import { warmHeroLODs } from './HeroB17';
 import { limitPlayerStraggle } from './FormationRules';
@@ -15,7 +16,6 @@ import { disposeOwned } from '../render/Dispose';
 import { Ballistics, HitEvent } from './Ballistics';
 import { Effects } from './Effects';
 import { EnemyPilot, EscortPilot, AttackType, WorldView } from './AI';
-import { P51_PARAMS } from './FlightModel';
 import { ENEMY_VARIANTS, EnemyType, tintModel } from './EnemyTypes';
 import { AI_EXTRA, dirFromYawPitch, inArc, STATIONS, STATION_ORDER, StationDef } from './B17Layout';
 import { sound } from '../audio/Sound';
@@ -316,11 +316,13 @@ export class World implements WorldView {
     const unwarmHero = warmHeroLODs(b17.model);
     const compact = instantiateCompactBomber();
     if (compact) { compact.position.copy(b17.pos); compact.userData.formationBatch = true; this.scene.add(compact); }
-    // the Mustangs of the 'little friends' set piece (gunner missions may have no escort)
-    const p51 = new Fighter('p51d', 'allied', P51_PARAMS);
-    p51.root.position.copy(camera.position).addScaledVector(fwd, 70);
-    this.scene.add(p51.root);
-    dummies.push(p51);
+    // Every escort skin/prop variant, including gunner missions with no starting escort
+    for (const kind of ['p51d', 'p47d', 'spitfire9'] as const) {
+      const spec = ESCORT_TYPES[kind];
+      const escort = new Fighter(kind, 'allied', spec.params, spec.propRadius);
+      escort.root.position.copy(camera.position).addScaledVector(fwd, 35);
+      this.scene.add(escort.root); dummies.push(escort);
+    }
     const at = camera.position.clone().addScaledVector(fwd, 80);
     this.effects.explosion(at, new THREE.Vector3(), 1);
     this.effects.parachute(at, new THREE.Vector3());
@@ -357,7 +359,7 @@ export class World implements WorldView {
     const unwarmAA = warmAAGuns(this.scene, at);
     const unwarmInteriorDamage = warmInteriorDamage(this.scene, at);
     const unwarmDamage = warmDamageStages(this.scene, at);
-    const unwarmDestruction = this.destruction.warm(this.scene, at, [...splitDummies, b17, p51].map((f) => ({ kind: f.kind, model: f.model })));
+    const unwarmDestruction = this.destruction.warm(this.scene, at, [...dummies, b17].map((f) => ({ kind: f.kind, model: f.model })));
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
     const unwarmTargetSmoke = warmTargetSmoke(this.scene);
     const unwarmStream = this.engine.bomberStream.warm();   // the stream's near-LOD programs
@@ -575,7 +577,7 @@ export class World implements WorldView {
   }
 
   spawnPlayerFighter(pos: THREE.Vector3, dir: THREE.Vector3): Fighter {
-    const f = this.makeMustang(pos, dir);
+    const f = this.makeAlliedFighter(pos, dir);
     f.isPlayer = true;
     for (const z of f.zones) { z.hp *= 1.7; z.maxHp *= 1.7; }
     this.player = f;
@@ -583,30 +585,36 @@ export class World implements WorldView {
     return f;
   }
 
-  spawnEscort(pos: THREE.Vector3, slot: THREE.Vector3): Fighter {
-    const f = this.makeMustang(pos, this.formationForward);
+  spawnEscort(pos: THREE.Vector3, slot: THREE.Vector3, kind: EscortKind = 'p51d'): Fighter {
+    const f = this.makeAlliedFighter(pos, this.formationForward, kind);
     // wingmen keep the enemy busy but leave the kills to the player
-    for (const g of f.guns) { g.damage *= 0.3; g.tracerEvery = 3; }
+    for (const g of f.guns) { g.damage *= 0.3 * 6 / f.guns.length; g.tracerEvery = 3; }
     this.pilots.set(f, new EscortPilot(f, slot));
     return f;
   }
 
-  private makeMustang(pos: THREE.Vector3, dir: THREE.Vector3) {
-    const f = new Fighter('p51d', 'allied', P51_PARAMS);
+  private makeAlliedFighter(pos: THREE.Vector3, dir: THREE.Vector3, kind: EscortKind = 'p51d') {
+    const spec = ESCORT_TYPES[kind];
+    const f = new Fighter(kind, 'allied', spec.params, spec.propRadius);
     f.root.position.copy(pos);
     f.root.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), _v.copy(dir).normalize());
     f.fm.vel.copy(dir).normalize().multiplyScalar(140);
     f.vel.copy(f.fm.vel);
-    // 6x M2 .50 cal in the wings, harmonised at ~300 m
+    // Authored wing muzzles, harmonised at ~300 m; escort damage is normalised above.
     const conv = 300;
-    const muzzles = [[2.009, -0.434, 0.6], [2.211, -0.417, 0.55], [2.407, -0.392, 0.55]];
+    const muzzles = spec.muzzles;
     f.guns = [];
     for (const side of [1, -1]) for (const [x, y, z] of muzzles) {
       const off = new THREE.Vector3(x * side, y, z);
       const dirv = new THREE.Vector3(-off.x, -off.y + 0.45, conv).normalize();
       f.guns.push(makeGun({ offset: off, dir: dirv, rate: 13, muzzleVel: 880, damage: 14, spread: 0.0035, tracerEvery: 4, tracerColor: [9, 3, 1], ammo: 500 }));
     }
-    f.label = 'P-51D';
+    if (kind !== 'p51d') {
+      f.zone('engine')!.offset.z = kind === 'p47d' ? 3.3 : 1.5;
+      f.zone('cockpit')!.offset.set(0, kind === 'p47d' ? .8 : .6, kind === 'p47d' ? 0 : -1.45);
+      f.zone('tail')!.offset.z = -5.8;
+    }
+    f.label = spec.label;
     this.add(f);
     return f;
   }

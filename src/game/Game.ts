@@ -1,3 +1,4 @@
+import { escortKind } from '../world/EscortTypes';
 import { FormationReturn } from './FormationReturn';
 import { setHudDetail } from '../ui/HudDetail';
 import { SimpleMenu } from './SimpleMenu';
@@ -318,7 +319,7 @@ export class Game {
     this.clearBombs();
     this.setWeather(DEFAULT_WEATHER);
     this.world.spawnFormation(12, 1);
-    for (let i = 0; i < 3; i++) this.world.spawnEscort(new THREE.Vector3(R() * 300, ALTITUDE + 300 + i * 40, -200 + i * 80), new THREE.Vector3(200 * (i - 1), 350, 200));
+    for (let i = 0; i < 3; i++) this.world.spawnEscort(new THREE.Vector3(R() * 300, ALTITUDE + 300 + i * 40, -200 + i * 80), new THREE.Vector3(200 * (i - 1), 350, 200), escortKind(i));
     this.menuScene.reset();
     sound.setMode('menu');
     this.coop.onTitle();

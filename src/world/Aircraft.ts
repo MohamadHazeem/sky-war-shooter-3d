@@ -84,7 +84,7 @@ export abstract class Aircraft {
     registerFormationSource(this.root, this, null);
     this.model = instantiate(kind);
     this.root.add(this.model);
-    this.props = setupProps(this.model, propRadius);
+    this.props = setupProps(this.model, propRadius, kind === 'p47d' || kind === 'spitfire9');
     this.propSpin = this.props.map(() => Math.random() * 6);
     this.engineDead = this.props.map(() => false);
   }

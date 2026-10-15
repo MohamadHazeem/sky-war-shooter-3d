@@ -28,6 +28,7 @@ RLM = {
     '24': _c('243a69'), '25': _c('3f7d43'), '65': _c('7b94a4'), '66': _c('34363a'), '70': _c('2c3327'),
     '71': _c('3c4430'), '74': _c('3c4041'), '75': _c('5c5c62'), '76': _c('9aa7ab'), '81': _c('544a3a'),
     '82': _c('4e5a3a'), '83': _c('3a4a37'), 'alu': _c('b9bcbf'), 'soot': _c('1b1917'),
+    'od': _c('535441'), 'rafgreen': _c('434d40'), 'rafgrey': _c('626d72'), 'mediumgrey': _c('9a9e9e'), 'sky': _c('bec7ac'),
     'oil': _c('2a2216'), 'primer': _c('7d8170'), 'red': _c('b02a26'), 'green': _c('2f6b35'),
 }
 
@@ -96,6 +97,7 @@ _G = {
     'B': [((0, 0), (0, 1)), ((0, 1), (0.8, 1)), ((0.8, 1), (0.85, 0.55)), ((0, 0.52), (1, 0.48)), ((1, 0.48), (1, 0)), ((1, 0), (0, 0))],
     'C': [((1, 1), (0, 1)), ((0, 1), (0, 0)), ((0, 0), (1, 0))],
     'D': [((0, 0), (0, 1)), ((0, 1), (0.7, 1)), ((0.7, 1), (1, 0.7)), ((1, 0.7), (1, 0.3)), ((1, 0.3), (0.7, 0)), ((0.7, 0), (0, 0))],
+    'J': [((0, 1), (1, 1)), ((0.75, 1), (0.75, 0.15)), ((0.75, 0.15), (0.55, 0)), ((0.55, 0), (0.15, 0)), ((0.15, 0), (0, 0.2))],
     'E': [((1, 1), (0, 1)), ((0, 1), (0, 0)), ((0, 0), (1, 0)), ((0, 0.5), (0.75, 0.5))],
     'H': [((0, 0), (0, 1)), ((1, 0), (1, 1)), ((0, 0.5), (1, 0.5))],
     'K': [((0, 0), (0, 1)), ((0, 0.45), (1, 1)), ((0.3, 0.6), (1, 0))],
@@ -260,8 +262,11 @@ def paint(m, maps, size):
     splinter = (parity % 2).astype(np.float32)
     big = nz(0.9, 3, 3)
     blot = sstep(0.47, 0.53, big)          # soft-edged blotches (fuselage spine, Me 262 / Bf 110)
+    if scheme == 'raf':
+        from allied_paint import raf_camouflage
+        blot = raf_camouflage(P, lift)
     cols = {'7475': ('74', '75', '76'), '7475m': ('74', '75', '76'), '8182': ('81', '82', '76'),
-            '7071': ('70', '71', '65')}[scheme]
+            '7071': ('70', '71', '65'), 'usod': ('od','od','mediumgrey'), 'raf': ('rafgreen','rafgrey','mediumgrey')}[scheme]
     c_a, c_b, c_lo = RLM[cols[0]], RLM[cols[1]], RLM[cols[2]]
     hard = sstep(0.35, 0.65, splinter)
     upper_wing = mix(c_a[None, None, :] * np.ones((H, W, 1), np.float32), c_b, hard if scheme in ('7475', '7071') else blot)
@@ -276,7 +281,7 @@ def paint(m, maps, size):
         mot_a = sstep(0.0, 0.03, nz(4.5, 5) - (0.62 - 0.12 * dens))
         mot_b = sstep(0.0, 0.03, nz(4.0, 7) - (0.63 - 0.12 * dens))
     side = base.copy()
-    if scheme == '7071':
+    if scheme in ('7071', 'usod', 'raf'):
         side = upper_body
     else:
         side = mix(side, RLM['02'], mot_c * 0.9)
@@ -284,7 +289,7 @@ def paint(m, maps, size):
         side = mix(side, c_b, mot_b)
     # demarcations: soft, a little wavy (sprayed)
     wav = (nz(2.2, 11, 2) - 0.5) * 0.25
-    if scheme == '7071':
+    if scheme in ('7071', 'usod', 'raf'):
         w_up_body = sstep(-0.5, -0.3, up + wav)
         w_side_body = np.zeros((H, W), np.float32)
     else:
@@ -295,7 +300,7 @@ def paint(m, maps, size):
     bmask = body | (skin & ~lift)
     col = np.where(bmask[..., None], mix(mix(base, side, w_side_body), upper_body, w_up_body), col)
     col = np.where((lift & ~vertical)[..., None], mix(base, upper_wing, w_up_lift), col)
-    vert_col = side if scheme != '7071' else upper_body
+    vert_col = upper_body if scheme in ('7071', 'usod', 'raf') else side
     col = np.where((lift & vertical)[..., None], vert_col, col)
 
     # ---------------- markings (two passes: standard and ace)
@@ -317,6 +322,10 @@ def paint(m, maps, size):
             k = np.clip(((zz - z0) / (z1 - z0) * len(colors)).astype(np.int32), 0, len(colors) - 1)
             for i, cname in enumerate(colors):
                 col = np.where((inb & (k == i))[..., None], RLM[cname], col)
+        if info.get('allied'):
+            from allied_paint import markings as allied_markings
+            col = allied_markings(col, P, N, skin, lift, info['allied'],
+                dict(blue=_c('172844'), white=RLM['21'], red=_c('a83931'), yellow=RLM['04'], sky=RLM['sky']))
         # fuselage crosses
         for (zc, yc, L) in info.get('crosses_fus', []):
             u, v = P[..., 2] - zc, P[..., 1] - yc

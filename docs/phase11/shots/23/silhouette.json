@@ -1,0 +1,25 @@
+{
+  "method": "Unmodified FlightGear conversion (cyan) against shipped LOD0 (orange); fixed 32 px/metre; same origin, no fitting. Prop blades excluded; new spinner included.",
+  "p47d": {
+    "top": {
+      "iou": 0.9961466308370938
+    },
+    "side": {
+      "iou": 0.9951542561783234
+    },
+    "front": {
+      "iou": 0.9803727527626588
+    }
+  },
+  "spitfire9": {
+    "top": {
+      "iou": 0.9901392497834632
+    },
+    "side": {
+      "iou": 0.976808988764045
+    },
+    "front": {
+      "iou": 0.9822211397954214
+    }
+  }
+}

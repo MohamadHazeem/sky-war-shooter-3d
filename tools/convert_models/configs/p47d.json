@@ -1,0 +1,53 @@
+{
+  "origin": [
+    0,
+    0,
+    0
+  ],
+  "materials": {
+    "roughness": 0.55,
+    "metallic": 0.1,
+    "glass": {
+      "color": [
+        0.6,
+        0.7,
+        0.8
+      ],
+      "alpha": 0.18,
+      "roughness": 0.06
+    }
+  },
+  "name": "p47d",
+  "exclude_objects": [
+    "main/(.*tire|.*strut.*|.*shock|.*damper|.*GdoorO|[LR]Rdoor|propblur|propdisk|Spinner.*|blade[1-4]|stn1|[LR]flap_1)"
+  ],
+  "glass_objects": [
+    "main/(Canopy|glass)"
+  ],
+  "groups": [
+    {
+      "name": "glass",
+      "objects": [
+        "main/(Canopy|glass)"
+      ]
+    },
+    {
+      "name": "interior",
+      "objects": [
+        "main/(Cockpit|cockpit|Panel|[LR]Hpedal|Cube.004)"
+      ]
+    }
+  ],
+  "markers": {
+    "prop_1": [
+      -4.354,
+      0,
+      -0.048
+    ],
+    "eye_pilot": [
+      0,
+      0,
+      0.95
+    ]
+  }
+}
