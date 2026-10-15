@@ -49,8 +49,16 @@ function injectCss() {
   .me-wave .n { grid-area: 1 / 1 / 2 / -1; } .me-wave [data-w=leg] { grid-area: 2 / 1; } .me-wave [data-w=from] { grid-area: 2 / 2; } .me-wave .x { grid-area: 2 / 3; }
   .me-wave .cnt { grid-area: 3 / 1 / 4 / -1; } .me-wave .types { grid-area: 4 / 1 / 5 / -1; }
 }
-/* the sticky Back stays opaque over the scrolled sheet */
-#me-screen .btn.menu-back, #me-shared .btn.menu-back { background: var(--panel-solid, #202720); }
+/* narrow phones (and the longer Arabic labels): the leg and direction each get a full row */
+@media (max-width: 420px) {
+  .me-wave { grid-template-columns: 1fr auto; }
+  .me-wave [data-w=leg] { grid-area: 2 / 1; } .me-wave .x { grid-area: 2 / 2; } .me-wave [data-w=from] { grid-area: 3 / 1 / 4 / -1; }
+  .me-wave .cnt { grid-area: 4 / 1 / 5 / -1; } .me-wave .types { grid-area: 5 / 1 / 6 / -1; }
+}
+/* The sticky Back sits in an opaque full-width strip (its clipped shadow), so the sheet scrolls under
+   the whole strip and nothing shows through or beside the button (the Survival sheet: simpleMenu.css). */
+:is(#me-screen, #me-shared) .box > .btn.menu-back { background: var(--panel-solid, #202720); z-index: 3;
+  box-shadow: 0 0 0 100vmax #2b2c27; clip-path: inset(-40px -100vmax -12px -100vmax); }
 .me-share { margin-top: 12px; display: flex; gap: 8px; align-items: center; }
 .me-share input { flex: 1; min-width: 0; font-family: monospace; font-size: 12px; }
 .me-err { color: #e07a5f; font-size: 13px; margin: 6px 0 0; min-height: 1em; }
@@ -189,7 +197,8 @@ export function showMissionEditor(o: EditorOpts) {
     out('route', tx(`${Math.round(ROUTE_SECONDS[s.route] / 6) / 10} min`));
     out('sunEl', sunLabel(s.sunEl, s.mood));
     out('bombers', tx(`${s.bombers} bombers`));
-    out('total', tx(`${s.waves.length} of ${WAVES_MAX} waves · ${totalFighters(s)} fighters`));
+    const f = totalFighters(s);
+    out('total', tx(`${s.waves.length} of ${WAVES_MAX} waves · ${f} ${f === 1 ? 'fighter' : 'fighters'}`));
     q<HTMLElement>('[data-sum]').textContent = `${missionTitle(s) === s.name ? s.name : tx(missionTitle(s))} — ${summary(s)}`;
     q<HTMLInputElement>('[data-link]').value = linkFor(encodeMission(s));
     saveDraft(s);

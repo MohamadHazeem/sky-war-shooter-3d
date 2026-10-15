@@ -44,6 +44,14 @@ const noHScroll = (page, sel) => page.evaluate((sel) => {
   const s = document.querySelector(sel);
   return document.documentElement.scrollWidth <= innerWidth && (!s || s.scrollWidth <= s.clientWidth + 1);
 }, sel);
+// Every dropdown shows its whole chosen label (text width + the arrow fit in the box)
+const selectsFit = (page, sel) => page.evaluate((sel) => [...document.querySelectorAll(sel)].filter((s) => {
+  const cs = getComputedStyle(s), ctx = document.createElement('canvas').getContext('2d');
+  ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  return ctx.measureText(s.selectedOptions[0]?.text ?? '').width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 18 > s.clientWidth;
+}).map((s) => s.selectedOptions[0]?.text), sel);
+// The sticky Back is opaque (not see-through over the scrolled sheet)
+const backOpaque = (page, sel) => page.evaluate((sel) => !/rgba\(.*, 0\)|transparent/.test(getComputedStyle(document.querySelector(sel)).backgroundColor), sel);
 const codeOf = (page, spec) => page.evaluate(async (spec) => (await import('/src/game/MissionEditor.ts')).encodeMission(spec), spec);
 
 // ---- 1. a shared link: the card, the briefing, the flight, the debrief rating ----
@@ -61,6 +69,12 @@ const codeOf = (page, spec) => page.evaluate(async (spec) => (await import('/src
   await page.locator('#briefing.show').waitFor();
   await page.waitForTimeout(400);
   await shot(page, 'briefing-en');
+  report.briefing = await page.evaluate(() => ({
+    kicker: document.querySelector('#briefing .kicker')?.textContent,
+    tags: [...document.querySelectorAll('#briefing .bx-meta span')].map((e) => e.textContent),
+  }));
+  assert.equal(report.briefing.kicker, 'PLAYER MISSION');
+  assert.ok(!report.briefing.tags.some((t) => /rounds/i.test(t)), 'no rounds tag on a player mission');
   // fly it with the autoplay bot; record every enemy type that spawns
   const flight = await page.evaluate(async (spec) => {
     const ME = await import('/src/game/MissionEditor.ts');
@@ -98,16 +112,20 @@ async function editorShots(lang, viewport, tag) {
   }, SPEC);
   await page.locator('#survival.show .me-lib').waitFor();
   await page.evaluate(() => document.querySelector('#survival details')?.setAttribute('open', ''));
-  await page.evaluate(() => document.querySelector('#survival .mode-panel')?.scrollIntoView({ block: 'start' }));
+  // the top of the sheet (title clear of the Back strip) when the library fits; else scroll the library into view
+  await page.evaluate(() => { document.querySelector('#survival .box').scrollTop = 0; document.querySelector('#survival .me-item')?.scrollIntoView({ block: 'nearest' }); });
   await page.waitForTimeout(300);
   await shot(page, `library-${tag}`);
   report[`libraryNoHScroll-${tag}`] = await noHScroll(page, '#survival .box');
+  report[`libraryBackOpaque-${tag}`] = await backOpaque(page, '#survival .menu-back');
   await page.locator('#survival [data-me-new]').click();
   await page.locator('#me-screen.show [data-waves]').waitFor();
   await page.locator('#me-screen [data-add]').click();
   await page.waitForTimeout(300);
   await shot(page, `editor-${tag}`);
   report[`editorNoHScroll-${tag}`] = await noHScroll(page, '#me-screen .box');
+  report[`editorBackOpaque-${tag}`] = await backOpaque(page, '#me-screen .menu-back');
+  report[`editorCutSelects-${tag}`] = await selectsFit(page, '#me-screen .me-sel');
   await page.evaluate(() => document.querySelectorAll('#me-screen details').forEach((d) => d.setAttribute('open', '')));
   await page.evaluate(() => { const b = document.querySelector('#me-screen .box'); b.scrollTop = b.scrollHeight; });
   await page.waitForTimeout(300);
@@ -138,6 +156,7 @@ await editorShots('ar', { width: 390, height: 844 }, 'phone-ar');
 report.errors = errors;
 await fs.writeFile(`${out}/check.json`, JSON.stringify(report, null, 2));
 await browser.close();
-for (const k of Object.keys(report)) if (/NoHScroll/.test(k)) assert.ok(report[k], k);
+for (const k of Object.keys(report)) if (/NoHScroll|BackOpaque/.test(k)) assert.ok(report[k], k);
+for (const k of Object.keys(report)) if (/CutSelects/.test(k)) assert.deepEqual(report[k], [], k);
 assert.deepEqual(errors, [], 'no page errors');
 console.log(JSON.stringify(report, null, 2));

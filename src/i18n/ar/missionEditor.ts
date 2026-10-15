@@ -47,6 +47,7 @@ const table: PhraseTable = {
     'This mission code holds values the game does not allow.': 'يحمل رمز المهمة هذا قيماً لا تسمح بها اللعبة.',
     // ---------------- the built mission ----------------
     'Player mission': 'مهمة من صنع لاعب',
+    'PLAYER MISSION': 'مهمة من صنع لاعب',
     'No flak over the target.': 'لا مضادات فوق الهدف.',
     'Light flak over the target.': 'مضادات خفيفة فوق الهدف.',
     'Heavy flak over the target.': 'مضادات كثيفة فوق الهدف.',
@@ -120,7 +121,7 @@ const table: PhraseTable = {
     [/^Wave (\d+)$/, 'الموجة $1'],
     [/^(\d+(?:\.\d+)?) min$/, '$1 دقيقة'],
     [/^(\d+) bombers$/, (m) => bombers(m[1])],
-    [/^(\d+) of (\d+) waves · (\d+) fighters$/, (m) => `${m[1]} من ${m[2]} موجات · ${fighters(m[3])}`],
+    [/^(\d+) of (\d+) waves · (\d+) fighters?$/, (m) => `${m[1]} من ${m[2]} موجات · ${fighters(m[3])}`],
     [/^(\d+) enemy groups? · (\d+) fighters?$/, (m) => `${groups(m[1])} من العدو · ${fighters(m[2])}`],
     [/^Flown (\d+) times · best (\d+)$/, (m) => `طرت فيها ${times(m[1])} · أفضل نتيجة ${m[2]}`],
     [/^Flown once · best (\d+)$/, 'طرت فيها مرة واحدة · أفضل نتيجة $1'],

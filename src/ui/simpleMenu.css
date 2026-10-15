@@ -35,6 +35,9 @@ html[dir=rtl] #title.simple-title .wrap { left:auto; right:7%; }
 #survival .mode-panel { border:0; padding:0; margin:0; }
 #survival .mode-body { margin-top:16px; }
 #survival .box { width:min(620px,100%); }
+/* Survival's sticky Back: an opaque full-width strip (clipped shadow) the sheet scrolls under, with room above the title */
+#survival .box > .btn.menu-back { background:var(--panel-solid); box-shadow:0 0 0 100vmax #2b2c27; clip-path:inset(-40px -100vmax -12px -100vmax); z-index:3; }
+#survival .box > .btn.menu-back + .kicker { margin-top:14px; }
 @media (max-width:600px) {
   #title.simple-title .wrap { padding:24px 0; }
   #title.simple-title h1 { font-size:46px; }
