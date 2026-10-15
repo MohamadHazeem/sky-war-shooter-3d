@@ -37,11 +37,23 @@ while :; do
     else
       r=$(( $(cat "$S/$k.round" 2>/dev/null || echo 0) + 1 )); echo $r > "$S/$k.round"; log "REJECTED $branch (round $r)"
       echo "$verdict" > "$S/$k.rejected"
+      if [ "$lane" = "cloud" ] && [ $r -le 2 ]; then
+        acct=""; [ "$(date +%s)" -ge "${ACCOUNT2_FROM:-9999999999}" ] && acct=account2
+        echo "$verdict" > "/tmp/sws-autopilot/$k.fixnote"
+        ( cd /tmp/sws-cloud && git pull -q; export PATH="$HOME/.local/node/bin:$PATH"; [ -n "$acct" ] && export CLAUDE_CONFIG_DIR="$HOME/.claude-account2"
+          (sleep 6; printf '\r'; sleep 40) | script -q "/tmp/cloud-fix-$k.log" claude --cloud "Branch $branch was REJECTED by the automatic quality review. Check out that branch, read AGENTS.md and docs/phase11/reference-pack.md, fix every point: $(echo "$verdict" | tail -n +2 | tr '\n' ' ') Update $report, commit, push the same branch and confirm GitHub CI is green. Never push main." > /dev/null 2>&1 & p=$!; sleep 45; kill $p 2>/dev/null ) &
+      fi
       if [ "$lane" = "codex" ] && [ $r -le 2 ]; then
         ( cd "$wt" && codex exec --dangerously-bypass-approvals-and-sandbox -C . -o "/tmp/codex-$k-fix$r.txt" "Follow AGENTS.md. The automatic quality review REJECTED your work on this branch ($branch). Reasons: $(echo "$verdict" | tail -n +2 | tr '\n' ' ') Fix all of them, re-capture the affected shots, update $report, commit, push your branch and wait for green CI. Never push main, never deploy." < /dev/null > "/tmp/codex-$k-fix$r.log" 2>&1 ) &
       fi
     fi
   done < .claude/autopilot.list
+  if [ ! -f "$S/scorecard.started" ] && [ -f docs/phase11/09-scorecard.md ]; then
+    left=$(grep -v "^phase11/09" .claude/autopilot.list | grep -c . ); done_n=$(ls "$S"/*.shipped 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$done_n" -ge "$left" ]; then touch "$S/scorecard.started"; log "starting final scorecard (09)"
+      echo "phase11/09-scorecard|docs/phase11/reports/09.md|.claude/worktrees/codex-09-scorecard|codex" >> .claude/autopilot.list
+      ( PHASE=phase11 tools/codex_task.sh 09-scorecard >> "$S/log" 2>&1 ) & pending=1; fi
+  fi
   [ $pending -eq 0 ] && { log "all branches shipped"; exit 0; }
   sleep 120
 done

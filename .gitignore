@@ -26,3 +26,4 @@ tools/interior/out/
 __pycache__/
 
 .vite-cache/
+.cache/

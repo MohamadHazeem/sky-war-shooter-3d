@@ -16,6 +16,7 @@ Sky War Shooter 3D: a WWII browser game (Three.js r186 + TypeScript + Vite). Rea
   Run the full `npm run check` locally only if CI is unavailable.
 - Heavy jobs (Blender, capture rig, full local build, long autoplay) go through `tools/heavy.sh <cmd>` (a
   machine-wide slot limit) so ~10 parallel agents don't overload the Mac.
+- Art goals: read `docs/phase11/reference-pack.md` first and wrap heavy asset builds in `tools/cached.sh <name> <inputs> -- <cmd>` so unchanged inputs are skipped.
 - Quality gate: before finishing, compare your result with the LIVE game (main) using the same capture-rig
   shots; if it is not clearly better in the shots your goal touches, keep working. Weak results get rejected.
 - When done, write a short report to the path given in the task (what changed, files, hook lines,
