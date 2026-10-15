@@ -8,10 +8,12 @@ import { Breathing } from './Breathing';
 import { Whizby } from './Whizby';
 import { Interphone } from './Interphone';
 import { Budget, FREQ, GAIN, RATE, fin, freeOnEnd, ok, place, setP, towards } from './Safe';
-import { DETAIL, ENGINE_SPECS, RateGate, airLowpass, aspect, blastDuck, blastMix, blastStages, cycloneMix, doppler, engineKindOf, engineRateTrim, soundDelay, thunderLowpass, type AudioDetail, type BlastSize, type DetailCaps, type EngineKind } from './Acoustics';
+import { DETAIL, ENGINE_SPECS, RateGate, airLowpass, aspect, blastDuck, blastMix, blastStages, cycloneMix, engineKindOf, engineRateTrim, soundDelay, thunderLowpass, type AudioDetail, type BlastSize, type DetailCaps, type EngineKind } from './Acoustics';
 import { SYNTH3, type PCM, type Synth3Name } from './Synth3';
 import { FIELD, FIELD_SHOTS, type FieldLoop, type FieldName } from './SynthField';
 import { Cabin, WAIST_WINDOWS } from './Cabin';
+import { FlakRumble, ListenerMotion, ROOMS, SPATIAL_DETAIL, compartmentOf, bomberRpm, doppler2, engineHarmonics, hrtfScore, isStation, occlusion, passBy, pickHrtf, rpmFor, type Compartment, type Occlusion, type SpatialCaps, type StationKey } from './Spatial2';
+import { HarmonicBank, RoomChain, RumbleBed } from './SpatialNodes';
 import { json, take } from '../core/Assets';
 import { AUDIO_MANIFEST, P_LOOPS, P_MENU_MUSIC, P_MISSION_MUSIC, P_REST, P_SFX } from '../core/Preload';
 
@@ -97,6 +99,8 @@ const FAR_GAP: Partial<Record<BufName, number>> = {
   mg81: 0.06, flak20: 0.07, flak20burst: 0.08, flakTower: 0.2, bk5: 0.2, whump: 0.15, thunder: 0.25,
 };
 const BIG = new Set<BufName>(['explosion', 'flakClose', 'hitHeavy', 'rocket', 'whoosh', 'bk5', 'flakTower', 'blastBoom', 'blastCrack', 'thunder', 'rumbleLong', 'whump', 'bellyImpact']);
+const ZERO3 = new Float32Array(3);
+const CYCLONE_TRIM = [1.0, 1.004, 0.9965, 1.0075];   // the four Cyclones slightly off-speed (they beat)
 const clamp01 = (v: number) => (Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 1);
 // Sounds with a single recording rotate through these pitch offsets (cents) instead of
 // repeating identically; multi-variant sounds rotate through a shuffle bag (no immediate repeat).
@@ -164,7 +168,7 @@ class Emitter implements LoopEmitter {
   last: number;
   private src: AudioBufferSourceNode; private f: BiquadFilterNode; private g: GainNode; private p: PannerNode; private send: GainNode;
   private to = new THREE.Vector3();
-  constructor(private ctx: AudioContext, buf: AudioBuffer, out: AudioNode, revBus: AudioNode, private host: { listener: THREE.Vector3; interior: () => boolean }, private rev: number, ref: number) {
+  constructor(private ctx: AudioContext, buf: AudioBuffer, out: AudioNode, revBus: AudioNode, private host: { listener: THREE.Vector3; motion: ListenerMotion; interior: () => boolean }, private rev: number, ref: number) {
     const t = ctx.currentTime;
     this.last = t;
     this.src = ctx.createBufferSource(); this.src.buffer = buf; this.src.loop = true;
@@ -185,7 +189,8 @@ class Emitter implements LoopEmitter {
     const to = this.to.copy(this.host.listener).sub(pos), d = Math.max(0.5, to.length());
     if (!ok(d)) return;
     const vr = vel ? fin(vel.dot(to) / d, 0, [-2000, 2000]) : 0;   // approaching = positive
-    towards(this.src.playbackRate, rate * doppler(vr), RATE, t, 0.04);
+    const m = this.host.motion, vl = -(m.vx * to.x + m.vy * to.y + m.vz * to.z) / d;   // listener closing on it
+    towards(this.src.playbackRate, rate * doppler2(vr, vl), RATE, t, 0.04);
     towards(this.g.gain, gain, GAIN, t, 0.06);
     towards(this.f.frequency, Math.min(lp, airLowpass(d, this.host.interior())), FREQ, t, 0.05);
     place(this.p, pos.x, pos.y, pos.z, t);
@@ -297,6 +302,26 @@ export class Sound {
   private crewGate = new RateGate(1 / 13);
   private brassGate = new RateGate(0.045);
   // Dev meter (sws.sound.stats()): one-shots played / refused by priority, peaks, render load
+  // Spatial audio 2.0 (Spatial2.ts / SpatialNodes.ts)
+  private spatial: SpatialCaps = SPATIAL_DETAIL.normal;
+  private motion = new ListenerMotion();
+  private station: StationKey | null = null;  // the gunner's station while the camera is in the cabin
+  private occlOn = false;                     // listener at that station: occlusion by the fuselage applies
+  private bomberInvQ = new THREE.Quaternion();
+  private occ: Occlusion = { gain: 1, lp: 1 };
+  private flakRumble = new FlakRumble();
+  private rumbleBed: RumbleBed | null = null;
+  private roomChain: RoomChain | null = null;
+  private roomIRs = new Map<Compartment, AudioBuffer>();
+  private bomberHarm: HarmonicBank | null = null;
+  private playerHarm: HarmonicBank | null = null;
+  private hf = new Float32Array(3);
+  private hg = new Float32Array(3);
+  private rpmWander = 0;
+  private hrtfScores = new Float32Array(8);
+  private hrtfWas = new Uint8Array(8);
+  private hrtfOn = new Uint8Array(8);
+  private pb = { tca: 0, miss: 0 };
   private meter = { played: 0, dropped: [0, 0, 0], peakIn: 0, peakOut: 0, nonFinite: 0, rc: null as null | { avg: number; peak: number; underrun: number; n: number } };
   private preScope: AnalyserNode | null = null;
 
@@ -345,7 +370,10 @@ export class Sound {
     this.revOut = ctx.createConvolver(); this.revOut.buffer = this.impulse(3.8, 1.4, false);
     this.revInSend = ctx.createGain(); this.revInSend.gain.value = 0.55;
     this.revOutSend = ctx.createGain(); this.revOutSend.gain.value = 0.5;
-    this.revInSend.connect(this.revIn).connect(this.fx);
+    this.roomChain = new RoomChain(ctx, this.revIn);
+    this.revInSend.connect(this.roomChain.input);
+    this.revIn.connect(this.fx);
+    this.rumbleBed = new RumbleBed(ctx, this.noiseLoop(6, 'brown'), this.amb);
     this.revOutSend.connect(this.revOut).connect(this.fx);
     this.creaks = new AirframeCreaks(ctx, this.amb, this.revInSend);
     this.cabin = new Cabin(ctx, this.amb, this.revInSend, this.caps.hrtf > 2);
@@ -472,6 +500,8 @@ export class Sound {
     this.voices = [];
     this.b17 = null; this.wind = null; this.gust = null; this.windSrc = null; this.rainGain = null; this.whistle = null;
     this.playerEngine = null; this.radioBed = null;
+    this.bomberHarm = null; this.playerHarm = null; this.rumbleBed = null; this.roomChain = null;
+    this.flakRumble.reset(); this.motion.reset(); this.hrtfWas.fill(0);
     this.b17Sputter = null; this.b17Depth = null; this.b17Sampled = false;
     this.scope = null;
     this.oneShots.clear(); this.hrtfShots.clear(); this.lastFar.clear();
@@ -797,7 +827,7 @@ export class Sound {
     const ctx = this.ctx, buf = this.fieldBuffer(name, opts.variant ?? -1);
     if (!ctx || !buf || ctx.state === 'closed') return null;
     try {
-      const e = new Emitter(ctx, buf, this.fx, this.revOutSend, { listener: this.listenerPos, interior: () => !!this.interior }, opts.reverb ?? 0.35, opts.ref ?? 30);
+      const e = new Emitter(ctx, buf, this.fx, this.revOutSend, { listener: this.listenerPos, motion: this.motion, interior: () => !!this.interior }, opts.reverb ?? 0.35, opts.ref ?? 30);
       this.emitters.push(e);
       return e;
     } catch { return null; }
@@ -1120,7 +1150,9 @@ export class Sound {
     this.wind?.gain.gain.setTargetAtTime(mode === 'menu' ? 0.1 : mode === 'bomber' ? 0.3 : 0.18, t, 0.5);
     this.windCut = mode === 'bomber' ? 1400 : 800;
     this.wind?.filter.frequency.setTargetAtTime(this.windCut, t, 0.5);
-    this.revInSend.gain.setTargetAtTime(mode === 'bomber' ? 0.55 : 0.0, t, 0.2);
+    this.revInSend.gain.setTargetAtTime(mode === 'bomber' ? ROOMS[this.compartment()].send : 0.0, t, 0.2);
+    this.applyRoom();
+    this.applyHarmonics();
     this.creaks?.setActive(mode === 'bomber');
     this.cabin?.setActive(mode === 'bomber');
     if (mode !== 'menu') this.startSynth3();
@@ -1150,6 +1182,73 @@ export class Sound {
     this.oneShots = new Budget(this.caps.voices);
     this.hrtfShots = new Budget(this.caps.hrtf);
     for (const v of this.voices) this.seat(v);   // drops / restores the second loops
+    this.spatial = SPATIAL_DETAIL[k];
+    this.applyHarmonics();
+    this.applyRoom();
+  }
+
+  // ---------------------------------------------------------------- spatial audio 2.0
+  // The player's gun station on the B-17 (World.playerStationId; null when not a gunner): picks the
+  // fuselage occlusion and the compartment's interior reverb. Called every frame by Game (cheap repeats).
+  setStation(id: string | null) {
+    const st = isStation(id) ? id : null;
+    if (st === this.station) return;
+    this.station = st;
+    if (!st) this.occlOn = false;
+    this.applyRoom();
+  }
+  // Compartment the interior reverb is voiced for (the waist when the station is unknown)
+  private compartment(): Compartment { return this.station ? compartmentOf(this.station) : 'waist'; }
+  private applyRoom() {
+    if (!this.ctx || !this.roomChain) return;
+    const room = this.compartment();
+    this.roomChain.set(room);
+    if (this.mode === 'bomber') towards(this.revInSend.gain, ROOMS[room].send, GAIN, this.ctx.currentTime, 0.2);
+    // Normal detail: each compartment its own impulse (length and decay); Reduced keeps the waist's
+    const ir = this.spatial.compartmentIRs ? room : 'waist';
+    let buf = this.roomIRs.get(ir);
+    if (!buf) { const r = ROOMS[ir]; buf = this.impulse(r.length, r.decay, true); this.roomIRs.set(ir, buf); }
+    if (this.revIn.buffer !== buf) try { this.revIn.buffer = buf; } catch { /* keep the current impulse */ }
+  }
+  // Engine order tones: the B-17's four Cyclones in the bomber, the Merlin in the fighter (Normal only)
+  private applyHarmonics() {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const bomber = this.spatial.harmonics && this.mode === 'bomber';
+    const fighter = this.spatial.harmonics && this.mode === 'fighter';
+    if (bomber && !this.bomberHarm) this.bomberHarm = new HarmonicBank(ctx, this.amb, [-0.7, -0.3, 0.3, 0.7], 0.05, 700);
+    if (fighter && !this.playerHarm) this.playerHarm = new HarmonicBank(ctx, this.amb, [0], 0.045, 1100);
+    this.bomberHarm?.setActive(bomber);
+    this.playerHarm?.setActive(fighter);
+    const drop = (h: HarmonicBank | null, keep: boolean) => { if (h && !keep) setTimeout(() => h.stop(), 400); return keep ? h : null; };
+    this.bomberHarm = drop(this.bomberHarm, bomber);
+    this.playerHarm = drop(this.playerHarm, fighter);
+  }
+  // Fuselage occlusion of an outside sound at pos (fills this.occ): gain and low-pass factors.
+  // Only while the camera sits at the gunner's station; elsewhere both are 1.
+  private occlude(pos: THREE.Vector3): Occlusion {
+    const o = this.occ;
+    if (!this.occlOn || this.mode !== 'bomber' || !this.station) { o.gain = 1; o.lp = 1; return o; }
+    const d = this.tmpOcc.copy(pos).sub(this.listenerPos).applyQuaternion(this.bomberInvQ);
+    return occlusion(this.station, d.x, d.y, d.z, o);
+  }
+  private tmpOcc = new THREE.Vector3();
+  private updateSpatial(dt: number) {
+    if (!this.ctx) return;
+    this.flakRumble.step(dt);
+    const mission = this.mode === 'bomber' || this.mode === 'fighter' || this.mode === 'ground';
+    // inside the fuselage the barrage comes through the skin: a little darker
+    this.rumbleBed?.update(mission ? this.flakRumble.level : 0, this.flakRumble.lp, this.mode === 'bomber' ? 0.8 : 1);
+    if (this.bomberHarm) {
+      const h = Math.min(Math.max(dt, 0), 0.1);
+      this.rpmWander = fin(Math.max(-1, Math.min(1, this.rpmWander * (1 - 0.3 * h) + rand() * Math.sqrt(3 * h) * 0.5)), 0);
+      const rpm = bomberRpm(this.engineAlive, this.rpmWander);
+      engineHarmonics('cyclone', rpm, this.hf, this.hg);
+      for (let i = 0; i < 4; i++) {
+        const on = !!(this.liveEngineMask & (1 << i));
+        this.bomberHarm.set(i, this.hf, on ? this.hg : ZERO3, CYCLONE_TRIM[i], on ? 0.6 : 0.35);
+      }
+    }
   }
   get detailCaps(): DetailCaps { return this.caps; }
 
@@ -1158,11 +1257,15 @@ export class Sound {
   private winL = new THREE.Vector3();
   private winR = new THREE.Vector3();
   setCabin(bomber: THREE.Object3D | null) {
+    if (!bomber || this.mode !== 'bomber') this.occlOn = false;
     if (!this.cabin || this.mode !== 'bomber') return;
     if (!bomber) { this.cabin.update(null, null, this.maneuver, false); return; }
     const l = bomber.localToWorld(this.winL.set(...WAIST_WINDOWS[0])), r = bomber.localToWorld(this.winR.set(...WAIST_WINDOWS[1]));
     // the camera far from the cabin (kill cam, photo mode): no window roar
     const near = Math.min(l.distanceTo(this.listenerPos), r.distanceTo(this.listenerPos)) < 25;
+    // fuselage occlusion (Spatial2.occlusion) needs the bomber's orientation, and the camera aboard
+    this.occlOn = near && !!this.station;
+    if (this.occlOn) bomber.getWorldQuaternion(this.bomberInvQ).invert();
     this.cabin.update(near ? l : null, near ? r : null, this.maneuver, this.caps.cabinBed, this.cabinDamage);
   }
 
@@ -1197,6 +1300,11 @@ export class Sound {
       pe.nextPop = t + len + (1.6 - 1.4 * dmg) * (0.4 + Math.random());
     }
     towards(this.playerEngine.filter.frequency, 380 + throttle * 1100, FREQ, t, 0.1);
+    if (this.playerHarm) {
+      // Merlin order tones follow the rpm (a sick engine hunts with it)
+      engineHarmonics('merlin', rpmFor('merlin', throttle) * hunt, this.hf, this.hg);
+      this.playerHarm.set(0, this.hf, this.hg, 1, 0.15);
+    }
     towards(this.playerEngine.gain.gain, (0.26 + throttle * 0.2) * this.merlinGain, GAIN, t, 0.1);
     if (this.wind) towards(this.wind.gain.gain, 0.05 + speed / 800, GAIN, t, 0.2);
     this.windSpeed = speed;
@@ -1209,6 +1317,7 @@ export class Sound {
   // the base wind filter), so gusts stay full and lulls go dull. Strength scales with
   // airspeed in the P-51 and stays subtle inside the bomber.
   updateWind(dt: number) {
+    if (this.ctx) this.updateSpatial(dt);
     if (!this.ctx || !this.gust) return;
     if (this.rainGain) towards(this.rainGain.gain, this.mode === 'menu' ? 0 : weatherNow.rain * .16, GAIN, this.ctx.currentTime, .5);
     const h = Math.min(dt, 0.1); // clamp so a stalled tab cannot jump the walks
@@ -1313,6 +1422,7 @@ export class Sound {
     // a NaN listener would poison every panner at once: keep the last good one
     if (!ok(p.x + p.y + p.z + f.x + f.y + f.z + u.x + u.y + u.z) || p.lengthSq() > 1e12) return;
     this.listenerPos.copy(p);
+    this.motion.update(p.x, p.y, p.z, performance.now() / 1000);   // for the relative Doppler
     if (l.positionX) {
       const t = this.ctx.currentTime;
       l.positionX.setValueAtTime(p.x, t); l.positionY.setValueAtTime(p.y, t); l.positionZ.setValueAtTime(p.z, t);
@@ -1339,6 +1449,8 @@ export class Sound {
     const sorted = fighters.map((f) => ({ f, d: f.pos.distanceTo(L) })).filter((x) => x.d < 4000).sort((a, b) => a.d - b.d).slice(0, nv);
     let intensity = 0;
     const used = new Set<Voice>();
+    const M = this.motion, sc = this.hrtfScores;
+    sc.fill(0);
     for (const { f, d } of sorted) {
       let v = this.voices.find((vv, i) => i < nv && vv.owner === f.id);
       if (!v) v = this.voices.find((vv, i) => i < nv && !used.has(vv) && !sorted.some((s) => s.f.id === vv.owner));
@@ -1359,7 +1471,9 @@ export class Sound {
       const dist = Math.max(1, toL.length());
       toL.divideScalar(dist);
       const vr = fin(f.vel.dot(toL), 0, [-2000, 2000]); // approaching = positive
-      const dop = doppler(vr);
+      // the listener rides along (the bomber at ~75 m/s): Doppler from both ends (Spatial2.doppler2)
+      const vl = -fin(M.vx * toL.x + M.vy * toL.y + M.vz * toL.z, 0, [-2000, 2000]);
+      const dop = doppler2(vr, vl);
       // a damaged engine sags and hunts: rpm down, a slow uneven wobble (stage 3-4)
       const sag = v.stage >= 3 ? (v.stage === 4 ? 0.9 : 0.96) * (1 + (v.stage === 4 ? 0.035 : 0.02) * Math.sin(t * (5.3 + (f.id % 5)) + f.id) * Math.sin(t * 1.7 + f.id * 0.7)) : 1;
       const spec = ENGINE_SPECS[kind];
@@ -1374,11 +1488,15 @@ export class Sound {
       if (cy) rate = (cyIdleMain ? cy.idleRate : cy.roarRate) * dop * sag;
       towards(v.src.playbackRate, rate, RATE, t, 0.04);
       const cut = cy ? spec.cutoff * cy.bright : synth ? spec.cutoff : 1600;
-      towards(v.filter.frequency, cut * (this.interior ? 0.4 : 1) * Math.max(0.3, Math.exp(-d / 2200)) + 160, FREQ, t, 0.05);
+      // inside the bomber: through the skin, or out of the gunner's window / glazing (Spatial2.occlusion)
+      const oc = this.occlOn ? this.occlude(f.pos) : null;
+      towards(v.filter.frequency, cut * (oc ? oc.lp : this.interior ? 0.4 : 1) * Math.max(0.3, Math.exp(-d / 2200)) + 160, FREQ, t, 0.05);
+      const occGain = oc ? oc.gain : 1;
       place(v.pan, f.pos.x, f.pos.y, f.pos.z, t);
-      // HRTF only while the fighter is close (hysteresis so it does not flip at the edge)
-      const pm = this.caps.hrtf > 2 && d < (v.pan.panningModel === 'HRTF' ? 1000 : 800) ? 'HRTF' : 'equalpower';
-      if (v.pan.panningModel !== pm) v.pan.panningModel = pm;
+      // HRTF goes to the fighters passing close (scored here, picked after the loop)
+      const vi = this.voices.indexOf(v);
+      const pb = passBy(-toL.x * dist, -toL.y * dist, -toL.z * dist, f.vel.x - M.vx, f.vel.y - M.vy, f.vel.z - M.vz, this.pb);
+      if (vi >= 0 && vi < sc.length) sc[vi] = hrtfScore(d, pb.tca, pb.miss);
       // aspect: which end of the aircraft faces us
       let main = 1;
       if (cy) {
@@ -1395,12 +1513,22 @@ export class Sound {
         else { main = 0.45 + 0.55 * a.rear; towards(v.auxGain.gain, v.aux ? spec.aux * (0.25 + a.front) : 0, GAIN, t, 0.06); }
         if (v.aux) towards(v.aux.playbackRate, (kind === 'jet' ? 0.86 + 0.18 * Math.min(1, thr) : base * 1.01) * dop * sag, RATE, t, 0.04);
       }
-      towards(v.gain.gain, (this.interior ? 0.5 : 0.65) * (synth ? spec.gain : this.voiceGain) * main, GAIN, t, 0.08);
+      towards(v.gain.gain, (this.interior ? 0.5 : 0.65) * (synth ? spec.gain : this.voiceGain) * main * occGain, GAIN, t, 0.08);
       // (a taxiing bomber makes no rush of air: scale it by speed)
       const close = Math.max(0, 1 - d / 450) * (kind === 'cyclone4' ? Math.min(1, f.vel.length() / 70) : 1);
       towards(v.whooshGain.gain, close * close * 0.9, GAIN, t, 0.05);
       towards(v.whooshFilter.frequency, 500 + Math.max(0, vr) * 6, FREQ, t, 0.05);
       intensity = Math.max(intensity, Math.max(0, 1 - d / 2500));
+    }
+    // HRTF panners for the k fighters most worth it (Audio detail: 4 at Normal, 1 at Reduced)
+    const nh = Math.min(this.voices.length, sc.length);
+    for (let i = 0; i < nh; i++) this.hrtfWas[i] = this.voices[i].pan.panningModel === 'HRTF' ? 1 : 0;
+    pickHrtf(sc, nh, this.spatial.hrtfFighters, this.hrtfWas, this.hrtfOn);
+    for (let i = 0; i < nh; i++) {
+      const v = this.voices[i];
+      if (!used.has(v)) continue;
+      const pm = this.hrtfOn[i] ? 'HRTF' : 'equalpower';
+      if (v.pan.panningModel !== pm) v.pan.panningModel = pm;
     }
     for (const v of this.voices) if (!used.has(v)) {
       if (v.owner !== -1) v.freeAt = t;
@@ -1526,6 +1654,7 @@ export class Sound {
     if (d < 900) this.layer('whump', pos, { ref: 70, reverb: 0.4, rate: 0.9 + Math.random() * 0.2 }, gain * 1.1 * (1 - d / 900));
     if (d < 130 && this.mode !== 'menu') this.patter(1 - d / 130, soundDelay(d) + d / 700);
     if (d < 260) this.blastDuckAt(d, 'small');
+    this.flakRumble.burst(d, gain);   // the barrage's rolling bed (updateSpatial)
   }
 
   // Shrapnel on our own skin (k 0..1), `after` seconds from now; rate-limited
@@ -1600,7 +1729,10 @@ export class Sound {
     if (pos) {
       const f = ctx.createBiquadFilter();
       f.type = 'lowpass';
-      setP(f.frequency, opts.lp ?? airLowpass(d, !!this.interior), FREQ);
+      // an outside sound heard at the gunner's station: muffled by the skin or open through a window
+      const oc = this.occlOn && d > 15 ? this.occlude(pos) : null;
+      setP(f.frequency, opts.lp ?? (oc ? airLowpass(d) * oc.lp : airLowpass(d, !!this.interior)), FREQ);
+      if (oc) setP(g.gain, gain * oc.gain, GAIN);
       const p = ctx.createPanner();
       // HRTF only for a few very close sounds at a time
       p.panningModel = d < 60 && this.hrtfShots.take(now, when, dur) ? 'HRTF' : 'equalpower';

@@ -56,8 +56,8 @@ describe('mode scores', () => {
     inner.smooth = 0.1; const quiet = inner.layerLevels(); inner.smooth = 0.85;
     expect(inner.layerLevels().strings).toBeGreaterThan(quiet.strings);
     expect(inner.layerLevels().brass).toBe(0);
-    m.setDetail(true); expect(inner.layerLevels()).toEqual({ drums: 0, brass: 0, strings: 0 });
-    m.setDetail(false); m.setCrewRoom(true); expect(inner.layerLevels()).toEqual({ drums: 0, brass: 0, strings: 0 });
+    m.setDetail(true); expect(inner.layerLevels()).toEqual({ drums: 0, brass: 0, strings: 0, snare: 0 });
+    m.setDetail(false); m.setCrewRoom(true); expect(inner.layerLevels()).toEqual({ drums: 0, brass: 0, strings: 0, snare: 0 });
   });
   it('plays a bounded breakup overlay, respects mute, and resumes the selected bed', () => {
     const { m, ctx, inner } = fixture(); m.setContext('m5', true); m.setScene('mission');

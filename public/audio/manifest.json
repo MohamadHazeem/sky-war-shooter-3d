@@ -398,6 +398,67 @@
       "root": 2,
       "pitched": true,
       "roots": [2]
+    },
+    "bombrun": {
+      "file": "music_bombrun.m4a",
+      "gain": 0.297,
+      "loop": true,
+      "bpm": 100,
+      "bars": 8,
+      "root": 2,
+      "pitched": true,
+      "roots": [2, 2, 10, 10, 7, 7, 9, 9],
+      "loopStart": 0.5,
+      "loopEnd": 19.7,
+      "beat0": 0,
+      "frames": 646400,
+      "sampleRate": 32000
+    },
+    "sting_bombsaway": {
+      "file": "sting_bombsaway.m4a",
+      "gain": 0.793,
+      "loop": false,
+      "root": 2,
+      "pitched": true,
+      "accent": 0
+    },
+    "sting_strike": {
+      "file": "sting_strike.m4a",
+      "gain": 0.557,
+      "loop": false,
+      "root": 2,
+      "pitched": true,
+      "accent": 0.9
+    },
+    "sting_loss": {
+      "file": "sting_loss.m4a",
+      "gain": 0.268,
+      "loop": false,
+      "root": 2,
+      "pitched": true,
+      "accent": 0
+    },
+    "sting_rise": {
+      "file": "sting_rise.m4a",
+      "gain": 0.597,
+      "loop": false,
+      "pitched": false,
+      "accent": 1.6
+    },
+    "sting_win": {
+      "file": "sting_win.m4a",
+      "gain": 0.78,
+      "loop": false,
+      "pitched": false,
+      "accent": 0
+    },
+    "sting_bunk": {
+      "file": "sting_bunk.m4a",
+      "gain": 0.144,
+      "loop": false,
+      "root": 2,
+      "pitched": false,
+      "accent": 0
     }
   }
 }

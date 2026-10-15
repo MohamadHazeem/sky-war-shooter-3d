@@ -49,9 +49,10 @@ export class BombRun {
   }
   update() {
     const g = this.g, w = g.world, m = g.mission;
-    if (!this.enabled || g.state !== 'playing' || !w.player?.alive || !m?.bombsAway) { this.panel.hidden = true; return; }
+    if (!this.enabled || g.state !== 'playing' || !w.player?.alive || !m?.bombsAway) { this.panel.hidden = true; sound.music.setBombRun('idle'); return; }
     if (!g.director.bombsDropped && w.time >= m.bombsAway && (!g.bombardier.active || w.time >= m.bombsAway + 12)) g.bombardier.release(false);
     this.clock.advance(w.time, m.bombsAway, g.bombardier.releaseTime);
+    sound.music.setBombRun(this.clock.phase);   // score 2.0: the run's bed, snare and stingers
     this.panel.hidden = !this.clock.active || g.bombardier.active;
     document.body.classList.toggle('bomb-run-active', this.clock.active);
     if (!this.active) return;

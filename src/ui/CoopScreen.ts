@@ -11,11 +11,21 @@ import { CAMPAIGN } from '../game/Missions';
 import { STATION_ORDER, STATIONS, StationId } from '../world/B17Layout';
 import { tx } from '../i18n';
 import { savedName, saveName } from '../net/Leaderboard';
+import { estimateRtt, latencyBars, REGION_LABEL, MAX_CREW, type LobbyListing, type Region } from '../net/Lobbies';
+import { loadTicket } from '../net/Rejoin';
+
+const PUBLIC_KEY = 'sws3d.coopPublic';
+function publicPref() { try { return localStorage.getItem(PUBLIC_KEY) !== '0'; } catch { return true; } }
+function savePublicPref(on: boolean) { try { localStorage.setItem(PUBLIC_KEY, on ? '1' : '0'); } catch { /* */ } }
 
 export interface CoopScreenHandlers {
-  host(): void;
+  host(pub: boolean): void;
   mode(mode: CoopMode, scenario: string): void;
   join(code: string): void;
+  quick(): void;             // quick join: the best public crew
+  browse(): void;            // the public game list
+  rejoin(code: string): void;
+  invite(): void;            // share / copy the invite link
   seat(s: StationId): void;
   start(): void;
   ready(): void;
@@ -36,6 +46,7 @@ export interface LobbyView {
   crew?: CrewSeat[];
   myId: number;
   ready: boolean;
+  listed?: boolean;   // host, B-17 crew: shown in the public game list
 }
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
@@ -59,6 +70,20 @@ const CSS = `
 #coop .joinrow input:focus { outline: 2px solid var(--khaki); }
 #coop .btn:disabled { opacity: 0.4; cursor: default; filter: none; }
 #coop .sep { border: none; border-top: 1px solid var(--line); margin: 20px 0 14px; }
+#coop .check { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 14px; color: var(--ink-dim); cursor: pointer; }
+#coop .check input { width: 18px; height: 18px; accent-color: var(--khaki); }
+#coop .lobbies { display: flex; flex-direction: column; gap: 6px; margin: 12px 0 16px; }
+#coop .lobbyrow { display: flex; align-items: center; gap: 12px; padding: 8px 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--line); }
+#coop .lobbyrow .who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+#coop .lobbyrow .who b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#coop .lobbyrow .who small { color: var(--ink-dim); font-size: 12px; }
+#coop .bars { display: flex; align-items: flex-end; gap: 2px; height: 14px; flex: none; }
+#coop .bars i { display: block; width: 4px; background: rgba(255,255,255,0.18); border-radius: 1px; }
+#coop .bars i:nth-child(1) { height: 25%; } #coop .bars i:nth-child(2) { height: 50%; } #coop .bars i:nth-child(3) { height: 75%; } #coop .bars i:nth-child(4) { height: 100%; }
+#coop .bars.q4 i, #coop .bars.q3 i:nth-child(-n+3), #coop .bars.q2 i:nth-child(-n+2), #coop .bars.q1 i:nth-child(1) { background: var(--q); }
+#coop .bars.q4 { --q: #7ed36a; } #coop .bars.q3 { --q: #c9d65a; } #coop .bars.q2 { --q: #eaa64a; } #coop .bars.q1 { --q: #e8573f; }
+@media (max-width: 520px) { #coop .box { padding: 20px 16px; } #coop .code { font-size: 34px; letter-spacing: 6px; } #coop .seats { grid-template-columns: repeat(3, 1fr); } }
+html[lang=ar] #coop .lobbyrow .who small, html[lang=ar] #coop .check { font-size: 14px; line-height: 1.6; }
 #hStations span.partner { border-color: #6fa8d8; color: #9cc6ec; }
 #hStations span.partner::after { content: var(--coop-partner, 'PARTNER'); position: absolute; left: 50%; top: -9px; transform: translateX(-50%); font-size: 8px; line-height: 11px; padding: 0 3px; background: #2b5d86; color: #fff; letter-spacing: 1px; white-space: nowrap; }
 #coopPing { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 40; display: none; align-items: flex-end; gap: 2px; height: 14px; padding: 3px 5px; background: rgba(0,0,0,0.35); border-radius: 3px; pointer-events: auto; }
@@ -139,15 +164,19 @@ export class CoopScreen {
   hide() { this.root.classList.remove('show'); }
 
   menu(error = '', code = '', back = () => this.h.back()) {
+    const ticket = loadTicket();
     this.root.innerHTML = `<div class="screen-center"><div class="box panel">
       <div class="kicker">${tx('ONLINE · PEER TO PEER')}</div><h2 class="h2">${tx('Co-op (beta)')}</h2>
       <p class="note" style="margin-top:4px">${tx('Up to four gunners crew one B-17, or two pilots fly Mustangs. Share one room code.')}</p>
       <label class="hud-label">${tx('Your callsign')} <input data-name maxlength="20" value="${esc(savedName())}" placeholder="${tx('Your name')}" /></label>
       ${this.modeChoice('gunner', 'survival', false)}
       <div class="row" style="margin:18px 0 4px"><button class="btn" data-host>${tx('Host a game')}</button></div>
+      <label class="check" data-pub-row><input type="checkbox" data-pub ${publicPref() ? 'checked' : ''} /><span>${tx('List it publicly — anyone can join')}</span></label>
       <hr class="sep" />
       <div class="hud-label">${tx('Join a game')}</div>
+      <div class="row" style="margin:8px 0 10px"><button class="btn" data-quick>${tx('Quick join')}</button><button class="btn ghost" data-browse>${tx('Find a game')}</button></div>
       <div class="joinrow"><input maxlength="7" placeholder="${esc(tx('CODE'))}" autocomplete="off" spellcheck="false" value="${esc(code)}" aria-label="${esc(tx('Join code'))}" /><button class="btn ghost" data-join>${tx('Join')}</button></div>
+      ${ticket ? `<div class="row" style="margin-top:10px"><button class="btn ghost" data-rejoin>${tx('Rejoin your last crew')} <span dir="ltr">${esc(ticket.code)}</span></button></div>` : ''}
       <div class="err" role="alert">${esc(tx(error))}</div>
       <p class="note">${tx('Shared crew score and personal rewards. Relay support is used when available.')}</p>
       <div class="row" style="margin-top:18px"><button class="btn ghost" data-back>${tx('Back')}</button></div>
@@ -155,8 +184,13 @@ export class CoopScreen {
     const input = this.root.querySelector<HTMLInputElement>('.joinrow input')!;
     const name = this.root.querySelector<HTMLInputElement>('[data-name]')!;
     const join = () => { saveName(name.value); this.h.join(input.value); };
-    this.root.querySelector('[data-host]')!.addEventListener('click', () => { saveName(name.value); this.h.mode(this.root.querySelector<HTMLSelectElement>('[data-mode]')!.value as CoopMode, this.root.querySelector<HTMLSelectElement>('[data-scenario]')!.value); this.h.host(); });
+    const pub = this.root.querySelector<HTMLInputElement>('[data-pub]')!;
+    pub.addEventListener('change', () => savePublicPref(pub.checked));
+    this.root.querySelector('[data-host]')!.addEventListener('click', () => { saveName(name.value); this.h.mode(this.root.querySelector<HTMLSelectElement>('[data-mode]')!.value as CoopMode, this.root.querySelector<HTMLSelectElement>('[data-scenario]')!.value); this.h.host(pub.checked); });
     this.root.querySelector('[data-join]')!.addEventListener('click', join);
+    this.root.querySelector('[data-quick]')!.addEventListener('click', () => { saveName(name.value); this.h.quick(); });
+    this.root.querySelector('[data-browse]')!.addEventListener('click', () => { saveName(name.value); this.h.browse(); });
+    this.root.querySelector('[data-rejoin]')?.addEventListener('click', () => { saveName(name.value); if (ticket) this.h.rejoin(ticket.code); });
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') join(); });
     this.root.querySelector('[data-back]')!.addEventListener('click', back);
     this.wireMode();
@@ -176,6 +210,8 @@ export class CoopScreen {
     const change = () => {
       const m = mode?.value === 'pilot' ? 'pilot' : 'gunner';
       this.root.querySelector<HTMLElement>('[data-scenario-row]')!.hidden = m !== 'pilot';
+      const pubRow = this.root.querySelector<HTMLElement>('[data-pub-row]');
+      if (pubRow) pubRow.hidden = m === 'pilot';
       this.h.mode(m, scenario?.value ?? 'survival');
     };
     mode?.addEventListener('change', change); scenario?.addEventListener('change', change);
@@ -213,6 +249,8 @@ export class CoopScreen {
       ${v.mode === 'pilot' ? `<p>${tx(v.role === 'host' ? 'Blue One' : 'Blue Two')} · ${tx('PARTNER')}: ${tx(v.role === 'host' ? 'Blue Two' : 'Blue One')}</p>` : ''}
       <div ${v.mode === 'pilot' ? 'hidden' : ''}><div class="hud-label">${tx('Your gun position')}</div>
       <div class="seats">${STATION_ORDER.map((s) => `<button data-s="${s}" class="${s === v.mine ? 'mine' : occupied(s) ? 'partner' : ''}" ${occupied(s) ? 'disabled' : ''}>${tx(STATIONS[s].label)}</button>`).join('')}</div></div>
+      <div class="row" style="margin-bottom:10px"><button class="btn ghost" data-invite>${tx('Copy invite link')}</button></div>
+      ${v.listed === undefined ? '' : `<p class="note" style="margin:0 0 12px">${tx(v.listed ? 'Listed publicly — players can find this crew' : 'Private — only people with the code or link can join')}</p>`}
       <div class="row">${v.crew ? `<button class="btn ghost" data-ready>${tx(v.ready ? 'Not ready' : 'Ready')}</button>` : ''}${v.role === 'host' ? `<button class="btn" data-start ${v.connected ? '' : 'disabled'}>${tx('Start mission')}</button>` : ''}<button class="btn ghost" data-leave>${tx('Leave')}</button></div>
       <p class="note">${tx(v.role === 'host' ? 'You run the battle: if your partner drops out you carry on alone.' : 'The host starts the mission. If the host leaves, the game ends.')}</p>
     </div></div>`;
@@ -220,10 +258,34 @@ export class CoopScreen {
     this.root.querySelectorAll<HTMLButtonElement>('[data-s]').forEach((b) => b.addEventListener('click', () => this.h.seat(b.dataset.s as StationId)));
     this.root.querySelector<HTMLSelectElement>('[data-mode]')!.disabled = true;
     this.root.querySelector('[data-ready]')?.addEventListener('click', () => this.h.ready());
+    this.root.querySelector('[data-invite]')!.addEventListener('click', () => this.h.invite());
     this.root.querySelector('[data-start]')?.addEventListener('click', () => this.h.start());
     this.root.querySelector('[data-leave]')!.addEventListener('click', () => this.h.leave());
     this.show();
     onBackKey(this.root, () => this.root.querySelector<HTMLButtonElement>('[data-back], [data-leave]')?.click());
+  }
+
+  // The public game list (B-17 crews): null while loading
+  browser(list: readonly LobbyListing[] | null, me: Region) {
+    const row = (l: LobbyListing) => {
+      const rtt = estimateRtt(me, l.region);
+      const where = l.phase === 'mission' ? tx('In battle · wave {n}', { n: Math.max(1, l.round) }) : tx('In the lobby');
+      return `<div class="lobbyrow"><span class="bars q${latencyBars(rtt)}" title="${esc(tx('Estimated round trip: {ms} ms', { ms: rtt }))}"><i></i><i></i><i></i><i></i></span><div class="who"><b>${esc(l.name)}</b><small><span dir="ltr">${l.crew}/${MAX_CREW}</span> · ${tx(REGION_LABEL[l.region])} · ${where}</small></div><button class="btn" data-code="${l.code}">${tx('Join')}</button></div>`;
+    };
+    const body = list === null ? `<div class="status">${tx('Looking for games…')}</div>`
+      : list.length ? `<div class="lobbies">${list.map(row).join('')}</div>`
+        : `<div class="status">${tx('No open crews right now. Host a public game and others can find it.')}</div>`;
+    this.root.innerHTML = `<div class="screen-center"><div class="box panel">
+      <div class="kicker">${tx('CO-OP (BETA) · SURVIVAL · B-17 GUNNERS')}</div><h2 class="h2">${tx('Public games')}</h2>
+      <p class="note" style="margin-top:4px">${tx('Your region')}: ${tx(REGION_LABEL[me])} · ${tx('Closest crews first; the bars estimate the connection.')}</p>
+      ${body}
+      <div class="row"><button class="btn ghost" data-refresh ${list === null ? 'disabled' : ''}>${tx('Refresh')}</button><button class="btn ghost" data-back>${tx('Back')}</button></div>
+    </div></div>`;
+    this.root.querySelectorAll<HTMLButtonElement>('[data-code]').forEach((b) => b.addEventListener('click', () => this.h.join(b.dataset.code!)));
+    this.root.querySelector('[data-refresh]')!.addEventListener('click', () => this.h.browse());
+    this.root.querySelector('[data-back]')!.addEventListener('click', () => this.menu());
+    this.show();
+    onBackKey(this.root, () => this.root.querySelector<HTMLButtonElement>('[data-back]')?.click());
   }
 
   // connection quality from the round-trip time: 4 bars (good) .. 1 bar (poor), blinking = no reply

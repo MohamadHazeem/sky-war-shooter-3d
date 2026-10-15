@@ -1,0 +1,138 @@
+name: Nightly QA
+
+# Phase 11 goal 22 (docs/phase11/reports/22.md). Headless autoplay sweeps of every gunner campaign
+# mission at Recruit, Veteran and Ace (+ Survival and one High/Arabic run) through tools/qa_sweep.mjs
+# on the dev server, in the Playwright headless shell with SwiftShader WebGL (runners have no GPU).
+# The summary job merges the shards (tools/nightly_qa.mjs), uploads `nightly-qa-summary` and opens an
+# issue labelled `nightly-qa` (or comments on the open one) when a run shows something new: page
+# errors, crashes, softlocks, HUD overlaps, false markers, B-17 losses counted twice.
+# A push that changes this file runs the one-mission smoke set as a self-test (no issue is opened).
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+    inputs:
+      set:
+        description: 'qa_sweep set (nightly, smoke, campaign, difficulty, survival, highar, ace)'
+        default: nightly
+      diffs:
+        description: 'Difficulties for the nightly set'
+        default: recruit,veteran,ace
+  push:
+    paths:
+      - .github/workflows/nightly-qa.yml
+
+concurrency:
+  group: nightly-qa-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  QA_SET: ${{ github.event_name == 'push' && 'smoke' || inputs.set || 'nightly' }}
+  QA_DIFFS: ${{ inputs.diffs || 'recruit,veteran,ace' }}
+  PLAYWRIGHT_VERSION: 1.56.1
+
+jobs:
+  sweep:
+    name: Sweep (shard ${{ matrix.shard }}/10)
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - id: nm
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - if: steps.nm.outputs.cache-hit != 'true'
+        run: npm ci
+      # Playwright lives outside the project (not a game dependency); only the headless shell is fetched
+      - id: pw
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/pw
+            ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+      - if: steps.pw.outputs.cache-hit != 'true'
+        run: npm install --prefix ~/pw --no-save --no-audit --no-fund playwright@${{ env.PLAYWRIGHT_VERSION }}
+      - run: ~/pw/node_modules/.bin/playwright install --with-deps --only-shell chromium
+      - name: Dev server
+        run: |
+          nohup npx vite --port 5297 --strictPort > vite.log 2>&1 &
+          for i in $(seq 60); do curl -sf http://127.0.0.1:5297/ > /dev/null && exit 0; sleep 1; done
+          cat vite.log; exit 1
+      - name: Sweep
+        env:
+          QA_SHARD: ${{ matrix.shard }}/10
+          QA_SWIFTSHADER: '1'
+          QA_JOB_TIMEOUT_S: '1500'
+        run: |
+          mkdir -p qa-out
+          PLAYWRIGHT_MODULE=$HOME/pw/node_modules/playwright/index.mjs node tools/qa_sweep.mjs "$QA_SET" qa-out/shard-${{ matrix.shard }}.jsonl
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-qa-shard-${{ matrix.shard }}
+          path: qa-out/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  summary:
+    name: Summary and regressions issue
+    needs: sweep
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: nightly-qa-shard-*
+          path: qa-out
+          merge-multiple: true
+      - name: Summary
+        env:
+          NIGHTLY_SWEEP_RESULT: ${{ needs.sweep.result }}
+        run: |
+          mkdir -p qa-out
+          node tools/nightly_qa.mjs summary qa-out --md qa-out/summary.md --json qa-out/findings.json
+          cat qa-out/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nightly-qa-summary
+          path: qa-out/
+          retention-days: 30
+      - name: Open or update the regressions issue
+        if: github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NIGHTLY_SWEEP_RESULT: ${{ needs.sweep.result }}
+        run: |
+          gh label create nightly-qa --color B60205 --description 'Found by the nightly QA sweep' 2>/dev/null || true
+          num=$(gh issue list --label nightly-qa --state open --limit 1 --json number --jq '.[0].number // empty')
+          if [ -n "$num" ]; then gh issue view "$num" --json body,comments > open.json; else : > open.json; fi
+          node tools/nightly_qa.mjs issue qa-out/findings.json open.json > body.md
+          if [ ! -s body.md ]; then echo 'Nothing new to report'; exit 0; fi
+          if [ -n "$num" ]; then gh issue comment "$num" --body-file body.md
+          else gh issue create --title "Nightly QA: regressions ($(date -u +%F))" --label nightly-qa --body-file body.md; fi
+      - name: Self-test must be clean
+        if: github.event_name == 'push'
+        run: node -e "const f=require('./qa-out/findings.json'); if (!f.runs || f.findings.length) { console.error(JSON.stringify(f, null, 1)); process.exit(1); }"

@@ -41,6 +41,7 @@ export interface Settings {
   ambVolume: number;
   radio: boolean;
   music: boolean;
+  musicCues?: boolean;  // score 2.0 stingers (audio/ScoreDirector.ts); undefined = on
   lensDirt?: boolean;
   quality: 'low' | 'medium' | 'high' | 'ultra' | 'cinematic';
   weatherEffects?: boolean; // undefined = on; cosmetic precipitation / glass only
@@ -456,7 +457,8 @@ export class UI {
       <label class="setting">${t('settings.sfxVolume')} <input type="range" min="0" max="1" step="0.05" data-k="sfxVolume" value="${s.sfxVolume}"></label>
       <label class="setting">${t('settings.ambVolume')} <input type="range" min="0" max="1" step="0.05" data-k="ambVolume" value="${s.ambVolume}"></label>
       <label class="setting">${t('settings.music')} <select data-k="music"><option value="true">${t('common.on')}</option><option value="false" ${!s.music ? 'selected' : ''}>${t('common.off')}</option></select></label>
-      <label class="setting">${t('settings.audioDetail')} <select data-k="audioDetail"><option value="normal">${t('settings.audioNormal')}</option><option value="reduced" ${s.audioDetail === 'reduced' ? 'selected' : ''}>${t('settings.audioReduced')}</option></select></label>
+      <label class="setting">${tx('Music cues')} <select data-k="musicCues"><option value="true">${t('common.on')}</option><option value="false" ${s.musicCues === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
+      <label class="setting" title="${tx('Normal: 3D headphone sound for passing fighters, engine harmonics and a different echo at each gun station. Reduced: lighter for weak devices.')}">${t('settings.audioDetail')} <select data-k="audioDetail"><option value="normal">${t('settings.audioNormal')}</option><option value="reduced" ${s.audioDetail === 'reduced' ? 'selected' : ''}>${t('settings.audioReduced')}</option></select></label>
       <label class="setting">${t('settings.breathing')} <select data-k="breathing"><option value="true">${t('common.on')}</option><option value="false" ${s.breathing === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
       <label class="setting">${t('settings.radio')} <select data-k="radio"><option value="true">${t('common.on')}</option><option value="false" ${!s.radio ? 'selected' : ''}>${t('settings.subsOnly')}</option></select></label>
       <label class="setting">${tx('Lens dirt')} <select data-k="lensDirt"><option value="true">${t('common.on')}</option><option value="false" ${s.lensDirt === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
@@ -479,7 +481,7 @@ export class UI {
       const k = i.dataset.k as keyof Settings;
       let v: any = i.value;
       if (k === 'voiceVolume' || k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume' || k === 'fov') v = parseFloat(v);
-      if (k === 'lensDirt' || k === 'weatherEffects' || k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'killCam' || k === 'fpsCounter' || k === 'breathing' || k === 'bookends' || k === 'crewRoom') v = v === 'true';
+      if (k === 'lensDirt' || k === 'weatherEffects' || k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'musicCues' || k === 'killCam' || k === 'fpsCounter' || k === 'breathing' || k === 'bookends' || k === 'crewRoom') v = v === 'true';
       (s as any)[k] = v;
       if (k === 'quality') { delete s.gfxAuto; s.graphicsMode = 'manual'; st.querySelector<HTMLSelectElement>('[data-graphics]')!.value = graphicsChoice(s); }   // the player's choice wins over the first-launch pick
       if (k === 'fov') { const b = i.closest('label')?.querySelector('.fov-val'); if (b) b.textContent = `${v}°`; }
