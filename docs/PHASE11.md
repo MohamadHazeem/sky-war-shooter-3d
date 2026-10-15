@@ -14,4 +14,5 @@ merge lane (`tools/codex_merge.sh` / `tools/claude_merge.sh`) → `tools/ship.sh
 | 06 | Night and sunset polish | post 6→8 | Claude | Building |
 | 07 | The Tour (25 missions) | gameplay | Claude | Building |
 | 08 | Gunner mastery | gameplay | Claude | Building |
+| 01b | Hero fighters from Sketchfab models (+ replace unlicensed pilot figures) | models | Codex | Queued |
 | 09 | Final scorecard and fixes | 80+ | Codex | After 01–08 |
