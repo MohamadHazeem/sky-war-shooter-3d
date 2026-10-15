@@ -181,3 +181,26 @@ or reference photographs are embedded. References and reproduction: `tools/hero/
 ## Original seated exterior crew — Phase 11
 
 `seated-crew.glb` is an original, directly authored seated aircrew mesh with continuous bent sleeves and trousers, leather flying helmet, goggles, oxygen mask/hose, shearling collar, gloves, boots and harness. Its separate lit PBR materials are built by `tools/hero/sketchfab/seated.py`. It replaces inherited figures and their textures in both B-17 exteriors, P-51, Do 335, He 111 and the archived converted models. Original Luftwaffe hero pilots remain project geometry. Source: `tools/hero/sketchfab/seated.py`; GPL-2.0-or-later. No inherited pilot figure is shipped.
+
+## Phase 11 aircraft surface detail
+
+The B-17, Me 262, Bf 110 and Ju 88 retain their FlightGear geometry licences above.
+The B-17 relief, service fasteners, fabric tapes, radial fins and pushrods are
+project-authored derivatives. B-17 colour/roughness variation incorporates Poly Haven's
+[Painted Metal Shutter](https://polyhaven.com/a/painted_metal_shutter), **CC0 1.0**:
+Charlotte Baglioni (photography), Dario Barresi (baking), Rico Cilliers (processing).
+The corrugation is removed; only restrained scan variation is baked into aircraft paint.
+Source files, licence and hashes: `tools/hero/references/CREDITS.md`.
+
+## Final aircraft review: retained approved main assets
+
+All five fighter models and the seated B-17 crew retain the approved artifacts from repository
+commit `683275db`, via `tools/hero/retain-main.mjs`. Fighter surfaces, mechanical parts,
+markings and authored crew are preserved; only canopy material transparency is adjusted.
+
+- Bf 109 source: **GRIP420**, [Bf 109 F-2 Messerschmitt](https://sketchfab.com/3d-models/bf-109-f-2-messerschmitt-e48914913f2140158bee87495916d64e), CC BY 4.0. Normalized, articulated, repainted and adapted with G-6 cowl blisters by this project.
+- Fw 190 source: **Saman Salili**, [Fw 190](https://sketchfab.com/3d-models/fw-190-51fd2e42ae5445788c15f00fe34729d2), CC BY 4.0. Normalized, articulated, repainted with original cockpit/engine fittings and LODs by this project.
+- Seated crew: original project geometry, GPL-2.0-or-later, authored in `tools/hero/sketchfab/seated.py` at the pinned revision.
+
+The historical FlightGear entries above document the earlier conversion; they no longer
+describe the shipped Bf 109/Fw 190 exterior geometry.

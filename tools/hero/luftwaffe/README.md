@@ -40,3 +40,12 @@ is Basis Universal 2.50.0 (Homebrew bottle `basis_universal`, extracted locally)
 - `turntable.html`, `hero_shots.mjs` (turntables + in-game rig shots, Playwright headless shell only),
   `hero_bench.mjs`.
 - `HERO_DEBUG=1` dumps the paint masks; `HERO_UVCHECK=1` reports UV-island overlap between objects.
+
+## Final review scope
+
+All five existing heroes retain approved geometry and skin maps from repository commit
+`683275db` through `../retain-main.mjs`; only the canopy material is changed. This removes
+the rejected baked skin deformation, wing-root smears and satin surface trade-offs. The
+legacy build recipes above are retained for source provenance. The final finish is
+reproducible with `node tools/hero/luftwaffe/finish.mjs bf109 fw190 me262 bf110 ju88`,
+with the pinned commit available locally. No Blender rebuild or texture encoding is needed.

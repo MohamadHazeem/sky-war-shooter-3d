@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Aircraft, Bomber, Fighter } from './Aircraft';
 import { ParticleSystem, type ParticleOpts } from '../render/Particles';
 import { ModelKind } from './Models';
+import { emitTurboGlow } from './TurboGlow';
 import { heatHaze } from '../render/HeatHaze';
 
 // Engine exhaust stacks: short, flickering blue-orange flame glows on both sides of the
@@ -27,6 +28,7 @@ export function updateExhausts(aircraft: readonly Aircraft[], glow: ParticleSyst
   tick++;
   if (tick & 1) return;
   for (const a of aircraft) {
+    if (a instanceof Bomber) { emitTurboGlow(a, glow); continue; }
     if (!(a instanceof Fighter) || !a.alive || a.remove) continue;
     if (a.enemyType === 'me163' && a.rocketFuel > 0 && a.fm.throttle > 0 && (a.zone('engine')?.hp ?? 0) > 0) {
       const scale = a.model.scale.x;

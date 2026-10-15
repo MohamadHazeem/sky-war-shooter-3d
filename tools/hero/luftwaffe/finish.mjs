@@ -23,6 +23,7 @@ import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { meshopt, textureCompress, prune } from '@gltf-transform/functions';
 import { MeshoptEncoder, MeshoptDecoder } from 'meshoptimizer';
 import sharp from 'sharp';
+import { retainFighter } from '../retain-main.mjs';
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '../../..');
 const SRC = process.env.HERO_SRC ?? join(REPO, 'tools/hero/luftwaffe/out');
@@ -79,8 +80,10 @@ async function ktx2(kind, map, name) {
 const want = process.argv.slice(2);
 const kinds = want.length ? want : readdirSync(SRC).filter((f) => f.endsWith('.glb')).map((f) => f.slice(0, -4));
 mkdirSync(OUT, { recursive: true });
-if (!BASISU) console.log('no Basis encoder (BASISU): WebP only');
+if (!BASISU && kinds.some(k => !['bf109','fw190','me262','bf110','ju88'].includes(k))) console.log('no Basis encoder (BASISU): WebP only');
 for (const kind of kinds) {
+  // Final review: retain approved geometry/skin maps; only improve clear glazing.
+  if (['bf109','fw190','me262','bf110','ju88'].includes(kind)) { await retainFighter(kind); continue; }
   const doc = await io.read(join(SRC, `${kind}.glb`));
   const root = doc.getRoot();
   if (kind === 'bf109' || kind === 'fw190') {

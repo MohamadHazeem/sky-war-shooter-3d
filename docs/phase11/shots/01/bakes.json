@@ -1,0 +1,75 @@
+{
+  "b17": {
+    "artifactSha256": "6c924e105d7700065259f792c05cba1aa3de87b8f10ff22dcd7d8d321056256d",
+    "reliefVertices": 1364112,
+    "bakeSize": 1024,
+    "normalKtx2Sha256": "05de5b9bbfb6341ae7e25aa54226046b0de2c9a558db4edc758d49773ad504a4",
+    "normalWebpSha256": "c5ec1abe756414d2d509302a281afebc6a041ae8aee4638598ffd4b8e0af9309",
+    "triangles": {
+      "0": 133859,
+      "1": 36197,
+      "2": 24853
+    },
+    "glbBytes": 1499800
+  },
+  "bf109": {
+    "artifactSha256": "d5691100e00135441f1d12c335a51e03bbb03bf4ada44c32483a07571b41048d",
+    "bakeSize": 1024,
+    "retainedSource": "683275db",
+    "normalKtx2Sha256": "6f24854f0def2b8e7d2abea5cae9c01bd743b9ac4fba7915a9ae0c199594a568",
+    "triangles": {
+      "0": 44453,
+      "1": 9999,
+      "2": 2598
+    },
+    "glbBytes": 1739404
+  },
+  "fw190": {
+    "artifactSha256": "14f145a7a41768af18d1ab2817b5f431178f3aed72775672f996a1d3c3e61441",
+    "bakeSize": 1024,
+    "retainedSource": "683275db",
+    "normalKtx2Sha256": "d33ceca7d215e0393d33b3005a5818e0ccc47f1b0b7c5b6622a25996c3836664",
+    "triangles": {
+      "0": 40880,
+      "1": 9999,
+      "2": 2575
+    },
+    "glbBytes": 1760908
+  },
+  "me262": {
+    "artifactSha256": "e0d5abebc7c3652adfc19a53cd1f7f3bc5174fa22e765dd78c6875ba050aefa3",
+    "bakeSize": 1024,
+    "retainedSource": "683275db",
+    "normalKtx2Sha256": "b3f980027d95556f84969bf538e24420dffa5d2c39a620f66f837073d424dc0e",
+    "triangles": {
+      "0": 59648,
+      "1": 11000,
+      "2": 2996
+    },
+    "glbBytes": 1445544
+  },
+  "bf110": {
+    "artifactSha256": "50531fc10a9bc7107f390d820d428c11dddfe754c82fd0d954fdfe48565742c1",
+    "bakeSize": 1024,
+    "retainedSource": "683275db",
+    "normalKtx2Sha256": "9929b89591eae1850be5fefaad104bc581ff4fc90c9bd4d33c26f8796892d35f",
+    "triangles": {
+      "0": 85247,
+      "1": 13000,
+      "2": 3590
+    },
+    "glbBytes": 2097288
+  },
+  "ju88": {
+    "artifactSha256": "4fde09d7b870ba121ff79b16a52df5c5b0ec7e1d4fae1418c4248fe62a0e0dcf",
+    "bakeSize": 1024,
+    "retainedSource": "683275db",
+    "normalKtx2Sha256": "1e689f864d315c69bb5678ea49203eaa260d614227dd0bc0bd1b31be64e41229",
+    "triangles": {
+      "0": 50447,
+      "1": 12892,
+      "2": 4200
+    },
+    "glbBytes": 1389136
+  }
+}

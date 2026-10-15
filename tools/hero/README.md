@@ -55,3 +55,68 @@ PLAYWRIGHT_MODULE=/absolute/path/to/installed/playwright/index.mjs node tools/he
 This uses an existing Playwright/Chrome installation, explicitly drives frames, and writes small JPEGs and JSON to `docs/phase10/shots/02c/`. It compares the retained legacy GLB and hero under matching gallery cameras, captures Low, silver and mechanics, tests corrupt/failed KTX2 requests and fresh Low startup, and checks shader stability after LOD transitions. It creates legacy-left/hero-right sheets for close, beauty, waist, wide and near formation, silver, Low and Low silver, plus idle and mechanical evidence. Render time is fixed and temporal passes are settled; mission wall-clock timing can still shift clouds/background aircraft slightly. The established gallery/VQA rig is used because goal 00's rig is absent on this branch.
 
 `render.py` supports `HERO_RENDER_LOD=2`, `HERO_RENDER_PREFIX=low-turntable`, and `HERO_RENDER_MODEL=tools/convert_models/output/b17.glb` for matching studio comparisons. `npm run check` validates the shipped artifact as well as runtime code.
+
+## Phase 11 detail pass
+
+Run every Blender/compression/capture job through `tools/heavy.sh`. The existing accurate
+silhouette and shared mechanical owners are preserved. `detail.py` supplies filtered tangent slopes and CC0 scan residuals (licence and source hashes in `references/CREDITS.md`).
+The B-17 adds service covers, shallow dents, filtered offset rivet rows on the source
+atlas charts, fabric rib tapes, matte paint, and dark steel radial fins/pushrods.
+These are plausible material details, not a factory rivet-plan reconstruction.
+Normals/AO now bake at the shipped 1024 resolution with 48 samples; colour remains 2048.
+Curvature controls roughness and is retained as a build intermediate. Basis normal mipmaps
+use normal-map mode and lower RDO loss. Glass uses low-opacity neutral tint and clearcoat, with the existing sky environment reflection; it has no transmission layer.
+
+Phase 11 QA (port **5321**, bundled headless shell, no desktop browser):
+
+```sh
+node tools/visual_rig.mjs --url http://127.0.0.1:5321 --out docs/phase11/shots/01/after --shots b17-beauty,waist-fw190,tail-bf109
+node tools/hero/detail-qa.mjs after
+```
+
+Set `PLAYWRIGHT_EXECUTABLE` only to an existing bundled **chrome-headless-shell** if the
+installed Playwright package expects another revision. `detail-qa.mjs` uses the production
+rig scene for six 15–17 m model-space detail views; `DETAIL_BASELINE=/path/to/models`
+serves preserved baseline assets, `DETAIL_QUALITY=low` exercises Low, and
+`DETAIL_FALLBACK=1` aborts KTX2 to exercise fallback. All pages and contexts close in `finally`.
+`HERO_SILHOUETTE_OUT=docs/phase11/shots/01` preserves the historical goal-02c gate.
+
+### Review revision: pose-locked evidence
+
+`detail-qa.mjs` now captures the three production rig fixtures as well as close views,
+30 m B-17/Fw 190 views, and a lit dusk B-17. It locks every bomber pose, animated
+model pivots, gunner aim and target pose before deriving the camera. Do not replay
+a world-space camera onto a separately simulated bomber: model construction consumes
+random numbers, so the eye can otherwise land inside the cabin wall.
+
+```sh
+DETAIL_BASELINE=/path/to/live/models tools/heavy.sh node tools/hero/detail-qa.mjs before
+tools/heavy.sh node tools/hero/detail-qa.mjs after
+node tools/hero/detail-compare.mjs
+```
+
+`before/detail.json` and `after/detail.json` are the authoritative capture records;
+the obsolete camera-only fixture manifests/contact sheets were removed. The comparison
+gate checks completion, presets, seed, weather, range, camera, aircraft and articulated
+part poses. Close daylight pairs use matched frontal light; dusk uses the production
+dusk weather with the low sun facing the visible aircraft surfaces. No extra light or
+exposure override is added.
+
+### Final review: restrained detail and retained main assets
+
+The rejected broad oil-canning/lap deformation and normal amplification are removed.
+The B-17 again has recessed seams with offset, filtered rivet rows and matte olive paint.
+A furnished forward cabin and bombsight reveal the retained seated bombardier through the
+separate 20%-opacity nose dome. Fighter normal/ORM maps retain their approved baseline
+bytes; the rejected projected relief normal/AO passes are omitted.
+
+`retain-main.mjs` pins all five approved fighters and the B-17 crew to repository commit
+`683275db`, which landed during this task. `compress.mjs` copies that seated crew into
+the new B-17. `luftwaffe/finish.mjs` preserves all five fighter GLBs and all their maps,
+changing only the canopy material. This deliberately supersedes this branch's rejected
+fighter skins and avoids overwriting the newer approved geometry, paint and fittings.
+Rebuilding needs the pinned commit available locally (`git show 683275db:...`).
+The rejected fighter bake/paint modifications have been reverted.
+
+The 25 m ADS pair uses identical oblique target poses on both sides and retains native
+1920-pixel captures. Both baseline and after must be recaptured when those poses change.

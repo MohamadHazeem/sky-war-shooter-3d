@@ -1,0 +1,408 @@
+{
+  "quality": "high",
+  "seed": 19431008,
+  "views": [
+    {
+      "kind": "fw190",
+      "glass": [
+        {
+          "name": "hero_fw190_glass",
+          "opacity": 0.085,
+          "color": [
+            0.12,
+            0.145,
+            0.15
+          ],
+          "envMap": true,
+          "envIntensity": 1.5,
+          "transmission": 0
+        }
+      ],
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
+      "subject": {
+        "kind": "fw190",
+        "position": [
+          110,
+          7680,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          6,
+          6,
+          6
+        ],
+        "parts": {
+          "count": 31,
+          "sha256": "6d83c8b480b2d09c595b547dbca5c013af7b36a43bfd8f624b01829857ea0eb6"
+        }
+      },
+      "modelRange": 17.029386365926403,
+      "camera": {
+        "position": [
+          182,
+          7710,
+          450
+        ],
+        "quaternion": [
+          -0.13588333844051473,
+          0.39820170466884447,
+          0.05977531380221468,
+          0.9052060718935404
+        ],
+        "fov": 20
+      },
+      "textures": [
+        {
+          "name": "hero_fw190",
+          "compressed": true,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 248,
+        "programsAfter": 248,
+        "mean": 4.535555555423101,
+        "p50": 4.600000023841858,
+        "p95": 6.300000011920929,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "bf109",
+      "glass": [
+        {
+          "name": "hero_bf109_glass",
+          "opacity": 0.085,
+          "color": [
+            0.12,
+            0.145,
+            0.15
+          ],
+          "envMap": true,
+          "envIntensity": 1.5,
+          "transmission": 0
+        }
+      ],
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
+      "subject": {
+        "kind": "bf109",
+        "position": [
+          110,
+          7680,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          6.300000000000001,
+          6.300000000000001,
+          6.300000000000001
+        ],
+        "parts": {
+          "count": 31,
+          "sha256": "6d83c8b480b2d09c595b547dbca5c013af7b36a43bfd8f624b01829857ea0eb6"
+        }
+      },
+      "modelRange": 17.029386365926403,
+      "camera": {
+        "position": [
+          185.60000000000002,
+          7711.5,
+          453
+        ],
+        "quaternion": [
+          -0.13588333844051467,
+          0.3982017046688445,
+          0.059775313802214666,
+          0.9052060718935405
+        ],
+        "fov": 20
+      },
+      "textures": [
+        {
+          "name": "hero_bf109",
+          "compressed": true,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 248,
+        "programsAfter": 248,
+        "mean": 6.166666666666667,
+        "p50": 5.0999999940395355,
+        "p95": 10.199999988079071,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "me262",
+      "glass": [
+        {
+          "name": "hero_me262_glass",
+          "opacity": 0.085,
+          "color": [
+            0.12,
+            0.145,
+            0.15
+          ],
+          "envMap": true,
+          "envIntensity": 1.5,
+          "transmission": 0
+        }
+      ],
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
+      "subject": {
+        "kind": "me262",
+        "position": [
+          110,
+          7680,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          6,
+          6,
+          6
+        ],
+        "parts": {
+          "count": 28,
+          "sha256": "bfee6939339f7cf9241da7bba866f6ad262d2a003224b406da32c1ae21a846a5"
+        }
+      },
+      "modelRange": 17.029386365926403,
+      "camera": {
+        "position": [
+          182,
+          7710,
+          450
+        ],
+        "quaternion": [
+          -0.13588333844051473,
+          0.39820170466884447,
+          0.05977531380221468,
+          0.9052060718935404
+        ],
+        "fov": 20
+      },
+      "textures": [
+        {
+          "name": "hero_me262",
+          "compressed": true,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 248,
+        "programsAfter": 248,
+        "mean": 6.093333333730698,
+        "p50": 5.5,
+        "p95": 9.5,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "bf110",
+      "glass": [
+        {
+          "name": "hero_bf110_glass",
+          "opacity": 0.085,
+          "color": [
+            0.12,
+            0.145,
+            0.15
+          ],
+          "envMap": true,
+          "envIntensity": 1.5,
+          "transmission": 0
+        }
+      ],
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
+      "subject": {
+        "kind": "bf110",
+        "position": [
+          110,
+          7680,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          5.1,
+          5.1,
+          5.1
+        ],
+        "parts": {
+          "count": 46,
+          "sha256": "768e58b7f5b449170904e00d5b91190fe380ea6cfa4b1bec2828f6f0be134f5d"
+        }
+      },
+      "modelRange": 17.029386365926406,
+      "camera": {
+        "position": [
+          171.2,
+          7705.5,
+          441
+        ],
+        "quaternion": [
+          -0.13588333844051473,
+          0.39820170466884436,
+          0.05977531380221466,
+          0.9052060718935405
+        ],
+        "fov": 20
+      },
+      "textures": [
+        {
+          "name": "hero_bf110",
+          "compressed": true,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 248,
+        "programsAfter": 248,
+        "mean": 4.724444444974264,
+        "p50": 4.9000000059604645,
+        "p95": 6.5,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "ju88",
+      "glass": [
+        {
+          "name": "hero_ju88_glass",
+          "opacity": 0.085,
+          "color": [
+            0.12,
+            0.145,
+            0.15
+          ],
+          "envMap": true,
+          "envIntensity": 1.5,
+          "transmission": 0
+        }
+      ],
+      "weather": {
+        "sunEl": 38,
+        "sunAz": 55,
+        "low": 0.15
+      },
+      "fixture": false,
+      "subject": {
+        "kind": "ju88",
+        "position": [
+          110,
+          7680,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          4.5,
+          4.5,
+          4.5
+        ],
+        "parts": {
+          "count": 42,
+          "sha256": "42a225bec8e1537f2db431b3556243238f14ce763c3b5d9e3e27484ae898a8c0"
+        }
+      },
+      "modelRange": 17.029386365926403,
+      "camera": {
+        "position": [
+          164,
+          7702.5,
+          435
+        ],
+        "quaternion": [
+          -0.13588333844051473,
+          0.39820170466884447,
+          0.05977531380221468,
+          0.9052060718935404
+        ],
+        "fov": 20
+      },
+      "textures": [
+        {
+          "name": "hero_ju88",
+          "compressed": true,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 248,
+        "programsAfter": 248,
+        "mean": 6.095555555820465,
+        "p50": 5.0999999940395355,
+        "p95": 10.200000017881393,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    }
+  ],
+  "errors": [],
+  "complete": true
+}

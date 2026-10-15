@@ -49,12 +49,12 @@ describe('shipped B-17 asset contract', () => {
     expect(totals[2]).toBeLessThan(totals[1]*.75);expect(totals[2]).toBeLessThan(26000);
   });
   it('matches the artifact verified against the USAAF three-view and section widths',()=>{
-    const qa=JSON.parse(readFileSync('docs/phase11/shots/01b/b17-silhouette/silhouette.json','utf8'));
+    const qa=JSON.parse(readFileSync('docs/phase11/shots/01/silhouette.json','utf8'));
     expect(qa.artifactSha256).toBe(createHash('sha256').update(readFileSync('public/models/hero/b17.glb')).digest('hex'));
     expect(qa.pass).toBe(true);
     for(const section of Object.values(qa.sections) as {relativeError:number;tolerance:number}[])expect(section.relativeError).toBeLessThanOrEqual(section.tolerance);
   });
-  it('ships meshopt, UVs, normal/ORM maps and transmission under the download budget', () => {
+  it('ships meshopt, UVs, normal/ORM maps and clear glazing under the download budget', () => {
     const r=asset.getRoot();
     expect(r.listExtensionsRequired().map(e=>e.extensionName)).toContain('EXT_meshopt_compression');
     const stencils=r.listMaterials().find(m=>m.getName()==='hero_stencils')!;
@@ -63,9 +63,17 @@ describe('shipped B-17 asset contract', () => {
     const lowSkin=r.listMaterials().find(m=>m.getName()==='hero_skin_low')!;
     expect(lowSkin.getBaseColorTexture()!.getSize()).toEqual([512,512]);
     expect(lowSkin.getNormalTexture()).toBeNull();
+    const lowGlass=r.listMaterials().find(m=>m.getName()==='hero_glass_low')!;
+    expect(lowGlass.getAlphaMode()).toBe('BLEND');
+    expect(lowGlass.getBaseColorFactor()[3]).toBeLessThan(.4);
+    expect(lowGlass.getExtension('KHR_materials_transmission')).toBeNull();
+    const noseGlass=r.listMaterials().find(m=>m.getName()==='hero_nose_glass')!;
+    expect(noseGlass.getAlphaMode()).toBe('BLEND');
+    expect(noseGlass.getBaseColorFactor()[3]).toBeGreaterThan(.1);
+    expect(noseGlass.getBaseColorFactor()[3]).toBeLessThan(.3);
     const skin=r.listMaterials().find(m=>m.getName()==='hero_skin')!;
     expect(skin.getBaseColorTexture()).toBeTruthy();expect(skin.getNormalTexture()).toBeTruthy();expect(skin.getOcclusionTexture()).toBeTruthy();
-    expect(r.listMaterials().some(m=>!!m.getExtension('KHR_materials_transmission'))).toBe(true);
+    expect(r.listMaterials().find(m=>m.getName()==='hero_glass')!.getExtension('KHR_materials_transmission')).toBeNull();
     for(const m of r.listMeshes())for(const p of m.listPrimitives()) {
       if(p.getMaterial()?.getBaseColorTexture())expect(p.getAttribute('TEXCOORD_0')).toBeTruthy();
       else expect(p.getAttribute('TEXCOORD_0') ?? p.getAttribute('COLOR_0')).toBeTruthy(); // Original seated crew uses vertex colours.
