@@ -28,7 +28,7 @@ while :; do
     log "review $branch @ ${head:0:7}"
     verdict=$(cd "$wt" && claude -p --model opus "You are the quality gate for the Sky War Shooter 3D game (owner wants 100/100 graphics, B-17 gunner focus). Review task branch $branch. Read its spec (docs/phase11/ file matching the report number), the report $report, and LOOK at the before/after screenshots it links (Read the image files). Decide whether the result is clearly better than the live game in the shots it touches and meets the spec's Done-when. Reply with the FIRST line exactly 'APPROVE' or 'REJECT', then up to 8 short lines of concrete reasons / required fixes." 2>/dev/null < /dev/null)
     touch "$S/$k.reviewed-$head"; echo "$verdict" > "$S/$k.verdict"
-    if echo "$verdict" | head -1 | grep -q APPROVE; then
+    if [ "$(echo "$verdict" | grep -m1 -oE '^\**(APPROVE|REJECT)' | tr -d '*')" = "APPROVE" ]; then
       log "APPROVED $branch"; touch "$S/$k.approved"; echo "$branch" >> "$S/merge.queue"
     else
       r=$(( $(cat "$S/$k.round" 2>/dev/null || echo 0) + 1 )); echo $r > "$S/$k.round"; log "REJECTED $branch (round $r)"
@@ -37,7 +37,7 @@ while :; do
         acct=""; [ "$(date +%s)" -ge "${ACCOUNT2_FROM:-9999999999}" ] && acct=account2
         echo "$verdict" > "/tmp/sws-autopilot/$k.fixnote"
         ( cd /tmp/sws-cloud && git pull -q; export PATH="$HOME/.local/node/bin:$PATH"; [ -n "$acct" ] && export CLAUDE_CONFIG_DIR="$HOME/.claude-account2"
-          (sleep 6; printf '\r'; sleep 40) | script -q "/tmp/cloud-fix-$k.log" claude --cloud "Branch $branch was REJECTED by the automatic quality review. Check out that branch, read AGENTS.md and docs/phase11/reference-pack.md, fix every point: $(echo "$verdict" | tail -n +2 | tr '\n' ' ') Update $report, commit, push the same branch and confirm GitHub CI is green. Never push main." > /dev/null 2>&1 & p=$!; sleep 45; kill $p 2>/dev/null ) &
+          (sleep 6; printf '\r'; sleep 40) | script -q "/tmp/cloud-fix-$k-$r.log" claude --cloud "Branch $branch was REJECTED by the automatic quality review. Check out that branch, read AGENTS.md and docs/phase11/reference-pack.md, fix every point: $(echo "$verdict" | tail -n +2 | tr '\n' ' ') Update $report, commit, push the same branch and confirm GitHub CI is green. Never push main." > /dev/null 2>&1 & p=$!; sleep 45; kill $p 2>/dev/null ) &
       fi
       if [ "$lane" = "codex" ] && [ $r -le 2 ]; then
         ( cd "$wt" && codex exec --dangerously-bypass-approvals-and-sandbox -C . -o "/tmp/codex-$k-fix$r.txt" "Follow AGENTS.md. The automatic quality review REJECTED your work on this branch ($branch). Reasons: $(echo "$verdict" | tail -n +2 | tr '\n' ' ') Fix all of them, re-capture the affected shots, update $report, commit, push your branch and wait for green CI. Never push main, never deploy." < /dev/null > "/tmp/codex-$k-fix$r.log" 2>&1 ) &
