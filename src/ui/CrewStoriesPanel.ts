@@ -8,12 +8,12 @@ import {
   FRIENDS, MORALE_HIGH, MORALE_LOW, FATIGUE_EFFECT, type Entry,
 } from '../game/CrewStories';
 import { crewRoster, manDef, type ManId } from '../game/CrewRoster';
-import { tx, isAr } from '../i18n';
+import { tx, isTranslated } from '../i18n';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 /** Translate a template and its English string values (names, senders). */
 export const say = (text: string, vars?: Record<string, string | number>) =>
-  tx(text, vars && isAr() ? Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, typeof v === 'string' ? tx(v) : v])) : vars);
+  tx(text, vars && isTranslated() ? Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, typeof v === 'string' ? tx(v) : v])) : vars);
 
 let open = false;   // the section's open state, kept while the hangar re-renders
 const gone = (id: ManId) => crewRoster.men[id].dead || crewStories.dead.has(id);

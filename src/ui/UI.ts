@@ -28,7 +28,7 @@ import { mountCrewRoster } from './CrewPanel';
 import { mountCrewDecisions } from './CrewDecisionsPanel';
 import { mountCloudSave } from './CloudSavePanel';
 import { mountStatsToggle } from '../net/Analytics';
-import { t, tx, getLang, setLang, applyDocumentLang, type Lang } from '../i18n';
+import { t, tx, getLang, setLang, applyDocumentLang, LANGS, type Lang } from '../i18n';
 import '../i18n/rtl.css';
 
 export interface Settings {
@@ -175,7 +175,7 @@ export class UI {
   fade(on: boolean) { $('#fade').style.opacity = on ? '1' : '0'; }
   fadeTo(a: number) { $('#fade').style.transition = 'none'; $('#fade').style.opacity = String(a); requestAnimationFrame(() => ($('#fade').style.transition = '')); }
 
-  title(h: { campaign(): void; survival(): void; coop(): void; hangar(): void; settings(): void }, mission: Mission, notice = false) {
+  title(h: { campaign(): void; survival(): void; coop(): void; hangar(): void; settings(): void; relang?(): void }, mission: Mission, notice = false) {
     const tl = $('#title');
     tl.classList.add('simple-title');
     tl.innerHTML = `<div class="wrap">
@@ -185,9 +185,13 @@ export class UI {
         <button class="primary" data-a="campaign">${tx('Fly a Mission')}<small>${tx('Mission {n} / {total} · {title}', { n: mission.number, total: campaignSize(), title: tx(mission.title) })}</small></button>
         <button data-a="survival">${t('title.survival')}<small>${tx('Endless B-17 gunner waves')}</small></button>
         <button data-a="coop">${tx('Co-op')}<small>${tx('Crew a B-17 with a friend')}</small></button>
-        <div class="menu-links"><button data-a="hangar">${tx('Hangar')}${notice ? `<i class="hangar-dot" aria-label="${tx('New items')}"></i>` : ''}</button><button data-a="settings">${t('common.settings')}</button></div>
+        <div class="menu-links"><button data-a="hangar">${tx('Hangar')}${notice ? `<i class="hangar-dot" aria-label="${tx('New items')}"></i>` : ''}</button><button data-a="settings">${t('common.settings')}</button>${langSelect('title-lang', t('settings.language'))}</div>
       </div></div>`;
-    tl.querySelectorAll<HTMLButtonElement>('[data-a]').forEach(b => b.onclick = h[b.dataset.a as keyof typeof h]);
+    tl.querySelectorAll<HTMLButtonElement>('[data-a]').forEach(b => b.onclick = h[b.dataset.a as 'settings']);
+    // Language right on the title screen: a player who does not read English finds it here
+    tl.querySelector<HTMLSelectElement>('.title-lang select')!.addEventListener('change', (e) => {
+      void setLang((e.target as HTMLSelectElement).value as Lang).then(() => (h.relang ? h.relang() : this.title(h, mission, notice)));
+    });
     const menu = tl.querySelector<HTMLElement>('.menu')!;
     menu.addEventListener('keydown', e => {
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
@@ -455,7 +459,7 @@ export class UI {
       <label class="setting">${tx('Graphics')} <select data-graphics>${(['low', 'medium', 'high', 'auto'] as const).map(q => `<option value="${q}" ${graphicsChoice(s) === q ? 'selected' : ''}>${q === 'auto' ? tx('Auto') : t(`settings.q.${q}`)}</option>`).join('')}</select></label>
       <label class="setting">${tx('HUD detail')} <select data-k="hudDetail">${(['minimal', 'standard', 'full'] as const).map(q => `<option value="${q}" ${hudDetail(s.hudDetail) === q ? 'selected' : ''}>${tx(q[0].toUpperCase() + q.slice(1))}</option>`).join('')}</select></label>
       <label class="setting">${tx('Voice volume')} <input type="range" min="0" max="1" step="0.05" data-k="voiceVolume" value="${s.voiceVolume ?? 1}"></label>
-      <label class="setting">${t('settings.language')} <select data-lang><option value="en" lang="en">English</option><option value="ar" lang="ar" ${getLang() === 'ar' ? 'selected' : ''}>العربية</option></select></label>
+      <label class="setting">${t('settings.language')} ${langOptions()}</label>
       <label class="setting">${t('settings.difficulty')} <select data-k="difficulty"><option value="recruit" ${s.difficulty === 'recruit' ? 'selected' : ''}>${t('settings.diff.recruit')}</option><option value="veteran" ${s.difficulty === 'veteran' ? 'selected' : ''}>${t('settings.diff.veteran')}</option><option value="ace" ${s.difficulty === 'ace' ? 'selected' : ''}>${t('settings.diff.ace')}</option></select></label>
       <label class="setting"><span>${tx('Adaptive difficulty')}<br><small class="adaptive-hint" style="display:block;max-width:30ch;font-size:11px;line-height:1.35;color:var(--ink-dim)">${tx(ADAPTIVE_HINT)}</small></span> <select data-k="adaptive"><option value="true">${t('common.on')}</option><option value="false" ${s.adaptive === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
       <label class="setting">${t('settings.sensitivity')} <input type="range" min="0.3" max="2.5" step="0.05" data-k="sensitivity" value="${s.sensitivity}"></label>
@@ -527,11 +531,12 @@ export class UI {
     st.querySelector<HTMLSelectElement>('[data-lang]')!.addEventListener('change', (e) => {
       const cloud = !!st.querySelector('.cloud');
       const stats = !!st.querySelector('.stats-optin');
-      setLang((e.target as HTMLSelectElement).value as Lang);
-      this.settings(s, onChange, onBack);
-      if (cloud) mountCloudSave(st.querySelector<HTMLElement>('.settings-advanced')!);
-      if (stats) mountStatsToggle(st.querySelector<HTMLElement>('.settings-advanced'));
-      if ($('#pause').classList.contains('show')) this.relang?.();
+      void setLang((e.target as HTMLSelectElement).value as Lang).then(() => {
+        this.settings(s, onChange, onBack);
+        if (cloud) mountCloudSave(st.querySelector<HTMLElement>('.settings-advanced')!);
+        if (stats) mountStatsToggle(st.querySelector<HTMLElement>('.settings-advanced'));
+        if ($('#pause').classList.contains('show')) this.relang?.();
+      });
     });
     mountAccessibilityPanel(st.querySelector('.box')!);
     const box = st.querySelector<HTMLElement>('.box')!;
@@ -772,3 +777,11 @@ function p51Svg() {
 }
 
 function hudVisibilityForTips() { return hudRuntime.detail !== 'minimal'; }
+
+// The language picker: every language named in its own language (i18n LANGS)
+function langOptions(label?: string) {
+  return `<select data-lang${label ? ` aria-label="${label}"` : ''}>${LANGS.map((l) => `<option value="${l.id}" lang="${l.id}" ${getLang() === l.id ? 'selected' : ''}>${l.name}</option>`).join('')}</select>`;
+}
+function langSelect(cls: string, label: string) {
+  return `<label class="${cls}" title="${label}"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor"/><path d="M1.5 8h13M8 1.5c-2.4 2.6-2.4 10.4 0 13M8 1.5c2.4 2.6 2.4 10.4 0 13" fill="none" stroke="currentColor"/></svg>${langOptions(label)}</label>`;
+}

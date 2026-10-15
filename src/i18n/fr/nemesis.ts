@@ -1,0 +1,192 @@
+// French for ar/nemesis.ts (same keys and patterns).
+import type { PhraseTable, Pattern } from '../types';
+
+// German first names and surnames stay as they are
+const NAMES = [
+  'Heinz', 'Walter', 'Erich', 'Günther', 'Hans', 'Josef', 'Wolfgang', 'Gerhard', 'Helmut', 'Friedrich', 'Karl', 'Ernst', 'Werner', 'Rudolf', 'Egon', 'Anton',
+  'Horst', 'Dieter',
+  'Brückner', 'Dorn', 'Eckhardt', 'Faber', 'Gebhardt', 'Hollmann', 'Kranz', 'Lindner', 'Neumeyer', 'Ostermann', 'Pfeiffer', 'Reuter', 'Sauer', 'Thalberg',
+  'Vossberg', 'Wendt', 'Zeller', 'Kaltenbach', 'Riedel', 'Stahl', 'Winterfeld', 'Haller', 'Ritter', 'Engel',
+];
+const NAME: Record<string, string> = Object.fromEntries(NAMES.map((n) => [n, n]));
+
+// Luftwaffe ranks stay German
+const RANKS: Record<string, string> = {
+  Leutnant: 'Leutnant', Oberleutnant: 'Oberleutnant', Hauptmann: 'Hauptmann', Major: 'Major', Oberstleutnant: 'Oberstleutnant', Oberst: 'Oberst',
+};
+const SHORT: Record<string, string> = {
+  'Lt.': 'Lt.', 'Oblt.': 'Oblt.', 'Hptm.': 'Hptm.', 'Maj.': 'Maj.', 'Obstlt.': 'Obstlt.', 'Obst.': 'Obst.',
+};
+
+// Places (always used after "sur")
+const PLACES: Record<string, string> = {
+  'the Reich': 'le Reich', 'the Ruhr': 'la Ruhr', 'the Netherlands': 'les Pays-Bas', 'the Channel': 'la Manche',
+  Emden: 'Emden', Bremen: 'Brême', Ludwigshafen: 'Ludwigshafen', Leipzig: 'Leipzig', Schweinfurt: 'Schweinfurt', Berlin: 'Berlin', Kiel: 'Kiel',
+  Regensburg: 'Ratisbonne', Oschersleben: 'Oschersleben', Hamm: 'Hamm', 'Münster': 'Münster', 'Osnabrück': 'Osnabrück', Hannover: 'Hanovre',
+  Rheine: 'Rheine', Twente: 'Twente', Oldenburg: 'Oldenbourg', Gelsenkirchen: 'Gelsenkirchen', Leuna: 'Leuna', Misburg: 'Misburg',
+  Wilhelmshaven: 'Wilhelmshaven', Brunswick: 'Brunswick', Kassel: 'Cassel', Gotha: 'Gotha',
+};
+
+const RK = '(Lt\\.|Oblt\\.|Hptm\\.|Maj\\.|Obstlt\\.|Obst\\.)';
+
+const patterns: Pattern[] = [
+  [/^(JG|KG|ZG) (\d+)$/, '$1 $2'],
+  [new RegExp(`^${RK} (\\S+)$`), (m, tr) => `${m[1]} ${tr(m[2])}`],
+  [/^(.+) \(Experte\)$/, (m, tr) => `${tr(m[1])} (as)`],
+  [/^Intelligence was right — that's (\S+)'s machine! Watch for his markings!$/, (m, tr) => `Le renseignement avait raison — c'est l'avion de ${tr(m[1])} ! Surveillez ses marques !`],
+  [/^You got (\S+)! That's one Experte off the board!$/, (m, tr) => `Vous avez eu ${tr(m[1])} ! Un as de moins !`],
+  [/^He's back — the one who wounded (.+) over (.+)!$/, (m, tr) => `Il est revenu — celui qui a blessé ${tr(m[1])} sur ${tr(m[2])} !`],
+  [/^He's back — the one who shot us down over (.+)!$/, (m, tr) => `Il est revenu — celui qui nous a abattus sur ${tr(m[1])} !`],
+];
+
+const table: PhraseTable = {
+  phrases: {
+    ...NAME, ...RANKS, ...SHORT, ...PLACES,
+    // traits
+    'Head-on specialist': 'Spécialiste de l’attaque frontale',
+    "Comes in from twelve o'clock high and never turns away first.": 'Arrive haut à midi et ne dévie jamais le premier.',
+    'Attacks out of the sun': 'Attaque dans le soleil',
+    'Climbs up-sun and dives out of the glare, where the gunners cannot look.': 'Monte face au soleil et plonge dans l’éblouissement, là où les mitrailleurs ne voient rien.',
+    'Hunts stragglers': 'Chasse les traînards',
+    'Circles the box and pounces on any bomber that falls behind.': 'Tourne autour de la formation et fond sur tout bombardier distancé.',
+    'Goes for the tail gunner': 'Vise le mitrailleur de queue',
+    'Kills the tail gun first: then the bomber is blind from behind.': 'Fait taire la queue d’abord : le bombardier est alors aveugle vers l’arrière.',
+    'Fights the escorts': 'Combat les escorteurs',
+    'Leaves the bombers to his wingmen and goes looking for Mustangs.': 'Laisse les bombardiers à ses ailiers et part chercher les Mustang.',
+    'Jet ace (Me 262)': 'As sur jet (Me 262)',
+    'One slashing pass at five hundred miles an hour, then gone.': 'Une passe fulgurante à cinq cents milles à l’heure, puis il disparaît.',
+    'Sturmbock (armoured Fw 190)': 'Sturmbock (Fw 190 blindé)',
+    'Armour plate and heavy cannon: closes from astern to point-blank range.': 'Blindage et canons lourds : approche par l’arrière jusqu’à bout portant.',
+    'Zerstörer ace (Me 410)': 'As Zerstörer (Me 410)',
+    'Stands off at two kilometres and fires his 50 mm cannon.': 'Reste à deux kilomètres et tire au canon de 50 mm.',
+    // colours and emblems
+    Yellow: 'Jaune', Red: 'Rouge', Blue: 'Bleu', White: 'Blanc', Black: 'Noir', Green: 'Vert', Orange: 'Orange', Violet: 'Violet',
+    'Ace of spades': 'As de pique', 'Red heart': 'Cœur rouge', "Wolf's head": 'Tête de loup', 'Lightning bolt': 'Éclair', "Eagle's wings": 'Ailes d’aigle',
+    'Red devil': 'Diable rouge', 'Crown': 'Couronne', 'Staffel star': 'Étoile de Staffel',
+    // dossier history lines
+    'Over {place}: you shot him down.': 'Sur {place} : vous l’avez abattu.',
+    'Over {place}: shot down by the formation.': 'Sur {place} : abattu par la formation.',
+    'Over {place}: you shot him down, but he bailed out.': 'Sur {place} : vous l’avez abattu, mais il a sauté.',
+    'Over {place}: shot down, but he bailed out.': 'Sur {place} : abattu, mais il a sauté.',
+    'Over {place}: badly shot up, he escaped.': 'Sur {place} : gravement touché, il s’est échappé.',
+    'Over {place}: he broke off and went home.': 'Sur {place} : il a décroché et est rentré.',
+    'He wounded {crew}.': 'Il a blessé {crew}.',
+    'He shot you down.': 'Il vous a abattu.',
+    'He shot down your bomber.': 'Il a abattu votre bombardier.',
+    'He claimed one of ours.': 'Il a abattu l’un des nôtres.',
+    'He claimed {n} of ours.': 'Il a abattu {n} des nôtres.',
+    'He shot up your aircraft.': 'Il a criblé votre avion.',
+    'Promoted to {rank}.': 'Promu {rank}.',
+    '+{n} merit.': '+{n} mérite.',
+    // debrief and campaign intelligence report
+    '{name} — shot down by you. +{n} merit.': '{name} — abattu par vous. +{n} mérite.',
+    '{name} — shot down by the formation.': '{name} — abattu par la formation.',
+    '{name} — shot down by you, +{n} merit. He bailed out and will be back.': '{name} — abattu par vous, +{n} mérite. Il a sauté et reviendra.',
+    '{name} — shot down. He bailed out and will be back.': '{name} — abattu. Il a sauté et reviendra.',
+    '{name} — escaped badly damaged. He will return with a grudge.': '{name} — échappé, gravement endommagé. Il reviendra avec de la rancune.',
+    '{name} — broke off and went home.': '{name} — a décroché et est rentré.',
+    '{name} wounded {crew}.': '{name} a blessé {crew}.',
+    '{name} shot you down.': '{name} vous a abattu.',
+    '{name} shot down your bomber.': '{name} a abattu votre bombardier.',
+    '{name} now claims {n} victories.': '{name} revendique désormais {n} victoires.',
+    '{name} has been promoted to {rank}.': '{name} a été promu {rank}.',
+    '{name} of {unit} is promoted from the ranks to take his place.': '{name} du {unit} sort du rang pour prendre sa place.',
+    'Most wanted: {name} · {n} victories · bounty {b} merit': 'Ennemi n° 1 : {name} · {n} victoires · prime {b} mérite',
+    'Experten dossiers': 'Dossiers des as',
+    // what the crew remembers (HUD card)
+    'Wounded {crew} over {place}': 'A blessé {crew} sur {place}',
+    'Shot us down over {place}': 'Nous a abattus sur {place}',
+    'Bailed out over {place}, back from hospital': 'A sauté sur {place}, sorti de l’hôpital',
+    'Escaped us damaged over {place}': 'Nous a échappé, touché, sur {place}',
+    'Met over {place}': 'Rencontré sur {place}',
+    // HUD: banner, card, panel, tags, tips, feed
+    'EXPERTE': 'AS',
+    '{n} VICTORIES': '{n} VICTOIRES',
+    'EXPERTE · {n} VICTORIES': 'AS · {n} VICTOIRES',
+    '{n} victories': '{n} victoires',
+    'victories': 'victoires',
+    '+{n} WINGMEN': '+{n} AILIERS',
+    'ALONE': 'SEUL',
+    'ACE': 'AS',
+    'MOST WANTED': 'ENNEMI N° 1',
+    'INTELLIGENCE · EXPERTE': 'RENSEIGNEMENT · AS',
+    'Patched up after last time · out for revenge': 'Rafistolé depuis la dernière fois · avide de revanche',
+    'Experte down': 'As abattu',
+    'Most wanted — down': 'Ennemi n° 1 — abattu',
+    'The Experte is coming for the <b>TAIL GUN</b> — <kbd>5</kbd>': 'L’as vise la <b>QUEUE</b> — <kbd>5</kbd>',
+    'The Experte attacks head-on — <b>TOP TURRET</b> <kbd>3</kbd>': 'L’as attaque de face — <b>TOURELLE DORSALE</b> <kbd>3</kbd>',
+    'The Experte dives <b>OUT OF THE SUN</b> — watch the glare': 'L’as plonge <b>DANS LE SOLEIL</b> — attention à l’éblouissement',
+    'Bring down the Experte — {trait}': 'Abattez l’as — {trait}',
+    '{name} shot down — +{n} merit bounty': '{name} abattu — prime de +{n} mérite',
+    '{name} shot down': '{name} abattu',
+    '{name} escaped, badly damaged': '{name} s’est échappé, gravement touché',
+    '{name} broke off': '{name} a décroché',
+    'Luftwaffe Experten': 'As de la Luftwaffe',
+    // the Experten screen
+    'Killed in action': 'Tué au combat',
+    'In hospital · back in {n} missions': 'À l’hôpital · de retour dans {n} missions',
+    'On strength': 'En service',
+    '{n} encounters': '{n} rencontres',
+    'Never met': 'Jamais rencontré',
+    'wounded {crew}': 'a blessé {crew}',
+    'shot you down ×{n}': 'vous a abattu ×{n}',
+    'escaped you ×{n}': 'vous a échappé ×{n}',
+    'Bounty: {n} merit': 'Prime : {n} mérite',
+    'Price on his head: {n} merit': 'Sa tête est mise à prix : {n} mérite',
+    'Patches': 'Rustines',
+    'Grudge': 'Rancune',
+    'Took over from {name}': 'A succédé à {name}',
+    'HISTORY WITH YOU': 'VOTRE HISTORIQUE',
+    'Last sighting: {mission} · over {place}': 'Dernière observation : {mission} · sur {place}',
+    'No Experten met yet. Intelligence expects them on every big raid.': 'Aucun as rencontré. Le renseignement les attend à chaque grand raid.',
+    'SECRET': 'SECRET',
+    '401ST BOMB SQUADRON · S-2 INTELLIGENCE': '401e ESCADRON DE BOMBARDEMENT · RENSEIGNEMENT S-2',
+    'ENEMY PERSONALITIES FILE': 'FICHIER DES PERSONNALITÉS ENNEMIES',
+    'Experten shot down by you: <b>{n}</b>': 'As abattus par vous : <b>{n}</b>',
+    'I. ON STRENGTH · {n}': 'I. EN SERVICE · {n}',
+    'II. KILLED IN ACTION · {n}': 'II. TUÉS AU COMBAT · {n}',
+    // achievements and the medal
+    'Scratch One Experte': 'Un as de moins',
+    'Shoot down a named Luftwaffe Experte.': 'Abattez un as nommé de la Luftwaffe.',
+    'Settled Score': 'Compte réglé',
+    'Shoot down an Experte who hurt your crew or got away from you before.': 'Abattez un as qui a blessé votre équipage ou vous a déjà échappé.',
+    'Most Wanted': 'Ennemi n° 1',
+    "Shoot down the Luftwaffe's most wanted Experte and collect the bounty.": 'Abattez l’as le plus recherché de la Luftwaffe et touchez la prime.',
+    'Knight Hunter': 'Chasseur de chevaliers',
+    'Shoot down five named Experten.': 'Abattez cinq as nommés.',
+    'Experten Killer': 'Tueur d’as',
+    // German pilots on the radio (subtitles only)
+    'Head-on, Kinder. Straight through them, and nobody turns away before me.': 'De face, Kinder. Droit à travers eux, et personne ne dévie avant moi.',
+    'Out of the sun. They will not see us until it is too late.': 'Depuis le soleil. Ils ne nous verront que trop tard.',
+    'Look for the cripple at the back. Wounded birds fall easiest.': 'Cherchez l’éclopé à l’arrière. Les oiseaux blessés tombent plus facilement.',
+    'Kill the tail gunner first. Then the Viermot is blind.': 'Tuez d’abord le mitrailleur de queue. Ensuite le Viermot est aveugle.',
+    'Leave the bombers to the others. The Mustangs are mine.': 'Laissez les bombardiers aux autres. Les Mustang sont pour moi.',
+    'Turbines at full power. Nobody can catch us today.': 'Turbines à pleine puissance. Personne ne nous rattrapera aujourd’hui.',
+    'Close in to a hundred metres. Sturm!': 'Approchez à cent mètres. Sturm !',
+    'Stay out of their range. One shell is enough for a Viermot.': 'Restez hors de leur portée. Un obus suffit pour un Viermot.',
+    'I remember your ship, Amis. Today we finish it.': 'Je me souviens de votre avion, Amis. Aujourd’hui on l’achève.',
+    'Two weeks in hospital because of you. Now it is my turn.': 'Deux semaines d’hôpital à cause de vous. À mon tour maintenant.',
+    'You again? You should have stayed in England.': 'Encore vous ? Vous auriez dû rester en Angleterre.',
+    // crew radio (recorded)
+    "That's the one who bailed out on us — he's flying again!": 'C’est celui qui avait sauté — il revole !',
+    "He's back — you can still see the patches where we shot him up!": 'Il est revenu — on voit encore les rustines là où on l’a touché !',
+    "Those markings again — it's the same Experte we tangled with before!": 'Encore ces marques — c’est le même as qu’on a déjà affronté !',
+    "He's breaking off, trailing smoke — don't let him get away!": 'Il décroche en fumant — ne le laissez pas filer !',
+    "He's going after the Mustangs — he wants the little friends!": 'Il s’en prend aux Mustang — il veut nos petits copains !',
+    "He's going for the stragglers — the cripples are his meat!": 'Il fonce sur les traînards — les éclopés sont ses proies !',
+    "He's lining up on the tail gun — watch six o'clock!": 'Il s’aligne sur la queue — surveillez six heures !',
+    'Sturmbock! Armoured Fw 190s closing to point-blank — hit him hard!': 'Sturmbock ! Des Fw 190 blindés à bout portant — frappez fort !',
+    "He's coming head-on, twelve o'clock high — he never turns away first!": 'Il arrive de face, haut à midi — il ne dévie jamais le premier !',
+    "He's coming out of the sun — watch the glare!": 'Il sort du soleil — attention à l’éblouissement !',
+    "Jet Experte! One pass and he's gone — be ready!": 'As sur jet ! Une passe et il disparaît — soyez prêts !',
+    "That Me 410 Experte is hanging back — he'll use the big gun!": 'Cet as en Me 410 reste à distance — il va sortir le gros canon !',
+    "He's coming straight for us — he's got a score to settle!": 'Il fonce droit sur nous — il a un compte à régler !',
+    'Somebody got the Experte! Scratch one ace!': 'Quelqu’un a eu l’as ! Un as de moins !',
+    "He's bailed out — there's his chute! He'll fly again.": 'Il a sauté — voilà son parachute ! Il revolera.',
+    "He got away. He'll be back — and he'll remember us.": 'Il s’est échappé. Il reviendra — et il se souviendra de nous.',
+    'That was the Experte! He got one of ours!': 'C’était l’as ! Il a eu l’un des nôtres !',
+    'The Experte just got one of the Forts!': 'L’as vient d’abattre une des Forteresses !',
+  },
+  patterns,
+};
+export default table;

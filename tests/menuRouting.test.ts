@@ -23,12 +23,13 @@ describe('menu routing', () => {
   it('routes Fly directly to the current briefing with Back to title', () => {
     const { g, menus } = fixture(); menus.title();
     const handlers = g.ui.title.mock.calls[0][0];
-    expect(Object.keys(handlers)).toEqual(['campaign', 'survival', 'coop', 'hangar', 'settings']);
+    expect(Object.keys(handlers)).toEqual(['campaign', 'survival', 'coop', 'hangar', 'settings', 'relang']);
     handlers.campaign();
     expect(g.showCampaign).not.toHaveBeenCalled();
     expect(g.showBriefing.mock.calls[0][0]).toBe(CAMPAIGN[2]);
     g.showBriefing.mock.calls[0][1](); expect(g.startMenu).toHaveBeenCalledOnce();
     handlers.coop(); expect(g.coop.openMenu).toHaveBeenCalledOnce();
+    handlers.relang(); expect(g.startMenu).toHaveBeenCalledTimes(2);   // title language picker rebuilds the whole title
   });
   it('uses the shared simplified Settings entry from title and preserves the Hangar return callback', () => {
     const { g, menus } = fixture(); menus.title();

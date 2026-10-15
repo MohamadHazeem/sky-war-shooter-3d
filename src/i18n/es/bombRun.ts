@@ -1,0 +1,25 @@
+// Spanish for ar/bombRun.ts (same keys and patterns).
+import type { PhraseTable } from '../types';
+export default { phrases: {
+  'IP INBOUND': 'LLEGANDO AL PUNTO INICIAL',
+  'STRAIGHT AND LEVEL': 'RECTO Y NIVELADO',
+  'BOMB BAY DOORS OPEN': 'COMPUERTAS DE BOMBAS ABIERTAS',
+  'RELEASE IN {time}': 'LANZAMIENTO EN {time}',
+  'STRIKE BELOW': 'IMPACTOS DEBAJO',
+  'BOMBS AWAY': 'BOMBAS FUERA',
+  'BOMBS FALLING · {time} s': 'BOMBAS CAYENDO · {time} s',
+  'RALLY POINT · FIGHTERS RETURNING': 'PUNTO DE REUNIÓN · VUELVEN LOS CAZAS',
+  'Target markers below · Hold formation': 'Marcadores de objetivo debajo · Mantén la formación',
+  'Bombing through overcast · Following the lead ship': 'Bombardeo entre nubes · Seguimos al avión guía',
+  'Watch the strike from the ball turret · 4': 'Mira los impactos desde la torreta ventral · 4',
+  'Strike result: on target': 'Resultado: en el objetivo',
+  'Strike result: off target': 'Resultado: fuera del objetivo',
+  'Initial point inbound. Fighters are pulling back. Hold formation.': 'Llegando al punto inicial. Los cazas se retiran. Mantened la formación.',
+  'Steady. Straight and level. No evasive action.': 'Firmes. Recto y nivelado. Sin maniobras evasivas.',
+  'Bomb bay doors open. Cold air coming through.': 'Compuertas de bombas abiertas. Entra el aire helado.',
+  'Target hidden by overcast. Bombing on the lead ship.': 'Objetivo oculto por las nubes. Lanzamos con el avión guía.',
+  'Target markers in sight. Smoke from the earlier wave.': 'Marcadores de objetivo a la vista. Humo de la oleada anterior.',
+  'Five seconds. Steady. Three. Two. One.': 'Cinco segundos. Firmes. Tres. Dos. Uno.',
+  'Rally point. Close the bays. Fighters coming back!': 'Punto de reunión. Cerrad las compuertas. ¡Vuelven los cazas!',
+  'Flak hit the ship beside us! Her engine is burning!': '¡La flak ha alcanzado al avión de al lado! ¡Su motor arde!',
+} } satisfies PhraseTable;

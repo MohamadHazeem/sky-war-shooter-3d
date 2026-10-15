@@ -10,6 +10,7 @@ import { DeviceControls } from './game/DeviceControls';
 import { installShare } from './game/Share';
 import { AutoGraphics } from './game/AutoGraphics';
 import { analytics } from './net/Analytics';
+import { langReady } from './i18n';
 import './style.css';
 import './ui/cleanHud.css';
 
@@ -34,7 +35,7 @@ async function boot() {
   engineUp = true;
   enableHeroKtx2(engine.renderer);   // hero aircraft: GPU-compressed textures (world/HeroLook.ts)
   ui.loading(0.1, 'Loading aircraft…');
-  await essentials;
+  await Promise.all([essentials, langReady()]);   // a lazy language pack (fr/de/es) before the menu
   ui.loading(0.9, 'Forming up over England…');
   const input = new Input(engine.renderer.domElement);
   const game = new Game(engine, input, ui);

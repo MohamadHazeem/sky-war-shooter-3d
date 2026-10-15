@@ -30,7 +30,7 @@ import { buildScene, spokenText, vignetteFor, VOICE_ROLE, type CrewRoomCtx, type
 import { loadCampaign, totals } from '../game/CampaignState';
 import { portraitUrl } from '../render/Portraits';
 import { sound } from '../audio/Sound';
-import { tx, isAr } from '../i18n';
+import { tx, isTranslated } from '../i18n';
 import { crewStories } from '../game/CrewStories';
 import { say as storySay } from './CrewStoriesPanel';
 
@@ -686,7 +686,7 @@ class RoomSound {
       if (ok) return;
     }
     // subtitles only: reading time
-    const shown = isAr() ? tx(l.text, l.show ?? l.vars) : text;
+    const shown = isTranslated() ? tx(l.text, l.show ?? l.vars) : text;
     await new Promise((r) => setTimeout(r, Math.min(9000, 1400 + shown.length * 55)));
   }
 
@@ -998,7 +998,7 @@ class Running {
     const seq = ++this.seq;
     const sub = this.root.querySelector<HTMLElement>('.crm-sub')!;
     const d = manDef(l.who as ManId);
-    const vars = isAr() ? Object.fromEntries(Object.entries(l.show ?? l.vars ?? {}).map(([k, v]) => [k, typeof v === 'string' ? tx(v) : v])) : l.vars;
+    const vars = isTranslated() ? Object.fromEntries(Object.entries(l.show ?? l.vars ?? {}).map(([k, v]) => [k, typeof v === 'string' ? tx(v) : v])) : l.vars;
     sub.classList.add('fade');
     for (const [id, el] of this.men) el.classList.toggle('on', id === l.who);
     if (l.cue === 'gramophone') this.audio.cue();

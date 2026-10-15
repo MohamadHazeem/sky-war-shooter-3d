@@ -27,7 +27,7 @@ npm run dev        # http://127.0.0.1:5173
 ```
 
 Desktop browsers with mouse and keyboard, gamepads, and phones/tablets (touch controls) are supported.
-English and Arabic (right-to-left) under Settings → Language.
+English, French, German, Spanish and Arabic (right-to-left) under Settings → Language or the globe on the title screen (voices stay English).
 
 ### Modes
 * **Campaign**: 12 story missions from Emden (Sept 1943) to the Berlin finale (1944) with voiced
