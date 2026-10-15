@@ -158,3 +158,14 @@ barrel and two FDL 131 barbette blisters (`src/world/EnemyDress.ts`). No He 219 
 - Original shapes retained; new named structural/control parts, UV atlas, baked PBR wear,
   USAAF/RAF markings, crew/props and LODs by this project. Pinned archive hashes, conversion
   inputs and rebuild instructions: `tools/hero/escorts/README.md` and `sources.json`.
+
+## Phase 11 goal 24 — Me 410, Me 163, Ju 88 G
+
+`me410.glb`, `me163.glb`, `ju88g.glb`, their `_ace.webp` and `_base/_normal/_orm.ktx2`
+files were built with `tools/hero/enemies/build.sh` and `tools/hero/luftwaffe/types/{me410,me163,ju88g}.py`.
+The Me 163 retains the FlightGear Me 163 source shape; the Ju 88 G derives from the FlightGear
+Ju 88; the Me 410 retains FlightGear Bf 110 nacelle, propeller and cockpit detail with new
+fuselage, wings, canopy, single tail and weapons. The original authors and GPL-2.0-or-later
+source attribution for those FlightGear types above continues to apply. New geometry,
+paint, bakes and LODs are repository work under GPL-2.0-or-later. No third-party textures
+or reference photographs are embedded. References and reproduction: `tools/hero/enemies/README.md`.

@@ -19,6 +19,7 @@ export type ModelKind =
   | 'me262'  // Me 262 jet: no props; fan_1/fan_2 are the intake fans (spin about local Z), exhaust_left/right markers
   | 'bf109'  // Bf 109 G-14: prop_1
   | 'ju88'   // Ju 88 A-4 twin-engine bomber: prop_1 (left), prop_2 (right)
+  | 'me410' | 'ju88g'
   | 'me163'  // Me 163 Komet rocket fighter: no props; fan_1 is the small nose generator windmill, exhaust marker
   | 'he111'  // He 111 H bomber: prop_1 (left), prop_2 (right), gun_rear (dorsal MG, rest pose aft) + muzzle_rear
   | 'do335'; // Do 335 Pfeil: prop_1 (nose, tractor), prop_2 (behind the tail, pusher; also spins about local +Z)
@@ -35,6 +36,8 @@ const FILES: Record<ModelKind, string> = {
   bf109: 'models/bf109.glb',
   ju88: 'models/ju88.glb',
   me163: 'models/me163.glb',
+  me410: 'models/me410.glb',
+  ju88g: 'models/ju88g.glb',
   he111: 'models/he111.glb',
   do335: 'models/do335.glb',
 };
@@ -102,7 +105,7 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
       else if (hero) prepareHero(root, k);
       else prepareAircraftSurface(root, k, skins);
       // Authored aircraft nodes are static except these explicit mechanical pivots.
-      root.traverse(o => { if (k !== 'p51d_cockpit' && o !== root && !/^(pilot|prop_\d+|fan_\d+|ctl_.*|turret_.*|gun_.*|flap_[LR]|bomb_bay_[LR]|gear_.*)$/.test(o.name)) { o.updateMatrix(); o.matrixAutoUpdate = false; } });
+      root.traverse(o => { if (k !== 'p51d_cockpit' && o !== root && !/^(pilot|prop_\d+|fan_\d+|ctl_.*|turret_.*|gun_.*|barbette_.*|flap_[LR]|bomb_bay_[LR]|gear_.*)$/.test(o.name)) { o.updateMatrix(); o.matrixAutoUpdate = false; } });
       if (k === 'b17') compact = compactBomber(root);
       cache.set(k, root);
     } catch (e) {
@@ -145,7 +148,9 @@ const EXTRA_PLACEHOLDERS: Partial<Record<ModelKind, { span: number; len: number;
   me262: { span: 12.6, len: 10.6, col: 0x5a5840, props: [] },
   bf109: { span: 9.8, len: 8.9, col: 0x5d6b4a, props: [[0, 2.4]] },
   ju88: { span: 20.0, len: 14.3, col: 0x4f6040, props: [[2.79, 2.9], [-2.76, 2.9]] },
-  me163: { span: 8.8, len: 5.9, col: 0x5b5a45, props: [] },
+  me410: { span: 16.35, len: 12.48, col: 0x747d78, props: [[2.35, 2.4], [-2.35, 2.4]] },
+  ju88g: { span: 20.08, len: 15.5, col: 0x909a9c, props: [[2.79, 2.9], [-2.76, 2.9]] },
+  me163: { span: 9.3, len: 5.7, col: 0x5b5a45, props: [] },
   he111: { span: 22.5, len: 17.0, col: 0x55604a, props: [[2.68, 3.16], [-2.68, 3.16]] },
   do335: { span: 13.8, len: 13.8, col: 0x4e5e3c, props: [[0, 4.79], [0, -8.44]] },
 };

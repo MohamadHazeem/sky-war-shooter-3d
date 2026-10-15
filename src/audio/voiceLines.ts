@@ -81,6 +81,8 @@ export const VOICE_LINES = {
   ditch_4: { speakers: ["Radio"], text: "Rescue launch in sight! Firing a flare." },
   ditch_5: { speakers: ["Co-Pilot"], text: "All ten accounted for. Picked up by the RAF Air-Sea Rescue." },
   dressing: { speakers: ["Radio"], text: "Hold still — I've patched you up. Back on that gun." },
+  enemies24_below: { speakers: ["Ball Turret"], text: "Night fighter below us! Watch his upward cannon!" },
+  enemies24_night: { speakers: ["Navigator"], text: "Ju 88 Gs coming in — radar night fighter — attacks from below with upward-firing cannon!" },
   escort: { speakers: ["Radio"], text: "Little friends at six o'clock high! The Mustangs are here!" },
   fbk_ack: { speakers: ["Blue Four"], text: "Blue Four, rolling with you." },
   fbk_break: { speakers: ["Lead"], text: "Blue flight, initial for the break. Breaking left." },

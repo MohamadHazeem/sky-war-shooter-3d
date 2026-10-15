@@ -231,6 +231,10 @@ def paint(m, maps, size):
     flatP = P.reshape(-1, 3)
     up = N[..., 1]
     skin = valid & ((cls == SKIN) | (cls == FRAME))
+    # Thin legacy double skins can self-occlude in the bake. Bound exterior AO
+    # only for an opted-in source; cockpit/material cavities keep their original AO.
+    if info.get('skin_ao_floor'):
+        ao = np.where(skin, np.maximum(ao, info['skin_ao_floor']), ao)
     lift = np.zeros((H, W), bool)
     body = np.zeros((H, W), bool)
     for k, s in enumerate(m.surfs):
@@ -265,7 +269,7 @@ def paint(m, maps, size):
     if scheme == 'raf':
         from allied_paint import raf_camouflage
         blot = raf_camouflage(P, lift)
-    cols = {'7475': ('74', '75', '76'), '7475m': ('74', '75', '76'), '8182': ('81', '82', '76'),
+    cols = {'night76': ('76', '75', '76'), '7475': ('74', '75', '76'), '7475m': ('74', '75', '76'), '8182': ('81', '82', '76'),
             '7071': ('70', '71', '65'), 'usod': ('od','od','mediumgrey'), 'raf': ('rafgreen','rafgrey','mediumgrey')}[scheme]
     c_a, c_b, c_lo = RLM[cols[0]], RLM[cols[1]], RLM[cols[2]]
     hard = sstep(0.35, 0.65, splinter)

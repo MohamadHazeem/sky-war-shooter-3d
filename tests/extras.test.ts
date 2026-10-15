@@ -56,7 +56,7 @@ describe('aircraft recognition data', () => {
     expect(by('p51d').speed).toBe('437 mph (703 km/h)');
     expect(by('me262').armament).toContain('4 × 30 mm MK 108');
     expect(by('me410').armament).toContain('BK 5');
-    expect(by('me410').note).toContain('Bf 110');   // the stand-in airframe is labelled
+    expect(by('me410').model).toBe('me410');
     expect(by('do335').first).toBe('26 October 1943');
   });
 

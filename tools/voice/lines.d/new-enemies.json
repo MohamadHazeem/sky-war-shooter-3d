@@ -1,0 +1,5 @@
+[
+  {"group":"Phase 11 new enemies"},
+  {"id":"enemies24_night","role":"nav","text":"Ju 88 Gs coming in — radar night fighter — attacks from below with upward-firing cannon!","say":"Junkers eighty eight night fighters. Watch below for upward firing cannon."},
+  {"id":"enemies24_below","role":"ball","text":"Night fighter below us! Watch his upward cannon!","urgent":true}
+]

@@ -1,3 +1,4 @@
+import { burnRocket, KOMET_BOOST } from './NewEnemyRules';
 import { registerFormationSource } from '../render/AircraftSubmission';
 import * as THREE from 'three';
 import { instantiate, instantiateCompactBomber, ModelKind, PropInfo, setupProps } from './Models';
@@ -36,6 +37,7 @@ export interface Gun {
   tracerEvery: number;
   tracerColor: [number, number, number];
   cannon?: boolean;
+  oblique?: boolean;
   cooldown: number;
   count: number;         // rounds fired (for tracer cadence)
   ammo: number;
@@ -157,6 +159,8 @@ export class Fighter extends Aircraft {
   gunAim: THREE.Vector3 | null = null; // world direction guns are laid on (AI), overrides boresight
   rollTrim = 0;           // roll from lost structure (a wingtip shot off: destruction/Destruction.ts)
 
+  rocketFuel = KOMET_BOOST;
+  obliqueTrigger = false;
   enemyType = '';          // EnemyType for axis aircraft (score, radio)
 
   constructor(kind: ModelKind, team: Team, params: FlightParams, propRadius = kind === 'p51d' ? 1.7 : 1.65) {
@@ -188,6 +192,10 @@ export class Fighter extends Aircraft {
     if (this.alive) {
       const eng = this.zone('engine')!;
       this.fm.thrustScale = eng.hp > 0 ? 0.55 + 0.45 * (eng.hp / eng.maxHp) : 0;
+      if (this.enemyType === 'me163') {
+        this.rocketFuel = burnRocket(this.rocketFuel, this.fm.throttle, dt);
+        if (this.rocketFuel <= 0) { this.fm.thrustScale = 0; this.fm.throttle = 0; }
+      }
       const wl = this.zone('wingL')!, wr = this.zone('wingR')!;
       this.fm.rollBias = ((1 - wl.hp / wl.maxHp) - (1 - wr.hp / wr.maxHp)) * -0.25 + this.rollTrim;
       if (!this.kinematic) this.fm.step(dt);

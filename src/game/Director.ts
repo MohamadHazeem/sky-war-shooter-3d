@@ -1,3 +1,4 @@
+import { weatherNow } from '../render/WeatherState';
 import { escortKind } from '../world/EscortTypes';
 import { TacticSchedule } from '../world/LuftwaffeTactics';
 import { crewRoster } from './CrewRoster';
@@ -170,7 +171,9 @@ export class Director {
       let attack: AttackType | undefined = w.attack;
       if (!attack) attack = (['headon', 'stern', 'beam', 'high'] as AttackType[])[Math.floor(Math.random() * 4)];
       const tier = g.roundIdx + (g.mission && g.mission.number > 0 ? Math.floor((g.mission.number - 1) / 2) : 0);
-      const type = g.modes.enemyType(g.mission, tier) ?? randomEnemyType(tier);
+      const selected = g.modes.enemyType(g.mission, tier);
+      const regular = selected ?? randomEnemyType(tier);
+      const type = selected ? selected : regular === 'ju88' && weatherNow.night > .5 ? 'ju88g' : regular === 'bf110' && tier >= 3 && Math.random() < .35 ? 'me410' : regular;
       if (g.mission && isSecondTourId(g.mission.id) && g.mission.number >= 7 && type === 'fw190') attack = 'stern';
       const f = world.spawnEnemy(p, attack, w.skill, true, Math.random() < (w.rockets ?? 0), type);
       g.modes.onSpawn(f);

@@ -42,8 +42,8 @@ export interface Envelope {
 }
 
 // Never-exceed speeds (m/s, true airspeed at bomber altitude; real-world ratios between types)
-const V_DIVE: Record<EnemyType, number> = { fw190: 235, bf109: 220, me262: 275, bf110: 205, ju88: 195, me163: 280, he111: 165, me410: 215, do335: 250 };
-const ROLE: Record<EnemyType, Role> = { fw190: 'turner', bf109: 'turner', me262: 'slasher', me163: 'slasher', do335: 'slasher', bf110: 'heavy', ju88: 'heavy', me410: 'heavy', he111: 'bomber' };
+const V_DIVE: Record<EnemyType, number> = { fw190: 235, bf109: 220, me262: 275, bf110: 205, ju88: 195, ju88g: 210, me163: 280, he111: 165, me410: 215, do335: 250 };
+const ROLE: Record<EnemyType, Role> = { fw190: 'turner', bf109: 'turner', me262: 'slasher', me163: 'slasher', do335: 'slasher', bf110: 'heavy', ju88: 'heavy', ju88g: 'heavy', me410: 'heavy', he111: 'bomber' };
 
 /** Speeds that come out of the flight model's own numbers (FlightModel.ts). */
 export function envelopeOf(p: FlightParams, vDive: number, role: Role): Envelope {

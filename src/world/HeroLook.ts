@@ -17,7 +17,7 @@ import type { Fighter } from './Aircraft';
 //                  GPU-compressed <kind>_{base,normal,orm}.ktx2 (Basis UASTC); WebP stays on any failure
 //   partSide       which break-up piece a named part belongs to (Wrecks.cut)
 
-export const HERO_KINDS: ReadonlySet<string> = new Set(['bf109', 'fw190', 'me262', 'bf110', 'ju88', 'p47d', 'spitfire9']);
+export const HERO_KINDS: ReadonlySet<string> = new Set(['bf109', 'fw190', 'me262', 'bf110', 'ju88', 'me410', 'me163', 'ju88g', 'p47d', 'spitfire9']);
 export const isHero = (kind: string) => HERO_KINDS.has(kind);
 
 // level switch distances in model metres (world distance / model scale) at the default zoom:
@@ -204,7 +204,8 @@ export function animateControls(f: Fighter, dt: number) {
   const k = 1 - Math.exp(-dt * 9);
   const fm = f.fm;
   for (const c of list) {
-    const want = c.axis === 0 ? -fm.roll * AIL : c.axis === 1 ? fm.roll * AIL : c.axis === 2 ? fm.pitch * ELE
+    const elevon = f.kind === 'me163' ? fm.pitch * ELE : 0;
+    const want = c.axis === 0 ? -fm.roll * AIL + elevon : c.axis === 1 ? fm.roll * AIL + elevon : c.axis === 2 ? fm.pitch * ELE
       : c.axis === 3 ? -fm.yaw * RUD : 0;
     if (Math.abs(want - c.cur) < 1e-4) continue;
     c.cur += (want - c.cur) * k;

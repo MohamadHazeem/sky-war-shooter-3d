@@ -73,6 +73,8 @@ const KINDS: Record<string, KindSpec> = {
   p47d: { shares: { root: 0.13, tip: 0.54, tail: 0.18, tailX: 0.4, nose: 0.22 }, mass: 6500, massShare: SINGLE, fuel: fuel(1, 0) },
   spitfire9: { shares: { root: 0.12, tip: 0.5, tail: 0.18, tailX: 0.3, nose: 0.22 }, mass: 3400, massShare: SINGLE, fuel: fuel(1, 0) },
   bf110: { shares: { root: 0.1, tip: 0.62, tail: 0.28, tailX: 0.44, nose: 0.16 }, mass: 7800, massShare: TWIN, fuel: fuel(0.4, 1, 0) },
+  me410: { shares: { root: .1, tip: .62, tail: .25, tailX: .35, nose: .16 }, mass: 9600, massShare: TWIN, fuel: fuel(.4, 1, 0) },
+  ju88g: { shares: { root: .1, tip: .64, tail: .28, tailX: .4, nose: .14 }, mass: 12000, massShare: TWIN, fuel: fuel(.6, 1, 0) },
   ju88: { shares: { root: 0.1, tip: 0.64, tail: 0.28, tailX: 0.4, nose: 0.14 }, mass: 11000, massShare: TWIN, fuel: fuel(0.6, 1, 0) },
   he111: { shares: { root: 0.09, tip: 0.64, tail: 0.27, tailX: 0.36, nose: 0.12 }, mass: 12000, massShare: TWIN, fuel: fuel(0.4, 1, 0) },
   // Me 262: jets under the wings, fuel fore and aft of the cockpit

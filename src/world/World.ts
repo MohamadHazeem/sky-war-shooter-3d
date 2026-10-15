@@ -1,3 +1,4 @@
+import { fitNewEnemyWeapons } from './NewEnemyWeapons';
 import { ESCORT_TYPES, type EscortKind } from './EscortTypes';
 import { warmDustMotes } from '../game/DustMotes';
 import { warmHeroLODs } from './HeroB17';
@@ -536,7 +537,7 @@ export class World implements WorldView {
     f.vel.copy(f.fm.vel);
     // Bf 109 paint: done before the drop tank and rockets are fitted so they keep their colours
     if (variant.tint && !own) tintModel(f.model, variant.tint);
-    dressEnemy(f, type, own); // late-war types: own hit zones, Me 410 cannon + barbettes (EnemyDress.ts)
+    dressEnemy(f, type, own); // per-type hit zones over the authored model
     // Fw 190 A-8: 2x MG 131 (13 mm) cowling, 4x MG 151/20 wing cannon
     const tracerY: [number, number, number] = [10, 8, 3.5];
     f.guns = [
@@ -547,14 +548,15 @@ export class World implements WorldView {
       makeGun({ offset: new THREE.Vector3(2.3, -0.326, 0.7), rate: 9, muzzleVel: 700, damage: 14, spread: 0.01, tracerEvery: 3, tracerColor: [11, 6, 2], cannon: true }),
       makeGun({ offset: new THREE.Vector3(-2.3, -0.326, 0.7), rate: 9, muzzleVel: 700, damage: 14, spread: 0.01, tracerEvery: 3, tracerColor: [11, 6, 2], cannon: true }),
     ];
-    if (dropTank) {
+    fitNewEnemyWeapons(f);
+    if (dropTank && type !== 'me163' && type !== 'ju88g' && type !== 'me410') {
       const t = this.tankProto.clone();
       t.position.set(0, -0.98, -0.2);
       f.model.add(t);
       f.dropTank = t;
       f.dropTankAttached = true;
     }
-    if (rockets) {
+    if (rockets && type !== 'me163' && type !== 'ju88g') {
       // two underwing Wgr. 21 mortar tubes
       f.rockets = 2;
       for (const x of [1.9, -1.9]) {
@@ -985,14 +987,14 @@ export class World implements WorldView {
     if (a.fireRockets) this.launchRockets(a);
     for (const g of a.guns) {
       g.cooldown -= dt;
-      if (!a.trigger || g.ammo <= 0) { if (g.cooldown < 0) g.cooldown = 0; continue; }
-      while (g.cooldown <= 0) {
+      if (!(g.oblique ? a.obliqueTrigger : a.trigger) || g.ammo <= 0) { if (g.cooldown < 0) g.cooldown = 0; continue; }
+      while (g.cooldown <= 0 && g.ammo > 0) {
         g.cooldown += 1 / g.rate;
         g.count++;
         if (g.ammo !== Infinity) g.ammo--;
         const muzzle = a.localToWorld(g.offset, _v);
         const dir = _v2.copy(g.dir).applyQuaternion(a.quat);
-        if (a.gunAim) dir.copy(a.gunAim);
+        if (a.gunAim && !g.oblique) dir.copy(a.gunAim);
         dir.x += R() * g.spread; dir.y += R() * g.spread; dir.z += R() * g.spread;
         dir.normalize();
         const vel = dir.clone().multiplyScalar(g.muzzleVel).add(a.vel);
