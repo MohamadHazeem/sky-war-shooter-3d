@@ -292,6 +292,7 @@ export class Game {
     sound.radioEnabled = s.radio;
     sound.setMusic(s.music);
     sound.music.cues = s.musicCues !== false;
+    this.adaptive.enabled = s.adaptive !== false;   // Settings: Adaptive difficulty (Adaptive.ts)
     sound.setDetail(s.audioDetail ?? 'normal');
     sound.setBreathing(s.breathing !== false);
     this.pilot.mode = s.flightMode;

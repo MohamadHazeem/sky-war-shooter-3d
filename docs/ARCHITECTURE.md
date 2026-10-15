@@ -283,3 +283,16 @@ CPU verification uses port 5312 and the bundled headless shell: `tools/cpu_profi
 `PERF_CPU=4`, `PERF_BREAKDOWN=1` and `PERF_STEPS` (600 = 1,800 rendered frames,
 1,800 = 5,400 frames). The bot advances three 1/60 s frames per step. `PLAYWRIGHT_EXECUTABLE`, when needed, must identify an
 already-installed **headless shell**, never the desktop Chrome application.
+
+## Adaptive difficulty director (Phase 11 goal 29)
+
+`game/Adaptive.ts` (`game.adaptive`) measures the player in the round director (`Director.director`):
+accuracy (rounds fired / hits in a 45 s window), damage taken (integrity lost per minute), reaction
+time (a fighter entering gun range -> the player's first hit on it) and kills per minute, each against a
+human-level baseline per role. It sets four knobs inside the band of the chosen difficulty
+(`ADAPTIVE_BANDS`): `mult` (fighters in the air, also Pacing's final wave), `skill` (new groups' enemy
+skill), `aim` (x `World.enemyAimMult`) and `focus` (x `World.playerFocus`, never above the mission's).
+Easing is quick, pushing slow and only after a minute; low health cancels any push. Settings
+"Adaptive difficulty" (`settings.adaptive`, undefined = on) switches it off; the debrief shows what it
+did (`summary()`). Dev readout: `sws.game.adaptive.state()`. Balance runs with autoplay bots:
+`tools/adaptive_balance.mjs`. P-51 campaign missions run PilotOps' scripted rounds and are not adapted.

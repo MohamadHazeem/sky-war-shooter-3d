@@ -1,6 +1,6 @@
 import type { Settings } from './UI';
 export type GraphicsChoice = 'low' | 'medium' | 'high' | 'auto';
-export const BASIC_SETTINGS = ['difficulty', 'hudDetail', 'volume', 'musicVolume', 'voiceVolume', 'sensitivity', 'invertY'] as const;
+export const BASIC_SETTINGS = ['difficulty', 'adaptive', 'hudDetail', 'volume', 'musicVolume', 'voiceVolume', 'sensitivity', 'invertY'] as const;
 export const difficultyBalance = (difficulty: Settings['difficulty']) => difficulty === 'recruit'
   ? { enemy: 0.8, damage: 0.7, allies: 1.2 } : difficulty === 'ace'
     ? { enemy: 1.2, damage: 1.3, allies: 1 } : { enemy: 1, damage: 1, allies: 1 };

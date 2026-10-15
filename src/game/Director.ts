@@ -71,8 +71,12 @@ export class Director {
     const w = g.world, t = w.time - g.roundT0;
     if (g.boss.director(dt, m, g.roundIdx)) { this.updateIncoming(null, null); if (g.boss.cleared && !this.roundClear && g.state === 'playing') { this.roundClear = true; g.flow.endRound(m); } return; }
     const pace = g.pacing.director(dt, m, r, t, enemies, g.roundIdx), ramp = pace.ramp;
-    // adaptive difficulty: ease off when the player is struggling, push when dominating
-    g.adaptive.update(w.time, dt, w.player ? w.player.integrity : 1);
+    // adaptive difficulty director (Adaptive.ts): measure the player, then ease or push inside the band
+    const a = g.adaptive;
+    if (w.player) a.observe(w.time, w.aircraft as Iterable<any>, w.player.pos, m.role === 'gunner' ? 900 : 700);
+    a.update({ t: w.time, dt, health: w.player ? w.player.integrity : 1, shots: w.stats.shots, hits: w.stats.hits });
+    w.enemyAimMult = (g.loadout?.enemyAim ?? 1) * a.aim;
+    w.playerFocus = a.baseFocus * a.focus;
     const target = Math.max(1, Math.round((r.min + (r.max - r.min) * ramp) * pace.scale * g.adaptive.mult));
     // round over: stop sending fighters; once the sky is clear (or 30 s on) the round ends
     if (t >= r.duration || pace.done) {
