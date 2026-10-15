@@ -81,6 +81,7 @@ describe('the sortie', () => {
     expect(s.ship.missions).toBe(1);
     expect(report.result).toBe('credited');
     expect(report.voice).toBe('tour_count_1');
+    expect(report.lines.some((l) => /not credited/.test(l.text))).toBe(false);
     expect(s.crew.every((m) => m.missions === 1)).toBe(true);
     // the next mission starts with the carried wear, never below the flyable floor
     expect(startHealth('engine2', s.ship.wear.engine2)).toBeCloseTo(1 - s.ship.wear.engine2, 5);
@@ -101,6 +102,8 @@ describe('the sortie', () => {
     expect(manAt(lost, 'tail').joined).toBe(0);
     const ditched = applySortie(newTour(2), ok({ shipLost: true, ditched: true }), rng(2)).state;
     expect(ditched.done).toBe(1); expect(ditched.gone).toEqual([]); expect(ditched.lostShips).toHaveLength(1);
+    expect(ditched.report!.lines.map((l) => l.text)).toContain('The {ship} ditched in the sea on the way home. Air-Sea Rescue picked up the crew.');
+    expect(ditched.report!.lines.some((l) => /not credited/.test(l.text))).toBe(false);
   });
 
   it('wounds: Purple Heart, hospital, death of wounds and a second replacement with a new name', () => {

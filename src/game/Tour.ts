@@ -359,8 +359,9 @@ export function applySortie(s0: TourState, o: SortieOutcome, rand: () => number 
 
   // -- the result
   if (credited) lines.push({ text: 'Mission {n} of 25 credited.', vars: { n: stage + 1 }, tone: 'good' });
+  if (credited && lostShip) lines.push({ text: 'The {ship} ditched in the sea on the way home. Air-Sea Rescue picked up the crew.', vars: { ship: ship.name }, tone: 'bad' });
   else if (lostShip) lines.push({ text: o.ditched ? 'The {ship} went down in the sea. Air-Sea Rescue picked up the crew. The sortie is not credited.' : 'The {ship} was shot down. The sortie is not credited.', vars: { ship: ship.name }, tone: 'bad' });
-  else lines.push({ text: 'The sortie is not credited. Mission {n} will be flown again.', vars: { n: stage + 1 }, tone: 'bad' });
+  else if (!credited) lines.push({ text: 'The sortie is not credited. Mission {n} will be flown again.', vars: { n: stage + 1 }, tone: 'bad' });
 
   // -- wounds and deaths
   let kia = 0, hurt = 0;

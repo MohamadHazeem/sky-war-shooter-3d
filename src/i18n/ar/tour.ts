@@ -107,6 +107,7 @@ const table: PhraseTable = {
     'Back to the tour': 'العودة إلى جولة الخدمة',
     'Mission {n} of 25 credited.': 'احتُسبت المهمة {n} من 25.',
     'The {ship} went down in the sea. Air-Sea Rescue picked up the crew. The sortie is not credited.': 'سقطت {ship} في البحر، وانتشل الإنقاذ الجوي البحري الطاقم. لا تُحتسب الطلعة.',
+    'The {ship} ditched in the sea on the way home. Air-Sea Rescue picked up the crew.': 'هبطت {ship} اضطرارياً في البحر في طريق العودة، وانتشل الإنقاذ الجوي البحري الطاقم.',
     'The {ship} was shot down. The sortie is not credited.': 'أُسقطت {ship}. لا تُحتسب الطلعة.',
     'The sortie is not credited. Mission {n} will be flown again.': 'لا تُحتسب الطلعة. ستُنفَّذ المهمة {n} مرة أخرى.',
     '{who} died of his wounds.': 'توفي {who} متأثراً بجراحه.',

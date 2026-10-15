@@ -1,0 +1,91 @@
+{
+  "briefingKicker": "THE TOUR · MISSION No. 1 OF 25",
+  "mission1": {
+    "id": "tour-1-1",
+    "active": true,
+    "stage": 0,
+    "factor": 0.953,
+    "programs0": 267,
+    "programs1": 267
+  },
+  "debriefReport": "THE TOUR · 1 OF 25 MISSIONS CREDITED\n\nINTERPHONE\nPilot to crew: that's number one in the books.\n\nMission 1 of 25 credited.\n\nThe Sky Queen came home without a scratch.\n\nCrew morale 70% → 74%. Fatigue 0% → 0%.\n\nBACK TO THE TOUR",
+  "afterFirst": {
+    "done": 1,
+    "sorties": 1,
+    "event": "mail",
+    "patches": 0
+  },
+  "midTour": {
+    "done": 10,
+    "patches": 125,
+    "wear": {
+      "nose": 0.06,
+      "fuselageMid": 0.165,
+      "fuselageAft": 0.12,
+      "tail": 0.075,
+      "engine2": 0.21,
+      "engine3": 0.09,
+      "wingL": 0.12
+    },
+    "crew": [
+      "pilot:Brenner:fit:10",
+      "copilot:Doyle:fit:10",
+      "nav:Stern:fit:10",
+      "bombardier:Kessler:fit:10",
+      "engineer:Mendez:fit:10",
+      "radio:Gallo:fit:10",
+      "ball:Reilly:fit:9",
+      "waistL:Price:fit:10",
+      "waistR:Walsh:fit:10",
+      "tail:Fisher:fit:2"
+    ],
+    "gone": [
+      "Dawson"
+    ],
+    "event": null,
+    "morale": 80,
+    "fatigue": 47
+  },
+  "carried": {
+    "id": "tour-11-0",
+    "patches": 125,
+    "outside": 40,
+    "zones": {
+      "nose": 0.94,
+      "cockpit": 1,
+      "fuselageFwd": 1,
+      "fuselageMid": 0.835,
+      "fuselageAft": 0.88,
+      "tail": 0.925,
+      "engine1": 1,
+      "engine2": 0.79,
+      "engine3": 0.91,
+      "engine4": 1,
+      "wingL": 0.88,
+      "wingLtip": 1,
+      "wingR": 1,
+      "wingRtip": 1
+    },
+    "factor": 1.04,
+    "programs0": 267,
+    "programs1": 265
+  },
+  "programsTop": [
+    265,
+    265
+  ],
+  "programsOutside": [
+    265,
+    265
+  ],
+  "waist": {
+    "shown": 30,
+    "attached": true
+  },
+  "programsWaist": [
+    265,
+    265
+  ],
+  "arBriefingLatin": [],
+  "errors": []
+}

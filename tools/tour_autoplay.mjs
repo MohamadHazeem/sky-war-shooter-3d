@@ -23,17 +23,18 @@ try {
     localStorage.setItem('sws3d.lang', 'en');
   });
   await page.goto(URL);
-  await page.waitForFunction(() => window.sws?.tour && sws.assetsReady(), { timeout: 180000 });
+  await page.waitForFunction(() => window.sws?.tour && window.sws?.autoplay && sws.assetsReady(), { timeout: 180000 });
   await page.evaluate(() => { sws.engine.loopOverride = () => {}; sws.game.input.lock = () => {}; sws.tour.begin(19431008); });
   for (let i = 0; i < sorties; i++) {
     const r = await page.evaluate(() => {
       let s = sws.tour.state();
-      if (s.event) { document.querySelector('#tour [data-choice="0"]')?.click(); s = sws.tour.state(); }
+      if (s.event) s = sws.tour.resolve(0);
       const before = { done: s.done, sorties: s.sorties, patches: s.ship.patches, morale: s.morale, fatigue: s.fatigue };
       const m = sws.tour.mission(0);
       const log = sws.autoplay(m, 9000);
       const after = sws.tour.state();
-      return { mission: m.id, title: m.title, result: log.split('\n')[0], before,
+      const g = sws.game, pb = g.world.playerBomber;
+      return { mission: m.id, title: m.title, result: log.split('\n').slice(0, 3).join(' / '), end: g.endResult, ditched: g.ditching.ditched, bomberAlive: pb?.alive, before,
         after: { done: after.done, sorties: after.sorties, patches: after.ship.patches, wear: after.ship.wear, morale: after.morale, fatigue: after.fatigue,
           crew: after.crew.filter((c) => c.status !== 'fit').map((c) => `${c.pos}:${c.last}:${c.status}`), gone: after.gone.map((c) => `${c.last}:${c.status}`), event: after.event },
         report: after.report?.lines.map((l) => l.text.replace(/\{(\w+)\}/g, (_, k) => l.vars?.[k] ?? k)) };

@@ -108,6 +108,7 @@ async function boot() {
         tourDev.saveTour(s); return s;
       },
       mission: (opt = 0) => { const s = tourDev.loadTour()!; return tourDev.tourMission(s, s.done, opt); },
+      resolve: (choice = 0) => { const s = tourDev.loadTour(); if (s?.event) tourDev.saveTour(tourDev.resolveEvent(s, choice)); return tourDev.loadTour(); },
       open: () => game.showTour(),
     };
     const { tutorialAutoplay } = await import('./dev/tutorialAutoplay');

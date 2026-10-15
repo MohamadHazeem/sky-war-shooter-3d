@@ -380,7 +380,7 @@ export function mountTourAccess(root: HTMLElement) {
 // ---------------- the debrief ----------------
 
 /** End of showDebrief for a tour mission: the tour report and the way back to the tour. */
-export function mountTourReport(res: { state: TourState; report: TourReport }, openTour: () => void) {
+export function mountTourReport(res: { state: TourState; report: TourReport }, openTour: () => void, speak = true) {
   ensureStyle();
   const host = document.querySelector<HTMLElement>('#debrief .box');
   if (!host) return;
@@ -395,5 +395,5 @@ export function mountTourReport(res: { state: TourState; report: TourReport }, o
   const row = host.querySelector('.row');
   if (row) row.before(box); else host.appendChild(box);
   box.querySelector<HTMLElement>('[data-tour]')!.onclick = openTour;
-  setTimeout(() => say(r.voice), 900);
+  if (speak) setTimeout(() => say(r.voice), 900);
 }

@@ -324,11 +324,12 @@ export class MissionFlow {
     };
     // the crew-room scene first after a story mission (CrewRoomScene.ts); `then` runs once the map is up
     const toMap = (then?: unknown) => crewRoomScene.play(m, () => { g.showCampaign(); if (typeof then === 'function') then(); });
+    let tour: ReturnType<typeof g.tour.debrief> = null;   // the Tour's report, mounted again after the Armory
     const h = {
       next: toMap, // campaign map: next operation card + optional side raids
       retry: () => g.showBriefing(m),
       menu: () => g.startMenu(),
-      armory: () => g.ui.armory(g.prog, () => g.ui.debrief({ ...d, merit: undefined, points: g.prog.points }, h)),
+      armory: () => g.ui.armory(g.prog, () => { g.ui.debrief({ ...d, merit: undefined, points: g.prog.points }, h); if (tour) mountTourReport(tour, () => g.showTour(), false); }),
     };
     g.ui.debrief(d, h);
     pushSave(); // progress to the cloud after every mission
@@ -342,7 +343,7 @@ export class MissionFlow {
     mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers, score: g.score, ditched: g.ditching.ditched }, g.prog, g.progress, toMap);
     g.specials.nemesis.onDebrief(m); // named Experten: this mission's ace outcomes (NemesisRuntime.ts)
     crewRoomScene.capture(g, m, d); // the outcome the crew-room scene talks about
-    const tour = g.tour.debrief(m, r.success, w.stats.kills, merit);
+    tour = g.tour.debrief(m, r.success, w.stats.kills, merit);
     if (tour) mountTourReport(tour, () => g.showTour());
   }
 }
