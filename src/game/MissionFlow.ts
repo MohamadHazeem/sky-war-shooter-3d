@@ -21,6 +21,7 @@ import { crewDecisions } from './CrewDecisions';
 import { beginCrewDecisions, endCrewDecisions } from './CrewDecisionHooks';
 import { BailOutCinematic, BAIL_TOTAL } from './BailOutCinematic';
 import { leaderboardMode } from './Modes';
+import { mountMissionRating } from '../ui/MissionEditorScreen';
 import { mountShare, shareStamp } from './Share';
 import { analytics } from '../net/Analytics';
 import { mountCampaignReport, prepareCampaignMission, campaignMeritMult } from '../ui/CampaignMap';
@@ -344,6 +345,7 @@ export class MissionFlow {
     g.service.onDebrief(m, d, medals);
     mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers, score: g.score, ditched: g.ditching.ditched, interned: g.limping.interned ?? undefined }, g.prog, g.progress, toMap);
     g.specials.nemesis.onDebrief(m); // named Experten: this mission's ace outcomes (NemesisRuntime.ts)
+    mountMissionRating(host, m, d); // player missions: plays, best score, star rating (MissionEditorScreen.ts)
     crewRoomScene.capture(g, m, d); // the outcome the crew-room scene talks about
     tour = g.tour.debrief(m, r.success, w.stats.kills, merit);
     if (tour) mountTourReport(tour, () => g.showTour());

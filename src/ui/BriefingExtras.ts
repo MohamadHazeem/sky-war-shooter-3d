@@ -3,6 +3,7 @@ import { DEEP_PENETRATION, isChapterMission } from '../game/DeepPenetration';
 import { isTourId, TOUR_LENGTH } from '../game/Tour';
 import { decorateTourBriefing } from './TourScreen';
 import { CAMPAIGN, type Mission } from '../game/Missions';
+import { USER_MISSION_ID } from '../game/MissionEditor';
 import { briefingVoice } from '../audio/BriefingVoice';
 import { tx } from '../i18n';
 import { decorateCampaignBriefing } from './CampaignMap';
@@ -73,7 +74,7 @@ function weatherLabel(m: Mission): string {
 function facts(m: Mission): { text: string; hot?: boolean }[] {
   const out: { text: string; hot?: boolean }[] = [{ text: tx('Weather: {w}', { w: tx(weatherLabel(m)) }) }];
   const n = m.rounds ?? 1;
-  out.push({ text: Number.isFinite(n) ? tx('{n} rounds', { n }) : tx('Endless rounds') });
+  if (m.id !== USER_MISSION_ID) out.push({ text: Number.isFinite(n) ? tx('{n} rounds', { n }) : tx('Endless rounds') });   // player missions: waves, not rounds
   if (m.playerDamaged) out.push({ text: tx('Two engines out'), hot: true });
   if (m.flak) out.push({ text: tx(m.flak.intensity >= 1.5 ? 'Heavy flak' : 'Flak'), hot: m.flak.intensity >= 1.5 });
   if (m.bombsAway !== undefined) out.push({ text: tx('Bomb run') });
@@ -116,6 +117,7 @@ export function decorateBriefing(root: HTMLElement, m: Mission) {
     meta.innerHTML = facts(m).map((f) => `<span${f.hot ? ' class="hot"' : ''}>${esc(f.text)}</span>`).join('');
     target.after(meta);
   }
+  if (m.id === USER_MISSION_ID && kicker) kicker.textContent = tx('PLAYER MISSION');   // Phase 11 goal 27 (MissionEditor.ts)
   if (isChapterMission(m.id) && kicker) kicker.textContent = tx('Deep Penetration') + ' · ' + kicker.textContent;
   if (tour) decorateTourBriefing(sheet);   // the Tour: kicker and the crew's own ship (TourScreen.ts)
   decorateCampaignBriefing(sheet, m); // dynamic campaign: side-raid kicker, strategic modifiers
