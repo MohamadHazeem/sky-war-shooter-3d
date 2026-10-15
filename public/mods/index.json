@@ -1,0 +1,14 @@
+[
+  {
+    "id": "eighth-extras",
+    "file": "eighth-extras.json",
+    "name": "Mighty Eighth Extras",
+    "description": "An example mod: three missions, two paint schemes and two nose art designs."
+  },
+  {
+    "id": "hometown-crew",
+    "file": "hometown-crew.json",
+    "name": "Hometown Crew",
+    "description": "An example mod: new names and nicknames for the whole crew."
+  }
+]

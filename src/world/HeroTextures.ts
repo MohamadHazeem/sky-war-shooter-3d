@@ -7,11 +7,16 @@ let enabled = false;
 export function enableHeroTextures() { enabled = true; }
 let loading: Promise<void> | null = null;
 let loaded: {base: THREE.Texture; normal: THREE.Texture; orm: THREE.Texture; silver: THREE.Texture; silverOrm: THREE.Texture} | null = null;
+// The boot (embedded, readable) colour map of each hero material, kept when the streamed map replaces
+// it: mod paint schemes recolour it on a canvas (render/Paint.ts)
+const bootMaps = new WeakMap<THREE.Material, THREE.Texture>();
+export const heroBootMap = (m: THREE.Material) => bootMaps.get(m);
 function apply(m: THREE.MeshStandardMaterial) {
+  if (m.map && !bootMaps.has(m) && !(m.map as THREE.CompressedTexture).isCompressedTexture) bootMaps.set(m, m.map);
   if (!loaded || m.name.endsWith('_low')) return;
   // Keep authored shader features stable: every replaced slot already had a boot texture.
   const silver = m.userData.paint === 'silver';
-  if (m.map) m.map = silver ? loaded.silver : loaded.base;
+  if (m.map && !m.userData.modMap) m.map = silver ? loaded.silver : loaded.base;   // modMap: a mod's camouflage (render/Paint.ts)
   if (m.normalMap) m.normalMap = loaded.normal;
   if (m.roughnessMap) m.roughnessMap = silver ? loaded.silverOrm : loaded.orm;
   if (m.metalnessMap) m.metalnessMap = silver ? loaded.silverOrm : loaded.orm;

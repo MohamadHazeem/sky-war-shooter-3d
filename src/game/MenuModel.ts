@@ -8,6 +8,7 @@ export const HANGAR_TABS = [
   ] },
   { id: 'aircraft', label: 'Aircraft & Armory', entries: [
     ['aircraft', 'Museum', 'Aircraft, crew, medals and operations'], ['armory', 'Armory', 'Aircraft, weapons and upgrades'], ['customize', 'Customize', 'Name, nose art and paint'], ['range', 'Gunnery Range', 'Drones, towed sleeves and drills'],
+    ['mods', 'Mods', 'Missions, paint and crews made by players'],
   ] },
   { id: 'records', label: 'Records', entries: [
     ['trophies', 'Trophies', 'Your achievement collection'], ['leaderboards', 'Leaderboards', 'Global and squadron scores'], ['daily', 'Daily Orders', 'Three orders for today'],

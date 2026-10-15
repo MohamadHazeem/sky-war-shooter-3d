@@ -56,6 +56,7 @@ import { showHistoricalRaids as showRaidsScreen } from '../ui/HistoricalRaidsScr
 import { showGunneryRange as showRangeScreen } from '../ui/GunneryRangeScreen';
 import { RANGE_MISSION, type RangeResult } from './GunneryRange';
 import '../ui/CustomBattleScreen'; // registers the Custom Battle and Weekly Challenge modes + their Survival-screen tabs
+import { initMods } from './ModRuntime';
 import { openMissionLink } from '../ui/MissionEditorScreen'; // registers the Mission Editor mode (Survival screen tab)
 import { CoopSession } from './CoopSession';
 import { qualityFallbackReady } from '../render/FrameTiming';
@@ -161,6 +162,7 @@ export class Game {
   private bombMat = new THREE.MeshStandardMaterial({ color: 0x3c3f33, roughness: 0.6, metalness: 0.4 });
 
   constructor(readonly engine: Engine, readonly input: Input, readonly ui: UI) {
+    initMods(); // enabled mods (Phase 11 · 38, ModRuntime.ts): crew names, paint schemes and nose art before any bomber is dressed
     this.director = new Director(this);
     this.flow = new MissionFlow(this);
     this.hud = new GameHud(this);

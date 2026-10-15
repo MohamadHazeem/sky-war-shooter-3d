@@ -1,0 +1,116 @@
+{
+  "installed": [
+    "eighth-extras",
+    "hometown-crew"
+  ],
+  "flyButtons": 3,
+  "brokenErrors": [
+    "id: id must be 2-24 lowercase letters, digits or dashes.",
+    "missions[0].waves[0].count: must be a whole number from 1 to 12.",
+    "missions[0].waves[0].types[0]: must be one of: fw190, bf109, bf110, ju88, ju88g, me262, me163, me410, do335, he111.",
+    "paints[0].top: colour must look like #5a5a2a.",
+    "noseArt[0].image: image must be an embedded PNG, JPEG or WebP (a data:image/…;base64 URL)."
+  ],
+  "crewOn": "Lyle",
+  "crewOff": "Joe",
+  "noHScrollDesktop": true,
+  "stored": [
+    [
+      "eighth-extras",
+      true
+    ],
+    [
+      "hometown-crew",
+      true
+    ]
+  ],
+  "crewPanel": true,
+  "bomber": {
+    "name": "Sky Queen",
+    "nose": "mod.eighth-extras.star-roundel",
+    "paint": "mod.eighth-extras.desert-camo"
+  },
+  "noHScroll-ar": true,
+  "arabicError": "تعذّرت إضافة broken-mod.json:id: يجب أن يتكون المعرّف من 2 إلى 24 حرفًا لاتينيًا صغيرًا أو رقمًا أو شرطة.missions[0].waves[0].count: يجب أن يكون عددًا صحيحًا من",
+  "noHScroll-phone-ar": true,
+  "noHScroll-phone-en": true,
+  "briefing-high": true,
+  "air-high": {
+    "name": "Sandy Annie",
+    "nose": true,
+    "skin": [
+      [
+        "hero_skin_damage",
+        "mod.eighth-extras.desert-camo",
+        true
+      ],
+      [
+        "hero_skin_damage",
+        "mod.eighth-extras.desert-camo",
+        true
+      ],
+      [
+        "hero_skin_low_damage",
+        "mod.eighth-extras.desert-camo",
+        false
+      ],
+      [
+        "hero_skin_damage",
+        "mod.eighth-extras.desert-camo",
+        true
+      ],
+      [
+        "hero_skin_damage",
+        "mod.eighth-extras.desert-camo",
+        true
+      ],
+      [
+        "hero_skin_low_damage",
+        "mod.eighth-extras.desert-camo",
+        false
+      ]
+    ],
+    "mission": "Black Thursday"
+  },
+  "autoplay": "0s kills 0 enemies 0 bombers 18 playing\n29s kills 3 enemies 2 bombers 18 playing\n58s kills 5 enemies 0 bombers 18 playing\n88s kills 5 enemies 0 bombers 18 playing\n118s kills 5 enemies 0 bombers 18 playing\n148s kills 5 enemies 0 bombers 18 playing\n178s kills 5 enemies 4 bombers 18 playing\n208s kills 5 enemies 2 bombers 18 playing\n238s kills 5 enemies 6 bombers 18 playing\n268s kills 5 enemies 0 bomb",
+  "debriefShown": true,
+  "briefing-low": true,
+  "air-low": {
+    "name": "Sandy Annie",
+    "nose": true,
+    "skin": [
+      [
+        "hero_skin_damage",
+        "mod.eighth-extras.desert-camo",
+        true
+      ],
+      [
+        "hero_skin_damage",
+        "mod.eighth-extras.desert-camo",
+        true
+      ],
+      [
+        "hero_skin_low_damage",
+        "mod.eighth-extras.desert-camo",
+        false
+      ],
+      [
+        "hero_skin_damage",
+        "mod.eighth-extras.desert-camo",
+        true
+      ],
+      [
+        "hero_skin_damage",
+        "mod.eighth-extras.desert-camo",
+        true
+      ],
+      [
+        "hero_skin_low_damage",
+        "mod.eighth-extras.desert-camo",
+        false
+      ]
+    ],
+    "mission": "Black Thursday"
+  },
+  "errors": []
+}

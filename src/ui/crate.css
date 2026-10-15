@@ -34,6 +34,7 @@
 .ctile .cimg.bare { background: repeating-linear-gradient(45deg, #4d4f2c 0 8px, #45472a 8px 16px); }
 .ctile .cn { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; margin-top: 6px; }
 .ctile .cs { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--rc); margin-top: 2px; }
+.ctile .cmod { position: absolute; top: 6px; inset-inline-start: 6px; z-index: 1; font: 600 9px/1 "IBM Plex Mono", monospace; letter-spacing: 1px; font-style: normal; padding: 3px 5px; background: #1b1a12cc; color: var(--khaki, #c9b98a); border: 1px solid var(--khaki, #c9b98a); }
 
 .hcoll summary { cursor: pointer; list-style: none; }
 .hcoll summary::-webkit-details-marker { display: none; }

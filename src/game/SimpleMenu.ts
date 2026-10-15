@@ -6,6 +6,7 @@ import { mountCrewRoster } from '../ui/CrewPanel';
 import { mountLeaderboard } from '../ui/LeaderboardPanel';
 import { showSquadronScreen } from '../ui/SquadronScreen';
 import { showCustomBattleScreen } from '../ui/CustomBattleScreen';
+import { showModsScreen } from '../ui/ModsScreen';
 import { MODES, mountModePanel } from './Modes';
 import { survivalMission } from './Missions';
 import { loadSeen, WHATS_NEW_VERSION } from './WhatsNew';
@@ -66,6 +67,10 @@ export class SimpleMenu {
       case 'range': g.showGunneryRange(back); break;
       case 'custom': {
         const open = () => showCustomBattleScreen({ back, start: m => g.showBriefing(m, open) });
+        open(); break;
+      }
+      case 'mods': {
+        const open = () => showModsScreen({ back, start: m => g.showBriefing(m, open) });
         open(); break;
       }
       case 'weekly': this.survival('weekly', back); break;
