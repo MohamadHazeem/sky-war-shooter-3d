@@ -82,13 +82,7 @@ vec3 godRays(vec2 uv) {
   vec3 tint = uSunCol / max(max(uSunCol.r, uSunCol.g), max(uSunCol.b, 1e-4));
   float falloff = exp(-length((uv - uSunUV) * vec2(uAspect, 1.0)) * 1.5);
   float localSky = (uReversed > .5 ? texture2D(tDepth,uv).r <= 0. : texture2D(tDepth,uv).r >= 1.) ? texture2D(tCloud,uv).a : 0.;
-  // A ray needs both an opening and a caster along its sunward path.
-  // Subtracting local sky erased shafts precisely in those open channels;
-  // a fully clear path must still contribute zero (no full-screen veil).
-  float pathSky = clamp(acc / wsum, 0., 1.);
-  float gapBeam = localSky * pow(pathSky, 3.) * (1. - pathSky) * 9.;
-  float surfaceBeam = max(0., pathSky - localSky) * (1. - localSky) * .3;
-  return mix(tint, vec3(1.), .35) * (gapBeam + surfaceBeam) * falloff * uShafts * uSunOn * 4.;
+  return tint * max(0., acc / wsum - localSky * .85) * falloff * uShafts * uSunOn;
 }
 
 

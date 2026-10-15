@@ -24,8 +24,8 @@
         ],
         "fov": 58
       },
-      "meanAlphaDelta": 0.0018190767291066307,
-      "maxAlphaDelta": 0.335693359375
+      "meanAlphaDelta": 0.001238246627333416,
+      "maxAlphaDelta": 0.522216796875
     },
     {
       "view": "sun-gap-towers",
@@ -51,8 +51,8 @@
         ],
         "fov": 58
       },
-      "meanAlphaDelta": 0.0023850361359202495,
-      "maxAlphaDelta": 0.3978271484375
+      "meanAlphaDelta": 0.0020258622719351114,
+      "maxAlphaDelta": 0.58251953125
     },
     {
       "view": "cloud-shoulder",
@@ -77,8 +77,8 @@
         ],
         "fov": 58
       },
-      "meanAlphaDelta": 0.0027104052383369118,
-      "maxAlphaDelta": 0.421630859375
+      "meanAlphaDelta": 0.0035103000556278574,
+      "maxAlphaDelta": 0.841796875
     }
   ],
   "errors": []

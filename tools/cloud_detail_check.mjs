@@ -43,7 +43,7 @@ try {
       cam.updateProjectionMatrix();cam.updateMatrixWorld(true);
       e.post.resetHistory();c.resetHistory();
       c.settleProbeForCapture(e.renderer,cam,e.time);
-      for(let i=0;i<48;i++) e.render(1/60);
+      for(let i=0;i<24;i++) e.render(1/60); // match the production fixture settling interval
       e.render(0);
       const png=e.renderer.domElement.toDataURL('image/png');
       // Frozen cloud-transmittance residuals measure march noise independently of

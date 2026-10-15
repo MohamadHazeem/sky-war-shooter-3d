@@ -100,7 +100,13 @@ export async function captureRig(argv) {
       if (args['verify-repeat']) {
         const repeat = await capture(id);
         metadata.repeatIdentical = repeat.metadata.pixelHash === metadata.pixelHash;
-        if (!metadata.repeatIdentical) throw new Error(`Non-deterministic pixels: ${id} (${metadata.pixelHash} / ${repeat.metadata.pixelHash})`);
+        if (!metadata.repeatIdentical) {
+          // Keep failed repeats reviewable; an incomplete manifest still blocks the board.
+          await fs.writeFile(path.join(out, `${id}.png`), png);
+          await fs.writeFile(path.join(out, `${id}-repeat.png`), repeat.png);
+          await fs.writeFile(path.join(out, `${id}-repeat.json`), JSON.stringify({ first: metadata, repeat: repeat.metadata }, null, 2));
+          throw new Error(`Non-deterministic pixels: ${id} (${metadata.pixelHash} / ${repeat.metadata.pixelHash})`);
+        }
       }
       await fs.writeFile(path.join(out, `${id}.png`), png);
       await fs.writeFile(path.join(out, `${id}.jpg`), await smallJpeg(png));

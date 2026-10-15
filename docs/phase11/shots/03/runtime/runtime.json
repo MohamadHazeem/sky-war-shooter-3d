@@ -1,18 +1,28 @@
 {
   "condensation": 0.24959026054541697,
   "condensationAfterExit": 0.1788392364950617,
+  "profiles": {
+    "dense": 8500,
+    "fair": 5900,
+    "overcast": 5900
+  },
+  "marchSteps": {
+    "dense": 28,
+    "fair": 40,
+    "overcast": 40
+  },
   "towers": [
     {
       "altitude": 6000,
-      "occupied": 8,
+      "occupied": 42,
       "samples": 121,
-      "maxDensity": 0.9568627450980393
+      "maxDensity": 0.9450980392156862
     },
     {
       "altitude": 7000,
-      "occupied": 9,
+      "occupied": 27,
       "samples": 121,
-      "maxDensity": 0.8784313725490196
+      "maxDensity": 0.9333333333333333
     },
     {
       "altitude": 7800,

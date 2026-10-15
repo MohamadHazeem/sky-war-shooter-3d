@@ -83,6 +83,20 @@ try {
         engine.camera.fov = ref.camera.fov;
         engine.camera.updateProjectionMatrix(); engine.camera.updateMatrixWorld(true);
         engine.post.resetHistory(); engine.clouds.resetHistory();
+        // Mirror the local capture-only settling without replacing any production
+        // shader. Consume camera cuts before synchronously reading its own probe.
+        const c = engine.clouds, r = engine.renderer;
+        c.frameN = 0;
+        c.syncUniforms(engine.camera, c.uniforms.tDepth.value, engine.time, 0);
+        c.detectCut(engine.camera); c.probeGeneration++;
+        const oldTarget = r.getRenderTarget(), oldMaterial = c.quad.material, busy = c.probeBusy;
+        c.probeBusy = true; c.renderShadowMap(r);
+        c.quad.material = c.probeMat; r.setRenderTarget(c.probeRT); c.quad.render(r);
+        const probe = new Uint8Array(4);
+        r.readRenderTargetPixels(c.probeRT, 0, 0, 1, 1, probe);
+        c.sunShadowTarget = c.sunShadow = probe[0] / 255;
+        game.weatherNow.cloudInside = probe[1] / 255;
+        c.probeBusy = busy; c.quad.material = oldMaterial; r.setRenderTarget(oldTarget);
         for(let i=0; i<RIG_SETTLE; i++) engine.render(RIG_DT);
         engine.render(0);
         return { ...facts, camera:ref.camera, time:engine.time, worldTime:game.world.time,

@@ -49,8 +49,8 @@ export interface QualityPreset {
 export const QUALITY: Record<Quality, QualityPreset> = {
   low:    { skyScale: .5, aoSlices: 1, pixels: 0.65e6, msaa: 0, shadows: 1, shadowRange: 24, cloudScale: 0.18, cloudSteps: 20, cloudTemporal: false, haze: false, ao: 0,   particles: 0, temporal: false },
   medium: { skyScale: .5, aoSlices: 1, pixels: 1.25e6, msaa: 0, shadows: 1024, shadowRange: 48, cloudScale: 0.24, cloudSteps: 28, cloudTemporal: true,  haze: false,  ao: 0, particles: 0.5, temporal: false },
-  high:   { skyScale: .5, aoSlices: 2, pixels: 2.3e6, msaa: 0, shadows: 2048, shadowRange: 40, cloudScale: 0.33, cloudSteps: 48, cloudTemporal: true,  haze: true,  ao: 0.6, particles: 1, temporal: true },
-  ultra:  { skyScale: .75, aoSlices: 3, pixels: 3.7e6, msaa: 2, shadows: 3072, shadowRange: 40, cloudScale: 0.42, cloudSteps: 52, cloudTemporal: true,  haze: true,  ao: 0.7, particles: 1.6, temporal: true },
+  high:   { skyScale: .5, aoSlices: 2, pixels: 2.3e6, msaa: 0, shadows: 2048, shadowRange: 40, cloudScale: 0.36, cloudSteps: 40, cloudTemporal: true,  haze: true,  ao: 0.6, particles: 1, temporal: true },
+  ultra:  { skyScale: .75, aoSlices: 3, pixels: 3.7e6, msaa: 2, shadows: 3072, shadowRange: 40, cloudScale: 0.45, cloudSteps: 52, cloudTemporal: true,  haze: true,  ao: 0.7, particles: 1.6, temporal: true },
   cinematic: { skyScale: 1, aoSlices: 3, pixels: 8.3e6, msaa: 4, shadows: 4096, shadowRange: 40, cloudScale: .5, cloudSteps: 64, cloudTemporal: true, haze: true, ao: .8, particles: 2, temporal: true },
 };
 export const QUALITY_ORDER: Quality[] = ['low', 'medium', 'high', 'ultra', 'cinematic'];

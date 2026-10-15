@@ -85,6 +85,7 @@ uniform vec2 uCloudType; // stratus amount, convective tower amount
 uniform float uWeatherScale;
 uniform vec2 uRes;
 uniform vec2 uFullTexel;
+uniform float uConvection; // dense cumulus only; fair decks and stratus keep production rendering
 uniform vec4 uGap;   // break in the low deck over the bombing target: x, z (local), radius, strength
 uniform vec4 uGlow;  // fire / flash light from the target on the deck: x, z (local), radius, intensity
 uniform float uWeatherFog;
@@ -102,13 +103,60 @@ float hg(float mu, float g) {
   return (1.0 - g2) / (4.0 * 3.14159 * pow(1.0 + g2 - 2.0 * g * mu, 1.5));
 }
 
-float filteredDensity(vec3 p, vec4 L, float layerSel, bool cheap, vec2 noiseLod) {
+float deckDensity(vec3 p, vec4 L, float layerSel, bool cheap, vec2 noiseLod) {
   float h = clamp((p.y - L.x) / (L.y - L.x), 0.0, 1.0);
   vec3 q = p + uWind;
+  // Explicit LOD is essential inside divergent marches: implicit derivatives of
+  // world-space positions produce horizontal mip bands at grazing angles.
 #ifdef CLOUD_TYPES
-  // Bend cell boundaries with altitude instead of extruding coverage into walls.
-  if (layerSel < 0.5 && L.z < 0.85) q.xz += vec2(110.0, 65.0) * sin(h * 6.283185) * (1.0 - layerSel) * (1.0 - smoothstep(0.65, 0.85, L.z));
+  vec4 wm = textureLod(tWeather, q.xz / mix(uWeatherScale, 26000.0, layerSel) + vec2(layerSel * 0.37), 0.0);
+  vec4 wm2 = textureLod(tWeather, q.xz / 90000.0 + vec2(0.61, 0.13), 0.0);
+#else
+  vec4 wm = texture2D(tWeather, q.xz / mix(uWeatherScale, 26000.0, layerSel) + vec2(layerSel * 0.37));
+  vec4 wm2 = texture2D(tWeather, q.xz / 90000.0 + vec2(0.61, 0.13));
 #endif
+  float cov = clamp((wm.r * 0.7 + wm2.r * 0.5) * 1.35 - 0.45 + (L.z - 0.6) * 1.8, 0.0, 1.0);
+  if (layerSel < 0.5 && uGap.w > 0.0) {
+    vec2 gq = p.xz - uGap.xy;
+    float gd = length(gq + vec2(sin(gq.y * 0.0007), cos(gq.x * 0.0006)) * uGap.z * 0.15);
+    cov = clamp(cov - uGap.w * (1.0 - smoothstep(uGap.z * 0.4, uGap.z, gd)), 0.0, 1.0);
+    if (cov < 0.01) return 0.0;
+  }
+  // Cumulus: cloud top height follows local coverage, so every cell becomes a dome.
+  float topH = clamp(cov * 1.05, 0.05, 1.0);
+  float prof = smoothstep(0.0, 0.08, h) * (1.0 - smoothstep(topH * 0.25, topH, h));
+#ifdef CLOUD_TYPES
+  // Weather G chooses cell maturity. Broad flat decks and deep cauliflower towers
+  // share the same density field used by lighting and shadows; fronts blend continuously.
+  float mature = smoothstep(0.25, 0.72, wm.g);
+  float tower = uCloudType.y * mature;
+  topH = mix(0.42 + 0.48 * mature, 1.0, tower);
+  float cumulus = smoothstep(0.0, 0.07, h) * (1.0 - smoothstep(topH * 0.62, topH, h));
+  float stratus = smoothstep(0.0, 0.06, h) * (1.0 - smoothstep(0.22, 0.42, h));
+  prof = mix(cumulus, stratus, uCloudType.x);
+  // Wind shear with height, strongest in convective cells.
+  q.xz += vec2(480.0, 210.0) * h * h * tower;
+#endif
+  float scale = mix(5600.0, 3800.0, layerSel);
+  // Shape drifts against the weather field, so cells deform and churn instead of only sliding with the wind
+  // Explicit level zero keeps the original density for below/inside views and shadows.
+  vec4 n = textureLod(tShape, q / scale + uShapeDrift, noiseLod.x);
+  float fbm = n.g * 0.625 + n.b * 0.25 + n.a * 0.125;
+  float base = remap(n.r, -(1.0 - fbm), 1.0, 0.0, 1.0);
+  base = remap(base * prof, 1.0 - cov * 0.85, 1.0, 0.0, 1.0);
+  if (base <= 0.0) return 0.0;
+  if (!cheap) {
+    float dn = textureLod(tDetail, q / (scale * 0.14) + vec3(0.0, uTime * 0.002, 0.0) + uDetailDrift, noiseLod.y).r;
+    float dmod = mix(dn, 1.0 - dn, clamp(h * 4.0, 0.0, 1.0));
+    base = remap(base, dmod * 0.42, 1.0, 0.0, 1.0);
+  }
+  return clamp(base, 0.0, 1.0) * L.w;
+}
+
+#ifdef CLOUD_TYPES
+float towerDensity(vec3 p, vec4 L, float layerSel, bool cheap, vec2 noiseLod) {
+  float h = clamp((p.y - L.x) / (L.y - L.x), 0.0, 1.0);
+  vec3 q = p + uWind;
   // Explicit LOD is essential inside divergent marches: implicit derivatives of
   // world-space positions produce horizontal mip bands at grazing angles.
 #ifdef CLOUD_TYPES
@@ -136,21 +184,6 @@ float filteredDensity(vec3 p, vec4 L, float layerSel, bool cheap, vec2 noiseLod)
   float denseWeather = smoothstep(0.65, 0.85, L.z);
   if (layerSel < 0.5) cov = mix(smoothstep(0.4, 0.85, cov), cov, denseWeather);
   if (cov < 0.08) return 0.0;
-  // The upper deck remains small detached cumulus, not copies of the tall low
-  // convection. Its compact rounded profile avoids vertically extruded islands.
-  if (layerSel > 0.5) {
-    float top = 0.55 + wm.g * 0.35;
-    float profile = smoothstep(0.0, 0.09, h) * (1.0 - smoothstep(top * 0.55, top, h));
-    vec4 n = textureLod(tShape, q / scale + uShapeDrift, noiseLod.x);
-    float fbm = dot(n.gba, vec3(0.625, 0.25, 0.125));
-    float base = remap(n.r, -(1.0 - fbm), 1.0, 0.0, 1.0);
-    base = remap(base * profile, 1.0 - cov * 0.85, 1.0, 0.0, 1.0);
-    if (!cheap && base > 0.0) {
-      float erosion = textureLod(tDetail, q / 650.0 + uDetailDrift, noiseLod.y).r;
-      base = remap(base, (1.0 - erosion) * 0.35, 1.0, 0.0, 1.0);
-    }
-    return clamp(base, 0.0, 1.0) * L.w;
-  }
   // B is a coherent cell core, not a height-independent blanket. Sparse mature
   // cells rise above the deck; the widening upper profile forms a sheared anvil.
   float anvil = smoothstep(0.48, 0.7, h) * (1.0 - smoothstep(0.82, 0.98, h));
@@ -204,11 +237,47 @@ float filteredDensity(vec3 p, vec4 L, float layerSel, bool cheap, vec2 noiseLod)
   return clamp(base, 0.0, 1.0) * L.w;
 }
 
+#endif
+
+float filteredDensity(vec3 p, vec4 L, float sel, bool cheap, vec2 lod) {
+#ifdef CLOUD_TYPES
+  if (sel < 0.5 && uConvection > 0.0) {
+    float tower = towerDensity(p, L, sel, cheap, lod);
+    if (uConvection >= 1.0) return tower;
+    return mix(deckDensity(p, L, sel, cheap, lod), tower, uConvection);
+  }
+#endif
+  return deckDensity(p, L, sel, cheap, lod);
+}
+
 float density(vec3 p, vec4 L, float layerSel, bool cheap) {
   return filteredDensity(p, L, layerSel, cheap, vec2(0.0));
 }
 
-float lightMarch(vec3 p, vec4 L, float sel, float jl, vec2 noiseLod) {
+float deckLightMarch(vec3 p, vec4 L, float sel, float jl, vec2 noiseLod) {
+  float sum = 0.0;
+#ifdef CLOUD_TYPES
+  float st = 150.0 * jl;
+  for (int i = 0; i < 3; i++) {
+#else
+  float st = 45.0 * jl;
+  for (int i = 0; i < 6; i++) {
+#endif
+    p += uSunDir * st;
+    if (p.y > L.y) break;
+#ifdef CLOUD_TYPES
+    sum += filteredDensity(p, L, sel, true, noiseLod) * st;
+    st *= 2.5;
+#else
+    sum += filteredDensity(p, L, sel, i > 2, noiseLod) * st;
+    st *= 1.7;
+#endif
+  }
+  return sum;
+}
+
+#ifdef CLOUD_TYPES
+float towerLightMarch(vec3 p, vec4 L, float sel, float jl, vec2 noiseLod) {
   float sum = 0.0;
 #ifdef CLOUD_TYPES
   float st = 110.0 * jl;
@@ -236,6 +305,15 @@ float lightMarch(vec3 p, vec4 L, float sel, float jl, vec2 noiseLod) {
   return sum;
 }
 
+#endif
+
+float lightMarch(vec3 p, vec4 L, float sel, float jl, vec2 noiseLod) {
+#ifdef CLOUD_TYPES
+  if (sel < 0.5 && uConvection > 0.0) return towerLightMarch(p, L, sel, jl, noiseLod);
+#endif
+  return deckLightMarch(p, L, sel, jl, noiseLod);
+}
+
 #ifdef SHADOWMAP
 // Transmittance of the upper layer toward the sun for a point below it: the shadow map is
 // indexed where the sun ray through p crosses the upper layer's base, so it is exact at any height.
@@ -246,24 +324,128 @@ float cloudShadow(vec3 p) {
   float edge = 1.0 - smoothstep(0.4, 0.49, max(abs(suv.x - 0.5), abs(suv.y - 0.5)));
   return mix(1.0, texture2D(tShadow, suv).r, edge);
 }
-// Height-resolved low-deck optical depth for aerial shafts shares the existing
-// shadow texture. Cloud surfaces instead march toward the sun directly: coarse
-// height interpolation here is suitable for air, but bands a nearby cloud face.
-float neighbourShadow(vec3 p) {
-  vec3 q = p + uSunDir * ((uLow.x - p.y) / max(uSunDir.y, 0.08));
-  vec2 uv = (q.xz - uShadowBox.xy) / uShadowBox.z + 0.5;
-  vec4 s = texture2D(tShadow, uv);
-  float h = clamp((p.y - uLow.x) / (uLow.y - uLow.x), 0.0, 1.0);
-  float tau = h < 0.35 ? mix(-log(max(s.g, 0.0001)), s.b, h / 0.35)
-    : h < 0.7 ? mix(s.b, s.a, (h - 0.35) / 0.35) : s.a * (1.0 - h) / 0.3;
-  float edge = 1.0 - smoothstep(0.4, 0.49, max(abs(uv.x - 0.5), abs(uv.y - 0.5)));
-  return mix(1.0, exp(-max(0.0, tau) * 0.7), edge);
-}
 #endif
 
-void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int steps, float jitter,
+void marchDeck(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int steps, float jitter,
                 inout vec3 col, inout float T, inout float firstHit, inout vec2 dw) {
   if (t.x < 0.0) return;
+  float t0 = t.x;
+  // Camera inside this layer (climbing through the deck in the take-off scene, a dive): a
+  // grazing ray runs tens of km through the slab, the steps end up ~1 km apart and the cloud
+  // ahead turned into step noise the temporal accumulation could not settle (static horizontal
+  // banding). Inside, the march stops 8 km out (murk), relaxed over the last 500 m before the
+  // layer's top or base so the far cloud sea fades back in as the camera leaves it. (A cap from
+  // above the layer would cut the cumulus sea: grazing rays reach the dense part km past entry.)
+  float inK = smoothstep(0.0, 500.0, min(ro.y - L.x, L.y - ro.y));
+  float t1 = min(t.y, min(maxDist, mix(90000.0, 8000.0, inK)));
+  if (t1 <= t0) return;
+  float len = t1 - t0;
+  float dt = max(len / float(steps), 30.0);
+  // Above the deck, coarse grazing steps must integrate noise at their own scale.
+  // Keep the full cloud sea; filter both extinction and its lighting, not the history.
+  // Fade in over 100 m above the top so crossing it does not switch density abruptly.
+  float footprint = dt * smoothstep(0.0, 100.0, ro.y - L.y);
+  float noiseScale = mix(5600.0, 3800.0, sel);
+  vec2 noiseLod = log2(max(vec2(1.0), footprint * vec2(64.0, 32.0 / 0.14) / noiseScale));
+  // Once erosion is filtered over several texels, a centred sample is stable without
+  // the large per-frame offsets that otherwise survive the temporal history clamp.
+#ifndef CLOUD_TYPES
+  jitter = mix(jitter, 0.5, smoothstep(1.0, 3.0, noiseLod.y));
+#endif
+  float mu = dot(rd, uSunDir);
+  float phase = mix(hg(mu, 0.62), hg(mu, -0.25), 0.35) * 4.0 * 3.14159;
+  phase = max(phase, 0.55);
+#ifdef SILVER
+  // a sharp forward lobe (g 0.88) for the single-scattered sun: only within ~20 degrees of
+  // the sun, where it makes thin cloud edges in front of it blaze (silver linings)
+  float sharp = hg(mu, 0.88) * 4.0 * 3.14159 * 0.12;
+  // powder darkening (dark edges seen away from the sun) fades out toward the sun
+  float fwd = smoothstep(0.55, 0.97, mu);
+  // light scattered many times has forgotten the sun's direction: toward the sun the higher
+  // octaves take a flatter phase, so a thick cloud in front of the sun goes grey and only
+  // its thin rim blazes (elsewhere the tuned single phase is kept)
+  float phaseSoft = mix(phase, mix(hg(mu, 0.3), hg(mu, -0.2), 0.35) * 4.0 * 3.14159, fwd);
+  float phaseFlat = mix(phase, 0.9, fwd);
+  // the broad forward lobe narrows its energy into the sharp one above: the bulk of a cloud
+  // near the sun is no longer blown out, its edges are
+  float phaseMain = mix(phase, mix(hg(mu, 0.4), hg(mu, -0.25), 0.35) * 4.0 * 3.14159, fwd);
+  float jl = 0.75 + 0.5 * fract(jitter * 7.13);
+#else
+  float jl = 1.0;
+#endif
+  float tt = t0 + dt * jitter;
+  float sigma = 0.0042;
+  for (int i = 0; i < 96; i++) {
+    if (i >= steps || tt > t1 || T < 0.02) break;
+#ifdef CLOUD_TYPES
+    // Quadratic spacing resolves wisps within metres of the eye on entry, without
+    // increasing sample count. Integrate the actual interval (Beer is step invariant).
+    if (inK > 0.0) {
+      float a = float(i) / float(steps), b = float(i + 1) / float(steps);
+      float ta = mix(a, a * a, inK), tb = mix(b, b * b, inK);
+      dt = len * (tb - ta);
+      tt = t0 + len * ta + dt * jitter;
+    }
+#endif
+    vec3 p = ro + rd * tt;
+    float dens = filteredDensity(p, L, sel, false, noiseLod);
+    if (dens > 0.001) {
+      if (firstHit < 0.0) firstHit = tt;
+      float h = clamp((p.y - L.x) / (L.y - L.x), 0.0, 1.0);
+      float ls = lightMarch(p, L, sel, jl, noiseLod) * sigma;
+      // Multiple-scattering approximation (sum of attenuated octaves)
+      float beer = exp(-ls) + 0.3 * exp(-ls * 0.25) + 0.12 * exp(-ls * 0.06);
+#ifdef CLOUD_TYPES
+      float powder = 1.0 - exp(-dens * 400.0 * sigma);
+#else
+      float powder = 1.0 - exp(-dens * 2.0 * dt * sigma * 2.0);
+#endif
+      // a touch more sun and less flat ambient than physically tidy: brighter sunlit tops and
+      // greyer bases give the cumulus sea its towering relief (the film's look)
+#ifdef SILVER
+      // thin edges (little density along the view ray and toward the sun) take the sharp lobe
+      float e0 = exp(-ls);
+      float edgeK = e0 * (1.0 + 2.0 * (1.0 - smoothstep(0.0, 0.35, dens)));
+      float scat = e0 * phaseMain + 0.3 * exp(-ls * 0.25) * phaseSoft + 0.12 * exp(-ls * 0.06) * phaseFlat;
+      vec3 sun = uSunColor * (scat + edgeK * sharp) * mix(mix(0.45, 1.0, powder), 1.0, fwd) * 0.47;
+#else
+      vec3 sun = uSunColor * beer * phase * mix(0.45, 1.0, powder) * 0.47;
+#endif
+#ifdef SHADOWMAP
+      if (sel < 0.5) sun *= cloudShadow(p);
+#endif
+      vec3 amb = mix(uHorizon * 0.3 + vec3(0.02), uZenith * 0.7 + uHorizon * 0.45, h) * uAmb * mix(0.42, 1.0, h * h * (3.0 - 2.0 * h));
+      if (sel < 0.5 && uGlow.w > 0.0) {
+        vec2 gq = p.xz - uGlow.xy;
+        amb += vec3(1.0, 0.45, 0.15) * uGlow.w * exp(-dot(gq, gq) / (uGlow.z * uGlow.z)) * (1.0 - h);
+      }
+      for (int li = 0; li < ${CLOUD_LIGHTS}; li++) {
+        if (li >= uPLn) break;
+        vec3 dl = p - uPL[li].xyz;
+        float q = dot(dl, dl) / (uPL[li].w * uPL[li].w);
+        // inverse-square beyond the radius, faded out by 8 radii
+        if (q < 64.0) amb += uPLc[li] * (1.0 - q * 0.015625) / (1.0 + q);
+      }
+      vec3 S = (sun + amb) * dens * sigma;
+      float sE = max(dens * sigma, 1e-6);
+      float Tr = exp(-sE * dt);
+      col += T * (S - S * Tr) / sE;
+#ifdef TEMPORAL
+      float wgt = T * (1.0 - Tr);
+      dw += vec2(wgt * tt, wgt);
+#endif
+      T *= Tr;
+    }
+    tt += dt;
+  }
+}
+
+
+#ifdef CLOUD_TYPES
+void marchTower(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int steps, float jitter,
+                inout vec3 col, inout float T, inout float firstHit, inout vec2 dw) {
+  if (t.x < 0.0) return;
+  jitter = 0.5;
   float t0 = t.x;
   // Camera inside this layer (climbing through the deck in the take-off scene, a dive): a
   // grazing ray runs tens of km through the slab, the steps end up ~1 km apart and the cloud
@@ -434,6 +616,22 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
 #endif
 }
 
+#endif
+
+// Scope the experimental march to dense convection. Fair/overcast skies retain
+// the production marcher, including its horizon integration and solar response.
+void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int steps, float jitter,
+                inout vec3 col, inout float T, inout float firstHit, inout vec2 dw) {
+#ifdef CLOUD_TYPES
+  if (sel < 0.5 && uConvection > 0.0) {
+    marchTower(ro, rd, t, maxDist, L, sel, steps, jitter, col, T, firstHit, dw);
+    if (T < 0.02) T = 0.0; // no HDR solar-disk leakage through terminated opaque volume
+    return;
+  }
+#endif
+  marchDeck(ro, rd, t, maxDist, L, sel, steps, jitter, col, T, firstHit, dw);
+}
+
 #if defined(SHADOW_PASS)
 // Cloud shadow map: transmittance of the upper layer along the sun ray that crosses the
 // layer's base at this texel's (x, z). Cheap density (no detail erosion), 8 steps.
@@ -452,22 +650,10 @@ void main() {
   float upper = max(exp(-od * 0.0042 * 0.75), 0.1);
   // G holds the low deck, indexed at its own base. Ground lookups project each
   // channel separately, so sunset shadows do not slide to the wrong altitude.
-  len = min((uLow.y - uLow.x) / sy, 50000.0);
-  int shadowSteps = uSunDir.y < 0.3 ? 32 : 16;
-  dt = len / float(shadowSteps);
-  float shadowLod = log2(max(1.0, dt * 0.4 * 64.0 / 5600.0));
+  len = min((uLow.y - uLow.x) / sy, 14000.0); dt = len / 8.0;
   p = vec3(xz.x, uLow.x, xz.y) + uSunDir * (dt * 0.5); od = 0.0;
-  float mid = 0.0, top = 0.0;
-  for (int i = 0; i < 32; i++) {
-    if (i >= shadowSteps) break;
-    float d = filteredDensity(p, uLow, 0.0, true, vec2(shadowLod)) * dt * 0.0042;
-    float h = (p.y - uLow.x) / (uLow.y - uLow.x);
-    od += d;
-    mid += d * smoothstep(0.28, 0.42, h);
-    top += d * smoothstep(0.63, 0.77, h);
-    p += uSunDir * dt;
-  }
-  gl_FragColor = vec4(upper, exp(-od), min(mid, 50.0), min(top, 50.0));
+  for (int i = 0; i < 8; i++) { od += density(p, uLow, 0.0, true) * dt; p += uSunDir * dt; }
+  gl_FragColor = vec4(upper, max(exp(-od * 0.0042 * 0.75), 0.1), 0.0, 1.0);
 }
 #elif defined(PROBE_PASS)
 // One texel: the upper layer's shadow at the camera (aircraft lighting, read back asynchronously)
@@ -508,11 +694,6 @@ void main() {
   float jitter = fract(52.9829189 * fract(dot(jp, vec2(0.06711056, 0.00583715))));
 #else
   float jitter = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))) + uTime * 0.0);
-#endif
-#ifdef CLOUD_TYPES
-  // Fine intervals integrate a smooth density field; a midpoint is stable and
-  // avoids baking random march offsets into the four checkerboard histories.
-  jitter = 0.5;
 #endif
   vec3 col = vec3(0.0);
   float T = 1.0;
@@ -556,37 +737,18 @@ void main() {
     marchLayer(ro, rd, th, min(sceneD, 55000.0), uHigh, 1.0, steps * 3 / 4 + 8, jitter, c2, T2, hitHigh, dw2);
     col += c2 * T; dw2 *= T; T *= T2;
   }
-  // March termination must not leak the HDR solar disk through opaque bodies.
-  if (T < 0.02) T = 0.0;
   // Distance haze on the clouds themselves
-  float hit = hitLow >= 0.0 ? hitLow : hitHigh;
-  if (hitLow >= 0.0 && hitHigh >= 0.0) hit = min(hitLow, hitHigh);
+  float hit = hitLow > 0.0 ? hitLow : hitHigh;
+  if (hitLow > 0.0 && hitHigh > 0.0) hit = min(hitLow, hitHigh);
   if (hit > 0.0) {
     float f = 1.0 - exp(-hit / (Atmos_hazeDist * uHaze));
     col = mix(col, skyRadiance(rd) * (1.0 - T), f * 0.9);
   }
-#if defined(TEMPORAL) && defined(SHADOWMAP)
-  // Air scattering before the first cloud surface. Trace the sun's visibility
-  // through both cloud decks in WORLD space, so off-screen clouds still cast
-  // shafts, and camera movement does not drag them like a radial screen blur.
-  float airEnd = min(sceneD, hit >= 0.0 ? hit : 16000.0);
-  airEnd = min(airEnd, 16000.0);
-  float airStep = airEnd / 8.0;
-  float shaft = 0.0;
-  for (int i = 0; i < 8; i++) {
-    vec3 ap = ro + rd * ((float(i) + 0.5) * airStep);
-    float vis = neighbourShadow(ap);
-    vis *= cloudShadow(ap);
-    shaft += vis * exp(-float(i) * airStep / 18000.0);
-  }
-  float forwardAir = 0.02 + pow(max(0.0, dot(rd, uSunDir)), 6.0);
-  col += uSunColor * shaft * airStep * 0.000008 * forwardAir;
-#endif
 #ifdef TEMPORAL
   // Reprojection depth: where the cloud's opacity builds up; empty texels take the nearest
   // layer entry
   vec2 dw = dw1 + dw2;
-  float rep = dw.y > 1e-4 ? dw.x / dw.y : clamp(entry, 16000.0, 60000.0);
+  float rep = dw.y > 1e-4 ? dw.x / dw.y : min(entry, 60000.0);
   outColor = vec4(col, T);
   outDepth = vec4(min(rep, 90000.0) * 0.001, 0.0, 0.0, 1.0);   // y: 1 = hidden behind geometry
 #else
@@ -604,6 +766,7 @@ ${depthGLSL}
 uniform sampler2D tScene;
 uniform sampler2D tClouds;
 uniform sampler3D tMist;
+uniform float uConvection;
 uniform vec3 uMistWind;
 uniform vec3 uCamPos;
 uniform vec4 uLow;
@@ -639,15 +802,15 @@ void main() {
   float fogD = min(d, 4500.0);
   float fog = uWeatherFog;
   vec3 fogColour = mix(uHorizon, uZenith, .2);
-  if (uAtmosQuality > 0.5 && fog > 0.0) {
+  if (uAtmosQuality > 0.5 && uConvection > 0.0 && fog > 0.0) {
     // Two world-space mist intervals break heavy weather into coherent passing
     // veils. They stay attached to the air mass through a camera turn or rebase.
     vec3 mp = uCamPos + uMistWind;
     float nearMist = textureLod(tMist, (mp + rd * fogD * 0.25) / 2100.0, 1.0).r;
     float farMist = textureLod(tMist, (mp + rd * fogD * 0.75) / 3400.0, 1.0).r;
-    fog *= 0.35 + nearMist * 0.8 + farMist * 0.6;
-    fogColour *= 0.72 + 0.3 * farMist;
-    fogColour += uSunColor * pow(max(0.0, dot(rd, uSunDir)), 6.0) * 0.035;
+    fog *= mix(1.0, 0.35 + nearMist * 0.8 + farMist * 0.6, uConvection);
+    fogColour *= mix(1.0, 0.72 + 0.3 * farMist, uConvection);
+    fogColour += uSunColor * pow(max(0.0, dot(rd, uSunDir)), 6.0) * 0.035 * uConvection;
   }
   col = mix(col, fogColour, 1.0 - exp(-fogD * fog));
   gl_FragColor = vec4(col, 1.0);
@@ -785,7 +948,11 @@ export class CloudRenderer {
   scale = 0.5;
   steps = 56;
   temporal = false;
-  get lowTop() { return this.useTemporal ? Atmos.lowTowerTop : Atmos.lowTop; }
+  private get convection() {
+    return this.useTemporal ? THREE.MathUtils.smoothstep(Atmos.lowCoverage, .65, .85)
+      * (1 - THREE.MathUtils.smoothstep(Atmos.stratus, .6, .9)) : 0;
+  }
+  get lowTop() { return THREE.MathUtils.lerp(Atmos.lowTop, Atmos.lowTowerTop, this.convection); }
   get groundShadowTexture() { return this.shadowRT.texture; }
   get groundShadowBox() { return this.uniforms.uShadowBox.value as THREE.Vector3; }
   shadows = false;
@@ -821,6 +988,7 @@ export class CloudRenderer {
       uCamPos: { value: new THREE.Vector3() },
       uLow: { value: new THREE.Vector4() },
       uHigh: { value: new THREE.Vector4() },
+      uConvection: { value: 0 },
     };
     // Startup-only mip chains: coarse grazing steps use a prefiltered noise footprint.
     const shape = createShapeNoise(64), detail = createDetailNoise(32);
@@ -933,7 +1101,8 @@ export class CloudRenderer {
     u.uInvProj.value.copy(camera.projectionMatrixInverse);
     u.uCamWorld.value.copy(camera.matrixWorld);
     u.uCamPos.value.setFromMatrixPosition(camera.matrixWorld);
-    u.uLow.value.set(Atmos.lowBase, this.lowTop, Atmos.lowCoverage, this.useTemporal ? Atmos.lowDensity * 0.55 : Atmos.lowDensity);
+    u.uConvection.value = this.convection;
+    u.uLow.value.set(Atmos.lowBase, this.lowTop, Atmos.lowCoverage, Atmos.lowDensity * THREE.MathUtils.lerp(1, .55, this.convection));
     u.uHigh.value.set(Atmos.highBase, Atmos.highTop, Atmos.highCoverage, Atmos.highDensity);
     u.uTime.value = time;
     u.uFrame.value = this.frameN;
@@ -944,7 +1113,9 @@ export class CloudRenderer {
       Math.sin(time * 0.013 + 2.1) * 0.03,
       Math.cos(time * 0.017) * 0.05 + Math.cos(time * 0.043) * 0.02);
     u.uDetailDrift.value.set(Math.cos(time * 0.031) * 0.06, 0, Math.sin(time * 0.037 + 0.7) * 0.06);
-    u.uSteps.value = this.steps;
+    // Dense penetration spends its budget on near surfaces; fair decks keep the
+    // production march/resolution. The existing uniform avoids reallocating targets.
+    u.uSteps.value = THREE.MathUtils.lerp(this.steps, Math.max(20, Math.floor(this.steps * .7)), this.convection);
     u.uAmb.value = Atmos.cloudAmbient;
     u.uCloudType.value.set(Atmos.stratus, Atmos.towers);
     u.uPLn.value = cloudLights.sync(dt, u.uCamPos.value, u.uPL.value, u.uPLc.value);
@@ -1006,8 +1177,14 @@ export class CloudRenderer {
    * Normal flight keeps the asynchronous probe and never stalls the GPU. */
   settleProbeForCapture(renderer: THREE.WebGLRenderer, camera: THREE.PerspectiveCamera, time: number) {
     if (!this.useTemporal || !this.shadows) return;
+    // Capture phase must not depend on how many async startup frames ran.
+    // Normal flight retains its uninterrupted stochastic sequence.
+    this.frameN = 0;
     const target = renderer.getRenderTarget(), material = this.quad.material;
     this.syncUniforms(camera, this.uniforms.tDepth.value, time, 0);
+    // Consume the cut before sampling: the first render must not clear the
+    // settled density and wait for a timing-dependent asynchronous replacement.
+    this.detectCut(camera);
     this.probeGeneration++;
     const busy = this.probeBusy;
     this.probeBusy = true;

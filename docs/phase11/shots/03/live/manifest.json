@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-10-15T12:20:25.695Z",
+  "capturedAt": "2026-10-15T14:16:28.184Z",
   "note": "Production game replay of VisualRigScene; camera locked to before manifest. Aircraft roots and gun transforms restored from the isolated rig before applying the identical camera pose.",
   "shots": [
     {
@@ -37,15 +37,15 @@
         1920,
         1080
       ],
-      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
-      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
-      "errors": [],
       "poseMatch": {
         "matched": true,
         "aircraft": 18,
         "referenceHash": "9b5108de6878abc8b1a933ffdfd13a51fabfd23192c224b503bfee6532a79e97",
-        "maxRootCorrectionMeters": 5.684871418889343
-      }
+        "maxRootCorrectionMeters": 7.126094617777196
+      },
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
     },
     {
       "shot": "overcast-rain",
@@ -82,15 +82,15 @@
         1920,
         1080
       ],
-      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
-      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
-      "errors": [],
       "poseMatch": {
         "matched": true,
         "aircraft": 18,
         "referenceHash": "80b55149458d8f4b2b91bcb9432859f4ce025392801daad2cf98bf181b38ed44",
-        "maxRootCorrectionMeters": 7.846860417826699
-      }
+        "maxRootCorrectionMeters": 8.557639386113673
+      },
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
     },
     {
       "shot": "cloud-flythrough",
@@ -125,15 +125,15 @@
         1920,
         1080
       ],
-      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
-      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
-      "errors": [],
       "poseMatch": {
         "matched": true,
         "aircraft": 18,
         "referenceHash": "9b5108de6878abc8b1a933ffdfd13a51fabfd23192c224b503bfee6532a79e97",
-        "maxRootCorrectionMeters": 7.846860417826699
-      }
+        "maxRootCorrectionMeters": 7.126094617777196
+      },
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
     },
     {
       "shot": "ball-europe",
@@ -169,15 +169,15 @@
         1920,
         1080
       ],
-      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
-      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
-      "errors": [],
       "poseMatch": {
         "matched": true,
         "aircraft": 18,
         "referenceHash": "bee966a3d0dda7016c091675b2965ccfac1299cf82b716d43ed518c49618e51d",
-        "maxRootCorrectionMeters": 9.657329399151962
-      }
+        "maxRootCorrectionMeters": 8.914697686474726
+      },
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
     },
     {
       "shot": "formation-chase",
@@ -213,15 +213,15 @@
         1920,
         1080
       ],
-      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
-      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
-      "errors": [],
       "poseMatch": {
         "matched": true,
         "aircraft": 18,
         "referenceHash": "9b5108de6878abc8b1a933ffdfd13a51fabfd23192c224b503bfee6532a79e97",
-        "maxRootCorrectionMeters": 6.447198263486114
-      }
+        "maxRootCorrectionMeters": 7.126094617777196
+      },
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
     },
     {
       "shot": "sun-gap",
@@ -257,15 +257,15 @@
         1920,
         1080
       ],
-      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
-      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
-      "errors": [],
       "poseMatch": {
         "matched": true,
         "aircraft": 18,
         "referenceHash": "9b5108de6878abc8b1a933ffdfd13a51fabfd23192c224b503bfee6532a79e97",
-        "maxRootCorrectionMeters": 7.243178192947529
-      }
+        "maxRootCorrectionMeters": 8.557639386113673
+      },
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
     },
     {
       "shot": "sun-gap-towers",
@@ -301,15 +301,15 @@
         1920,
         1080
       ],
-      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
-      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
-      "errors": [],
       "poseMatch": {
         "matched": true,
         "aircraft": 18,
         "referenceHash": "9b5108de6878abc8b1a933ffdfd13a51fabfd23192c224b503bfee6532a79e97",
-        "maxRootCorrectionMeters": 7.846860417826699
-      }
+        "maxRootCorrectionMeters": 7.0642457523990485
+      },
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
     },
     {
       "shot": "cloud-shoulder",
@@ -344,15 +344,15 @@
         1920,
         1080
       ],
-      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
-      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
-      "errors": [],
       "poseMatch": {
         "matched": true,
         "aircraft": 18,
         "referenceHash": "9b5108de6878abc8b1a933ffdfd13a51fabfd23192c224b503bfee6532a79e97",
-        "maxRootCorrectionMeters": 9.657329399151962
-      }
+        "maxRootCorrectionMeters": 7.529903769355736
+      },
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
     }
   ]
 }

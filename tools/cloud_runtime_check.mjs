@@ -73,8 +73,15 @@ try {
     c.rebase(delta.negate());
     // Probe real GPU density above the former 5.9 km deck, across a 30 km
     // region. This verifies actual vertical cloud volume, not added screen haze.
-    applyWeather(e, { sunEl:40, sunAz:140, low:.55, high:.2 });
+    applyWeather(e, { sunEl:40, sunAz:140, low:.86, high:.2 });
     await frames(8);
+    const profiles = { dense: c.lowTop };
+    const marchSteps = { dense: c.uniforms.uSteps.value };
+    applyWeather(e, { sunEl:40, sunAz:140, low:.55, high:.2 }); await frames(8);
+    profiles.fair = c.lowTop; marchSteps.fair = c.uniforms.uSteps.value;
+    applyWeather(e, { sunEl:28, sunAz:140, low:.9, high:.95, mood:'overcast', preset:'heavyRain' }); await frames(8);
+    profiles.overcast = c.lowTop; marchSteps.overcast = c.uniforms.uSteps.value;
+    applyWeather(e, { sunEl:40, sunAz:140, low:.86, high:.2 }); await frames(8);
     const towers = [];
     const probe = new Uint8Array(4);
     for (const altitude of [6000,7000,7800]) {
@@ -101,14 +108,16 @@ try {
     e.setQuality('low'); await frames();
     const low = { temporal: c.temporal, steps: c.steps, scale: c.scale, inside: weatherNow.cloudInside,
       shadows: cloudShadowUniforms.uCloudShadowOn.value, veil: cloudOcclusionUniforms.uCloudVeilOn.value };
-    return { cloudGlassPng, exitGlassPng, condensation, condensationAfterExit, towers, nonfinite, tried, inside, outside, wetTarget, wet, effectsOff, insideSun, cutHistory, rebased, programs, programsAfter, low };
+    return { cloudGlassPng, exitGlassPng, condensation, condensationAfterExit, profiles, marchSteps, towers, nonfinite, tried, inside, outside, wetTarget, wet, effectsOff, insideSun, cutHistory, rebased, programs, programsAfter, low };
   });
   const { cloudGlassPng, exitGlassPng, ...result } = raw;
   for (const [name, png] of [['cloud-glass',cloudGlassPng],['exit-glass',exitGlassPng]])
     await fs.writeFile(`${dir}/${name}.jpg`, await sharp(Buffer.from(png.split(',')[1],'base64')).resize(960).jpeg({quality:82}).toBuffer());
   console.log(JSON.stringify(result, null, 2));
+  assert.deepEqual(result.profiles, {dense:8500, fair:5900, overcast:5900}, 'Scope: tall volumes only in dense convection');
+  assert.deepEqual(result.marchSteps, {dense:28, fair:40, overcast:40}, 'Reduced march budget is confined to dense convection');
   assert.ok(result.inside > .05, 'Density probe inside cloud');
-  assert.ok(result.towers[1].occupied > 0, 'Real cloud volume reaches 7 km');
+  assert.ok(result.towers[1].occupied > 0, 'Dense convection has real cloud volume at 7 km');
   assert.ok(result.wet > .01 && result.wetTarget > .01, 'Cloud wets real turret glass');
   assert.equal(result.outside, 0);
   assert.ok(result.condensation > .05 && result.condensationAfterExit > 0 && result.condensationAfterExit < result.condensation, 'Cloud film builds then evaporates after exit');
