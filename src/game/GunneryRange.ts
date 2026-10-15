@@ -24,7 +24,7 @@ export const RANGE_MISSION = (station: StationId, title: string): Mission => ({
   title, target: 'Gunnery range', date: 'Practice flight · over the Wash', role: 'gunner', station,
   briefing: ['A practice flight over the Wash. Target drones and towed sleeves only — nobody shoots back.'],
   objectives: ['Shoot the drill'],
-  bombers: 6, waves: [], duration: 9999, maxBombersLost: 99, playerArmor: 0,
+  bombers: 6, waves: [], duration: 9999, maxBombersLost: 99, playerArmor: 0, midRound: false, specials: false, boss: false,
   weather: { sunEl: 44, sunAz: 200, low: 0.4, high: 0.25, contrails: true },
 });
 
@@ -52,7 +52,10 @@ const _z = new THREE.Vector3(0, 0, 1), _up = new THREE.Vector3(0, 1, 0), ZERO = 
 const _p = { x: 0, y: 0, z: 0 };
 const _g: GhostSample = { yaw: 0, pitch: 0, score: 0, on: false };
 const _lead = new THREE.Vector3(), _aim = new THREE.Vector3(), _o = new THREE.Vector3();
-const SLEEVE_SPHERES = [-2.6, 0, 2.6];   // m along the sleeve: three hit spheres cover its 8 m
+// The sleeve is drawn (and hit) larger than life, like the game's fighters (World.ENEMY_SCALE):
+// a true 9 m sleeve is two pixels wide at 600 m.
+const SLEEVE_LEN = 22, SLEEVE_R = 2.1;
+const SLEEVE_SPHERES = [-SLEEVE_LEN / 3, 0, SLEEVE_LEN / 3];   // three hit spheres along its length
 const DRONE_TINT = new THREE.Color(2.6, 1.25, 0.32);   // target-drone orange over the Fw 190 paint
 const fmtT = (s: number) => `${Math.floor(s / 60)}:${String(Math.max(0, Math.floor(s % 60))).padStart(2, '0')}`;
 
@@ -78,6 +81,8 @@ export class GunneryRange {
   private sleeveGeo: THREE.CylinderGeometry | null = null;
   private cableGeo: THREE.CylinderGeometry | null = null;
   coach: string = '';             // last coaching word (dev / tests)
+  readonly lead = new THREE.Vector3();   // the tutor's lead point this frame (world; valid while leadOn)
+  leadOn = false;
   readonly log: string[] = [];
 
   constructor(private game: Game, private host: RangeHost) {}
@@ -303,7 +308,7 @@ export class GunneryRange {
     const sl = this.cur?.sleeve;
     if (player && !axis && sl && !sl.falling) {
       const p = sl.mesh.position;
-      const r = 1.6 * this.game.world.ballistics.playerHitScale;
+      const r = SLEEVE_R * 1.9 * this.game.world.ballistics.playerHitScale;
       _o.set(0, 1, 0).applyQuaternion(sl.mesh.quaternion);
       for (const k of SLEEVE_SPHERES) {
         if (segSphere(ax, ay, az, bx, by, bz, p.x + _o.x * k, p.y + _o.y * k, p.z + _o.z * k, r) >= 0) {
@@ -328,10 +333,10 @@ export class GunneryRange {
 
   private makeSleeve(): Sleeve {
     // a plain double-sided standard material: World.prewarm already compiled that program
-    this.sleeveMat ??= new THREE.MeshStandardMaterial({ color: 0xf0f0ea, roughness: 0.95, side: THREE.DoubleSide });
+    this.sleeveMat ??= new THREE.MeshStandardMaterial({ color: 0xff7a2e, roughness: 0.95, side: THREE.DoubleSide });
     this.cableMat ??= new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6 });
-    this.sleeveGeo ??= new THREE.CylinderGeometry(0.7, 0.5, 8, 14, 1, true);
-    this.cableGeo ??= new THREE.CylinderGeometry(0.06, 0.06, 1, 4, 1, true);
+    this.sleeveGeo ??= new THREE.CylinderGeometry(SLEEVE_R, SLEEVE_R * 0.7, SLEEVE_LEN, 16, 1, true);
+    this.cableGeo ??= new THREE.CylinderGeometry(0.12, 0.12, 1, 4, 1, true);
     const mesh = new THREE.Mesh(this.sleeveGeo, this.sleeveMat);
     const cable = new THREE.Mesh(this.cableGeo, this.cableMat);
     mesh.frustumCulled = false; cable.frustumCulled = false;
@@ -386,14 +391,16 @@ export class GunneryRange {
       if (sp.on) {
         const x = (sp.x * 0.5 + 0.5) * W, y = (-sp.y * 0.5 + 0.5) * H;
         ctx.save();
-        ctx.strokeStyle = 'rgba(170,215,255,0.75)'; ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath(); ctx.arc(x, y, 13, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(150,205,255,0.95)'; ctx.lineWidth = 2;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.stroke();
         ctx.setLineDash([]);
         ctx.fillStyle = 'rgba(170,215,255,0.85)';
         ctx.font = `600 10px ${CANVAS_MONO}`;
         ctx.textAlign = 'center';
-        ctx.fillText(tx('GHOST'), x, y - 18);
+        ctx.fillText(tx('GHOST'), x, y - 22);
         ctx.restore();
       }
     }
@@ -404,10 +411,12 @@ export class GunneryRange {
     const g = this.game, cam = g.engine.camera, b = g.world.playerBomber!;
     const tg = this.cur;
     this.coach = '';
+    this.leadOn = false;
     if (!tg || tg.downed || (tg.f && !tg.f.alive) || (tg.sleeve && tg.sleeve.falling)) return;
     const origin = cam.position;
     const speed = g.gunner.loadout.weapon.velocity * g.gunner.loadout.velocity;
     const tof = gunLead(_lead, origin, tg.pos, tg.vel, b.vel, speed);
+    this.lead.copy(_lead); this.leadOn = true;
     const range = origin.distanceTo(tg.pos);
     // projectMarker hands back one shared object: read each projection before the next
     const tp = projectMarker(tg.pos, cam);
@@ -451,11 +460,14 @@ export class GunneryRange {
     // labels: lead angle, range, time of flight, and the coach's word
     const deg = leadDegrees(origin, tg.pos, _lead);
     ctx.font = `600 11px ${CANVAS_MONO}`;
-    ctx.textAlign = 'left';
-    const lx2 = lx + tol + 8;
+    // the labels go on the side away from the target, so they never cover it
+    const right = tx0 <= lx;
+    ctx.textAlign = right ? 'left' : 'right';
+    const lx2 = right ? lx + tol + 8 : lx - tol - 8;
     const l1 = tx('LEAD {d}° · {r} m', { d: deg.toFixed(1), r: Math.round(range) }), l2 = tx('Time of flight {t} s', { t: tof.toFixed(2) });
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(lx2 - 5, ly - 26, Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width) + 10, 40);
+    const bw = Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width) + 10;
+    ctx.fillRect(right ? lx2 - 5 : lx2 - bw + 5, ly - 26, bw, 40);
     ctx.fillStyle = 'rgba(255,224,150,0.95)';
     ctx.fillText(l1, lx2, ly - 12);
     ctx.fillText(l2, lx2, ly + 2);

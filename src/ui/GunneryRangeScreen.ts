@@ -56,9 +56,10 @@ function ensureStyle() {
 .rng-result .nb { color: var(--good); letter-spacing: 1px; text-transform: uppercase; font-size: 15px; }
 .rng-result ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 14px; }
 .rng-result ul b { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
-#rangeCard { position: fixed; left: 24px; top: 118px; z-index: 7; width: min(320px, calc(100vw - 32px)); pointer-events: none;
+/* top right in both directions: the kill feed sits top left (cleanHud.css) */
+#rangeCard { position: fixed; right: 24px; top: 118px; z-index: 7; width: min(320px, calc(100vw - 32px)); pointer-events: none;
   background: rgba(12,14,9,0.78); border: 1px solid rgba(185,167,111,0.55); border-left: 3px solid var(--khaki);
-  padding: 10px 14px; opacity: 0; transition: opacity 0.3s; }
+  padding: 10px 14px; box-sizing: border-box; opacity: 0; transition: opacity 0.3s; }
 #rangeCard.show { opacity: 1; }
 #rangeCard .k { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2.5px; color: var(--ink-dim); }
 #rangeCard .t { font-size: 21px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--khaki); margin: 3px 0 4px; }
@@ -67,14 +68,12 @@ function ensureStyle() {
 #rangeCard .sc, #rangeCard .big { font-family: 'IBM Plex Mono', monospace; font-size: 30px; color: var(--ink); }
 #rangeCard .gh { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #aad7ff; }
 #rangeCard .st { margin-top: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-dim); }
-html[dir=rtl] #rangeCard { left: auto; right: 24px; border-left: 1px solid rgba(185,167,111,0.55); border-right: 3px solid var(--khaki); }
 @media (max-width: 760px) {
   #gunRange .rng { padding: 14px 16px 24px; }
   .rng h2 { font-size: 26px; }
   .rng-result { grid-template-columns: 1fr; }
   .rng-result .score { font-size: 36px; }
-  #rangeCard { top: 64px; left: 12px; width: min(260px, calc(100vw - 24px)); }
-  html[dir=rtl] #rangeCard { right: 12px; }
+  #rangeCard { top: 64px; right: 12px; width: min(240px, calc(100vw - 24px)); }
 }
 html[lang=ar] .rng h2, html[lang=ar] #rangeCard .t { letter-spacing: 0; }
 `;

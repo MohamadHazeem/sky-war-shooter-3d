@@ -38,7 +38,7 @@ async function open(lang, viewport = { width: 1280, height: 800 }) {
   }, lang).catch(() => {});
   await page.goto(URL);
   await page.waitForFunction(() => window.sws?.game, { timeout: 120000 });
-  await page.addStyleTag({ content: '#hudToast { display: none !important; }' });
+  await page.addStyleTag({ content: '#hudToast { display: none !important; } #fade { transition: none !important; }' });
   await page.evaluate(() => {
     sws.engine.loopOverride = () => {}; sws.game.input.lock = () => {};
     // a scripted gunner: eases the sight onto the tutor's lead point (plus an error) and fires short bursts
@@ -50,10 +50,11 @@ async function open(lang, viewport = { width: 1280, height: 800 }) {
         const tg = r.current, pb = w.playerBomber;
         if (tg && pb && !tg.downed && !(tg.f && !tg.f.alive)) {
           const cam = g.engine.camera.position;
-          const d = tg.pos.distanceTo(cam), tof = d / 870 * 1.08;
-          const rel = tg.vel.clone().sub(pb.vel);
-          const p = tg.pos.clone().addScaledVector(rel, tof * (1 + err));
-          p.y += 0.5 * 9.81 * tof * tof;
+          const d = tg.pos.distanceTo(cam);
+          // the tutor's lead point (err scales the lead: -0.45 = too little), else a rough one
+          let p;
+          if (r.leadOn) p = tg.pos.clone().lerp(r.lead, 1 + err);
+          else { const tof = d / 870 * 1.08; p = tg.pos.clone().addScaledVector(tg.vel.clone().sub(pb.vel), tof * (1 + err)); p.y += 0.5 * 9.81 * tof * tof; }
           const def = gun.state.def;
           const local = pb.worldToLocal(p).sub(def.pivot);
           let dy = Math.atan2(local.x, local.z) - def.rest.yaw;
@@ -63,7 +64,7 @@ async function open(lang, viewport = { width: 1280, height: 800 }) {
           const s = gun.state;
           s.tYaw += (dy - s.tYaw) * 0.3; s.tPitch += (pr - s.tPitch) * 0.3;
           burst = (burst + 1 / 60) % 0.8;
-          if (Math.abs(dy - s.yaw) < 0.04 && Math.abs(pr - s.pitch) < 0.04 && d < 1100 && !s.overheated && burst < 0.5) inp.buttons |= 1;
+          if (Math.abs(dy - s.yaw) < 0.02 && Math.abs(pr - s.pitch) < 0.02 && d < 1100 && !s.overheated && burst < 0.5) inp.buttons |= 1;
         }
         sws.step(1, 1 / 60, false);
       }
@@ -90,7 +91,8 @@ async function finish(page, err) {
 }
 
 try {
-  // -- English: entry, screen, crossing drones with the lead tutor
+  // -- English: entry, screen, crossing drones with the lead tutor (RANGE_AR_ONLY=1 skips to the Arabic part)
+  if (!process.env.RANGE_AR_ONLY) {
   const { page, ctx } = await open('en');
   await page.evaluate(() => sws.game.menus.hangar('aircraft'));
   assert.equal(await page.locator('#hangarHub [data-route="range"]').count(), 1, 'Hangar → Aircraft & Armory shows the Gunnery Range');
@@ -124,7 +126,7 @@ try {
   // -- towed sleeve: close-up of the sleeve and tow cable with the tutor
   await start(page, 'sleeve');
   facts.sleeveMid = await page.evaluate(() => {
-    const out = window.__rangeBot(6000, 0, 4 + 2.4);
+    const out = window.__rangeBot(6000, 0, 4 + 3.5);
     sws.game.gunner.adsK = 1; sws.step(20, 1 / 60, true);
     return out;
   });
@@ -139,6 +141,7 @@ try {
   facts.freeSaved = await page.evaluate(() => JSON.parse(localStorage.getItem('sws3d.range.v1')).prefs.free);
   assert.equal(facts.freeSaved.speed, 'fast');
   await ctx.close();
+  }
 
   // -- Arabic: the screen, a run card, the phone layout
   const ar = await open('ar');
@@ -159,7 +162,7 @@ try {
   await phone.ctx.close();
 } finally {
   facts.errors = errors;
-  await fs.writeFile(`${shots}/check.json`, JSON.stringify(facts, null, 2));
+  await fs.writeFile(`${shots}/${process.env.RANGE_AR_ONLY ? 'check-ar.json' : 'check.json'}`, JSON.stringify(facts, null, 2));
   await browser.close();
 }
 console.log(JSON.stringify(facts, null, 2));

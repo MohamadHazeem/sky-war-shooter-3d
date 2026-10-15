@@ -186,7 +186,7 @@ describe('gunnery range: records', () => {
 describe('gunnery range: mission, menu and Arabic', () => {
   it('a harmless gunner practice flight at the chosen gun, with a Hangar entry', () => {
     const m = RANGE_MISSION('tail', 'Crossing targets');
-    expect([m.role, m.station, m.tutorial, m.range, m.playerArmor, m.waves.length]).toEqual(['gunner', 'tail', true, true, 0, 0]);
+    expect([m.role, m.station, m.tutorial, m.range, m.playerArmor, m.waves.length, m.midRound, m.specials, m.boss]).toEqual(['gunner', 'tail', true, true, 0, 0, false, false, false]);
     const tab = HANGAR_TABS.find((t) => t.id === 'aircraft')!;
     expect(tab.entries.map((e) => e[0])).toContain('range');
   });

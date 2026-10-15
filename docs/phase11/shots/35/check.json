@@ -1,0 +1,51 @@
+{
+  "intro": {
+    "t": 2.8499999999999948,
+    "phase": "intro",
+    "score": 0,
+    "downed": 0,
+    "coach": ""
+  },
+  "mid": {
+    "t": 21.752500000000047,
+    "phase": "run",
+    "score": 306,
+    "downed": 1,
+    "coach": "on"
+  },
+  "card": "GUNNERY RANGE · Left Waist\n306\nTarget 2 / 6 · 0:46",
+  "first": "CROSSING TARGETS\n1,206\n★★★\nFIRST SCORE ON THIS DRILL\nTargets down: 4/6\nHits: 54\nAccuracy: 62%\nAccuracy bonus: +124",
+  "firstRecord": {
+    "best": 1206,
+    "stars": 3,
+    "runs": 1,
+    "ghost": 340
+  },
+  "ghostRun": {
+    "t": 30.57166666666621,
+    "phase": "run",
+    "score": 495,
+    "downed": 2,
+    "coach": "more"
+  },
+  "ghostCard": "GUNNERY RANGE · Left Waist\n495\nGhost 592\nTarget 3 / 6 · 0:37",
+  "second": "CROSSING TARGETS\n829\n★★★\nBEST 1,206\nTargets down: 3/6\nHits: 37\nAccuracy: 15%\nAccuracy bonus: +30\nYour ghost was 253 ahead",
+  "sleeveMid": {
+    "t": 7.533333333333312,
+    "phase": "run",
+    "score": 30,
+    "downed": 0,
+    "coach": "on"
+  },
+  "sleeve": "TOWED SLEEVE\n565\n★★★\nFIRST SCORE ON THIS DRILL\nTargets down: 2/4\nHits: 17\nAccuracy: 12%\nAccuracy bonus: +23",
+  "freeSaved": {
+    "kind": "drone",
+    "speed": "fast",
+    "angle": 90,
+    "range": 500
+  },
+  "arLatin": [],
+  "arCard": "ميدان الرماية · الجانب الأيسر\n279\nالهدف 1 / 5 · 0:53",
+  "phoneOverflow": false,
+  "errors": []
+}

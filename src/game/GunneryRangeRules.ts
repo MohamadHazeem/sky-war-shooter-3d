@@ -47,7 +47,7 @@ export interface Window { spec: PassSpec; start: number; half: number }
 export const LEAD_IN = 4;        // s before the first target
 export const GAP = 2.5;          // s between passes
 export const TAIL = 1.5;         // s after the last pass
-export const SLEEVE_HP = 14;     // hits that shred a towed sleeve
+export const SLEEVE_HP = 8;      // hits that shred a towed sleeve
 export const CABLE = 230;        // m of tow cable between the tow ship and the sleeve
 
 export const SCORE = { hit: 10, sleeveHit: 15, down: 100, speed: 60, accuracy: 200 } as const;
