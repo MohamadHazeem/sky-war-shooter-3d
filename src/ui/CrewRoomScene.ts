@@ -31,6 +31,8 @@ import { loadCampaign, totals } from '../game/CampaignState';
 import { portraitUrl } from '../render/Portraits';
 import { sound } from '../audio/Sound';
 import { tx, isAr } from '../i18n';
+import { crewStories } from '../game/CrewStories';
+import { say as storySay } from './CrewStoriesPanel';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 const norm = (s: string) => s.replace(/[‘’]/g, "'").replace(/\s+/g, ' ').trim().toLowerCase();
@@ -67,6 +69,9 @@ function ensureStyle() {
 #crewRoom { position: fixed; inset: 0; z-index: 60; background: #0a0806; overflow: hidden; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 #crewRoom canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #crewRoom .crm-memorial { position: absolute; top: 82px; left: 22px; right: 22px; color: #e0c896; font-family: "Oswald", sans-serif; font-size: 16px; z-index: 2; }
+#crewRoom .crm-story { position: absolute; left: 22px; width: min(400px, 38vw); z-index: 2; pointer-events: none; font-family: 'Special Elite', monospace; font-size: clamp(11px, 1.05vw, 14px); line-height: 1.5; color: #d9cfb4; text-shadow: 0 1px 3px #000; opacity: 0; transition: opacity 1.2s; }
+#crewRoom .crm-story p { margin: 0 0 8px; padding: 6px 10px; background: rgba(10,8,5,0.5); border-inline-start: 2px solid rgba(224,180,69,0.6); }
+html[dir=rtl] #crewRoom .crm-story { left: auto; right: 22px; font-family: 'Noto Kufi Arabic', sans-serif; }
 #crewRoom .crm-cast { position: absolute; inset: 0; pointer-events: none; }
 #crewRoom .crm-man { position: absolute; width: var(--ps); transform: translate(-50%, -50%) scale(0.94); transition: transform .35s ease, opacity .35s ease, filter .35s ease; opacity: 0.62; filter: saturate(0.55) brightness(0.72); text-align: center; }
 #crewRoom .crm-man img { display: block; width: var(--ps); height: var(--ps); border-radius: 50%; box-shadow: 0 6px 18px rgba(0,0,0,0.65), 0 0 0 2px rgba(20,16,10,0.9), 0 0 0 3px rgba(185,167,111,0.35); }
@@ -97,6 +102,7 @@ html[dir=rtl] #crewRoom .crm-sub .txt { font-family: 'Noto Kufi Arabic', 'Oswald
   #crewRoom .crm-cap { top: 10px; left: 14px; }
   #crewRoom .crm-skip { top: 8px; right: 10px; padding: 5px 10px; font-size: 12px; }
   #crewRoom .crm-hint { display: none; }
+  #crewRoom .crm-story { display: none; }
 }
 `;
   document.head.appendChild(st);
@@ -916,8 +922,11 @@ class Running {
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-label', tx('Crew room'));
     const touch = document.body.classList.contains('touch');
+    // short written vignettes from the crew's stories (morale, letters, friends and friction)
+    const stories = crewStories.vignettes(scene.present as ManId[]);
     root.innerHTML = `<div class="crm-cast"></div>
       ${scene.memorial.length ? `<div class="crm-memorial">${scene.memorial.map((id) => esc(tx('In memory of {who}', { who: tx(manDef(id).call) }))).join('<br>')}</div>` : ''}
+      ${stories.length ? `<div class="crm-story" style="top:${82 + scene.memorial.length * 24}px">${stories.map((n) => `<p>${esc(storySay(n.text, n.vars))}</p>`).join('')}</div>` : ''}
       <div class="crm-cap"><b>${esc(tx(v.place))}</b><span>${esc(tx(m.date))} · ${esc(tx(v.time))}</span></div>
       <button class="crm-skip" type="button">${esc(tx('Skip scene'))} ›</button>
       <div class="crm-sub fade" aria-live="polite"><span class="who"></span><span class="txt"></span></div>
@@ -943,7 +952,10 @@ class Running {
     window.addEventListener('resize', this.onResize);
     this.layout();
     const fade = root.querySelector<HTMLElement>('.crm-fade')!;
-    requestAnimationFrame(() => { fade.style.opacity = '0'; root.querySelector<HTMLElement>('.crm-cap')!.style.opacity = '1'; });
+    requestAnimationFrame(() => {
+      fade.style.opacity = '0'; root.querySelector<HTMLElement>('.crm-cap')!.style.opacity = '1';
+      const st = root.querySelector<HTMLElement>('.crm-story'); if (st) st.style.opacity = '1';
+    });
     this.loop();
     sound.stopSpeech();
     sound.music.setCrewRoom(scene.emptyBunk);
