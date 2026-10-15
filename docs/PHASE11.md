@@ -1,4 +1,4 @@
-# Phase 11 — from 60 to 80+ (expanded: "go wild", 27 goals)
+# Phase 11 — from 60 to 80+ (expanded: "go wild", 39 goals)
 
 Strict scorecard 60/100 after Phase 10 → target 80+. B-17 gunner first. Speed + quality pipeline: tasks push their
 branch, GitHub CI (public repo) runs the full check; heavy local jobs via `tools/heavy.sh`; quality gate vs LIVE main;
@@ -33,4 +33,16 @@ merge lane (`tools/codex_merge.sh` / `tools/claude_merge.sh`) → `tools/ship.sh
 | 24 | New enemies (Me 410, Me 163, Ju 88 G) | art + AI | Codex | Queued |
 | 25 | The ground war below | art + FX | Codex | Queued |
 | 26 | Arabic voice-over | audio | Claude (local) | Queued |
+| 27 | Mission editor and sharing | features | Cloud (2nd account) | Queued |
+| 28 | Dynamic in-mission events | gameplay | Cloud (2nd account) | Queued |
+| 29 | Adaptive difficulty director | gameplay | Cloud (2nd account) | Queued |
+| 30 | Museum and codex | content | Cloud (2nd account) | Queued |
+| 31 | Historical raid mode | content | Cloud (2nd account) | Queued |
+| 32 | More languages (FR/DE/ES) | reach | Cloud (2nd account) | Queued |
+| 33 | Co-op crew intercom (voice) | multiplayer | Cloud (2nd account) | Queued |
+| 34 | Spectator and streamer mode | multiplayer | Cloud (2nd account) | Queued |
+| 35 | Gunnery range 2.0 | gameplay | Cloud (2nd account) | Queued |
+| 36 | Save system 2.0 | platform | Cloud (2nd account) | Queued |
+| 37 | Share cards and stats | features | Cloud (2nd account) | Queued |
+| 38 | Mod support (JSON) | platform | Cloud (2nd account) | Queued |
 | 09 | Final scorecard and fixes | 80+ | Codex | After 01–08 |
