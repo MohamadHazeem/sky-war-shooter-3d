@@ -10,9 +10,9 @@ export type Neutral = 'Sweden' | 'Switzerland';
 /** Fuel is a fraction of the full tanks. A sound ship starts the return leg with about a third left. */
 export const FUEL = {
   start: 0.34,        // at the start of the return leg, nothing leaking
-  leakLoss: 0.1,      // already lost through the holes by the time the crew checks the gauges
+  leakLoss: 0.07,     // already lost through the holes by the time the crew checks the gauges
   engineLoss: 0.03,   // per dead engine: the cross-feed and the drag of a windmilling prop
-  leakPerS: 0.002,    // per second while a tank is still leaking
+  leakPerS: 0.0015,   // per second while a tank is still leaking
   engineDrag: 0.12,   // each dead engine makes the rest burn this much more per kilometre
 } as const;
 
@@ -89,32 +89,38 @@ export function options(s: LimpState): LimpChoice[] {
 }
 
 export type CrewSeat = 'Pilot' | 'Co-Pilot' | 'Navigator' | 'Bombardier' | 'Engineer' | 'Radio' | 'Ball Turret' | 'Tail' | 'Waist';
-/** Each man weighs the same facts a little differently. `caution` is the fuel he wants to land with. */
+/** Each man weighs the same facts his own way. `caution` is the fuel he wants to land with (negative: a
+ *  gambler); `lean` is what he thinks of each choice, on the same scale as VALUE below, so a man's
+ *  personality decides whenever the gauges leave room for doubt. */
 export const CREW_BIAS: Record<CrewSeat, { caution: number; lean: Partial<Record<LimpChoice, number>> }> = {
-  'Pilot': { caution: 0.02, lean: { home: 0.06, divert: 0.04, neutral: -0.06 } },   // his ship, his duty
-  'Co-Pilot': { caution: 0.02, lean: { divert: 0.04 } },
-  'Navigator': { caution: 0.03, lean: {} },                                          // goes by the numbers
-  'Bombardier': { caution: 0.01, lean: { home: 0.05 } },
-  'Engineer': { caution: 0.06, lean: { divert: 0.02 } },                             // he reads the gauges
-  'Radio': { caution: 0.03, lean: { ditch: 0.06 } },                                 // trusts Air-Sea Rescue
-  'Ball Turret': { caution: 0.02, lean: { ditch: -0.06 } },                          // the ball fills first
-  'Tail': { caution: 0.03, lean: { neutral: 0.05 } },                                // has had enough of the war
-  'Waist': { caution: 0.03, lean: {} },
+  'Pilot': { caution: 0.02, lean: { home: 0.06, divert: 0.06, neutral: -0.2 } },     // his ship, his crew, his war
+  'Co-Pilot': { caution: 0.02, lean: { divert: 0.08, neutral: -0.08 } },             // follows the pilot
+  'Navigator': { caution: 0.03, lean: {} },                                            // goes by the numbers
+  'Bombardier': { caution: -0.03, lean: { home: 0.1, divert: 0.06, neutral: -0.1 } }, // wants his 25 missions
+  'Engineer': { caution: 0.09, lean: {} },                                             // he reads the gauges
+  'Radio': { caution: 0.03, lean: { ditch: 0.15 } },                                   // trusts Air-Sea Rescue
+  'Ball Turret': { caution: 0.03, lean: { ditch: -0.2 } },                             // the ball fills first
+  'Tail': { caution: 0.04, lean: { neutral: 0.12 } },                                  // has had enough of the war
+  'Waist': { caution: 0.03, lean: { neutral: 0.05, ditch: -0.05 } },                   // solid ground under him
 };
 export const CREW_SEATS = Object.keys(CREW_BIAS) as CrewSeat[];
 
-/** How good one choice looks to one crewman: making it with fuel to spare beats everything; the
- *  sea and internment are last resorts, and the formation's guns are worth a lot to a straggler. */
+/** What each ending is worth to a crewman before his own leanings: an English runway is everything, a
+ *  neutral field is safe but ends the war for them, a planned ditching is cold water and a dinghy, and
+ *  running dry on the way is the worst of all (an unplanned ditching, or worse). */
+export const VALUE = { england: 1, neutral: 0.55, ditch: 0.52, dry: 0.3, perWounded: 0.08, straggler: -0.15, box: 0.05 } as const;
+/** How sure a man is of making `choice`: one half when the margin is exactly the fuel he wants to keep,
+ *  certain 4 % above it, hopeless 4 % below. */
+export function reach(choice: LimpChoice, s: LimpState, caution: number): number {
+  return Math.max(0, Math.min(1, 0.5 + (fuelMargin(choice, s) - caution) / 0.08));
+}
 export function utility(choice: LimpChoice, s: LimpState, seat: CrewSeat): number {
   const b = CREW_BIAS[seat];
+  const p = reach(choice, s, b.caution);
   const lean = b.lean[choice] ?? 0;
-  const englandOk = Math.max(fuelMargin('home', s), fuelMargin('divert', s)) >= b.caution;
-  if (choice === 'ditch') return (englandOk ? -0.4 : 0.12) - 0.05 * s.wounded + lean;
-  const margin = fuelMargin(choice, s) - b.caution;
-  let u = margin < 0 ? -0.3 + margin * 3 : Math.min(0.15, margin) * 2;
-  if (choice === 'home') u += s.straggling ? -0.1 : 0.06;       // the box's guns
-  if (choice === 'divert') u += 0.02;                            // shorter over enemy air
-  if (choice === 'neutral') u += englandOk ? -0.35 : 0.1;        // internment ends the war for them
+  const made = choice === 'ditch' ? VALUE.ditch - VALUE.perWounded * s.wounded : choice === 'neutral' ? VALUE.neutral : VALUE.england;
+  let u = p * made + (1 - p) * VALUE.dry;
+  if (choice === 'home') u += s.straggling ? VALUE.straggler : VALUE.box;   // the box's guns, or alone at its pace
   return u + lean;
 }
 export function crewVote(s: LimpState, seat: CrewSeat, opts = options(s)): LimpChoice {
@@ -128,13 +134,24 @@ export function tally(s: LimpState, opts = options(s)): Tally {
   for (const seat of CREW_SEATS) { const v = crewVote(s, seat, opts); votes[v]++; voters[v].push(seat); }
   return { votes, voters };
 }
-/** The crew decides by show of hands with the gunner's vote weighted; the pilot breaks a tie. */
+/** Choices that end the tour (internment) need more than half of all the hands, the gunner's included. */
+export const TOUR_ENDING: readonly LimpChoice[] = ['neutral'];
+export const majorityNeeded = (voted: boolean) => Math.floor((CREW_SEATS.length + (voted ? PLAYER_WEIGHT : 0)) / 2) + 1;
+/** The crew decides by show of hands with the gunner's vote weighted; the pilot breaks a tie. Internment
+ *  is never the silent default: without the gunner's vote the crew won't take itself out of the war, and
+ *  with it, it needs a clear majority. Otherwise its hands go to each man's next choice and the most hands win. */
 export function decide(s: LimpState, player: LimpChoice | null, opts = options(s)): LimpChoice {
   const t = tally(s, opts);
-  if (player && opts.includes(player)) t.votes[player] += PLAYER_WEIGHT;
-  const pilot = crewVote(s, 'Pilot', opts);
+  const voted = !!player && opts.includes(player);
+  if (voted) t.votes[player!] += PLAYER_WEIGHT;
+  const allowed = (c: LimpChoice) => !TOUR_ENDING.includes(c) || (voted && t.votes[c] >= majorityNeeded(true));
+  for (const c of opts) if (TOUR_ENDING.includes(c) && allowed(c)) return c;
+  // no majority for internment: those hands go to each man's next choice
+  const open = opts.filter((c) => !TOUR_ENDING.includes(c));
+  for (const c of opts) if (!open.includes(c)) for (const seat of t.voters[c]) t.votes[crewVote(s, seat, open)]++;
+  const pilot = crewVote(s, 'Pilot', open);
   let best = pilot;
-  for (const c of opts) if (t.votes[c] > t.votes[best]) best = c;
+  for (const c of open) if (t.votes[c] > t.votes[best]) best = c;
   return best;
 }
 
@@ -149,7 +166,7 @@ export const LIMP_TEXT = {
   title: 'LIMPING HOME', sub: 'Badly damaged, and a long way from England',
   fuel: 'Fuel', leak: 'fuel leak', engines: 'Engines {n} of 4', behind: 'falling behind the formation',
   ask: 'CREW DECISION · where do we take her?', yourVote: 'Your vote: {choice}', crewDecided: 'Crew decision: {choice}',
-  votes: '{n} votes', vote1: '1 vote', press: 'Press {keys} to vote · {s} s',
+  votes: '{n} votes', vote1: '1 vote', you: 'You ×{n}', majority: 'Internment needs {n} of {total} votes', press: 'Press {keys} to vote · {s} s', tap: 'Tap a choice to vote · {s} s',
   home: 'Home with the formation', divert: 'Emergency field · RAF Woodbridge', ditch: 'Ditch in the Channel · Air-Sea Rescue',
   Sweden: 'Neutral Sweden · interned', Switzerland: 'Neutral Switzerland · interned',
   kmTo: '{km} km to go', dry: 'Tanks dry',

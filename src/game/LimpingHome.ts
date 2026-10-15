@@ -4,7 +4,7 @@ import { tx } from '../i18n';
 import { sound } from '../audio/Sound';
 import {
   ASK_AT, CHOICE_KEYS, DECIDE_TIME, FUEL, HUNTER_TIMES, LIMP_RADIO, LIMP_TEXT, ROUTE, burnRate, choiceLabel, decide, distanceLeft,
-  PLAYER_WEIGHT, internReason, limpingDue, neutralFor, options, startFuel, tally, type LimpChoice, type LimpState, type Neutral, type Tally,
+  CREW_SEATS, PLAYER_WEIGHT, TOUR_ENDING, internReason, majorityNeeded, limpingDue, neutralFor, options, startFuel, tally, type LimpChoice, type LimpState, type Neutral, type Tally,
 } from './LimpingHomeRules';
 
 // Limping home (Phase 11 goal 12). When a campaign gunner mission would end in success but the ship is
@@ -17,7 +17,7 @@ import {
 // Hooks: MissionFlow.finish asks intercept() first; Game.frame calls frame(dt) next to midRound.update;
 // Ditching.eligible defers to `ditch` / `owns`; reset() from MissionFlow.startMission, release() from the menus.
 const CSS = `
-#limpHome { position: fixed; left: 16px; top: 236px; width: min(30vw, 330px); box-sizing: border-box; padding: 8px 11px 9px; z-index: 44;
+#limpHome { position: fixed; right: 16px; top: 96px; width: min(28vw, 330px); box-sizing: border-box; padding: 8px 11px 9px; z-index: 44;
   background: rgba(10,14,10,.88); border-inline-start: 3px solid #c6a85e; color: #efe6cf; font: 12px/1.35 inherit; text-align: start; pointer-events: none; }
 #limpHome .lh-k { font-size: 10px; letter-spacing: 2px; color: #c6a85e; }
 #limpHome .lh-s { font-size: 11px; opacity: .85; margin: 2px 0 4px; }
@@ -26,14 +26,34 @@ const CSS = `
 #limpHome .lh-f .bar i { display: block; height: 100%; background: #c6a85e; width: 0; }
 #limpHome.low .lh-f .bar i { background: #d0573f; }
 #limpHome .lh-q { margin-top: 7px; font-size: 12px; color: #c6a85e; }
-#limpHome .lh-o { display: flex; gap: 6px; align-items: baseline; margin-top: 4px; padding: 3px 5px; border: 1px solid #fff2; pointer-events: auto; cursor: pointer; }
+#limpHome .lh-o { display: grid; grid-template-columns: auto 1fr auto; column-gap: 6px; align-items: baseline; margin-top: 4px; padding: 3px 5px; border: 1px solid #fff2; pointer-events: auto; cursor: pointer; }
 #limpHome .lh-o kbd { font-size: 10px; padding: 0 4px; border: 1px solid #c6a85e; }
-#limpHome .lh-o .l { flex: 1; }
 #limpHome .lh-o .v { font-size: 10px; opacity: .8; white-space: nowrap; }
+#limpHome .lh-o .who { grid-column: 2 / 4; font-size: 10px; line-height: 1.3; color: #c9bfa3; }
+#limpHome .lh-o .who b { font-weight: 600; color: #efe6cf; }
+#limpHome .lh-o .who:empty { display: none; }
+#limpHome .lh-o .need { grid-column: 2 / 4; font-size: 9.5px; color: #d9a35a; }
 #limpHome .lh-o.mine { border-color: #c6a85e; background: #c6a85e22; }
 #limpHome .lh-o.win { border-color: #efe6cf; }
 #limpHome .lh-r { margin-top: 6px; font-size: 13px; }
-@media (max-height: 520px) { #limpHome { top: 120px; padding: 4px 7px; } #limpHome .lh-s { display: none; } }
+body.touch #limpHome { top: 132px; }
+body.limping #nemCard { display: none !important; }
+body.touch #limpHome .lh-o { grid-template-columns: 1fr auto; }
+body.touch #limpHome .lh-o kbd { display: none; }
+body.touch #limpHome .lh-o .who, body.touch #limpHome .lh-o .need { grid-column: 1 / 3; }
+/* phones and short windows: clear of the centred subtitles (44vw) and the touch buttons under the card */
+@media (max-height: 500px) {
+  #limpHome { right: 8px; top: 84px; width: calc(27vw - 8px); padding: 4px 6px; font-size: 10px; }
+  body.touch #limpHome { top: 128px; }
+  #limpHome .lh-s:not(.lh-c) { display: none; }
+  #limpHome .lh-f { font-size: 10px; }
+  #limpHome .lh-q { display: none; }
+  #limpHome .lh-o { margin-top: 3px; padding: 1px 4px; line-height: 1.2; }
+  #limpHome .lh-o .v, #limpHome .lh-o .who, #limpHome .lh-o .need { font-size: 8.5px; line-height: 1.2; }
+  #limpHome .lh-s.lh-c { font-size: 9px; margin: 1px 0 0; }
+}
+/* the smallest phones: the fuel row carries the card (the LIMPING HOME banner already named it) */
+@media (max-height: 380px) { #limpHome .lh-k { display: none; } }
 `;
 
 export class LimpingHome {
@@ -224,6 +244,7 @@ export class LimpingHome {
       this.pick(el.dataset.limp as LimpChoice);
     });
     document.body.appendChild(r);
+    document.body.classList.add('limping');
     this.render();
   }
 
@@ -237,15 +258,18 @@ export class LimpingHome {
     let body = '';
     if (this.choice) {
       const left = distanceLeft(this.choice, this.flown, s.neutral);
-      body = `<div class="lh-r">${esc(tx(choiceLabel(this.choice, s.neutral)))}</div><div class="lh-s">${esc(s.fuel <= 0 ? tx(LIMP_TEXT.dry) : tx(LIMP_TEXT.kmTo, { km: left }))}</div>`;
+      body = `<div class="lh-r">${esc(tx(choiceLabel(this.choice, s.neutral)))}</div><div class="lh-s lh-c">${esc(s.fuel <= 0 ? tx(LIMP_TEXT.dry) : tx(LIMP_TEXT.kmTo, { km: left }))}</div>`;
     } else if (this.votes) {
       const t = this.votes = tally(s, this.opts);   // hands change as the gauges fall
       const winner = decide(s, this.vote, this.opts);
+      const need = majorityNeeded(true), total = CREW_SEATS.length + PLAYER_WEIGHT;
       body = `<div class="lh-q">${esc(tx(LIMP_TEXT.ask))}</div>` + this.opts.map((c, i) => {
-        const n = t.votes[c] + (this.vote === c ? PLAYER_WEIGHT : 0);
-        const who = t.voters[c].map((v) => tx(v)).join(', ');
-        return `<div class="lh-o${this.vote === c ? ' mine' : ''}${winner === c && this.vote ? ' win' : ''}" data-limp="${c}"><kbd>${CHOICE_KEYS[i].slice(5)}</kbd><span class="l">${esc(tx(choiceLabel(c, s.neutral)))}</span><span class="v" title="${esc(who)}">${esc(n === 1 ? tx(LIMP_TEXT.vote1) : tx(LIMP_TEXT.votes, { n }))}</span></div>`;
-      }).join('') + `<div class="lh-s">${esc(this.vote ? tx(LIMP_TEXT.yourVote, { choice: tx(choiceLabel(this.vote, s.neutral)) }) : tx(LIMP_TEXT.press, { keys: this.opts.map((_, i) => CHOICE_KEYS[i].slice(5)).join('/'), s: Math.max(0, Math.ceil(DECIDE_TIME - (this.t - ASK_AT))) }))}</div>`;
+        const mine = this.vote === c, n = t.votes[c] + (mine ? PLAYER_WEIGHT : 0);
+        // each man's hand under the choice he votes for (the gunner's counts three times)
+        const who = t.voters[c].map((v) => esc(tx(v))).join(' · ') + (mine ? `${t.voters[c].length ? ' · ' : ''}<b>${esc(tx(LIMP_TEXT.you, { n: PLAYER_WEIGHT }))}</b>` : '');
+        const note = TOUR_ENDING.includes(c) ? `<span class="need">${esc(tx(LIMP_TEXT.majority, { n: need, total }))}</span>` : '';
+        return `<div class="lh-o${mine ? ' mine' : ''}${winner === c && this.vote ? ' win' : ''}" data-limp="${c}"><kbd>${CHOICE_KEYS[i].slice(5)}</kbd><span class="l">${esc(tx(choiceLabel(c, s.neutral)))}</span><span class="v">${esc(n === 1 ? tx(LIMP_TEXT.vote1) : tx(LIMP_TEXT.votes, { n }))}</span><span class="who">${who}</span>${note}</div>`;
+      }).join('') + `<div class="lh-s lh-c">${esc(this.vote ? tx(LIMP_TEXT.yourVote, { choice: tx(choiceLabel(this.vote, s.neutral)) }) : tx(this.touch() ? LIMP_TEXT.tap : LIMP_TEXT.press, { keys: this.opts.map((_, i) => CHOICE_KEYS[i].slice(5)).join('/'), s: Math.max(0, Math.ceil(DECIDE_TIME - (this.t - ASK_AT))) }))}</div>`;
     }
     const html = `<div class="lh-k">${esc(tx(LIMP_TEXT.title))}</div><div class="lh-s">${esc(status.join(' · '))}</div>`
       + `<div class="lh-f"><span>${esc(tx(LIMP_TEXT.fuel))}</span><span class="bar"><i style="width:${Math.min(100, fuel * 2.5)}%"></i></span><b>${fuel}%</b></div>${body}`;
@@ -253,11 +277,14 @@ export class LimpingHome {
     r.classList.toggle('low', s.fuel < 0.08);
   }
 
+  private touch() { return typeof document !== 'undefined' && document.body.classList.contains('touch'); }
+
   /** End the leg (UI and pins); the outcome flags stay for the debrief. */
   private stop() {
     if (this.hunters.length) { this.g.midRound.unpin(this.hunters); this.hunters.length = 0; }
     this.active = false;
     this.root?.remove(); this.root = null; this.html = '';
+    if (typeof document !== 'undefined') document.body.classList.remove('limping');
   }
   release() { this.stop(); }
   reset() {

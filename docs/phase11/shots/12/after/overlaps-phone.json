@@ -1,0 +1,73 @@
+{
+ "results": [
+  {
+   "key": "standard-en-844x390",
+   "info": true,
+   "card": {
+    "id": "limpHome",
+    "left": 616.125,
+    "top": 128,
+    "right": 836,
+    "bottom": 268.5625
+   },
+   "limpIssues": [],
+   "otherIssues": []
+  },
+  {
+   "key": "standard-en-844x390 voted",
+   "issues": []
+  },
+  {
+   "key": "standard-en-667x375",
+   "info": true,
+   "card": {
+    "id": "limpHome",
+    "left": 486.921875,
+    "top": 128,
+    "right": 659,
+    "bottom": 277.5625
+   },
+   "limpIssues": [],
+   "otherIssues": []
+  },
+  {
+   "key": "standard-en-667x375 voted",
+   "issues": []
+  },
+  {
+   "key": "standard-ar-844x390",
+   "info": true,
+   "card": {
+    "id": "limpHome",
+    "left": 616.125,
+    "top": 128,
+    "right": 836,
+    "bottom": 280.5625
+   },
+   "limpIssues": [],
+   "otherIssues": []
+  },
+  {
+   "key": "standard-ar-844x390 voted",
+   "issues": []
+  },
+  {
+   "key": "standard-ar-667x375",
+   "info": true,
+   "card": {
+    "id": "limpHome",
+    "left": 486.921875,
+    "top": 128,
+    "right": 659,
+    "bottom": 293.9375
+   },
+   "limpIssues": [],
+   "otherIssues": []
+  },
+  {
+   "key": "standard-ar-667x375 voted",
+   "issues": []
+  }
+ ],
+ "errors": []
+}

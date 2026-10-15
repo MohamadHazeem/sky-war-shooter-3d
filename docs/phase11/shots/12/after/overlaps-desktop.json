@@ -1,0 +1,125 @@
+{
+ "results": [
+  {
+   "key": "standard-en-1280x720",
+   "info": true,
+   "card": {
+    "id": "limpHome",
+    "left": 934,
+    "top": 96,
+    "right": 1264,
+    "bottom": 360
+   },
+   "limpIssues": [],
+   "otherIssues": []
+  },
+  {
+   "key": "standard-en-1280x720 voted",
+   "issues": []
+  },
+  {
+   "key": "full-en-1280x720",
+   "info": true,
+   "card": {
+    "id": "limpHome",
+    "left": 934,
+    "top": 96,
+    "right": 1264,
+    "bottom": 360
+   },
+   "limpIssues": [],
+   "otherIssues": []
+  },
+  {
+   "key": "standard-en-1024x500",
+   "info": true,
+   "card": {
+    "id": "limpHome",
+    "left": 747.53125,
+    "top": 84,
+    "right": 1016,
+    "bottom": 230.5625
+   },
+   "limpIssues": [],
+   "otherIssues": []
+  },
+  {
+   "key": "standard-en-1024x500 voted",
+   "issues": []
+  },
+  {
+   "key": "full-en-1024x500",
+   "info": true,
+   "card": {
+    "id": "limpHome",
+    "left": 747.53125,
+    "top": 84,
+    "right": 1016,
+    "bottom": 230.5625
+   },
+   "limpIssues": [],
+   "otherIssues": []
+  },
+  {
+   "key": "standard-ar-1280x720",
+   "info": true,
+   "card": {
+    "id": "limpHome",
+    "left": 934,
+    "top": 96,
+    "right": 1264,
+    "bottom": 409
+   },
+   "limpIssues": [],
+   "otherIssues": []
+  },
+  {
+   "key": "standard-ar-1280x720 voted",
+   "issues": []
+  },
+  {
+   "key": "full-ar-1280x720",
+   "info": true,
+   "card": {
+    "id": "limpHome",
+    "left": 934,
+    "top": 96,
+    "right": 1264,
+    "bottom": 409
+   },
+   "limpIssues": [],
+   "otherIssues": []
+  },
+  {
+   "key": "standard-ar-1024x500",
+   "info": true,
+   "card": {
+    "id": "limpHome",
+    "left": 747.53125,
+    "top": 84,
+    "right": 1016,
+    "bottom": 242.5625
+   },
+   "limpIssues": [],
+   "otherIssues": []
+  },
+  {
+   "key": "standard-ar-1024x500 voted",
+   "issues": []
+  },
+  {
+   "key": "full-ar-1024x500",
+   "info": true,
+   "card": {
+    "id": "limpHome",
+    "left": 747.53125,
+    "top": 84,
+    "right": 1016,
+    "bottom": 242.5625
+   },
+   "limpIssues": [],
+   "otherIssues": []
+  }
+ ],
+ "errors": []
+}
