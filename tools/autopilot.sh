@@ -39,6 +39,9 @@ while :; do
         ( cd /tmp/sws-cloud && git pull -q; export PATH="$HOME/.local/node/bin:$PATH"; [ -n "$acct" ] && export CLAUDE_CONFIG_DIR="$HOME/.claude-account2"
           (sleep 6; printf '\r'; sleep 40) | script -q "/tmp/cloud-fix-$k-$r.log" claude --cloud "Branch $branch was REJECTED by the automatic quality review. Check out that branch, read AGENTS.md and docs/phase11/reference-pack.md, fix every point: $(echo "$verdict" | tail -n +2 | tr '\n' ' ') Update $report, commit, push the same branch and confirm GitHub CI is green. Never push main." > /dev/null 2>&1 & p=$!; sleep 45; kill $p 2>/dev/null ) &
       fi
+      if [ "$lane" = "claude2" ] && [ $r -le 2 ]; then
+        ( cd "$wt" && CLAUDE_CONFIG_DIR="$HOME/.claude-account2" claude -p --dangerously-skip-permissions --model opus "Follow AGENTS.md. The automatic quality review REJECTED your work on this branch ($branch). Reasons: $(echo "$verdict" | tail -n +2 | tr '\n' ' ') Fix all of them, update $report, commit, push this branch and wait for green CI. Never push main, never deploy." < /dev/null > "/tmp/claude2-$k-fix$r.log" 2>&1 ) &
+      fi
       if [ "$lane" = "codex" ] && [ $r -le 2 ]; then
         ( cd "$wt" && codex exec --dangerously-bypass-approvals-and-sandbox -C . -o "/tmp/codex-$k-fix$r.txt" "Follow AGENTS.md. The automatic quality review REJECTED your work on this branch ($branch). Reasons: $(echo "$verdict" | tail -n +2 | tr '\n' ' ') Fix all of them, re-capture the affected shots, update $report, commit, push your branch and wait for green CI. Never push main, never deploy." < /dev/null > "/tmp/codex-$k-fix$r.log" 2>&1 ) &
       fi
