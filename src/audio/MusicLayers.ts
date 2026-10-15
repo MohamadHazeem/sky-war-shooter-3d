@@ -182,3 +182,41 @@ export function stringsBar(spb: number, root: number, fifth: boolean, variant = 
   }
   return normalise(d);
 }
+
+// ---------------------------------------------------------------- field snare (score 2.0)
+// A period field drum (rope-tension snare): a band-passed noise "crack" over a short shell
+// tone, ghost notes between the accents. Unpitched, so it may play over any track.
+//   march  the bomb-run / combat cadence: accents on 1 and 3, a flam on 4, ghosts between
+//   roll   a 32-stroke crescendo roll across the bar (bomb-run countdown, into a climax)
+export type SnarePattern = 'march' | 'roll';
+const SNARE: Record<'march', [number, number][]> = {
+  // [step of 16, velocity]
+  march: [[0, 1], [2, 0.3], [3, 0.35], [4, 0.6], [6, 0.3], [8, 0.95], [10, 0.3], [11, 0.4], [12, 0.6], [13.6, 0.45], [14, 0.9]],
+};
+export function snareBar(spb: number, pattern: SnarePattern, seed = 1, sr = LAYER_SR): Float32Array {
+  const bar = 4 * spb;
+  const n = Math.ceil((bar + 0.4) * sr);
+  const d = new Float32Array(n);
+  const r = rng(seed);
+  const strokes: [number, number][] = pattern === 'roll'
+    ? Array.from({ length: 32 }, (_, k) => [k / 2, 0.25 + 0.75 * Math.pow(k / 31, 1.6)] as [number, number])
+    : (60 / spb > 120 ? SNARE.march.filter(([s]) => Number.isInteger(s) && s % 2 === 0) : SNARE.march);
+  for (const [step, vel] of strokes) {
+    const t0 = Math.round((step / 16) * bar * sr);
+    const v = vel * (0.9 + 0.2 * r());
+    const len = Math.min(n - t0, Math.floor(0.28 * sr));
+    const bp = new SVF(), lp = new SVF();
+    let ph = r() * TAU;
+    for (let i = 0; i < len; i++) {
+      const t = i / sr;
+      ph += TAU * (185 + 60 * Math.exp(-t * 60)) / sr;
+      const shell = Math.sin(ph) * Math.exp(-t * 38) * 0.55;
+      // snares: band-passed noise (via the SVF band output), a little low body under it
+      const x = r() * 2 - 1;
+      bp.run(x, 3200, 1.2, sr);
+      const crack = (bp.bp * 1.4 + lp.run(x, 900, 0.7, sr) * 0.4) * Math.exp(-t * 22);
+      d[t0 + i] += v * Math.tanh((shell + crack) * 1.6);
+    }
+  }
+  return normalise(d);
+}

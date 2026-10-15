@@ -21,10 +21,19 @@
 // with their own wrapped audio, so an AAC decoder that keeps the encoder priming still loops
 // cleanly; the priming is detected from the decoded length and the beat grid shifted).
 // Without any recorded track the old procedural score (D minor, intensity-driven) plays.
+//
+// Score 2.0 (ScoreDirector.ts, cues from tools/audio/score2_build.mjs): the bomb run gets its
+// own bed and a field-snare layer that follows its phases; stingers for the climb into the
+// climax, bombs away, the strike, a lost B-17, victory and the crew room's empty bunk. A
+// stinger lands its accent on the playing track's beat or bar line, pitched ones are
+// transposed to the bar's root, and the beds and layers duck under it. Cues load lazily
+// (after the first mission starts) and can be switched off (Settings: Music cues).
 import { freeOnEnd } from './Safe';
-import { LAYER_SR, brassBar, stringsBar, taikoBar, type TaikoPattern } from './MusicLayers';
+import { LAYER_SR, brassBar, snareBar, stringsBar, taikoBar, type SnarePattern, type TaikoPattern } from './MusicLayers';
 import { CLIMAX } from './Threat';
 import { scoreMode, modeThreat, type ScoreMode } from './ModeMusic';
+import { CUES, ScoreDirector, bombRunBed, bombRunSnare, moodSnare, transposeRate, type Cue } from './ScoreDirector';
+import type { BombRunPhase } from '../game/BombRunState';
 
 const mtof = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -49,7 +58,14 @@ export interface TrackMeta {
   root?: number;       // key root, pitch class
   pitched?: boolean;   // drone / ostinato allowed
   roots?: number[];    // bass root per bar
+  accent?: number;     // stingers: s into the file where the accent sits (lands on the grid)
 }
+
+interface Sting { buf: AudioBuffer; gain: number; root: number | null; accent: number }
+// stinger file key (manifest) for each cue
+const CUE_FILE: Record<Cue, string> = { rise: 'sting_rise', bombsAway: 'sting_bombsaway', strike: 'sting_strike', loss: 'sting_loss', win: 'sting_win', bunk: 'sting_bunk' };
+type LayerKind = 'drums' | 'brass' | 'strings' | 'snare';
+const LAYERS: LayerKind[] = ['drums', 'brass', 'strings', 'snare'];
 
 interface Track {
   name: string; buf: AudioBuffer; meta: TrackMeta; gain: number; loop: boolean;
@@ -69,11 +85,13 @@ const UP: Record<Mood, number> = { calm: 0, tension: 0.18, combat: 0.45, climax:
 const DOWN: Record<Mood, number> = { calm: 0, tension: 0.1, combat: 0.3, climax: 0.68 };
 const DWELL: Record<Mood, number> = { calm: 4, tension: 8, combat: 10, climax: 14 };
 const ORDER: Mood[] = ['calm', 'tension', 'combat', 'climax'];
-const RANK: Record<string, number> = { tension: 1, combat: 2, climax: 3 };
+const RANK: Record<string, number> = { tension: 1, bombrun: 1.5, combat: 2, climax: 3 };
 // Layer bus levels at full (1.0) layer level, set from the loudness report so that the full
 // climax layers sit ~6 LU under the climax track: drums ~-30, brass ~-32, strings ~-34 LUFS
 // against the track's ~-22 (tools/audio/loudness.mjs, "music layers").
-export const LAYER_MIX = { drums: 0.13, brass: 0.095, strings: 0.16 };
+// The field snare sits under the drums (bright, so it reads at a lower level): climax ~-34,
+// the bomb-run countdown ~-32 LUFS against the bomb-run bed's ~-23.
+export const LAYER_MIX = { drums: 0.13, brass: 0.095, strings: 0.16, snare: 0.12 };
 const LOOKAHEAD = 0.3;
 const RESUME_S = 120;  // a track left less than this long ago resumes where it was
 
@@ -81,7 +99,12 @@ export class Music {
   private ctx: AudioContext | null = null;
   private out!: GainNode;
   private layerBus!: GainNode;
-  private layerGain!: Record<'drums' | 'brass' | 'strings', GainNode>;
+  private layerGain!: Record<LayerKind, GainNode>;
+  private bedBus!: GainNode;   // beds + layers: ducks under a stinger
+  readonly director = new ScoreDirector();
+  private stings = new Map<string, Sting>();
+  private bombPhase: BombRunPhase = 'idle';
+  private pendingRise = false;
   private noise!: AudioBuffer;
   private timer: number | null = null;
   private nextTime = 0;
@@ -105,8 +128,11 @@ export class Music {
 
   setCrewRoom(losses: boolean | null) {
     const room = losses === null ? null : losses ? 'crewLoss' : 'crew';
+    const was = this.room;
     if (room !== this.room) { this.room = room; this.modeChanged = true; }
     if (this.ctx) this.updateTracks();
+    // the empty bunk: a solo horn over the room's music once it has come in
+    if (this.ctx && room === 'crewLoss' && was !== 'crewLoss' && this.enabled && this.stings.has(CUE_FILE.bunk) && this.director.request('bunk', this.ctx.currentTime)) this.playSting('bunk', this.ctx.currentTime + 2.5);
   }
 
   setDetail(reduced: boolean) { this.reduced = reduced; }
@@ -119,6 +145,75 @@ export class Music {
     const src = ctx.createBufferSource(), gain = ctx.createGain();
     src.buffer = track.buf; gain.gain.value = track.gain;
     src.connect(gain).connect(this.out); freeOnEnd(src, [gain]); src.start();
+  }
+
+  // ---- score 2.0 cues (ScoreDirector.ts) ----
+  private bombBed = false;
+
+  /** Settings: Music cues (stingers); the beds and layers adapt either way. */
+  set cues(on: boolean) { this.director.enabled = on; }
+  get cues() { return this.director.enabled; }
+
+  /** The bomb-run clock (BombRun.ts), every frame of a gunner mission ('idle' outside the run). */
+  setBombRun(phase: BombRunPhase) {
+    if (phase === this.bombPhase || !this.ctx) return;
+    const cue = this.scene === 'mission' ? this.director.bombRun(phase, this.ctx.currentTime) : null;
+    this.bombPhase = phase;
+    this.bombBed = this.scene === 'mission' && bombRunBed(phase);
+    if (cue) this.cue(cue, true);
+  }
+
+  /** World event: a B-17 went down. */
+  bomberLost(player: boolean) {
+    if (!this.ctx || this.scene !== 'mission' || !this.enabled) return;
+    if (this.director.bomberLost(player, this.ctx.currentTime)) this.cue('loss', true);
+  }
+
+  // Play a cue whose permission is already granted (or ask the director first): its accent
+  // lands on the playing track's next beat / bar line (as soon as possible if that is too close).
+  private cue(cue: Cue, granted = false) {
+    const ctx = this.ctx;
+    if (!ctx || !this.enabled || !this.stings.has(CUE_FILE[cue])) return;
+    if (!granted && !this.director.request(cue, ctx.currentTime)) return;
+    const s = this.stings.get(CUE_FILE[cue])!, spec = CUES[cue], now = ctx.currentTime;
+    const b = this.lead;
+    let land = now + 0.05 + s.accent;
+    if (b?.track.spb && spec.quantise !== 'now') {
+      const unit = spec.quantise === 'bar' ? this.barDur(b.track) : b.track.spb;
+      // a bed that is about to enter (a mood change): its first downbeat; else the next line,
+      // leaving room for (at most half a unit of) the stinger's pickup
+      land = b.when > now ? b.when : this.nextGrid(b, now + 0.05 + Math.min(s.accent, unit * 0.5), unit);
+    }
+    this.playSting(cue, land - s.accent);
+  }
+
+  // Start a stinger at ctx time `at` (before now: joined late), transposed to the bar it lands
+  // in when it is pitched; the beds and layers duck under it. Returns its length (s).
+  private playSting(cue: Cue, at: number): number {
+    const ctx = this.ctx!, s = this.stings.get(CUE_FILE[cue])!, spec = CUES[cue];
+    const now = ctx.currentTime, start = Math.max(now + 0.02, at), off = start - at;
+    const lead = this.lead && !this.room && this.lead.track.meta.pitched ? this.lead : null;
+    const rate = s.root !== null && lead ? transposeRate(s.root, this.rootAt(lead, start + s.accent)) : 1;
+    const src = ctx.createBufferSource(), gain = ctx.createGain();
+    src.buffer = s.buf; src.playbackRate.value = rate; gain.gain.value = s.gain;
+    src.connect(gain).connect(this.out); freeOnEnd(src, [gain]);
+    src.start(start, Math.min(off * rate, Math.max(0, s.buf.duration - 0.1)));
+    const len = (s.buf.duration - off * rate) / rate;
+    if (spec.duck < 1) {
+      const g = this.bedBus.gain;
+      g.cancelScheduledValues(start);
+      g.setTargetAtTime(spec.duck, start, 0.06);
+      g.setTargetAtTime(1, start + Math.max(0.3, len * 0.6), 0.6);
+    }
+    return len;
+  }
+
+  // first grid line (every `unit` s from the bed's downbeat) at or after t
+  private nextGrid(b: Bed, t: number, unit: number) {
+    const T = b.track;
+    if (t <= b.when) return b.when;
+    const ph = (((this.filePos(b, t) - T.ls - T.beat0) % unit) + unit) % unit;
+    return ph < 1e-4 ? t : t + unit - ph;
   }
 
   // threat -> mood
@@ -143,12 +238,13 @@ export class Music {
     this.beds = []; this.lead = null; this.lastLayerAt = -1; this.moodAt = ctx.currentTime; this.lastTick = ctx.currentTime;
     for (const t of this.tracks.values()) t.lastAt = -Infinity;
     this.out.connect(dest);
+    this.bedBus = ctx.createGain(); this.bedBus.connect(this.out);
     const send = ctx.createGain(); send.gain.value = 0.9;
     this.out.connect(send).connect(reverb);
-    this.layerBus = ctx.createGain(); this.layerBus.connect(this.out);
+    this.layerBus = ctx.createGain(); this.layerBus.connect(this.bedBus);
     const lg = () => { const g = ctx.createGain(); g.gain.value = 0; g.connect(this.layerBus); return g; };
-    this.layerGain = { drums: lg(), brass: lg(), strings: lg() };
-    this.layerSet = { drums: 0, brass: 0, strings: 0 };
+    this.layerGain = { drums: lg(), brass: lg(), strings: lg(), snare: lg() };
+    this.layerSet = { drums: 0, brass: 0, strings: 0, snare: 0 };
     const n = ctx.sampleRate;
     this.noise = ctx.createBuffer(1, n, ctx.sampleRate);
     const d = this.noise.getChannelData(0);
@@ -162,13 +258,17 @@ export class Music {
   private lastSwitch = 0;
   private lastLayerAt = -1;
   private layerCache = new Map<string, AudioBuffer>();
-  private layerSet = { drums: 0, brass: 0, strings: 0 };
+  private layerSet = { drums: 0, brass: 0, strings: 0, snare: 0 };
 
   get hasTracks() { return this.tracks.size > 0; }
   get playing() { return this.lead?.track.name ?? null; }
 
   // A decoded track (any order, any time): the scheduler picks it up when the mood wants it
   addTrack(name: string, buf: AudioBuffer, meta: TrackMeta = {}) {
+    if (name.startsWith('sting_')) {
+      this.stings.set(name, { buf, gain: meta.gain ?? 0.4, root: meta.pitched ? meta.root ?? null : null, accent: Math.max(0, meta.accent ?? 0) });
+      return;
+    }
     const loop = meta.loop ?? (name !== 'victory' && name !== 'defeat');
     let ls = Math.max(0, meta.loopStart ?? 0), le = Math.min(buf.duration, meta.loopEnd ?? buf.duration);
     // untrimmed AAC priming (or MP3 decoder delay): the decoded buffer is longer than encoded
@@ -251,7 +351,7 @@ export class Music {
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0, at);
     gain.gain.linearRampToValueAtTime(T.gain * this.moodLevel(name), at + Math.max(0.02, fadeIn));
-    src.connect(filter).connect(gain).connect(this.out);
+    src.connect(filter).connect(gain).connect(this.bedBus);
     freeOnEnd(src, [filter, gain]);
     src.start(at, off);
     const bed: Bed = { track: T, src, gain, filter, when: at, off, mood: this.mood };
@@ -271,8 +371,10 @@ export class Music {
     if (this.room && this.tracks.has(this.room)) return this.room;
     if (this.scene === 'menu') return this.tracks.has('menu') ? 'menu' : null;
     if (this.mode !== 'day' && this.tracks.has(this.mode)) return this.mode;
+    // the bomb run's own bed, unless the fight is pressing hard enough for the climax
+    if (this.bombBed && this.mood !== 'climax' && this.tracks.has('bombrun')) return 'bombrun';
     for (const n of MOOD_TRACK[this.mood]) if (this.tracks.has(n)) return n;
-    return [...this.tracks.keys()].find((k) => this.tracks.get(k)!.loop && k !== 'menu' && k !== 'crew' && k !== 'crewLoss') ?? null;
+    return [...this.tracks.keys()].find((k) => this.tracks.get(k)!.loop && !['menu', 'crew', 'crewLoss', 'bombrun'].includes(k)) ?? null;
   }
 
   private updateTracks() {
@@ -345,27 +447,33 @@ export class Music {
     if (i > ORDER.indexOf(was)) this.mood = ORDER[i];
     // down: one step at a time, after the dwell
     else if (i > 0 && s < DOWN[ORDER[i]] && now - this.moodAt > DWELL[ORDER[i]]) this.mood = ORDER[i - 1];
-    if (this.mood !== was) this.moodAt = now;
+    if (this.mood !== was) {
+      this.moodAt = now;
+      if (this.scene === 'mission' && this.director.mood(was, this.mood, now)) this.pendingRise = true;
+    }
   }
 
   // Layer levels (gliding) for the mood and threat; pitched layers only over pitched tracks
-  private layerLevels() {
-    if (this.reduced || this.room) return { drums: 0, brass: 0, strings: 0 };
+  private layerLevels(): Record<LayerKind, number> {
+    if (this.reduced || this.room) return { drums: 0, brass: 0, strings: 0, snare: 0 };
     const s = this.smooth, m = this.mood;
-    if (this.scene === 'mission' && this.mode === 'night' && this.lead?.track.name === 'night') return { drums: 0.15 + s * 0.5, brass: 0, strings: Math.max(0, s - 0.3) * 0.65 };
+    if (this.scene === 'mission' && this.mode === 'night' && this.lead?.track.name === 'night') return { drums: 0.15 + s * 0.5, brass: 0, strings: Math.max(0, s - 0.3) * 0.65, snare: 0 };
+    // the bomb run's bed: a heartbeat under it and the field snare tightening towards the release
+    if (this.scene === 'mission' && this.lead?.track.name === 'bombrun') return { drums: 0.35 + 0.3 * bombRunSnare(this.bombPhase), brass: 0, strings: 0, snare: bombRunSnare(this.bombPhase) };
     const lin = (a: number, b: number) => Math.min(1, Math.max(0, (s - a) / (b - a)));
     const pitched = !!this.lead?.track.meta.pitched && this.scene === 'mission';
     const drums = m === 'calm' ? 0 : m === 'tension' ? 0.6 + 0.4 * lin(0.18, 0.45) : m === 'combat' ? 0.5 + 0.35 * lin(0.45, CLIMAX) : 0.9;
     const brass = !pitched ? 0 : m === 'climax' ? 0.75 + 0.25 * lin(CLIMAX, 1) : m === 'combat' ? 0.45 * lin(0.55, CLIMAX) : 0;
     const strings = !pitched ? 0 : m === 'climax' ? 0.8 : m === 'combat' ? 0.5 * lin(0.65, CLIMAX) : 0;
-    return { drums: this.scene === 'mission' ? drums : 0, brass, strings };
+    const snare = this.scene === 'mission' && this.mode === 'day' ? moodSnare(m, s) : 0;
+    return { drums: this.scene === 'mission' ? drums : 0, brass, strings, snare };
   }
 
   private updateLayers() {
     const ctx = this.ctx!;
     const now = ctx.currentTime;
     const lv = this.layerLevels();
-    for (const k of ['drums', 'brass', 'strings'] as const) {
+    for (const k of LAYERS) {
       const v = lv[k] * LAYER_MIX[k];
       if (Math.abs(v - this.layerSet[k]) < 0.002) continue;
       this.layerSet[k] = v;
@@ -382,14 +490,20 @@ export class Music {
     const fifth = !!T.meta.pitched;
     if (lv.drums > 0.02) {
       const fill = (this.mood === 'climax' || this.smooth > 0.62) && bi % 4 === 3;
-      const pat: TaikoPattern = this.mood === 'tension' ? 'heart' : fill ? 'fill' : 'drive';
+      const bomb = T.name === 'bombrun';
+      const pat: TaikoPattern = this.mood === 'tension' || bomb ? 'heart' : fill ? 'fill' : 'drive';
       this.layerShot('drums', this.layer('taiko', T.spb, pat, 0, bi % 2), at);
     }
     if (lv.brass > 0.02) this.layerShot('brass', this.layer('brass', T.spb, root, fifth, 0), at);
     if (lv.strings > 0.02) this.layerShot('strings', this.layer('strings', T.spb, root, fifth, bi % 2), at);
+    if (lv.snare > 0.02) {
+      // a roll through the countdown, and into every fourth bar of the climax
+      const roll = T.name === 'bombrun' ? this.bombPhase === 'countdown' : this.mood === 'climax' && bi % 4 === 3;
+      this.layerShot('snare', this.layer('snare', T.spb, roll ? 'roll' : 'march', 0, bi % 2), at);
+    }
   }
 
-  private layerShot(bus: 'drums' | 'brass' | 'strings', buf: AudioBuffer | null, at: number) {
+  private layerShot(bus: LayerKind, buf: AudioBuffer | null, at: number) {
     if (!buf || !this.ctx) return;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
@@ -399,7 +513,7 @@ export class Music {
   }
 
   // Bar buffers, cached by kind / tempo / root / variant (rendered on first use or ahead, see prerender)
-  private layer(kind: 'taiko' | 'brass' | 'strings', spb: number, a: TaikoPattern | number, fifth: boolean | number, variant: number): AudioBuffer | null {
+  private layer(kind: 'taiko' | 'brass' | 'strings' | 'snare', spb: number, a: TaikoPattern | SnarePattern | number, fifth: boolean | number, variant: number): AudioBuffer | null {
     if (typeof AudioBuffer === 'undefined') return null;
     const key = `${kind}|${spb.toFixed(5)}|${a}|${fifth}|${variant}`;
     let buf = this.layerCache.get(key);
@@ -407,6 +521,7 @@ export class Music {
     let d: Float32Array;
     try {
       d = kind === 'taiko' ? taikoBar(spb, a as TaikoPattern, 11 + variant)
+        : kind === 'snare' ? snareBar(spb, a as SnarePattern, 41 + variant)
         : kind === 'brass' ? brassBar(spb, a as number, !!fifth, 21 + variant)
           : stringsBar(spb, a as number, !!fifth, variant, 31 + variant);
     } catch { return null; }
@@ -423,6 +538,7 @@ export class Music {
     const jobs: (() => void)[] = [];
     jobs.push(() => this.layer('taiko', T.spb, 'hit', 0, 0));
     for (const v of [0, 1]) for (const p of ['heart', 'drive', 'fill'] as TaikoPattern[]) jobs.push(() => this.layer('taiko', T.spb, p, 0, v));
+    if (name === 'combat' || name === 'climax' || name === 'bombrun') for (const v of [0, 1]) for (const p of ['march', 'roll'] as SnarePattern[]) jobs.push(() => this.layer('snare', T.spb, p, 0, v));
     if (T.meta.pitched) {
       for (const r of new Set(T.meta.roots ?? [T.meta.root ?? 9])) {
         jobs.push(() => this.layer('brass', T.spb, r, true, 0));
@@ -450,6 +566,7 @@ export class Music {
     this.out.gain.setTargetAtTime(this.enabled ? (this.tracks.size ? 1 : s === 'menu' ? 0.5 : 0.32) : 0, t, 1.0);
     if (s === 'menu') this.setContext(undefined, false);
     if (s === 'mission') { this.mood = 'calm'; this.moodAt = t; this.smooth = 0; }
+    this.director.reset(); this.bombPhase = 'idle'; this.bombBed = false; this.pendingRise = false;
     if (this.tracks.size) { this.lastSwitch = -99; this.updateTracks(); }
     if (!this.timer) {
       this.nextTime = t + 0.1;
@@ -478,8 +595,16 @@ export class Music {
     if (!this.ctx || !this.enabled) return;
     const name = win ? 'victory' : 'defeat';
     if (this.tracks.has(name)) {
-      for (const k of ['drums', 'brass', 'strings'] as const) { this.layerGain[k].gain.setTargetAtTime(0, this.ctx.currentTime, 0.4); this.layerSet[k] = 0; }
-      this.startTrack(name, this.ctx.currentTime + 0.05, 0.6, 1.5);
+      const now = this.ctx.currentTime;
+      for (const k of LAYERS) { this.layerGain[k].gain.setTargetAtTime(0, now, 0.4); this.layerSet[k] = 0; }
+      this.bombBed = false;
+      // a win opens with the fanfare; the victory track enters under its last bar
+      const fanfare = win && this.stings.has(CUE_FILE.win) && this.director.request('win', now);
+      if (fanfare) {
+        const len = this.playSting('win', now + 0.05);
+        for (const b of this.beds) { b.gain.gain.cancelScheduledValues(now); b.gain.gain.setTargetAtTime(0, now, 0.35); }
+        this.startTrack(name, now + Math.max(0.5, len - 1.2), 1.5, 1);
+      } else this.startTrack(name, now + 0.05, 0.6, 1.5);
       return;
     }
     const t = this.ctx.currentTime + 0.05;
@@ -512,6 +637,7 @@ export class Music {
     this.updateMood(dt);
     if (this.tracks.size) {
       this.updateTracks();
+      if (this.pendingRise) { this.pendingRise = false; this.cue('rise', true); }
       this.updateLayers();
       this.nextTime = now + 0.1;
       return;

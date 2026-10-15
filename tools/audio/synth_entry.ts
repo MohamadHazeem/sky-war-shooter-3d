@@ -4,7 +4,7 @@ import { sound } from '../../src/audio/Sound';
 import { hitSounds } from '../../src/audio/HitSounds';
 import { playCue } from '../../src/audio/FeedbackCues';
 import { AirframeCreaks } from '../../src/audio/Creaks';
-import { taikoBar, brassBar, stringsBar, LAYER_SR } from '../../src/audio/MusicLayers';
+import { taikoBar, brassBar, stringsBar, snareBar, LAYER_SR } from '../../src/audio/MusicLayers';
 import { LAYER_MIX } from '../../src/audio/Music';
 import { SYNTH3 } from '../../src/audio/Synth3';
 import { FIELD } from '../../src/audio/SynthField';
@@ -61,5 +61,7 @@ export function render(sr = 44100): { bufs: Buf[]; layerMix: typeof LAYER_MIX } 
   mk('layer:climax:brass_A', brassBar(60 / 130, 9, true, 21));
   mk('layer:climax:brass_F', brassBar(60 / 130, 5, true, 21));
   mk('layer:climax:strings_A', stringsBar(60 / 130, 9, true, 0, 31));
+  mk('layer:climax:snare_march', snareBar(60 / 130, 'march', 41));
+  mk('layer:bombrun:snare_march', snareBar(60 / 100, 'march', 41));
   return { bufs: out, layerMix: LAYER_MIX };
 }
