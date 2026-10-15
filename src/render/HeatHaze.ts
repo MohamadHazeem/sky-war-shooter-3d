@@ -1,11 +1,12 @@
 import * as THREE from 'three';
+import { effectNoise, EFFECT_NOISE_GLSL } from './EffectNoise';
 import { access } from '../core/Accessibility';
 
 // Heat haze: screen-space refraction behind engine exhausts, around muzzle blasts and in
 // the expanding shock ripple of a nearby explosion.
 //
 // A fixed pool of world-space emitters is drawn as camera-facing billboards (one instanced
-// draw) into a small half-float buffer of screen-space offset vectors, additively, with a
+// draw) into a quarter-resolution half-float buffer of screen-space offset vectors, additively, with a
 // soft depth test against the scene. PostFX then offsets its scene colour lookups by it.
 //
 // API (other systems call these; nothing is allocated per call):
@@ -101,12 +102,7 @@ varying float vKind;
 varying float vDist;
 varying float vRadius;
 
-float h2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float vnoise(vec2 p) {
-  vec2 i = floor(p), f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(mix(h2(i), h2(i + vec2(1, 0)), u.x), mix(h2(i + vec2(0, 1)), h2(i + vec2(1, 1)), u.x), u.y);
-}
+${EFFECT_NOISE_GLSL}
 
 float sceneDist(vec2 uv) {
   float d = texture2D(tDepth, uv).r;
@@ -198,6 +194,7 @@ export class HeatHaze {
     this.geo.instanceCount = 0;
     this.mat = new THREE.ShaderMaterial({
       uniforms: {
+        tValueNoise: { value: effectNoise() },
         tDepth: { value: null }, uInvProj: { value: new THREE.Matrix4() }, uReversed: { value: reversed ? 1 : 0 },
         uRes: { value: new THREE.Vector2(1, 1) }, uTime: { value: 0 }, uNear: { value: 0.05 },
         uGain: { value: new THREE.Vector2(0.004, 0.012) },
@@ -283,7 +280,9 @@ export class HeatHaze {
   setReversed(reversed: boolean) { this.mat.uniforms.uReversed.value = reversed ? 1 : 0; }
 
   setSize(w: number, h: number) {
-    this.rt.setSize(Math.max(1, w >> 1), Math.max(1, h >> 1));
+    // The offset field is smooth and bilinearly reconstructed; quarter resolution
+    // preserves the scene image resolution while cutting distortion fill by 75%.
+    this.rt.setSize(Math.max(1, w >> 2), Math.max(1, h >> 2));
     this.mat.uniforms.uRes.value.set(this.rt.width, this.rt.height);
   }
 

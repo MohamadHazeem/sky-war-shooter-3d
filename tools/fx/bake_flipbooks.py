@@ -55,9 +55,9 @@ EFFECTS = {
                      flow='BOTH', fuel=2.2, temp=2.2, dens=0.9, vel=0.8, burning_rate=0.5, flame_smoke=1.5,
                      flame_vorticity=1.6, vorticity=0.9, alpha=0.0, beta=0.8, dissolve=0, sigma=22),
     # 88 mm flak burst: a split-second orange core inside an instantly black, dense, lumpy puff
-    'flak': dict(seed=27, frames=(1, 64), emit=(1, 3), grow=(0.07, 0.26), lumpy=1.15, loc=(0, 0, 0), gravity=2.0,
-                 flow='BOTH', fuel=0.7, temp=1.5, dens=2.5, vel=2.8, burning_rate=2.2, flame_smoke=3.0,
-                 flame_vorticity=1.8, vorticity=2.8, alpha=0.0, beta=0.15, dissolve=0, sigma=34),
+    'flak': dict(seed=27, frames=(1, 64), emit=(1, 3), grow=(0.10, 0.32), lumpy=1.65, loc=(0, 0, 0), gravity=2.0,
+                 flow='BOTH', fuel=0.7, temp=1.5, dens=2.8, vel=0.65, burning_rate=2.2, flame_smoke=3.0,
+                 flame_vorticity=2.5, vorticity=3.5, alpha=0.0, beta=0.15, dissolve=0, sigma=34),
     # Engine fire: a lick of burning fuel that turns to smoke (trail puffs play it from the start)
     'fire': dict(seed=41, frames=(2, 32), emit=(1, 9), grow=(0.12, 0.2), lumpy=0.3, loc=(0, 0, -0.5), gravity=4.0,
                  flow='BOTH', fuel=2.2, temp=2.0, dens=0.35, vel=0.6, burning_rate=0.7, flame_smoke=0.6,
@@ -215,7 +215,7 @@ def bake_frame(rho, flame, sigma):
 
 def run(name):
     global FRAME, RESOLUTION
-    FRAME, RESOLUTION = (128, 128) if name in ('smoke', 'wisp') else (256, 192)
+    FRAME, RESOLUTION = (256, 192) if name in ('explosion', 'flak') else (128, 128)
     p = EFFECTS[name]
     t0 = time.time()
     sc, dom = setup_sim(name, p)
@@ -262,7 +262,7 @@ def run(name):
     save(A, os.path.join(ATLAS, f'{name}_a.webp'), quality=100)
     save(B, os.path.join(ATLAS, f'{name}_b.webp'), quality=100)
     preview(A, B, os.path.join(PREVIEW, f'{name}_preview.png'), fire=p['flow'] == 'BOTH')
-    meta = dict(frames=GRID * GRID, grid=GRID, frame=FRAME, simFrames=[f0, f1], fps=24, emissionMax=emax)
+    meta = dict(frames=GRID * GRID, grid=GRID, frame=FRAME, resolution=RESOLUTION, simFrames=[f0, f1], fps=24, emissionMax=emax)
     with open(os.path.join(PREVIEW, f'{name}.json'), 'w') as fh:
         json.dump(meta, fh)
     print(f'[{name}] done in {time.time() - t0:.0f} s', flush=True)
@@ -293,21 +293,25 @@ def save(arr, path, quality=90):
 
 
 def pack(quality):
-    # Four close 2048^2 blocks, then two diffuse 1024^2 blocks; one pair / one draw.
+    # Explosion/flak at 256 px; four supporting effects at 128 px; one pair / one draw.
     names = list(EFFECTS)
-    width, height = 4096, 5120
-    frame_sizes = {nm: 256 if k < 4 else 128 for k, nm in enumerate(names)}
+    width, height = 4096, 3072
+    frame_sizes = {nm: 256 if nm in ('explosion', 'flak') else 128 for nm in names}
+    origins = {'explosion': (0, 0), 'flak': (2048, 0), 'fireball': (0, 2048), 'fire': (1024, 2048), 'smoke': (2048, 2048), 'wisp': (3072, 2048)}
     for suffix in ('a', 'b'):
         big = np.zeros((height, width, 4), np.float32)
         for k, nm in enumerate(names):
             size = frame_sizes[nm] * GRID
-            x, y = ((k % 2) * size, (k // 2) * size) if k < 4 else ((k - 4) * size, 4096)
-            big[y:y + size, x:x + size] = load(os.path.join(ATLAS, f'{nm}_{suffix}.webp'))
+            x, y = origins[nm]
+            block = load(os.path.join(ATLAS, f'{nm}_{suffix}.webp'))
+            if block.shape[0] == size * 2:
+                block = block.reshape(size, 2, size, 2, 4).mean(axis=(1, 3))
+            big[y:y + size, x:x + size] = block
         os.makedirs(OUT, exist_ok=True)
         save(big, os.path.join(OUT, f'fx_{suffix}.webp'), quality)
     with open(os.path.join(OUT, 'manifest.json'), 'w') as fh:
         json.dump(dict(frameSizes=frame_sizes, grid=GRID, frames=GRID * GRID, width=width, height=height,
-                       simulation='Blender Mantaflow gas', resolutions={nm: 192 if k < 4 else 128 for k, nm in enumerate(names)},
+                       simulation='Blender Mantaflow gas', resolutions={nm: json.load(open(os.path.join(PREVIEW, f'{nm}.json'))).get('resolution', 128 if nm in ('smoke', 'wisp') else 192) for nm in names},
                        quality=quality, effects=EFFECTS), fh, indent=2)
         fh.write('\n')
 

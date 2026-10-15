@@ -7,7 +7,7 @@
   "cameraReference": "docs/phase11/shots/04/live/manifest.json",
   "browser": "153.0.8010.12",
   "platform": "darwin/arm64",
-  "revision": "a4ed5925169e2cb2741a76586310e0f9be3e2e11",
+  "revision": "c869b04d7ef7966749c92feed62f43d1f55a31b7",
   "dirty": true,
   "shots": [
     {
@@ -65,15 +65,15 @@
       },
       "camera": {
         "position": [
-          112.4678441956731,
-          7628.839594556222,
-          434.0024099260684
+          112.65791973803641,
+          7629.048316696395,
+          432.9107307300419
         ],
         "quaternion": [
-          -0.00000422661087994884,
-          0.9999941154499298,
-          -0.003158933415144737,
-          -0.0013379788215801423
+          0.00003418288901321587,
+          0.9999656060985224,
+          -0.005530711761006615,
+          0.006180346184607115
         ],
         "fov": 55
       },
@@ -94,12 +94,12 @@
         "samples": 60,
         "programsBefore": 244,
         "programsAfter": 244,
-        "mean": 7.895000000298023,
-        "p50": 8.099999994039536,
-        "p95": 9.199999988079071,
+        "mean": 6.846666666865349,
+        "p50": 6.9000000059604645,
+        "p95": 9.300000011920929,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "9da7bb46e0f216912ed0112bde3793d589234cd46798af2dfb7a7b8e8efa2036",
+      "pixelHash": "c4d9903816cfac0c4aa410d71c6a806768c763b3c5ee75da1067704908423644",
       "errors": []
     },
     {
@@ -156,9 +156,9 @@
       },
       "camera": {
         "position": [
-          -311.23522005753983,
-          7775.135141947355,
-          -299.3096549260965
+          -311.32240425385504,
+          7775.026223083915,
+          -299.75611305093133
         ],
         "quaternion": [
           0.038218235603471984,
@@ -186,12 +186,12 @@
         "samples": 60,
         "programsBefore": 244,
         "programsAfter": 244,
-        "mean": 10.576666666567325,
-        "p50": 10.400000005960464,
-        "p95": 12.599999994039536,
+        "mean": 12.283333332836628,
+        "p50": 12.5,
+        "p95": 15.5,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "2234ab3a83a6a52a5c212fb81c46e0be7075ed28f3f360b3ade8ef6e1a120275",
+      "pixelHash": "6f55a9a018f4dffe28377b4e9d73aea8e9be0c668cb80ce3a52d3fabab1c66b4",
       "errors": []
     },
     {
@@ -281,12 +281,12 @@
         "samples": 60,
         "programsBefore": 240,
         "programsAfter": 240,
-        "mean": 4.446666666865349,
-        "p50": 4.5,
-        "p95": 6.0999999940395355,
+        "mean": 6.096666666865349,
+        "p50": 6.300000011920929,
+        "p95": 8.5,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "9efb4324a3558acf17b9e25e16477a685ca041aa0423c28b298897932b1d3456",
+      "pixelHash": "99b511fa857381b47830abc9a42f973f13672f2855557598239061eff1b2d616",
       "errors": []
     },
     {
@@ -345,15 +345,15 @@
       },
       "camera": {
         "position": [
-          71.39440782786265,
-          7637.6385060784005,
-          385.2093958343235
+          71.74385336066302,
+          7639.168757466119,
+          385.0400043615087
         ],
         "quaternion": [
-          -0.046812066461327115,
-          0.9338528443903235,
-          0.1329982986865345,
-          0.3286927866628807
+          -0.049444878642010776,
+          0.9328335691789467,
+          0.1406067908529236,
+          0.32803424600944686
         ],
         "fov": 52
       },
@@ -377,13 +377,14 @@
         "samples": 60,
         "programsBefore": 244,
         "programsAfter": 244,
-        "mean": 8.838333333532015,
-        "p50": 9,
-        "p95": 11.199999988079071,
+        "mean": 8.32166666686535,
+        "p50": 8.199999988079071,
+        "p95": 11.099999994039536,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "719913ed1243ed8cb0fb47aaf223dfb91efa299a456930b5c5a9c5719ea298bd",
+      "pixelHash": "7fd734349ad18c541d4b3f71a812a1c38f8e85f464d2c966d69bb4a912d3353d",
       "errors": []
     }
-  ]
+  ],
+  "completedAt": "2026-10-15T12:48:35.426Z"
 }

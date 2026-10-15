@@ -278,6 +278,7 @@ export class VolumeFX {
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = 15; // over the particle smoke (10), under glow sparks (20)
     this.mesh.userData.noRebase = true;
+    this.mesh.userData.emptyDrawSafe = true; // camera is refreshed by Effects.setCamera; still submitted during prewarm
     // the eye position for LOD, light priority and sorting (one frame old is fine)
     this.mesh.onBeforeRender = (_r, _s, cam) => { cam.getWorldPosition(this.camPos); this.hasCam = true; };
   }
@@ -364,6 +365,8 @@ export class VolumeFX {
       }
     }
     this.geo.instanceCount = n;
+    // Do not turn an empty draw into a full-capacity buffer upload.
+    if (n === 0) return;
     for (const at of this.attrs) {
       at.clearUpdateRanges();
       if (n > 0) at.addUpdateRange(0, n * 4);

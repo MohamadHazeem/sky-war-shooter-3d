@@ -6,7 +6,7 @@ import { TracerRenderer } from './Particles';
 // red, bent down by gravity and slowed by drag. Hit sparks, flak fragments and explosion embers
 // read as fast-flying metal instead of round dots. One additive instanced draw (TracerRenderer's
 // streak shader: HDR core, soft glow, at least ~1.5 px wide); pooled, nothing allocated per spawn.
-const STREAK = 0.035;
+const STREAK = 0.085;
 
 export class Sparks {
   readonly tr: TracerRenderer;
@@ -17,6 +17,7 @@ export class Sparks {
   constructor(readonly max = 900) {
     this.tr = new TracerRenderer(max);
     this.tr.mesh.renderOrder = 21;
+    this.tr.mesh.userData.emptyDrawSafe = true; // uPx only matters when a streak is drawn
     const F = (k: number) => new Float32Array(max * k);
     this.p = F(3); this.v = F(3); this.c0 = F(3); this.c1 = F(3); this.life = F(1); this.age = F(1); this.w = F(1); this.drag = F(1); this.grav = F(1);
     // the streak width floor needs the camera's pixel size: set it as the mesh is drawn

@@ -345,7 +345,7 @@ export class LivingSky {
           if (uFlipOn > 0.5) {
             // the simulated 88 mm puff (render/Flipbooks.ts 'flak' block), turned per burst
             // Match the local burst: fast ignition, then a slowly dispersing black puff.
-            float fr = floor(pow(clamp(vAge / 14.0, 0.0, 1.0), 0.38) * 60.0);
+            float fr = floor(pow(clamp(vAge / 14.0, 0.0, 1.0), 0.65) * 60.0);
             float an = vSeed * 6.2832, cs = cos(an), sn = sin(an);
             vec2 q = clamp(0.5 + mat2(cs, sn, -sn, cs) * vQ * 0.45, 0.0, 1.0);
             vec2 uv = flipUv(2.0, fr, q);

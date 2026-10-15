@@ -11,8 +11,8 @@ import { weatherNow } from './WeatherState';
 // the simulated volume into a directional lighting basis: for every frame, how the volume looks lit
 // from +X, -X, +Y, -Y and the front, plus its opacity and its own flame emission (light from
 // behind is derived from the opacity: thin smoke lets it through, a dense core does not). All
-// six effects share one pair of 4096 x 5120 atlases (public/fx/fx_a.webp, fx_b.webp):
-// four 256 px close effects, then two 128 px diffuse effects (8 x 8 frames per block), loaded lazily the first time a tier above Low needs them.
+// six effects share one pair of 4096 x 3072 atlases (public/fx/fx_a.webp, fx_b.webp):
+// two 256 px close effects, then four 128 px supporting effects (8 x 8 frames per block), loaded lazily the first time a tier above Low needs them.
 //
 // FlipbookFX draws every flipbook particle in one instanced, back-to-front sorted draw:
 //   - relit per pixel from the live sun direction and colour (the "six-way" basis, weighted by the
@@ -34,11 +34,12 @@ const FRAMES = 64;
 // Shared with the distant flak field so mixed-resolution tiles cannot drift apart.
 export const FLIP_UV_GLSL = /* glsl */ `
 vec2 flipUv(float kind, float frame, vec2 q) {
-  float tile = kind < 3.5 ? 256.0 : 128.0;
-  vec2 origin = kind < 3.5 ? vec2(mod(kind, 2.0), floor(kind / 2.0)) * 2048.0
-                           : vec2((kind - 4.0) * 1024.0, 4096.0);
+  bool close = kind < 0.5 || abs(kind - 2.0) < 0.5;
+  float tile = close ? 256.0 : 128.0;
+  float smallIndex = kind < 2.0 ? 0.0 : kind - 2.0;
+  vec2 origin = close ? vec2(kind * 1024.0, 0.0) : vec2(smallIndex * 1024.0, 2048.0);
   q = clamp(q, vec2(0.5 / tile), vec2(1.0 - 0.5 / tile));
-  return (origin + (vec2(mod(frame, 8.0), floor(frame / 8.0)) + q) * tile) / vec2(4096.0, 5120.0);
+  return (origin + (vec2(mod(frame, 8.0), floor(frame / 8.0)) + q) * tile) / vec2(4096.0, 3072.0);
 }`;
 
 // One spawn's settings (reused objects: the caller fills one in and passes it)
@@ -228,6 +229,7 @@ export class FlipbookFX {
         uSunDir: { value: Atmos.sunDir },
         uSunCol: { value: new THREE.Vector3(1, 1, 1) },
         uSky: { value: new THREE.Vector3(0.3, 0.35, 0.45) },
+        uFlakSky: { value: new THREE.Vector3(0.3, 0.35, 0.45) },
         uGround: { value: new THREE.Vector3(0.1, 0.1, 0.1) },
         uHaze: { value: new THREE.Vector3(0.5, 0.6, 0.75) },
         uHazeK: { value: 1 / 30000 },
@@ -287,7 +289,7 @@ export class FlipbookFX {
         }`,
       fragmentShader: /* glsl */ `
         uniform sampler2D tA; uniform sampler2D tB; uniform sampler2D tDetail;
-        uniform vec3 uSunCol; uniform vec3 uSky; uniform vec3 uGround; uniform vec3 uHaze; uniform float uHazeK;
+        uniform vec3 uSunCol; uniform vec3 uSky; uniform vec3 uFlakSky; uniform vec3 uGround; uniform vec3 uHaze; uniform float uHazeK;
         ${SOFT_DEPTH_GLSL}
         varying vec2 vUv0; varying vec2 vUv1; varying float vBlend;
         varying vec3 vL; varying vec3 vUp; varying vec3 vAlb;
@@ -299,7 +301,7 @@ export class FlipbookFX {
           c = mix(c, vec3(4.0, 1.0, 0.12), smoothstep(0.2, 0.5, T));
           c = mix(c, vec3(9.0, 4.6, 1.2), smoothstep(0.5, 0.8, T));
           c = mix(c, vec3(16.0, 12.5, 8.0), smoothstep(0.95, 1.45, T));
-          return c;
+          return c * smoothstep(0.015, 0.32, T);
         }
         float six(vec4 a, vec4 b, vec3 d, float back) {
           vec3 w = d * d;
@@ -307,16 +309,20 @@ export class FlipbookFX {
         }
         void main() {
           vec4 a = mix(texture2D(tA, vUv0), texture2D(tA, vUv1), vBlend);
+          if (a.a * vAlpha < 0.002 && vHeat < 0.002) discard;
           // sub-texel detail, strongest where the flipbook is magnified (close explosions)
-          float n = texture2D(tDetail, vQ * 1.4 + vDet.x + vec2(0.0, vDet.y)).r * 0.65
-                  + texture2D(tDetail, vQ * 3.1 - vDet.x * 1.7 + vec2(vDet.y * 0.7, 0.0)).r * 0.35 - 0.5;
+          float n = 0.0;
+          if (vDet.z > 0.001) {
+            n = texture2D(tDetail, vQ * 1.4 + vDet.x + vec2(0.0, vDet.y)).r * 0.65
+              + texture2D(tDetail, vQ * 3.1 - vDet.x * 1.7 + vec2(vDet.y * 0.7, 0.0)).r * 0.35 - 0.5;
+          }
           float dk = vDet.z;
           float alpha = min(1.0, a.a * (1.0 + n * 0.7 * dk * (1.0 - a.a * 0.5))) * vAlpha;
           // Flak holds an optically dense centre and breaks at the perimeter. The
           // old magnification-only detail never activated on ordinary 20–80 px bursts.
-          float flakDensity = clamp(a.a * (1.0 + n * 0.35 * dk), 0.0, 1.0);
-          // Beer extinction retains fine rolling wisps instead of thresholding a solid blob.
-          alpha = mix(alpha, (1.0 - pow(1.0 - flakDensity, 1.65)) * vAlpha, vFlak);
+          float flakDensity = smoothstep(0.08 + n * 0.18 * dk, 0.85, a.a);
+          // Continuous extinction keeps the firmer soot edge feathered at sub-pixel scale.
+          alpha = mix(alpha, (1.0 - pow(1.0 - flakDensity, 1.25)) * vAlpha, vFlak);
           vec4 b = mix(texture2D(tB, vUv0), texture2D(tB, vUv1), vBlend);
           // (min: WebP keeps no colour under a fully transparent pixel; B.a = max(opacity, flame) bounds it)
           float eb = min(b.b, b.a);
@@ -330,7 +336,10 @@ export class FlipbookFX {
           float behind = max(-L.z, 0.0);
           sun *= (1.0 + 2.5 * pow(behind, 8.0) * (1.0 - a.a * 0.7)) * (1.0 + n * 0.9 * dk);
           float sky = six(a, b, U, back), gnd = six(a, b, -U, back);
-          vec3 lit = vAlb * (uSunCol * sun * uSunShadow + uSky * (0.35 + 0.65 * sky) + uGround * gnd);
+          // A small cool sky floor lets the baked rolling lobes read in moonlit flak,
+          // while retaining black soot and the live sun term in daylight.
+          vec3 skyLight = mix(uSky, uFlakSky, vFlak);
+          vec3 lit = vAlb * (uSunCol * sun * uSunShadow + skyLight * mix(0.35 + 0.65 * sky, 0.15 + 0.85 * sky, vFlak) + uGround * gnd);
           vec3 fire = fireRamp(e);
           // soft against the opaque scene, and faded right in front of the eye
           float k = clamp((softScene() - vDist) / vSoft, 0.0, 1.0) * smoothstep(0.6, 3.0 + vSoft * 0.5, vDist);
@@ -352,6 +361,7 @@ export class FlipbookFX {
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = 12;   // over the sprite smoke (10), under the volumes (15) and glow (20)
     this.mesh.userData.noRebase = true;
+    this.mesh.userData.emptyDrawSafe = true; // camera is refreshed by Effects.setCamera; still submitted during prewarm
     this.mesh.onBeforeRender = (r, _s, cam) => {
       this.setCamera(cam);
       const pc = cam as THREE.PerspectiveCamera;
@@ -422,6 +432,9 @@ export class FlipbookFX {
     u.uSunCol.value.set(Atmos.sunColor.r, Atmos.sunColor.g, Atmos.sunColor.b).multiplyScalar(Atmos.sunIntensity * 0.62);
     u.uSky.value.set(Atmos.zenith.r * 0.5 + Atmos.horizon.r * 0.5, Atmos.zenith.g * 0.5 + Atmos.horizon.g * 0.5, Atmos.zenith.b * 0.5 + Atmos.horizon.b * 0.5)
       .multiplyScalar(0.75 + Atmos.cloudAmbient * 0.6);
+    const sun = u.uSunCol.value, sky = u.uSky.value;
+    const night = 1 - THREE.MathUtils.smoothstep(Math.max(sun.x, sun.y, sun.z), 0.2, 0.5);
+    u.uFlakSky.value.set(Math.max(sky.x, 1.2 * night), Math.max(sky.y, 1.6 * night), Math.max(sky.z, 2.4 * night));
     // the cloud sea / ground below bounces a little warm-grey light up into the smoke's belly
     u.uGround.value.set(0.42, 0.42, 0.44).multiplyScalar((0.25 + 0.35 * Atmos.envFloor) * day);
     u.uHaze.value.set(Atmos.horizon.r, Atmos.horizon.g, Atmos.horizon.b);
@@ -457,7 +470,7 @@ export class FlipbookFX {
       D[m * 3] = this.flow[k * 3]; D[m * 3 + 1] = this.flow[k * 3 + 1]; D[m * 3 + 2] = this.flow[k * 3 + 2];
       const ag = Math.max(0, this.age[k]);
       const t = ag / this.life[k];
-      const te = 1 - (1 - t) * (1 - t);
+      const te = this.kind[k] === 2 ? 0.65 * (1 - Math.exp(-ag * 2.5)) + 0.35 * t : 1 - (1 - t) * (1 - t);
       const pt = Math.min(1, ag / this.play[k]);
       const fr = this.fr0[k] + (this.fr1[k] - this.fr0[k]) * (this.curve[k] === 1 ? pt : Math.pow(pt, this.curve[k]));
       A[m * 4] = this.pos[k * 3]; A[m * 4 + 1] = this.pos[k * 3 + 1]; A[m * 4 + 2] = this.pos[k * 3 + 2];
@@ -471,6 +484,8 @@ export class FlipbookFX {
       C[m * 4] = this.alb[k * 3]; C[m * 4 + 1] = this.alb[k * 3 + 1]; C[m * 4 + 2] = this.alb[k * 3 + 2]; C[m * 4 + 3] = this.soft[k];
     }
     this.geo.instanceCount = n;
+    // Do not turn an empty draw into a full-capacity buffer upload.
+    if (n === 0) return;
     for (let q = 0; q < this.attrs.length; q++) {
       const at = this.attrs[q];
       at.clearUpdateRanges();

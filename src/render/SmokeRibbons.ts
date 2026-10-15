@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { effectNoise, EFFECT_NOISE_GLSL } from './EffectNoise';
 import { Atmos } from './Atmosphere';
 import { softDepth, SOFT_DEPTH_GLSL } from './SoftDepth';
 import { weatherNow } from './WeatherState';
@@ -73,6 +74,7 @@ export class SmokeRibbons {
     this.geo.setIndex(idx);
     this.mat = new THREE.ShaderMaterial({
       uniforms: {
+        tValueNoise: { value: effectNoise() },
         uTime: { value: 0 },
         uSunDir: { value: Atmos.sunDir },
         uSunCol: { value: new THREE.Vector3(1, 1, 1) },
@@ -101,15 +103,12 @@ export class SmokeRibbons {
         uniform float uTime; uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uSky; uniform vec3 uHaze; uniform float uHazeK;
         ${SOFT_DEPTH_GLSL}
         varying vec3 vSideW; varying vec3 vToCam; varying float vS; varying vec4 vInfo; varying vec2 vAlong; varying float vDist; varying float vEnd;
-        float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-        float vnoise(vec2 p) {
-          vec2 i = floor(p), f = fract(p);
-          f = f * f * (3.0 - 2.0 * f);
-          return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
-        }
+        ${EFFECT_NOISE_GLSL}
         void main() {
           float age = vInfo.x, alpha0 = vInfo.z, grey = vInfo.w;
-          if (alpha0 <= 0.001) discard;
+          if (alpha0 <= 0.001 || vEnd <= 0.001 || vDist <= 2.0) discard;
+          float k = clamp((softScene() - vDist) / (vInfo.y * 0.8 + 1.0), 0.0, 1.0) * smoothstep(2.0, 12.0, vDist) * vEnd;
+          if (k <= 0.001) discard;
           // Rolling margins, with optical depth tapering smoothly to the silhouette.
           // The former sqrt profile plus saturated noise read as a hard cylindrical pipe.
           float billow = vnoise(vec2(vAlong.x * 0.32 + vAlong.y, age * 0.12));
@@ -129,7 +128,6 @@ export class SmokeRibbons {
           vec3 lit = grey * (uSunCol * (lam * (0.55 + n * 0.75) + fwd) * uSunShadow + uSky * (0.55 + 0.45 * nrm.y));
           float h = 1.0 - exp(-vDist * uHazeK);
           vec3 col = mix(lit, uHaze, h);
-          float k = clamp((softScene() - vDist) / (vInfo.y * 0.8 + 1.0), 0.0, 1.0) * smoothstep(2.0, 12.0, vDist) * vEnd;
           gl_FragColor = vec4(col * a * k, a * k);
         }`,
       transparent: true,
@@ -276,6 +274,8 @@ export class SmokeRibbons {
     }
     this.geo.setDrawRange(0, used * (NODES - 1) * 6);
     const nv = used * NODES * 2;
+    // Empty update ranges mean a full-buffer upload in three.js, not no work.
+    if (nv === 0) return;
     this.aPos.clearUpdateRanges(); this.aDir.clearUpdateRanges(); this.aInfo.clearUpdateRanges(); this.aSer.clearUpdateRanges();
     if (nv > 0) {
       this.aPos.addUpdateRange(0, nv * 3); this.aDir.addUpdateRange(0, nv * 3); this.aInfo.addUpdateRange(0, nv * 4); this.aSer.addUpdateRange(0, nv);

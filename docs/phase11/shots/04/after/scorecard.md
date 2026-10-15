@@ -1,7 +1,7 @@
 # Phase 10 visual scorecard
 
 Capture rig v1; seed 19431008; requested webgl2; preset high.
-Browser: 153.0.8010.12. Source revision: `a4ed5925169e2cb2741a76586310e0f9be3e2e11` (dirty at capture: true).
+Browser: 153.0.8010.12. Source revision: `c869b04d7ef7966749c92feed62f43d1f55a31b7` (dirty at capture: true).
 [Contact sheet](contact-sheet.jpg) · [Capture metadata](manifest.json) · [Metric data](metrics.json)
 
 Score relevant cells from 0–10 against [the reference board](../../../../phase10/reference.md). `__/10` is unscored; `—` is not a primary subject. Do not convert image metrics into artistic scores. Review each pillar across its relevant shots; the ten pillar judgments sum to /100.
@@ -21,14 +21,14 @@ Frame times are real wall-clock milliseconds for a frozen scene render plus a GP
 
 | Shot | Source / pixels | Luma | RMS contrast | Colourfulness | Sharpness | Aliasing estimate | Render ms mean / p50 / p95 |
 |---|---|---:|---:|---:|---:|---:|---|
-| [explosion-close](explosion-close.jpg) | PNG 1920×1080 | 0.668 | 0.120 | 56.20 | 0.002053 | 0.093 | 7.90 / 8.10 / 9.20 |
-| [flak-barrage](flak-barrage.jpg) | PNG 1920×1080 | 0.699 | 0.133 | 23.24 | 0.004037 | 0.085 | 10.58 / 10.40 / 12.60 |
-| [night-flak](night-flak.jpg) | PNG 1920×1080 | 0.095 | 0.044 | 13.80 | 0.002725 | 0.035 | 4.45 / 4.50 / 6.10 |
-| [damaged-neighbour](damaged-neighbour.jpg) | PNG 1920×1080 | 0.641 | 0.179 | 22.22 | 0.002331 | 0.142 | 8.84 / 9.00 / 11.20 |
+| [explosion-close](explosion-close.jpg) | PNG 1920×1080 | 0.646 | 0.153 | 46.35 | 0.002317 | 0.055 | 6.85 / 6.90 / 9.30 |
+| [flak-barrage](flak-barrage.jpg) | PNG 1920×1080 | 0.694 | 0.140 | 23.23 | 0.004496 | 0.078 | 12.28 / 12.50 / 15.50 |
+| [night-flak](night-flak.jpg) | PNG 1920×1080 | 0.096 | 0.043 | 13.71 | 0.002627 | 0.030 | 6.10 / 6.30 / 8.50 |
+| [damaged-neighbour](damaged-neighbour.jpg) | PNG 1920×1080 | 0.638 | 0.181 | 18.65 | 0.002255 | 0.130 | 8.32 / 8.20 / 11.10 |
 
 | Shot | Luminance histogram (%) | Black / white clipped (%) |
 |---|---|---|
-| [explosion-close](explosion-close.jpg) | 0.0, 0.0, 0.0, 0.0, 0.0, 0.7, 2.2, 4.7, 14.3, 15.5, 16.6, 15.8, 19.1, 8.9, 2.1, 0.1 | 0.00 / 0.01 |
-| [flak-barrage](flak-barrage.jpg) | 0.0, 0.1, 0.5, 0.7, 1.4, 1.0, 2.2, 2.4, 2.5, 9.6, 17.3, 21.3, 24.6, 13.9, 2.3, 0.0 | 0.00 / 0.00 |
-| [night-flak](night-flak.jpg) | 18.5, 63.9, 14.0, 3.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 | 0.00 / 0.00 |
-| [damaged-neighbour](damaged-neighbour.jpg) | 0.0, 0.0, 0.0, 0.3, 6.1, 4.8, 6.9, 9.1, 4.7, 6.3, 8.8, 17.4, 19.2, 13.0, 3.4, 0.0 | 0.00 / 0.00 |
+| [explosion-close](explosion-close.jpg) | 0.0, 0.0, 0.1, 2.0, 2.5, 2.3, 3.1, 4.0, 12.7, 14.4, 14.5, 14.3, 18.7, 9.0, 2.3, 0.2 | 0.00 / 0.00 |
+| [flak-barrage](flak-barrage.jpg) | 0.0, 0.3, 0.9, 0.9, 1.3, 1.0, 2.2, 2.4, 2.5, 9.5, 17.2, 21.3, 24.6, 13.6, 2.2, 0.0 | 0.00 / 0.00 |
+| [night-flak](night-flak.jpg) | 17.2, 64.3, 14.8, 3.4, 0.1, 0.1, 0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 | 0.00 / 0.00 |
+| [damaged-neighbour](damaged-neighbour.jpg) | 0.0, 0.0, 0.1, 0.9, 5.5, 5.1, 6.2, 9.3, 5.1, 6.5, 8.7, 17.1, 19.3, 12.7, 3.3, 0.0 | 0.00 / 0.00 |

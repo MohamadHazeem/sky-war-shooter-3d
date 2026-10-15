@@ -6,6 +6,7 @@ import sharp from 'sharp';
 import { FLIP_KINDS, FlipbookFX, loadFlipbooks, registerFlipMaterial } from '../src/render/Flipbooks';
 import { SmokeRibbons } from '../src/render/SmokeRibbons';
 import { Sparks } from '../src/render/Sparks';
+import { VolumeFX } from '../src/render/Explosions';
 
 const ROOT = resolve(import.meta.dirname, '..');
 
@@ -32,10 +33,10 @@ describe('Effects 2.0 flipbook atlases', () => {
 
   it('ships 256 px close frames and compact diffuse frames in matched atlases', async () => {
     const layout = JSON.parse(readFileSync(resolve(ROOT, 'public/fx/manifest.json'), 'utf8'));
-    expect(layout.frameSizes).toEqual({ explosion: 256, fireball: 256, flak: 256, fire: 256, smoke: 128, wisp: 128 });
+    expect(layout.frameSizes).toEqual({ explosion: 256, fireball: 128, flak: 256, fire: 128, smoke: 128, wisp: 128 });
     for (const name of ['fx_a.webp', 'fx_b.webp']) {
       const meta = await sharp(resolve(ROOT, 'public/fx', name)).metadata();
-      expect([meta.width, meta.height]).toEqual([4096, 5120]);
+      expect([meta.width, meta.height]).toEqual([4096, 3072]);
       expect(meta.hasAlpha).toBe(true);
     }
   });
@@ -43,10 +44,10 @@ describe('Effects 2.0 flipbook atlases', () => {
   it('retains nonempty wispy opacity and directional self-shadow detail in every effect', async () => {
     for (let kind = 0; kind < FLIP_KINDS.length; kind++) {
       // Frame 16: all six simulations have emitted, including the short engine flame.
-      const size = kind < 4 ? 256 : 128;
+      const size = kind === 0 || kind === 2 ? 256 : 128;
       const frame = sharp(resolve(ROOT, 'public/fx/fx_a.webp')).extract({
-        left: kind < 4 ? (kind % 2) * 2048 : (kind - 4) * 1024,
-        top: (kind < 4 ? Math.floor(kind / 2) * 2048 : 4096) + size * 2, width: size, height: size,
+        left: kind === 0 || kind === 2 ? kind * 1024 : (kind < 2 ? 0 : kind - 2) * 1024,
+        top: (kind === 0 || kind === 2 ? 0 : 2048) + size * 2, width: size, height: size,
       });
       const pixels = await frame.raw().toBuffer();
       const stats = await sharp(pixels, { raw: { width: size, height: size, channels: 4 } }).stats();
@@ -78,6 +79,25 @@ describe('Effects 2.0 flipbook atlases', () => {
 });
 
 describe('FlipbookFX pool', () => {
+  it('does not upload full backing buffers for empty or expired effect pools', () => {
+    const flip = new FlipbookFX(4), ribbon = new SmokeRibbons(2), sparks = new Sparks(4), volume = new VolumeFX(4);
+    for (const [effect, mesh] of [[flip, flip.mesh], [ribbon, ribbon.mesh], [sparks, sparks.tr.mesh], [volume, volume.mesh]] as const) {
+      const versions = () => Object.values(mesh.geometry.attributes).map(a => (a as THREE.BufferAttribute).version);
+      const before = versions();
+      effect.update(0.1);
+      expect(versions()).toEqual(before);
+    }
+    const pos = new THREE.Vector3();
+    flip.spawn({ kind: 'smoke', pos, life: 0.01, size0: 1, size1: 2, albedo: [0.1, 0.1, 0.1] });
+    const a = flip.mesh.geometry.getAttribute('iA') as THREE.BufferAttribute;
+    flip.update(0.02);
+    expect(a.version).toBe(0);
+    flip.spawn({ kind: 'smoke', pos, life: 1, size0: 1, size1: 2, albedo: [0.1, 0.1, 0.1] });
+    flip.update(0.1);
+    expect(a.version).toBe(1);
+    expect(a.updateRanges).toEqual([{ start: 0, count: 4 }]);
+  });
+
   it('spawns, ages out and never exceeds its pool', () => {
     const fx = new FlipbookFX(8);
     const pos = new THREE.Vector3(0, 100, 0);
@@ -112,6 +132,20 @@ describe('FlipbookFX pool', () => {
     expect(b.getW(0)).toBeLessThan(0.8);
     fx.update(0.2);
     expect(fx.count).toBe(0);
+  });
+
+  it('expands flak promptly while retaining a lingering smoke lifetime', () => {
+    const fx = new FlipbookFX(1);
+    fx.spawn({ kind: 'flak', pos: new THREE.Vector3(), life: 20, size0: 20, size1: 40, albedo: [0.03, 0.03, 0.03], heat: 2.4, tau: 0.17 });
+    fx.update(0.1);
+    const early = fx.mesh.geometry.getAttribute('iA').getW(0);
+    const heat = fx.mesh.geometry.getAttribute('iB').getW(0);
+    fx.update(0.9);
+    expect(fx.mesh.geometry.getAttribute('iA').getW(0)).toBeGreaterThan(early + 8);
+    expect(fx.mesh.geometry.getAttribute('iB').getW(0)).toBeLessThan(heat * 0.01);
+    fx.update(7);
+    expect(fx.count).toBe(1);
+    expect(fx.mesh.geometry.getAttribute('iB').getZ(0)).toBeGreaterThan(0.5);
   });
 
   it('tracks a camera cut without requiring a rendered frame', () => {

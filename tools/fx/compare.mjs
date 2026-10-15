@@ -13,7 +13,7 @@ for(const a of after.shots){
  const parts=[];
  for(const [i,dir] of ['live','after'].entries()){
   const label=Buffer.from(`<svg width="960" height="32"><rect width="960" height="32" fill="#151b22"/><text x="12" y="23" fill="white" font-family="sans-serif" font-size="18">${dir==='live'?'LIVE main':'Phase 11 / 04'} — ${a.shot}</text></svg>`);
-  parts.push({input:await sharp(`${root}/${dir}/${a.shot}.png`).resize(960,540).png().toBuffer(),left:i*960,top:32});
+  parts.push({input:await sharp(`${root}/${dir}/${a.shot}.jpg`).resize(960,540).png().toBuffer(),left:i*960,top:32});
   parts.push({input:label,left:i*960,top:0});
  }
  const sheet=await sharp({create:{width:1920,height:572,channels:3,background:'#151b22'}}).composite(parts).png().toBuffer();

@@ -14,6 +14,23 @@ function fixture() {
 const batches = (s: T.Scene) => s.children.filter(o => (o as T.BatchedMesh).isBatchedMesh) as T.BatchedMesh[];
 
 describe('formation submission', () => {
+  it('skips opted-in empty effect callbacks but retains them during shader prewarm', () => {
+    const scene = new T.Scene(), camera = new T.PerspectiveCamera(), submit = new AircraftSubmission();
+    const geometry = new T.InstancedBufferGeometry();
+    geometry.setAttribute('position', new T.BufferAttribute(new Float32Array(9), 3));
+    geometry.instanceCount = 0;
+    const mesh = new T.Mesh(geometry, new T.ShaderMaterial());
+    mesh.onBeforeRender = () => {};
+    scene.add(mesh);
+    expect(submit.prepare(scene, camera).children).toContain(mesh); // callbacks may generate their own geometry
+    mesh.userData.emptyDrawSafe = true;
+    expect(submit.prepare(scene, camera).children).not.toContain(mesh);
+    submit.warming = true;
+    expect(submit.prepare(scene, camera).children).toContain(mesh);
+    submit.warming = false; geometry.instanceCount = 1;
+    expect(submit.prepare(scene, camera).children).toContain(mesh);
+  });
+
   it('shares a draw for repeated geometry without reparenting gameplay or hit-test objects', () => {
     const f = fixture(), out = f.submit.prepare(f.scene, f.camera), [b] = batches(out), m = new T.Matrix4();
     expect(batches(out)).toHaveLength(1); expect(b.instanceCount).toBe(2);

@@ -226,6 +226,8 @@ export class ParticleSystem {
       FR[k] = this.frame[k];
     }
     this.geo.instanceCount = this.n;
+    // With no update range, needsUpdate uploads the entire backing pool.
+    if (this.n === 0) return;
     this.iPos.needsUpdate = this.iSR.needsUpdate = this.iCol.needsUpdate = this.iFrame.needsUpdate = true;
     this.iPos.clearUpdateRanges(); this.iSR.clearUpdateRanges(); this.iCol.clearUpdateRanges(); this.iFrame.clearUpdateRanges();
     if (this.n > 0) {
@@ -329,6 +331,8 @@ export class TracerRenderer {
   // Upload what was pushed since begin() (the caller keeps uPx current)
   flush() {
     this.geo.instanceCount = this.n;
+    // With no update range, needsUpdate uploads the entire backing pool.
+    if (this.n === 0) return;
     for (let q = 0; q < 3; q++) {
       const at = q === 0 ? this.a : q === 1 ? this.b : this.c;
       at.clearUpdateRanges();

@@ -1,0 +1,12 @@
+{
+  "capturedAt": "2026-10-15T11:57:30.213Z",
+  "otherHeadlessGPUProcesses": 0,
+  "reservedHeavySlots": 3,
+  "loadAverage": [
+    4.7958984375,
+    8.7080078125,
+    15.125
+  ],
+  "logicalCPUs": 18,
+  "peakHeadlessGPUProcesses": 1
+}

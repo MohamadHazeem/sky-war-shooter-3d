@@ -69,7 +69,7 @@ function mirrored(matrix: T.Matrix4) {
 const noBefore = T.Object3D.prototype.onBeforeRender;
 function emptyDraw(o: T.Object3D) {
   const m = o as T.Mesh;
-  return m.isMesh && m.onBeforeRender === noBefore && !m.children.length &&
+  return m.isMesh && (m.onBeforeRender === noBefore || m.userData.emptyDrawSafe) && !m.children.length &&
     ((m as T.InstancedMesh).isInstancedMesh && (m as T.InstancedMesh).count === 0 ||
       (m.geometry as T.InstancedBufferGeometry).isInstancedBufferGeometry && (m.geometry as T.InstancedBufferGeometry).instanceCount === 0 || m.geometry.drawRange.count === 0);
 }
@@ -98,7 +98,7 @@ export class AircraftSubmission {
   private shadowOverflow = false;
   private readonly collect = (o: T.Object3D) => {
     const m = o as T.Mesh;
-    if (emptyDraw(o)) return;
+    if (emptyDraw(o) && !(this.warming && o.userData.emptyDrawSafe)) return;
     if (!m.isMesh) {
       if ((o as T.Points).isPoints || (o as T.Line).isLine || (o as T.Sprite).isSprite || (o as T.Light).isLight) this.scene.children.push(o);
       return;
@@ -220,7 +220,7 @@ export class AircraftSubmission {
     out.overrideMaterial = source.overrideMaterial;
     for (const b of this.batches.values()) for (const slot of b.slots.values()) b.mesh.setVisibleAt(slot.id, false);
     for (const child of source.children) {
-      if (!child.visible || emptyDraw(child)) continue;
+      if (!child.visible || (emptyDraw(child) && !(this.warming && child.userData.emptyDrawSafe))) continue;
       if (child.userData.formationBatch || this.warming) {
         this.aircraftDistanceSq = child.position.distanceToSquared(this.cameraPosition);
         const f = formationSources.get(child), state = f?.state;

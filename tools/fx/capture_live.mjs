@@ -18,19 +18,19 @@ const source = await (await fetch(script)).text();
 const requireMatch = (pattern, text = source) => {
  const m = text.match(pattern); if (!m) throw new Error(`Live build changed: ${pattern}`); return m[1];
 };
-const atmosphere = requireMatch(/(\w+)\.sunElevationDeg=\w+\.sunEl/);
-const vector = requireMatch(/windOffset:new (\w+)/);
-const campaign = requireMatch(/window\.sws=\{CAMPAIGN:(\w+)/);
+const atmosphere = requireMatch(/([$\w]+)\.sunElevationDeg=\w+\.sunEl/);
+const vector = requireMatch(/windOffset:new ([$\w]+)/);
+const campaign = requireMatch(/window\.sws=\{CAMPAIGN:([$\w]+)/);
 const enclosingFunction = marker => {
  const at = source.indexOf(marker); if (at < 0) throw Error(`Missing ${marker}`);
- return [...source.slice(0,at).matchAll(/function (\w+)\(/g)].at(-1)[1];
+ return [...source.slice(0,at).matchAll(/function ([$\w]+)\(/g)].at(-1)[1];
 };
 const weather = enclosingFunction(source.match(/\w+\.sunElevationDeg=\w+\.sunEl/)[0]);
 const loadFlip = enclosingFunction('fx/fx_a.webp');
 const searchlightAt = source.indexOf('coned=new Set');
 if (searchlightAt < 0) throw Error('Missing searchlight class');
-const searchlights = [...source.slice(0,searchlightAt).matchAll(/var (\w+)=class/g)].at(-1)[1];
-const loadHero = requireMatch(/\.quality!==`low`&&(\w+)\(\w+\.renderer\)/);
+const searchlights = [...source.slice(0,searchlightAt).matchAll(/var ([$\w]+)=class/g)].at(-1)[1];
+const loadHero = requireMatch(/\.quality!==`low`&&([$\w]+)\(\w+\.renderer\)/);
 const compile = async path => (await transform((await fs.readFile(path, 'utf8')).replace(/^import .*;\n/gm, '').replace(/export /g, ''), { loader: 'ts' })).code;
 const config = await compile('src/dev/VisualRigConfig.ts');
 const fixture = await compile('src/dev/VisualRigScene.ts');
@@ -47,6 +47,8 @@ try {
   page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error'&&/THREE|WebGL|shader/i.test(m.text()))errors.push(m.text());});
   await context.route('**/*',route=>{
+   // Pin the fetched HTML as well: a deployment between shots must not switch bundles.
+   if(route.request().url()===origin+'/')return route.fulfill({body:html,contentType:'text/html'});
    if(route.request().url()===script)return route.fulfill({body:source+extra,contentType:'application/javascript'});
    return new URL(route.request().url()).origin===origin?route.continue():route.abort();
   });

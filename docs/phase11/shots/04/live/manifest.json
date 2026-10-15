@@ -1,9 +1,9 @@
 {
   "complete": true,
   "origin": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
-  "script": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BMiV91Uj.js",
-  "sha256": "9c5986d8b8d0a8be50913f169f6c25c2a8c914b3d11c18952ee1abd43c30c257",
-  "fetchedAt": "2026-10-15T10:19:27.250Z",
+  "script": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-ChejSXfi.js",
+  "sha256": "ec62af6dd460544bec6c89e18545a3e532a1975a19330cd7081a84363bb6b45e",
+  "fetchedAt": "2026-10-15T11:52:18.500Z",
   "method": "Deployed bundle + unchanged VisualRigScene fixture; expose production symbols, freeze clocks/RAF",
   "shots": [
     {
@@ -32,15 +32,15 @@
       "worldTime": 5.999999999999984,
       "camera": {
         "position": [
-          112.4678441956731,
-          7628.839594556222,
-          434.0024099260684
+          112.65791973803641,
+          7629.048316696395,
+          432.9107307300419
         ],
         "quaternion": [
-          -0.00000422661087994884,
-          0.9999941154499298,
-          -0.003158933415144737,
-          -0.0013379788215801423
+          0.00003418288901321587,
+          0.9999656060985224,
+          -0.005530711761006615,
+          0.006180346184607115
         ],
         "fov": 55
       },
@@ -51,11 +51,11 @@
       "aimDownSight": null,
       "visibleSunShafts": 0,
       "frameMs": {
-        "mean": 6.971666667362054,
-        "p50": 6.9000000059604645,
-        "p95": 9.199999988079071,
-        "programsBefore": 266,
-        "programsAfter": 266
+        "mean": 6.180000000198683,
+        "p50": 6.4000000059604645,
+        "p95": 8,
+        "programsBefore": 269,
+        "programsAfter": 269
       },
       "errors": []
     },
@@ -85,9 +85,9 @@
       "worldTime": 5.999999999999984,
       "camera": {
         "position": [
-          -311.23522005753983,
-          7775.135141947355,
-          -299.3096549260965
+          -311.32240425385504,
+          7775.026223083915,
+          -299.75611305093133
         ],
         "quaternion": [
           0.038218235603471984,
@@ -105,11 +105,11 @@
       "aimDownSight": null,
       "visibleSunShafts": 0,
       "frameMs": {
-        "mean": 10.151666666567326,
-        "p50": 9.800000011920929,
-        "p95": 11.800000011920929,
-        "programsBefore": 266,
-        "programsAfter": 266
+        "mean": 8.468333332240581,
+        "p50": 8.400000005960464,
+        "p95": 9.699999988079071,
+        "programsBefore": 269,
+        "programsAfter": 269
       },
       "errors": []
     },
@@ -160,11 +160,11 @@
       "aimDownSight": null,
       "visibleSunShafts": 0,
       "frameMs": {
-        "mean": 4.065000000099341,
-        "p50": 3.899999976158142,
+        "mean": 3.8150000005960463,
+        "p50": 3.5,
         "p95": 5,
-        "programsBefore": 262,
-        "programsAfter": 262
+        "programsBefore": 265,
+        "programsAfter": 265
       },
       "errors": []
     },
@@ -194,15 +194,15 @@
       "worldTime": 5.999999999999984,
       "camera": {
         "position": [
-          71.39440782786265,
-          7637.6385060784005,
-          385.2093958343235
+          71.74385336066302,
+          7639.168757466119,
+          385.0400043615087
         ],
         "quaternion": [
-          -0.046812066461327115,
-          0.9338528443903235,
-          0.1329982986865345,
-          0.3286927866628807
+          -0.049444878642010776,
+          0.9328335691789467,
+          0.1406067908529236,
+          0.32803424600944686
         ],
         "fov": 52
       },
@@ -216,11 +216,11 @@
       "aimDownSight": null,
       "visibleSunShafts": 0,
       "frameMs": {
-        "mean": 7.468333334227403,
-        "p50": 7.4000000059604645,
-        "p95": 9.5,
-        "programsBefore": 266,
-        "programsAfter": 266
+        "mean": 6.53666666696469,
+        "p50": 6.5,
+        "p95": 8.5,
+        "programsBefore": 269,
+        "programsAfter": 269
       },
       "errors": []
     }

@@ -5,13 +5,13 @@
     "counts": [
       {
         "age": 2,
-        "flip": 285,
+        "flip": 162,
         "ribbons": 15
       }
     ],
     "atlasSize": [
       4096,
-      5120
+      3072
     ],
     "flipOn": true,
     "flipMax": 2400,
@@ -19,14 +19,14 @@
       "samples": 60,
       "programsBefore": 244,
       "programsAfter": 244,
-      "mean": 8.36333333303531,
-      "p50": 8,
-      "p95": 11.800000011920929,
+      "mean": 8.570000000298023,
+      "p50": 7.5,
+      "p95": 16.100000023841858,
       "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
     },
     "linger": {
       "age": 8,
-      "flip": 949,
+      "flip": 477,
       "ribbons": 15,
       "smoke": 0,
       "programs": 244
@@ -36,7 +36,7 @@
       "ribbons": 0
     },
     "lowSwitch": {
-      "started": 3,
+      "started": 4,
       "flip": 0,
       "ribbons": 0,
       "sparks": 0,
@@ -64,9 +64,9 @@
       "samples": 60,
       "programsBefore": 236,
       "programsAfter": 236,
-      "mean": 1.7716666663686433,
-      "p50": 1.5,
-      "p95": 3,
+      "mean": 2.396666666865349,
+      "p50": 1.800000011920929,
+      "p95": 5,
       "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
     },
     "linger": {
@@ -80,13 +80,41 @@
       "flip": 0,
       "ribbons": 0
     },
+    "flakFallback": {
+      "volumes": 0,
+      "smoke": 5,
+      "glow": 18,
+      "flip": 0
+    },
     "errors": []
   },
   {
     "fuel": {
-      "flowing": 22,
+      "flowing": 19,
       "shimmers": 6,
-      "mediumHaze": false
+      "mediumHaze": false,
+      "lights": [
+        {
+          "range": 6.841052550594828,
+          "intensity": 114.42442676436622
+        },
+        {
+          "range": 6.841052550594828,
+          "intensity": 94.76810383994598
+        },
+        {
+          "range": 6.841052550594828,
+          "intensity": 106.93725237506442
+        },
+        {
+          "range": 6.841052550594828,
+          "intensity": 140.85202288150322
+        }
+      ],
+      "hazeSize": [
+        480,
+        270
+      ]
     }
   }
 ]

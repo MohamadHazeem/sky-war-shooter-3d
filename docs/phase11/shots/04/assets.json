@@ -1,13 +1,13 @@
 {
   "atlases": {
     "fx_a.webp": {
-      "bytes": 2658722,
-      "sha256": "2eef77087a5634d49dbdb30a729796148caad4c75f77eda5ce60808d35047de3"
+      "bytes": 2219076,
+      "sha256": "90d6f0000957b8ebf90a3b7554cbabe7579d96277ad6b2053b1ae08a5af1a20e"
     },
     "fx_b.webp": {
-      "bytes": 2597784,
-      "sha256": "1ca5b8c798471c835184ad1e583b9daedef403f02baf57fae7d43a3ce5d6d503"
+      "bytes": 2140162,
+      "sha256": "5466d98f61da9de1e713a928014e11f5bee71d86b3c204f97011ac0618cb02f3"
     }
   },
-  "gpuRGBA8MiBWithMipmaps": 213.33333333333334
+  "gpuRGBA8MiBWithMipmaps": 128
 }
