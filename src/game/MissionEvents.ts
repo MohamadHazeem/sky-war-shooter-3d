@@ -6,9 +6,10 @@ import { sound } from '../audio/Sound';
 import { tx } from '../i18n';
 import { DEFAULT_WEATHER, Weather } from '../render/Weather';
 import { SP_MAX_LOSSES } from './SetPieces';
+import { brassGeometry, brassMaterial } from './Brass';
 import {
   CHUTE_LINES, CHUTE_SPEAKER, EV_AFTER, EV_GAP, EvAction, EvContext, EvNeed, EvTone, MissionEventDef,
-  EVENT_IDS, eventDef, eventDue, pickEvent,
+  EVENT_IDS, bombLeadIn, eventDef, eventDue, pickEvent,
 } from './MissionEventLib';
 
 // Runs the dynamic in-mission events (Phase 11 goal 28; the library and the director's rules are in
@@ -29,6 +30,9 @@ const _c = new THREE.Vector3();
 const _s = new THREE.Vector3();
 const _q = new THREE.Quaternion();
 const _q2 = new THREE.Quaternion();
+const _m = new THREE.Matrix4();
+const _e = new THREE.Euler();
+const _one = new THREE.Vector3();
 const R = () => Math.random() * 2 - 1;
 const smooth = (x: number) => { x = THREE.MathUtils.clamp(x, 0, 1); return x * x * (3 - 2 * x); };
 const NEAR_SCALE = 2.2;        // scripted enemy fighters close by: near true size (normal enemies are drawn larger)
@@ -36,6 +40,10 @@ const NEIGHBOUR = 480;         // m: a B-17 this close to the player's ship read
 const TRACER: [number, number, number] = [10, 7, 3];
 const STAGE_T = 4;             // s a staged B-17 takes to slide into the gun's view before the event proper
 const BAILOUT_DEATH = 4;      // FighterDeath KINDS index of 'bailout'
+const SINK_T = 9.5;            // s a bailing B-17 sinks out of the box on her own (chutes in view) before she spins in
+const CHUTE_DRAG = 0.12;       // the bail-out's canopies shed forward speed slowly: they drift near her, countable
+const BRASS_N = 72;            // falling casings (instanced, the waist pile's own geometry and material)
+const BRASS_SIZE = 2.4;        // drawn larger than a real .50 case so the glint reads at a few metres
 
 interface Actor { left: number; tick(dt: number): void; stop?(): void }
 
@@ -68,6 +76,13 @@ export class MissionEvents {
   private peelAt = -1;
   private announced = false;
   private jamAcc = 0;
+  private brassMesh: THREE.InstancedMesh | null = null;
+  private brassPos = new Float32Array(BRASS_N * 3);
+  private brassVel = new Float32Array(BRASS_N * 3);
+  private brassRot = new Float32Array(BRASS_N * 3);
+  private brassLife = new Float32Array(BRASS_N);
+  /** radio lines this event has spoken (the shot harness waits for each subtitle) */
+  said = 0;
   readonly banner;
 
   constructor(private c: MidRound, banner: { show(k: string, t: string, s: string, tone: string): void; setSub(s: string): void; hide(): void }) {
@@ -90,6 +105,7 @@ export class MissionEvents {
   update(dt: number, boss: boolean, otherBusy: boolean) {
     const w = this.world;
     const e = this.active;
+    if (e && this.bombIn() <= 0) { this.stop(); return; }   // the bomb run's lead-in has the stage now
     if (e) {
       this.prev = this.t; this.t += dt;
       if (!this.announced && this.t >= 0) this.announce(e);
@@ -136,7 +152,13 @@ export class MissionEvents {
       box: others.length >= 4,
       aiGunner: !!this.freeStation(),
     };
-    return { phase, near, roundLeft: this.c.roundLeft, have };
+    return { phase, near, roundLeft: this.c.roundLeft, bombIn: this.bombIn(), have };
+  }
+
+  /** s until the bomb run's lead-in (IP call, bombsight offer); events end well before it */
+  private bombIn(): number {
+    const g = this.c.game, m = g.mission;
+    return bombLeadIn(this.world.time, m?.bombsAway, !!g.director?.bombsDropped, !!g.bombRun?.active || !!g.bombardier?.available);
   }
 
   // ---------------------------------------------------------------- start / end
@@ -164,6 +186,7 @@ export class MissionEvents {
     this.announced = false;
     this.chutes = 0; this.chuteWord = Math.floor(Math.random() * CHUTE_LINES.length);
     this.peelAt = -1;
+    this.said = 0;
     this.played.push(def.id);
     this.count++;
     this.lastAt = w.time;
@@ -223,6 +246,7 @@ export class MissionEvents {
     this.salute = this.joiner = this.crosser = null;
     this.subject = null;
     this.banner.hide();
+    this.markStation(null);
   }
 
   // ---------------------------------------------------------------- beats
@@ -230,6 +254,7 @@ export class MissionEvents {
     if (act) this.act(act, arg ?? 0);
     if (say) {
       this.world.callout('ev28_' + say[1].length + '_' + say[0], say[0], say[1], 0, 3);
+      this.said++;
     }
   }
 
@@ -244,7 +269,7 @@ export class MissionEvents {
       case 'explode': if (b?.alive) this.explode(b); break;
       case 'fall': if (b?.alive) this.fall(b); break;
       case 'chute': this.chute(); break;
-      case 'countChutes': this.world.callout('ev28_count', CHUTE_SPEAKER, CHUTE_LINES[THREE.MathUtils.clamp(this.chutes - 4, 0, CHUTE_LINES.length - 1)], 0, 3); break;
+      case 'countChutes': this.world.callout('ev28_count', CHUTE_SPEAKER, CHUTE_LINES[THREE.MathUtils.clamp(this.chutes - 4, 0, CHUTE_LINES.length - 1)], 0, 3); this.said++; break;
       case 'cookoff': if (b) this.cookoff(b, arg || 6); break;
       case 'boxes': if (b?.alive) {
         b.localToWorld(_a.set(this.side * 1.4, 0.3, -7));
@@ -256,8 +281,8 @@ export class MissionEvents {
       case 'jam': this.jammed = true; this.jamAcc = 0; break;
       case 'unjam': this.jammed = false; break;
       case 'cabinFire': this.cabinFire(); break;
-      case 'freeze': { const s = this.freeStation(); if (s) { this.frozen = s; w.frozenStations.add(s); } break; }
-      case 'unfreeze': if (this.frozen) { w.frozenStations.delete(this.frozen); this.frozen = null; } break;
+      case 'freeze': { const s = this.freeStation(); if (s) { this.frozen = s; w.frozenStations.add(s); this.markStation(s); } break; }
+      case 'unfreeze': if (this.frozen) { w.frozenStations.delete(this.frozen); this.frozen = null; this.markStation(null); } break;
       case 'salute': this.saluteActor(); break;
       case 'peel': this.peelAt = this.t; break;
       case 'join': this.joinActor(); break;
@@ -298,6 +323,12 @@ export class MissionEvents {
       return s;
     }
     return null;
+  }
+
+  /** The quiet gun on the station bar (HUD detail Full): struck through until he's back on it */
+  private markStation(s: string | null) {
+    if (typeof document === 'undefined') return;
+    document.querySelectorAll<HTMLElement>('#hStations span').forEach((el) => el.classList.toggle('ev-frozen', el.dataset.s === s));
   }
 
   private clearSky(): boolean {
@@ -368,23 +399,40 @@ export class MissionEvents {
     this.c.game.feel.blastFlash(0.25 * Math.max(0, 1 - center.distanceTo(w.player!.pos) / 900));
   }
 
+  // She is hit and falls out of the box, but slowly at first: wings nearly level, two engines
+  // burning, sinking and dropping back a few metres a second, so she stays in the gun's view while
+  // her crew get out. Then a wing drops and she spins in.
   private fall(b: Bomber) {
     const w = this.world;
     w.scriptedLoss(b, true);
-    b.spin.set(R() * 0.04, R() * 0.04, (Math.random() < 0.5 ? -1 : 1) * (0.12 + Math.random() * 0.12));
-    b.vel.multiplyScalar(0.85);   // she drops back as she goes
+    b.gliding = true;                 // Bomber.update: sinks at 6 m/s
+    b.vel.multiplyScalar(0.965);      // and drops back slowly
+    const roll = Math.random() < 0.5 ? -1 : 1;
+    b.spin.set(0, 0, roll * 0.035);
     let n = 0;
     for (const z of b.zones) if (z.engine !== undefined && n < 2) { z.burning = true; n++; }
     w.effects.explosion(b.localToWorld(_a.set(-7, 0, 1.5)), b.vel, 0.5, 'small');
     sound.play('explosion', b.pos, { gain: 1.2, ref: 200, reverb: 0.7 });
+    this.trailActor(b, SINK_T + 4, () => b.localToWorld(_a.set(roll * 5.2, -0.2, 1.8)), 1, true, 1.6);
+    let t = 0;
+    this.actors.push({ left: SINK_T, tick: (dt) => {
+      t += dt;
+      b.spin.z = roll * (0.035 + 0.01 * Math.sin(t * 0.8));   // fighting the controls
+    }, stop: () => {
+      if (b.remove) return;
+      b.gliding = false;
+      b.vel.multiplyScalar(0.9);
+      b.spin.set(R() * 0.04, R() * 0.04, roll * (0.14 + Math.random() * 0.1));
+    } });
   }
 
   private chute() {
     const b = this.subject;
     if (!b || b.remove || this.chutes >= 4 + this.chuteWord) return;   // four to six of the ten get out
     const w = this.world;
+    // out of the waist door and the bomb bay; the canopies drift near her (CHUTE_DRAG) to be counted
     const p = b.localToWorld(_a.set(R() * 0.6, -1.4, -4 + R() * 3));
-    if (w.effects.parachute(p, _b.copy(b.vel).multiplyScalar(0.4), 1.6)) {
+    if (w.effects.parachute(p, _b.copy(b.vel).multiplyScalar(0.97), 1.8, CHUTE_DRAG)) {
       this.chutes++;
       this.banner.setSub(tx('Chutes: {n}', { n: this.chutes }));
     }
@@ -443,21 +491,56 @@ export class MissionEvents {
     } });
   }
 
-  // casings from the ship above come down right past the player's gun position (the subject trails
-  // a little gun smoke as her gunners fire)
+  // Spent .50 cal casings from the ship above come down right past the player's gun window: small
+  // brass cases (the waist pile's instanced mesh and material, so nothing new compiles), tumbling
+  // and glinting. Simulated relative to the gun, so they fall past it whatever the ship does (and a
+  // floating-origin rebase can't touch them); the subject trails a little gun smoke as her gunners fire.
   private brass(b: Bomber, secs: number) {
     const w = this.world;
-    let acc = 0;
-    this.actors.push({ left: secs, tick: (dt) => {
-      acc += dt;
-      if (acc < 0.07) return;
-      acc = 0;
-      const arc = w.playerArc(), gun = w.playerGunPos(), pl = w.player;
-      if (!arc || !gun || !pl) return;
-      const p = _a.copy(gun).addScaledVector(arc, 4 + Math.random() * 7).addScaledVector(UP, 6 + Math.random() * 5).addScaledVector(w.formationForward, R() * 5);
-      w.effects.spawnDebris(p, pl.vel, 3, false, _b.set(0, -18, 0), 0.11);
-      if (b.alive && Math.random() < 0.3) w.effects.gunSmoke(b.localToWorld(_c.set(0, 2.3, 1.15)), b.vel);
-    } });
+    const mesh = this.brassMesh ??= (() => {
+      const m = new THREE.InstancedMesh(brassGeometry(), brassMaterial(), BRASS_N);
+      m.name = 'eventBrass'; m.frustumCulled = false; m.count = 0;
+      m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      return m;
+    })();
+    if (!mesh.parent) w.scene.add(mesh);
+    const P = this.brassPos, V = this.brassVel, A = this.brassRot, L = this.brassLife;
+    L.fill(0);
+    let acc = 0, t = 0;
+    _one.setScalar(BRASS_SIZE);
+    this.actors.push({ left: secs + 1.5, tick: (dt) => {
+      t += dt;
+      const arc = w.playerArc(), gun = w.playerGunPos();
+      if (!arc || !gun || dt <= 0) return;
+      // new casings for `secs`, a dozen or so a second, out in front of the window and above it
+      acc += t < secs ? dt * 14 : 0;
+      for (let i = 0; i < BRASS_N && acc >= 1; i++) {
+        if (L[i] > 0) continue;
+        acc -= 1;
+        const o = _a.copy(arc).multiplyScalar(2.2 + Math.random() * 6).addScaledVector(UP, 4.5 + Math.random() * 3).addScaledVector(w.formationForward, R() * 3.5);
+        P[i * 3] = o.x; P[i * 3 + 1] = o.y; P[i * 3 + 2] = o.z;
+        const v = _b.copy(w.formationForward).multiplyScalar(-2 - Math.random() * 3).addScaledVector(UP, -9 - Math.random() * 4).addScaledVector(arc, R() * 0.8);
+        V[i * 3] = v.x; V[i * 3 + 1] = v.y; V[i * 3 + 2] = v.z;
+        A[i * 3] = Math.random() * 6; A[i * 3 + 1] = Math.random() * 6; A[i * 3 + 2] = Math.random() * 6;
+        L[i] = 1.6;
+      }
+      if (acc > 1) acc = 1;
+      let n = 0;
+      for (let i = 0; i < BRASS_N; i++) {
+        if (L[i] <= 0) continue;
+        L[i] -= dt;
+        if (L[i] <= 0) continue;
+        V[i * 3 + 1] -= 9.81 * dt * 0.4;
+        P[i * 3] += V[i * 3] * dt; P[i * 3 + 1] += V[i * 3 + 1] * dt; P[i * 3 + 2] += V[i * 3 + 2] * dt;
+        A[i * 3] += dt * 11; A[i * 3 + 1] += dt * 7; A[i * 3 + 2] += dt * 9;   // tumbling: the glint flickers
+        _c.set(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]).add(gun);
+        _q.setFromEuler(_e.set(A[i * 3], A[i * 3 + 1], A[i * 3 + 2]));
+        mesh.setMatrixAt(n++, _m.compose(_c, _q, _one));
+      }
+      mesh.count = n;
+      mesh.instanceMatrix.needsUpdate = true;
+      if (t < secs && b.alive && Math.random() < dt * 4) w.effects.gunSmoke(b.localToWorld(_c.set(0, 2.3, 1.15)), b.vel);
+    }, stop: () => { mesh.count = 0; } });
   }
 
   private cabinFire() {
@@ -519,6 +602,7 @@ export class MissionEvents {
     const w = this.world, pl = w.player!;
     const f = this.scripted(w.spawnEnemy(pl.pos.clone().addScaledVector(w.formationForward, -240), 'stern', 1, false, false, 'bf109'), NEAR_SCALE);
     (f as { team: string }).team = 'allied';   // no longer a fighting aircraft: the guns (AI and the player's) leave him be
+    f.noMarker = true;                         // ...but no friendly chevron either: he's still a Bf 109
     f.guns.length = 0;
     this.salute = f;
     const last = new THREE.Vector3(), sm = { t: 0, last: new THREE.Vector3() };
@@ -595,6 +679,7 @@ export class MissionEvents {
     const f = this.scripted(w.spawnEnemy(start.clone(), 'beam', 1, false, false, 'fw190'), 3.2);
     f.guns.length = 0;
     (f as { team: string }).team = 'allied';   // no threat any more: the crew's guns leave him be (axis again for his fall)
+    f.noMarker = true;
     this.crosser = f;
     const last = new THREE.Vector3(), sm = { t: 0, last: new THREE.Vector3() };
     let t = 0;
@@ -662,7 +747,7 @@ export class MissionEvents {
     const g = this.c.game, w = this.world;
     const now = this.currentWeather();
     // the wall shows on the horizon at once (Weather.ts: in sight from 95 s before the front)
-    const next: Weather = { ...now, front: { at: 25, to: 'storm', preset: 'thunderstorm', duration: 45 } };
+    const next: Weather = { ...now, front: { at: 14, to: 'storm', preset: 'thunderstorm', duration: 45 } };
     // this event calls the wall itself: skip World's own "storm front" line for a while
     (w as unknown as { lastCallout: Map<string, number> }).lastCallout.set('wx_front', w.time);
     g.setWeather(next);

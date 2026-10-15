@@ -194,7 +194,7 @@ export class GameHud {
     if (visibility.markers && g.settings.markers && pl) {
       for (const a of w.aircraft) {
         ctx.globalAlpha = 1;
-        if (a === pl || !liveMarkerTarget(a)) continue;
+        if (a === pl || a.noMarker || !liveMarkerTarget(a)) continue;
         const enemy = a.team === 'axis';
         const d = a.pos.distanceTo(cam.position);
         const visibility = aircraftMarkerAlpha(a, w, cam, enemy ? 2800 : 1800);

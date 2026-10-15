@@ -9,7 +9,8 @@ import { atmosUniforms, skyGLSL } from './Atmosphere';
 // One curved strip of 97 x 2 vertices, built in the vertex shader around the camera: it sits
 // at most GEOM_MAX away (inside the far plane and the clouds' march range) but is scaled in
 // height to subtend the angle it would at its true distance. It is drawn in the opaque pass
-// right after the sky dome (renderOrder) with alpha blending and no depth write, so to the
+// right after the sky dome (renderOrder 1001: the dome writes no depth and draws last of the
+// opaques, so a wall drawn before it is painted over) with alpha blending and no depth write, so to the
 // cloud pass it is sky: the volumetric clouds in front draw over it, and aircraft always do.
 // Always in the scene (compiled with the first frame); with uFade = 0 every vertex is clipped.
 
@@ -130,7 +131,7 @@ export class StormWall {
     });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.frustumCulled = false;
-    this.mesh.renderOrder = -999;   // right after the sky dome
+    this.mesh.renderOrder = 1001;   // right after the sky dome (Sky.ts draws it last of the opaques, at 1000)
     this.mesh.userData.noRebase = true;
     this.mesh.name = 'storm-wall';
   }

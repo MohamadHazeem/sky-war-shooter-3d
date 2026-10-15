@@ -69,6 +69,7 @@ export abstract class Aircraft {
   engineDead: boolean[] = [];
   smokeAcc = 0;
   label = '';
+  noMarker = false;   // no HUD marker (MissionEvents' scripted no-threat enemies: neither target nor friend)
   damageTaken = 0;
   hitFlash = 0;
   isPlayer = false;

@@ -98,7 +98,8 @@ and more. The data and the director's pure rules (`eventDue`, `eventFits`, `pick
 small vocabulary). `game/MissionEvents.ts` (owned by `MidRound` as `midRound.events`) runs one at a
 time, stages a B-17 into the gun's view first when it needs one (`SetPieces.stage`), and puts back
 whatever it changed when it ends. MidRound's objectives, random events and set pieces wait while
-one plays (`events.busy`), and it waits for theirs. Radio lines: `tools/voice/lines.d/28-mission-events.json`;
+one plays (`events.busy`), and it waits for theirs; none runs into the bomb run's lead-in (`bombLeadIn`:
+from 30 s before bombs away). Radio lines: `tools/voice/lines.d/28-mission-events.json`;
 Arabic: `i18n/ar/missionEvents.ts`; banner (HUD detail Full only): `ui/EventBanner.ts`. To add an
 event, add an entry and its lines; only a new kind of action needs code. Trigger one with
 `sws.missionEvent('salute')` (no id lists them); browser check: `tools/mission_events_check.mjs`.

@@ -11,18 +11,21 @@
      "nearMiss"
     ],
     "log": [
-     "12s event nearMiss (dev) start"
+     "13s event nearMiss (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTNear missA Fortress slides right at us",
-   "subtitle": "",
+   "subtitle": "TAILWatch it — she's sliding right into us!",
+   "bombRun": false,
+   "time": 18.6,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "12s event nearMiss (dev) start",
+     "13s event nearMiss (dev) start",
      "27s event nearMiss end"
     ]
    }
@@ -33,27 +36,27 @@
    "state": {
     "active": "friendlyExplodes",
     "t": 3.1,
-    "count": 2,
+    "count": 1,
     "played": [
-     "nearMiss",
      "friendlyExplodes"
     ],
     "log": [
-     "12s event nearMiss (dev) start",
-     "27s event nearMiss end",
-     "44s event friendlyExplodes (dev) start"
+     "13s event friendlyExplodes (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTFortress lostA B-17 takes a hit in the fuel tanks",
-   "subtitle": "CO-PILOTMissed us by a wingspan. Somebody buy that pilot a drink.",
+   "subtitle": "TOP TURRETShip in the high squadron — she's hit in the fuel tanks!",
+   "bombRun": false,
+   "time": 19.6,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "44s event friendlyExplodes (dev) start",
-     "57s event friendlyExplodes stopped"
+     "13s event friendlyExplodes (dev) start",
+     "30s event friendlyExplodes end"
     ]
    }
   },
@@ -62,25 +65,28 @@
    "started": "event bailout started",
    "state": {
     "active": "bailout",
-    "t": 8.8,
+    "t": 8.5,
     "count": 1,
     "played": [
      "bailout"
     ],
     "log": [
-     "12s event bailout (dev) start"
+     "13s event bailout (dev) start"
     ]
    },
    "programs": 0,
-   "banner": "IN FLIGHTBail outChutes: 4",
-   "subtitle": "NAVIGATORInitial point inbound. Fighters are pulling back. Hold formation.",
+   "banner": "IN FLIGHTBail outChutes: 5",
+   "subtitle": "PILOTShe's going down — count the chutes, everybody!",
+   "bombRun": false,
+   "time": 25,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "12s event bailout (dev) start",
-     "32s event bailout end"
+     "13s event bailout (dev) start",
+     "33s event bailout end"
     ]
    }
   },
@@ -90,27 +96,27 @@
    "state": {
     "active": "jamming",
     "t": 3,
-    "count": 2,
+    "count": 1,
     "played": [
-     "bailout",
      "jamming"
     ],
     "log": [
-     "12s event bailout (dev) start",
-     "32s event bailout end",
-     "51s event jamming (dev) start"
+     "13s event jamming (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTRadio jammedRadar and interphone full of static",
-   "subtitle": "CO-PILOTGood. They'll sit the war out in a camp. Better than the alternative.",
+   "subtitle": "RADIOThey're jamming us — the whole band's gone to static!",
+   "bombRun": false,
+   "time": 15.6,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "51s event jamming (dev) start",
-     "57s event jamming stopped"
+     "13s event jamming (dev) start",
+     "29s event jamming end"
     ]
    }
   },
@@ -125,18 +131,21 @@
      "oxygenFire"
     ],
     "log": [
-     "12s event oxygenFire (dev) start"
+     "13s event oxygenFire (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTOxygen fireFire in the radio room",
-   "subtitle": "BOMBARDIERTarget markers in sight. Smoke from the earlier wave.",
+   "subtitle": "RADIOFire! The oxygen line's burning in the radio room!",
+   "bombRun": false,
+   "time": 14.2,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "12s event oxygenFire (dev) start",
+     "13s event oxygenFire (dev) start",
      "24s event oxygenFire end"
     ]
    }
@@ -147,27 +156,27 @@
    "state": {
     "active": "gunnerFreezes",
     "t": 2,
-    "count": 2,
+    "count": 1,
     "played": [
-     "oxygenFire",
      "gunnerFreezes"
     ],
     "log": [
-     "12s event oxygenFire (dev) start",
-     "24s event oxygenFire end",
-     "40s event gunnerFreezes (dev) start"
+     "13s event gunnerFreezes (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTGunner frozenA waist gun has gone quiet",
-   "subtitle": "RADIOIt's out. Lost a bottle, but it's out.",
+   "subtitle": "TOP TURRETWaist gun's quiet — he's frozen up on the gun!",
+   "bombRun": false,
+   "time": 14.6,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "40s event gunnerFreezes (dev) start",
-     "53s event gunnerFreezes end"
+     "13s event gunnerFreezes (dev) start",
+     "25s event gunnerFreezes end"
     ]
    }
   },
@@ -182,18 +191,21 @@
      "salute"
     ],
     "log": [
-     "12s event salute (dev) start"
+     "13s event salute (dev) start"
     ]
    },
    "programs": 0,
    "banner": null,
-   "subtitle": "WAISTI'm okay… I'm back on it. Sorry, sir.",
+   "subtitle": "PILOTHe's saluting us. Hold your fire. Let him go.",
+   "bombRun": false,
+   "time": 22.1,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "12s event salute (dev) start",
+     "13s event salute (dev) start",
      "31s event salute end"
     ]
    }
@@ -204,27 +216,27 @@
    "state": {
     "active": "lostMustang",
     "t": 8.5,
-    "count": 2,
+    "count": 1,
     "played": [
-     "salute",
      "lostMustang"
     ],
     "log": [
-     "12s event salute (dev) start",
-     "31s event salute end",
-     "48s event lostMustang (dev) start"
+     "13s event lostMustang (dev) start"
     ]
    },
    "programs": 0,
    "banner": null,
-   "subtitle": "PILOTPilot to crew: we're at altitude. Test fire your guns, and keep your eyes open.",
+   "subtitle": "PILOTCome on in, little friend. Glad to have you.",
+   "bombRun": false,
+   "time": 21,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "48s event lostMustang (dev) start",
-     "57s event lostMustang stopped"
+     "13s event lostMustang (dev) start",
+     "29s event lostMustang end"
     ]
    }
   },
@@ -239,18 +251,21 @@
      "cookOff"
     ],
     "log": [
-     "12s event cookOff (dev) start"
+     "13s event cookOff (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTCook-offAmmunition burning in a neighbour's waist",
-   "subtitle": "BOMBARDIERFive seconds. Steady. Three. Two. One.",
+   "subtitle": "BALL TURRETHer waist ammo's cooking off — rounds going everywhere!",
+   "bombRun": false,
+   "time": 18.8,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "12s event cookOff (dev) start",
+     "13s event cookOff (dev) start",
      "28s event cookOff end"
     ]
    }
@@ -259,30 +274,29 @@
    "id": "weatherWall",
    "started": "event weatherWall started",
    "state": {
-    "active": null,
-    "t": 11,
-    "count": 2,
+    "active": "weatherWall",
+    "t": 9,
+    "count": 1,
     "played": [
-     "cookOff",
      "weatherWall"
     ],
     "log": [
-     "12s event cookOff (dev) start",
-     "28s event cookOff end",
-     "45s event weatherWall (dev) start",
-     "56s event weatherWall end"
+     "14s event weatherWall (dev) start"
     ]
    },
    "programs": 0,
    "banner": null,
-   "subtitle": "WAISTThey're throwing the boxes out the window!",
+   "subtitle": "PILOTThen we go through. Close it up and watch your spacing.",
+   "bombRun": false,
+   "time": 22.7,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "45s event weatherWall (dev) start",
-     "56s event weatherWall end"
+     "14s event weatherWall (dev) start",
+     "25s event weatherWall end"
     ]
    }
   },
@@ -297,18 +311,21 @@
      "flakWalk"
     ],
     "log": [
-     "12s event flakWalk (dev) start"
+     "13s event flakWalk (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTFlak trackingThe bursts are walking toward us",
-   "subtitle": "TOP TURRETFlak hit the ship beside us! Her engine is burning!",
+   "subtitle": "BOMBARDIERFlak's tracking us — they've got our altitude!",
+   "bombRun": false,
+   "time": 16.5,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "12s event flakWalk (dev) start",
+     "13s event flakWalk (dev) start",
      "24s event flakWalk end"
     ]
    }
@@ -319,27 +336,27 @@
    "state": {
     "active": "runawayProp",
     "t": 3,
-    "count": 2,
+    "count": 1,
     "played": [
-     "flakWalk",
      "runawayProp"
     ],
     "log": [
-     "12s event flakWalk (dev) start",
-     "24s event flakWalk end",
-     "42s event runawayProp (dev) start"
+     "13s event runawayProp (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTRunaway propA neighbour fights a failing engine",
-   "subtitle": "NAVIGATORThat threw them off. The bursts are falling behind.",
+   "subtitle": "CO-PILOTShip off our wing — runaway prop, she's smoking bad!",
+   "bombRun": false,
+   "time": 19.6,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "42s event runawayProp (dev) start",
-     "57s event runawayProp end"
+     "13s event runawayProp (dev) start",
+     "27s event runawayProp end"
     ]
    }
   },
@@ -354,18 +371,21 @@
      "redFlares"
     ],
     "log": [
-     "12s event redFlares (dev) start"
+     "13s event redFlares (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTWounded aboardRed flares from a neighbour",
-   "subtitle": "PILOTSteady. Straight and level. No evasive action.",
+   "subtitle": "TAILRed flares from the ship off our wing — wounded aboard!",
+   "bombRun": false,
+   "time": 18.5,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "12s event redFlares (dev) start",
+     "13s event redFlares (dev) start",
      "26s event redFlares end"
     ]
    }
@@ -376,27 +396,27 @@
    "state": {
     "active": "enemyBailout",
     "t": 4.6,
-    "count": 2,
+    "count": 1,
     "played": [
-     "redFlares",
      "enemyBailout"
     ],
     "log": [
-     "12s event redFlares (dev) start",
-     "26s event redFlares end",
-     "44s event enemyBailout (dev) start"
+     "13s event enemyBailout (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTHe's outA burning Fw 190 pilot bails out",
-   "subtitle": "PILOTShe lands first. Let's get her home.",
+   "subtitle": "BALL TURRETHe's out! There's his chute!",
+   "bombRun": false,
+   "time": 17.2,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "44s event enemyBailout (dev) start",
-     "55s event enemyBailout end"
+     "13s event enemyBailout (dev) start",
+     "23s event enemyBailout end"
     ]
    }
   },
@@ -411,19 +431,22 @@
      "yellowNoses"
     ],
     "log": [
-     "13s event yellowNoses (dev) start"
+     "14s event yellowNoses (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTYellow nosesVeteran Fw 190s, head-on",
-   "subtitle": "BOMBARDIERBomb bay doors open. Cold air coming through.",
+   "subtitle": "PILOTTop turret, chin turret — get on them!",
+   "bombRun": false,
+   "time": 19.7,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "13s event yellowNoses (dev) start",
-     "27s event yellowNoses end"
+     "14s event yellowNoses (dev) start",
+     "28s event yellowNoses end"
     ]
    }
   },
@@ -433,27 +456,27 @@
    "state": {
     "active": "sunBandits",
     "t": 5,
-    "count": 2,
+    "count": 1,
     "played": [
-     "yellowNoses",
      "sunBandits"
     ],
     "log": [
-     "13s event yellowNoses (dev) start",
-     "27s event yellowNoses end",
-     "45s event sunBandits (dev) start"
+     "14s event sunBandits (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTOut of the sunBf 109s diving from the glare",
-   "subtitle": "PILOTTop turret, chin turret — get on them!",
+   "subtitle": "TAILSquint and lead them. They have to come out of it sometime.",
+   "bombRun": false,
+   "time": 18.7,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "45s event sunBandits (dev) start",
-     "57s event sunBandits stopped"
+     "14s event sunBandits (dev) start",
+     "27s event sunBandits end"
     ]
    }
   },
@@ -468,19 +491,22 @@
      "chaff"
     ],
     "log": [
-     "12s event chaff (dev) start"
+     "13s event chaff (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTWindowThe lead ship scatters radar foil",
-   "subtitle": "BOMBARDIERTarget markers in sight. Smoke from the earlier wave.",
+   "subtitle": "NAVIGATORLead's dropping chaff — foil strips to blind their radar.",
+   "bombRun": false,
+   "time": 15.6,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "12s event chaff (dev) start",
-     "22s event chaff end"
+     "13s event chaff (dev) start",
+     "23s event chaff end"
     ]
    }
   },
@@ -490,27 +516,27 @@
    "state": {
     "active": "oxygenCheck",
     "t": 5,
-    "count": 2,
+    "count": 1,
     "played": [
-     "chaff",
      "oxygenCheck"
     ],
     "log": [
-     "12s event chaff (dev) start",
-     "22s event chaff end",
-     "41s event oxygenCheck (dev) start"
+     "13s event oxygenCheck (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTOxygen checkCrew check-in, station by station",
-   "subtitle": "BOMBARDIERLook at it glitter. Christmas over Germany.",
+   "subtitle": "WAISTWaist, okay.",
+   "bombRun": false,
+   "time": 17.6,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "41s event oxygenCheck (dev) start",
-     "56s event oxygenCheck end"
+     "13s event oxygenCheck (dev) start",
+     "27s event oxygenCheck end"
     ]
    }
   },
@@ -525,18 +551,21 @@
      "tightenUp"
     ],
     "log": [
-     "12s event tightenUp (dev) start"
+     "13s event tightenUp (dev) start"
     ]
    },
    "programs": 0,
    "banner": null,
-   "subtitle": "NAVIGATORInitial point inbound. Fighters are pulling back. Hold formation.",
+   "subtitle": "PILOTThat's better. Every gun in the box covers us now.",
+   "bombRun": false,
+   "time": 23.5,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "12s event tightenUp (dev) start",
+     "13s event tightenUp (dev) start",
      "38s event tightenUp end"
     ]
    }
@@ -547,27 +576,27 @@
    "state": {
     "active": "strayTracers",
     "t": 0.7,
-    "count": 2,
+    "count": 1,
     "played": [
-     "tightenUp",
      "strayTracers"
     ],
     "log": [
-     "12s event tightenUp (dev) start",
-     "38s event tightenUp end",
-     "49s event strayTracers (dev) start"
+     "13s event strayTracers (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTWatch your fireA jittery gunner sprays the formation",
-   "subtitle": "PILOTPilot to crew: we're at altitude. Test fire your guns, and keep your eyes open.",
+   "subtitle": "TOP TURRETHey! Watch your fire — that's a friendly ship!",
+   "bombRun": false,
+   "time": 17.3,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "49s event strayTracers (dev) start",
-     "57s event strayTracers stopped"
+     "13s event strayTracers (dev) start",
+     "25s event strayTracers end"
     ]
    }
   },
@@ -582,18 +611,21 @@
      "escortHome"
     ],
     "log": [
-     "12s event escortHome (dev) start"
+     "13s event escortHome (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTEscort hitA damaged P-51 turns for home",
-   "subtitle": "BOMBARDIERTarget markers in sight. Smoke from the earlier wave.",
+   "subtitle": "BLUE TWOBig friend, I'm hit — coolant's going. Turning for home.",
+   "bombRun": false,
+   "time": 16.1,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "12s event escortHome (dev) start",
+     "13s event escortHome (dev) start",
      "26s event escortHome end"
     ]
    }
@@ -604,27 +636,27 @@
    "state": {
     "active": "brassRain",
     "t": 2,
-    "count": 2,
+    "count": 1,
     "played": [
-     "escortHome",
      "brassRain"
     ],
     "log": [
-     "12s event escortHome (dev) start",
-     "26s event escortHome end",
-     "42s event brassRain (dev) start"
+     "13s event brassRain (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTBrass rainSpent casings fall from the ship above",
-   "subtitle": "PILOTGood luck, little friend. Thanks for the company.",
+   "subtitle": "TOP TURRETBrass coming down from the ship above — it's raining shell casings!",
+   "bombRun": false,
+   "time": 18.6,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "42s event brassRain (dev) start",
-     "55s event brassRain end"
+     "13s event brassRain (dev) start",
+     "25s event brassRain end"
     ]
    }
   },
@@ -633,24 +665,27 @@
    "started": "event salute started",
    "state": {
     "active": "salute",
-    "t": 5,
+    "t": 9.6,
     "count": 1,
     "played": [
      "salute"
     ],
     "log": [
-     "12s event salute (dev) start"
+     "13s event salute (dev) start"
     ]
    },
    "programs": 0,
-   "banner": "IN FLIGHT · NO SHOT · A crippled Bf 109 pulls alongside",
-   "subtitle": "",
+   "banner": null,
+   "subtitle": "PILOTHe's saluting us. Hold your fire. Let him go.",
+   "bombRun": false,
+   "time": 22.1,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "12s event salute (dev) start",
+     "13s event salute (dev) start",
      "31s event salute end"
     ]
    }
@@ -660,28 +695,58 @@
    "started": "event bailout started",
    "state": {
     "active": "bailout",
-    "t": 6.4,
-    "count": 2,
+    "t": 8.5,
+    "count": 1,
     "played": [
-     "salute",
      "bailout"
     ],
     "log": [
-     "12s event salute (dev) start",
-     "31s event salute end",
-     "43s event bailout (dev) start"
+     "13s event bailout (dev) start"
     ]
    },
    "programs": 0,
-   "banner": "IN FLIGHT · BAIL OUT · Chutes: 4",
-   "subtitle": "PILOTHe's saluting us. Hold your fire. Let him go.",
+   "banner": "IN FLIGHT · BAIL OUT · Chutes: 5",
+   "subtitle": "PILOTShe's going down — count the chutes, everybody!",
+   "bombRun": false,
+   "time": 25,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "43s event bailout (dev) start",
-     "57s event bailout stopped"
+     "13s event bailout (dev) start",
+     "33s event bailout end"
+    ]
+   }
+  },
+  {
+   "id": "gunnerFreezes",
+   "started": "event gunnerFreezes started",
+   "state": {
+    "active": "gunnerFreezes",
+    "t": 2,
+    "count": 1,
+    "played": [
+     "gunnerFreezes"
+    ],
+    "log": [
+     "13s event gunnerFreezes (dev) start"
+    ]
+   },
+   "programs": 0,
+   "banner": "IN FLIGHT · GUNNER FROZEN · A waist gun has gone quiet",
+   "subtitle": "TOP TURRETWaist gun's quiet — he's frozen up on the gun!",
+   "bombRun": false,
+   "time": 14.6,
+   "bombsAway": 85,
+   "after": {
+    "active": null,
+    "jammed": false,
+    "frozen": [],
+    "log": [
+     "13s event gunnerFreezes (dev) start",
+     "25s event gunnerFreezes end"
     ]
    }
   },
@@ -690,24 +755,27 @@
    "started": "event salute started",
    "state": {
     "active": "salute",
-    "t": 5.5,
+    "t": 9.6,
     "count": 1,
     "played": [
      "salute"
     ],
     "log": [
-     "12s event salute (dev) start"
+     "13s event salute (dev) start"
     ]
    },
    "programs": 0,
-   "banner": "أثناء الطيران · لا تطلقوا · طائرة Bf 109 معطوبة تحاذينا",
-   "subtitle": "",
+   "banner": null,
+   "subtitle": "الطيارإنه يؤدي لنا التحية. أوقفوا النار. دعوه يذهب.",
+   "bombRun": false,
+   "time": 22.1,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "12s event salute (dev) start",
+     "13s event salute (dev) start",
      "31s event salute end"
     ]
    }
@@ -718,27 +786,27 @@
    "state": {
     "active": "jamming",
     "t": 3,
-    "count": 2,
+    "count": 1,
     "played": [
-     "salute",
      "jamming"
     ],
     "log": [
-     "12s event salute (dev) start",
-     "31s event salute end",
-     "44s event jamming (dev) start"
+     "13s event jamming (dev) start"
     ]
    },
    "programs": 0,
    "banner": "أثناء الطيران · تشويش على اللاسلكي · الرادار والاتصال الداخلي يملؤهما التشويش",
-   "subtitle": "الطيارإنه يؤدي لنا التحية. أوقفوا النار. دعوه يذهب.",
+   "subtitle": "اللاسلكيإنهم يشوشون علينا — الموجة كلها تشويش!",
+   "bombRun": false,
+   "time": 15.6,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "44s event jamming (dev) start",
-     "57s event jamming stopped"
+     "13s event jamming (dev) start",
+     "29s event jamming end"
     ]
    }
   },
@@ -747,125 +815,132 @@
    "started": "event bailout started",
    "state": {
     "active": "bailout",
-    "t": 8.8,
+    "t": 8.5,
     "count": 1,
     "played": [
      "bailout"
     ],
     "log": [
-     "12s event bailout (dev) start"
+     "13s event bailout (dev) start"
     ]
    },
    "programs": 0,
-   "banner": "IN FLIGHT · BAIL OUT · Chutes: 6",
-   "subtitle": "",
+   "banner": "IN FLIGHT · BAIL OUT · Chutes: 5",
+   "subtitle": "PILOTShe's going down — count the chutes, everybody!",
+   "bombRun": false,
+   "time": 25,
+   "bombsAway": 85,
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "12s event bailout (dev) start",
-     "32s event bailout end"
+     "13s event bailout (dev) start",
+     "33s event bailout end"
     ]
    }
   },
   {
    "id": "pacing-1",
    "mission": "Twelve O'Clock High",
-   "time": 399,
+   "time": 370,
    "result": {
     "success": true,
-    "reason": "The head-on attacks broke against a wall of fifty-calibre fire. Bremen's docks are burning."
+    "reason": "Objectives met. Ditched in the Channel; bomber lost, crew rescued."
    },
-   "summary": "enemy AI: {\"extend\":14,\"zoom\":13,\"dive\":0,\"reattack\":30,\"jink\":16,\"break\":6,\"splitS\":4,\"weakGun\":0,\"straggler\":0,\"engine\":1,\"schwarm\":1,\"signature\":0,\"limp\":72,\"press\":28} | RESULT: Mission complete — perks 0, kills 51, accuracy 69%, bombers lost 3, t=399s",
-   "samples": 21465,
+   "summary": "enemy AI: {\"extend\":19,\"zoom\":15,\"dive\":0,\"reattack\":33,\"jink\":22,\"break\":8,\"splitS\":5,\"weakGun\":0,\"straggler\":0,\"engine\":0,\"schwarm\":3,\"signature\":0,\"limp\":60,\"press\":29} | RESULT: Mission complete — perks 0, kills 42, accuracy 74%, bombers lost 4, t=370s",
+   "samples": 19708,
    "events": [
-    "32s event gunnerFreezes start",
-    "45s event gunnerFreezes end",
-    "228s event runawayProp start",
-    "239s event runawayProp end"
+    "32s event runawayProp start",
+    "43s event runawayProp end",
+    "265s event oxygenFire start",
+    "277s event oxygenFire end"
    ],
    "midRound": [
-    "24s objective noLoss start",
-    "53s event straggler start",
-    "77s event straggler won",
-    "78s event straggler start",
-    "94s objective noLoss lost",
-    "94s event straggler lost",
-    "247s objective coolHead start",
-    "254s objective coolHead WON",
-    "258s event engineFire start",
-    "273s objective clearTail start",
-    "274s event engineFire timeout",
-    "281s objective clearTail WON"
+    "24s objective sharpshooter start",
+    "56s objective sharpshooter WON",
+    "74s objective noLoss start",
+    "80s event engineFire start",
+    "96s event engineFire timeout",
+    "175s objective noLoss WON",
+    "285s objective clearTail start",
+    "291s event straggler start",
+    "312s objective clearTail WON",
+    "316s event straggler won",
+    "320s objective noLoss start",
+    "368s objective noLoss WON"
    ],
    "setPieces": [
-    "78s set piece straggler",
-    "275s set piece bombBay",
-    "296s set piece bombBay done"
+    "51s set piece bombBay",
+    "66s set piece bombBay done",
+    "327s set piece littleFriends",
+    "340s set piece littleFriends done"
    ],
    "overlaps": []
   },
   {
    "id": "pacing-2",
    "mission": "Black Thursday",
-   "time": 420,
+   "time": 427,
    "result": null,
-   "summary": "enemy AI: {\"extend\":19,\"zoom\":40,\"dive\":0,\"reattack\":11,\"jink\":8,\"break\":9,\"splitS\":7,\"weakGun\":22,\"straggler\":1,\"engine\":1,\"schwarm\":2,\"signature\":0,\"limp\":81,\"press\":28} | RESULT: TIMEOUT (playing) — perks 0, kills 49, accuracy 66%, bombers lost 4, t=420s",
+   "summary": "enemy AI: {\"extend\":13,\"zoom\":28,\"dive\":0,\"reattack\":29,\"jink\":6,\"break\":3,\"splitS\":7,\"weakGun\":8,\"straggler\":1,\"engine\":2,\"schwarm\":1,\"signature\":0,\"limp\":74,\"press\":28} | RESULT: TIMEOUT (playing) — perks 0, kills 47, accuracy 71%, bombers lost 2, t=427s",
    "samples": 23575,
    "events": [
-    "239s event yellowNoses start",
-    "253s event yellowNoses end",
-    "389s event weatherWall start",
-    "400s event weatherWall end"
+    "34s event cookOff start",
+    "50s event cookOff end",
+    "236s event bailout start",
+    "256s event bailout end",
+    "395s event weatherWall start",
+    "406s event weatherWall end"
    ],
    "midRound": [
-    "28s objective coolHead start",
-    "33s objective coolHead WON",
-    "74s event engineFire start",
-    "90s event engineFire timeout",
-    "261s objective sharpshooter start",
-    "267s event straggler start",
-    "282s objective sharpshooter WON",
-    "302s event straggler won",
-    "408s objective pathfinder start",
-    "414s event engineFire start"
+    "25s objective coolHead start",
+    "38s objective coolHead WON",
+    "58s event straggler start",
+    "64s objective pathfinder start",
+    "83s objective pathfinder WON",
+    "90s event straggler won",
+    "264s objective sharpshooter start",
+    "276s event engineFire start",
+    "292s event engineFire timeout",
+    "305s objective sharpshooter WON",
+    "414s objective protect start",
+    "420s event straggler start"
    ],
    "setPieces": [
-    "45s set piece flakHit",
-    "64s set piece flakHit done"
+    "265s set piece collision",
+    "268s set piece collision done"
    ],
    "overlaps": []
   },
   {
    "id": "pacing-4",
    "mission": "Last Light",
-   "time": 424,
+   "time": 423,
    "result": null,
-   "summary": "enemy AI: {\"extend\":46,\"zoom\":48,\"dive\":0,\"reattack\":51,\"jink\":20,\"break\":12,\"splitS\":9,\"weakGun\":23,\"straggler\":2,\"engine\":0,\"schwarm\":2,\"signature\":0,\"limp\":64,\"press\":22} | RESULT: TIMEOUT (playing) — perks 0, kills 63, accuracy 74%, bombers lost 2, t=424s",
-   "samples": 26995,
+   "summary": "enemy AI: {\"extend\":25,\"zoom\":35,\"dive\":0,\"reattack\":24,\"jink\":16,\"break\":11,\"splitS\":14,\"weakGun\":22,\"straggler\":0,\"engine\":0,\"schwarm\":0,\"signature\":0,\"limp\":67,\"press\":18} | RESULT: TIMEOUT (playing) — perks 0, kills 64, accuracy 66%, bombers lost 1, t=423s",
+   "samples": 26998,
    "events": [
-    "32s event flakWalk start",
-    "44s event flakWalk end",
-    "168s event nearMiss start",
-    "183s event nearMiss end",
-    "325s event cookOff start",
-    "341s event cookOff end"
+    "32s event sunBandits start",
+    "45s event sunBandits end",
+    "168s event oxygenFire start",
+    "180s event oxygenFire end",
+    "323s event chaff start",
+    "333s event chaff end"
    ],
    "midRound": [
-    "24s objective noLoss start",
-    "78s objective noLoss WON",
-    "191s objective coolHead start",
-    "230s objective coolHead WON",
-    "349s objective sharpshooter start",
-    "349s event straggler start",
-    "363s objective sharpshooter WON",
-    "384s event straggler won"
+    "23s objective protect start",
+    "53s objective protect WON",
+    "188s objective pathfinder start",
+    "199s objective pathfinder WON",
+    "341s objective noLoss start",
+    "386s objective noLoss WON"
    ],
    "setPieces": [
-    "192s set piece collision",
-    "214s set piece collision done",
-    "349s set piece straggler"
+    "188s set piece bombBay",
+    "209s set piece bombBay done",
+    "342s set piece littleFriends",
+    "354s set piece littleFriends done"
    ],
    "overlaps": []
   }

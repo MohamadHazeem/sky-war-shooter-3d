@@ -5,7 +5,7 @@ import { setLang, tx } from '../src/i18n';
 import { hasPhrase } from '../src/i18n';
 import { VOICE_LINES } from '../src/audio/voiceLines';
 import {
-  MISSION_EVENTS, EVENT_IDS, EV_FIRST, EV_GAP, EV_MAX, EV_EDGE, CHUTE_LINES, eventDue, eventFits, pickEvent, eventLines,
+  MISSION_EVENTS, EVENT_IDS, EV_FIRST, EV_GAP, EV_MAX, EV_EDGE, EV_BOMB_LEAD, EV_BOMB_CLEAR, CHUTE_LINES, eventDue, eventFits, pickEvent, eventLines, bombLeadIn,
   type EvGate, type EvContext, type EvAction,
 } from '../src/game/MissionEventLib';
 import { MissionEvents } from '../src/game/MissionEvents';
@@ -130,6 +130,18 @@ describe('the director (pacing)', () => {
     expect(eventFits(nearMiss, ctx({ roundLeft: nearMiss.dur }))).toBe(false);
   });
 
+  it('keeps clear of the bomb run: nothing runs into its lead-in (IP call, bombsight offer)', () => {
+    const nearMiss = MISSION_EVENTS.find((e) => e.id === 'nearMiss')!;
+    expect(bombLeadIn(10, undefined, false, false)).toBe(Infinity);          // no bomb run in this mission
+    expect(bombLeadIn(10, 100, true, false)).toBe(Infinity);                 // bombs gone, run over
+    expect(bombLeadIn(10, 100, true, true)).toBe(0);                         // the run itself (rally included)
+    expect(bombLeadIn(10, 100, false, false)).toBe(100 - EV_BOMB_LEAD - 10);
+    expect(bombLeadIn(80, 100, false, false)).toBe(0);                       // the lead-in is on
+    expect(eventFits(nearMiss, ctx({ bombIn: nearMiss.dur + EV_BOMB_CLEAR }))).toBe(true);
+    expect(eventFits(nearMiss, ctx({ bombIn: nearMiss.dur + EV_BOMB_CLEAR - 1 }))).toBe(false);
+    expect(MISSION_EVENTS.filter((e) => eventFits(e, ctx({ bombIn: 0, phase: 'none' })))).toEqual([]);
+  });
+
   it('picks by weight, never repeats in a mission and returns null when nothing fits', () => {
     let seed = 7;
     const rng = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
@@ -233,6 +245,20 @@ describe('MissionEvents runtime', () => {
         expect(r.frozen.size).toBe(0);
       }
     } finally { Math.random = random; }
+  });
+
+  it('stops a running event when the bomb run\'s lead-in begins, putting everything back', () => {
+    const r = rig();
+    r.game.mission.bombsAway = 140;
+    r.game.director = { bombsDropped: false };
+    r.world.time = 100;
+    r.ev.dev('gunnerFreezes');
+    r.run(1);
+    expect(r.frozen.size).toBe(1);
+    r.run(11);                         // past bombsAway - 30: the lead-in has the stage
+    expect(r.ev.active).toBeNull();
+    expect(r.frozen.size).toBe(0);
+    expect(r.ev.log.at(-1)).toContain('stopped');
   });
 
   it('a neighbour event is not available without a B-17 in view', () => {

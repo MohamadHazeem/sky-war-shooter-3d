@@ -15,6 +15,9 @@ const CSS = `
 #evBanner.tense .eb-t { color: var(--warn, #e0b445); }
 #evBanner.loss { border-top-color: var(--bad, #d0523c); }
 #evBanner.loss .eb-t { color: #ec8a72; }
+/* a gunner frozen on his gun (gunnerFreezes): his station struck through on the station bar */
+#hStations span.ev-frozen { color: var(--bad, #d0523c); text-decoration: line-through; animation: evFrozen 1s steps(2) infinite; }
+@keyframes evFrozen { 50% { opacity: .45; } }
 @media (max-width: 640px) { #evBanner { top: 11%; } #evBanner .eb-t { font-size: 17px; } #evBanner .eb-s { font-size: 12px; } }
 @media (prefers-reduced-motion: reduce) { #evBanner { transition: opacity .2s; transform: translate(-50%, 0); } }
 `;

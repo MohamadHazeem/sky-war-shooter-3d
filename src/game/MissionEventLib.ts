@@ -27,7 +27,7 @@ export type EvNeed =
 
 export type EvAction =
   | 'slide' | 'slideBack'              // the subject B-17 drifts toward the player's ship / back to its slot
-  | 'burn' | 'explode' | 'fall'        // the subject: fire pouring out / blows up / goes down in a spin
+  | 'burn' | 'explode' | 'fall'        // the subject: fire pouring out / blows up / sinks out of the box burning, then spins in
   | 'chute'                            // a parachute from the subject (counted on the card)
   | 'countChutes'                      // the tail gunner calls the count (CHUTE_LINES)
   | 'smoke'                            // the subject trails smoke from an engine (arg: seconds)
@@ -105,8 +105,8 @@ export const MISSION_EVENTS: MissionEventDef[] = [
       { at: 0, act: 'fall' },
       { at: 0.3, say: ['Pilot', 'She\'s going down — count the chutes, everybody!'] },
       { at: 1.5, act: 'drama' },
-      { at: 3, act: 'chute' }, { at: 4.1, act: 'chute' }, { at: 5.0, act: 'chute' },
-      { at: 6.2, act: 'chute' }, { at: 7.1, act: 'chute' }, { at: 8.4, act: 'chute' },
+      { at: 3.4, act: 'chute' }, { at: 4.0, act: 'chute' }, { at: 4.7, act: 'chute' },
+      { at: 5.3, act: 'chute' }, { at: 6.0, act: 'chute' }, { at: 6.8, act: 'chute' },
       { at: 10.5, act: 'countChutes' },
       { at: 13.5, say: ['Co-Pilot', 'Good. They\'ll sit the war out in a camp. Better than the alternative.'] },
     ],
@@ -297,6 +297,8 @@ export const EV_GAP: [number, number] = [50, 90];  // s between the start of one
 export const EV_MAX = 6;                           // per mission
 export const EV_EDGE = 15;                         // s at either end of a round kept clear
 export const EV_AFTER = 8;                         // s of quiet after another system's moment ends
+export const EV_BOMB_LEAD = 30;                    // s before bombs away the bomb-run lead-in starts (IP, bombsight offer)
+export const EV_BOMB_CLEAR = 14;                   // s an event (with its staging) must end before that lead-in
 const NEAR_CALM = 2, NEAR_TENSE = 6, NEAR_SPAWN = 4;
 
 export interface EvGate {
@@ -322,13 +324,23 @@ export interface EvContext {
   phase: string;
   near: number;                // enemy fighters within 1.2 km of the player
   roundLeft: number;
+  bombIn?: number;             // s until the bomb-run lead-in (bombLeadIn); absent: no bomb run ahead
   have: Partial<Record<EvNeed, boolean>>;
+}
+
+/** Seconds until the bomb run's lead-in (the IP call and the bombsight offer) begins: 0 once it has
+ *  (or while the run is on), Infinity with no bomb run ahead. Events never run into it. */
+export function bombLeadIn(time: number, bombsAway: number | undefined, dropped: boolean, runActive: boolean): number {
+  if (runActive) return 0;
+  if (!bombsAway || dropped) return Infinity;
+  return Math.max(0, bombsAway - EV_BOMB_LEAD - time);
 }
 
 /** Can this event play now? */
 export function eventFits(e: MissionEventDef, c: EvContext): boolean {
   if (c.phase !== 'none' && !e.phases.includes(c.phase as EvPhase)) return false;
   if (c.roundLeft < e.dur + EV_EDGE * 0.5) return false;
+  if ((c.bombIn ?? Infinity) < e.dur + EV_BOMB_CLEAR) return false;
   for (const n of e.needs) if (!c.have[n]) return false;
   const spawns = e.beats.some((b) => b.act === 'yellowNoses' || b.act === 'sunBandits');
   const cap = spawns ? NEAR_SPAWN : e.tone === 'calm' ? (c.phase === 'breather' ? NEAR_CALM + 2 : NEAR_CALM) : NEAR_TENSE;
