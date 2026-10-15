@@ -1,3 +1,4 @@
+import { NIGHT_FIGHTER as NF, radarContact, schrageSolution, SCHRAGE_Y, SCHRAGE_Z } from './NewEnemyRules';
 import * as THREE from 'three';
 import { AIR_BOMB, PACK, STURM, sturmSlot, type PackTactic } from './LuftwaffeTactics';
 import type { ParticleOpts } from '../render/Particles';
@@ -41,7 +42,7 @@ import { sound } from '../audio/Sound';
  * (radarCues, drawn by ui/Radar.ts). Nothing here allocates per frame.
  */
 
-export type TacticKind = 'companyFront' | 'pincer' | 'comet' | 'jet' | 'standoff' | 'topCover' | 'zerstorer' | 'bigGun' | 'sturm' | 'airBomb';
+export type TacticKind = 'companyFront' | 'pincer' | 'comet' | 'jet' | 'standoff' | 'topCover' | 'zerstorer' | 'bigGun' | 'sturm' | 'airBomb' | 'nightFighter';
 
 // ---------------------------------------------------------------- radar cues
 export interface RadarCue { pos: THREE.Vector3; label: string; until: number; on: boolean }
@@ -99,7 +100,7 @@ const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 
 // ---------------------------------------------------------------- members
 class Member implements PilotOverride {
-  get steady() { return this.g.kind === 'sturm' || this.g.kind === 'airBomb'; }
+  get steady() { return this.g.kind === 'sturm' || this.g.kind === 'airBomb' || this.g.kind === 'nightFighter'; }
   readonly slot = new THREE.Vector3();    // formation-frame offset from the group anchor
   readonly aimErr = new THREE.Vector3();
   readonly tubes: THREE.Object3D[] = [];  // Wgr. 21 tubes, kept for the reload
@@ -492,10 +493,59 @@ class Comet extends Group {
       if (dist < 170 || (!this.closing(m, t) && dist < 650) || m.t > 28) { m.phase = 1; m.t = 0; freeCue(this.cue); this.cue = null; }
       return true;
     }
-    // zoom past, then the fuel is gone: a long glide away, ahead and down
+    // The zoom burns the last of the compressed combat fuel, then glides home.
     steerTo(f.fm, _a.copy(F).addScaledVector(UP, 0.5).addScaledVector(RT, m.side * 0.3), 1.2, 0.9);
     f.fm.throttle = 1;
-    if (m.t > 2.2) { this.release(m, 'withdraw', _a.copy(F).addScaledVector(RT, m.side * 0.4).normalize().setY(-0.22).normalize()); return false; }
+    if (m.t > 2.2) { f.rocketFuel = 0; f.fm.throttle = 0; this.release(m, 'withdraw', _a.copy(F).addScaledVector(RT, m.side * 0.4).normalize().setY(-0.22).normalize()); return false; }
+    return true;
+  }
+}
+
+// Ju 88 G: radar intercept, settle beneath the bomber, fire the fixed oblique mount.
+class NightFighter extends Group {
+  constructor(tx: Tactics) { super(tx, 'nightFighter'); }
+  place() {
+    frame(this.w);
+    for (const m of this.members) {
+      m.target = this.tx.pickTarget(m.f.pos);
+      fpos(this.focusPos(m), 100, -NF.height, -1100, _a);
+      this.tx.place(m.f, _a, F, 145);
+    }
+  }
+  step() { frame(this.w); }
+  fly(m: Member, dt: number) {
+    const f = m.f, t = m.target;
+    f.trigger = false; f.obliqueTrigger = false; f.gunAim = null;
+    if (!t?.alive || m.t > 75 || m.salvos >= NF.maxBursts) {
+      this.release(m, 'withdraw'); return false;
+    }
+    const range = _c.copy(t.pos).sub(f.pos).length();
+    const dot = range > 0 ? _c.multiplyScalar(1 / range).dot(f.forward(_d)) : 0;
+    // A lock is acquired ahead; once under the ship its radio return is tracked overhead.
+    if (m.phase === 0) {
+      m.ang = radarContact(range, dot) ? m.ang + dt : 0;
+      fpos(t.pos, 0, -NF.height, -NF.aft, _a);
+      this.seek(m, _a, t.vel, .3, 175, 75);
+      if (m.ang >= NF.lockTime) { m.phase = 1; m.reload = NF.warningTime; }
+      return true;
+    }
+    if (range > NF.radarRange) { m.phase = 0; m.ang = 0; return true; }
+    // Use target-relative offsets, so rebases and bomber manoeuvres remain coherent.
+    fpos(t.pos, 0, -NF.height, -NF.aft, _a);
+    this.seek(m, _a, t.vel, .22, 160, 65);
+    m.p.state = 'attack';
+    m.reload = Math.max(0, m.reload - dt);
+    // Lead from the actual mount muzzle, including inherited aircraft velocity.
+    f.localToWorld(_a.set(0, 1.7, -2.665).multiplyScalar(f.model.scale.x), _a);
+    leadPoint(_a, f.vel, t, 700, _c);
+    const above = _c.y - _a.y;
+    const r = _c.sub(_a).length();
+    const aligned = r > 0 && schrageSolution(r, _c.multiplyScalar(1 / r).dot(_d.set(0, SCHRAGE_Y, SCHRAGE_Z).applyQuaternion(f.quat)), above);
+    if (m.reload <= 0 && aligned) {
+      f.obliqueTrigger = true; m.shots += dt;
+      if (m.shots >= NF.burst) { f.obliqueTrigger = false; m.shots = 0; m.salvos++; m.reload = NF.cooldown; }
+    }
+    if (this.cue) this.cue.pos.copy(f.pos);
     return true;
   }
 }
@@ -1209,6 +1259,17 @@ export class Tactics {
     return g;
   }
 
+  nightFighter(f: Fighter): Group | null {
+    const g = new NightFighter(this);
+    if (!g.add(f)) return null;
+    g.place(); this.groups.push(g);
+    this.cueAt(g, 'NIGHT FIGHTER', 75);
+    this.call('nightBelow', 'Ball Turret', 'Night fighter below us! Watch his upward cannon!', 25);
+    if (this.gunner()) this.hint?.('Ju 88 G below — use the BALL turret before its upward cannon lines up.');
+    this.log.push(`${this.world.time.toFixed(0)}s nightFighter`);
+    return g;
+  }
+
   jet(f: Fighter, opts: { high?: boolean; low?: boolean; quiet?: boolean } = {}): Group | null {
     const g = new Jet(this, !!opts.high, !!opts.low);
     if (!g.add(f)) return null;
@@ -1417,7 +1478,7 @@ export class Tactics {
       }
     }
     // gunner groups sent at a gun position keep their arc attacks
-    this.perType(ctx.station ? fs.filter((f) => !w.enemyPilot(f)?.station) : fs, skill);
+    this.perType(ctx.station ? fs.filter((f) => !w.enemyPilot(f)?.station || f.enemyType === 'me163' || f.enemyType === 'me410' || f.enemyType === 'ju88g') : fs, skill);
     this.formSchwarme(fs);
   }
 
@@ -1452,6 +1513,7 @@ export class Tactics {
       if (!f.alive || this.memberOf(f) || w.enemyPilot(f)?.override) continue;
       const t = f.enemyType as EnemyType;
       if (t === 'me163') this.comet(f);
+      else if (t === 'ju88g') this.nightFighter(f);
       else if (t === 'me410') this.bigGun([f], { place: 3000 });
       else if (t === 'do335') this.jet(f, { high: true });
       else if (t === 'he111') raiders.push(f);
@@ -1494,6 +1556,7 @@ export class Tactics {
       case 'companyFront': return this.companyFront(this.spawn('fw190', 6)) ? 'company front x6' : 'failed';
       case 'schwarm': return this.companyFront(this.spawn('fw190', 4), { schwarm: true }) ? 'schwarm head-on x4' : 'failed';
       case 'pincer': return this.pincer(this.spawn('fw190', 4)) ? 'pincer x4' : 'failed';
+      case 'nightFighter': return this.nightFighter(this.spawn('ju88g', 1)[0]) ? 'Ju 88 G underside intercept' : 'failed';
       case 'comet': return this.comet(this.spawn('me163', 1)[0]) ? 'Me 163 comet' : 'failed';
       case 'jet': return this.jet(this.spawn('me262', 1)[0]) ? 'Me 262 slashing passes' : 'failed';
       case 'standoff': return this.standoff(this.spawn(Math.random() < 0.5 ? 'ju88' : 'bf110', 2, 1.1, true), { place: 2600 }) ? 'stand-off rockets x2' : 'failed';

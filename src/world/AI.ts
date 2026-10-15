@@ -508,6 +508,11 @@ export class EnemyPilot {
     this.runT += dt;
     if (!me.alive) return;
     this.checkWounds(w);
+    me.obliqueTrigger = false;
+    if (me.enemyType === 'me163' && me.rocketFuel <= 0 && this.state !== 'withdraw') {
+      this.state = 'withdraw'; this.timer = 0; this.wing = null; this.evasion = null;
+      this.breakDir.copy(me.forward(_t)).setY(-.16).normalize();
+    }
     if (this.state === 'withdraw') this.override = null;
 
     // Jumped by an escort (allied fighter close behind)?

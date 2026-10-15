@@ -19,7 +19,7 @@ let rounds = 0;
 let inPass = false, passShots = 0, passHits = 0, lastContact = 0, quietAt = 30;
 let checkAt = 0, replyAt = 0, wounded = 0;
 const CONTACT_PREFIX = {
-  fw190: 'pfx_ss_fw190', bf109: 'pfx_ss_bf109', bf110: 'pfx_ss_bf110', ju88: 'pfx_ss_ju88',
+  fw190: 'pfx_ss_fw190', bf109: 'pfx_ss_bf109', bf110: 'pfx_ss_bf110', ju88: 'pfx_ss_ju88', ju88g: 'pfx_ss_ju88',
   me262: 'pfx_ss_me262', me163: 'pfx_ss_me163', he111: 'pfx_ss_he111', me410: 'pfx_ss_me410', do335: 'pfx_ss_do335',
 } as const;
 

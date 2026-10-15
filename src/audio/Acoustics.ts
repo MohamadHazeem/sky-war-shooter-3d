@@ -99,7 +99,7 @@ export const ENGINE_SPECS: Record<EngineKind, EngineSpec> = {
 export function engineKindOf(kind: string, type = ''): EngineKind {
   switch (type || kind) {
     case 'fw190': return 'bmw';
-    case 'he111': case 'ju88': return 'jumoTwin';      // twin Jumo 211
+    case 'he111': case 'ju88g': case 'ju88': return 'jumoTwin';      // twin Jumo 211
     case 'me410': case 'bf110': return 'db603twin';    // twin DB 603 / DB 601
     case 'do335': return 'pushpull';                   // DB 603 fore and aft
     case 'me262': return 'jet';                        // twin Jumo 004

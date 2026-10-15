@@ -265,7 +265,7 @@ export class AircraftGallery implements GalleryControl {
     let f: Fighter;
     if (id === 'b17' || id === 'p51d') f = new Fighter(id, 'allied', FW190_PARAMS, id === 'b17' ? 1.77 : 1.7);
     else {
-      // dressed the way World.spawnEnemy dresses it (Me 410 tint, BK 5 cannon and barbettes)
+      // fitted with the same per-type hit layout as World.spawnEnemy
       const type = id as EnemyType, v = ENEMY_VARIANTS[type];
       const own = hasModel(v.model as ModelKind);
       f = new Fighter((own ? v.model : 'fw190') as ModelKind, 'axis', v.params, own ? v.propRadius : 1.65);

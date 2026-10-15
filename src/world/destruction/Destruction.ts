@@ -356,7 +356,7 @@ export class Destruction {
     }
     const lease = this.leaseOf(st), sc = f.model.scale.x, kick = Math.sqrt(sc / 6);
     const blast = this.toWorld(st, st.split.parts[seat].fuel, _s);
-    const twin = f.kind === 'b17' || f.kind === 'bf110' || f.kind === 'ju88' || f.kind === 'he111';
+    const twin = f.kind === 'b17' || f.kind === 'bf110' || f.kind === 'ju88' || f.kind === 'ju88g' || f.kind === 'me410' || f.kind === 'he111';
     const away = (piece: Piece, speed: number) => {
       _v.copy(piece.root.position).sub(blast);
       const d = _v.length();

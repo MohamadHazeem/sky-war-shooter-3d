@@ -6,10 +6,10 @@ import { FlightParams, FW190_PARAMS } from './FlightModel';
 // otherwise it flies the Fw 190 airframe with a paint tint.
 // Late-war types (EnemyDress.ts dresses them at spawn, Tactics.ts flies them):
 //   he111  Heinkel He 111 bomber: raid target (Raid.ts spawnBomberRaid), dorsal gunner (gun_rear)
-//   me410  Me 410 Hornisse: Bf 110 airframe as a stand-in (no GPL Me 410 model exists), BK 5
+//   me410  Me 410 Hornisse: dedicated hero airframe, BK 5
 //          50 mm cannon under the nose for a stand-off shot at the bombers, side barbettes
 //   do335  Dornier Do 335 Pfeil: push-pull fast interceptor, diving slashing passes from high
-export type EnemyType = 'fw190' | 'bf109' | 'me262' | 'bf110' | 'ju88' | 'me163' | 'he111' | 'me410' | 'do335';
+export type EnemyType = 'fw190' | 'bf109' | 'me262' | 'bf110' | 'ju88' | 'ju88g' | 'me163' | 'he111' | 'me410' | 'do335';
 
 export interface EnemyVariant {
   label: string;          // name used in the HUD and kill feed
@@ -53,6 +53,11 @@ export const ENEMY_VARIANTS: Record<EnemyType, EnemyVariant> = {
     structure: 3.4, scale: 0.75, fallbackScale: 1.45, score: 320, propRadius: 1.72,
     tint: new THREE.Color(0.7, 0.75, 0.7),
   },
+  ju88g: {
+    label: 'Ju 88 G', model: 'ju88g', blurb: 'radar night fighter — attacks from below with upward-firing cannon',
+    params: { ...FW190_PARAMS, power: FW190_PARAMS.power * 1.12, rollRate: 1.4, maxG: 5, pitchRate: .75 },
+    structure: 3, scale: .75, fallbackScale: 1.45, score: 380, propRadius: 1.72,
+  },
   me163: {
     label: 'Me 163', model: 'me163', blurb: 'rocket fighter — blindingly fast, made of paper',
     // rocket: a slashing pass at absurd speed; it barely survives a burst
@@ -68,11 +73,11 @@ export const ENEMY_VARIANTS: Record<EnemyType, EnemyVariant> = {
     tint: new THREE.Color(0.72, 0.78, 0.7),
   },
   me410: {
-    label: 'Me 410', model: 'bf110', blurb: 'Hornisse, a fifty-millimetre cannon that fires from two kilometres',
-    // Bf 110 airframe (stand-in) in a lighter day-fighter grey; a bit faster, a little less armour
+    label: 'Me 410', model: 'me410', blurb: 'Hornisse, a fifty-millimetre cannon that fires from two kilometres',
+    // DB 603 twin: faster than the Bf 110, a little less armour
     params: { ...FW190_PARAMS, power: FW190_PARAMS.power * 1.1, rollRate: 1.8, maxG: 6, pitchRate: 0.85 },
     structure: 2.2, scale: 0.85, fallbackScale: 1.3, score: 350, propRadius: 1.55,
-    tint: new THREE.Color(0.94, 1.0, 1.1), ownTint: true,
+    tint: new THREE.Color(0.94, 1.0, 1.1),
   },
   do335: {
     label: 'Do 335', model: 'do335', blurb: 'Pfeil, a push-pull fighter as fast as a jet in a dive',

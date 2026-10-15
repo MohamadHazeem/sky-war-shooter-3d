@@ -44,7 +44,7 @@ export function styleOf(enemyType: string): DogfightStyle {
   switch (enemyType) {
     case 'bf109': return 'turner';
     case 'me262': case 'me163': return 'slasher';
-    case 'bf110': case 'ju88': case 'me410': case 'he111': return 'heavy';
+    case 'bf110': case 'ju88g': case 'ju88': case 'me410': case 'he111': return 'heavy';
     default: return 'boomzoom';
   }
 }

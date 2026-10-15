@@ -24,15 +24,19 @@ describe('hero model files (docs/phase10/hero-parts.md contract)', async () => {
         'part_fuselage_aft', 'part_tail', 'part_wingL', 'part_wingLtip', 'part_wingR', 'part_wingRtip',
         'part_wingL_lod0', 'ctl_aileron_L_lod0', 'ctl_aileron_L', 'ctl_aileron_R', 'ctl_elevator_L', 'ctl_elevator_R',
         'ctl_flap_L', 'ctl_flap_R', 'glass', 'pilot', 'interior', 'eye_pilot'];
-      for (const n of need) expect(names.has(n), `${kind} lacks ${n}`).toBe(true);
+      for (const n of need.filter(n => kind !== 'me163' || !/^ctl_(elevator|flap)/.test(n))) expect(names.has(n), `${kind} lacks ${n}`).toBe(true);
       expect([...names].some((n) => n.startsWith('ctl_rudder'))).toBe(true);
       // only the fuselage carries LOD1 / LOD2 (the whole airframe merged: one draw call)
       expect([...names].filter((n) => n.endsWith('_lod1'))).toEqual(['part_fuselage_lod1']);
       expect([...names].filter((n) => n.endsWith('_lod2'))).toEqual(['part_fuselage_lod2']);
-      if (kind !== 'p47d' && kind !== 'spitfire9') for (const n of ['gear_left', 'gear_right']) expect(names.has(n)).toBe(true);
+      if (kind !== 'p47d' && kind !== 'spitfire9' && kind !== 'me163') for (const n of ['gear_left', 'gear_right']) expect(names.has(n)).toBe(true);
       if (kind === 'me262') {
         for (const n of ['fan_1', 'fan_2', 'exhaust_left', 'exhaust_right', 'part_engine1', 'part_engine2']) expect(names.has(n), n).toBe(true);
         expect(names.has('prop_1')).toBe(false);
+      } else if (kind === 'me163') {
+        expect(names.has('prop_1')).toBe(false);
+        expect(names.has('exhaust')).toBe(true);
+        expect(names.has('gear_skid')).toBe(true);
       } else {
         for (const n of ['prop_1', 'spinner_1', 'blades_1']) expect(names.has(n), n).toBe(true);
       }

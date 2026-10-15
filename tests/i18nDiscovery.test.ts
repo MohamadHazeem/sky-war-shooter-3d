@@ -44,7 +44,7 @@ describe('Arabic table auto-discovery', () => {
       const probe = fresh.ALL_TABLES.findIndex((t) => t.phrases[key] === 'مسبار');
       expect(probe).toBeGreaterThanOrEqual(0);
       expect(probe).toBeLessThan(fresh.ALL_TABLES.findIndex((t) => t.phrases['Pause'] !== undefined && t.phrases['Pause'] !== 'probe'));
-      // placed first: an explicit table's wording still wins
+      expect(fresh.ALL_TABLES.slice(probe + 1).some(t => t.phrases['Pause'] === PHRASES['Pause'])).toBe(true);
       expect(fresh.PHRASES['Pause']).toBe(PHRASES['Pause']);
     } finally {
       await server.close();

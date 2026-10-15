@@ -31,9 +31,9 @@ describe('late-war enemy types', () => {
       expect(ALL_ENEMIES).toContain(t);
     }
     expect(ENEMY_VARIANTS.he111.structure).toBeGreaterThan(ENEMY_VARIANTS.bf110.structure);
-    // no GPL Me 410 model exists: the Bf 110 airframe stands in, repainted
-    expect(ENEMY_VARIANTS.me410.model).toBe('bf110');
-    expect(ENEMY_VARIANTS.me410.ownTint).toBe(true);
+    // The Hornisse now has an authored airframe and paint, without stand-in tinting.
+    expect(ENEMY_VARIANTS.me410.model).toBe('me410');
+    expect(ENEMY_VARIANTS.me410.ownTint).not.toBe(true);
     expect(styleOf('me410')).toBe('heavy');
     expect(styleOf('he111')).toBe('heavy');
     expect(styleOf('do335')).toBe('boomzoom');

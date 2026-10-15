@@ -69,6 +69,13 @@ export const AIRCRAFT_SPECS: AircraftSpec[] = [
     tip: 'Slow and armoured: go for an engine, not the fuselage.',
   },
   {
+    id: 'ju88g', model: 'ju88g', side: 'axis', name: 'Junkers Ju 88 G-6', nick: 'Ju 88 G',
+    role: 'Radar night fighter', crew: '3',
+    armament: '4 × 20 mm forward cannon · 2 × 20 mm upward-firing cannon',
+    speed: '388 mph (625 km/h)', first: '21 December 1936', size: '20.1 m × 15.5 m',
+    tip: 'Radar finds the bomber in darkness. Watch below: the upward cannon cannot fire sideways.',
+  },
+  {
     id: 'me262', model: 'me262', side: 'axis', name: 'Messerschmitt Me 262 A-1a Schwalbe', nick: 'Me 262',
     role: 'Jet fighter', crew: '1',
     armament: '4 × 30 mm MK 108 cannon',
@@ -90,12 +97,11 @@ export const AIRCRAFT_SPECS: AircraftSpec[] = [
     tip: 'Glazed nose, close formations, a gunner in every window: attack from below and go for the engines.',
   },
   {
-    id: 'me410', model: 'bf110', side: 'axis', name: 'Messerschmitt Me 410 A Hornisse', nick: 'Me 410',
+    id: 'me410', model: 'me410', side: 'axis', name: 'Messerschmitt Me 410 A Hornisse', nick: 'Me 410',
     role: 'Heavy fighter · bomber destroyer', crew: '2',
     armament: '2 × 20 mm cannon · 2 × 7.92 mm MG · 2 × 13 mm remote barbettes · 50 mm BK 5 cannon (U4)',
     speed: '388 mph (624 km/h)', first: '1942', size: '16.4 m × 12.4 m',
     tip: 'The BK 5 cannon telegraphs: he lines up from two kilometres and holds steady. Kill him before he fires.',
-    note: 'Shown on the Bf 110 airframe the game uses as a stand-in.',
   },
   {
     id: 'do335', model: 'do335', side: 'axis', name: 'Dornier Do 335 A Pfeil', nick: 'Do 335',

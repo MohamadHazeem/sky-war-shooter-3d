@@ -1498,7 +1498,7 @@ export class Sound {
       const pb = passBy(-toL.x * dist, -toL.y * dist, -toL.z * dist, f.vel.x - M.vx, f.vel.y - M.vy, f.vel.z - M.vz, this.pb);
       if (vi >= 0 && vi < sc.length) sc[vi] = hrtfScore(d, pb.tca, pb.miss);
       // aspect: which end of the aircraft faces us
-      let main = 1;
+      let main = kind === 'rocket' ? Math.min(1, thr) : 1;
       if (cy) {
         // Normal: roar on the main loop, idle on the second; Reduced: one loop, the one for the throttle
         main = v.aux ? 1 : cyIdleMain ? spec.aux * Math.max(cy.idle, 0.5) : Math.max(cy.roar, 0.3);

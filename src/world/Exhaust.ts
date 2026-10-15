@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Aircraft, Bomber, Fighter } from './Aircraft';
-import { ParticleSystem } from '../render/Particles';
+import { ParticleSystem, type ParticleOpts } from '../render/Particles';
 import { ModelKind } from './Models';
 import { heatHaze } from '../render/HeatHaze';
 
@@ -18,6 +18,7 @@ const BLUE: [number, number, number] = [2.2, 3.2, 6];   // flame core, cooler an
 
 const _p = new THREE.Vector3();
 const _v = new THREE.Vector3();
+const rocketGlow: ParticleOpts = { pos: _p, vel: _v, life: .18, size0: 1, size1: .2, color0: [10, 7, 4], alpha0: .8, alpha1: 0, frame: 1 };
 let tick = 0;
 
 // Called once per frame from World.update. Spawns every other frame to keep it cheap;
@@ -27,6 +28,13 @@ export function updateExhausts(aircraft: readonly Aircraft[], glow: ParticleSyst
   if (tick & 1) return;
   for (const a of aircraft) {
     if (!(a instanceof Fighter) || !a.alive || a.remove) continue;
+    if (a.enemyType === 'me163' && a.rocketFuel > 0 && a.fm.throttle > 0 && (a.zone('engine')?.hp ?? 0) > 0) {
+      const scale = a.model.scale.x;
+      a.localToWorld(_p.set(0, -.015, -3.45).multiplyScalar(scale), _p);
+      a.forward(_v).multiplyScalar(-45).addScaledVector(a.vel, .2);
+      rocketGlow.size0 = .65 * scale; rocketGlow.size1 = .15 * scale;
+      glow.spawn(rocketGlow);
+    }
     const stack = STACK[a.kind];
     if (!stack) continue;
     // a dead engine stops burning

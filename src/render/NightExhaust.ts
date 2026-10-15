@@ -49,7 +49,7 @@ export function updateNightExhaust(aircraft: readonly Fighter[], glow: ParticleS
   tick++;
   if (tick & 1) return;
   for (const f of aircraft) {
-    if (!f.alive || f.remove) continue;
+    if (!f.alive || f.remove || f.enemyType === 'ju88g' || (f.enemyType === 'me163' && (f.rocketFuel <= 0 || f.fm.throttle <= 0))) continue;
     const eng = f.zone('engine');
     if (eng && eng.hp <= 0) continue;
     const thr = THREE.MathUtils.clamp(f.fm.throttle, 0.3, 1.1);
