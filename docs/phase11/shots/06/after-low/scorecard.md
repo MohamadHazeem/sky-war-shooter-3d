@@ -1,7 +1,7 @@
 # Phase 10 visual scorecard
 
 Capture rig v1; seed 19431008; requested webgl2; preset low.
-Browser: 153.0.8010.12. Source revision: `d483ab6b167a3fa2ba19a49fde099e35c0c237cb` (dirty at capture: false).
+Browser: 153.0.8010.12. Source revision: `743dfe2579895dabcf7ade98fea1c241212f5227` (dirty at capture: true).
 [Contact sheet](contact-sheet.jpg) · [Capture metadata](manifest.json) · [Metric data](metrics.json)
 
 Score relevant cells from 0–10 against [the reference board](../../../../phase10/reference.md). `__/10` is unscored; `—` is not a primary subject. Do not convert image metrics into artistic scores. Review each pillar across its relevant shots; the ten pillar judgments sum to /100.
@@ -12,6 +12,8 @@ Score relevant cells from 0–10 against [the reference board](../../../../phase
 | [sunset](sunset.jpg) | __/10 | __/10 | __/10 | — | — | — | __/10 | __/10 | — | __/10 |
 | [night-formation](night-formation.jpg) | — | __/10 | — | — | __/10 | — | __/10 | __/10 | — | __/10 |
 | [sunset-rim](sunset-rim.jpg) | __/10 | __/10 | __/10 | — | — | — | __/10 | — | — | __/10 |
+| [night-clouds](night-clouds.jpg) | — | __/10 | __/10 | — | __/10 | — | __/10 | — | — | __/10 |
+| [night-waist](night-waist.jpg) | — | __/10 | — | — | __/10 | __/10 | __/10 | — | — | __/10 |
 
 ## Objective measurements
 
@@ -21,14 +23,18 @@ Frame times are real wall-clock milliseconds for a frozen scene render plus a GP
 
 | Shot | Source / pixels | Luma | RMS contrast | Colourfulness | Sharpness | Aliasing estimate | Render ms mean / p50 / p95 |
 |---|---|---:|---:|---:|---:|---:|---|
-| [night-flak](night-flak.jpg) | PNG 1920×1080 | 0.081 | 0.039 | 6.15 | 0.000321 | 0.000 | 2.82 / 2.10 / 4.70 |
-| [sunset](sunset.jpg) | PNG 1920×1080 | 0.417 | 0.160 | 25.48 | 0.000316 | 0.022 | 4.94 / 4.70 / 7.30 |
-| [night-formation](night-formation.jpg) | PNG 1920×1080 | 0.077 | 0.034 | 7.11 | 0.000338 | 0.018 | 4.60 / 4.20 / 6.90 |
-| [sunset-rim](sunset-rim.jpg) | PNG 1920×1080 | 0.617 | 0.158 | 28.02 | 0.000875 | 0.045 | 4.53 / 4.20 / 7.20 |
+| [night-flak](night-flak.jpg) | PNG 1920×1080 | 0.078 | 0.035 | 7.43 | 0.000324 | 0.005 | 1.86 / 1.60 / 2.90 |
+| [sunset](sunset.jpg) | PNG 1920×1080 | 0.492 | 0.179 | 22.84 | 0.000394 | 0.009 | 3.23 / 3.00 / 4.90 |
+| [night-formation](night-formation.jpg) | PNG 1920×1080 | 0.095 | 0.046 | 8.28 | 0.000399 | 0.055 | 4.41 / 4.20 / 6.30 |
+| [sunset-rim](sunset-rim.jpg) | PNG 1920×1080 | 0.653 | 0.154 | 27.37 | 0.000859 | 0.042 | 3.91 / 3.70 / 5.30 |
+| [night-clouds](night-clouds.jpg) | PNG 1920×1080 | 0.119 | 0.072 | 18.08 | 0.000312 | 0.000 | 3.52 / 3.00 / 6.60 |
+| [night-waist](night-waist.jpg) | PNG 1920×1080 | 0.070 | 0.056 | 8.84 | 0.000363 | 0.015 | 3.48 / 3.30 / 4.90 |
 
 | Shot | Luminance histogram (%) | Black / white clipped (%) |
 |---|---|---|
-| [night-flak](night-flak.jpg) | 29.0, 61.8, 5.2, 3.2, 0.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 | 0.00 / 0.00 |
-| [sunset](sunset.jpg) | 0.0, 0.0, 8.0, 15.1, 11.7, 6.8, 6.3, 11.6, 15.4, 19.3, 4.8, 0.9, 0.3, 0.0, 0.0, 0.0 | 0.00 / 0.00 |
-| [night-formation](night-formation.jpg) | 29.3, 68.1, 1.7, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 | 0.00 / 0.00 |
-| [sunset-rim](sunset-rim.jpg) | 0.0, 0.3, 0.5, 0.3, 2.6, 4.2, 4.5, 8.3, 15.8, 14.7, 14.5, 14.1, 9.6, 5.9, 3.5, 1.3 | 0.00 / 0.00 |
+| [night-flak](night-flak.jpg) | 28.8, 64.4, 3.5, 2.8, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 | 0.00 / 0.00 |
+| [sunset](sunset.jpg) | 0.0, 0.0, 0.0, 8.7, 18.6, 8.5, 5.3, 4.6, 8.8, 14.5, 14.7, 12.8, 2.9, 0.5, 0.0, 0.0 | 0.00 / 0.00 |
+| [night-formation](night-formation.jpg) | 16.4, 67.2, 14.6, 0.9, 0.3, 0.2, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 | 0.00 / 0.00 |
+| [sunset-rim](sunset-rim.jpg) | 0.0, 0.1, 0.4, 0.3, 1.3, 3.4, 3.6, 5.0, 12.2, 15.7, 14.9, 15.9, 11.9, 8.3, 4.5, 2.5 | 0.00 / 0.00 |
+| [night-clouds](night-clouds.jpg) | 14.0, 57.3, 9.7, 9.8, 8.3, 0.7, 0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 | 0.00 / 0.00 |
+| [night-waist](night-waist.jpg) | 64.8, 29.8, 1.0, 1.0, 1.1, 1.6, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 | 0.00 / 0.00 |

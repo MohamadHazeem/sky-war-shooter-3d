@@ -5,10 +5,11 @@
   "backend": "webgl2",
   "quality": "low",
   "cameraReference": null,
+  "fighterBaseline": null,
   "browser": "153.0.8010.12",
   "platform": "darwin/arm64",
-  "revision": "d483ab6b167a3fa2ba19a49fde099e35c0c237cb",
-  "dirty": false,
+  "revision": "743dfe2579895dabcf7ade98fea1c241212f5227",
+  "dirty": true,
   "shots": [
     {
       "version": 2,
@@ -95,14 +96,14 @@
       "visibleSunShafts": 0,
       "frameMs": {
         "samples": 60,
-        "programsBefore": 234,
-        "programsAfter": 234,
-        "mean": 2.8216666663686434,
-        "p50": 2.0999999940395355,
-        "p95": 4.700000017881393,
+        "programsBefore": 238,
+        "programsAfter": 238,
+        "mean": 1.859999999900659,
+        "p50": 1.5999999940395355,
+        "p95": 2.9000000059604645,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "4bae267e7e88e13f8b25df1daaff4d1d9314b6d6e39db886b4a656885014e857",
+      "pixelHash": "38a5772c15aae24ca2a124ce9fd1d8b519496b1e165e2a6b49c17aa2e828cc96",
       "errors": []
     },
     {
@@ -161,9 +162,9 @@
       },
       "camera": {
         "position": [
-          -310.35049011821354,
-          7775.359106436241,
-          -299.09085620980215
+          -310.290271548265,
+          7775.6206563388,
+          -298.9152338174597
         ],
         "quaternion": [
           0.038218235603471984,
@@ -188,14 +189,14 @@
       "visibleSunShafts": 0,
       "frameMs": {
         "samples": 60,
-        "programsBefore": 234,
-        "programsAfter": 234,
-        "mean": 4.939999999602636,
-        "p50": 4.699999988079071,
-        "p95": 7.299999982118607,
+        "programsBefore": 238,
+        "programsAfter": 238,
+        "mean": 3.234999999900659,
+        "p50": 3,
+        "p95": 4.9000000059604645,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "a7974d192ecec3d81ffb12bb9e4817d1c6bb41b7b7f130d80039fe58f17a3b7f",
+      "pixelHash": "0da67560cea30dc54071d7e2d7206c0cb247d95b49f9a97a70b4a6648d32fbc3",
       "errors": []
     },
     {
@@ -253,14 +254,14 @@
       },
       "camera": {
         "position": [
-          -16.49832640458221,
-          7617.011659733138,
-          581.8799225097467
+          -16.711797039966875,
+          7616.000418780689,
+          578.2018829661636
         ],
         "quaternion": [
-          0.0588788368211467,
+          0.05887883682114671,
           -0.28374434724695363,
-          0.017458448738652623,
+          0.017458448738652627,
           0.9569313614610135
         ],
         "fov": 62
@@ -287,14 +288,14 @@
       "visibleSunShafts": 0,
       "frameMs": {
         "samples": 60,
-        "programsBefore": 235,
-        "programsAfter": 235,
-        "mean": 4.596666666368644,
+        "programsBefore": 239,
+        "programsAfter": 239,
+        "mean": 4.409999999900659,
         "p50": 4.200000017881393,
-        "p95": 6.9000000059604645,
+        "p95": 6.300000011920929,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "dd3dca578aa4c521cb589fc65069c3630d593ced526deeaae15c0b4a4fd9223d",
+      "pixelHash": "533023465c2d2155c72248d0e702b8d8a2b32a9b344ce101a47a4ac0bb2a4af9",
       "errors": []
     },
     {
@@ -352,9 +353,9 @@
       },
       "camera": {
         "position": [
-          138.1719900608751,
-          7617.708527046902,
-          421.1030817767892
+          140.20513790299924,
+          7617.535803225065,
+          415.6651485846235
         ],
         "quaternion": [
           0.04146909720403659,
@@ -379,14 +380,204 @@
       "visibleSunShafts": 0,
       "frameMs": {
         "samples": 60,
-        "programsBefore": 235,
-        "programsAfter": 235,
-        "mean": 4.531666666766008,
-        "p50": 4.200000017881393,
-        "p95": 7.199999988079071,
+        "programsBefore": 239,
+        "programsAfter": 239,
+        "mean": 3.908333333333333,
+        "p50": 3.699999988079071,
+        "p95": 5.300000011920929,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "991d4689f4cd1b5dabf753c037f54f1222e5357f5e52f03d0fbcda4476fd289b",
+      "pixelHash": "10a28a0e1a676b3a6f5db102ae29dc268a098744b8d4b400bafb40b6abefec75",
+      "errors": []
+    },
+    {
+      "version": 2,
+      "backend": "webgl2",
+      "quality": "low",
+      "seed": 19431008,
+      "shot": "night-clouds",
+      "label": "Night / flak glowing in the clouds, a coned bomber",
+      "pillars": [
+        2,
+        3,
+        5,
+        7,
+        10
+      ],
+      "backendActual": "webgl2",
+      "deviceInfo": {
+        "vendor": "Google Inc. (Apple)",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+      },
+      "seedDefault": 19431008,
+      "dt": 0.016666666666666666,
+      "steps": 360,
+      "settleFrames": 24,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1074,
+        604
+      ],
+      "stream": {
+        "tier": "low",
+        "shown": false,
+        "bombers": 162,
+        "groups": 8,
+        "escorts": 8,
+        "gaggleFighters": 6,
+        "baked": {
+          "bomber": false,
+          "escort": false,
+          "gaggle": false,
+          "near": false
+        },
+        "impostors": 0,
+        "nearInstances": 0,
+        "ribbons": 170,
+        "fieldBands": 24,
+        "wrecks": 0,
+        "barrages": 0
+      },
+      "camera": {
+        "position": [
+          -22.426099958529747,
+          7589.000418780689,
+          218.94189796555736
+        ],
+        "quaternion": [
+          0.00398248549428695,
+          0.9960072221336178,
+          0.06529018153886224,
+          -0.060753151865432765
+        ],
+        "fov": 66
+      },
+      "weather": {
+        "sunEl": 26,
+        "sunAz": 140,
+        "low": 0.62,
+        "high": 0.12,
+        "mood": "night"
+      },
+      "subject": "night-clouds",
+      "searchlights": 6,
+      "conedBombers": 1,
+      "flakBursts": 14,
+      "effectAge": 1.52,
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "frameMs": {
+        "samples": 60,
+        "programsBefore": 239,
+        "programsAfter": 239,
+        "mean": 3.5216666663686436,
+        "p50": 3,
+        "p95": 6.5999999940395355,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "pixelHash": "a0077879ff76b0ba04597f493e93d95dbc931f52ef79854177568cdd3e481524",
+      "errors": []
+    },
+    {
+      "version": 2,
+      "backend": "webgl2",
+      "quality": "low",
+      "seed": 19431008,
+      "shot": "night-waist",
+      "label": "Night / waist gun: a fighter's tracers light the gun, exhaust flames",
+      "pillars": [
+        2,
+        5,
+        6,
+        7,
+        10
+      ],
+      "backendActual": "webgl2",
+      "deviceInfo": {
+        "vendor": "Google Inc. (Apple)",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+      },
+      "seedDefault": 19431008,
+      "dt": 0.016666666666666666,
+      "steps": 360,
+      "settleFrames": 24,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1074,
+        604
+      ],
+      "stream": {
+        "tier": "low",
+        "shown": false,
+        "bombers": 162,
+        "groups": 8,
+        "escorts": 8,
+        "gaggleFighters": 6,
+        "baked": {
+          "bomber": false,
+          "escort": false,
+          "gaggle": false,
+          "near": false
+        },
+        "impostors": 0,
+        "nearInstances": 0,
+        "ribbons": 170,
+        "fieldBands": 24,
+        "wrecks": 0,
+        "barrages": 0
+      },
+      "camera": {
+        "position": [
+          106.56378849004166,
+          7620.867244898227,
+          379.52060850343
+        ],
+        "quaternion": [
+          -0.01551248222496563,
+          0.7064842883514757,
+          -0.023996603537019125,
+          -0.7071516642322326
+        ],
+        "fov": 35.64516129032259
+      },
+      "weather": {
+        "sunEl": 26,
+        "sunAz": 140,
+        "low": 0.62,
+        "high": 0.12,
+        "mood": "night"
+      },
+      "subject": "night-waist",
+      "enemy": {
+        "type": "fw190",
+        "range": 130.93967727610755
+      },
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": 0.9999999999999997,
+      "visibleSunShafts": 1,
+      "frameMs": {
+        "samples": 60,
+        "programsBefore": 241,
+        "programsAfter": 241,
+        "mean": 3.480000000198682,
+        "p50": 3.2999999821186066,
+        "p95": 4.9000000059604645,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "pixelHash": "df8a7ff38f8d76d396cae7c612dbd89e6594ded7a10a19f26e0fd8b92be6cf37",
       "errors": []
     }
   ]
