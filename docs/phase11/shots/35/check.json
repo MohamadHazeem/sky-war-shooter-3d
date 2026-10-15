@@ -9,28 +9,28 @@
   "mid": {
     "t": 21.752500000000047,
     "phase": "run",
-    "score": 314,
+    "score": 304,
     "downed": 1,
     "coach": "on"
   },
-  "card": "GUNNERY RANGE · Left Waist\n314\nTarget 2 / 6 · 0:46",
-  "first": "CROSSING TARGETS\n835\n★★★\nFIRST SCORE ON THIS DRILL\nTargets down: 3/6\nHits: 35\nAccuracy: 40%\nAccuracy bonus: +80",
+  "card": "GUNNERY RANGE · Left Waist\n304\nTarget 2 / 6 · 0:46",
+  "first": "CROSSING TARGETS\n947\n★★★\nFIRST SCORE ON THIS DRILL\nTargets down: 3/6\nHits: 50\nAccuracy: 41%\nAccuracy bonus: +81",
   "firstRecord": {
-    "best": 835,
+    "best": 947,
     "stars": 2,
     "runs": 1,
     "ghost": 340
   },
   "ghostRun": {
-    "t": 30.57416666666621,
+    "t": 30.57166666666621,
     "phase": "run",
-    "score": 708,
-    "downed": 3,
-    "coach": ""
+    "score": 601,
+    "downed": 2,
+    "coach": "more"
   },
   "ghostShown": true,
-  "ghostCard": "GUNNERY RANGE · Left Waist\n708\nGhost 528\nTarget 3 / 6 · 0:37",
-  "second": "CROSSING TARGETS\n1,011\n★★★\nNEW BEST!\nTargets down: 4/6\nHits: 45\nAccuracy: 17%\nAccuracy bonus: +34\nYou beat your ghost by 256",
+  "ghostCard": "GUNNERY RANGE · Left Waist\n601\nGhost 608\nTarget 3 / 6 · 0:37",
+  "second": "CROSSING TARGETS\n1,116\n★★★\nNEW BEST!\nTargets down: 4/6\nHits: 49\nAccuracy: 26%\nAccuracy bonus: +51\nYou beat your ghost by 250",
   "sleeveMid": {
     "t": 7.033333333333314,
     "phase": "run",
@@ -39,8 +39,27 @@
     "coach": "on"
   },
   "card2": "block 1",
-  "sleeve": "TOWED SLEEVE\n810\n★★★\nFIRST SCORE ON THIS DRILL\nTargets down: 3/4\nHits: 24\nAccuracy: 24%\nAccuracy bonus: +47",
+  "towPx": {
+    "dist": 839,
+    "px": 84
+  },
+  "sleevePlate": {
+    "x": 550.7340653112657,
+    "y": 191.04119867828433,
+    "w": 154.5998077392578,
+    "h": 56,
+    "ringX": 641.7714477723222,
+    "ringY": 459.4201427879619,
+    "ringR": 192.71920654655054
+  },
+  "sleeve": "TOWED SLEEVE\n502\n★★★\nFIRST SCORE ON THIS DRILL\nTargets down: 2/4\nHits: 16\nAccuracy: 10%\nAccuracy bonus: +20",
   "freeSelects": 0,
+  "freeRows": [
+    1,
+    1,
+    1,
+    1
+  ],
   "freeSaved": {
     "kind": "sleeve",
     "speed": "fast",
@@ -48,7 +67,12 @@
     "range": 500
   },
   "arLatin": [],
-  "arCard": "ميدان الرماية · الجانب الأيسر\n288\nالهدف 1 / 5 · 0:53",
+  "arCard": "ميدان الرماية · الجانب الأيسر\n279\nالهدف 1 / 5 · 0:53",
+  "arSpacing": {
+    "tracked": 0,
+    "cardFont": "\"IBM Plex Sans Arabic\", \"IBM Plex Mono\", sans-serif"
+  },
   "phoneOverflow": false,
+  "phoneSpacing": 0,
   "errors": []
 }

@@ -4,6 +4,7 @@ import type { Mission } from './Missions';
 import type { Fighter } from '../world/Aircraft';
 import { STATIONS, dirFromYawPitch, type StationId } from '../world/B17Layout';
 import { segSphere } from '../world/Ballistics';
+import { tintModel } from '../world/EnemyTypes';
 import { gunLead } from '../world/Gunnery';
 import { projectMarker } from '../ui/MarkerProjection';
 import { CANVAS_MONO, num, tx } from '../i18n';
@@ -57,11 +58,16 @@ const _lead = new THREE.Vector3(), _aim = new THREE.Vector3(), _o = new THREE.Ve
 const SLEEVE_LEN = 40, SLEEVE_R = 3.4, SLEEVE_BANDS = 5;
 const SLEEVE_SPHERES = [-SLEEVE_LEN * 0.3, 0, SLEEVE_LEN * 0.3];   // three hit spheres along its length
 const SLEEVE_HIT_R = SLEEVE_R * 1.5;
-const TOW_SCALE = 4;   // the tow ship reads at range like the (×6) drones
+// the tow ship flies a cable's length beyond the sleeve (~850 m at the drilled range): drawn at ×8
+// and in tow-target yellow so it reads as an aircraft there, not a speck
+const TOW_SCALE = 8;
+const TOW_TINT = new THREE.Color(2.6, 2.1, 0.45);
 // the cable is kept at least ~2 px thick on screen: radius grows with distance from the eye
 const CABLE_PX = 0.0016;
 // the tutor's labels and the ghost marker keep clear of the gun's sight ring, the target and each other
 const PLATE_PAD = 6;
+const RING_OUTER = 0.0682;   // the ring sight's torus: 0.066 m radius + 0.0022 m tube (Viewmodels.buildM2)
+const _rc = new THREE.Vector3(), _re = new THREE.Vector3();
 const DRONE_TINT = new THREE.Color(2.6, 1.25, 0.32);   // target-drone orange over the Fw 190 paint
 /** Does the rectangle (x, y, w, h) touch the circle (cx, cy, r)? */
 const rectCircle = (x: number, y: number, w: number, h: number, cx: number, cy: number, r: number) => {
@@ -92,6 +98,7 @@ export class GunneryRange {
   private sleeveGeos: THREE.BufferGeometry[] | null = null;
   private cableGeo: THREE.CylinderGeometry | null = null;
   coach: string = '';             // last coaching word (dev / tests)
+  readonly plate = { x: 0, y: 0, w: 0, h: 0, ringX: 0, ringY: 0, ringR: 0 };   // last tutor plate and ring sight (dev / tests)
   readonly lead = new THREE.Vector3();   // the tutor's lead point this frame (world; valid while leadOn)
   leadOn = false;
   readonly log: string[] = [];
@@ -210,6 +217,7 @@ export class GunneryRange {
       const f = w.spawnEscort(tg.pos.clone(), new THREE.Vector3(), 'p47d');
       f.guns = [];
       f.setScale(TOW_SCALE);
+      tintModel(f.model, TOW_TINT);
       f.label = 'Tow ship';
       tg.f = f;
       tg.sleeve = this.makeSleeve();
@@ -448,13 +456,15 @@ export class GunneryRange {
   }
 
   // what the tutor's label plate must keep clear of this frame (screen px)
-  private sx = 0; private sy = 0; private sr = 0;            // the gun's sight ring
+  private sx = 0; private sy = 0; private sr = 0;            // the HUD reticle
+  private rx = 0; private ry = 0; private rr = 0;            // the physical ring sight in aim view (0 = none)
   private lx = 0; private ly = 0; private lr = 0;            // the lead ring
   private tx = 0; private ty = 0; private tr = 0;            // the target
   private W = 0; private H = 0;
   private clearAt(x: number, y: number, w: number, h: number) {
     const hit = rectCircle;
     if (x < 8 || y < 8 || x + w > this.W - 8 || y + h > this.H - 8) return false;
+    if (this.rr > 0 && hit(x, y, w, h, this.rx, this.ry, this.rr)) return false;
     if (hit(x, y, w, h, this.sx, this.sy, this.sr) || hit(x, y, w, h, this.lx, this.ly, this.lr) || hit(x, y, w, h, this.tx, this.ty, this.tr)) return false;
     if (this.ghostShown && hit(x, y, w, h, this.gx, this.gy, 44)) return false;
     // the gun's post runs down the middle of the screen below the sight
@@ -523,12 +533,29 @@ export class GunneryRange {
     ctx.font = `600 11px ${CANVAS_MONO}`;
     const pw = Math.max(ww, ctx.measureText(l1).width, ctx.measureText(l2).width) + 16, ph = 56;
     this.W = W; this.H = H;
+    // the HUD reticle, and in aim view the gun's physical ring sight as it is drawn on screen
     this.sx = W / 2; this.sy = H / 2; this.sr = Math.min(W, H) * 0.05 + 14;
+    this.rr = 0;
+    const ring = g.gunner.sightRing();
+    if (ring) {
+      ring.updateWorldMatrix(true, false);
+      const cp = projectMarker(ring.getWorldPosition(_rc), cam);
+      if (cp.on) {
+        this.rx = (cp.x * 0.5 + 0.5) * W; this.ry = (-cp.y * 0.5 + 0.5) * H;
+        // outer edge of the torus, across and up (the ring may be seen a little obliquely)
+        const ex = projectMarker(ring.localToWorld(_re.set(RING_OUTER, 0, 0)), cam);
+        const r1 = Math.hypot((ex.x * 0.5 + 0.5) * W - this.rx, (-ex.y * 0.5 + 0.5) * H - this.ry);
+        const ey = projectMarker(ring.localToWorld(_re.set(0, RING_OUTER, 0)), cam);
+        const r2 = Math.hypot((ey.x * 0.5 + 0.5) * W - this.rx, (-ey.y * 0.5 + 0.5) * H - this.ry);
+        this.rr = Math.max(r1, r2) + 10;
+      }
+    }
     this.lx = lx; this.ly = ly; this.lr = tol + 4;
     this.tx = tx0; this.ty = ty0; this.tr = Math.max(16, (tg.sleeve ? SLEEVE_LEN * 0.55 : 30) / Math.max(1, range) * fovPx) + 4;
     const away = tx0 <= lx ? 1 : -1;
     let px = NaN, py = NaN;
-    for (let d = PLATE_PAD; d <= 190 && Number.isNaN(px); d += 46) {
+    const reach = Math.max(190, this.rr * 2 + 46);
+    for (let d = PLATE_PAD; d <= reach && Number.isNaN(px); d += 46) {
       for (let c = 0; c < 4; c++) {
         const s = c === 0 ? away : -away;
         const x = c < 2 ? (s > 0 ? lx + tol + d : lx - tol - d - pw) : lx - pw / 2;
@@ -536,8 +563,13 @@ export class GunneryRange {
         if (this.clearAt(x, y, pw, ph)) { px = x; py = y; break; }
       }
     }
-    // nothing fits near the lead point: a fixed spot left of the sight, above the gun's post
-    if (Number.isNaN(px)) { px = W / 2 - this.sr - 60 - pw; py = H / 2 - this.sr - ph - 30; }
+    // nothing fits near the lead point: a fixed spot up and left of the sight (outside the ring sight)
+    if (Number.isNaN(px)) {
+      const r = Math.max(this.sr, this.rr), cx = this.rr > 0 ? this.rx : this.sx, cy = this.rr > 0 ? this.ry : this.sy;
+      px = Math.max(8, cx - r - 24 - pw); py = Math.max(8, cy - r * 0.7 - ph);
+    }
+    const pl = this.plate;
+    pl.x = px; pl.y = py; pl.w = pw; pl.h = ph; pl.ringX = this.rx; pl.ringY = this.ry; pl.ringR = this.rr;
     ctx.fillStyle = 'rgba(8,10,6,0.82)';
     ctx.fillRect(px, py, pw, ph);
     ctx.fillStyle = on ? 'rgba(120,235,140,0.95)' : 'rgba(255,200,90,0.95)';
