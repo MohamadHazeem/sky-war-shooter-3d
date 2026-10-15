@@ -30,6 +30,7 @@ export interface CoopScreenHandlers {
   start(): void;
   ready(): void;
   ping(): void;
+  intercom?(el: HTMLElement): void;   // the lobby's crew intercom panel (game/CrewIntercom.ts)
   leave(): void;   // lobby: leave / cancel
   back(): void;    // menu: back to the title
 }
@@ -47,6 +48,7 @@ export interface LobbyView {
   myId: number;
   ready: boolean;
   listed?: boolean;   // host, B-17 crew: shown in the public game list
+  voice?: boolean;    // someone else is connected: show the crew intercom panel
 }
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
@@ -246,6 +248,7 @@ export class CoopScreen {
       <div class="status ${v.connected ? 'ok' : ''}" data-status>${esc(tx(v.status))}</div>
       ${this.modeChoice(v.mode, v.scenario, v.role === 'guest')}
       ${v.crew ? this.crewRows(v.crew) : ''}
+      <div data-intercom ${v.voice ? '' : 'hidden'}></div>
       ${v.mode === 'pilot' ? `<p>${tx(v.role === 'host' ? 'Blue One' : 'Blue Two')} · ${tx('PARTNER')}: ${tx(v.role === 'host' ? 'Blue Two' : 'Blue One')}</p>` : ''}
       <div ${v.mode === 'pilot' ? 'hidden' : ''}><div class="hud-label">${tx('Your gun position')}</div>
       <div class="seats">${STATION_ORDER.map((s) => `<button data-s="${s}" class="${s === v.mine ? 'mine' : occupied(s) ? 'partner' : ''}" ${occupied(s) ? 'disabled' : ''}>${tx(STATIONS[s].label)}</button>`).join('')}</div></div>
@@ -261,6 +264,8 @@ export class CoopScreen {
     this.root.querySelector('[data-invite]')!.addEventListener('click', () => this.h.invite());
     this.root.querySelector('[data-start]')?.addEventListener('click', () => this.h.start());
     this.root.querySelector('[data-leave]')!.addEventListener('click', () => this.h.leave());
+    const ic = this.root.querySelector<HTMLElement>('[data-intercom]');
+    if (ic && !ic.hidden) this.h.intercom?.(ic);
     this.show();
     onBackKey(this.root, () => this.root.querySelector<HTMLButtonElement>('[data-back], [data-leave]')?.click());
   }

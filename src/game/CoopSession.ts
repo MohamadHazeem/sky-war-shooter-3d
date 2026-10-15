@@ -65,6 +65,8 @@ import { buildCustomMission, loadConfig } from './CustomBattle';
 import { CombatTally } from './CombatTally';
 import { freeSeat, canTakeSeat, crewCode, snapshotInterval, type CrewSeat } from '../net/Crew';
 import { CrewPings } from './CrewPings';
+import { CrewIntercom } from './CrewIntercom';
+import { addVoiceLines, type VoiceLink } from '../net/Intercom';
 import { makeCode } from '../net/Signal';
 import { fetchListings, HEARTBEAT_MS, inviteCode, inviteLink, listingFields, localRegion, publishListing, PUBLISH_GAP_MS, quickJoinOrder, rankLobbies, removeListing, sameListing, withoutInvite, type ListingFields } from '../net/Lobbies';
 import { clearTicket, lossAction, MIGRATE_GAP_MS, MIGRATE_TRIES, pickHeir, RECONNECT_GAP_MS, RECONNECT_TRIES, saveTicket, validPlan, type MigrationPlan } from '../net/Rejoin';
@@ -119,6 +121,7 @@ export class CoopSession {
   scenario = 'survival';
   readonly pilots: CoopPilot;
   readonly pings: CrewPings;
+  readonly intercom: CrewIntercom;
   readonly peers: CrewPeer[] = [];
   roster: CrewSeat[] = [];
   private departed: CrewPeer[] = [];
@@ -146,6 +149,15 @@ export class CoopSession {
   }
   pingTarget(id: number) { return this.role === 'host' ? this.game.world.aircraft.find(a => a.id === id) : this.proxies.get(id); }
   targetId(a: Aircraft) { if (this.role === 'host') return a.id; for (const [id, proxy] of this.proxies) if (proxy === a) return id; return -1; }
+  // crew intercom (game/CrewIntercom.ts): the open links by crew id (host 0; a pilot guest is 1)
+  voiceLinks(): VoiceLink[] {
+    if (this.role === 'host' && this.mode === 'gunner') return this.peers.filter(p => p.link.status === 'open').map(p => ({ id: p.id, pc: p.link.pc, send: (m: unknown) => p.link.sendEvent(m) }));
+    const l = this.link;
+    return l && l.status === 'open' && this.role ? [{ id: this.role === 'host' ? 1 : 0, pc: l.pc, send: (m: unknown) => l.sendEvent(m) }] : [];
+  }
+  get voiceLive() { return this.role === 'host' && this.mode === 'gunner' ? this.peers.some(p => p.link.status === 'open') : this.link?.status === 'open'; }
+  voiceName(id: number) { return this.roster.find(p => p.id === id)?.name ?? (this.mode === 'pilot' || id === 0 ? this.partnerName : 'Gunner'); }
+  voiceCrew(): number[] { return this.mode === 'gunner' && this.roster.length ? this.roster.filter(p => p.id !== this.myId).map(p => p.id) : this.voiceLive ? [this.role === 'host' ? 1 : 0] : []; }
   get epoch() { return this.run; }
   get localId() { return this.myId; }
   get activeCrew(): CrewSeat[] {
@@ -235,6 +247,7 @@ export class CoopSession {
 
   constructor(private game: Game, private engine: Engine, private ui: UI) {
     this.pings = new CrewPings(game, this);
+    this.intercom = new CrewIntercom(this, (t) => this.screen.toast(t, 3500));
     this.pilots = new CoopPilot(game, m => this.link?.sendEvent({ ...m, run: this.run }), this.origin);
     this.screen = new CoopScreen({
       mode: (mode, scenario) => { if (this.role === 'guest' || (this.role === 'host' && mode !== this.mode)) return; this.mode = mode; this.scenario = mode === 'gunner' ? 'survival' : scenario; this.sendLobby(); this.renderLobby(this.lobbyStatus); },
@@ -248,6 +261,7 @@ export class CoopSession {
       start: () => this.startHostMission(),
       ready: () => this.toggleReady(),
       ping: () => this.pings.mark(),
+      intercom: (el) => this.intercom.lobby(el),
       leave: () => { clearTicket(); this.leave(); this.screen.menu(); },
       back: () => { clearTicket(); this.leave(); this.game.startMenu(); },
     });
@@ -276,6 +290,7 @@ export class CoopSession {
   update(dt: number) {
     const link = this.link;
     this.pings.update(dt);
+    this.intercom?.update(dt);
     this.screen.setPing(link?.rtt ?? -1, !!link && link.status === 'open', this.phase === 'mission', this.mode === 'gunner');
     if (this.phase !== 'mission' || (!link && this.role !== 'host')) return;
     if (this.role === 'host') this.hostTick(dt);
@@ -291,6 +306,7 @@ export class CoopSession {
 
   private newLink(role: 'host' | 'guest', iceServers?: RTCIceServer[], slot = 0) {
     const link = new CoopLink(role, iceServers);
+    addVoiceLines(link.pc, role);
     if (role === 'host' && this.mode === 'gunner') {
       const seat = freeSeat(this.activeCrew, 'waistR')!;
       const peer: CrewPeer = { id: slot + 1, run: 0, link, signal: null, seat, name: 'Gunner', ready: false,
@@ -620,7 +636,7 @@ export class CoopSession {
     this.mission = null;
     this.endWhy = '';
     this.code = '';
-    this.roster = []; this.departed = []; this.myId = 0; this.myReady = false; this.pings.reset();
+    this.roster = []; this.departed = []; this.myId = 0; this.myReady = false; this.pings.reset(); this.intercom?.reset();
     this.run = 0; this.rewardedRun = 0; this.result = null; this.partnerReady = true;
     this.plan = null; this.hostLeft = false; this.rejoining = false; this.nextCode = '';
     this.engine.paused = false;
@@ -680,6 +696,7 @@ export class CoopSession {
       partner: this.partnerSeat,
       crew: this.mode === 'gunner' ? this.roster : undefined, myId: this.myId, ready: this.myReady,
       listed: this.role === 'host' && this.mode === 'gunner' ? !!this.publicGame : undefined,
+      voice: this.voiceLive,
     });
   }
   private lobbyStatus = '';
@@ -713,6 +730,7 @@ export class CoopSession {
 
   private onEvent(m: any, peer?: CrewPeer) {
     if (m.t === 'mark') { this.pings.receive(m, peer?.id); return; }
+    if (m.t === 'talk') { this.intercom?.net.receive(m, peer?.id ?? (this.role === 'host' ? 1 : 0)); return; }
     if (peer) {
       if (m.t === 'hello') {
         peer.name = cleanName(String(m.name ?? 'Gunner')); this.crewNames[peer.id] = peer.name; this.sendLobby();
