@@ -1,3 +1,4 @@
+import { escortKind } from '../world/EscortTypes';
 import { TacticSchedule } from '../world/LuftwaffeTactics';
 import { crewRoster } from './CrewRoster';
 import { isSecondTourId } from './SecondTour';
@@ -286,7 +287,7 @@ export class Director {
     }
     if (m.escortArrive && !this.escortsSpawned && t >= m.escortArrive) {
       this.escortsSpawned = true;
-      for (let i = 0; i < 4; i++) w.spawnEscort(w.formationCenter.clone().add(new THREE.Vector3(R() * 400, 600, -1500 - i * 80)), new THREE.Vector3((i - 1.5) * 200, 300, 0));
+      for (let i = 0; i < 4; i++) w.spawnEscort(w.formationCenter.clone().add(new THREE.Vector3(R() * 400, 600, -1500 - i * 80)), new THREE.Vector3((i - 1.5) * 200, 300, 0), escortKind(i + 2));
       w.callout('escort', 'Radio', 'Little friends at six o\'clock high! The Mustangs are here!', 0, 3);
     }
 

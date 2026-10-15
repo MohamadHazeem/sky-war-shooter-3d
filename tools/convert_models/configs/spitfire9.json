@@ -1,0 +1,53 @@
+{
+  "origin": [
+    3.1,
+    0,
+    0
+  ],
+  "materials": {
+    "roughness": 0.55,
+    "metallic": 0.1,
+    "glass": {
+      "color": [
+        0.6,
+        0.7,
+        0.8
+      ],
+      "alpha": 0.18,
+      "roughness": 0.06
+    }
+  },
+  "name": "spitfire9",
+  "exclude_objects": [
+    "main/(exttip.*|lftip.*|aileron.L.001|wheel14.*|prophub.merlin)"
+  ],
+  "glass_objects": [
+    "main/(canopyglass|fightercanopy.glass|rearcanglass)"
+  ],
+  "groups": [
+    {
+      "name": "glass",
+      "objects": [
+        "main/(canopyglass|fightercanopy.glass|rearcanglass)"
+      ]
+    },
+    {
+      "name": "interior",
+      "objects": [
+        "main/interiour.001"
+      ]
+    }
+  ],
+  "markers": {
+    "prop_1": [
+      0.99,
+      0,
+      0.127
+    ],
+    "eye_pilot": [
+      4.55,
+      0,
+      0.7
+    ]
+  }
+}

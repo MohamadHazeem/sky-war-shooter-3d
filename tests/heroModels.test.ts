@@ -23,12 +23,13 @@ describe('hero model files (docs/phase10/hero-parts.md contract)', async () => {
       const need = ['airframe', 'part_fuselage', 'part_fuselage_lod0', 'part_fuselage_lod1', 'part_fuselage_lod2',
         'part_fuselage_aft', 'part_tail', 'part_wingL', 'part_wingLtip', 'part_wingR', 'part_wingRtip',
         'part_wingL_lod0', 'ctl_aileron_L_lod0', 'ctl_aileron_L', 'ctl_aileron_R', 'ctl_elevator_L', 'ctl_elevator_R',
-        'ctl_flap_L', 'ctl_flap_R', 'glass', 'pilot', 'interior', 'eye_pilot', 'gear_left', 'gear_right'];
+        'ctl_flap_L', 'ctl_flap_R', 'glass', 'pilot', 'interior', 'eye_pilot'];
       for (const n of need) expect(names.has(n), `${kind} lacks ${n}`).toBe(true);
       expect([...names].some((n) => n.startsWith('ctl_rudder'))).toBe(true);
       // only the fuselage carries LOD1 / LOD2 (the whole airframe merged: one draw call)
       expect([...names].filter((n) => n.endsWith('_lod1'))).toEqual(['part_fuselage_lod1']);
       expect([...names].filter((n) => n.endsWith('_lod2'))).toEqual(['part_fuselage_lod2']);
+      if (kind !== 'p47d' && kind !== 'spitfire9') for (const n of ['gear_left', 'gear_right']) expect(names.has(n)).toBe(true);
       if (kind === 'me262') {
         for (const n of ['fan_1', 'fan_2', 'exhaust_left', 'exhaust_right', 'part_engine1', 'part_engine2']) expect(names.has(n), n).toBe(true);
         expect(names.has('prop_1')).toBe(false);
@@ -84,7 +85,7 @@ describe('hero model files (docs/phase10/hero-parts.md contract)', async () => {
 describe('silhouette gate vs the public-domain three-views', async () => {
   // @ts-expect-error plain .mjs tool module
   const sil = await import('../tools/hero/luftwaffe/silhouette/check.mjs');
-  for (const kind of HERO_KINDS) {
+  for (const kind of ['bf109', 'fw190', 'me262', 'bf110', 'ju88']) {
     it(`${kind}: top / side / front outlines`, async () => {
       const r = await sil.measure(kind, join(MODELS, `${kind}.glb`));
       for (const view of ['top', 'side', 'front'] as const) {

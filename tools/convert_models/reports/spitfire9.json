@@ -1,0 +1,131 @@
+{
+ "name": "spitfire9",
+ "origin_fg": [
+  3.1,
+  0,
+  0
+ ],
+ "nodes": {},
+ "markers": {
+  "prop_1": {
+   "position": [
+    0.0,
+    0.127,
+    2.11
+   ],
+   "parent": null
+  },
+  "eye_pilot": {
+   "position": [
+    0.0,
+    0.7,
+    -1.45
+   ],
+   "parent": null
+  }
+ },
+ "groups": {
+  "airframe": {
+   "triangles": 8884,
+   "primitives": 3,
+   "materials": [
+    "spit9-1",
+    "spit9-1_2s",
+    "DefaultWhite_2s"
+   ],
+   "bbox_min": [
+    -5.6236,
+    -0.8724,
+    -6.4895
+   ],
+   "bbox_max": [
+    5.6236,
+    1.5015,
+    2.1058
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "glass": {
+   "triangles": 190,
+   "primitives": 2,
+   "materials": [
+    "glass_glass",
+    "glass.002_glass"
+   ],
+   "bbox_min": [
+    -0.2922,
+    0.481,
+    -2.1068
+   ],
+   "bbox_max": [
+    0.2922,
+    0.8646,
+    -0.7636
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "interior": {
+   "triangles": 86,
+   "primitives": 1,
+   "materials": [
+    "int-1"
+   ],
+   "bbox_min": [
+    -0.2922,
+    0.3873,
+    -2.2505
+   ],
+   "bbox_max": [
+    0.2922,
+    0.7923,
+    -1.7196
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  }
+ },
+ "bbox_min": [
+  -5.6236,
+  -0.8724,
+  -6.4895
+ ],
+ "bbox_max": [
+  5.6236,
+  1.5015,
+  2.1058
+ ],
+ "triangles": 9160,
+ "primitives": 6,
+ "materials": [
+  "DefaultWhite_2s",
+  "glass.002_glass",
+  "glass_glass",
+  "int-1",
+  "spit9-1",
+  "spit9-1_2s"
+ ],
+ "excluded_objects": [
+  "main/aileron.L.001",
+  "main/exttip.L",
+  "main/exttip.R",
+  "main/lftip.L",
+  "main/lftip.R",
+  "main/prophub.merlin",
+  "main/wheel14.2.L"
+ ],
+ "file_bytes": 989644
+}

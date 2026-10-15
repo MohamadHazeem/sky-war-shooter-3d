@@ -36,7 +36,7 @@ KINDS = argv or ['bf109', 'fw190', 'me262', 'bf110', 'ju88']
 os.makedirs(OUT, exist_ok=True)
 
 LOD1_RATIO = 0.4
-LOD1_TRIS = {'bf109': 10000, 'fw190': 10000, 'me262': 11000, 'bf110': 13000, 'ju88': 13000}
+LOD1_TRIS = {'p47d': 10000, 'spitfire9': 10000, 'bf109': 10000, 'fw190': 10000, 'me262': 11000, 'bf110': 13000, 'ju88': 13000}
 LOD2_TRIS = {'bf109': 2600, 'fw190': 2600, 'me262': 3000, 'bf110': 3600, 'ju88': 4200}
 
 

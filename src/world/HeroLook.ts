@@ -17,7 +17,7 @@ import type { Fighter } from './Aircraft';
 //                  GPU-compressed <kind>_{base,normal,orm}.ktx2 (Basis UASTC); WebP stays on any failure
 //   partSide       which break-up piece a named part belongs to (Wrecks.cut)
 
-export const HERO_KINDS: ReadonlySet<string> = new Set(['bf109', 'fw190', 'me262', 'bf110', 'ju88']);
+export const HERO_KINDS: ReadonlySet<string> = new Set(['bf109', 'fw190', 'me262', 'bf110', 'ju88', 'p47d', 'spitfire9']);
 export const isHero = (kind: string) => HERO_KINDS.has(kind);
 
 // level switch distances in model metres (world distance / model scale) at the default zoom:

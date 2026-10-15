@@ -1,0 +1,160 @@
+{
+ "name": "p47d",
+ "origin_fg": [
+  0,
+  0,
+  0
+ ],
+ "nodes": {},
+ "markers": {
+  "prop_1": {
+   "position": [
+    0.0,
+    -0.048,
+    4.354
+   ],
+   "parent": null
+  },
+  "eye_pilot": {
+   "position": [
+    0.0,
+    0.95,
+    -0.0
+   ],
+   "parent": null
+  }
+ },
+ "groups": {
+  "airframe": {
+   "triangles": 5658,
+   "primitives": 8,
+   "materials": [
+    "paint1",
+    "paint1.001",
+    "cowl",
+    "paint1.002",
+    "Black",
+    "gunmetal",
+    "inst-metal",
+    "Black_2s"
+   ],
+   "bbox_min": [
+    -6.1916,
+    -1.1992,
+    -6.1752
+   ],
+   "bbox_max": [
+    6.1916,
+    2.0953,
+    4.1372
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "glass": {
+   "triangles": 162,
+   "primitives": 1,
+   "materials": [
+    "Glass_glass"
+   ],
+   "bbox_min": [
+    -0.411,
+    0.6296,
+    -1.1708
+   ],
+   "bbox_max": [
+    0.4115,
+    1.1744,
+    1.0549
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  },
+  "interior": {
+   "triangles": 692,
+   "primitives": 1,
+   "materials": [
+    "cockpit"
+   ],
+   "bbox_min": [
+    -0.4512,
+    -0.0046,
+    -0.6253
+   ],
+   "bbox_max": [
+    0.4516,
+    1.0306,
+    1.7417
+   ],
+   "pivot": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "parent": null
+  }
+ },
+ "bbox_min": [
+  -6.1916,
+  -1.1992,
+  -6.1752
+ ],
+ "bbox_max": [
+  6.1916,
+  2.0953,
+  4.1372
+ ],
+ "triangles": 6512,
+ "primitives": 10,
+ "materials": [
+  "Black",
+  "Black_2s",
+  "Glass_glass",
+  "cockpit",
+  "cowl",
+  "gunmetal",
+  "inst-metal",
+  "paint1",
+  "paint1.001",
+  "paint1.002"
+ ],
+ "excluded_objects": [
+  "main/Ctire",
+  "main/LGdoorO",
+  "main/LLdamper",
+  "main/LRdoor",
+  "main/LUdamper",
+  "main/Lflap_1",
+  "main/Lshock",
+  "main/Lstrut",
+  "main/Lstrut.base",
+  "main/Ltire",
+  "main/RGdoorO",
+  "main/RLdamper",
+  "main/RRdoor",
+  "main/RUdamper",
+  "main/Rflap_1",
+  "main/Rshock",
+  "main/Rstrut",
+  "main/Rstrut.base",
+  "main/Rtire",
+  "main/Spinner_0",
+  "main/Spinner_1",
+  "main/blade1",
+  "main/blade2",
+  "main/blade3",
+  "main/blade4",
+  "main/propblur",
+  "main/propdisk",
+  "main/stn1"
+ ],
+ "file_bytes": 521160
+}

@@ -1,3 +1,4 @@
+import { escortKind } from '../world/EscortTypes';
 import { difficultyBalance } from '../ui/SettingsModel';
 import { secondTourMedal } from './CampaignState';
 import { isSecondTourId } from './SecondTour';
@@ -123,7 +124,7 @@ export class MissionFlow {
       g.pilot.throttleCmd = 0.85;
       sound.setMode('fighter');
       for (let i = 0; i < (m.escorts ?? 0); i++) {
-        g.world.spawnEscort(start.clone().add(new THREE.Vector3((i + 1) * 40 * (i % 2 ? 1 : -1), 10, -30 * (i + 1))), new THREE.Vector3((i - 1.5) * 250, 380, 150));
+        g.world.spawnEscort(start.clone().add(new THREE.Vector3((i + 1) * 40 * (i % 2 ? 1 : -1), 10, -30 * (i + 1))), new THREE.Vector3((i - 1.5) * 250, 380, 150), escortKind(i));
       }
     }
     g.prog.role = m.role;

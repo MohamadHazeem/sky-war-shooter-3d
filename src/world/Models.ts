@@ -11,7 +11,7 @@ import { prepareHeroLODs, heroStreamGeometry } from './HeroB17';
 import { isHero, prepareHero } from './HeroLook';
 
 export type ModelKind =
-  | 'b17' | 'fw190' | 'p51d' | 'p51d_cockpit'
+  | 'b17' | 'fw190' | 'p51d' | 'p51d_cockpit' | 'p47d' | 'spitfire9'
   // Extra enemy types (see public/models/CREDITS.md). Same frame as the others: metres, +Z nose, +X left wing.
   // fw190, bf109, me262, bf110 and ju88 are the hero models (tools/hero/luftwaffe, world/HeroLook.ts):
   // named parts with three LODs, hinged control surfaces, baked PBR maps; the node names below still hold.
@@ -27,6 +27,8 @@ const FILES: Record<ModelKind, string> = {
   b17: 'models/hero/b17.glb',
   fw190: 'models/fw190.glb',
   p51d: 'models/p51d.glb',
+  p47d: 'models/p47d.glb',
+  spitfire9: 'models/spitfire9.glb',
   p51d_cockpit: 'models/p51d_cockpit.glb',
   bf110: 'models/bf110.glb',
   me262: 'models/me262.glb',
@@ -39,7 +41,7 @@ const FILES: Record<ModelKind, string> = {
 
 // The models the menu shows (formation + escorts) and the default enemy: loaded before the
 // menu appears. The rest load in the background (see core/Preload.ts).
-export const ESSENTIAL_MODELS: readonly ModelKind[] = ['b17', 'fw190', 'p51d'];
+export const ESSENTIAL_MODELS: readonly ModelKind[] = ['b17', 'fw190', 'p51d', 'p47d', 'spitfire9'];
 export const ALL_MODELS = Object.keys(FILES) as ModelKind[];
 export const modelPath = (k: ModelKind) => FILES[k];
 
@@ -137,6 +139,8 @@ export function instantiate(k: ModelKind): THREE.Object3D {
 // Placeholder sizes for the extra enemy types: span, length, colour, prop positions [x, z]
 // (roughly the converted models' bounding boxes and prop_N pivots).
 const EXTRA_PLACEHOLDERS: Partial<Record<ModelKind, { span: number; len: number; col: number; props: [number, number][] }>> = {
+  p47d: { span: 12.43, len: 11.0, col: 0x535441, props: [[0, 4.354]] },
+  spitfire9: { span: 11.23, len: 9.46, col: 0x434d40, props: [[0, 2.11]] },
   bf110: { span: 16.3, len: 12.5, col: 0x6b6a52, props: [[2.35, 2.4], [-2.35, 2.4]] },
   me262: { span: 12.6, len: 10.6, col: 0x5a5840, props: [] },
   bf109: { span: 9.8, len: 8.9, col: 0x5d6b4a, props: [[0, 2.4]] },
