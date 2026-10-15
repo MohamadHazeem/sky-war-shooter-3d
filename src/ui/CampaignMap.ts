@@ -17,7 +17,7 @@ import { ENEMY_MIX } from '../game/Modes';
 import {
   CampaignData, ESCORT_THRESHOLD, FORMATION_FULL_AT, FULL_SQUADRON, IntelReport, Outcome, baseOf, campaignDate, currentGap,
   currentIndex, enemyMult, escortAvailability, formationFactor, isCurrentOp, loadCampaign, meritMult, modifiersFor, offeredRaids,
-  campaignOperations, currentStory, startSecondTour, prepareCampaignMission, raidInGap, recordCampaignOutcome, startNewTour, totals,
+  campaignOperations, currentStory, startSecondTour, prepareCampaignMission, raidInGap, recordCampaignOutcome, startNewTour, totals, strategicModifiersFor,
 } from '../game/CampaignState';
 import { isSecondTourId, SECOND_TOUR_LENGTH } from '../game/SecondTour';
 import { isRaidId, raidEnemyType, sideRaidById, type SideRaid } from '../game/SideRaids';
@@ -25,6 +25,7 @@ import { tx, isAr } from '../i18n';
 import { loadNemesis, mostWanted, reportLines, aceName, bounty, MOST_WANTED_MULT } from '../game/Nemesis';
 import { showNemesisScreen } from './NemesisScreen';
 import { onBackKey } from './serviceCommon';
+import { industryCardHtml, mountNewsreel, wireIndustryCard } from './StrategicPanel';
 
 export { prepareCampaignMission, campaignMeritMult } from '../game/CampaignState';
 
@@ -346,7 +347,7 @@ function moodLabel(m: Mission) {
 
 function modChips(d: CampaignData, m: Mission): string {
   const b = baseOf(m);
-  const mods = modifiersFor(d, m, { ...b, role: m.role, playerDamaged: m.playerDamaged, duration: m.duration });
+  const mods = strategicModifiersFor(d, m, { ...b, role: m.role, playerDamaged: m.playerDamaged, duration: m.duration });
   if (!mods) return '';
   const chips: string[] = [];
   chips.push(`<span class="${mods.bombers < b.bombers ? 'bad' : ''}">${tx('Formation {n} ships', { n: `${mods.bombers}${mods.bombers < b.bombers ? `/${b.bombers}` : ''}` })}</span>`);
@@ -450,7 +451,7 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
     </div>
     <div class="cm-grid">
       <div class="cm-chart">${chartSvg(d, ops)}</div>
-      <div class="cm-side">${gaugesHtml(d)}${intelHtml(d.report)}</div>
+      <div class="cm-side">${gaugesHtml(d)}${industryCardHtml(d)}${intelHtml(d.report)}</div>
     </div>
     <div class="cm-ops">
       <div class="cm-card"><h3>${tx(next ? 'Next operation' : 'Tour of duty')}</h3>${nextCard}</div>
@@ -484,6 +485,7 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
     root.querySelectorAll<SVGPathElement>('[data-route]').forEach((p) => p.setAttribute('opacity', p.dataset.route === c.dataset.card ? '1' : '0.45'));
   }));
   root.querySelector('[data-back]')!.addEventListener('click', onBack);
+  wireIndustryCard(root, d);
   onBackKey(root, onBack);   // Esc / Backspace (and the gamepad's B) go back, like the other menu screens
   root.querySelector('[data-nem]')?.addEventListener('click', () => showNemesisScreen({ back: () => showCampaignMap(progress, onPick, onBack) }));
   root.querySelectorAll('[data-summary]').forEach((b) => b.addEventListener('click', () => showCampaignSummary(progress, onPick, onBack)));
@@ -585,6 +587,7 @@ export function mountCampaignReport(m: Mission, o: Outcome, prog: Merit, progres
       return `<p class="${ch ? (l.to! > l.from! ? 'up' : 'down') : ''}" ${ch ? `style="color:${good ? 'var(--good)' : 'var(--bad)'}"` : ''}><span style="color:var(--ink-dim)">${esc(tx(l.text))}</span></p>`;
     }).join('')}
     <div class="row"><button class="btn ${res.data.complete && res.report.effect ? 'ghost' : ''}" data-cm-map>${tx('Campaign map')}</button>${res.data.complete ? `<button class="btn" data-cm-sum>${tx('Campaign summary')}</button>` : ''}</div>`;
+  mountNewsreel(box, res.newsreel);
   const row = host.querySelector('.row');
   if (row) row.after(box); else host.appendChild(box);
   box.querySelector('[data-cm-map]')!.addEventListener('click', () => toMap());
@@ -606,7 +609,7 @@ export function decorateCampaignBriefing(sheet: HTMLElement, m: Mission) {
     if (k) k.textContent = `${tx('SIDE RAID · OPTIONAL OPERATION')}${s ? ` · ${tx(s.template.label).toUpperCase()}` : ''}`;
   }
   if (!isCurrentOp(d, m)) return;
-  const mods = modifiersFor(d, m, { ...baseOf(m), role: m.role, playerDamaged: m.playerDamaged, duration: m.duration });
+  const mods = strategicModifiersFor(d, m, { ...baseOf(m), role: m.role, playerDamaged: m.playerDamaged, duration: m.duration });
   if (!mods) return;
   const meta = document.createElement('div');
   meta.className = 'bx-meta';
