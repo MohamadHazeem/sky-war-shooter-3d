@@ -1,3 +1,4 @@
+import { bindGlassReflection, reflectionUniforms } from '../render/GlassReflection';
 import { AircraftSubmission } from '../render/AircraftSubmission';
 import { SkyCache } from '../render/SkyCache';
 import { cloudSurfaceUniforms } from '../render/CloudSurfaceShadow';
@@ -445,6 +446,7 @@ export class Engine {
 
   render(dt: number) {
     const cam = this.camera;
+    reflectionUniforms.swsReflectionOn.value = 0;
     cam.updateMatrixWorld();
     const cp = cam.getWorldPosition(_camPos);
     this.cascades.update(cam, Atmos.sunIntensity * 1.15 * (1 - 0.65 * weatherNow.cloudInside));   // immersion dims cockpit/local light
@@ -482,6 +484,7 @@ export class Engine {
       // canopy or turret dome doesn't mask the exhaust shimmer seen through it)
       this.post.hazeTex = this.heatHaze.render(r, cam, this.sceneRT.depthTexture!);
       // linear depth copy for the soft effects (render/SoftDepth.ts), only when something wants it
+      if (this.quality !== 'low' && this.quality !== 'medium') softDepth.want();
       softDepth.capture(r, cam, this.sceneRT.depthTexture!, this.clouds.sunShadow);
       // Copy the composite back over the scene colour (keeping its depth buffer), then
       // pass 2: transparent effects (layer 1) on top of the clouds, depth-tested.
@@ -489,6 +492,7 @@ export class Engine {
       r.setRenderTarget(this.sceneRT);
       this.copyMat.uniforms.tSrc.value = this.hdrRT.texture;
       this.copyQuad.render(r);
+      bindGlassReflection(this.hdrRT.texture, softDepth.uniforms.tSoftDepth.value, cam, this.quality !== 'low' && this.quality !== 'medium');
       cam.layers.set(1);
       r.shadowMap.autoUpdate = false;
       r.render(drawScene, cam);
@@ -532,6 +536,7 @@ export class Engine {
   // post stack as the world, so its materials keep the world's shader programs (same output
   // target; the caller mirrors the world's light counts) and it gets the game's grade.
   renderStudio(scene: THREE.Scene, cam: THREE.PerspectiveCamera, dt: number) {
+    reflectionUniforms.swsReflectionOn.value = 0;
     const r = this.renderer;
     cam.updateMatrixWorld();
     cascadeUniform.value.z = 0;

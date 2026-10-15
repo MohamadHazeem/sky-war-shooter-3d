@@ -26,3 +26,6 @@ tools/interior/out/
 __pycache__/
 
 .vite-cache/
+
+# Phase 11 goal 02: retain lossless rig captures locally; commit small JPEG evidence.
+docs/phase11/shots/02/**/*.png

@@ -1,0 +1,19 @@
+{
+  "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+  "main": "9b333aec65c7acde8a7c8b07080dbae2043ed940",
+  "method": "Live deployed entry bundle and full service-worker asset manifest compared byte-for-byte to main dist. Development rig uses unchanged main source before implementation; production excludes its endpoint.",
+  "files": [
+    {
+      "file": "assets/index-DT4N_VKK.js",
+      "live_sha256": "e59ce20752d4c1f5cd076c36b9101f65055b898e058baee987f306a9761f147b",
+      "main_dist_sha256": "e59ce20752d4c1f5cd076c36b9101f65055b898e058baee987f306a9761f147b",
+      "identical": true
+    },
+    {
+      "file": "sw.js",
+      "live_sha256": "840e1547c0e9023ef7313f486efd3f475edc875951b1dabc0b95e7951f494ddd",
+      "main_dist_sha256": "840e1547c0e9023ef7313f486efd3f475edc875951b1dabc0b95e7951f494ddd",
+      "identical": true
+    }
+  ]
+}

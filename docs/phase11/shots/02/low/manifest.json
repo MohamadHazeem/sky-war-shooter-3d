@@ -1,0 +1,286 @@
+{
+  "version": 1,
+  "complete": true,
+  "seed": 19431008,
+  "backend": "webgl2",
+  "quality": "low",
+  "cameraReference": null,
+  "browser": "153.0.8010.12",
+  "platform": "darwin/arm64",
+  "revision": "9b333aec65c7acde8a7c8b07080dbae2043ed940",
+  "dirty": true,
+  "shots": [
+    {
+      "version": 2,
+      "backend": "webgl2",
+      "quality": "low",
+      "seed": 19431008,
+      "shot": "b17-beauty",
+      "label": "B-17 / side and rim sunlight",
+      "pillars": [
+        1,
+        2,
+        7,
+        10
+      ],
+      "backendActual": "webgl2",
+      "deviceInfo": {
+        "vendor": "Google Inc. (Apple)",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+      },
+      "seedDefault": 19431008,
+      "dt": 0.016666666666666666,
+      "steps": 360,
+      "settleFrames": 24,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1074,
+        604
+      ],
+      "stream": {
+        "tier": "low",
+        "shown": true,
+        "bombers": 162,
+        "groups": 8,
+        "escorts": 8,
+        "gaggleFighters": 6,
+        "baked": {
+          "bomber": false,
+          "escort": false,
+          "gaggle": false,
+          "near": false
+        },
+        "impostors": 0,
+        "nearInstances": 0,
+        "ribbons": 170,
+        "fieldBands": 24,
+        "wrecks": 0,
+        "barrages": 0
+      },
+      "camera": {
+        "position": [
+          122.02194243193757,
+          7630.520978390825,
+          410.2309738391006
+        ],
+        "quaternion": [
+          -0.14010426040668814,
+          0.3232593105874182,
+          0.04845788493729472,
+          0.9346261539898432
+        ],
+        "fov": 45
+      },
+      "weather": {
+        "sunEl": 24,
+        "sunAz": 245,
+        "low": 0.45,
+        "high": 0.12,
+        "contrails": true
+      },
+      "subject": "b17-beauty",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "frameMs": {
+        "samples": 60,
+        "programsBefore": 243,
+        "programsAfter": 243,
+        "mean": 3.2733333334326744,
+        "p50": 3.0999999940395355,
+        "p95": 4.800000011920929,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "pixelHash": "d3437ef6b4943316ca4b2ae5d36761b4d5a883ab7d6884747e0db9577d6c53ca",
+      "errors": []
+    },
+    {
+      "version": 2,
+      "backend": "webgl2",
+      "quality": "low",
+      "seed": 19431008,
+      "shot": "top-formation",
+      "label": "Top turret / formation",
+      "pillars": [
+        1,
+        2,
+        3,
+        6,
+        8,
+        10
+      ],
+      "backendActual": "webgl2",
+      "deviceInfo": {
+        "vendor": "Google Inc. (Apple)",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+      },
+      "seedDefault": 19431008,
+      "dt": 0.016666666666666666,
+      "steps": 360,
+      "settleFrames": 24,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1074,
+        604
+      ],
+      "stream": {
+        "tier": "low",
+        "shown": true,
+        "bombers": 162,
+        "groups": 8,
+        "escorts": 8,
+        "gaggleFighters": 6,
+        "baked": {
+          "bomber": false,
+          "escort": false,
+          "gaggle": false,
+          "near": false
+        },
+        "impostors": 0,
+        "nearInstances": 0,
+        "ribbons": 170,
+        "fieldBands": 24,
+        "wrecks": 0,
+        "barrages": 0
+      },
+      "camera": {
+        "position": [
+          103.27294547702303,
+          7623.016817272785,
+          387.41735479228555
+        ],
+        "quaternion": [
+          -0.01780996830265668,
+          0.9818544879051193,
+          -0.11976866836910192,
+          0.1459453174539232
+        ],
+        "fov": 64.99999999999997
+      },
+      "weather": {
+        "sunEl": 40,
+        "sunAz": 140,
+        "low": 0.55,
+        "high": 0.2,
+        "contrails": true
+      },
+      "subject": "top-formation",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 2,
+      "frameMs": {
+        "samples": 60,
+        "programsBefore": 244,
+        "programsAfter": 244,
+        "mean": 6.353333333631356,
+        "p50": 6.299999982118607,
+        "p95": 7.299999982118607,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "pixelHash": "20ed1efea15d0c81e1ab4703397945ba5389954ffb81b64add781610a65a8596",
+      "errors": []
+    },
+    {
+      "version": 2,
+      "backend": "webgl2",
+      "quality": "low",
+      "seed": 19431008,
+      "shot": "waist-interior",
+      "label": "Waist compartment / light shafts",
+      "pillars": [
+        1,
+        2,
+        6,
+        7,
+        10
+      ],
+      "backendActual": "webgl2",
+      "deviceInfo": {
+        "vendor": "Google Inc. (Apple)",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+      },
+      "seedDefault": 19431008,
+      "dt": 0.016666666666666666,
+      "steps": 360,
+      "settleFrames": 24,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1074,
+        604
+      ],
+      "stream": {
+        "tier": "low",
+        "shown": true,
+        "bombers": 162,
+        "groups": 8,
+        "escorts": 8,
+        "gaggleFighters": 6,
+        "baked": {
+          "bomber": false,
+          "escort": false,
+          "gaggle": false,
+          "near": false
+        },
+        "impostors": 0,
+        "nearInstances": 0,
+        "ribbons": 170,
+        "fieldBands": 24,
+        "wrecks": 0,
+        "barrages": 0
+      },
+      "camera": {
+        "position": [
+          103.32840989936358,
+          7621.725547084889,
+          381.40865037973754
+        ],
+        "quaternion": [
+          -0.030300170723150277,
+          0.21081540623350545,
+          0.006537890031870035,
+          0.9770342983450893
+        ],
+        "fov": 74
+      },
+      "weather": {
+        "sunEl": 22,
+        "sunAz": 90,
+        "low": 0.35,
+        "high": 0.1
+      },
+      "subject": "waist-interior",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": 0.9999999999999997,
+      "visibleSunShafts": 1,
+      "frameMs": {
+        "samples": 60,
+        "programsBefore": 245,
+        "programsAfter": 245,
+        "mean": 6.948333333432674,
+        "p50": 7,
+        "p95": 7.9000000059604645,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "pixelHash": "1fb49a2070a88deaaa55ebee8108dc3310992430d56484fe9a8ad82bfd52250e",
+      "errors": []
+    }
+  ]
+}

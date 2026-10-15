@@ -1,3 +1,4 @@
+import { GLASS_REFLECTION_GLSL, reflectionUniforms } from '../render/GlassReflection';
 import * as THREE from 'three';
 import type { World } from '../world/World';
 import type { Bomber, Fighter, HitZone } from '../world/Aircraft';
@@ -53,6 +54,7 @@ const VERT = /* glsl */ `
   }`;
 
 const FRAG = /* glsl */ `
+  ${GLASS_REFLECTION_GLSL}
   uniform float uShape, uR, uTime, uRain, uSpeedK, uFlowV, uGlint, uDust, uOil, uSpat, uFrost, uCrackN, uAimK, uAspect;
   uniform vec3 uC, uAxis, uUp, uFlow, uFlowUp, uSun, uSunCol, uSky, uFlash;
   uniform vec4 uEdge, uAim;
@@ -348,6 +350,17 @@ const FRAG = /* glsl */ `
       col *= 1.0 - hole; a *= 1.0 - hole * 0.85;   // the hole itself is open
     }
 
+    // Perspex reflects the visible formation/cloud composite; offscreen rays use sky fill.
+    if(swsReflectionOn>.5 && uDust>0.) {
+      vec3 wn=normalize(cross(dFdx(vW),dFdy(vW)));
+      vec3 vn=normalize(mat3(viewMatrix)*wn);
+      vec3 vp=(viewMatrix*vec4(vW,1.)).xyz;
+      float f=.035+.965*pow(1.-abs(dot(wn,normalize(cameraPosition-vW))),5.);
+      vec4 reflected=swsGlassReflection(vp,vn);
+      float weight=min(.24,f)*.65;
+      col+=mix(uSky*.32,reflected.rgb,reflected.a)*weight;
+      a+=weight;
+    }
     // keep the gunsight clear: everything thins out around the aim point (most in ADS)
     float ad = length((ndc - uAim.xy) * vec2(uAspect, 1.0));
     float keep = 1.0 - uAimK * (1.0 - smoothstep(uAim.z * 0.5, uAim.z * 1.4, ad));
@@ -357,6 +370,7 @@ const FRAG = /* glsl */ `
 
 // Uniforms shared by every pane (one frame's environment)
 const env = {
+  ...reflectionUniforms,
   uTime: { value: 0 },
   uSun: { value: new THREE.Vector3(0, 1, 0) },
   uSunNdc: { value: new THREE.Vector2(9, 9) },

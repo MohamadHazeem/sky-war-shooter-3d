@@ -1,0 +1,68 @@
+[
+  {
+    "quality": "high",
+    "hit": [
+      220,
+      80,
+      30,
+      255
+    ],
+    "miss": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "sky": [
+      220,
+      80,
+      30,
+      166
+    ],
+    "off": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "glError": 0,
+    "compiles": 0,
+    "programsBefore": 254,
+    "programsAfter": 254,
+    "reflectionOn": 1,
+    "errors": []
+  },
+  {
+    "quality": "low",
+    "hit": [
+      220,
+      80,
+      30,
+      255
+    ],
+    "miss": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "sky": [
+      220,
+      80,
+      30,
+      166
+    ],
+    "off": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "glError": 0,
+    "compiles": 0,
+    "programsBefore": 244,
+    "programsAfter": 244,
+    "reflectionOn": 0,
+    "errors": []
+  }
+]

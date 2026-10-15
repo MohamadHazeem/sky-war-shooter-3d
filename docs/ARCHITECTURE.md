@@ -269,3 +269,18 @@ CPU verification uses port 5312 and the bundled headless shell: `tools/cpu_profi
 `PERF_CPU=4`, `PERF_BREAKDOWN=1` and `PERF_STEPS` (600 = 1,800 rendered frames,
 1,800 = 5,400 frames). The bot advances three 1/60 s frames per step. `PLAYWRIGHT_EXECUTABLE`, when needed, must identify an
 already-installed **headless shell**, never the desktop Chrome application.
+
+### Phase 11 material reflections
+
+`AircraftFinish` keeps baked ORM maps while narrowing painted-metal highlights, bending bare-metal
+reflection normals along the UV brushing direction, and occluding reflections below the geometric
+surface. `MaterialAudit` binds its clone-safe finish uniforms; only glass compiles the reflection
+samplers. `Models` sets thin dielectric glass before prewarm, removing the redundant physical
+transmission pass. `GlassReflection` traces ten bounded view-space steps into the existing HDR
+cloud composite and **SoftDepth's linear depth copy**, never an attached depth texture. `Engine`
+binds these immediately before transparency; High+ enables tracing, Low/Medium/studio use IBL.
+`GlassFx` shares the same lookup with its turret/canopy overlay. All variants warm through the
+existing `World.prewarm` → `Engine.warmRenderer` path. The formation cascade fits a forward-shifted
+345.6 m square at the existing resolution, with edge blending back to the far cascade.
+The sky PMREM includes broad procedural cloud variation; HDR reference sources and matched
+live-main provenance are recorded in `docs/phase11/reports/02.md`.
