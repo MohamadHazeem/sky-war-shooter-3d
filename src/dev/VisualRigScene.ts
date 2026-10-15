@@ -143,6 +143,7 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     cam.rotateX(-.10); cam.rotateY(.06); cam.updateMatrixWorld(true);
   }
   if (shot.id === 'night-flak') {
+    Math.random = seededRandom(seed ^ 0xf1a4);
     look(new THREE.Vector3(-800, 3200, -2200), new THREE.Vector3(0, 5200, 2000), 65);
     const lights = new Searchlights(engine.scene);
     lights.setup(Array.from({ length: 8 }, (_, i) => new THREE.Vector3((i - 4) * 550, 0, 2000 + (i % 3) * 500)), new THREE.Vector3(0, 0, -1));
@@ -159,14 +160,18 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
       w.effects.explosion(cam.position.clone().addScaledVector(forward, 95), new THREE.Vector3(10, 0, 0), 1.5, 'heavy');
       facts.effectAge = .4;
     } else {
+      // Burst centres must not depend on random draws inside effect construction.
+      const random = seededRandom(seed ^ 0xb005), positions: number[][] = [];
       for (let i = 0; i < 28; i++) {
-        const depth = 280 + Math.random() * 650;
+        const depth = 280 + random() * 650;
         const pos = cam.position.clone().addScaledVector(forward, depth)
-          .addScaledVector(right, (Math.random() - .5) * depth * .85).addScaledVector(up, (Math.random() - .5) * depth * .45);
+          .addScaledVector(right, (random() - .5) * depth * .85).addScaledVector(up, (random() - .5) * depth * .45);
+        positions.push(pos.toArray());
+        Math.random = seededRandom(seed ^ (0xf1a4 + i));
         w.effects.flak(pos);
         w.effects.update(.035);
       }
-      facts.flakBursts = 28; facts.effectAge = 28 * .035 + .4;
+      facts.flakBursts = 28; facts.flakPositions = positions; facts.effectAge = 28 * .035 + .4;
     }
     for (let i = 0; i < 24; i++) w.effects.update(RIG_DT);
   }

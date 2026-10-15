@@ -6,9 +6,26 @@ import { bindGlassReflection, reflectionUniforms } from '../src/render/GlassRefl
 import { SunCascades } from '../src/render/SunCascades';
 import { FormationReflection, formationReflectionUniforms } from '../src/render/FormationReflection';
 import { InteriorLight } from '../src/render/InteriorLight';
+import { warmBatchedShadow } from '../src/render/ShadowWarmup';
 import { Atmos } from '../src/render/Atmosphere';
 
 describe('aircraft finishes and safe glass reflections', () => {
+  it('warms untextured batched debris depth without leaking shadow or clipping state', () => {
+    const scene=new T.Scene(), camera=new T.PerspectiveCamera(), target=new T.WebGLRenderTarget(1,1);
+    const clipping=[new T.Plane()];let current: T.WebGLRenderTarget | null=null;
+    const renderer={shadowMap:{enabled:false},clippingPlanes:clipping,
+      getRenderTarget:()=>current,setRenderTarget:(t:T.WebGLRenderTarget|null)=>{current=t;},
+      compile:(batch:T.BatchedMesh,c:T.Camera,lighting:T.Scene)=>{
+        expect(batch.isBatchedMesh).toBe(true);expect((batch.material as T.MeshDepthMaterial).isMeshDepthMaterial).toBe(true);
+        expect(batch.material.side).toBe(T.DoubleSide);expect(batch.geometry.getAttribute('normal')).toBeDefined();
+        expect(c).toBe(camera);expect(lighting).toBe(scene);expect(current).toBe(target);
+        expect(renderer.clippingPlanes).toEqual([]);expect(renderer.shadowMap.enabled).toBe(true);
+        throw new Error('compile failed');
+      },
+    } as unknown as T.WebGLRenderer;
+    expect(()=>warmBatchedShadow(renderer,scene,camera,target)).toThrow('compile failed');
+    expect(current).toBe(null);expect(renderer.clippingPlanes).toBe(clipping);expect(renderer.shadowMap.enabled).toBe(false);
+  });
   it('keeps glass samplers out of opaque programs and preserves baked ORM/clone finishes', () => {
     const skin = new T.MeshStandardMaterial(); skin.name = 'hero_skin';
     const orm = new T.Texture(); skin.aoMap = skin.roughnessMap = skin.metalnessMap = orm;

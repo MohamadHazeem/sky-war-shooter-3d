@@ -1,4 +1,4 @@
-// Acceptance gates for this review; timings come from GPU-fenced native-resolution runs.
+// Acceptance gates: GPU-fenced, 1080p viewport, fixed DRS 1 and normal preset pixel caps.
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const root='docs/phase11/shots/02';
@@ -12,13 +12,14 @@ for(const [tier,data,budget] of [['High',high,11],['Low',low,6]])for(const r of 
  for(const b of r.batches)assert.equal(b.programsBefore,b.programsAfter);
 }
 const budgets={low:6,medium:9,high:11,ultra:14,cinematic:20};
+const sizes={low:[1074,604],medium:[1490,838],high:[1920,1080],ultra:[1920,1080],cinematic:[1920,1080]};
 const combat=await read('combat/combat.json');assert.deepEqual(combat.results.map(r=>r.tier),Object.keys(budgets));
 const throttled=await read('combat-throttled/combat.json');assert.equal(throttled.results.length,1);
 for(const r of [...combat.results,...throttled.results]){
  const budget=r.cpuThrottle===4?16.7:budgets[r.tier];
  assert.ok(r.mean<=budget,`${r.tier} ${r.cpuThrottle}x CPU: ${r.mean} > ${budget} ms`);
  assert.ok(r.frames>=1800);assert.equal(r.compileCalls,0);assert.equal(r.errors.length,0);
- assert.deepEqual(r.renderSize,[1920,1080]);
+ assert.deepEqual(r.viewport,[1920,1080]);assert.deepEqual(r.renderSize,sizes[r.tier]);
 }
 assert.equal(throttled.results[0].cpuThrottle,4);
 console.log('PASS: all 9 High p95 gates, Low rig, five combat means and 4x CPU Low; no shader compiles/errors.');

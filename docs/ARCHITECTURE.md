@@ -299,11 +299,13 @@ World prewarm also warms the shaft composite. Formation GTAO extends through 220
 Submission retirement uses value iterators and changes instance visibility only when needed.
 High merges the existing authored LOD1 by material at 240–650 m, then uses compact LOD2 beyond
 650 m (60 m for offscreen shadow-only casters); close, reflected, damaged, player, falling, open-bay and object-blurred film aircraft
-retain their articulated source. Compact variants are warmed before play. These changes preserve
+retain their articulated source. Compact variants are warmed before play. `ShadowWarmup` also retains the exact untextured,
+untinted, unclipped, double-sided batched depth program against the mission lights. These changes preserve
 the simulation and cloud-resolution budget.
 
-Fixture v6 retains turret-glass, close-shadow and formation-glints. It explicitly seeds formation
-motion independently of art construction, neutralizes career crew effects and records formation poses. Its gunner reflection receiver is staged
+Fixture v7 retains turret-glass, close-shadow and formation-glints. It explicitly seeds formation
+motion independently of art construction, neutralizes career crew effects and records formation poses. Burst centres use a separate seeded
+stream so effect implementation changes cannot move the night-flak scene. Its gunner reflection receiver is staged
 in the dome approximation's optical field, identically for baseline and candidate.
 It waits for streamed mission terrain before
 settling temporal history, and records SHA-256 hashes of all three region textures. Comparisons

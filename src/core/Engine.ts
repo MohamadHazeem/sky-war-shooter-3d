@@ -1,5 +1,6 @@
 import { InteriorLight } from '../render/InteriorLight';
 import { FormationReflection } from '../render/FormationReflection';
+import { warmBatchedShadow } from '../render/ShadowWarmup';
 import { bindGlassReflection, reflectionUniforms } from '../render/GlassReflection';
 import { AircraftSubmission } from '../render/AircraftSubmission';
 import { SkyCache } from '../render/SkyCache';
@@ -544,6 +545,7 @@ export class Engine {
     this.skyCache.scale = skyScale;
     this.temporal.enabled=enabled;this.post.economy=economy;this.post.temporal=temporal;
     this.post.film.prewarm(this.renderer, this.scene, this.camera);
+    warmBatchedShadow(this.renderer, this.scene, this.camera, this.sceneRT);
     this.temporal.reset();this.post.resetHistory();
   }
 
