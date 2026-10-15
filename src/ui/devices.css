@@ -15,12 +15,15 @@ body.noflash #fireFrame.on { animation: none; opacity: 0.6; }
    --cb-enemy / --cb-friend come from the chosen palette (Accessibility.ts: red-green,
    blue-yellow or high contrast); a dashed border adds a shape cue so nothing relies on colour. */
 body.cb .stations span.threat { border-color: var(--cb-enemy, #ff9a14); border-style: dashed; color: #fff; }
-body.cb .stations span b { background: var(--cb-enemy, #ff9a14); color: #111; }
+body.cb .stations span b { background: var(--cb-enemy, #ff9a14); color: var(--cb-ink, #111); }
 body.cb .stations span.best { animation-name: seatPulseCb; }
-@keyframes seatPulseCb { 50% { background: color-mix(in srgb, var(--cb-enemy, #ff9a14) 55%, transparent); color: #111; } }
+@keyframes seatPulseCb { 50% { background: color-mix(in srgb, var(--cb-enemy, #ff9a14) 70%, #000); color: var(--cb-ink, #111); } }
 body.cb .crewlist b { color: var(--cb-friend, #64aaff); }
 body.cb .crewlist span.wnd { border-left-color: var(--cb-enemy, #ff9a14); border-left-style: dashed; }
-body.cb .crewlist span.wnd b { color: var(--cb-enemy, #ff9a14); }
+body.cb .crewlist span.wnd b { color: var(--cb-enemy-text, #ffb95a); }
+/* darker plates so the palette colours hold up against bright cloud */
+body.cb .stations span, body.cb .crewlist span { background: rgba(0, 0, 0, 0.6); }
+body.cb .stations span.on { background: var(--khaki); }
 body.cb #evPrompt.show { border-color: var(--cb-enemy, #ff9a14); }
 /* high contrast: heavier HUD text and darker plates behind it */
 body.cb-contrast #hud { --ink: #fff; text-shadow: 0 0 3px #000, 0 1px 2px #000; }
@@ -34,7 +37,13 @@ body.cb-contrast .stations span { background: rgba(0, 0, 0, 0.8); border-width: 
 .a11y-note { color: var(--ink-dim); font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; margin: 8px 0; }
 .a11y-sub { text-align: center; margin: 6px 0 2px; }
 .a11y-sample { display: inline-block; background: rgba(0, 0, 0, var(--subs-bg, 0.55)); color: #fff; font-size: calc(16px * var(--subs-scale, 1)); padding: 3px 12px; letter-spacing: 0.3px; }
-.a11y-sample .who { color: var(--khaki); margin-right: 8px; font-size: 0.75em; letter-spacing: 2px; text-transform: uppercase; }
+.a11y-sample .who { color: var(--khaki); margin-inline-end: 8px; font-size: 0.75em; letter-spacing: 2px; text-transform: uppercase; }
+/* Arabic: letter-spacing breaks the joined letters of the small-caps headers, and the speaker
+   needs its gap on the left of the line (the margin above is logical, this keeps it at any size) */
+html[dir=rtl] .a11y-h, html[dir=rtl] .a11y-sample, html[dir=rtl] .a11y-sample .who, html[dir=rtl] .a11y-row { letter-spacing: 0; }
+html[dir=rtl] .a11y-h { font-family: 'Special Elite', 'Noto Kufi Arabic', monospace; word-spacing: 0.25em; }
+html[dir=rtl] .a11y-sample .who { margin-inline-end: 0.6em; }
+html[dir=rtl] .a11y-note { font-family: 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; }
 .a11y-keys { display: grid; gap: 4px; margin: 8px 0; }
 .a11y-row { display: grid; grid-template-columns: 1fr 140px; align-items: center; gap: 12px; font-size: 14px; letter-spacing: 0.5px; }
 .a11y-key { background: #222; color: var(--ink); border: 1px solid var(--line); padding: 6px 8px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; cursor: pointer; text-align: center; }

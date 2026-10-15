@@ -16,6 +16,13 @@ const table: PhraseTable = { phrases: {
   'Left-handed sticks': 'العصوان لليد اليسرى',
   'On (aim with the left stick)': 'تشغيل (التصويب بالعصا اليسرى)',
   'Stronger aim assist on a gamepad': 'مساعدة تصويب أقوى مع يد التحكم',
+  // gamepad summary line, built from the button map and the stick side
+  'Gamepad ready: {stick} · {fire} fire · {zoom} zoom · {prev}/{next} gun position · {reload} reload · {map} map · Start pause': 'يد التحكم جاهزة: {stick} · {fire} للإطلاق · {zoom} للتقريب · {prev}/{next} لموقع الرماية · {reload} لإعادة التلقيم · {map} للخريطة · Start للإيقاف المؤقت',
+  'Gamepad: plug one in and press any button. {stick}, {fire} fires, {zoom} zooms, {prev}/{next} change gun position, Start pauses.': 'يد التحكم: وصّل واحدة واضغط أي زر. {stick}، و{fire} للإطلاق، و{zoom} للتقريب، و{prev}/{next} لتغيير موقع الرماية، وStart للإيقاف المؤقت.',
+  'right stick aim': 'العصا اليمنى للتصويب',
+  'left stick aim': 'العصا اليسرى للتصويب',
+  'Right stick aims': 'العصا اليمنى للتصويب',
+  'Left stick aims': 'العصا اليسرى للتصويب',
   'Gamepad buttons': 'أزرار يد التحكم',
   'Press A on an action, then the new button. Start or View cancels; they stay fixed.': 'اضغط A على إجراء، ثم الزر الجديد. Start أو View للإلغاء؛ فهما ثابتان.',
   'Reset gamepad to defaults': 'إعادة يد التحكم إلى الوضع الافتراضي',

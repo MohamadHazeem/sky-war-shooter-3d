@@ -28,15 +28,16 @@ export interface AccessPrefs {
 
 const STORE_KEY = 'sws3d.access.v1';
 
-export interface Palette { enemy: string; enemyDim: string; enemyText: string; friend: string; warn: string; ok: string }
+// warn / ok colour HUD plates and borders; ink is the text colour on a warn-coloured fill
+export interface Palette { enemy: string; enemyDim: string; enemyText: string; friend: string; warn: string; ok: string; ink: string }
 
 // Okabe-Ito based: each palette keeps foes and friends apart for its kind of colour blindness;
 // enemies also get a cross glyph in every colour-blind mode, so nothing relies on colour alone.
 export const PALETTE: Record<'standard' | Exclude<CbMode, 'off'>, Palette> = {
-  standard: { enemy: 'rgba(255,70,45,0.95)', enemyDim: 'rgba(255,90,60,0.55)', enemyText: 'rgba(255,120,90,0.9)', friend: 'rgba(110,190,255,0.85)', warn: '#d8432c', ok: '#5fbf4a' },
-  redGreen: { enemy: 'rgba(255,150,20,0.98)', enemyDim: 'rgba(255,160,40,0.6)', enemyText: 'rgba(255,185,90,0.95)', friend: 'rgba(60,140,255,0.95)', warn: '#ff9a14', ok: '#64aaff' },
-  blueYellow: { enemy: 'rgba(235,40,95,0.98)', enemyDim: 'rgba(235,60,110,0.6)', enemyText: 'rgba(255,120,160,0.95)', friend: 'rgba(40,215,205,0.95)', warn: '#eb285f', ok: '#28d7cd' },
-  contrast: { enemy: 'rgba(255,230,0,1)', enemyDim: 'rgba(255,230,0,0.7)', enemyText: 'rgba(255,240,90,1)', friend: 'rgba(255,255,255,0.95)', warn: '#ffe600', ok: '#ffffff' },
+  standard: { enemy: 'rgba(255,70,45,0.95)', enemyDim: 'rgba(255,90,60,0.55)', enemyText: 'rgba(255,120,90,0.9)', friend: 'rgba(110,190,255,0.85)', warn: '#d8432c', ok: '#5fbf4a', ink: '#fff' },
+  redGreen: { enemy: 'rgba(255,150,20,0.98)', enemyDim: 'rgba(255,160,40,0.6)', enemyText: 'rgba(255,185,90,0.95)', friend: 'rgba(60,140,255,0.95)', warn: '#ff9a14', ok: '#64aaff', ink: '#111' },
+  blueYellow: { enemy: 'rgba(235,40,95,0.98)', enemyDim: 'rgba(235,60,110,0.6)', enemyText: 'rgba(255,120,160,0.95)', friend: 'rgba(40,215,205,0.95)', warn: '#eb285f', ok: '#28d7cd', ink: '#fff' },
+  contrast: { enemy: 'rgba(255,230,0,1)', enemyDim: 'rgba(255,230,0,0.7)', enemyText: 'rgba(255,240,90,1)', friend: 'rgba(255,255,255,0.95)', warn: '#ffe600', ok: '#ffffff', ink: '#111' },
 };
 
 const SUB_SCALE: Record<SubSize, number> = { S: 0.85, M: 1, L: 1.4, XL: 1.8 };
@@ -106,6 +107,8 @@ export class Access {
     root.setProperty('--subs-bg', String(Math.max(0, Math.min(1, p.subBg))));
     root.setProperty('--cb-enemy', pal.warn);
     root.setProperty('--cb-friend', pal.ok);
+    root.setProperty('--cb-enemy-text', pal.enemyText);
+    root.setProperty('--cb-ink', pal.ink);
     const body = document.body.classList;
     body.toggle('calm', p.reduceMotion);
     body.toggle('noflash', p.reduceFlash);

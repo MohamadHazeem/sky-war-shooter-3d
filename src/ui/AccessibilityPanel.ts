@@ -9,6 +9,15 @@ import { tx } from '../i18n';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
+/** The gamepad summary line, built from the current button map and stick side. */
+export function padHint(connected: boolean): string {
+  const v = { fire: padMap.label('fire'), zoom: padMap.label('zoom'), prev: padMap.label('prevGun'), next: padMap.label('nextGun'), reload: padMap.label('reload'), map: padMap.label('map') };
+  const left = access.prefs.padSwap;
+  return connected
+    ? tx('Gamepad ready: {stick} · {fire} fire · {zoom} zoom · {prev}/{next} gun position · {reload} reload · {map} map · Start pause', { ...v, stick: tx(left ? 'left stick aim' : 'right stick aim') })
+    : tx('Gamepad: plug one in and press any button. {stick}, {fire} fires, {zoom} zooms, {prev}/{next} change gun position, Start pauses.', { ...v, stick: tx(left ? 'Left stick aims' : 'Right stick aims') });
+}
+
 export function mountAccessibilityPanel(box: HTMLElement) {
   box.querySelector('.a11y-panel')?.remove();
   const p = access.prefs;
@@ -50,6 +59,7 @@ export function mountAccessibilityPanel(box: HTMLElement) {
     if (k === 'colorBlind' || k === 'reduceMotion' || k === 'reduceFlash' || k === 'padSwap' || k === 'padAssist' || k === 'oneHand') v = v === 'true';
     if (k === 'subBg' || k === 'touchSens' || k === 'padSens') v = parseFloat(i.value);
     access.set(k, v as never);
+    if (k === 'padSwap') showPad();
     if (k === 'oneHand') wrap.querySelector<HTMLElement>('[data-onehand]')!.hidden = !v;
     const out = wrap.querySelector(`[data-v="${k}"]`);
     if (out) out.textContent = k === 'subBg' ? `${Math.round((v as number) * 100)}%` : `${(v as number).toFixed(2)}×`;
@@ -58,9 +68,8 @@ export function mountAccessibilityPanel(box: HTMLElement) {
   // gamepad status
   const pad = wrap.querySelector<HTMLElement>('[data-pad]')!;
   const pads = (() => { try { return Array.from(navigator.getGamepads?.() ?? []).filter((g) => g?.connected); } catch { return []; } })();
-  pad.innerHTML = pads.length
-    ? tx('Gamepad ready: right stick aim · RT fire · LT zoom · LB/RB gun position · X reload · D-pad up map · Start pause')
-    : tx('Gamepad: plug one in and press any button. Right stick aims, RT fires, LT zooms, LB/RB change gun position, Start pauses.');
+  const showPad = () => { pad.textContent = padHint(pads.length > 0); };
+  showPad();
 
   // key bindings
   const msg = wrap.querySelector<HTMLElement>('[data-msg]')!;
@@ -93,7 +102,7 @@ export function mountAccessibilityPanel(box: HTMLElement) {
   // gamepad buttons: GamepadInput hands the next pressed button to padMap.finishCapture
   const pmsg = wrap.querySelector<HTMLElement>('[data-pmsg]')!;
   const padLabel = (id: PadActionId) => tx(PAD_ACTIONS.find((a) => a.id === id)!.label);
-  const prefresh = () => wrap.querySelectorAll<HTMLButtonElement>('[data-p]').forEach((b) => { b.textContent = padMap.label(b.dataset.p as PadActionId); b.classList.remove('wait'); });
+  const prefresh = () => { wrap.querySelectorAll<HTMLButtonElement>('[data-p]').forEach((b) => { b.textContent = padMap.label(b.dataset.p as PadActionId); b.classList.remove('wait'); }); showPad(); };
   const pstop = () => { if (padMap.capturing) padMap.finishCapture(-1); };
   wrap.querySelectorAll<HTMLButtonElement>('[data-p]').forEach((b) => b.addEventListener('click', () => {
     pstop();

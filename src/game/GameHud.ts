@@ -15,6 +15,7 @@ import { access } from '../core/Accessibility';
 import { tx } from '../i18n';
 
 const _v = new THREE.Vector3();
+const OUTLINE = 'rgba(0,0,0,0.85)';   // colour-blind marker outline
 
 // The in-mission HUD driven from Game.frame(): the DOM panels (objective line, score,
 // gunner / pilot readouts, the seat finder, refreshed every 0.08 s) and the 2D canvas
@@ -191,6 +192,9 @@ export class GameHud {
     const pl = w.player;
     const visibility = hudVisibility(g.settings.hudDetail);
     if (visibility.markers && g.settings.markers && pl) {
+      // colour-blind modes: a dark halo keeps markers and labels readable against bright cloud
+      const outline = access.prefs.colorBlind;
+      if (outline) { ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 4; }
       for (const a of w.aircraft) {
         ctx.globalAlpha = 1;
         if (a === pl || !liveMarkerTarget(a)) continue;
@@ -221,17 +225,21 @@ export class GameHud {
           const x = (p.x * 0.5 + 0.5) * W, y = (-p.y * 0.5 + 0.5) * H;
           const s = THREE.MathUtils.clamp(3200 / d, 9, 34);
           recordMarker('target-box', a, 'world', x, y);
-          ctx.strokeStyle = col; ctx.lineWidth = 2;
           ctx.beginPath();
           const c = s * 0.45;
           for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
             ctx.moveTo(x + sx * s, y + sy * s - sy * c); ctx.lineTo(x + sx * s, y + sy * s); ctx.lineTo(x + sx * s - sx * c, y + sy * s);
           }
+          // colour-blind modes: a solid dark outline under brackets and label (bright cloud behind)
+          if (outline) { ctx.strokeStyle = OUTLINE; ctx.lineWidth = 4.5; ctx.stroke(); }
+          ctx.strokeStyle = col; ctx.lineWidth = 2;
           ctx.stroke();
           access.enemyGlyph(ctx, x, y, s);
           ctx.fillStyle = col; ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
           const lab = tx(a.label).toUpperCase();
-          ctx.fillText(d < 1600 ? `${lab}  ${Math.round(d)}m` : lab, x, y + s + 13);
+          const text = d < 1600 ? `${lab}  ${Math.round(d)}m` : lab;
+          if (outline) { ctx.strokeStyle = OUTLINE; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeText(text, x, y + s + 13); }
+          ctx.fillText(text, x, y + s + 13);
         } else if (enemy && d < 1500) {
           // edge arrow toward off-screen attacker
           let ex = p.x, ey = p.y;
@@ -246,6 +254,7 @@ export class GameHud {
           ctx.restore();
         }
       }
+      ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
     }
     ctx.globalAlpha = 1;
     // Health bars on enemies the player has been hitting

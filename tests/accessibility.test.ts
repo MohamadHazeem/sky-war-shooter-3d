@@ -298,3 +298,24 @@ describe('accessibility texts resolve to Arabic', () => {
     expect(tx('Strong (accessibility)')).toMatch(arabic);
   });
 });
+
+describe('gamepad summary line follows the button map and stick side', () => {
+  afterEach(() => { padMap.reset(); access.prefs.padSwap = false; setLang('en'); });
+
+  it('names the remapped fire button and the aiming stick', async () => {
+    const { padHint } = await import('../src/ui/AccessibilityPanel');
+    expect(padHint(true)).toBe('Gamepad ready: right stick aim · RT fire · LT zoom · LB/RB gun position · X reload · ✚↑ map · Start pause');
+    padMap.bind('fire', B.RB);
+    access.prefs.padSwap = true;
+    const h = padHint(true);
+    expect(h).toContain('left stick aim');
+    expect(h).toContain('RB fire');
+    expect(h).toContain('LB/RT gun position');
+    expect(padHint(false)).toContain('Left stick aims, RB fires');
+    setLang('ar');
+    const ar = padHint(true);
+    expect(ar).toMatch(/[؀-ۿ]/);
+    expect(ar).toContain('العصا اليسرى');
+    expect(ar).toContain('RB للإطلاق');
+  });
+});
