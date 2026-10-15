@@ -21,7 +21,7 @@ EXTRA=(); [ -n "${EFFORT:-}" ] && EXTRA=(-c "model_reasoning_effort=$EFFORT")
 for attempt in 1 2 3 4 5 6; do
   set +e
   codex exec --dangerously-bypass-approvals-and-sandbox ${EXTRA[@]+"${EXTRA[@]}"} -C . -o "/tmp/codex-$TASK-final.txt" \
-    "You are implementing Phase $PN goal $NN in this repository. Follow AGENTS.md strictly. Your task file is $SPEC — read it and do the work end to end: implement, add tests, run npm run check until it passes, verify in your browser with your own dev server on the port named in the task file (save the screenshots you rely on under docs/$PHASE/shots/$NN/), commit on the current branch ($PHASE/$TASK), and write the report to docs/$PHASE/reports/$NN.md (commit it too). Do not push or deploy." \
+    "You are implementing Phase $PN goal $NN in this repository. Follow AGENTS.md strictly. Your task file is $SPEC — read it and do the work end to end: implement, add tests, verify visually with the capture rig / headless browser on the port named in the task file (save the screenshots you rely on under docs/$PHASE/shots/$NN/), compare against the live game (main) and keep improving until clearly better, commit on the current branch ($PHASE/$TASK), write the report to docs/$PHASE/reports/$NN.md (commit it too), then push your branch (git push -u origin HEAD) and wait until GitHub CI is green (fix and re-push if not). Never push main, never deploy." \
     < /dev/null > "/tmp/codex-$TASK.log" 2>&1
   rc=$?; set -e
   if [ $rc -ne 0 ] && grep -q "status: 429" "/tmp/codex-$TASK.log" && [ -z "$(git log --oneline main..HEAD -- . ':!docs/'"$PHASE"'/'"$TASK"'.md' 2>/dev/null)" ]; then

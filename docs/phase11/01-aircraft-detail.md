@@ -1,0 +1,6 @@
+# Phase 11 · 01 — Aircraft detail 2.0 (B-17 + fighters)
+Report: `docs/phase11/reports/01.md` · Port 5321 · Shots: `docs/phase11/shots/01/`
+
+Pillar 1 from 6 → 8. Read `tools/hero/*`, `docs/phase10/reports/02c.md`, `05b.md`. On the existing accurate hero meshes: generate a proper high-poly detail pass (recessed panel lines, raised/flush rivet rows at real pitch, fasteners, access panels, fabric control surfaces with rib tapes, dents and oil-canning on thin skin), bake high-quality normal/AO/curvature maps at shipped resolution, use scanned CC0 PBR metal/paint references for roughness/colour variation, sharper decals, better glass (reflection + slight tint, framing depth), engine detail (cylinder banks, exhaust stacks, turbo glow at night). Close camera at 15–40 m must hold up next to IL-2-class references. Keep LODs/KTX2/named parts/budgets.
+
+Rules: read `AGENTS.md` (CI flow, `tools/heavy.sh`, quality gate), `docs/PHASE11.md`, `docs/phase10/scorecard-final.md`, `docs/phase10/reference.md`. Verify with the capture rig (`node tools/visual_rig.mjs`) before/after vs LIVE main; done only when clearly better in the touched shots and CI is green. Downloads of CC0/CC BY assets from no-login sources (Poly Haven, ambientCG, public-domain archives) are allowed; log licences in the CREDITS files. Never `channel: 'chrome'`, never computer use.

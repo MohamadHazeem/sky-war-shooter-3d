@@ -1,0 +1,6 @@
+# Phase 11 · 07 — Gameplay: The Tour (25 missions)
+Report: `docs/phase11/reports/07.md` · Port 5327 · Shots: `docs/phase11/shots/07/`
+
+Read `src/game/CampaignState.ts`, `Missions.ts`, `DeepPenetration.ts`, `SecondTour.ts`, `CrewRoster.ts`, `CrewRoom.ts`, `Career.ts`. A full 25-mission tour mode for the gunner: one persistent B-17 (damage carried between missions, patched skin, replacements) and crew (wounds, deaths, replacements, promotions, medals), mission selection from historically ordered targets with escalating danger, morale/fatigue, mid-tour events, a finale at mission 25 ("going home"). Uses existing missions + generated variants. Simple UI (Phase 8 rules), Arabic, voice lines via Chatterbox.
+
+Rules: read `AGENTS.md` (CI flow, `tools/heavy.sh`, quality gate), `docs/PHASE11.md`, `docs/phase10/scorecard-final.md`, `docs/phase10/reference.md`. Verify with the capture rig (`node tools/visual_rig.mjs`) before/after vs LIVE main; done only when clearly better in the touched shots and CI is green. Downloads of CC0/CC BY assets from no-login sources (Poly Haven, ambientCG, public-domain archives) are allowed; log licences in the CREDITS files. Never `channel: 'chrome'`, never computer use.
