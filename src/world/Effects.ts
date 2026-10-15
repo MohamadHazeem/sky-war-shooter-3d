@@ -15,6 +15,7 @@ import { Sparks } from '../render/Sparks';
 const _v = new THREE.Vector3();
 const _p = new THREE.Vector3();
 const _d = new THREE.Vector3();
+const _flow = new THREE.Vector3();
 const R = () => Math.random() * 2 - 1;
 const UP = new THREE.Vector3(0, 1, 0);
 
@@ -130,11 +131,20 @@ export class Effects {
     sys.spawn(o);
   }
 
+  // Simulation LOD must follow camera cuts and fixed stepping even without a render.
+  setCamera(camera: THREE.Camera) {
+    this.flip.setCamera(camera);
+    this.vol.camPos.copy(this.flip.camPos); this.vol.hasCam = true;
+  }
+
   // ---------------- Effects 2.0 ----------------
   // Graphics tier (Game.frame, every frame): Low keeps the sprite effects; any tier above starts
   // loading the flipbook atlases (once) and turns on the ribbons and streaks
   setQuality(q: string) {
     const low = q === 'low';
+    // A combat-time drop to Low must shed the high-tier pools immediately.
+    // Keep their meshes present so World.prewarm can still compile their materials.
+    if (low && this.hiFx) { this.flip.clear(); this.ribbons.clear(); this.sparkFx.clear(); }
     this.smoke.budget = low ? 512 : Infinity; this.glow.budget = low ? 256 : Infinity;
     this.vol.setQuality(low);
     this.hiFx = !low;
@@ -149,9 +159,9 @@ export class Effects {
   // One flipbook particle: the shared options object filled in (no allocation)
   private flipbook(kind: FlipKind, pos: THREE.Vector3, vel: THREE.Vector3 | undefined, life: number, play: number, s0: number, s1: number,
     albedo: [number, number, number], alpha0: number, alpha1: number, heat: number, tau: number, drag: number, rise: number, windK: number,
-    rot?: number, age = 0, f0 = 0, f1 = 63, curve = 1) {
+    rot?: number, age = 0, f0 = 0, f1 = 63, curve = 1, flow?: THREE.Vector3) {
     const f = this.fo;
-    f.kind = kind; f.pos = pos; f.vel = vel; f.life = life; f.play = play; f.f0 = f0; f.f1 = f1; f.curve = curve; f.size0 = s0; f.size1 = s1;
+    f.kind = kind; f.pos = pos; f.vel = vel; f.flow = flow; f.life = life; f.play = play; f.f0 = f0; f.f1 = f1; f.curve = curve; f.size0 = s0; f.size1 = s1;
     // upright by default (the simulated gas rises), turned a little at random
     f.rot = rot ?? this.flip.angleOf(UP) + (Math.random() - 0.5) * 0.7; f.rotVel = undefined; f.albedo = albedo; f.alpha0 = alpha0; f.alpha1 = alpha1; f.heat = heat; f.tau = tau;
     f.drag = drag; f.rise = rise; f.windK = windK; f.age = age; f.soft = undefined;
@@ -295,16 +305,18 @@ export class Effects {
     _v.copy(vel).multiplyScalar(0.25);
     const flip = this.flipOn && far < 3500;
     if (fire && flip) {
+      // The gas streams behind the fuel source; the existing haze pool/preset gate owns cost.
+      if (far < 700) heatHaze.emit(pos, 2.2 * scale, 0.35, 0.16, 'shimmer', _d.copy(vel).multiplyScalar(-0.16));
       // simulated flame licks streaming back from the fire (render/Flipbooks.ts 'fire'): about half
       // a flame apart along the path flown since the last call, each one turning to smoke
       const s0 = 1.9 * scale, W = s0 * 2.6;
       const n = far < 2500 ? Math.min(8, Math.max(1, Math.ceil(back / (s0 * 0.55)))) : 1;
-      const rot = this.flip.angleOf(_d.copy(vel).negate());
+      _flow.copy(vel).negate();
       for (let i = 0; i < n; i++) {
         const t = ((i + Math.random()) / n) * span;
         this.trailAt(pos, vel, t, span, from);
-        const k = 0.8 + Math.random() * 0.45, life = 0.45 + Math.random() * 0.3;
-        this.flipbook('fire', _p, _v, life, life, W * k, W * k * 1.35, this.grey(0.05), 0.95, 0.6, 1.1 + Math.random() * 0.4, 0.7, 0, 0, 0, rot + (Math.random() - 0.5) * 0.5, t);
+        const k = 0.8 + Math.random() * 0.45, life = 0.22 + Math.random() * 0.12;
+        this.flipbook('fire', _p, _v, life, life, W * k, W * k * 1.35, this.grey(0.05), 0.95, 0.45, 0.8 + Math.random() * 0.25, 0.2, 0, 0, 0, (Math.random() - 0.5) * 0.35, t, 4, 60, 1, _flow);
       }
       // the fire lights what is around it (its own wing and nacelle, a neighbour), flickering
       if (this.vol.hasCam && far < 260) this.flashLight(pos, (700 + Math.random() * 600) * scale, 0.09, 0xff7428, 26 * scale);
@@ -326,7 +338,7 @@ export class Effects {
     const c = 0.75 - dark * 0.68;
     if (fire) { _f1[0] = 0.07; _f1[1] = 0.065; _f1[2] = 0.06; } else { _f1[0] = c; _f1[1] = c; _f1[2] = c * 0.98; }
     // a continuous ribbon volume along the whole trail (render/SmokeRibbons.ts)
-    if (this.fx2 && far < 4500) this.ribbons.feed(pos, vel, (0.45 + level * 0.75) * scale, fire ? 0.06 : c, fire ? 0.95 : 0.3 + level * 0.6);
+    if (this.fx2 && far < 4500) this.ribbons.feed(pos, vel, (0.45 + level * 0.75) * scale, fire ? 0.06 : c, fire ? 0.75 : 0.3 + level * 0.6);
     if (flip) {
       // simulated puffs on top of it: oily black / grey smoke, or thin white glycol vapour
       const glycol = !fire && level < 0.45;
@@ -454,7 +466,7 @@ export class Effects {
   }
 
   // Effects 2.0 blast: the simulated explosion flipbook (fireball cooling into its own rolling smoke),
-  // simulated fireball lobes thrown out of it, the shock shell, lingering volumetric smoke balls,
+  // simulated fireball lobes thrown out of it, the shock shell, lingering lit smoke,
   // and embers as streaks
   private flipBlast(pos: THREE.Vector3, vel: THREE.Vector3, r: number, lobes: number, shock: number, smokeBalls: number, smokeLife: number,
     embers: number, light: number, range: number, glowSprite: boolean, smokeDelay: number, mid: boolean) {
@@ -466,29 +478,19 @@ export class Effects {
     const W = r * 5.2;
     const play = 2.6 * Math.pow(r / 5, 0.35);
     const life = play + smokeLife * 0.7;
-    if (mid) {
-      // at range the whole simulated blast: fire frames in the first second, then its smoke ball rolls on
-      this.flipbook('explosion', pos, vel, life, life, W, W * 1.8, this.grey(0.06), 1, 0.45, 0.9, play * 0.6, 2.2, r * 0.04, 0.7, undefined, 0, 0, 52, 0.5);
-    } else {
-      // close up: the ray-marched fireball (crisp at any size) for the burning second, and the
-      // simulated smoke rising out of it as it cools: the flipbook from its smoke frames on
-      this.fireball(pos, vel, r);
-      this.later2(0.45, 0.6);
-      this.flipbook('explosion', pos, vel, life, life, W * 1.1, W * 1.9, this.grey(0.06), 1, 0.45, 0.35, play * 0.3, 2.2, r * 0.04, 0.7, undefined, 0, 12, 56, 0.6);
-    }
+    // The 256 px simulated core carries both flame and self-shadowed soot through the
+    // transition; no separately fading sphere can reveal a second smoke silhouette.
+    this.flipbook('explosion', pos, vel, life, life, W, W * 1.8, this.grey(0.085), 1, 0.45,
+      0.75, play * 0.65, 2.2, r * 0.04, 0.7, undefined, 0, 0, 60, 0.5);
     for (let i = 0; i < lobes; i++) {
       _d.set(R(), R() * 0.7, R()).normalize();
       _p.copy(pos).addScaledVector(_d, r * (0.35 + Math.random() * 0.35));
       _v.copy(vel).addScaledVector(_d, r * (0.9 + Math.random() * 1.1));
-      if (!mid) {
-        const f = this.fireball(_p, _v, r * (0.45 + Math.random() * 0.25), 1.05 + Math.random() * 0.3, 0.28 + Math.random() * 0.2, Math.random() * 0.12, 2.4 + Math.random() * 0.8);
-        if (f) f.drag = 2.8;
-      }
-      const w = W * (0.45 + Math.random() * 0.2);
+      const w = W * (0.35 + Math.random() * 0.15);
       const lf = play + smokeLife * 0.45;
-      if (!mid) this.later2(0.35 + Math.random() * 0.2, 0.5);
+      this.later2(0.06 + Math.random() * 0.12, 0.12);
       this.flipbook('fireball', _p, _v, lf, lf, w, w * 1.7, this.grey(0.06), 0.95, 0.35,
-        mid ? 0.75 + Math.random() * 0.25 : 0.3, play * 0.5, 2.8, r * 0.03, 0.7, undefined, Math.random() * 0.1, mid ? 0 : 10, 56, 0.55);
+        0.35 + Math.random() * 0.15, play * 0.5, 2.8, r * 0.03, 0.7, undefined, Math.random() * 0.1, 0, 60, 0.55);
     }
     if (shock > 0) this.shock(pos, vel, r * shock);
     // the rest of the smoke cloud: simulated puffs that billow up out of the dying fire
@@ -503,7 +505,7 @@ export class Effects {
     // burning fragments arcing away, drawn as cooling streaks
     for (let i = 0; i < embers; i++) {
       _v.set(R(), R(), R()).normalize().multiplyScalar((30 + Math.random() * 70) * Math.sqrt(r / 5)).add(vel);
-      this.sparkFx.spawn(pos, _v, 0.7 + Math.random() * 1.1, 0.3 * Math.sqrt(r / 5), C_EMBER, C_EMBER1, 1.4, 9);
+      this.sparkFx.spawn(pos, _v, 0.7 + Math.random() * 1.1, 0.16 * Math.sqrt(r / 5), C_EMBER, C_EMBER1, 1.4, 9);
     }
     if (!mid) {
       // a few smoke wisps torn off the edge
@@ -580,15 +582,8 @@ export class Effects {
     // (a secondary pop: under Effects 2.0 its flash no longer outshines the fireball it starts)
     this.emit(this.glow, pos, vel, 0.08, r * 1.2, r * 2.2, C_FLASH, undefined, this.flipOn ? 0.35 : 1, 0, 1, 0, 0, false, 0);
     if (this.flipOn) {
-      const W = r * 5.5;
-      if (this.vol.camDist(pos) > VOL_MID) {
-        this.flipbook('fireball', pos, vel, 6, 6, W, W * 1.7, this.grey(0.06), 1, 0.3, 1.0, 0.9, 2.2, r * 0.03, 0.7, undefined, 0, 0, 56, 0.55);
-        return;
-      }
-      // close: the ray-marched fireball, then the simulated smoke rising out of it
-      this.fireball(pos, vel, r, 1.2, 0.3, 0, 2.4);
-      this.later2(0.4, 0.5);
-      this.flipbook('fireball', pos, vel, 7, 7, W, W * 1.9, this.grey(0.07), 0.9, 0.3, 0.3, 0.5, 1.6, r * 0.03, 0.8, undefined, 0, 12, 60, 0.6);
+      const W = r * 4.6;
+      this.flipbook('explosion', pos, vel, 7, 7, W, W * 1.8, this.grey(0.07), 1, 0.3, 0.45, 0.9, 2.2, r * 0.03, 0.7, undefined, 0, 0, 60, 0.55);
       return;
     }
     this.fireball(pos, vel, r, 1.2, 0.3, 0, 2.4);
@@ -694,8 +689,8 @@ export class Effects {
     const W = 40 * scale;
     _v.set(R(), R() * 0.5 + 0.5, R()).multiplyScalar(2);
     // the burst's first frames in a fraction of a second, then the dense puff slowly billows and frays
-    const life = 11 + Math.random() * 5;
-    this.flipbook('flak', pos, _v, life, life, W, W * 1.6, this.grey(g), 1, 0.55, 1.3, 0.35, 1.2, 0.25, 1, undefined, 0, 0, 46, 0.45);
+    const life = 15 + Math.random() * 5;
+    this.flipbook('flak', pos, _v, life, life, W, W * 1.6, this.grey(g), 1, 0.35, 1.15, 0.09, 1.2, 0.18, 1, undefined, 0, 0, 60, 0.38);
     const nP = 1 + (Math.random() < 0.5 ? 1 : 0);
     for (let i = 0; i < nP; i++) {
       _d.set(R(), R() * 0.6 + 0.2, R()).normalize();
@@ -703,7 +698,7 @@ export class Effects {
       _v.copy(_d).multiplyScalar((2 + Math.random() * 3) * scale);
       const w = W * (0.5 + Math.random() * 0.2);
       const lf = 8 + Math.random() * 4;
-      this.flipbook('flak', _p, _v, lf, lf, w, w * 1.6, this.grey(g + 0.015), 0.9, 0.45, 0.6, 0.25, 1.6, 0.2, 1, undefined, 0, 3, 42, 0.5);
+      this.flipbook('flak', _p, _v, lf, lf, w, w * 1.6, this.grey(g + 0.015), 0.8, 0.3, 0.45, 0.07, 1.6, 0.15, 1, undefined, 0, 3, 58, 0.42);
     }
   }
 
@@ -836,10 +831,12 @@ export class Effects {
         // with varied size and density: emitted at the frame's end position, a fast fragment drew
         // evenly spaced beads (dotted orange lines at night). Thinner far away.
         const far = seen ? d.mesh.position.distanceTo(cam) : 0;
-        const tick = far > 1500 ? 0.1 : 0.04;
+        const flip = this.flipOn && far < 3000;
+        const tick = flip ? 0.12 : far > 1500 ? 0.1 : 0.04;
         const burn = d.life / d.max;
         const sc = d.mesh.scale.x;
-        const off = far > 3000 || this.smoke.count > SMOKE_HARD;
+        const off = far > 3000 || (flip ? this.flip.free < 24 : this.smoke.count > SMOKE_HARD);
+        if (flip && !off) this.ribbons.feed(d.mesh.position, d.vel, 0.32 * sc, 0.065, 0.6, d);
         d.acc += dt;
         while (d.acc >= tick) {
           d.acc -= tick * (0.6 + Math.random() * 0.8);
@@ -848,12 +845,16 @@ export class Effects {
           const ago = Math.min(Math.max(d.acc, 0), dt);
           _p.copy(d.mesh.position).addScaledVector(d.vel, -ago);
           const k = 0.8 + Math.random() * 0.4;
+          if (flip) {
+            this.flipbook('smoke', _p, undefined, 6 + burn * 3, 7, 2 * sc * k, 9 * sc * k, this.grey(0.065), 0.45, 0.08, 0, 1, 0, 0.3, 1, undefined, ago);
+            continue;
+          }
           this.emit(this.smoke, _p, undefined, 2.2 + burn * 1.6, 0.5 * sc * k, (2.2 + burn * 2.5) * sc * k, C_TRAIL, undefined, (0.35 + burn * 0.3) * (0.8 + Math.random() * 0.4), 0, 0, 0, 0.5, true, undefined, ago);
         }
         if (d.fire && burn > 0.35 && !off) {
           // flames: spaced by distance, about 0.3 of a flame's size apart along the segment
           const size = 1.1 * sc;
-          const gap = size * 0.3;
+          const gap = size * (flip ? 0.8 : 0.3);
           const speed = d.vel.length();
           const seg = speed * dt;
           d.fAcc += seg;
@@ -865,6 +866,10 @@ export class Effects {
             const ago = Math.min(seg, Math.max(0, d.fAcc)) / Math.max(1e-3, speed);
             _p.copy(d.mesh.position).addScaledVector(d.vel, -ago);
             const k = 0.75 + Math.random() * 0.5;
+            if (flip) {
+              this.flipbook('fire', _p, undefined, 0.32, 0.32, size * k * 2.4, size * k, this.grey(0.05), 0.75, 0.1, 0.9, 0.18, 0, 0, 0, 0, ago, 4, 60, 1, _flow.copy(d.vel).negate());
+              continue;
+            }
             this.emit(this.glow, _p, undefined, 0.16 + Math.random() * 0.12, size * k, 0.35 * sc * k, C_FLAME0, C_FLAME1, 0.7 + Math.random() * 0.3, 0, 2, 0, 0, false, 4, ago);
           }
           if (n === 12) d.fAcc = 0;

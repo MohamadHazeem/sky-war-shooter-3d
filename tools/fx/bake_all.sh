@@ -1,15 +1,28 @@
-#!/bin/sh
-# Bake every effect flipbook in parallel (one Blender process each), then build the lit previews.
-# Usage: sh tools/fx/bake_all.sh [effect ...]   (default: all six). Logs in tools/fx/out/<name>.log
+#!/bin/bash
+# Each simulation owns a machine-wide slot and a content cache entry. No nested heavy.sh.
+set -euo pipefail
 BLENDER=${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}
 DIR=$(cd "$(dirname "$0")" && pwd)
+ROOT=$(cd "$DIR/../.." && pwd)
 mkdir -p "$DIR/out"
-NAMES=${*:-explosion fireball flak fire smoke wisp}
-for n in $NAMES; do
-  "$BLENDER" -b --factory-startup -P "$DIR/bake_flipbooks.py" -- "$n" > "$DIR/out/$n.log" 2>&1 &
+NAMES=("$@")
+if [ ${#NAMES[@]} -eq 0 ]; then NAMES=(flak explosion fire fireball smoke wisp); fi
+pids=()
+wait_batch() {
+  local status=0
+  for pid in "${pids[@]}"; do wait "$pid" || status=1; done
+  pids=()
+  return "$status"
+}
+for n in "${NAMES[@]}"; do
+  "$ROOT/tools/cached.sh" "fx256-$n" "$DIR/bake_flipbooks.py" -- "$ROOT/tools/heavy.sh" \
+    "$BLENDER" -b -t 4 --python-exit-code 1 --factory-startup -P "$DIR/bake_flipbooks.py" -- "$n" > "$DIR/out/$n.log" 2>&1 &
+  pids+=("$!")
+  # At most two simulations from this task; leave a global slot for other worktrees.
+  if [ ${#pids[@]} -eq 2 ]; then
+    wait_batch
+  fi
 done
-wait
-"$BLENDER" -b --factory-startup -P "$DIR/bake_flipbooks.py" -- preview $NAMES > "$DIR/out/preview.log" 2>&1
-# one pair of atlases for the game (needs every effect's per-effect atlas in tools/fx/out/atlas)
-"$BLENDER" -b --factory-startup -P "$DIR/bake_flipbooks.py" -- pack > "$DIR/out/pack.log" 2>&1
-ls -l "$DIR/../../public/fx"
+wait_batch
+"$ROOT/tools/cached.sh" fx256-pack "$DIR/bake_flipbooks.py" "$DIR/out/atlas" -- "$ROOT/tools/heavy.sh" \
+  "$BLENDER" -b -t 4 --python-exit-code 1 --factory-startup -P "$DIR/bake_flipbooks.py" -- pack > "$DIR/out/pack.log" 2>&1

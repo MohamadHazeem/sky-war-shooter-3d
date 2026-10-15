@@ -1,0 +1,228 @@
+{
+  "complete": true,
+  "origin": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+  "script": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BMiV91Uj.js",
+  "sha256": "9c5986d8b8d0a8be50913f169f6c25c2a8c914b3d11c18952ee1abd43c30c257",
+  "fetchedAt": "2026-10-15T10:19:27.250Z",
+  "method": "Deployed bundle + unchanged VisualRigScene fixture; expose production symbols, freeze clocks/RAF",
+  "shots": [
+    {
+      "version": 2,
+      "shot": "explosion-close",
+      "seed": 19431008,
+      "backend": "webgl2",
+      "quality": "high",
+      "weather": {
+        "sunEl": 40,
+        "sunAz": 140,
+        "low": 0.55,
+        "high": 0.2,
+        "contrails": true
+      },
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "steps": 360,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "camera": {
+        "position": [
+          112.4678441956731,
+          7628.839594556222,
+          434.0024099260684
+        ],
+        "quaternion": [
+          -0.00000422661087994884,
+          0.9999941154499298,
+          -0.003158933415144737,
+          -0.0013379788215801423
+        ],
+        "fov": 55
+      },
+      "subject": "explosion-close",
+      "effectAge": 0.4,
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "frameMs": {
+        "mean": 6.971666667362054,
+        "p50": 6.9000000059604645,
+        "p95": 9.199999988079071,
+        "programsBefore": 266,
+        "programsAfter": 266
+      },
+      "errors": []
+    },
+    {
+      "version": 2,
+      "shot": "flak-barrage",
+      "seed": 19431008,
+      "backend": "webgl2",
+      "quality": "high",
+      "weather": {
+        "sunEl": 40,
+        "sunAz": 140,
+        "low": 0.55,
+        "high": 0.2,
+        "contrails": true
+      },
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "steps": 360,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "camera": {
+        "position": [
+          -311.23522005753983,
+          7775.135141947355,
+          -299.3096549260965
+        ],
+        "quaternion": [
+          0.038218235603471984,
+          0.9435300044290845,
+          0.11728126811320087,
+          -0.3074664231410787
+        ],
+        "fov": 58
+      },
+      "subject": "flak-barrage",
+      "flakBursts": 28,
+      "effectAge": 1.3800000000000001,
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "frameMs": {
+        "mean": 10.151666666567326,
+        "p50": 9.800000011920929,
+        "p95": 11.800000011920929,
+        "programsBefore": 266,
+        "programsAfter": 266
+      },
+      "errors": []
+    },
+    {
+      "version": 2,
+      "shot": "night-flak",
+      "seed": 19431008,
+      "backend": "webgl2",
+      "quality": "high",
+      "weather": {
+        "sunEl": 26,
+        "sunAz": 140,
+        "low": 0.08,
+        "high": 0.12,
+        "mood": "night"
+      },
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "steps": 360,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "camera": {
+        "position": [
+          -800,
+          3200,
+          -2200
+        ],
+        "quaternion": [
+          -0.020394692078284225,
+          0.9718453246645887,
+          -0.21606931327427742,
+          -0.0917320735827693
+        ],
+        "fov": 65
+      },
+      "subject": "night-flak",
+      "searchlights": 8,
+      "flakBursts": 28,
+      "effectAge": 1.3800000000000001,
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "frameMs": {
+        "mean": 4.065000000099341,
+        "p50": 3.899999976158142,
+        "p95": 5,
+        "programsBefore": 262,
+        "programsAfter": 262
+      },
+      "errors": []
+    },
+    {
+      "version": 2,
+      "shot": "damaged-neighbour",
+      "seed": 19431008,
+      "backend": "webgl2",
+      "quality": "high",
+      "weather": {
+        "sunEl": 40,
+        "sunAz": 140,
+        "low": 0.55,
+        "high": 0.2,
+        "contrails": true
+      },
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "steps": 360,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "camera": {
+        "position": [
+          71.39440782786265,
+          7637.6385060784005,
+          385.2093958343235
+        ],
+        "quaternion": [
+          -0.046812066461327115,
+          0.9338528443903235,
+          0.1329982986865345,
+          0.3286927866628807
+        ],
+        "fov": 52
+      },
+      "subject": "damaged-neighbour",
+      "burningEngines": [
+        "engine1",
+        "engine2"
+      ],
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "frameMs": {
+        "mean": 7.468333334227403,
+        "p50": 7.4000000059604645,
+        "p95": 9.5,
+        "programsBefore": 266,
+        "programsAfter": 266
+      },
+      "errors": []
+    }
+  ]
+}

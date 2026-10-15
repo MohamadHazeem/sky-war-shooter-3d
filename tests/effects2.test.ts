@@ -1,19 +1,69 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { readFileSync, statSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as THREE from 'three';
-import { FLIP_KINDS, FlipbookFX } from '../src/render/Flipbooks';
+import sharp from 'sharp';
+import { FLIP_KINDS, FlipbookFX, loadFlipbooks, registerFlipMaterial } from '../src/render/Flipbooks';
 import { SmokeRibbons } from '../src/render/SmokeRibbons';
 import { Sparks } from '../src/render/Sparks';
 
 const ROOT = resolve(import.meta.dirname, '..');
 
 describe('Effects 2.0 flipbook atlases', () => {
+  it('binds atlases when a distant-effect material registers after loading completed', async () => {
+    vi.stubGlobal('fetch', async () => new Response(new Blob(['fixture'])));
+    vi.stubGlobal('createImageBitmap', async () => ({ width: 4, height: 4 }));
+    try {
+      expect(await loadFlipbooks()).toBe(true);
+      const material = new THREE.ShaderMaterial({ uniforms: { tA: { value: null }, uFlipOn: { value: 0 } } });
+      registerFlipMaterial(material);
+      expect(material.uniforms.uFlipOn.value).toBe(1);
+      expect(material.uniforms.tA.value.image.width).toBe(4);
+      expect(material.uniforms.tB.value.image.width).toBe(4);
+    } finally { vi.unstubAllGlobals(); }
+  });
+
   it('lists the effects in the order the bake script packs them', () => {
     const py = readFileSync(resolve(ROOT, 'tools/fx/bake_flipbooks.py'), 'utf8');
     const block = py.slice(py.indexOf('EFFECTS = {'), py.indexOf('\n}\n', py.indexOf('EFFECTS = {')));
     const names = [...block.matchAll(/^ {4}'([a-z]+)': dict\(/gm)].map((m) => m[1]);
     expect(names).toEqual(FLIP_KINDS);
+  });
+
+  it('ships 256 px close frames and compact diffuse frames in matched atlases', async () => {
+    const layout = JSON.parse(readFileSync(resolve(ROOT, 'public/fx/manifest.json'), 'utf8'));
+    expect(layout.frameSizes).toEqual({ explosion: 256, fireball: 256, flak: 256, fire: 256, smoke: 128, wisp: 128 });
+    for (const name of ['fx_a.webp', 'fx_b.webp']) {
+      const meta = await sharp(resolve(ROOT, 'public/fx', name)).metadata();
+      expect([meta.width, meta.height]).toEqual([4096, 5120]);
+      expect(meta.hasAlpha).toBe(true);
+    }
+  });
+
+  it('retains nonempty wispy opacity and directional self-shadow detail in every effect', async () => {
+    for (let kind = 0; kind < FLIP_KINDS.length; kind++) {
+      // Frame 16: all six simulations have emitted, including the short engine flame.
+      const size = kind < 4 ? 256 : 128;
+      const frame = sharp(resolve(ROOT, 'public/fx/fx_a.webp')).extract({
+        left: kind < 4 ? (kind % 2) * 2048 : (kind - 4) * 1024,
+        top: (kind < 4 ? Math.floor(kind / 2) * 2048 : 4096) + size * 2, width: size, height: size,
+      });
+      const pixels = await frame.raw().toBuffer();
+      const stats = await sharp(pixels, { raw: { width: size, height: size, channels: 4 } }).stats();
+      expect(stats.channels[3].mean).toBeGreaterThan(1);
+      expect(stats.channels[3].mean).toBeLessThan(254);
+      expect(stats.channels[3].max).toBeGreaterThan(32);
+      let low = 255, high = 0, directional = 0;
+      for (let i = 0; i < pixels.length; i += 4) if (pixels[i + 3] > stats.channels[3].max * 0.6) {
+        low = Math.min(low, pixels[i]); high = Math.max(high, pixels[i]);
+        directional = Math.max(directional, Math.abs(pixels[i] - pixels[i + 1]));
+      }
+      // Inspect the densest gas (including translucent flame/vapour), excluding the
+      // transparent black border: a flat billboard
+      // cannot pass simply by having contrast between the image and its empty margin.
+      expect(high - low, FLIP_KINDS[kind]).toBeGreaterThan(20);
+      expect(directional, FLIP_KINDS[kind]).toBeGreaterThan(12);
+    }
   });
 
   it('ships both packed atlases, within the download budget', () => {
@@ -39,6 +89,40 @@ describe('FlipbookFX pool', () => {
     expect(fx.count).toBe(0);
   });
 
+  it('keeps delayed fire dark, fades emission with opacity, and survives pool compaction/rebase', () => {
+    const fx = new FlipbookFX(4);
+    const pos = new THREE.Vector3(100, 50, 20);
+    fx.spawn({ kind: 'smoke', pos, life: 0.1, size0: 1, size1: 2, albedo: [0.1, 0.1, 0.1] });
+    fx.spawn({ kind: 'fire', pos, flow: new THREE.Vector3(0, 0, -80), life: 1, delay: 0.3, fadeIn: 0.2, heat: 2, tau: 100,
+      size0: 1, size1: 2, albedo: [0.1, 0.1, 0.1] });
+    fx.update(0.2); // first slot dies: the delayed flame must carry its timing into slot zero
+    const b = fx.mesh.geometry.getAttribute('iB');
+    expect(fx.count).toBe(1);
+    expect(b.getZ(0)).toBe(0);
+    expect(b.getW(0)).toBe(0);
+    fx.rebase(new THREE.Vector3(90, 40, 10));
+    fx.update(0.2);
+    expect(fx.mesh.geometry.getAttribute('iA').getX(0)).toBe(10);
+    expect(fx.mesh.geometry.getAttribute('iD').getZ(0)).toBe(-80);
+    expect((fx.mesh.geometry.getAttribute('iD') as THREE.BufferAttribute).updateRanges[0].count).toBe(3);
+    expect(b.getZ(0)).toBeCloseTo(0.5, 5);
+    expect(b.getW(0)).toBeCloseTo(Math.exp(-0.1 / 100), 5);
+    fx.update(0.8);
+    expect(b.getZ(0)).toBeLessThan(0.4);
+    expect(b.getW(0)).toBeLessThan(0.8);
+    fx.update(0.2);
+    expect(fx.count).toBe(0);
+  });
+
+  it('tracks a camera cut without requiring a rendered frame', () => {
+    const fx = new FlipbookFX(4), camera = new THREE.PerspectiveCamera();
+    camera.position.set(50, 7000, 10);
+    camera.rotation.z = Math.PI / 2;
+    fx.setCamera(camera);
+    expect(fx.camPos.toArray()).toEqual([50, 7000, 10]);
+    expect(fx.angleOf(new THREE.Vector3(0, 1, 0))).toBeCloseTo(-Math.PI / 2, 6);
+  });
+
   it('turns its up axis along a direction seen from the camera', () => {
     const fx = new FlipbookFX(4);
     // camera at the identity orientation: screen right = +X, up = +Y
@@ -48,6 +132,24 @@ describe('FlipbookFX pool', () => {
 });
 
 describe('SmokeRibbons', () => {
+  it('keeps crossing debris trails separate from each other and engine smoke', () => {
+    const r = new SmokeRibbons(4), pos = new THREE.Vector3(), vel = new THREE.Vector3(1, 0, 0);
+    const a = {}, b = {};
+    for (let i = 0; i < 10; i++) {
+      r.feed(pos, vel, 1, 0.1, 0.5, a);
+      r.feed(pos, vel, 1, 0.1, 0.5, b);
+      r.feed(pos, vel, 1, 0.1, 0.5);
+      r.update(0.05);
+    }
+    expect(r.active).toBe(3);
+    r.rebase(new THREE.Vector3(100, 0, 0));
+    pos.x -= 100;
+    r.feed(pos, vel, 1, 0.1, 0.5, a);
+    expect(r.active).toBe(3);
+    r.clear();
+    expect(r.active).toBe(0);
+  });
+
   it('continues one ribbon along an emitter path and starts another for a second emitter', () => {
     const r = new SmokeRibbons(6);
     const vel = new THREE.Vector3(0, 0, 75);

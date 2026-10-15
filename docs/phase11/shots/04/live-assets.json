@@ -1,0 +1,20 @@
+{
+  "origin": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+  "fetchedAt": "2026-10-15T10:32:09.743Z",
+  "assets": [
+    {
+      "file": "fx_a.webp",
+      "bytes": 1334080,
+      "sha256": "97beaa855fece340eb5d91459c514df0ad9e5903a4c377661573ae13b438f697",
+      "entrySha256": "97beaa855fece340eb5d91459c514df0ad9e5903a4c377661573ae13b438f697",
+      "matchesEntry": true
+    },
+    {
+      "file": "fx_b.webp",
+      "bytes": 1272602,
+      "sha256": "d9258f623b6097485d39cd63f46d7484a2fa07b4c7c74f3054a2357a462b14e2",
+      "entrySha256": "d9258f623b6097485d39cd63f46d7484a2fa07b4c7c74f3054a2357a462b14e2",
+      "matchesEntry": true
+    }
+  ]
+}

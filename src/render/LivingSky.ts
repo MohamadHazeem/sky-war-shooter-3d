@@ -1,6 +1,6 @@
 import { b17StreamGeometry } from '../world/Models';
 import * as THREE from 'three';
-import { registerFlipMaterial } from './Flipbooks';
+import { registerFlipMaterial, FLIP_UV_GLSL } from './Flipbooks';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { Atmos, atmosUniforms, skyGLSL } from './Atmosphere';
 import { mulberry } from './Particles';
@@ -337,16 +337,18 @@ export class LivingSky {
         }`,
       fragmentShader: /* glsl */ `
         ${hazeGLSL}
+        ${FLIP_UV_GLSL}
         uniform vec3 uSunCol; uniform sampler2D tA; uniform float uFlipOn;
         varying vec2 vQ; varying float vA; varying float vFlash; varying vec3 vW; varying float vSeed; varying float vAge;
         void main() {
           float r = length(vQ);
           if (uFlipOn > 0.5) {
             // the simulated 88 mm puff (render/Flipbooks.ts 'flak' block), turned per burst
-            float fr = min(63.0, floor(vAge / 2.7 * 63.0));
+            // Match the local burst: fast ignition, then a slowly dispersing black puff.
+            float fr = floor(pow(clamp(vAge / 14.0, 0.0, 1.0), 0.38) * 60.0);
             float an = vSeed * 6.2832, cs = cos(an), sn = sin(an);
-            vec2 q = clamp(0.5 + mat2(cs, sn, -sn, cs) * vQ * 0.3, 0.0, 1.0);
-            vec2 uv = (vec2(0.0, 8.0) + vec2(mod(fr, 8.0), floor(fr / 8.0)) + vec2(q.x, q.y)) / vec2(16.0, 24.0);
+            vec2 q = clamp(0.5 + mat2(cs, sn, -sn, cs) * vQ * 0.45, 0.0, 1.0);
+            vec2 uv = flipUv(2.0, fr, q);
             vec4 t = texture2D(tA, uv);
             float fa = t.a * vA;
             if (fa < 0.004 && vFlash < 0.01) discard;

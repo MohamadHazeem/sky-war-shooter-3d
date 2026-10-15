@@ -11,8 +11,8 @@ import { weatherNow } from './WeatherState';
 // the simulated volume into a directional lighting basis: for every frame, how the volume looks lit
 // from +X, -X, +Y, -Y and the front, plus its opacity and its own flame emission (light from
 // behind is derived from the opacity: thin smoke lets it through, a dense core does not). All
-// six effects share one pair of atlases (public/fx/fx_a.webp, fx_b.webp: 2 x 3 blocks of 8 x 8
-// frames, 128 px each), loaded lazily the first time a tier above Low needs them.
+// six effects share one pair of 4096 x 5120 atlases (public/fx/fx_a.webp, fx_b.webp):
+// four 256 px close effects, then two 128 px diffuse effects (8 x 8 frames per block), loaded lazily the first time a tier above Low needs them.
 //
 // FlipbookFX draws every flipbook particle in one instanced, back-to-front sorted draw:
 //   - relit per pixel from the live sun direction and colour (the "six-way" basis, weighted by the
@@ -31,11 +31,22 @@ export type FlipKind = 'explosion' | 'fireball' | 'flak' | 'fire' | 'smoke' | 'w
 export const FLIP_KINDS: FlipKind[] = ['explosion', 'fireball', 'flak', 'fire', 'smoke', 'wisp'];
 const FRAMES = 64;
 
+// Shared with the distant flak field so mixed-resolution tiles cannot drift apart.
+export const FLIP_UV_GLSL = /* glsl */ `
+vec2 flipUv(float kind, float frame, vec2 q) {
+  float tile = kind < 3.5 ? 256.0 : 128.0;
+  vec2 origin = kind < 3.5 ? vec2(mod(kind, 2.0), floor(kind / 2.0)) * 2048.0
+                           : vec2((kind - 4.0) * 1024.0, 4096.0);
+  q = clamp(q, vec2(0.5 / tile), vec2(1.0 - 0.5 / tile));
+  return (origin + (vec2(mod(frame, 8.0), floor(frame / 8.0)) + q) * tile) / vec2(4096.0, 5120.0);
+}`;
+
 // One spawn's settings (reused objects: the caller fills one in and passes it)
 export interface FlipOpts {
   kind: FlipKind;
   pos: THREE.Vector3;
   vel?: THREE.Vector3;
+  flow?: THREE.Vector3; // world-space flame direction, projected for the current camera
   life: number;
   play?: number;      // s to play the frames (default: the whole life); the last frame holds after
   f0?: number;        // first / last frame (0..63)
@@ -156,9 +167,12 @@ const materials: THREE.ShaderMaterial[] = [];
 // Another material that samples the atlases (uniforms tA, tB and uFlipOn): filled in once loaded.
 // LivingSky's distant flak fields use the simulated flak puff this way.
 export function registerFlipMaterial(m: THREE.ShaderMaterial) {
-  m.uniforms.tA ??= { value: atlasA ?? placeholder() };
-  m.uniforms.tB ??= { value: atlasB ?? placeholder() };
+  m.uniforms.tA ??= { value: null };
+  m.uniforms.tB ??= { value: null };
+  m.uniforms.tA.value = atlasA ?? m.uniforms.tA.value ?? placeholder();
+  m.uniforms.tB.value = atlasB ?? m.uniforms.tB.value ?? placeholder();
   m.uniforms.uFlipOn ??= { value: 0 };
+  m.uniforms.uFlipOn.value = flipAtlas.ready ? 1 : 0;
   materials.push(m);
 }
 const _d = new THREE.Vector3();
@@ -170,7 +184,7 @@ export class FlipbookFX {
   private camQinv = new THREE.Quaternion();
   private hasCam = false;
   private n = 0;
-  private pos: Float32Array; private vel: Float32Array;
+  private pos: Float32Array; private vel: Float32Array; private flow: Float32Array;
   private life: Float32Array; private age: Float32Array; private play: Float32Array;
   private fr0: Float32Array; private fr1: Float32Array; private curve: Float32Array; private kind: Float32Array;
   private s0: Float32Array; private s1: Float32Array; private rot: Float32Array; private rotVel: Float32Array;
@@ -179,6 +193,7 @@ export class FlipbookFX {
   private windK: Float32Array; private soft: Float32Array; private fadeIn: Float32Array;
   private order: Int32Array;
   private readonly depthSort: DepthSort; private keys: Float32Array;
+  private iD: THREE.InstancedBufferAttribute;
   private iA: THREE.InstancedBufferAttribute; private iB: THREE.InstancedBufferAttribute; private iC: THREE.InstancedBufferAttribute;
   private geo: THREE.InstancedBufferGeometry;
   private attrs: THREE.InstancedBufferAttribute[];
@@ -186,7 +201,7 @@ export class FlipbookFX {
 
   constructor(readonly max = 2400) {
     const F = (k: number) => new Float32Array(max * k);
-    this.pos = F(3); this.vel = F(3); this.life = F(1); this.age = F(1); this.play = F(1);
+    this.pos = F(3); this.vel = F(3); this.flow = F(3); this.life = F(1); this.age = F(1); this.play = F(1);
     this.fr0 = F(1); this.fr1 = F(1); this.curve = F(1); this.kind = F(1); this.s0 = F(1); this.s1 = F(1); this.rot = F(1); this.rotVel = F(1);
     this.alb = F(3); this.a0 = F(1); this.a1 = F(1); this.heat = F(1); this.tau = F(1); this.drag = F(1); this.rise = F(1);
     this.windK = F(1); this.soft = F(1); this.fadeIn = F(1);
@@ -199,10 +214,12 @@ export class FlipbookFX {
     geo.setAttribute('uv', base.getAttribute('uv'));
     const A = () => new THREE.InstancedBufferAttribute(new Float32Array(max * 4), 4).setUsage(THREE.DynamicDrawUsage);
     this.iA = A(); this.iB = A(); this.iC = A();
+    this.iD = new THREE.InstancedBufferAttribute(F(3), 3).setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('iD', this.iD);
     geo.setAttribute('iA', this.iA); geo.setAttribute('iB', this.iB); geo.setAttribute('iC', this.iC);
     geo.instanceCount = 0;
     this.geo = geo;
-    this.attrs = [this.iA, this.iB, this.iC];
+    this.attrs = [this.iA, this.iB, this.iC, this.iD];
     this.mat = new THREE.ShaderMaterial({
       uniforms: {
         tA: { value: atlasA ?? placeholder() },
@@ -218,7 +235,8 @@ export class FlipbookFX {
         ...softDepth.uniforms,
       },
       vertexShader: /* glsl */ `
-        attribute vec4 iA; attribute vec4 iB; attribute vec4 iC;
+        ${FLIP_UV_GLSL}
+        attribute vec4 iA; attribute vec4 iB; attribute vec4 iC; attribute vec3 iD;
         uniform vec3 uSunDir; uniform float uPx;
         varying vec2 vUv0; varying vec2 vUv1; varying float vBlend;
         varying vec3 vL; varying vec3 vUp; varying vec3 vAlb;
@@ -230,19 +248,27 @@ export class FlipbookFX {
           float size = iA.w;
           // never smaller than ~2.5 px: far puffs stay visible, their opacity scaled to match
           float grow = max(size, dist * uPx * 2.5);
-          float c = cos(iB.x), s = sin(iB.x);
+          vec2 flow = (viewMatrix * vec4(iD, 0.0)).xy;
+          float heading = dot(flow, flow) > 1e-6 ? atan(-flow.x, flow.y) : 0.0;
+          float c = cos(iB.x + heading), s = sin(iB.x + heading);
           vec2 ax = vec2(c, s), ay = vec2(-s, c);
-          mv.xy += (ax * position.x + ay * position.y) * grow;
-          gl_Position = projectionMatrix * mv;
           float kind = floor(iB.y / ${FRAMES}.0 + 1e-3);
+          // Fuel licks stretch along their flow, rather than growing into round orange beads.
+          float flame = 1.0 - step(0.5, abs(kind - 3.0));
+          vec2 shape = mix(vec2(1.0), vec2(0.72, 1.6), flame);
+          // Align the authored emission source with the particle position. Fuel/fire
+          // simulations start below domain centre so the rising gas has headroom.
+          float fuel = 1.0 - step(0.5, abs(kind - 1.0));
+          float anchor = fuel * 0.15 + flame * 0.25;
+          mv.xy += (ax * position.x * shape.x + ay * (position.y + anchor) * shape.y) * grow;
+          gl_Position = projectionMatrix * mv;
           vFlak = 1.0 - step(0.5, abs(kind - 2.0));
           float fr = clamp(iB.y - kind * ${FRAMES}.0, 0.0, ${FRAMES - 1}.0);
           float f0 = floor(fr), f1 = min(f0 + 1.0, ${FRAMES - 1}.0);
           vBlend = fr - f0;
           vec2 q = vec2(uv.x, 1.0 - uv.y);
-          vec2 blk = vec2(mod(kind, 2.0), floor(kind / 2.0)) * 8.0;
-          vUv0 = (blk + vec2(mod(f0, 8.0), floor(f0 / 8.0)) + q) / vec2(16.0, 24.0);
-          vUv1 = (blk + vec2(mod(f1, 8.0), floor(f1 / 8.0)) + q) / vec2(16.0, 24.0);
+          vUv0 = flipUv(kind, f0, q);
+          vUv1 = flipUv(kind, f1, q);
           // sun and world-up in the billboard's own frame (x right, y up, z toward the eye)
           vec3 sv = (viewMatrix * vec4(uSunDir, 0.0)).xyz;
           vL = vec3(dot(sv.xy, ax), dot(sv.xy, ay), sv.z);
@@ -288,8 +314,9 @@ export class FlipbookFX {
           float alpha = min(1.0, a.a * (1.0 + n * 0.7 * dk * (1.0 - a.a * 0.5))) * vAlpha;
           // Flak holds an optically dense centre and breaks at the perimeter. The
           // old magnification-only detail never activated on ordinary 20–80 px bursts.
-          float flakDensity = smoothstep(0.08 + n * 0.16 * dk, 0.72, a.a);
-          alpha = mix(alpha, (1.0 - exp(-flakDensity * 3.8)) * vAlpha, vFlak);
+          float flakDensity = clamp(a.a * (1.0 + n * 0.35 * dk), 0.0, 1.0);
+          // Beer extinction retains fine rolling wisps instead of thresholding a solid blob.
+          alpha = mix(alpha, (1.0 - pow(1.0 - flakDensity, 1.65)) * vAlpha, vFlak);
           vec4 b = mix(texture2D(tB, vUv0), texture2D(tB, vUv1), vBlend);
           // (min: WebP keeps no colour under a fully transparent pixel; B.a = max(opacity, flame) bounds it)
           float eb = min(b.b, b.a);
@@ -326,8 +353,7 @@ export class FlipbookFX {
     this.mesh.renderOrder = 12;   // over the sprite smoke (10), under the volumes (15) and glow (20)
     this.mesh.userData.noRebase = true;
     this.mesh.onBeforeRender = (r, _s, cam) => {
-      cam.getWorldPosition(this.camPos); this.hasCam = true;
-      cam.getWorldQuaternion(this.camQinv).invert();
+      this.setCamera(cam);
       const pc = cam as THREE.PerspectiveCamera;
       if (pc.isPerspectiveCamera) {
         const h = r.getRenderTarget()?.height ?? r.domElement.height;
@@ -337,6 +363,11 @@ export class FlipbookFX {
   }
 
   get count() { return this.n; }
+
+  setCamera(camera: THREE.Camera) {
+    camera.getWorldPosition(this.camPos); this.hasCam = true;
+    camera.getWorldQuaternion(this.camQinv).invert();
+  }
 
   // Rotation that turns a flipbook's "up" (the way its hot gas rises) along a world direction as
   // seen from the camera (last frame's view): flames streaming back from a moving engine
@@ -351,6 +382,8 @@ export class FlipbookFX {
     if (this.n >= this.max) return;
     const i = this.n++;
     this.pos[i * 3] = o.pos.x; this.pos[i * 3 + 1] = o.pos.y; this.pos[i * 3 + 2] = o.pos.z;
+    const flow = o.flow;
+    this.flow[i * 3] = flow ? flow.x : 0; this.flow[i * 3 + 1] = flow ? flow.y : 0; this.flow[i * 3 + 2] = flow ? flow.z : 0;
     const v = o.vel;
     this.vel[i * 3] = v ? v.x : 0; this.vel[i * 3 + 1] = v ? v.y : 0; this.vel[i * 3 + 2] = v ? v.z : 0;
     this.life[i] = o.life; this.age[i] = o.delay ? -o.delay : o.age ? Math.min(o.age, o.life * 0.9) : 0;
@@ -372,7 +405,7 @@ export class FlipbookFX {
     const j = --this.n;
     if (i === j) return;
     const mv = (a: Float32Array, k: number) => { for (let q = 0; q < k; q++) a[i * k + q] = a[j * k + q]; };
-    mv(this.pos, 3); mv(this.vel, 3); mv(this.life, 1); mv(this.age, 1); mv(this.play, 1); mv(this.fr0, 1); mv(this.fr1, 1); mv(this.curve, 1);
+    mv(this.pos, 3); mv(this.vel, 3); mv(this.flow, 3); mv(this.life, 1); mv(this.age, 1); mv(this.play, 1); mv(this.fr0, 1); mv(this.fr1, 1); mv(this.curve, 1);
     mv(this.kind, 1); mv(this.s0, 1); mv(this.s1, 1); mv(this.rot, 1); mv(this.rotVel, 1); mv(this.alb, 3); mv(this.a0, 1);
     mv(this.a1, 1); mv(this.heat, 1); mv(this.tau, 1); mv(this.drag, 1); mv(this.rise, 1); mv(this.windK, 1); mv(this.soft, 1); mv(this.fadeIn, 1);
   }
@@ -418,8 +451,10 @@ export class FlipbookFX {
     }
     this.depthSort.sort(o, ks, n);
     const A = this.iA.array as Float32Array, B = this.iB.array as Float32Array, C = this.iC.array as Float32Array;
+    const D = this.iD.array as Float32Array;
     for (let m = 0; m < n; m++) {
       const k = o[m];
+      D[m * 3] = this.flow[k * 3]; D[m * 3 + 1] = this.flow[k * 3 + 1]; D[m * 3 + 2] = this.flow[k * 3 + 2];
       const ag = Math.max(0, this.age[k]);
       const t = ag / this.life[k];
       const te = 1 - (1 - t) * (1 - t);
@@ -432,14 +467,14 @@ export class FlipbookFX {
       B[m * 4] = this.rot[k];
       B[m * 4 + 1] = this.kind[k] * FRAMES + fr;
       B[m * 4 + 2] = (this.a0[k] + (this.a1[k] - this.a0[k]) * t) * fin * fout;
-      B[m * 4 + 3] = this.heat[k] * Math.exp(-ag / this.tau[k]);
+      B[m * 4 + 3] = this.heat[k] * Math.exp(-ag / this.tau[k]) * fin * fout;
       C[m * 4] = this.alb[k * 3]; C[m * 4 + 1] = this.alb[k * 3 + 1]; C[m * 4 + 2] = this.alb[k * 3 + 2]; C[m * 4 + 3] = this.soft[k];
     }
     this.geo.instanceCount = n;
-    for (let q = 0; q < 3; q++) {
+    for (let q = 0; q < this.attrs.length; q++) {
       const at = this.attrs[q];
       at.clearUpdateRanges();
-      if (n > 0) at.addUpdateRange(0, n * 4);
+      if (n > 0) at.addUpdateRange(0, n * at.itemSize);
       at.needsUpdate = true;
     }
     if (n > 0) softDepth.want();

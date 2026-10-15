@@ -1,4 +1,4 @@
-"""Offline volumetric flipbooks for Effects 2.0 (Phase 10 goal 06).
+"""Offline volumetric flipbooks for Effects 2.0 (Phase 11 goal 04).
 
 Blender (Mantaflow) simulates each effect as a real smoke/fire gas; this script then bakes the
 simulated density and flame grids into relightable flipbook atlases with a small numpy volume
@@ -28,6 +28,7 @@ import os
 import sys
 import time
 import json
+import shutil
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
@@ -37,7 +38,8 @@ ATLAS = os.path.join(PREVIEW, 'atlas')
 CACHE = os.environ.get('FX_CACHE', os.path.join(PREVIEW, 'cache'))
 
 GRID = 8            # atlas is GRID x GRID frames
-FRAME = 128         # px per frame (= simulation resolution)
+FRAME = 256         # shipped image resolution
+RESOLUTION = 192    # fluid grid; projected at FRAME resolution
 
 # Per effect: Mantaflow setup and bake settings. Velocities in m/s in a 2 m domain.
 #   emit: (first, last) frame the emitter is live; grow: emitter radius at first/last emit frame
@@ -53,9 +55,9 @@ EFFECTS = {
                      flow='BOTH', fuel=2.2, temp=2.2, dens=0.9, vel=0.8, burning_rate=0.5, flame_smoke=1.5,
                      flame_vorticity=1.6, vorticity=0.9, alpha=0.0, beta=0.8, dissolve=0, sigma=22),
     # 88 mm flak burst: a split-second orange core inside an instantly black, dense, lumpy puff
-    'flak': dict(seed=27, frames=(1, 64), emit=(1, 3), grow=(0.12, 0.34), lumpy=0.55, loc=(0, 0, 0), gravity=2.0,
-                 flow='BOTH', fuel=0.7, temp=1.5, dens=2.5, vel=1.2, burning_rate=1.6, flame_smoke=3.0,
-                 flame_vorticity=0.6, vorticity=0.6, alpha=0.0, beta=0.15, dissolve=0, sigma=34),
+    'flak': dict(seed=27, frames=(1, 64), emit=(1, 3), grow=(0.07, 0.26), lumpy=1.15, loc=(0, 0, 0), gravity=2.0,
+                 flow='BOTH', fuel=0.7, temp=1.5, dens=2.5, vel=2.8, burning_rate=2.2, flame_smoke=3.0,
+                 flame_vorticity=1.8, vorticity=2.8, alpha=0.0, beta=0.15, dissolve=0, sigma=34),
     # Engine fire: a lick of burning fuel that turns to smoke (trail puffs play it from the start)
     'fire': dict(seed=41, frames=(2, 32), emit=(1, 9), grow=(0.12, 0.2), lumpy=0.3, loc=(0, 0, -0.5), gravity=4.0,
                  flow='BOTH', fuel=2.2, temp=2.0, dens=0.35, vel=0.6, burning_rate=0.7, flame_smoke=0.6,
@@ -87,9 +89,11 @@ def setup_sim(name, p):
     md.fluid_type = 'DOMAIN'
     d = md.domain_settings
     d.domain_type = 'GAS'
-    d.resolution_max = FRAME
+    d.resolution_max = RESOLUTION
     d.cache_type = 'REPLAY'
     d.cache_directory = os.path.join(CACHE, name)
+    # Cached.sh owns reuse; a changed simulation must not read an older grid size.
+    shutil.rmtree(d.cache_directory, ignore_errors=True)
     for side in ('front', 'back', 'left', 'right', 'top', 'bottom'):
         setattr(d, 'use_collision_border_' + side, False)
     d.vorticity = p['vorticity']
@@ -107,7 +111,7 @@ def setup_sim(name, p):
     bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=4, radius=1.0, location=p['loc'])
     em = bpy.context.object
     tex = bpy.data.textures.new('lumps', 'CLOUDS')
-    tex.noise_scale = 0.55
+    tex.noise_scale = 0.28 if name == 'flak' else 0.4
     tex.noise_depth = 2
     disp = em.modifiers.new('Disp', 'DISPLACE')
     disp.texture = tex
@@ -159,7 +163,7 @@ def setup_sim(name, p):
 
 def border_mask(n):
     # smooth falloff over the outer 10 % of the domain so nothing is cut off at the frame edge
-    x = (np.arange(n) + 0.5) / n
+    x = (np.arange(n, dtype=np.float32) + 0.5) / n
     e = np.minimum(x, 1 - x) / 0.1
     m = np.clip(e, 0, 1)
     m = m * m * (3 - 2 * m)
@@ -168,7 +172,7 @@ def border_mask(n):
 
 def ms(tau):
     # approximate multiple scattering (sum of octaves with softer extinction), max 1
-    return (np.exp(-tau) + 0.5 * np.exp(-tau * 0.35) + 0.25 * np.exp(-tau * 0.12)) / 1.75
+    return (np.exp(-tau) + 0.3 * np.exp(-tau * 0.35) + 0.1 * np.exp(-tau * 0.12)) / 1.4
 
 
 def excl_cumsum(a, axis, reverse):
@@ -179,36 +183,45 @@ def excl_cumsum(a, axis, reverse):
 
 
 def bake_frame(rho, flame, sigma):
-    """rho, flame: [z, y, x] grids (z up, camera looks along +y). Returns 8 float images [z, x]."""
-    n = rho.shape[0]
-    dz = 1.0 / n
+    """rho, flame: [z, y, x] grids (z up, camera looks along +y). Returns five lighting images, opacity and emission [z, x]."""
+    # Render 256 pixel rays through the higher-resolution (192^3) simulation.
+    # Bilinear reconstruction in the image plane, preserving the 192 depth samples.
+    def image_plane(grid):
+        n = grid.shape[0]
+        u = np.clip((np.arange(FRAME) + .5) * n / FRAME - .5, 0, n - 1)
+        lo = u.astype(np.int32); hi = np.minimum(lo + 1, n - 1)
+        k = (u - lo).astype(np.float32)
+        x = grid[:, :, lo] * (1 - k)[None, None, :] + grid[:, :, hi] * k[None, None, :]
+        return x[lo] * (1 - k)[:, None, None] + x[hi] * k[:, None, None]
+    rho, flame = image_plane(rho), image_plane(flame)
+    dz = 1.0 / rho.shape[1]
     tau = rho * (sigma * dz)
     t_front = excl_cumsum(tau, 1, False)            # optical depth from the viewer's side
     cam_T = np.exp(-t_front)
     a = 1.0 - np.exp(-tau)
     w = cam_T * a
     alpha = 1.0 - np.exp(-tau.sum(axis=1))
-    lights = [
-        excl_cumsum(tau, 2, True),    # +X: light arrives from the right face
-        excl_cumsum(tau, 2, False),   # -X
-        excl_cumsum(tau, 0, True),    # +Y up (grid z top)
-        excl_cumsum(tau, 0, False),   # -Y
-        t_front,                      # front (viewer side)
-        excl_cumsum(tau, 1, True),    # back
-    ]
+    # Integrate one light direction at a time: retaining six 256^3 optical-depth
+    # grids needlessly competes with Mantaflow and other agents for several GB.
     safe = np.maximum(alpha, 1e-4)
-    imgs = [(w * ms(L * 0.8)).sum(axis=1) / safe for L in lights]
+    imgs = []
+    for axis, reverse in ((2, True), (2, False), (0, True), (0, False), (1, False)):
+        light_tau = t_front if (axis, reverse) == (1, False) else excl_cumsum(rho * (sigma / rho.shape[axis]), axis, reverse)
+        imgs.append((w * ms(light_tau * 0.8)).sum(axis=1) / safe)
+        del light_tau
     emis = (cam_T * flame * dz).sum(axis=1)
     return imgs, alpha, emis
 
 
 def run(name):
+    global FRAME, RESOLUTION
+    FRAME, RESOLUTION = (128, 128) if name in ('smoke', 'wisp') else (256, 192)
     p = EFFECTS[name]
     t0 = time.time()
     sc, dom = setup_sim(name, p)
     f0, f1 = p['frames']
     picks = [int(round(f0 + (f1 - f0) * i / (GRID * GRID - 1))) for i in range(GRID * GRID)]
-    mask = border_mask(FRAME)
+    mask = border_mask(RESOLUTION)
     frames = {}
     emax = 0.0
     for fr in range(1, f1 + 1):
@@ -218,9 +231,13 @@ def run(name):
         dg = bpy.context.evaluated_depsgraph_get()
         dd = dom.evaluated_get(dg).modifiers['Fluid'].domain_settings
         rx, ry, rz = dd.domain_resolution
-        rho = np.array(dd.density_grid[:], dtype=np.float32)[:rx * ry * rz].reshape(rz, ry, rx)
+        rho = np.empty(rx * ry * rz, dtype=np.float32)
+        dd.density_grid.foreach_get(rho)
+        rho = rho.reshape(rz, ry, rx)
         if p['flow'] == 'BOTH':
-            fl = np.array(dd.flame_grid[:], dtype=np.float32)[:rx * ry * rz].reshape(rz, ry, rx)
+            fl = np.empty(rx * ry * rz, dtype=np.float32)
+            dd.flame_grid.foreach_get(fl)
+            fl = fl.reshape(rz, ry, rx)
         else:
             fl = np.zeros_like(rho)
         rho = np.clip(rho, 0, None) * mask
@@ -276,17 +293,23 @@ def save(arr, path, quality=90):
 
 
 def pack(quality):
-    # every effect's 8 x 8 block into one pair of atlases: 2 blocks wide, 3 high, in EFFECTS order
-    # (src/render/Flipbooks.ts FLIP_KINDS must list them in the same order)
-    S = FRAME * GRID
+    # Four close 2048^2 blocks, then two diffuse 1024^2 blocks; one pair / one draw.
     names = list(EFFECTS)
+    width, height = 4096, 5120
+    frame_sizes = {nm: 256 if k < 4 else 128 for k, nm in enumerate(names)}
     for suffix in ('a', 'b'):
-        big = np.zeros((S * 3, S * 2, 4), np.float32)
+        big = np.zeros((height, width, 4), np.float32)
         for k, nm in enumerate(names):
-            bx, by = k % 2, k // 2
-            big[by * S:(by + 1) * S, bx * S:(bx + 1) * S] = load(os.path.join(ATLAS, f'{nm}_{suffix}.webp'))
+            size = frame_sizes[nm] * GRID
+            x, y = ((k % 2) * size, (k // 2) * size) if k < 4 else ((k - 4) * size, 4096)
+            big[y:y + size, x:x + size] = load(os.path.join(ATLAS, f'{nm}_{suffix}.webp'))
         os.makedirs(OUT, exist_ok=True)
         save(big, os.path.join(OUT, f'fx_{suffix}.webp'), quality)
+    with open(os.path.join(OUT, 'manifest.json'), 'w') as fh:
+        json.dump(dict(frameSizes=frame_sizes, grid=GRID, frames=GRID * GRID, width=width, height=height,
+                       simulation='Blender Mantaflow gas', resolutions={nm: 192 if k < 4 else 128 for k, nm in enumerate(names)},
+                       quality=quality, effects=EFFECTS), fh, indent=2)
+        fh.write('\n')
 
 
 def load(path):

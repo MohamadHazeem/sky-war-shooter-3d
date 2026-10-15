@@ -28,7 +28,7 @@ interface Ribbon {
   head: number; count: number; lastNode: number; lastFeed: number;
   ex: number; ey: number; ez: number;   // where the emitter was at the last feed
   evx: number; evy: number; evz: number;
-  grey: number; seed: number; active: boolean;
+  grey: number; seed: number; active: boolean; source: object | undefined;
 }
 
 export class SmokeRibbons {
@@ -61,7 +61,7 @@ export class SmokeRibbons {
       this.ribbons.push({
         px: new Float32Array(NODES * 3), vx: new Float32Array(NODES * 3), born: new Float32Array(NODES).fill(-1e9),
         w0: new Float32Array(NODES), a0: new Float32Array(NODES), ser: new Float32Array(NODES), serial: 0, head: 0, count: 0, lastNode: -1e9, lastFeed: -1e9,
-        ex: 0, ey: 0, ez: 0, evx: 0, evy: 0, evz: 0, grey: 0.1, seed: r * 7.13, active: false,
+        ex: 0, ey: 0, ez: 0, evx: 0, evy: 0, evz: 0, grey: 0.1, seed: r * 7.13, active: false, source: undefined,
       });
     }
     this.geo.setAttribute('position', this.aPos);
@@ -90,7 +90,7 @@ export class SmokeRibbons {
           toCam /= max(dist, 1e-3);
           vec3 d = normalize(aDir + 1e-5);
           vec3 side = normalize(cross(d, toCam) + 1e-5);
-          float w = aInfo.y;
+          float w = aInfo.y * (0.85 + 0.15 * sin(aSer * 1.73 + aSeed));
           vec3 p = position + side * aSide * w;
           gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
           vSideW = side; vToCam = toCam; vS = aSide; vInfo = aInfo; vAlong = vec2(aSer, aSeed); vDist = dist;
@@ -110,20 +110,23 @@ export class SmokeRibbons {
         void main() {
           float age = vInfo.x, alpha0 = vInfo.z, grey = vInfo.w;
           if (alpha0 <= 0.001) discard;
-          float s = vS;
-          float c = sqrt(max(1.0 - s * s, 0.0));          // path length through the round cross-section
-          // turbulence: noise in (along the trail, across it), drifting and coarsening with age
-          vec2 q = vec2(vAlong.x * 0.55 + vAlong.y, s * (1.2 + age * 0.08) + age * 0.15);
+          // Rolling margins, with optical depth tapering smoothly to the silhouette.
+          // The former sqrt profile plus saturated noise read as a hard cylindrical pipe.
+          float billow = vnoise(vec2(vAlong.x * 0.32 + vAlong.y, age * 0.12));
+          float s = (vS + (billow - 0.5) * 0.22) / (0.65 + 0.35 * billow);
+          float radial = max(1.0 - s * s, 0.0);
+          float c = sqrt(radial);
+          vec2 q = vec2(vAlong.x * 0.55 + vAlong.y, s * (2.4 + age * 0.12) + age * 0.15);
           float n = vnoise(q * vec2(1.0, 1.6) + vec2(0.0, uTime * 0.05)) * 0.65 + vnoise(q * vec2(2.7, 3.1) + 11.3) * 0.35;
-          float dens = c * smoothstep(0.15, 0.75, n + c * 0.55 - age * 0.012);
-          float a = 1.0 - exp(-dens * alpha0 * 3.0);
+          float dens = radial * smoothstep(0.18, 0.82, n + c * 0.22 - age * 0.012);
+          float a = 1.0 - exp(-dens * alpha0 * 2.4);
           if (a < 0.003) discard;
           // lit as a cylinder: the normal swings from the side to the eye across the ribbon
           vec3 nrm = normalize(vSideW * s + vToCam * c);
           float ndl = dot(nrm, uSunDir);
           float lam = clamp(ndl * 0.6 + 0.4, 0.0, 1.0);
           float fwd = pow(max(dot(-vToCam, uSunDir), 0.0), 8.0) * (1.0 - a) * 2.5;   // sun behind the trail
-          vec3 lit = grey * (uSunCol * (lam + fwd) * uSunShadow + uSky * (0.55 + 0.45 * nrm.y));
+          vec3 lit = grey * (uSunCol * (lam * (0.55 + n * 0.75) + fwd) * uSunShadow + uSky * (0.55 + 0.45 * nrm.y));
           float h = 1.0 - exp(-vDist * uHazeK);
           vec3 col = mix(lit, uHaze, h);
           float k = clamp((softScene() - vDist) / (vInfo.y * 0.8 + 1.0), 0.0, 1.0) * smoothstep(2.0, 12.0, vDist) * vEnd;
@@ -148,13 +151,15 @@ export class SmokeRibbons {
 
   // Lay smoke along an emitter's path. width: rope radius at the source (m); grey: albedo;
   // alpha: density at the source (0..1). Called by Effects.trail on every emission tick.
-  feed(pos: THREE.Vector3, vel: THREE.Vector3, width: number, grey: number, alpha: number) {
+  feed(pos: THREE.Vector3, vel: THREE.Vector3, width: number, grey: number, alpha: number, source?: object) {
     if (!this.enabled) return;
     const t = this.time;
     let best: Ribbon | null = null, bestD = Infinity, free: Ribbon | null = null, oldest: Ribbon | null = null;
     for (const r of this.ribbons) {
       if (!r.active) { free ??= r; continue; }
       if (!oldest || r.lastFeed < oldest.lastFeed) oldest = r;
+      // Fragment emitters can cross within centimetres: never splice their ropes together.
+      if (r.source !== source) continue;
       const since = t - r.lastFeed;
       if (since > 0.6 || since < 0) continue;
       const x = r.ex + r.evx * since - pos.x, y = r.ey + r.evy * since - pos.y, z = r.ez + r.evz * since - pos.z;
@@ -167,7 +172,7 @@ export class SmokeRibbons {
       r = free ?? (oldest && t - oldest.lastFeed > 1 ? oldest : null);
       if (!r) return;
       r.active = true; r.count = 0; r.head = NODES - 1; r.lastNode = -1e9; r.born.fill(-1e9);
-      r.grey = grey;
+      r.grey = grey; r.source = source;
     }
     r.ex = pos.x; r.ey = pos.y; r.ez = pos.z; r.evx = vel.x; r.evy = vel.y; r.evz = vel.z;
     r.lastFeed = t;
@@ -197,7 +202,7 @@ export class SmokeRibbons {
   }
 
   clear() {
-    for (const r of this.ribbons) r.active = false;
+    for (const r of this.ribbons) { r.active = false; r.source = undefined; }
     this.geo.setDrawRange(0, 0);
   }
 
@@ -219,7 +224,7 @@ export class SmokeRibbons {
     let used = 0;
     for (let ri = 0; ri < this.max; ri++) {
       const r = this.ribbons[ri];
-      if (r.active && t - r.lastFeed > LIFE) r.active = false;
+      if (r.active && t - r.lastFeed > LIFE) { r.active = false; r.source = undefined; }
       if (r.active) used = ri + 1;
     }
     for (let ri = 0; ri < used; ri++) {

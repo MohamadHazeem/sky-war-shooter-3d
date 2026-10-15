@@ -824,6 +824,7 @@ export class World implements WorldView {
 
   // ---------- per-frame ----------
   update(dt: number) {
+    this.effects.setCamera(this.engine.camera);
     if (dt <= 0) return;
     this.time += dt;
     this.radioCooldown -= dt;
