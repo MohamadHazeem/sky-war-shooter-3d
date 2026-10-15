@@ -1,0 +1,40 @@
+/* Crew stories section under the hangar crew roster (ui/CrewStoriesPanel.ts) */
+.crs { margin-top: 10px; }
+.crs > summary { cursor: pointer; list-style: none; }
+.crs > summary::-webkit-details-marker { display: none; }
+.crs > summary::before { content: '▸ '; }
+.crs[open] > summary::before { content: '▾ '; }
+.crs .cs-sub { margin: 10px 0 4px; font-family: 'Oswald', sans-serif; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: #d8c48f; }
+.crs .cs-note { font-size: 12px; opacity: 0.75; margin: 2px 0 4px; }
+.crs .cs-letter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 8px; margin: 3px 0; background: rgba(233,226,207,0.06); border-inline-start: 3px solid #b9a76f; font-size: 13px; }
+.crs .cs-letter.bad { border-inline-start-color: #c0574a; }
+.crs .cs-letter .btn { padding: 3px 10px; font-size: 12px; margin-inline-start: auto; }
+.crs .cs-men { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px; }
+.crs .cs-man { padding: 6px 8px; background: rgba(0,0,0,0.22); border: 1px solid rgba(233,226,207,0.12); font-size: 12px; }
+.crs .cs-name { font-size: 13px; margin-bottom: 3px; }
+.crs .cs-name i { font-style: normal; font-size: 11px; padding: 0 5px; margin-inline-start: 3px; border: 1px solid rgba(233,226,207,0.25); border-radius: 8px; opacity: 0.85; cursor: help; }
+.crs .cs-meters { display: grid; grid-template-columns: auto 1fr auto; gap: 2px 6px; align-items: center; }
+.crs .cs-meters em { font-style: normal; opacity: 0.85; }
+.crs .cs-meters em.up { grid-column: 1 / -1; color: #9fd28a; }
+.crs .cs-meters em.down { grid-column: 1 / -1; color: #e08a7a; }
+.crs .cs-bar { display: inline-block; height: 6px; background: rgba(255,255,255,0.1); position: relative; min-width: 60px; }
+.crs .cs-bar > span { position: absolute; inset: 0 auto 0 0; background: #b9a76f; }
+.crs .cs-bar.high > span { background: #7fbf6a; }
+.crs .cs-bar.low > span { background: #c0574a; }
+.crs .cs-ritual { margin-top: 3px; opacity: 0.7; font-style: italic; }
+.crs ul { list-style: none; margin: 0; padding: 0; }
+.crs .cs-bonds li { font-size: 12px; padding: 2px 0; }
+.crs .cs-bonds li.friend b { color: #9fd28a; }
+.crs .cs-bonds li.rival b { color: #e08a7a; }
+.crs .cs-bonds li span { opacity: 0.6; }
+.crs .cs-journal li { font-size: 12px; padding: 3px 0; border-bottom: 1px solid rgba(233,226,207,0.08); }
+.crs .cs-journal li > span { opacity: 0.55; margin-inline-end: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+.crs .cs-journal li.k-loss { color: #e6c2b8; }
+.cr-man .cs-mood { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+.cr-man .cs-mood.bad { color: #e08a7a; }
+.cr-man .cs-mood.good { color: #9fd28a; }
+html[dir=rtl] .crs .cs-bar > span { inset: 0 0 0 auto; }
+html[dir=rtl] .crs .cs-sub { letter-spacing: 0; }
+html[dir=rtl] .crs > summary::before { content: '◂ '; }
+html[dir=rtl] .crs[open] > summary::before { content: '▾ '; }
+@media (max-width: 520px) { .crs .cs-men { grid-template-columns: 1fr; } }

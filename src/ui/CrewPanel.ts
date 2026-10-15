@@ -11,6 +11,7 @@ import {
 } from '../game/CrewRoster';
 import { tx } from '../i18n';
 import { ROLE_STATS, ROLE_LABEL, ROLE_HELP, TALENTS } from '../game/CrewRoles';
+import { moodLine, storiesHtml, bindStories } from './CrewStoriesPanel';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
@@ -141,7 +142,7 @@ function manCard(id: ManId, post: Post | null): string {
       <div class="cr-spec">${esc(spec)} · ${esc(tx(TALENTS[id].trait))} · <b>${tx('Level {n}', { n: lv })}</b>${isNew}</div>
       <div class="cr-xp" title="${st.xp} XP">${bar(next * 100)}</div>
       <div class="cr-bio">${esc(tx(d.bio))}</div>
-      ${stats}${bonus}
+      ${moodLine(id)}${stats}${bonus}
       <div class="cr-status ${s.cls}">${esc(tx(s.text))} · ${tx('{n} kills', { n: st.kills })} · ${tx('{n} missions', { n: st.missions })} ${heal}</div>
     </div></div>`;
 }
@@ -164,7 +165,9 @@ function renderRoster() {
     <div class="cr-grid">${POSTS.map(seat).join('')}</div>
     <div class="hsec">${tx('OFFICERS')}</div><div class="cr-role">${esc(tx(ROLE_HELP.nerve))} ${esc(tx(ROLE_HELP.spotting))}</div>
     <div class="cr-grid off">${officers.map((m) => `<div class="cr-seat officer">${manCard(m.id, null)}</div>`).join('')}</div>
+    ${storiesHtml()}
     ${MEN.some((m) => crewRoster.men[m.id].dead) ? `<div class="cr-memorial"><div class="hsec">${tx('Roster memorial')}</div>${MEN.filter((m) => crewRoster.men[m.id].dead).map((m) => `<p>${esc(tx('In memory of {who}', { who: tx(m.call) }))} · ${tx('Level {n}', { n: crewRoster.level(m.id) })} · ${tx('{n} missions', { n: crewRoster.men[m.id].missions })}</p>`).join('')}</div>` : ''}`;
+  bindStories(host, renderRoster);
   host.querySelector('[data-recommend]')!.addEventListener('click', () => { picked = null; crewRoster.recommend(); renderRoster(); });
   host.querySelectorAll<HTMLElement>('[data-post]').forEach((el) => el.addEventListener('keydown', (e) => {
     if (e.target !== el || (e.key !== 'Enter' && e.key !== ' ')) return;

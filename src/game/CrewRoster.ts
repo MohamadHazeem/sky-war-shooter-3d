@@ -20,6 +20,7 @@ import type { Loadout } from './Upgrades';
 import type { World } from '../world/World';
 import { VOICE_LINES } from '../audio/voiceLines';
 import { tx } from '../i18n';
+import { crewStories } from './CrewStories';
 import { roleStat, roleMultiplier, roleEffects, NEUTRAL_EFFECTS, POSITION_WEIGHTS, ROLE_STATS, type RoleStat, type CrewEffects } from './CrewRoles';
 
 export type ManId = 'brenner' | 'doyle' | 'stern' | 'kessler' | 'mendez' | 'gallo' | 'reilly' | 'price' | 'walsh' | 'dawson';
@@ -173,6 +174,7 @@ export class CrewRoster {
   private listeners: ((e: RosterEvent, who?: ManId) => void)[] = [];
   private aiHits = new WeakMap<object, number>();   // fighter -> world time our AI gunners last hit it
   private tapped = new WeakSet<object>();
+  private killsAt = {} as Record<ManId, number>;   // kills at mission start (crew stories)
 
   constructor() {
     for (const m of MEN) this.men[m.id] = fresh();
@@ -206,7 +208,8 @@ export class CrewRoster {
   // ---------- queries ----------
   level(id: ManId) { return levelOf(this.men[id].xp); }
   stat(id: ManId, s: Stat) { return Math.min(100, manDef(id).base[s] + STAT_PER_LEVEL * (this.level(id) - 1)); }
-  roleStat(id: ManId, stat: RoleStat) { return roleStat(id, stat, this.level(id)); }
+  // morale and fatigue (CrewStories) lean on it: exactly 1 in the normal band
+  roleStat(id: ManId, stat: RoleStat) { return Math.min(100, Math.round(roleStat(id, stat, this.level(id)) * crewStories.mult(id))); }
   effects(): Readonly<CrewEffects> {
     if (!this.active) return NEUTRAL_EFFECTS;
     return this.effectCache ??= roleEffects((p, s) => {
@@ -338,6 +341,8 @@ export class CrewRoster {
     if (!this.live) { this.placeAll(); this.emit('mission'); return; }
     for (const m of MEN) if (this.men[m.id].rest > 0 || this.men[m.id].dead) this.resting.add(m.id);
     this.place();
+    for (const m of MEN) this.killsAt[m.id] = this.men[m.id].kills;
+    crewStories.beginSortie([...this.flew]);   // rituals at take-off
     for (const m of MEN) if (this.resting.has(m.id)) {
       const pos = m.gunner ? POST_CREW[this.postOf(m.id)!] : m.home;
       ui.feed(tx(this.men[m.id].dead ? '{who} is remembered — {rookie} (rookie) takes his place' : '{who} is resting — {rookie} (rookie) takes his place', { who: tx(m.call), rookie: tx(ROOKIES[pos].call) }), 'loss');
@@ -409,15 +414,22 @@ export class CrewRoster {
   private finish(success: boolean, completed: boolean) {
     // At most one fatal casualty: only a wounded veteran actually aboard a lost ship,
     // with at least three combat losses. Scripted losses never trigger this roll.
+    const killed: ManId[] = [];
     if (completed && !this.escapeRecorded && this.world?.playerBomber?.alive === false && this.world.combatLosses >= 3) {
       const candidates = [...this.wounded].filter((id) => !this.men[id].dead && this.level(id) >= 3 && !this.resting.has(id) && !this.benched.has(id));
       if (candidates.length && Math.random() < 0.03 * this.effects().seriousWound) {
         const id = candidates[Math.floor(Math.random() * candidates.length)];
         this.men[id].dead = true;
+        killed.push(id);
         this.note(tx('In memory of {who}', { who: tx(manDef(id).call) }));
       }
     }
     this.live = false;
+    if (completed) crewStories.endSortie({
+      success, flew: [...this.flew], killed, lost: this.world?.stats?.bombersLost ?? 0,
+      wounded: MEN.filter((m) => this.wounded.has(m.id) || this.benched.has(m.id) || this.serious.has(m.id)).map((m) => m.id),
+      kills: Object.fromEntries(MEN.map((m) => [m.id, this.men[m.id].kills - (this.killsAt[m.id] ?? this.men[m.id].kills)])),
+    });
     for (const m of MEN) {
       const st = this.men[m.id];
       if (st.dead) continue;
