@@ -7,8 +7,8 @@ merge lane (`tools/codex_merge.sh` / `tools/claude_merge.sh`) → `tools/ship.sh
 | # | Goal | Target | Lane | Status |
 |---|---|---|---|---|
 | 01 | Aircraft detail 2.0 | models 6→8 | Codex | Building |
-| 02 | Materials, reflections, contact shadows | lighting 6→8 | Codex | Building |
-| 03 | Film-grade clouds | clouds 6→8 | Codex | Building |
+| 02 | Materials, reflections, contact shadows | lighting 6→8 | Codex | Closed — 8 review rounds, over perf budget, no visible gain; redo in Phase 12 |
+| 03 | Film-grade clouds | clouds 6→8 | Codex | Closed — only fly-through improved; redo in Phase 12 with a new approach |
 | 04 | Explosions, flak, fire 2.0 | effects 6→8 | Codex | Building |
 | 05 | Crew 2.0 | interior 5→7 | Claude | Building |
 | 06 | Night and sunset polish | post 6→8 | Claude | Building |
