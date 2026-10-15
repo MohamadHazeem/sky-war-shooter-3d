@@ -22,9 +22,12 @@
 // Everything here is pure data and maths plus guarded localStorage (unit-tested in Node).
 // Game hooks: prepareCampaignMission (briefing / mission start), campaignMeritMult (debrief
 // merit) and recordCampaignOutcome (debrief, via ui/CampaignMap.ts mountCampaignReport).
+// The war industry under it (aircraft, bearings, oil, rail with real lag) is StrategicWar.ts:
+// strategicModifiersFor folds its factors in, recordCampaignOutcome records the strike.
 import { isSecondTourId, secondTourMission, secondTourKind, SECOND_TOUR_LENGTH, SECOND_TOUR_MEDAL } from './SecondTour';
 import { CAMPAIGN, type Mission } from './Missions';
 import { isRaidId, sideRaidById, sideRaidsFor, templateFor, type RaidKind, type SideRaid } from './SideRaids';
+import { industryFactors, industryTypeList, loadStrategic, recordStrategicStrike, setActiveIndustry, type IndustryFactors, type Newsreel } from './StrategicWar';
 
 export const CAMPAIGN_KEY = 'sws3d.campaign.v2';
 const PROGRESS_KEY = 'sws3d.progress.v1';
@@ -151,7 +154,7 @@ export function modifiersFor(d: CampaignData, m: Mission, base: Pick<Mission, 'b
 
 interface Snapshot {
   bombers: number; maxBombersLost?: number; objectives: string[]; escortArrive?: number;
-  round?: Mission['round']; waves: Mission['waves'];
+  round?: Mission['round']; waves: Mission['waves']; enemyTypes?: Mission['enemyTypes'];
 }
 const BASE = new WeakMap<Mission, Snapshot>();
 
@@ -162,6 +165,7 @@ function snapshot(m: Mission): Snapshot {
       bombers: m.bombers, maxBombersLost: m.maxBombersLost, objectives: [...m.objectives], escortArrive: m.escortArrive,
       round: m.round ? { ...m.round, skill: [...m.round.skill] as [number, number] } : undefined,
       waves: m.waves.map((w) => ({ ...w })),
+      enemyTypes: m.enemyTypes ? [...m.enemyTypes] : undefined,
     };
     BASE.set(m, s);
   }
@@ -179,6 +183,7 @@ export function applyModifiers(m: Mission, mods: Modifiers | null): Mission {
   m.escortArrive = b.escortArrive;
   m.round = b.round ? { ...b.round, skill: [...b.round.skill] as [number, number] } : undefined;
   m.waves = b.waves.map((w) => ({ ...w }));
+  if (b.enemyTypes) m.enemyTypes = [...b.enemyTypes];
   if (!mods) return m;
   m.bombers = mods.bombers;
   if (b.maxBombersLost !== undefined && b.maxBombersLost < 99 && mods.bombers !== b.bombers) {
@@ -432,11 +437,30 @@ export function secondTourMedal(m: Mission, success: boolean): string[] {
 
 function isCampaignMission(m: Mission) { return storyIndex(m.id) >= 0 || isRaidId(m.id) || isSecondTourId(m.id); }
 
+/** The war industry's factors for this campaign (StrategicWar.ts; all 1 until something is hit). */
+export const campaignIndustry = (d: CampaignData): IndustryFactors => industryFactors(loadStrategic(d));
+
+/** modifiersFor with the war industry folded in: what the map, briefing and mission use. */
+export function strategicModifiersFor(d: CampaignData, m: Mission, base: Parameters<typeof modifiersFor>[2] = m, f?: IndustryFactors): Modifiers | null {
+  const mods = modifiersFor(d, m, base);
+  if (!mods) return null;
+  const k = f ?? campaignIndustry(d);
+  mods.enemy *= k.enemy;
+  mods.skill *= k.skill;
+  return mods;
+}
+
 /** Briefing / mission start: apply the strategic modifiers to a current operation (in place). */
 export function prepareCampaignMission(m: Mission, progress?: ProgressLike | null): Mission {
   if (!isCampaignMission(m)) return m;
   const d = loadCampaign(progress);
-  return applyModifiers(m, modifiersFor(d, m, { ...baseOf(m), role: m.role, playerDamaged: m.playerDamaged, duration: m.duration }));
+  const f = campaignIndustry(d);
+  const mods = strategicModifiersFor(d, m, { ...baseOf(m), role: m.role, playerDamaged: m.playerDamaged, duration: m.duration }, f);
+  applyModifiers(m, mods);
+  // the fighter mix follows the factories that were hit (ui/StrategicPanel.ts registers the spawn hook)
+  if (mods && m.enemyTypes) m.enemyTypes = industryTypeList(m.enemyTypes, f);
+  setActiveIndustry(mods ? m.id : null, f);
+  return m;
 }
 
 /** Debrief merit multiplier from crew morale (1 for anything but a current operation). */
@@ -446,7 +470,7 @@ export function campaignMeritMult(m: Mission, progress?: ProgressLike | null): n
   return isCurrentOp(d, m) ? meritMult(d.morale) : 1;
 }
 
-export interface RecordResult { data: CampaignData; report: IntelReport; reward: number; op: OpInfo }
+export interface RecordResult { data: CampaignData; report: IntelReport; reward: number; op: OpInfo; newsreel?: Newsreel | null }
 
 /**
  * Debrief: record the result. Game has already moved progress.unlocked on, so the state is only
@@ -460,6 +484,8 @@ export function recordCampaignOutcome(m: Mission, o: Outcome, progress?: Progres
   const op = opInfo(d, m);
   if (!op) return null;
   const res = applyOutcome(d, op, o);
+  // the war industry: this operation's bombs and the weeks until the next one (newsreel card)
+  const newsreel = res.report.effect ? recordStrategicStrike(res.data, { id: m.id, target: m.target, date: m.date }, { success: o.success, bombersLost: o.bombersLost, bombersTotal: o.bombersTotal }, campaignDate(res.data)) : null;
   const reward = res.report.effect && o.success && op.kind === 'raid' && op.raidKind ? templateFor(op.raidKind).reward : 0;
   if (reward) res.report.lines.splice(-1, 0, { gauge: 'merit', text: `Raid bonus: +${reward} merit.` });
   d = reconcile(res.data, progress ?? (readJson(PROGRESS_KEY) as ProgressLike | null));
@@ -467,7 +493,7 @@ export function recordCampaignOutcome(m: Mission, o: Outcome, progress?: Progres
   saveCampaign(d);
   // back to the mission as written (the modifiers are applied again at the next start)
   applyModifiers(m, null);
-  return { data: d, report: res.report, reward, op };
+  return { data: d, report: res.report, reward, op, newsreel };
 }
 
 export interface CampaignTotals { sorties: number; wins: number; raids: number; raidWins: number; kills: number; lost: number }

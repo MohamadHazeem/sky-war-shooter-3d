@@ -110,6 +110,19 @@ wall-clock time, such as the menu frames that run before the mission and the aud
 one after it. Look at completions, console errors, and the spread of kills, bombers lost and mission
 times. Don't diff the logs.
 
+## Strategic air war (Phase 11 goal 10)
+
+`game/StrategicWar.ts` is the German war industry under the campaign: 21 real sites in four sectors
+(aircraft factories, ball bearings, oil, rail), weekly production, damage that reaches the lines after
+a sector's lag (aircraft 3 weeks, bearings 5, oil 1, rail at once) and weekly repairs. Pure, seeded,
+saved in `sws3d.strategic.v1` (bound to the campaign seed, rebuilt from the operations log when
+missing). `CampaignState.recordCampaignOutcome` records each current operation's strike and returns
+the week's newsreel; `strategicModifiersFor` / `prepareCampaignMission` fold the industry into the
+enemy count and skill and filter second-tour enemy types; `ui/StrategicPanel.ts` registers the
+spawn-time `ENEMY_MIX` hook (types whose factories were hit are swapped) and draws the campaign map's
+"War industry" card, the industry map and the debrief newsreel. Nothing hit = every factor exactly 1.
+Another campaign layer (The Tour) can call `recordStrike` / `industryFactors` directly.
+
 ## Weather conditions (Phase 7)
 
 Modes use `game.setWeather('lightRain' | 'heavyRain' | 'snow' | 'fog' | 'thunderstorm' | 'clear')`.
