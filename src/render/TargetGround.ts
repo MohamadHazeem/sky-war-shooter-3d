@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { groundWarUniforms, GROUND_WAR_GLSL } from './GroundWar';
 
 // The bombing target as seen from 7 km: an industrial river city drawn procedurally into the
 // sky dome's ground (Sky.ts), plus the bomb run's aftermath — impact flashes, shock rings,
@@ -11,6 +12,7 @@ export const TGT_IMPACTS = 40;
 export const TGT_PLUMES = 8;
 
 export const targetUniforms = {
+  ...groundWarUniforms,
   uTgt: { value: new THREE.Vector4() },        // absolute ground x, z of the aim point, city radius (m), on (0/1)
   uTgtLook: { value: 0 },                     // authored target layout, 0 retains the original city
   uTgtRot: { value: new THREE.Vector2(1, 0) }, // cos, sin of the river / street grid axis
@@ -19,8 +21,21 @@ export const targetUniforms = {
   uFlakGround: { value: 0 },                   // 0..1 flak batteries firing
   uImpacts: { value: Array.from({ length: TGT_IMPACTS }, () => new THREE.Vector4()) }, // rel x, z, impact clock, radius (0 = unused)
   uPlumes: { value: Array.from({ length: TGT_PLUMES }, () => new THREE.Vector4()) },   // rel x, z, start clock, strength (0 = unused)
+  uPlumeShape: { value: Array.from({ length: TGT_PLUMES }, () => new THREE.Vector4()) }, // top, base width, density, age
   uImpBound: { value: new THREE.Vector3() },   // circle around all impacts' marks (x, z, radius): pixel cull
 };
+
+/** Uniform-only plume growth: compute once per frame instead of at every sky pixel. */
+export function syncTargetPlumes() {
+  const u = targetUniforms;
+  for (let i = 0; i < TGT_PLUMES; i++) {
+    const p = u.uPlumes.value[i], age = Math.max(0, u.uTgtClock.value - p.z);
+    const ramp = Math.min(1, age / 3);
+    u.uPlumeShape.value[i].set(7400 * (1 - Math.exp(-age / 45)) + 80,
+      70 + Math.min(age, 300) * 0.35,
+      p.w * (0.45 + 0.55 * Math.exp(-age / 600)) * ramp * ramp * (3 - 2 * ramp), age);
+  }
+}
 
 // Needs h2(), vnoise(), fbm() and the atmosphere uniforms from the sky shader.
 export const TARGET_GLSL = /* glsl */ `
@@ -34,6 +49,7 @@ uniform vec2 uTgtWind;
 uniform float uFlakGround;
 uniform vec4 uImpacts[TGT_IMPACTS];
 uniform vec4 uPlumes[TGT_PLUMES];
+uniform vec4 uPlumeShape[TGT_PLUMES];
 uniform vec3 uImpBound;   // circle holding every impact's marks and pall: x, z, radius
 // Set by the real-map ground (FarTerrain.ts terrain()) for this pixel: land share, and the
 // city's water as a signed side distance (m) with its half-width (0 = no mapped water: the
@@ -53,6 +69,8 @@ float tStreets(vec2 p, vec2 size, float hw, float fw, out vec2 cell, out vec2 f)
   return mix(s, mean, smoothstep(hw, hw * 5.0, fw));
 }
 float tRiver(float u) { return 340.0 * sin(u / 1700.0 + 0.6) + 110.0 * sin(u / 640.0 + 2.0); }
+
+${GROUND_WAR_GLSL}
 
 // City albedo over the base terrain. u runs along the river, v across it.
 vec3 tCity(vec2 rel, vec3 base, float fw) {
@@ -154,7 +172,21 @@ vec3 tCity(vec2 rel, vec3 base, float fw) {
       c = mix(c, mix(vec3(0.065, 0.06, 0.05), vec3(0.4, 0.4, 0.36), tanks), zone * dry);
     }
   }
-  return c;
+  // Four-gun revetments identify the flashing batteries between salvos.
+  float rr = length(rel);
+  if (rr > R * 0.45 && rr < R * 2.1) {
+    vec2 bc = floor(rel / 520.0);
+    if (h2(bc + 3.7) < 0.45) {
+      vec2 site = (bc + 0.3 + 0.4 * vec2(h2(bc + 1.3), h2(bc + 7.1))) * 520.0;
+      vec2 q = abs(rel - site) - 22.5;
+      float pit = length(q);
+      float earth = tBand(pit, 9.0, 19.0, fw);
+      float gun = 1.0 - smoothstep(5.0, 10.0 + fw, pit);
+      c = mix(c, vec3(0.25, 0.21, 0.15), earth * tgtLand * (1.0 - water) * 0.45);
+      c = mix(c, vec3(0.035), gun * tgtLand * (1.0 - water) * 0.35);
+    }
+  }
+  return groundWarTraffic(uv, c, fw, tgtLand * (1.0 - water));
 }
 
 // The bombs' work: returns lit ground colour with flashes, fires, scars and pall.
@@ -217,13 +249,23 @@ vec3 targetGround(vec2 rel, vec3 alb, float fw, vec3 light, vec2 camRel, vec3 d)
       alb = mix(alb, vec3(0.2, 0.19, 0.17), ring * 0.7);
       emis += vec3(1.0, 0.4, 0.1) * 0.1 * min(fireGlow, 2.0);
     }
+    // Fires left by the preceding wave anchor the two persistent smoke columns to the works.
+    for (int k = TGT_PLUMES - 2; k < TGT_PLUMES; k++) {
+      vec4 P = uPlumes[k];
+      if (P.w <= 0.0 || P.z > -100.0 || uTgtClock < P.z) continue;
+      vec2 q = rel - P.xy;
+      float scar = exp(-dot(q, q) / 65000.0);
+      alb = mix(alb, vec3(0.027, 0.024, 0.02), scar * 0.9);
+      float fire = exp(-dot(q, q) / 13000.0) * (0.55 + 0.45 * vnoise(q / 35.0 + uTgtClock * 0.3));
+      emis += vec3(1.0, 0.30, 0.035) * fire * 2.8;
+    }
     // Pathfinder target indicators, laid before our arrival; hidden by the real cloud deck.
     if (uTgtClock < 3.0 && uTgtClock > -40.0) {
       float marker = 1.0 - smoothstep(35.0, max(80.0, fw * 2.0), length(rel));
       emis += vec3(1.0, 0.18, 0.035) * marker * 18.0;
     }
     // flak batteries: four-gun sites ringed around the city, muzzle flashes during the barrage
-    if (uFlakGround > 0.0) {
+    if (uFlakGround > 0.0 && tgtLand > 0.5) {
       float rr = sqrt(r2);
       if (rr > R * 0.45 && rr < R * 2.1) {
         vec2 cell = floor(rel / 520.0);
@@ -245,6 +287,7 @@ vec3 targetGround(vec2 rel, vec3 alb, float fw, vec3 light, vec2 camRel, vec3 d)
   vec3 g = alb * light;
   vec3 pallC = vec3(0.07, 0.064, 0.058) * light;
   g = mix(g, pallC, pall) + emis * (1.0 - pall * 0.55);
+  g = groundWarAircraft(rel, camRel, g, fw, light);
   // rising smoke columns, leaning downwind: each column is a stack of vertically stretched
   // gaussian puffs whose line integral along the view ray is analytic. Only for rays whose
   // stretch below 7.5 km passes within reach of the city.
@@ -252,27 +295,28 @@ vec3 targetGround(vec2 rel, vec3 alb, float fw, vec3 light, vec2 camRel, vec3 d)
   vec2 ra = camRel + d.xz * ((uCamAlt - 7500.0) / dy), rb = rel;
   vec2 ab = rb - ra;
   vec2 cl = ra + ab * clamp(-dot(ra, ab) / max(dot(ab, ab), 1e-3), 0.0, 1.0);
-  if (uTgtClock > 0.0 && dot(cl, cl) < (R * 1.6 + 2500.0) * (R * 1.6 + 2500.0)) {
+  if (dot(cl, cl) < (R * 1.6 + 2500.0) * (R * 1.6 + 2500.0)) {
     float tau = 0.0, glow = 0.0;
     vec3 sc = vec3(0.0);
     vec3 O = vec3(camRel.x, uCamAlt, camRel.y);
     for (int k = 0; k < TGT_PLUMES; k++) {
       vec4 P = uPlumes[k];
       if (P.w <= 0.0) continue;
-      float age = uTgtClock - P.z;
+      vec4 shape = uPlumeShape[k];
+      float age = shape.w;
       if (age <= 0.0) continue;
-      float top = 7400.0 * (1.0 - exp(-age / 45.0)) + 80.0;
+      float top = shape.x;
       // skip columns the ray's lower stretch never comes near
       vec2 pa = camRel + d.xz * ((uCamAlt - top) / dy) - P.xy;
       vec2 pab = rel - P.xy - pa;
       vec2 pcl = pa + pab * clamp(-dot(pa, pab) / max(dot(pab, pab), 1e-3), 0.0, 1.0);
-      float reach = 3.0 * (70.0 + top * 0.14 + min(age, 300.0) * 0.35) + length(uTgtWind) * min(top / 16.0, age);
+      float reach = 3.0 * (shape.y + top * 0.085) + length(uTgtWind) * min(top / 16.0, age);
       if (dot(pcl, pcl) > reach * reach) continue;
-      float fade = P.w * (0.45 + 0.55 * exp(-age / 600.0)) * smoothstep(0.0, 3.0, age);
+      float fade = shape.z;
       for (int j = 0; j < 4; j++) {
         float fj = (float(j) + 0.5) / 4.0;
         float yb = top * fj;
-        float w = 70.0 + yb * 0.14 + min(age, 300.0) * 0.35;
+        float w = shape.y + yb * 0.085;
         float hgt = max(top * 0.2, w);                   // vertical half-size: puffs overlap into a column
         vec2 cxz = P.xy + uTgtWind * min(yb / 16.0, age);
         // squash y so the puff is a sphere of radius w, integrate, undo the stretch
@@ -283,15 +327,18 @@ vec3 targetGround(vec2 rel, vec3 alb, float fw, vec3 light, vec2 camRel, vec3 d)
         vec3 oc = vec3(O.x - cxz.x, (O.y - yb) * kq, O.z - cxz.y);
         float tc = -dot(oc, dd);
         vec3 pc = oc + dd * tc;
+        if (dot(pc, pc) > w * w * 6.25) continue;
         float dens = fade * (1.0 - fj * 0.55) / (1.0 + yb / 1500.0);
-        float tk = dens * 0.009 * 1.772 * w / L * exp(-dot(pc, pc) / (w * w));
+        // Break the analytic column into rolling lobes, stable in world space.
+        float billow = 0.55 + 0.65 * vnoise((pc.xz + vec2(yb * 0.3, uTgtClock * -8.0)) / max(90.0, w * 0.6));
+        float tk = billow * dens * 0.009 * 1.772 * w / L * exp(-dot(pc, pc) / (w * w));
         tau += tk;
         sc += mix(vec3(0.02, 0.018, 0.017), vec3(0.12, 0.115, 0.11), fj * fj) * tk;
         glow += (1.0 - fj) * (1.0 - fj) * tk;
       }
     }
     if (tau > 0.001) {
-      vec3 sm = sc / tau * light + vec3(1.0, 0.4, 0.1) * 0.35 * glow / tau;
+      vec3 sm = sc / tau * light + vec3(1.0, 0.25, 0.035) * 0.06 * glow / tau;
       g = mix(g, sm, 1.0 - exp(-tau));
     }
   }

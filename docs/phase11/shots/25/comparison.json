@@ -1,0 +1,901 @@
+[
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "high",
+    "shot": "bomb-release",
+    "clock": 5.999999999999984,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 5.9733333339293795,
+      "p95": 9.700000017881393,
+      "programsBefore": 252,
+      "programsAfter": 252,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "high",
+    "shot": "walking-strikes",
+    "clock": 28.999999999999634,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 6.2233333339293795,
+      "p95": 12.699999988079071,
+      "programsBefore": 252,
+      "programsAfter": 252,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "high",
+    "shot": "burning-city",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 6.930000000198683,
+      "p95": 11.200000017881393,
+      "programsBefore": 252,
+      "programsAfter": 252,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "high",
+    "shot": "wind-columns",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -6500,
+        7620,
+        -6531.25
+      ],
+      "quaternion": [
+        0.0709602499477949,
+        0.9237111262007455,
+        0.20961076265675965,
+        -0.3127070936815288
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 16.593333333730698,
+      "p95": 25,
+      "programsBefore": 252,
+      "programsAfter": 252,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "high",
+    "shot": "airfield-rail",
+    "clock": 90,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -981.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 42
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 6.436666666467985,
+      "p95": 15.699999988079071,
+      "programsBefore": 252,
+      "programsAfter": 252,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792069756184"
+    ],
+    "quality": "high",
+    "shot": "bomb-release",
+    "clock": 5.999999999999984,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 3.210000001390775,
+      "p95": 6.9000000059604645,
+      "programsBefore": 271,
+      "programsAfter": 271,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "freight": 238.78333333333285,
+      "sorties": [
+        [
+          2630.650000000002,
+          -1044.1039111111108,
+          670.616666666667,
+          0
+        ],
+        [
+          215.65000000000168,
+          -1185,
+          141.61666666666702,
+          0
+        ],
+        [
+          -1491.6410138888884,
+          -1185,
+          4,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792069756184"
+    ],
+    "quality": "high",
+    "shot": "walking-strikes",
+    "clock": 28.999999999999634,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 3.0633333325386047,
+      "p95": 6.5,
+      "programsBefore": 271,
+      "programsAfter": 271,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "freight": 537.7833333333292,
+      "sorties": [
+        [
+          5045.649999999965,
+          -565.9492444444536,
+          1199.616666666659,
+          0
+        ],
+        [
+          2630.649999999966,
+          -1044.1039111111154,
+          670.6166666666592,
+          0
+        ],
+        [
+          215.64999999996587,
+          -1185,
+          141.61666666665917,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792069756184"
+    ],
+    "quality": "high",
+    "shot": "burning-city",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 3.4366666664679846,
+      "p95": 7.199999988079071,
+      "programsBefore": 271,
+      "programsAfter": 271,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "freight": 1330.7833333332837,
+      "sorties": [
+        [
+          1790.6499999995958,
+          -1131.0585777778097,
+          486.6166666665781,
+          0
+        ],
+        [
+          -611.5660138892505,
+          -1185,
+          4,
+          0
+        ],
+        [
+          6620.649999999596,
+          -71.70924444458979,
+          1544.616666666578,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792069756184"
+    ],
+    "quality": "high",
+    "shot": "wind-columns",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -6500,
+        7620,
+        -6531.25
+      ],
+      "quaternion": [
+        0.0709602499477949,
+        0.9237111262007455,
+        0.20961076265675965,
+        -0.3127070936815288
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 7.540000000596047,
+      "p95": 9.799999982118607,
+      "programsBefore": 271,
+      "programsAfter": 271,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "freight": 1330.7833333332837,
+      "sorties": [
+        [
+          1790.6499999995958,
+          -1131.0585777778097,
+          486.6166666665781,
+          0
+        ],
+        [
+          -611.5660138892505,
+          -1185,
+          4,
+          0
+        ],
+        [
+          6620.649999999596,
+          -71.70924444458979,
+          1544.616666666578,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792069756184"
+    ],
+    "quality": "high",
+    "shot": "airfield-rail",
+    "clock": 90,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -981.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 42
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 3.1666666666666665,
+      "p95": 7.200000017881393,
+      "programsBefore": 271,
+      "programsAfter": 271,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "freight": 200,
+      "sorties": [
+        [
+          2317.4,
+          -1081.32,
+          602,
+          0.8
+        ],
+        [
+          -97.59999999999991,
+          -1185,
+          73,
+          1
+        ],
+        [
+          -1540.6,
+          -1185,
+          4,
+          1
+        ]
+      ]
+    },
+    "errors": [],
+    "motion": {
+      "before": {
+        "train": 200,
+        "altitude": 602,
+        "target": [
+          0,
+          2418.75
+        ]
+      },
+      "after": {
+        "train": 226,
+        "altitude": 648,
+        "target": [
+          0,
+          2418.75
+        ]
+      },
+      "reset": {
+        "bombs": 0,
+        "target": 0,
+        "aircraft": [
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792069756184"
+    ],
+    "quality": "low",
+    "shot": "bomb-release",
+    "clock": 5.999999999999984,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 1.5466666658719381,
+      "p95": 3.699999988079071,
+      "programsBefore": 254,
+      "programsAfter": 254,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "freight": 238.78333333333285,
+      "sorties": [
+        [
+          2630.650000000002,
+          -1044.1039111111108,
+          670.616666666667,
+          0
+        ],
+        [
+          215.65000000000168,
+          -1185,
+          141.61666666666702,
+          0
+        ],
+        [
+          -1491.6410138888884,
+          -1185,
+          4,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792069756184"
+    ],
+    "quality": "low",
+    "shot": "walking-strikes",
+    "clock": 28.999999999999634,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 1.6833333323399227,
+      "p95": 3.399999976158142,
+      "programsBefore": 254,
+      "programsAfter": 254,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "freight": 537.7833333333292,
+      "sorties": [
+        [
+          5045.649999999965,
+          -565.9492444444536,
+          1199.616666666659,
+          0
+        ],
+        [
+          2630.649999999966,
+          -1044.1039111111154,
+          670.6166666666592,
+          0
+        ],
+        [
+          215.64999999996587,
+          -1185,
+          141.61666666665917,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792069756184"
+    ],
+    "quality": "low",
+    "shot": "burning-city",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 1.4666666666666666,
+      "p95": 3.0999999940395355,
+      "programsBefore": 254,
+      "programsAfter": 254,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "freight": 1330.7833333332837,
+      "sorties": [
+        [
+          1790.6499999995958,
+          -1131.0585777778097,
+          486.6166666665781,
+          0
+        ],
+        [
+          -611.5660138892505,
+          -1185,
+          4,
+          0
+        ],
+        [
+          6620.649999999596,
+          -71.70924444458979,
+          1544.616666666578,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792069756184"
+    ],
+    "quality": "low",
+    "shot": "wind-columns",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -6500,
+        7620,
+        -6531.25
+      ],
+      "quaternion": [
+        0.0709602499477949,
+        0.9237111262007455,
+        0.20961076265675965,
+        -0.3127070936815288
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 3.503333333134651,
+      "p95": 5.9000000059604645,
+      "programsBefore": 254,
+      "programsAfter": 254,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "freight": 1330.7833333332837,
+      "sorties": [
+        [
+          1790.6499999995958,
+          -1131.0585777778097,
+          486.6166666665781,
+          0
+        ],
+        [
+          -611.5660138892505,
+          -1185,
+          4,
+          0
+        ],
+        [
+          6620.649999999596,
+          -71.70924444458979,
+          1544.616666666578,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792069756184"
+    ],
+    "quality": "low",
+    "shot": "airfield-rail",
+    "clock": 90,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -981.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 42
+    },
+    "formation": 18,
+    "perf": {
+      "mean": 1.5433333337306976,
+      "p95": 3.0999999940395355,
+      "programsBefore": 254,
+      "programsAfter": 254,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "freight": 200,
+      "sorties": [
+        [
+          2317.4,
+          -1081.32,
+          602,
+          0.8
+        ],
+        [
+          -97.59999999999991,
+          -1185,
+          73,
+          1
+        ],
+        [
+          -1540.6,
+          -1185,
+          4,
+          1
+        ]
+      ]
+    },
+    "errors": [],
+    "motion": {
+      "before": {
+        "train": 200,
+        "altitude": 602,
+        "target": [
+          0,
+          2418.75
+        ]
+      },
+      "after": {
+        "train": 226,
+        "altitude": 648,
+        "target": [
+          0,
+          2418.75
+        ]
+      },
+      "reset": {
+        "bombs": 0,
+        "target": 0,
+        "aircraft": [
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  }
+]
