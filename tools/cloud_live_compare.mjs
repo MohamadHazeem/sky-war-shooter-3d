@@ -24,6 +24,18 @@ await fs.mkdir(out, { recursive: true });
 const results = [];
 try {
   for (const ref of reference.shots) {
+    // Lock aircraft and gun transforms as well as the camera. Production menu
+    // construction consumes a different random stream before mission startup.
+    const localPage = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+    await localPage.goto(`${local}/tools/visual-rig.html?shot=${ref.detail ? 'formation-chase' : ref.shot}&quality=high`);
+    await localPage.waitForFunction(() => window.visualRig?.ready, null, { timeout: 180000 });
+    const fixturePose = await localPage.evaluate(() => {
+      const g = visualRig.game;
+      const pose = o => ({position:o.position.toArray(), quaternion:o.quaternion.toArray(), scale:o.scale.toArray()});
+      return { bombers:g.world.bombers().map(b => pose(b.root)),
+        gun: {rig:pose(g.gunner.rig), pivot:pose(g.gunner.gunPivot), station:g.gunner.station, ads:g.gunner.ads} };
+    });
+    await localPage.close();
     const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, serviceWorkers: 'block' });
     const page = await context.newPage();
     const errors = [];
@@ -39,14 +51,14 @@ try {
     await page.waitForFunction(() => window.sws?.assetsReady(), null, { timeout: 180000, polling: 100 });
     // Let optional production textures finish their asynchronous load before freezing time.
     await page.waitForTimeout(2000);
-    const result = await page.evaluate(({ config, scene, shot, ref }) => {
+    const result = await page.evaluate(({ config, scene, shot, ref, fixturePose }) => {
       const e = window.engine, g = window.game;
       const THREE = { Vector3: e.camera.position.constructor };
       const CAMPAIGN = sws.CAMPAIGN;
       const u = e.clouds.uniforms;
       const Atmos = { lowBase: u.uLow.value.x, windOffset: u.uWind.value, originOffset: new THREE.Vector3() };
       const applyWeather = (_, weather) => g.setWeather(weather);
-      const run = new Function('engine', 'game', 'THREE', 'CAMPAIGN', 'Atmos', 'applyWeather', 'shot', 'ref', `${config}\n${scene}\n
+      const run = new Function('engine', 'game', 'THREE', 'CAMPAIGN', 'Atmos', 'applyWeather', 'shot', 'ref', 'fixturePose', `${config}\n${scene}\n
         Math.random = seededRandom(RIG_SEED);
         let tick = 0;
         Object.defineProperty(performance, 'now', { configurable:true, value: () => tick * RIG_DT * 1000 });
@@ -56,6 +68,15 @@ try {
         engine.beforeFrame = undefined;
         const facts = setupRigShot(engine, game, shot, () => { tick++; engine.frame(RIG_DT, false); });
         engine.onFrame = undefined;
+        const restore = (o, p) => {
+          o.position.fromArray(p.position); o.quaternion.fromArray(p.quaternion); o.scale.fromArray(p.scale);
+          o.updateMatrix(); o.updateMatrixWorld(true);
+        };
+        const beforePose = game.world.bombers().map(b => b.pos.toArray());
+        game.world.bombers().forEach((b, i) => restore(b.root, fixturePose.bombers[i]));
+        restore(game.gunner.rig, fixturePose.gun.rig);
+        restore(game.gunner.gunPivot, fixturePose.gun.pivot);
+        engine.scene.updateMatrixWorld(true);
         if (ref.detail) game.setWeather({sunEl:ref.shot.startsWith('sun-gap')?7:32,sunAz:250,low:.55,high:.25,...(ref.shot.startsWith('sun-gap')?{mood:'dusk'}:{})});
         engine.camera.position.fromArray(ref.camera.position);
         engine.camera.quaternion.fromArray(ref.camera.quaternion);
@@ -67,20 +88,30 @@ try {
         return { ...facts, camera:ref.camera, time:engine.time, worldTime:game.world.time,
           renderSize:[engine.renderer.domElement.width,engine.renderer.domElement.height],
           png:engine.renderer.domElement.toDataURL('image/png'),
+          fixturePose, beforePose,
+          actualPose: {bombers:game.world.bombers().map(b => ({position:b.root.position.toArray(),quaternion:b.root.quaternion.toArray(),scale:b.root.scale.toArray()})),
+            gun:{rig:{position:game.gunner.rig.position.toArray(),quaternion:game.gunner.rig.quaternion.toArray(),scale:game.gunner.rig.scale.toArray()},
+              pivot:{position:game.gunner.gunPivot.position.toArray(),quaternion:game.gunner.gunPivot.quaternion.toArray(),scale:game.gunner.gunPivot.scale.toArray()},
+              station:game.gunner.station,ads:game.gunner.ads}},
           cloudShader:engine.clouds.tMat.fragmentShader };
       `);
-      return run(e, g, THREE, CAMPAIGN, Atmos, applyWeather, shot, ref);
-    }, { config, scene, shot: shots.find(s => s.id === (ref.detail ? 'formation-chase' : ref.shot)), ref });
+      return run(e, g, THREE, CAMPAIGN, Atmos, applyWeather, shot, ref, fixturePose);
+    }, { config, scene, shot: shots.find(s => s.id === (ref.detail ? 'formation-chase' : ref.shot)), ref, fixturePose });
     assert.equal(result.formationCount, 18);
+    assert.deepEqual(result.actualPose, result.fixturePose, 'Matching aircraft and gun poses');
     assert.ok(Math.abs(result.time - 6) < 1e-8);
     assert.deepEqual(result.renderSize, ref.renderSize);
     assert.deepEqual(errors, []);
-    const { png, cloudShader, ...metadata } = result;
+    const { png, cloudShader, fixturePose: verifiedPose, actualPose, beforePose, ...metadata } = result;
+    if (ref.detail) metadata.weather = {sunEl:ref.shot.startsWith('sun-gap')?7:32,sunAz:250,low:.55,high:.25,...(ref.shot.startsWith('sun-gap')?{mood:'dusk'}:{})};
+    metadata.poseMatch = { matched: true, aircraft: verifiedPose.bombers.length,
+      referenceHash: createHash('sha256').update(JSON.stringify(verifiedPose)).digest('hex'),
+      maxRootCorrectionMeters: Math.max(...verifiedPose.bombers.map((b,i) => Math.hypot(...b.position.map((v,j) => v-beforePose[i][j])))) };
     const bytes = Buffer.from(png.split(',')[1], 'base64');
     await fs.writeFile(`${out}/${ref.shot}.jpg`, await sharp(bytes).resize(960).jpeg({ quality: 82 }).toBuffer());
     results.push({ shot:ref.shot, ...metadata, url:live, cloudShaderHash:createHash('sha256').update(cloudShader).digest('hex'), errors });
     console.log(`LIVE ${ref.shot}: captured`);
     await context.close();
   }
-  await fs.writeFile(`${out}/manifest.json`, JSON.stringify({ capturedAt: new Date().toISOString(), note:'Production game replay of VisualRigScene; camera locked to before manifest. Production startup differs from isolated rig startup.', shots: results }, null, 2));
+  await fs.writeFile(`${out}/manifest.json`, JSON.stringify({ capturedAt: new Date().toISOString(), note:'Production game replay of VisualRigScene; camera locked to before manifest. Aircraft roots and gun transforms restored from the isolated rig before applying the identical camera pose.', shots: results }, null, 2));
 } finally { await browser.close(); }

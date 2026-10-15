@@ -4,15 +4,15 @@
   "towers": [
     {
       "altitude": 6000,
-      "occupied": 18,
+      "occupied": 8,
       "samples": 121,
-      "maxDensity": 0.807843137254902
+      "maxDensity": 0.9568627450980393
     },
     {
       "altitude": 7000,
-      "occupied": 15,
+      "occupied": 9,
       "samples": 121,
-      "maxDensity": 0.9137254901960784
+      "maxDensity": 0.8784313725490196
     },
     {
       "altitude": 7800,

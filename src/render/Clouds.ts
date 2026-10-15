@@ -105,6 +105,10 @@ float hg(float mu, float g) {
 float filteredDensity(vec3 p, vec4 L, float layerSel, bool cheap, vec2 noiseLod) {
   float h = clamp((p.y - L.x) / (L.y - L.x), 0.0, 1.0);
   vec3 q = p + uWind;
+#ifdef CLOUD_TYPES
+  // Bend cell boundaries with altitude instead of extruding coverage into walls.
+  if (layerSel < 0.5 && L.z < 0.85) q.xz += vec2(110.0, 65.0) * sin(h * 6.283185) * (1.0 - layerSel) * (1.0 - smoothstep(0.65, 0.85, L.z));
+#endif
   // Explicit LOD is essential inside divergent marches: implicit derivatives of
   // world-space positions produce horizontal mip bands at grazing angles.
 #ifdef CLOUD_TYPES
@@ -127,7 +131,11 @@ float filteredDensity(vec3 p, vec4 L, float layerSel, bool cheap, vec2 noiseLod)
   }
   float scale = mix(5600.0, 3800.0, layerSel);
 #ifdef CLOUD_TYPES
-  if (cov < 0.015) return 0.0;
+  // A weather cell needs a coherent coverage core. Remap weak coverage
+  // out before evaluating 3D detail, so it cannot seed detached fragments.
+  float denseWeather = smoothstep(0.65, 0.85, L.z);
+  if (layerSel < 0.5) cov = mix(smoothstep(0.4, 0.85, cov), cov, denseWeather);
+  if (cov < 0.08) return 0.0;
   // The upper deck remains small detached cumulus, not copies of the tall low
   // convection. Its compact rounded profile avoids vertically extruded islands.
   if (layerSel > 0.5) {
@@ -152,7 +160,7 @@ float filteredDensity(vec3 p, vec4 L, float layerSel, bool cheap, vec2 noiseLod)
   float topH = mix(0.28, 0.94, tower);
   q.xz += vec2(900.0, 350.0) * h * h * uCloudType.y;
   vec3 shapeQ = q / scale;
-  shapeQ.y *= 0.85;
+  shapeQ.y *= mix(1.05, 0.85, denseWeather);
   vec4 n = textureLod(tShape, shapeQ + uShapeDrift, noiseLod.x);
   // Three-dimensional Worley lobes define the volume itself. The weather map
   // selects a cluster, rather than extruding its 2D footprint into a cliff.
@@ -161,7 +169,7 @@ float filteredDensity(vec3 p, vec4 L, float layerSel, bool cheap, vec2 noiseLod)
   float base = (body - (0.61 - cov * 0.25)) * 3.2;
   float cap = 1.0 - smoothstep(topH * 0.72, topH, h);
   float stratusCap = 1.0 - smoothstep(0.18, 0.3, h);
-  base *= mix(cap, stratusCap, uCloudType.x) * smoothstep(0.0, 0.07, h);
+  base *= mix(cap, stratusCap, uCloudType.x) * smoothstep(0.0, 0.07, h) * smoothstep(0.08, 0.30, cov);
   if (base <= 0.0) return 0.0;
   if (!cheap) {
     vec4 eddy = textureLod(tDetail, q / 1800.0 + uDetailDrift, noiseLod.y);
@@ -169,14 +177,16 @@ float filteredDensity(vec3 p, vec4 L, float layerSel, bool cheap, vec2 noiseLod)
     // Erode only the boundary. The curls remain spatial structure, not a noisy
     // multiplier throughout the opaque core; filtered distant wisps disappear.
     float edge = 1.0 - smoothstep(0.3, 0.8, base);
-    base -= (eddy.r * 0.24 + erosion * 0.28) * edge;
+    // Erosion cannot excavate deep holes through a supporting lobe.
+    base -= min(eddy.r * 0.24 + erosion * 0.28, mix(0.28, 0.52, denseWeather)) * edge;
+    base = max(0.0, base) * mix(1.7, 1.0, denseWeather);
     // Heterogeneous liquid water inside the body creates passing veils and
     // pockets during penetration, rather than one constant grey extinction.
     base *= mix(0.32, 1.0, smoothstep(0.22, 0.65, eddy.r));
   } else {
     // Mean unresolved erosion/water content for shadow integration, avoiding
     // the old over-dense cheap field that made illuminated cloud bodies muddy.
-    base = max(0.0, base - 0.14) * 0.65;
+    base = max(0.0, base - mix(0.18, 0.14, denseWeather)) * mix(1.1, 0.65, denseWeather);
   }
 #else
   float topH = clamp(cov * 1.05, 0.05, 1.0);
@@ -363,7 +373,10 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
       float edgeK = e0 * exp(-dens * 5.0) * 4.5;
       float scat = e0 * phaseMain + 0.3 * exp(-ls * 0.25) * phaseSoft + 0.12 * exp(-ls * 0.06) * phaseFlat;
       vec3 sun = uSunColor * scat * mix(mix(0.45, 1.0, powder), 1.0, fwd) * 0.47;
-      vec3 silver = uSunColor * edgeK * sharp * 0.47;
+      // Backlit bodies retain cool skylight beneath the warm single-scatter rim.
+      sun *= mix(1.0, 0.62, fwd);
+      vec3 rimColour = mix(uSunColor, vec3(max(uSunColor.r, max(uSunColor.g, uSunColor.b))), 0.65);
+      vec3 silver = rimColour * edgeK * sharp * 1.5;
 #else
       vec3 sun = uSunColor * beer * phase * mix(0.45, 1.0, powder) * 0.47;
 #endif
@@ -383,6 +396,9 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
       float skyAccess = exp(-dens * 1.2) * mix(0.18, 1.0, smoothstep(0.05, 0.7, h));
       amb *= mix(0.42, 1.08, skyAccess);
       amb += uZenith * uAmb * skyAccess * 0.10;
+#ifdef SILVER
+      amb += vec3(0.035, 0.055, 0.10) * uAmb * fwd;
+#endif
 #endif
       if (sel < 0.5 && uGlow.w > 0.0) {
         vec2 gq = p.xz - uGlow.xy;
@@ -413,7 +429,8 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
 #ifdef SILVER
   // Only a thin VIEW column receives the forward rim. Applying this to every
   // low-density front sample used to turn entire opaque bodies into glowing dunes.
-  col += rim * T * T * T;
+  // The rim peaks on the translucent silhouette, with no inner opacity band.
+  col += rim * T * T;
 #endif
 }
 
@@ -539,6 +556,8 @@ void main() {
     marchLayer(ro, rd, th, min(sceneD, 55000.0), uHigh, 1.0, steps * 3 / 4 + 8, jitter, c2, T2, hitHigh, dw2);
     col += c2 * T; dw2 *= T; T *= T2;
   }
+  // March termination must not leak the HDR solar disk through opaque bodies.
+  if (T < 0.02) T = 0.0;
   // Distance haze on the clouds themselves
   float hit = hitLow >= 0.0 ? hitLow : hitHigh;
   if (hitLow >= 0.0 && hitHigh >= 0.0) hit = min(hitLow, hitHigh);
@@ -561,7 +580,7 @@ void main() {
     shaft += vis * exp(-float(i) * airStep / 18000.0);
   }
   float forwardAir = 0.02 + pow(max(0.0, dot(rd, uSunDir)), 6.0);
-  col += uSunColor * shaft * airStep * 0.000045 * forwardAir;
+  col += uSunColor * shaft * airStep * 0.000008 * forwardAir;
 #endif
 #ifdef TEMPORAL
   // Reprojection depth: where the cloud's opacity builds up; empty texels take the nearest

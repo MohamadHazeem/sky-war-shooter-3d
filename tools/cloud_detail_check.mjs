@@ -18,7 +18,7 @@ try {
   await page.goto(`${process.env.CLOUD_URL ?? 'http://127.0.0.1:5323'}/tools/visual-rig.html?shot=formation-chase&quality=high`);
   await page.waitForFunction(()=>window.visualRig?.ready,null,{timeout:180000});
   const records=[];
-  for(const view of ['sun-gap','sun-gap-towers','cloud-shoulder']) for(const mode of (process.argv.includes('--after-only') ? ['after'] : ['before','after'])) {
+  for(const view of (process.env.CLOUD_VIEWS?.split(',') ?? ['sun-gap','sun-gap-towers','cloud-shoulder'])) for(const mode of (process.argv.includes('--after-only') ? ['after'] : ['before','after'])) {
     const data=await page.evaluate(async ({baseline,view,mode})=>{
       const { Atmos, skyGLSL } = await import('/src/render/Atmosphere.ts');
       const { depthGLSL } = await import('/src/render/Clouds.ts');
@@ -30,7 +30,8 @@ try {
       c.syncUniforms = (...args) => { c.filmSync(...args); if (mode === 'before') { c.uniforms.uLow.value.y = 5900; c.uniforms.uLow.value.w = 3; } };
       const before=new Function('skyGLSL','depthGLSL','CLOUD_LIGHTS','return `'+baseline+'`')(skyGLSL,depthGLSL,CLOUD_LIGHTS);
       for(const mat of [c.tMat,c.shadowMat,c.probeMat]) {mat.fragmentShader=mode==='before'?before:c.filmOriginal;mat.needsUpdate=true;}
-      g.setWeather({sunEl:view.startsWith('sun-gap')?7:32,sunAz:250,low:.55,high:.25,...(view.startsWith('sun-gap')?{mood:'dusk'}:{})});
+      const weather={sunEl:view.startsWith('sun-gap')?7:32,sunAz:250,low:.55,high:.25,...(view.startsWith('sun-gap')?{mood:'dusk'}:{})};
+      g.setWeather(weather);
       const cam=e.camera;
       cam.position.set(view==='sun-gap-towers'?-10000:-6000,view==='sun-gap-towers'?7000:view==='sun-gap'?5100:5500,400);
       // Read the active renderer singleton after weather sync. A bare Vite import
@@ -59,7 +60,7 @@ try {
         }
         prior=px;
       }
-      return {png,camera:{position:cam.position.toArray(),quaternion:cam.quaternion.toArray(),fov:cam.fov},meanAlphaDelta:total/count,maxAlphaDelta:max};
+      return {png,weather,camera:{position:cam.position.toArray(),quaternion:cam.quaternion.toArray(),fov:cam.fov},meanAlphaDelta:total/count,maxAlphaDelta:max};
     },{baseline,view,mode});
     const {png,...metrics}=data;
     await fs.writeFile(`${dir}/${view}-${mode}.jpg`,await sharp(Buffer.from(png.split(',')[1],'base64')).resize(960).jpeg({quality:82}).toBuffer());

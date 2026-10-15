@@ -3,6 +3,13 @@
     {
       "view": "sun-gap",
       "mode": "after",
+      "weather": {
+        "sunEl": 7,
+        "sunAz": 250,
+        "low": 0.55,
+        "high": 0.25,
+        "mood": "dusk"
+      },
       "camera": {
         "position": [
           -6000,
@@ -17,12 +24,19 @@
         ],
         "fov": 58
       },
-      "meanAlphaDelta": 0.0018836890637302268,
-      "maxAlphaDelta": 0.21533203125
+      "meanAlphaDelta": 0.0018190767291066307,
+      "maxAlphaDelta": 0.335693359375
     },
     {
       "view": "sun-gap-towers",
       "mode": "after",
+      "weather": {
+        "sunEl": 7,
+        "sunAz": 250,
+        "low": 0.55,
+        "high": 0.25,
+        "mood": "dusk"
+      },
       "camera": {
         "position": [
           -10000,
@@ -37,12 +51,18 @@
         ],
         "fov": 58
       },
-      "meanAlphaDelta": 0.0027524020200894203,
-      "maxAlphaDelta": 0.355224609375
+      "meanAlphaDelta": 0.0023850361359202495,
+      "maxAlphaDelta": 0.3978271484375
     },
     {
       "view": "cloud-shoulder",
       "mode": "after",
+      "weather": {
+        "sunEl": 32,
+        "sunAz": 250,
+        "low": 0.55,
+        "high": 0.25
+      },
       "camera": {
         "position": [
           -6000,
@@ -57,8 +77,8 @@
         ],
         "fov": 58
       },
-      "meanAlphaDelta": 0.003650519370378617,
-      "maxAlphaDelta": 0.30908203125
+      "meanAlphaDelta": 0.0027104052383369118,
+      "maxAlphaDelta": 0.421630859375
     }
   ],
   "errors": []
