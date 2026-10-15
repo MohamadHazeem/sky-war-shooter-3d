@@ -20,6 +20,11 @@ while :; do
     ci=$($GH run list --branch "$branch" --limit 5 --json headSha,conclusion --jq ".[] | select(.headSha==\"$head\") | .conclusion" | head -1)
     [ "$ci" = "success" ] || continue
     [ -f "$S/$k.reviewed-$head" ] && continue
+    # cloud-lane branches have no local worktree yet: check the branch out for review/preview
+    if [ ! -d "$wt" ]; then git worktree add -q --detach "$wt" "$head" && ln -sf "$ROOT/node_modules" "$wt/node_modules"; fi
+    [ "$lane" = "cloud" ] && git -C "$wt" checkout -q --detach "$head"
+    url=$(tools/preview.sh "$wt" "$(echo "$branch" | sed 's#.*/##')" 2>/dev/null | tail -1)
+    [ -n "$url" ] && { echo "$url" > "$S/$k.preview"; echo "- $branch: $url" >> "$S/previews.md"; log "preview $branch: $url"; }
     log "review $branch @ ${head:0:7}"
     verdict=$(cd "$wt" && claude -p --model opus "You are the quality gate for the Sky War Shooter 3D game (owner wants 100/100 graphics, B-17 gunner focus). Review task branch $branch. Read its spec (docs/phase11/ file matching the report number), the report $report, and LOOK at the before/after screenshots it links (Read the image files). Decide whether the result is clearly better than the live game in the shots it touches and meets the spec's Done-when. Reply with the FIRST line exactly 'APPROVE' or 'REJECT', then up to 8 short lines of concrete reasons / required fixes." 2>/dev/null < /dev/null)
     touch "$S/$k.reviewed-$head"; echo "$verdict" > "$S/$k.verdict"
