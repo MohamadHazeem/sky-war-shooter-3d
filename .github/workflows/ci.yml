@@ -17,10 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
-        with: { node-version: 22 }
+        with:
+          node-version: 22
       - id: nm
         uses: actions/cache@v4
-        with: { path: node_modules, key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json') }} }
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - if: steps.nm.outputs.cache-hit != 'true'
         run: npm ci
       - run: npx tsc --noEmit
@@ -31,14 +34,18 @@ jobs:
     timeout-minutes: 10
     strategy:
       fail-fast: false
-      matrix: { shard: [1, 2, 3] }
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
-        with: { node-version: 22 }
+        with:
+          node-version: 22
       - id: nm
         uses: actions/cache@v4
-        with: { path: node_modules, key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json') }} }
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - if: steps.nm.outputs.cache-hit != 'true'
         run: npm ci
       - run: npx vitest run --shard=${{ matrix.shard }}/3
