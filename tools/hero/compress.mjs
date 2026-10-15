@@ -5,6 +5,7 @@ import {meshopt,textureCompress} from '@gltf-transform/functions';
 import {MeshoptEncoder} from 'meshoptimizer';
 import sharp from 'sharp';
 import { finishNormalPng } from './normal-finish.mjs';
+import { retainBomberCrew } from './retain-main.mjs';
 import {mkdirSync,writeFileSync,statSync,copyFileSync,readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
@@ -22,6 +23,7 @@ for(const m of doc.getRoot().listMaterials()) {
   if(m.getName()==='hero_stencils')m.setAlphaMode('MASK').setAlphaCutoff(.4).setDoubleSided(true);
   if(/marking|walkway/.test(m.getName()))m.setDoubleSided(true);
 }
+await retainBomberCrew(doc);
 const stencilTexture=doc.getRoot().listMaterials().find(m=>m.getName()==='hero_stencils').getBaseColorTexture();
 stencilTexture.setName('hero_stencils').setURI('hero_stencils.png');
 await doc.transform(textureCompress({encoder:sharp,targetFormat:'webp',quality:95,resize:[512,512],pattern:/^(?!hero_stencils(?:\.|$))/}),textureCompress({encoder:sharp,targetFormat:'webp',lossless:true,pattern:/^hero_stencils$/}),meshopt({encoder:MeshoptEncoder,level:'high',quantizeTexcoord:14}));
@@ -30,7 +32,7 @@ const ktx=process.env.TOKTX, basis=process.env.BASISU;
 const names=['base','normal','orm','silver','silver-orm'];
 for(const name of names) {
   const input=src+'/'+name+'-detail.png';
-  if(name==='normal') writeFileSync(input,await finishNormalPng(src+'/'+name+'.png',1024,2));
+  if(name==='normal') writeFileSync(input,await finishNormalPng(src+'/'+name+'.png',1024));
   else await sharp(src+'/'+name+'.png').resize(['base','silver'].includes(name)?2048:1024).png().toFile(input);
   await sharp(input).webp({quality:95,lossless:!['base','silver'].includes(name)}).toFile(out+'/'+name+'.webp');
   if(ktx) execFileSync(ktx,['--t2','--encode','uastc','--uastc_quality','2','--zcmp','18','--genmipmap','--assign_oetf',['base','silver'].includes(name)?'srgb':'linear',out+'/'+name+'.ktx2',input],{stdio:'inherit'});

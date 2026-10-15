@@ -41,17 +41,11 @@ is Basis Universal 2.50.0 (Homebrew bottle `basis_universal`, extracted locally)
   `hero_bench.mjs`.
 - `HERO_DEBUG=1` dumps the paint masks; `HERO_UVCHECK=1` reports UV-island overlap between objects.
 
-## Phase 11
+## Final review scope
 
-`parts.finish_fittings` adds original-window boundary seals, hollow exhaust rims and the
-Fw 190's two cylinder rows without replacing the FlightGear skin. Paint now includes
-metric oil-canning, slotted service fasteners, separate fabric roughness and CC0 scan
-variation (`../references/CREDITS.md`). Markings retain 2048 resolution with quality-95
-WebP fallback. Glass receives a tinted clearcoat/IOR material; the existing prewarm
-includes the intact and damaged variants.
-
-`build.bake_relief` displaces the actual subdivided airframe from the metre-valued height
-field and bakes tangent normals/AO at **1024**, 48 samples. The editable high-poly sources
-are `out/<kind>-relief-source.blend`; curvature maps are build intermediates. All shipped
-LODs share the atlas, with the previous 10–13k / 2.6–4.2k far-level caps and named parts.
-Use `tools/heavy.sh sh tools/hero/luftwaffe/build.sh` and supply the existing Basis encoder.
+All five existing heroes retain approved geometry and skin maps from repository commit
+`683275db` through `../retain-main.mjs`; only the canopy material is changed. This removes
+the rejected baked skin deformation, wing-root smears and satin surface trade-offs. The
+legacy build recipes above are retained for source provenance. The final finish is
+reproducible with `node tools/hero/luftwaffe/finish.mjs bf109 fw190 me262 bf110 ju88`,
+with the pinned commit available locally. No Blender rebuild or texture encoding is needed.

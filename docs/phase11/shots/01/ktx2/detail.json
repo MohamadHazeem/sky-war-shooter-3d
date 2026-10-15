@@ -74,11 +74,11 @@
       ],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 244,
-        "programsAfter": 244,
-        "mean": 4.4222222222222225,
-        "p50": 4.5,
-        "p95": 6,
+        "programsBefore": 248,
+        "programsAfter": 248,
+        "mean": 4.535555555423101,
+        "p50": 4.600000023841858,
+        "p95": 6.300000011920929,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
@@ -154,11 +154,11 @@
       ],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 244,
-        "programsAfter": 244,
-        "mean": 5.095555555820465,
-        "p50": 4.4000000059604645,
-        "p95": 8.599999994039536,
+        "programsBefore": 248,
+        "programsAfter": 248,
+        "mean": 6.166666666666667,
+        "p50": 5.0999999940395355,
+        "p95": 10.199999988079071,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
@@ -234,11 +234,11 @@
       ],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 244,
-        "programsAfter": 244,
-        "mean": 4.497777777910232,
-        "p50": 4.299999982118607,
-        "p95": 6,
+        "programsBefore": 248,
+        "programsAfter": 248,
+        "mean": 6.093333333730698,
+        "p50": 5.5,
+        "p95": 9.5,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
@@ -314,11 +314,11 @@
       ],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 244,
-        "programsAfter": 244,
-        "mean": 4.582222222619587,
-        "p50": 4.300000011920929,
-        "p95": 6.399999976158142,
+        "programsBefore": 248,
+        "programsAfter": 248,
+        "mean": 4.724444444974264,
+        "p50": 4.9000000059604645,
+        "p95": 6.5,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
@@ -394,11 +394,11 @@
       ],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 244,
-        "programsAfter": 244,
-        "mean": 4.611111111111111,
-        "p50": 4.4000000059604645,
-        "p95": 6.299999982118607,
+        "programsBefore": 248,
+        "programsAfter": 248,
+        "mean": 6.095555555820465,
+        "p50": 5.0999999940395355,
+        "p95": 10.200000017881393,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     }

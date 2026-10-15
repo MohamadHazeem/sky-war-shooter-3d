@@ -412,7 +412,9 @@ export class GunnerController {
       // The hero export groups these legacy surfaces by material under `airframe`.
       airframe_hero_interior_lod: id !== null,
       airframe_hero_glass_lod: id !== null,
+      airframe_hero_nose_glass_lod: id !== null,
       airframe_hero_ww2_pilot_old_lod: id === 'tail' || id === 'waistL' || id === 'waistR',
+      airframe_hero_own_seated_crew_lod: id === 'tail' || id === 'waistL' || id === 'waistR',
       // at either waist window both external waist guns go: the interior has its own
       gun_waist_left: id === 'waistL' || id === 'waistR',
       gun_waist_right: id === 'waistL' || id === 'waistR',

@@ -53,8 +53,8 @@ try {
     if(!enemy)throw Error('Missing fixture fighter');
     const tail=view.startsWith('tail-bf109');
     enemy.pos.copy(r.engine.camera.position).addScaledVector(r.engine.camera.getWorldDirection(new THREE.Vector3()),midrange?25*enemy.model.scale.x:(tail?180:150));
-    enemy.quat.setFromUnitVectors(new THREE.Vector3(0,0,1),new THREE.Vector3(...(midrange?(tail?[.85,-.12,-.5]:[-.3,.02,.95]):(tail?[.15,-.65,1]:[-1,-.08,.3]))).normalize());
-    enemy.root.rotateZ(midrange?.55:(tail?.4:-.45));enemy.root.updateMatrixWorld(true);
+    enemy.quat.setFromUnitVectors(new THREE.Vector3(0,0,1),new THREE.Vector3(...(midrange?(tail?[-.6,-.55,.65]:[-.7,-.40,.68]):(tail?[.15,-.65,1]:[-1,-.08,.3]))).normalize());
+    enemy.root.rotateZ(midrange?.35:(tail?.4:-.45));enemy.root.updateMatrixWorld(true);
    }
    if(ktx){
     const hero=await import('/src/world/HeroLook.ts');hero.enableHeroKtx2(r.engine.renderer);
@@ -67,6 +67,13 @@ try {
      if(tries===199)throw Error('KTX2 did not become ready');
      await new Promise(resolve=>setTimeout(resolve,25));
     }
+   }
+   if(midrange){
+    // A real clear-day sun angle lights the port/aft inspection sector. Keep
+    // original shadowed rig fixtures too; both 25 m sides use this same weather.
+    const {applyWeather}=await import('/src/render/Weather.ts');
+    const {RIG_WEATHER}=await import('/src/dev/VisualRigConfig.ts');
+    applyWeather(r.engine,{...RIG_WEATHER.clear,sunAz:315,sunEl:35,low:.15});
    }
    if(!fixture){
     const {applyWeather}=await import('/src/render/Weather.ts');
@@ -101,14 +108,14 @@ try {
    const target=fixture && view!=='b17-beauty'?w.aircraft.find(p=>p.team==='axis'):null;
    const glass=[];a.model.traverse(o=>{if(o.isMesh && /glass/.test(o.material.name))glass.push({name:o.material.name,opacity:o.material.opacity,color:o.material.color.toArray(),envMap:!!o.material.envMap,envIntensity:o.material.envMapIntensity,transmission:o.material.transmission??0});});
    const textures=[];a.model.traverse(o=>{if(o.isMesh && o.material.name?.startsWith('hero_') && o.material.normalMap)textures.push({name:o.material.name,compressed:!!o.material.map?.isCompressedTexture,normalSize:[o.material.normalMap.image?.width,o.material.normalMap.image?.height]});});
-   return {kind:view,targetRange:target?cam.position.distanceTo(target.pos)/target.model.scale.x:undefined,glass:[...new Map(glass.map(m=>[m.name,m])).values()],weather:dusk?{sunEl:10,sunAz:55,low:.15,mood:'dusk'}:night?{mood:'night'}:!fixture?{sunEl:38,sunAz:55,low:.15}:r.metadata.weather,fixture,aircraft:fixture?w.aircraft.map(pose):undefined,glow:(night||dusk)?{count:w.effects.glow.count,alpha:Array.from(w.effects.glow.iCol.array.slice(0,8)),visible:w.effects.glow.mesh.visible,night:(await import('/src/render/WeatherState.ts')).weatherNow.night}:undefined,subject:pose(a),modelRange:fixture?cam.position.distanceTo(b.pos)/scale:from.distanceTo(at)/scale,camera:r.metadata.camera,textures:[...new Map(textures.map(t=>[t.name,t])).values()]};
+   return {kind:view,targetRange:target?cam.position.distanceTo(target.pos)/target.model.scale.x:undefined,glass:[...new Map(glass.map(m=>[m.name,m])).values()],weather:midrange?{sunEl:35,sunAz:315,low:.15}:dusk?{sunEl:10,sunAz:55,low:.15,mood:'dusk'}:night?{mood:'night'}:!fixture?{sunEl:38,sunAz:55,low:.15}:r.metadata.weather,fixture,aircraft:fixture?w.aircraft.map(pose):undefined,glow:(night||dusk)?{count:w.effects.glow.count,alpha:Array.from(w.effects.glow.iCol.array.slice(0,8)),visible:w.effects.glow.mesh.visible,night:(await import('/src/render/WeatherState.ts')).weatherNow.night}:undefined,subject:pose(a),modelRange:fixture?cam.position.distanceTo(b.pos)/scale:from.distanceTo(at)/scale,camera:r.metadata.camera,textures:[...new Map(textures.map(t=>[t.name,t])).values()]};
   },{view:kind,fixture,ktx:!!process.env.DETAIL_KTX2 && !fixture && !kind.startsWith('b17'),night:!!process.env.DETAIL_NIGHT});
   // Compact exact pose fingerprints avoid repeating thousands of identical pivots.
   for(const pose of [state.subject,...(state.aircraft ?? [])]){
    const parts=pose.parts;pose.parts={count:parts.length,sha256:createHash('sha256').update(JSON.stringify(parts)).digest('hex')};
   }
   const data=await page.evaluate(()=>window.visualRig.png());
-  await fs.writeFile(`${out}/${fixture?kind:'close-'+kind}.jpg`,await smallJpeg(Buffer.from(data.split(',')[1],'base64'),1440));
+  await fs.writeFile(`${out}/${fixture?kind:'close-'+kind}.jpg`,await smallJpeg(Buffer.from(data.split(',')[1],'base64'),kind.endsWith('-25m')?1920:1440));
   state.frameMs=await page.evaluate(()=>window.visualRig.benchmark(45));const previous=report.views.findIndex(v=>v.kind===kind);
   if(previous<0)report.views.push(state);else report.views[previous]=state;
   await context.close();console.log(kind,state.modelRange,state.frameMs.mean);

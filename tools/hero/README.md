@@ -59,10 +59,9 @@ This uses an existing Playwright/Chrome installation, explicitly drives frames, 
 ## Phase 11 detail pass
 
 Run every Blender/compression/capture job through `tools/heavy.sh`. The existing accurate
-silhouette and shared mechanical owners are preserved. `detail.py` supplies metric sheet
-relief and CC0 scan residuals (licence and source hashes in `references/CREDITS.md`).
-The B-17 adds service covers, shallow dents, oil-canning, 45 mm rivet pitch on calibrated
-atlas charts, fabric rib tapes, satin paint, and dark steel radial fins/pushrods.
+silhouette and shared mechanical owners are preserved. `detail.py` supplies filtered tangent slopes and CC0 scan residuals (licence and source hashes in `references/CREDITS.md`).
+The B-17 adds service covers, shallow dents, filtered offset rivet rows on the source
+atlas charts, fabric rib tapes, matte paint, and dark steel radial fins/pushrods.
 These are plausible material details, not a factory rivet-plan reconstruction.
 Normals/AO now bake at the shipped 1024 resolution with 48 samples; colour remains 2048.
 Curvature controls roughness and is retained as a build intermediate. Basis normal mipmaps
@@ -103,18 +102,21 @@ part poses. Close daylight pairs use matched frontal light; dusk uses the produc
 dusk weather with the low sun facing the visible aircraft surfaces. No extra light or
 exposure override is added.
 
-### Second review: clear glazing and lighting-driven skin detail
+### Final review: restrained detail and retained main assets
 
-The glass alpha is 0.075 (B-17 including Low) / 0.085 (fighters), with neutral dark tint;
-`Models.ts` / `HeroLook.ts` already bind the dynamic sky reflection. No extra runtime pass.
-Skin laps have asymmetric relief, variable joint widths and staggered B-17 sheet ends.
-Recess colour is restrained and rivet colour highlights are removed. `finish_normals` adds
-metric tangent slopes at 1024 px to recover relief finer than the subdivided source mesh;
-fastener roughness supplies their specular response. `normal-finish.mjs` preserves fine
-slope contrast during export while excluding steep edges and normalizing each texel. This is an offline finish of the
-geometric normal bake, not additional runtime geometry or a higher-resolution texture.
+The rejected broad oil-canning/lap deformation and normal amplification are removed.
+The B-17 again has recessed seams with offset, filtered rivet rows and matte olive paint.
+A furnished forward cabin and bombsight reveal the retained seated bombardier through the
+separate 20%-opacity nose dome. Fighter normal/ORM maps retain their approved baseline
+bytes; the rejected projected relief normal/AO passes are omitted.
 
-The detail rig also captures `waist-fw190-25m` and `tail-bf109-25m` using the production
-ADS eye and 34-degree field of view. `targetRange` is measured in model metres (world
-range divided by the game's target scale), and the comparison gate requires exactly 25 m.
-Both live and revised assets use identical target, bomber, camera and articulated poses.
+`retain-main.mjs` pins all five approved fighters and the B-17 crew to repository commit
+`683275db`, which landed during this task. `compress.mjs` copies that seated crew into
+the new B-17. `luftwaffe/finish.mjs` preserves all five fighter GLBs and all their maps,
+changing only the canopy material. This deliberately supersedes this branch's rejected
+fighter skins and avoids overwriting the newer approved geometry, paint and fittings.
+Rebuilding needs the pinned commit available locally (`git show 683275db:...`).
+The rejected fighter bake/paint modifications have been reverted.
+
+The 25 m ADS pair uses identical oblique target poses on both sides and retains native
+1920-pixel captures. Both baseline and after must be recaptured when those poses change.

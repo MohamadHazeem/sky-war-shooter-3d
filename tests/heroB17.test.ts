@@ -67,6 +67,10 @@ describe('shipped B-17 asset contract', () => {
     expect(lowGlass.getAlphaMode()).toBe('BLEND');
     expect(lowGlass.getBaseColorFactor()[3]).toBeLessThan(.4);
     expect(lowGlass.getExtension('KHR_materials_transmission')).toBeNull();
+    const noseGlass=r.listMaterials().find(m=>m.getName()==='hero_nose_glass')!;
+    expect(noseGlass.getAlphaMode()).toBe('BLEND');
+    expect(noseGlass.getBaseColorFactor()[3]).toBeGreaterThan(.1);
+    expect(noseGlass.getBaseColorFactor()[3]).toBeLessThan(.3);
     const skin=r.listMaterials().find(m=>m.getName()==='hero_skin')!;
     expect(skin.getBaseColorTexture()).toBeTruthy();expect(skin.getNormalTexture()).toBeTruthy();expect(skin.getOcclusionTexture()).toBeTruthy();
     expect(r.listMaterials().find(m=>m.getName()==='hero_glass')!.getExtension('KHR_materials_transmission')).toBeNull();

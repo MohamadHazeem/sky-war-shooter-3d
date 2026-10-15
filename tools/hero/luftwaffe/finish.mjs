@@ -19,19 +19,19 @@ import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { NodeIO } from '@gltf-transform/core';
-import { ALL_EXTENSIONS, KHRMaterialsClearcoat, KHRMaterialsIOR } from '@gltf-transform/extensions';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { meshopt, textureCompress, prune } from '@gltf-transform/functions';
 import { MeshoptEncoder, MeshoptDecoder } from 'meshoptimizer';
 import sharp from 'sharp';
-import { finishNormalPng } from '../normal-finish.mjs';
+import { retainFighter } from '../retain-main.mjs';
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '../../..');
 const SRC = process.env.HERO_SRC ?? join(REPO, 'tools/hero/luftwaffe/out');
 const OUT = process.env.HERO_OUT ?? join(REPO, 'public/models');
-// Shipped sizes: 2048 colour/markings, 1024 normal/packed material maps.
-// Mipmapped KTX2 replaces the embedded WebP without adding runtime texture slots.
+// texture sizes: colour carries the markings and seams at full size; the normal map (grooves, rivets)
+// and ORM (AO, roughness, metalness) are low-frequency enough for half (GPU memory: no KTX2 here)
 const TEX = { base: Number(process.env.HERO_TEX ?? 2048), normal: 1024, orm: 1024, ace: Number(process.env.HERO_TEX ?? 2048) };
-const Q = Number(process.env.WEBP_QUALITY ?? 95);
+const Q = Number(process.env.WEBP_QUALITY ?? 86);
 
 await MeshoptEncoder.ready;
 await MeshoptDecoder.ready;
@@ -50,7 +50,6 @@ function isolateNamedMeshes(doc) {
 }
 
 async function png(kind, map, size = TEX[map] ?? TEX.base) {
-  if (map === 'normal') return finishNormalPng(readFileSync(join(SRC, `${kind}_${map}.png`)), size);
   return sharp(readFileSync(join(SRC, `${kind}_${map}.png`))).resize(size, size).png().toBuffer();
 }
 
@@ -67,8 +66,7 @@ async function ktx2(kind, map, name) {
   const dir = mkdtempSync(join(tmpdir(), 'herok-'));
   const src = join(dir, `${kind}_${name}.png`);
   writeFileSync(src, await png(kind, map));
-  // The Bf 109's dense atlas needs slightly more colour RDO to retain its 8 MiB budget.
-  const args = ['-ktx2', '-uastc', '-uastc_level', '2', '-uastc_rdo_l', name === 'base' ? (kind === 'bf109' ? '1.3' : '0.6') : '1.0', '-mipmap',
+  const args = ['-ktx2', '-uastc', '-uastc_level', '2', '-uastc_rdo_l', name === 'base' ? '0.6' : '1.0', '-mipmap',
     '-ktx2_zstandard_level', '12', '-output_path', dir];
   if (name !== 'base') args.push('-linear');
   if (name === 'normal') args.push('-normal_map');
@@ -82,8 +80,10 @@ async function ktx2(kind, map, name) {
 const want = process.argv.slice(2);
 const kinds = want.length ? want : readdirSync(SRC).filter((f) => f.endsWith('.glb')).map((f) => f.slice(0, -4));
 mkdirSync(OUT, { recursive: true });
-if (!BASISU) console.log('no Basis encoder (BASISU): WebP only');
+if (!BASISU && kinds.some(k => !['bf109','fw190','me262','bf110','ju88'].includes(k))) console.log('no Basis encoder (BASISU): WebP only');
 for (const kind of kinds) {
+  // Final review: retain approved geometry/skin maps; only improve clear glazing.
+  if (['bf109','fw190','me262','bf110','ju88'].includes(kind)) { await retainFighter(kind); continue; }
   const doc = await io.read(join(SRC, `${kind}.glb`));
   const root = doc.getRoot();
   const skin = root.listMaterials().find((m) => m.getName() === `hero_${kind}`);
@@ -96,12 +96,10 @@ for (const kind of kinds) {
   skin.setBaseColorFactor([1, 1, 1, 1]).setBaseColorTexture(base)
     .setMetallicFactor(1).setRoughnessFactor(1).setMetallicRoughnessTexture(orm)
     .setOcclusionTexture(orm).setOcclusionStrength(1)
-    .setNormalTexture(nrm).setNormalScale(1.15)
+    .setNormalTexture(nrm).setNormalScale(1)
     .setDoubleSided(false).setAlphaMode('OPAQUE');
   if (glass) {
-    glass.setExtension('KHR_materials_clearcoat',doc.createExtension(KHRMaterialsClearcoat).createClearcoat().setClearcoatFactor(.35).setClearcoatRoughnessFactor(.08));
-    glass.setExtension('KHR_materials_ior',doc.createExtension(KHRMaterialsIOR).createIOR().setIOR(1.46));
-    glass.setBaseColorFactor([0.12, 0.145, 0.15, 0.085]).setAlphaMode('BLEND').setRoughnessFactor(0.045)
+    glass.setBaseColorFactor([0.62, 0.68, 0.7, 0.2]).setAlphaMode('BLEND').setRoughnessFactor(0.04)
       .setMetallicFactor(0).setDoubleSided(true).setBaseColorTexture(null).setMetallicRoughnessTexture(null);
   }
   isolateNamedMeshes(doc);

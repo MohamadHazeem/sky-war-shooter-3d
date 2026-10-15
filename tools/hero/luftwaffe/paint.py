@@ -7,15 +7,12 @@ t/8+0.5, surface id/64), 'ao'. Output (H, W, 3) arrays in file colour space:
           chipping to bare aluminium and primer, fading
   ace     the same with the ace's markings (kill bars, emblem, Kommandeur chevrons, spinner)
   orm     R occlusion (baked AO), G roughness, B metalness (glTF packing)
-  height  metre-valued relief, displaced onto a high-poly copy and baked in build.py
-  curvature  signed relief curvature at the 1024 shipped detail-map resolution
+  normal  tangent-space normal map from the height field (panel-line grooves, rivet heads,
+          fabric rib tapes), derived in the atlas's own UV frame
 Everything is a function of the 3D position / surface coordinates, so markings and seams run
 across UV islands without seams in the pattern.
 """
-import math, os, sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from detail import scan_variation, sheet_relief, curvature
+import math, os
 import numpy as np
 
 DEBUG = bool(os.environ.get('HERO_DEBUG'))
@@ -467,7 +464,6 @@ def paint(m, maps, size):
     height = np.zeros((H, W), np.float32)
     seam = np.zeros((H, W), np.float32)
     rivet = np.zeros((H, W), np.float32)
-    panel_finish = np.zeros((H, W), np.float32)
     texel = np.maximum(tm_ref, 1e-4)
     def line_px(F, gF, v0):
         return np.abs(F - v0) / gF
@@ -479,13 +475,8 @@ def paint(m, maps, size):
             continue
         Ss, Ts, gSs, gTs = S[sel], T[sel], gS[sel], gT[sel]
         Pk = P[sel]
-        # Finish changes follow the measured sheet stations, not a second arbitrary grid.
-        sb = sorted(set(ln[0] if isinstance(ln, tuple) else ln for ln in s.lines_s))
-        tb = sorted(set(ln[0] if isinstance(ln, tuple) else ln for ln in s.lines_t))
-        panel_finish[sel] = np.sin(np.searchsorted(sb, Ss)*12.989 + np.searchsorted(tb, Ts)*7.233 + k)
         dmin = np.full(Ss.shape, 99.0, np.float32)
         rv = np.zeros(Ss.shape, np.float32)
-        lap = np.zeros(Ss.shape, np.float32)
         if s.kind == 'body':
             along_s = Ts * np.hypot(Pk[:, 0], Pk[:, 1] - s.axis_y)   # arc length round the body
         else:
@@ -497,20 +488,16 @@ def paint(m, maps, size):
             dperp = np.abs(dp - off)
             da = np.abs((along / sp) % 1.0 - 0.5) * sp / texel
             return 1 - sstep(0.45, 1.05, np.hypot(dperp, da))
-        for j, ln in enumerate(s.lines_s):
+        for ln in s.lines_s:
             v0, lo, hi = (ln, -99, 99) if not isinstance(ln, tuple) else ln
-            d = line_px(Ss, gSs, v0) / (.65 + .5*(.5+.5*np.sin(j*7.1+k)))
-            signed = (Ss-v0)/gSs
-            lap += .36*np.tanh(signed/.65)*np.exp(-(signed/2.8)**2)*((Ts>=lo)&(Ts<=hi))
+            d = line_px(Ss, gSs, v0)
             rng_ = (Ts >= lo) & (Ts <= hi)
             d = np.where(rng_, d, 99)
             dmin = np.minimum(dmin, d)
             rv = np.maximum(rv, np.where(rng_, rivets(d, along_s), 0))
-        for j, ln in enumerate(s.lines_t):
+        for ln in s.lines_t:
             v0, lo, hi = (ln, -99, 99) if not isinstance(ln, tuple) else ln
-            d = line_px(Ts, gTs, v0) / (.55 + .35*(.5+.5*np.sin(j*3.7+k)))
-            signed = (Ts-v0)/gTs
-            lap += .18*np.tanh(signed/.6)*np.exp(-(signed/2.4)**2)*((Ss>=lo)&(Ss<=hi))
+            d = line_px(Ts, gTs, v0)
             rng_ = (Ss >= lo) & (Ss <= hi)
             d = np.where(rng_, d, 99)
             dmin = np.minimum(dmin, d)
@@ -523,18 +510,7 @@ def paint(m, maps, size):
             # fasteners at the corners and along the edges
             rv = np.maximum(rv, np.where(inside, rivets(d, along_s if s.kind == 'body' else along_t) * 0.8, 0))
         ln_mask = 1 - sstep(0.35, 1.15, dmin)
-        h = lap - ln_mask * .24 + rv * .52
-        # Metric thin-skin deformation, retained between the existing measured panel stations.
-        h += 1.6 * sheet_relief(Ss, along_s, .58, .36) / .0022
-        # Countersunk service fasteners: broader collar, recessed slot, not giant rivet heads.
-        for s0, s1, t0, t1 in s.hatches:
-            for cs in (s0+.035, s1-.035):
-                for ct in (t0+.035, t1-.035):
-                    dx=(Ss-cs)/gSs;dy=(Ts-ct)/gTs
-                    collar=np.exp(-(dx*dx+dy*dy)/1.4)
-                    slot=np.exp(-dx*dx/.12-dy*dy/1.0)
-                    h += .65*collar-.7*slot
-                    rv=np.maximum(rv,collar*.7)
+        h = -ln_mask * 0.6 + rv * (0.14 if texel < 0.008 else 0.0)
         if s.fabric > 0:
             ph = (Ss / s.fabric) % 1.0
             rib = 1 - sstep(0.0, 0.06, np.abs(ph - 0.5) - 0.0)
@@ -597,18 +573,8 @@ def paint(m, maps, size):
         pc = pc + (lum * 1.08 - pc) * sun
         pc = pc + sun * 0.05
         col = np.where(skinm[..., None], pc, col)
-        scan_color, scan_rough = scan_variation(P[..., 2] * .37 + P[..., 0] * .19, P[..., 1] * .5 + P[..., 0] * .23)
-        col *= 1 + (skinm * scan_color * .08)[..., None]
-        # Sheet-to-sheet finish changes interrupt the reflection without painting a dark grid.
-        panel = panel_finish
-        rough = np.where(skinm, .43 + panel * .16 + (lowf - .5) * .14 + scan_rough * .075, rough)
-        col *= 1 + (skinm * panel * .10)[...,None]
-        # Rivets have no painted highlight; their normals and roughness carry the glint.
-        rough = np.where(skinm, rough - rivet * .24, rough)
-        for k, surface in enumerate(m.surfs):
-            if surface and surface.fabric:
-                rough = np.where((sid == k) & skinm, .76 + .04 * scan_rough, rough)
-        col = np.where(skinm[..., None], col * (1 - 0.16 * seam)[..., None], col)
+        rough = np.where(skinm, 0.6 + (lowf - 0.5) * 0.12 + (nz(9, 33, 3) - 0.5) * 0.08, rough)
+        col = np.where(skinm[..., None], col * (1 - 0.32 * seam)[..., None], col)
         # streaks aft of the seams (dirt drawn back by the airflow): stretched noise
         streak = fbm(flatP, (22, 22, 0.45), 3, seed + 41).reshape(H, W)
         dirt = sstep(0.58, 0.85, streak) * 0.05
@@ -690,12 +656,18 @@ def paint(m, maps, size):
     base_c, rough, metal = weather(base_m)
     ace_c, _, _ = weather(ace_m)
 
-    # Metre-valued relief is displaced onto a subdivided aircraft in build.py, then baked.
-    hm = height * .0022
+    # ---------------- normal map from the height field (metres)
+    hm = height * 0.0022
+    dHc, dHr = safe_grad(hm, P, valid)
+    nx = -dHc / texel
+    ny = -dHr / texel
+    nzv = np.ones_like(nx)
+    nl = np.sqrt(nx * nx + ny * ny + 1)
+    nrm = np.stack([nx / nl, ny / nl, nzv / nl], -1) * 0.5 + 0.5
+    nrm[~valid] = (0.5, 0.5, 1.0)
+
     orm = np.stack([ao, rough, metal], -1)
-    out = {'base': base_c, 'ace': ace_c, 'orm': orm.astype(np.float32), 'height': hm, 'metric_x': np.maximum(np.linalg.norm(np.gradient(P, axis=1),axis=-1),.002),
-           'metric_y': np.maximum(np.linalg.norm(np.gradient(P, axis=0),axis=-1),.002),
-           'curvature': np.repeat(curvature(hm.reshape(1024,2,1024,2).mean(axis=(1,3)))[...,None],3,-1)}
+    out = {'base': base_c, 'ace': ace_c, 'orm': orm.astype(np.float32), 'normal': nrm.astype(np.float32)}
     if DEBUG:
         rngc = np.random.default_rng(5).random((256, 3)).astype(np.float32)
         out['dbg_node'] = np.where(valid[..., None], rngc[np.clip(nid, 0, 255)], 0)

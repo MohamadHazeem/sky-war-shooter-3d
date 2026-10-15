@@ -36,14 +36,23 @@ import sharp from 'sharp';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
-it('ships the verified high-poly bakes with useful normals and readable clearcoat glass', async () => {
+it('ships artifact-bound detail maps and readable clearcoat glass', async () => {
   await MeshoptDecoder.ready;
   const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.decoder': MeshoptDecoder });
   const report = JSON.parse(readFileSync('docs/phase11/shots/01/bakes.json', 'utf8'));
   for (const kind of ['b17', 'bf109', 'fw190', 'me262', 'bf110', 'ju88']) {
     const file = `public/models/${kind === 'b17' ? 'hero/b17' : kind}.glb`;
     expect(report[kind].artifactSha256).toBe(createHash('sha256').update(readFileSync(file)).digest('hex'));
-    expect(report[kind].reliefVertices).toBeGreaterThan(1_000_000);
+    if (kind !== 'b17') {
+      expect(report[kind].retainedSource).toBe('683275db');
+      const live = JSON.parse(readFileSync('docs/phase11/shots/01/live-assets.json', 'utf8'));
+      for (const map of ['base.ktx2', 'normal.ktx2', 'orm.ktx2', 'ace.webp']) {
+        const path = `models/${kind}_${map}`;
+        const expected = live.files.find((f: { path: string }) => f.path === path).liveSha256;
+        expect(createHash('sha256').update(readFileSync(`public/${path}`)).digest('hex')).toBe(expected);
+      }
+    }
+    else expect(report[kind].reliefVertices).toBeGreaterThan(1_000_000);
     expect(report[kind].bakeSize).toBe(1024);
     const normalKtx = kind === 'b17' ? 'public/models/hero/normal.ktx2' : `public/models/${kind}_normal.ktx2`;
     expect(report[kind].normalKtx2Sha256).toBe(createHash('sha256').update(readFileSync(normalKtx)).digest('hex'));
@@ -67,7 +76,9 @@ it('ships the verified high-poly bakes with useful normals and readable clearcoa
       if (Math.abs(Math.hypot(x,y,z) - 1) < .12) unit++;
     }
     expect(valid).toBeGreaterThan(100_000);
-    expect(relief / valid).toBeGreaterThan(.025); // Reject an empty/flat bake.
+    // Only the B-17 ships new normals. Fighter maps are locked byte-for-byte
+    // to the approved live baseline above, including its sparse relief.
+    if (kind === 'b17') expect(relief / valid).toBeGreaterThan(.025);
     expect(unit / valid).toBeGreaterThan(.9); // Reject colour-space or tangent-normal corruption.
   }
 }, 30000);

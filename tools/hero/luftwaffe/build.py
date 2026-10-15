@@ -6,8 +6,8 @@
 Per type: geometry from types/<kind>.py (game frame, named parts) -> Blender objects -> one shared
 atlas UV over every opaque mesh -> Cycles bakes of position / normal / part / surface-coordinate
 maps and ambient occlusion -> paint.py synthesises base colour (camouflage, markings, weathering),
-roughness, metalness and the panel-line / rivet / fabric height field -> subdivided displaced
-aircraft -> selected-to-active 1024 normal/AO bakes -> LOD1 / LOD2 meshes (decimated copies sharing the atlas) -> GLB + PNGs in
+roughness, metalness and the panel-line / rivet / fabric height field, from which the tangent-space
+normal map is derived -> LOD1 / LOD2 meshes (decimated copies sharing the atlas) -> GLB + PNGs in
 --out. tools/hero/luftwaffe/finish.mjs then attaches the textures and compresses (meshopt + WebP).
 """
 import bpy, bmesh, sys, os, math, time, importlib, json
@@ -28,7 +28,6 @@ def opt(name, default):
         return type(default)(v)
     return default
 SIZE = opt('--size', 2048)
-if SIZE != 2048: raise ValueError('Ship atlas is 2048; relief/ORM bakes are 1024.')
 AO_SAMPLES = opt('--ao-samples', 96)
 OUT = opt('--out', os.path.join(HERE, 'out'))
 NO_LOD = '--no-lod' in argv
@@ -319,55 +318,6 @@ def save_png(arr, path, size):
     bpy.data.images.remove(img)
 
 
-def bake_relief(opaque, height, kind, size=1024):
-    """Selected-to-active bake from the actual subdivided/displaced aircraft, at ship resolution."""
-    originals = [o for o in bpy.context.scene.objects if o.type == 'MESH']
-    for o in originals: o.hide_render = True
-    low = bake_proxy(opaque, '_relief_target')
-    high = low.copy(); high.data = low.data.copy()
-    bpy.context.scene.collection.objects.link(high)
-    high.name = 'HIGH_PANELS_FASTENERS_FABRIC'
-    bpy.context.view_layer.objects.active = high
-    sub = high.modifiers.new('relief_subdivision', 'SUBSURF')
-    sub.subdivision_type = 'SIMPLE'; sub.levels = 3
-    bpy.ops.object.modifier_apply(modifier=sub.name)
-    h, w = height.shape
-    im = bpy.data.images.new('metric_relief', w, h, alpha=True, float_buffer=True)
-    im.colorspace_settings.name = 'Non-Color'
-    pixels = np.ones((h,w,4),np.float32); pixels[...,:3] = (height/.008+.5)[...,None]
-    im.pixels.foreach_set(pixels.ravel())
-    tex = bpy.data.textures.new('metric_relief', type='IMAGE'); tex.image=im
-    mod = high.modifiers.new('recesses_rivets_rib_tapes', 'DISPLACE')
-    mod.texture=tex; mod.texture_coords='UV'; mod.uv_layer=high.data.uv_layers.active.name
-    mod.strength=.008; mod.mid_level=.5
-    bpy.ops.object.modifier_apply(modifier=mod.name)
-    mat=bpy.data.materials.new('relief_target'); mat.use_nodes=True
-    low.data.materials.clear(); low.data.materials.append(mat)
-    for poly in low.data.polygons: poly.material_index=0
-    tn=mat.node_tree.nodes.new('ShaderNodeTexImage'); mat.node_tree.nodes.active=tn
-    settings=bpy.context.scene.render.bake
-    settings.use_selected_to_active=True; settings.cage_extrusion=.015; settings.max_ray_distance=.03
-    bpy.context.scene.cycles.samples=48
-    result={}
-    for kind in ('NORMAL','AO'):
-        dest=bpy.data.images.new('relief_'+kind,size,size,alpha=True)
-        dest.colorspace_settings.name='Non-Color'; tn.image=dest
-        bpy.ops.object.select_all(action='DESELECT'); high.select_set(True);low.select_set(True)
-        bpy.context.view_layer.objects.active=low
-        bpy.ops.object.bake(type=kind,margin=8,use_clear=True)
-        arr=np.empty(size*size*4,np.float32);dest.pixels.foreach_get(arr)
-        result[kind.lower()]=arr.reshape(size,size,4)[...,:3].copy()
-        bpy.data.images.remove(dest)
-    count=len(high.data.vertices)
-    # Keep an editable bake source; it is not exported or shipped.
-    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, kind + '-relief-source.blend'))
-    for ob in (low,high): bpy.data.objects.remove(ob,do_unlink=True)
-    bpy.data.images.remove(im)
-    for o in originals: o.hide_render=False
-    settings.use_selected_to_active=False
-    return result,count
-
-
 def decimated_copy(src, name, ratio, parent, local=Matrix.Identity(4)):
     ob = src.copy()
     ob.data = src.data.copy()
@@ -464,8 +414,6 @@ for kind in KINDS:
     sc = reset()
     mod = importlib.import_module(kind)
     m = mod.build()
-    import parts
-    parts.finish_fittings(m)
     objs, lod0, opaque, glass = build_objects(m)
     unwrap(opaque)
     if os.environ.get('HERO_UVCHECK'):
@@ -486,14 +434,6 @@ for kind in KINDS:
     for o in originals:
         o.hide_render = False
     tex = paint.paint(m, maps, SIZE)
-    height=tex.pop('height')
-    relief, relief_vertices = bake_relief(opaque, height, kind)
-    from detail import finish_normals
-    tex['normal'] = finish_normals(relief['normal'],height,(tex.pop('metric_x'),tex.pop('metric_y')),2.0)
-    # AO comes from the relief source; pack it at the same 1024 size as the shipped ORM.
-    orm=tex['orm'].reshape(1024,2,1024,2,3).mean(axis=(1,3))
-    orm[...,0]=np.minimum(orm[...,0],np.clip(relief['ao'][...,0],.3,1))
-    tex['orm']=orm
     base = os.path.join(OUT, kind)
     for k, arr in tex.items():
         save_png(arr, f'{base}_{k}.png', SIZE)
@@ -502,7 +442,7 @@ for kind in KINDS:
     rep = tris_report(objs)
     export(m, objs, opaque, glass, base + '.glb')
     with open(base + '_report.json', 'w') as f:
-        json.dump({'kind': kind, 'reliefVertices': relief_vertices, 'bakeSize': 1024, 'tris': rep, 'seconds': round(time.time() - t0, 1),
+        json.dump({'kind': kind, 'tris': rep, 'seconds': round(time.time() - t0, 1),
                    'lod0': sum(v for k, v in rep.items() if not k.endswith('_lod1') and not k.endswith('_lod2')),
                    'lod1': rep.get('part_fuselage_lod1', 0),
                    'lod2': rep.get('part_fuselage_lod2', 0)}, f, indent=1)
