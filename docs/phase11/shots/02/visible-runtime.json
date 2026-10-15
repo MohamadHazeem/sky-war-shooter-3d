@@ -1,0 +1,58 @@
+[
+  {
+    "reversed": true,
+    "flat": {
+      "mean": 0.9955996750370798,
+      "min": 0.292724609375,
+      "dark": 44,
+      "count": 3034
+    },
+    "corner": {
+      "mean": 0.9864840380504691,
+      "min": 0.292724609375,
+      "dark": 141,
+      "count": 3304
+    },
+    "shadows": {
+      "max": 0.4033203125,
+      "changed": 316
+    },
+    "cloudShadow": {
+      "max": 0.318603515625,
+      "changed": 13234
+    },
+    "disocclusion": {
+      "oldFootprint": 0,
+      "newFootprint": 0.99951171875
+    },
+    "errors": []
+  },
+  {
+    "reversed": false,
+    "flat": {
+      "mean": 0.9927799071460943,
+      "min": 0.381591796875,
+      "dark": 71,
+      "count": 3034
+    },
+    "corner": {
+      "mean": 0.9838967681219734,
+      "min": 0.381591796875,
+      "dark": 168,
+      "count": 3304
+    },
+    "shadows": {
+      "max": 0.4033203125,
+      "changed": 316
+    },
+    "cloudShadow": {
+      "max": 0.318603515625,
+      "changed": 13234
+    },
+    "disocclusion": {
+      "oldFootprint": 0,
+      "newFootprint": 0.99951171875
+    },
+    "errors": []
+  }
+]

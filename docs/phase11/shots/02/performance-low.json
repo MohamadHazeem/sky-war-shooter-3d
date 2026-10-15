@@ -1,30 +1,32 @@
 {
+  "sourceRevision": "3701aed406cb78295fb52e288aa9f384f49ae17c",
+  "capturedAt": "2026-10-15T13:47:23.206Z",
   "method": "180 warm-up frames followed by one continuous 180-frame rig benchmark per shot; a fresh browser process per fixture releases all prior scene/GPU resources. Frozen simulation, GPU fenced; p95 of all 180 frames. No other task-owned capture concurrent.",
   "results": [
     {
       "shot": "b17-beauty",
-      "mean": 3.540000000099341,
-      "p95": 6.100000023841858,
+      "mean": 4.26777777771155,
+      "p95": 6.700000017881393,
       "budget": 6,
-      "reflectionVisible": true,
+      "reflectionVisible": false,
       "warmup": {
         "samples": 180,
-        "programsBefore": 238,
-        "programsAfter": 238,
-        "mean": 3.353333333465788,
-        "p50": 3,
-        "p95": 4.700000017881393,
+        "programsBefore": 245,
+        "programsAfter": 245,
+        "mean": 4.1594444445437855,
+        "p50": 3.7000000178813934,
+        "p95": 6.0999999940395355,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
       "passes": true,
       "batches": [
         {
           "samples": 180,
-          "programsBefore": 238,
-          "programsAfter": 238,
-          "mean": 3.540000000099341,
-          "p50": 3.100000023841858,
-          "p95": 6.100000023841858,
+          "programsBefore": 245,
+          "programsAfter": 245,
+          "mean": 4.26777777771155,
+          "p50": 3.9000000059604645,
+          "p95": 6.700000017881393,
           "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
         }
       ],
@@ -32,28 +34,28 @@
     },
     {
       "shot": "top-formation",
-      "mean": 5.607222222122881,
-      "p95": 7.800000011920929,
+      "mean": 4.681666666766008,
+      "p95": 7.200000017881393,
       "budget": 6,
       "reflectionVisible": false,
       "warmup": {
         "samples": 180,
-        "programsBefore": 239,
-        "programsAfter": 239,
-        "mean": 4.4094444443782175,
-        "p50": 4.100000023841858,
-        "p95": 6.700000017881393,
+        "programsBefore": 247,
+        "programsAfter": 247,
+        "mean": 4.145555555489328,
+        "p50": 4,
+        "p95": 5.299999982118607,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
       "passes": true,
       "batches": [
         {
           "samples": 180,
-          "programsBefore": 239,
-          "programsAfter": 239,
-          "mean": 5.607222222122881,
-          "p50": 5,
-          "p95": 7.800000011920929,
+          "programsBefore": 247,
+          "programsAfter": 247,
+          "mean": 4.681666666766008,
+          "p50": 4.299999982118607,
+          "p95": 7.200000017881393,
           "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
         }
       ],
@@ -61,32 +63,33 @@
     },
     {
       "shot": "waist-interior",
-      "mean": 4.792222222354677,
-      "p95": 6.800000011920929,
+      "mean": 4.525555555522442,
+      "p95": 7.600000023841858,
       "budget": 6,
       "reflectionVisible": false,
       "warmup": {
         "samples": 180,
-        "programsBefore": 240,
-        "programsAfter": 240,
-        "mean": 5.416111111144224,
-        "p50": 5.0999999940395355,
-        "p95": 8,
+        "programsBefore": 247,
+        "programsAfter": 247,
+        "mean": 4.111666666799121,
+        "p50": 3.9000000059604645,
+        "p95": 5.4000000059604645,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
       "passes": true,
       "batches": [
         {
           "samples": 180,
-          "programsBefore": 240,
-          "programsAfter": 240,
-          "mean": 4.792222222354677,
-          "p50": 4.5,
-          "p95": 6.800000011920929,
+          "programsBefore": 247,
+          "programsAfter": 247,
+          "mean": 4.525555555522442,
+          "p50": 4.100000023841858,
+          "p95": 7.600000023841858,
           "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
         }
       ],
       "errors": []
     }
-  ]
+  ],
+  "complete": true
 }

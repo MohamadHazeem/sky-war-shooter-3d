@@ -1,0 +1,154 @@
+{
+  "sourceRevision": "3701aed406cb78295fb52e288aa9f384f49ae17c",
+  "capturedAt": "2026-10-15T13:55:50.226Z",
+  "method": "180 warm-up frames followed by one continuous 180-frame rig benchmark per shot; a fresh browser process per fixture releases all prior scene/GPU resources. Frozen simulation, GPU fenced; p95 of all 180 frames. Competing headless GPU processes are checked every 500 ms during warmup/measurement; interrupted samples are retained separately and retried regardless of measured time.",
+  "results": [
+    {
+      "shot": "b17-beauty",
+      "mean": 7.798333333432675,
+      "p95": 12,
+      "budget": 11,
+      "reflectionVisible": true,
+      "warmup": {
+        "samples": 180,
+        "programsBefore": 250,
+        "programsAfter": 250,
+        "mean": 7.1738888889551164,
+        "p50": 6.9000000059604645,
+        "p95": 11.400000005960464,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "passes": false,
+      "batches": [
+        {
+          "samples": 180,
+          "programsBefore": 250,
+          "programsAfter": 250,
+          "mean": 7.798333333432675,
+          "p50": 7.199999988079071,
+          "p95": 12,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "shot": "top-formation",
+      "mean": 8.388333333532016,
+      "p95": 10.800000011920929,
+      "budget": 11,
+      "reflectionVisible": true,
+      "warmup": {
+        "samples": 180,
+        "programsBefore": 253,
+        "programsAfter": 253,
+        "mean": 8.237222221990427,
+        "p50": 8.099999994039536,
+        "p95": 10.699999988079071,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "passes": true,
+      "batches": [
+        {
+          "samples": 180,
+          "programsBefore": 253,
+          "programsAfter": 253,
+          "mean": 8.388333333532016,
+          "p50": 8.099999994039536,
+          "p95": 10.800000011920929,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "shot": "p51-cockpit",
+      "mean": 7.805000000033114,
+      "p95": 11.599999994039536,
+      "budget": 11,
+      "reflectionVisible": true,
+      "warmup": {
+        "samples": 180,
+        "programsBefore": 252,
+        "programsAfter": 252,
+        "mean": 7.652222222420904,
+        "p50": 7.0999999940395355,
+        "p95": 11.5,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "passes": false,
+      "batches": [
+        {
+          "samples": 180,
+          "programsBefore": 252,
+          "programsAfter": 252,
+          "mean": 7.805000000033114,
+          "p50": 7.4000000059604645,
+          "p95": 11.599999994039536,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "shot": "waist-interior",
+      "mean": 9.430555555389986,
+      "p95": 11.799999982118607,
+      "budget": 11,
+      "reflectionVisible": false,
+      "warmup": {
+        "samples": 180,
+        "programsBefore": 251,
+        "programsAfter": 251,
+        "mean": 9.134444444378216,
+        "p50": 8.699999988079071,
+        "p95": 11.900000005960464,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "passes": false,
+      "batches": [
+        {
+          "samples": 180,
+          "programsBefore": 251,
+          "programsAfter": 251,
+          "mean": 9.430555555389986,
+          "p50": 8.300000011920929,
+          "p95": 11.799999982118607,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "shot": "sunset",
+      "mean": 7.987777777678437,
+      "p95": 12.400000005960464,
+      "budget": 11,
+      "reflectionVisible": false,
+      "warmup": {
+        "samples": 180,
+        "programsBefore": 250,
+        "programsAfter": 250,
+        "mean": 6.815555555621783,
+        "p50": 6.799999982118607,
+        "p95": 9,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "passes": false,
+      "batches": [
+        {
+          "samples": 180,
+          "programsBefore": 250,
+          "programsAfter": 250,
+          "mean": 7.987777777678437,
+          "p50": 7.300000011920929,
+          "p95": 12.400000005960464,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "complete": false,
+  "note": "Partial later attempt stopped after already exceeding the gate while competing jobs repeatedly restarted; not an acceptance result."
+}

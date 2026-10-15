@@ -27,8 +27,8 @@
     ],
     "glError": 0,
     "compiles": 0,
-    "programsBefore": 250,
-    "programsAfter": 250,
+    "programsBefore": 255,
+    "programsAfter": 255,
     "reflectionOn": 1,
     "errors": []
   },
@@ -60,8 +60,8 @@
     ],
     "glError": 0,
     "compiles": 0,
-    "programsBefore": 239,
-    "programsAfter": 239,
+    "programsBefore": 247,
+    "programsAfter": 247,
     "reflectionOn": 0,
     "errors": []
   }

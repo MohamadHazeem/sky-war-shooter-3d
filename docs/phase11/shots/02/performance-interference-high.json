@@ -1,0 +1,61 @@
+{
+  "sourceRevision": "3701aed406cb78295fb52e288aa9f384f49ae17c",
+  "interrupted": [
+    {
+      "shot": "p51-cockpit",
+      "quality": "high",
+      "at": "2026-10-15T13:58:59.472Z",
+      "competingPids": [
+        95401
+      ],
+      "warmup": {
+        "samples": 180,
+        "programsBefore": 252,
+        "programsAfter": 252,
+        "mean": 7.60055555568801,
+        "p50": 7.0999999940395355,
+        "p95": 10.700000017881393,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "batches": [
+        {
+          "samples": 180,
+          "programsBefore": 252,
+          "programsAfter": 252,
+          "mean": 9.523333333432674,
+          "p50": 9.199999988079071,
+          "p95": 14.099999994039536,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        }
+      ]
+    },
+    {
+      "shot": "night-flak",
+      "quality": "high",
+      "at": "2026-10-15T14:00:09.519Z",
+      "competingPids": [
+        97491
+      ],
+      "warmup": {
+        "samples": 180,
+        "programsBefore": 246,
+        "programsAfter": 246,
+        "mean": 5.190555555456214,
+        "p50": 4.799999982118607,
+        "p95": 8.700000017881393,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "batches": [
+        {
+          "samples": 180,
+          "programsBefore": 246,
+          "programsAfter": 246,
+          "mean": 5.004444444510672,
+          "p50": 4.5,
+          "p95": 8.400000005960464,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        }
+      ]
+    }
+  ]
+}

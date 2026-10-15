@@ -1,7 +1,7 @@
 # Phase 10 visual scorecard
 
 Capture rig v1; seed 19431008; requested webgl2; preset high.
-Browser: 153.0.8010.12. Source revision: `2dc10f15baa213a44426893c972297845f99f937` (dirty at capture: true).
+Browser: 153.0.8010.12. Source revision: `3701aed406cb78295fb52e288aa9f384f49ae17c` (dirty at capture: true).
 [Contact sheet](contact-sheet.jpg) · [Capture metadata](manifest.json) · [Metric data](metrics.json)
 
 Score relevant cells from 0–10 against [the reference board](../../../../phase10/reference.md). `__/10` is unscored; `—` is not a primary subject. Do not convert image metrics into artistic scores. Review each pillar across its relevant shots; the ten pillar judgments sum to /100.
@@ -26,24 +26,24 @@ Frame times are real wall-clock milliseconds for a frozen scene render plus a GP
 
 | Shot | Source / pixels | Luma | RMS contrast | Colourfulness | Sharpness | Aliasing estimate | Render ms mean / p50 / p95 |
 |---|---|---:|---:|---:|---:|---:|---|
-| [b17-beauty](b17-beauty.jpg) | PNG 1920×1080 | 0.621 | 0.212 | 12.92 | 0.006960 | 0.121 | 8.50 / 8.00 / 12.70 |
-| [top-formation](top-formation.jpg) | PNG 1920×1080 | 0.622 | 0.167 | 49.03 | 0.006773 | 0.109 | 8.11 / 7.50 / 10.40 |
-| [p51-cockpit](p51-cockpit.jpg) | PNG 1920×1080 | 0.510 | 0.298 | 32.55 | 0.009437 | 0.114 | 6.97 / 5.90 / 11.90 |
-| [waist-interior](waist-interior.jpg) | PNG 1920×1080 | 0.224 | 0.126 | 18.37 | 0.006693 | 0.075 | 10.90 / 10.70 / 13.50 |
-| [sunset](sunset.jpg) | PNG 1920×1080 | 0.593 | 0.130 | 30.29 | 0.003775 | 0.194 | 12.47 / 12.10 / 16.80 |
-| [night-flak](night-flak.jpg) | PNG 1920×1080 | 0.088 | 0.044 | 13.68 | 0.002750 | 0.037 | 4.30 / 4.20 / 5.30 |
-| [turret-glass](turret-glass.jpg) | PNG 1920×1080 | 0.619 | 0.170 | 47.72 | 0.005116 | 0.083 | 8.42 / 8.30 / 11.80 |
-| [close-shadow](close-shadow.jpg) | PNG 1920×1080 | 0.678 | 0.153 | 33.49 | 0.008373 | 0.136 | 10.50 / 10.10 / 14.40 |
-| [formation-glints](formation-glints.jpg) | PNG 1920×1080 | 0.567 | 0.180 | 11.06 | 0.004344 | 0.126 | 6.81 / 6.30 / 9.50 |
+| [b17-beauty](b17-beauty.jpg) | PNG 1920×1080 | 0.629 | 0.205 | 13.08 | 0.006869 | 0.112 | 9.45 / 9.20 / 13.00 |
+| [top-formation](top-formation.jpg) | PNG 1920×1080 | 0.620 | 0.167 | 49.35 | 0.006961 | 0.107 | 10.92 / 9.80 / 25.00 |
+| [p51-cockpit](p51-cockpit.jpg) | PNG 1920×1080 | 0.511 | 0.298 | 32.60 | 0.009064 | 0.106 | 7.68 / 7.10 / 11.40 |
+| [waist-interior](waist-interior.jpg) | PNG 1920×1080 | 0.224 | 0.127 | 18.19 | 0.006731 | 0.077 | 13.57 / 13.50 / 17.20 |
+| [sunset](sunset.jpg) | PNG 1920×1080 | 0.592 | 0.130 | 30.28 | 0.003774 | 0.196 | 10.73 / 10.50 / 12.90 |
+| [night-flak](night-flak.jpg) | PNG 1920×1080 | 0.089 | 0.044 | 13.73 | 0.002675 | 0.032 | 4.72 / 4.60 / 6.60 |
+| [turret-glass](turret-glass.jpg) | PNG 1920×1080 | 0.620 | 0.171 | 48.16 | 0.004993 | 0.077 | 8.80 / 8.40 / 11.90 |
+| [close-shadow](close-shadow.jpg) | PNG 1920×1080 | 0.677 | 0.153 | 34.06 | 0.008560 | 0.139 | 8.98 / 8.80 / 10.60 |
+| [formation-glints](formation-glints.jpg) | PNG 1920×1080 | 0.567 | 0.181 | 11.15 | 0.004254 | 0.123 | 8.46 / 8.20 / 11.90 |
 
 | Shot | Luminance histogram (%) | Black / white clipped (%) |
 |---|---|---|
-| [b17-beauty](b17-beauty.jpg) | 0.1, 2.0, 1.6, 0.7, 3.1, 9.4, 9.3, 5.2, 4.0, 6.3, 8.4, 12.5, 18.9, 12.2, 5.1, 1.2 | 0.00 / 0.00 |
-| [top-formation](top-formation.jpg) | 0.5, 1.9, 0.7, 0.4, 0.4, 1.2, 2.8, 14.0, 13.8, 13.5, 11.4, 13.7, 14.4, 8.4, 2.8, 0.0 | 0.00 / 0.00 |
-| [p51-cockpit](p51-cockpit.jpg) | 4.3, 19.8, 4.8, 2.2, 1.2, 1.3, 1.1, 1.2, 3.4, 12.3, 11.3, 10.2, 11.7, 11.0, 4.2, 0.1 | 0.00 / 0.00 |
-| [waist-interior](waist-interior.jpg) | 0.1, 15.4, 28.6, 28.8, 13.7, 6.6, 2.7, 0.9, 0.3, 0.2, 0.2, 0.3, 1.2, 0.9, 0.1, 0.0 | 0.00 / 0.00 |
-| [sunset](sunset.jpg) | 0.0, 0.1, 0.1, 1.6, 2.8, 3.9, 4.0, 7.3, 14.2, 19.2, 21.9, 18.0, 5.7, 1.2, 0.0, 0.0 | 0.00 / 0.00 |
-| [night-flak](night-flak.jpg) | 27.1, 57.3, 12.4, 2.7, 0.2, 0.1, 0.1, 0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 | 0.00 / 0.00 |
-| [turret-glass](turret-glass.jpg) | 0.5, 1.8, 0.9, 0.5, 0.8, 0.5, 3.5, 15.3, 14.0, 13.1, 10.5, 12.6, 13.6, 9.2, 3.2, 0.0 | 0.00 / 0.00 |
-| [close-shadow](close-shadow.jpg) | 0.1, 1.1, 1.0, 1.3, 0.8, 0.5, 0.5, 2.5, 10.3, 13.2, 13.4, 15.8, 22.1, 15.5, 1.8, 0.0 | 0.00 / 0.00 |
-| [formation-glints](formation-glints.jpg) | 0.0, 0.9, 1.4, 0.3, 2.0, 7.2, 18.8, 11.6, 9.5, 8.2, 8.7, 11.5, 11.0, 5.3, 3.0, 0.5 | 0.00 / 0.00 |
+| [b17-beauty](b17-beauty.jpg) | 0.1, 2.1, 1.6, 0.8, 1.6, 7.8, 9.7, 5.7, 4.5, 7.2, 8.8, 12.8, 19.0, 11.9, 5.6, 0.9 | 0.00 / 0.00 |
+| [top-formation](top-formation.jpg) | 0.5, 1.9, 0.7, 0.5, 0.3, 1.2, 3.2, 14.2, 13.8, 13.6, 11.3, 13.6, 14.3, 8.2, 2.7, 0.0 | 0.00 / 0.00 |
+| [p51-cockpit](p51-cockpit.jpg) | 4.2, 19.8, 4.7, 2.3, 1.3, 1.3, 1.1, 1.2, 3.3, 12.2, 11.3, 10.2, 11.7, 11.0, 4.2, 0.1 | 0.00 / 0.00 |
+| [waist-interior](waist-interior.jpg) | 0.1, 15.3, 28.8, 28.5, 13.7, 6.7, 2.7, 0.8, 0.3, 0.2, 0.2, 0.4, 1.2, 1.0, 0.1, 0.0 | 0.00 / 0.00 |
+| [sunset](sunset.jpg) | 0.0, 0.1, 0.1, 1.6, 2.8, 3.8, 4.0, 7.3, 14.3, 19.5, 22.0, 17.5, 5.7, 1.2, 0.0, 0.0 | 0.00 / 0.00 |
+| [night-flak](night-flak.jpg) | 25.4, 58.9, 12.5, 2.7, 0.1, 0.1, 0.1, 0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 | 0.00 / 0.00 |
+| [turret-glass](turret-glass.jpg) | 0.5, 1.8, 0.9, 0.4, 0.7, 0.6, 3.2, 15.3, 14.0, 13.2, 10.6, 12.6, 13.4, 9.5, 3.2, 0.0 | 0.00 / 0.00 |
+| [close-shadow](close-shadow.jpg) | 0.1, 1.1, 1.0, 1.3, 0.7, 0.5, 0.5, 2.7, 10.7, 13.4, 13.4, 15.7, 21.6, 15.2, 2.1, 0.0 | 0.00 / 0.00 |
+| [formation-glints](formation-glints.jpg) | 0.0, 0.9, 1.4, 0.3, 2.1, 7.5, 18.2, 11.8, 9.4, 8.1, 8.9, 11.7, 11.1, 5.3, 3.0, 0.5 | 0.00 / 0.00 |

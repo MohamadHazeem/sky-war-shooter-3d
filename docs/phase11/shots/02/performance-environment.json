@@ -1,0 +1,15 @@
+{
+  "capturedAt": "2026-10-15T13:45:54.607Z",
+  "heavySlotLimit": 4,
+  "reservedSlots": 2,
+  "taskConcurrentBrowsers": 1,
+  "otherHeadlessGPUProcesses": 1,
+  "voiceGenerationProcesses": 2,
+  "loadAverage": [
+    16.5478515625,
+    17.2783203125,
+    16.48291015625
+  ],
+  "logicalCPUs": 18,
+  "recordNote": "Restored verbatim from the saved tool output for this complete run; a later guarded attempt had replaced the environment file."
+}

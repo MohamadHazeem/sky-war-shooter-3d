@@ -1,7 +1,7 @@
 # Phase 10 visual scorecard
 
 Capture rig v1; seed 19431008; requested webgl2; preset low.
-Browser: 153.0.8010.12. Source revision: `2dc10f15baa213a44426893c972297845f99f937` (dirty at capture: true).
+Browser: 153.0.8010.12. Source revision: `3701aed406cb78295fb52e288aa9f384f49ae17c` (dirty at capture: true).
 [Contact sheet](contact-sheet.jpg) · [Capture metadata](manifest.json) · [Metric data](metrics.json)
 
 Score relevant cells from 0–10 against [the reference board](../../../../phase10/reference.md). `__/10` is unscored; `—` is not a primary subject. Do not convert image metrics into artistic scores. Review each pillar across its relevant shots; the ten pillar judgments sum to /100.
@@ -20,12 +20,12 @@ Frame times are real wall-clock milliseconds for a frozen scene render plus a GP
 
 | Shot | Source / pixels | Luma | RMS contrast | Colourfulness | Sharpness | Aliasing estimate | Render ms mean / p50 / p95 |
 |---|---|---:|---:|---:|---:|---:|---|
-| [b17-beauty](b17-beauty.jpg) | PNG 1920×1080 | 0.541 | 0.189 | 11.37 | 0.000800 | 0.032 | 3.46 / 3.30 / 4.60 |
-| [top-formation](top-formation.jpg) | PNG 1920×1080 | 0.606 | 0.202 | 33.50 | 0.001136 | 0.018 | 4.17 / 3.90 / 5.50 |
-| [waist-interior](waist-interior.jpg) | PNG 1920×1080 | 0.217 | 0.096 | 22.39 | 0.000873 | 0.018 | 4.55 / 4.30 / 6.00 |
+| [b17-beauty](b17-beauty.jpg) | PNG 1920×1080 | 0.543 | 0.192 | 11.67 | 0.000805 | 0.028 | 3.03 / 2.70 / 4.60 |
+| [top-formation](top-formation.jpg) | PNG 1920×1080 | 0.642 | 0.145 | 34.32 | 0.000814 | 0.030 | 3.69 / 3.40 / 5.30 |
+| [waist-interior](waist-interior.jpg) | PNG 1920×1080 | 0.191 | 0.094 | 21.18 | 0.000860 | 0.022 | 4.30 / 4.40 / 6.10 |
 
 | Shot | Luminance histogram (%) | Black / white clipped (%) |
 |---|---|---|
-| [b17-beauty](b17-beauty.jpg) | 0.0, 0.6, 1.7, 1.2, 1.2, 13.7, 24.4, 8.3, 6.9, 5.8, 6.9, 11.0, 10.8, 3.1, 3.2, 1.2 | 0.00 / 0.00 |
-| [top-formation](top-formation.jpg) | 0.8, 7.9, 1.1, 0.8, 0.5, 0.7, 0.3, 3.1, 10.7, 17.3, 16.7, 17.4, 15.3, 7.1, 0.2, 0.0 | 0.00 / 0.00 |
-| [waist-interior](waist-interior.jpg) | 0.8, 19.6, 20.7, 23.9, 19.3, 11.0, 2.8, 1.4, 0.1, 0.2, 0.1, 0.0, 0.1, 0.0, 0.0, 0.0 | 0.00 / 0.00 |
+| [b17-beauty](b17-beauty.jpg) | 0.0, 0.8, 2.1, 0.8, 1.1, 13.2, 23.9, 8.2, 6.9, 5.7, 6.8, 11.1, 10.7, 4.2, 3.2, 1.0 | 0.00 / 0.00 |
+| [top-formation](top-formation.jpg) | 0.2, 2.1, 0.6, 0.7, 0.3, 0.7, 1.2, 2.7, 13.5, 18.5, 18.4, 18.5, 16.0, 6.4, 0.2, 0.0 | 0.00 / 0.00 |
+| [waist-interior](waist-interior.jpg) | 0.9, 26.8, 31.7, 11.1, 19.7, 6.6, 1.8, 0.8, 0.1, 0.2, 0.1, 0.0, 0.1, 0.0, 0.0, 0.0 | 0.00 / 0.00 |

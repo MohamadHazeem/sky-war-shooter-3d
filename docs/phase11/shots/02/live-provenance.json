@@ -1,22 +1,27 @@
 {
   "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
-  "main": "9b333aec65c7acde8a7c8b07080dbae2043ed940",
-  "method": "Live deployed entry bundle and full service-worker asset manifest compared byte-for-byte to main dist. Development rig uses unchanged main source before implementation; production excludes its endpoint.",
+  "main": "a005e2055d3df50ec0e51e55ffa20f290d0d31b7",
+  "recheckedAt": "2026-10-15T13:40:41.714445+00:00",
+  "method": "Live entry bundle and complete service worker byte-identical to main checkout dist. Captures use an isolated git archive with identical development fixture v7 overlay; no baseline rendering changes.",
+  "overlayFiles": [
+    "src/dev/VisualRigConfig.ts",
+    "src/dev/VisualRigScene.ts",
+    "src/dev/VisualRigPage.ts",
+    "tools/visual-shots.json",
+    "src/world/World.ts: development-only seedFormationMotion helper"
+  ],
   "files": [
     {
-      "file": "assets/index-DT4N_VKK.js",
-      "live_sha256": "e59ce20752d4c1f5cd076c36b9101f65055b898e058baee987f306a9761f147b",
-      "main_dist_sha256": "e59ce20752d4c1f5cd076c36b9101f65055b898e058baee987f306a9761f147b",
-      "identical": true,
-      "recheck_sha256": "e59ce20752d4c1f5cd076c36b9101f65055b898e058baee987f306a9761f147b"
+      "file": "assets/index-BOGsoLtY.js",
+      "live_sha256": "3d1ece5973f4d31dafc314a0481eaa335eea1c617ff5a818844705824e043bbe",
+      "main_dist_sha256": "3d1ece5973f4d31dafc314a0481eaa335eea1c617ff5a818844705824e043bbe",
+      "identical": true
     },
     {
       "file": "sw.js",
-      "live_sha256": "840e1547c0e9023ef7313f486efd3f475edc875951b1dabc0b95e7951f494ddd",
-      "main_dist_sha256": "840e1547c0e9023ef7313f486efd3f475edc875951b1dabc0b95e7951f494ddd",
-      "identical": true,
-      "recheck_sha256": "840e1547c0e9023ef7313f486efd3f475edc875951b1dabc0b95e7951f494ddd"
+      "live_sha256": "2e79ca0f736dc78e5007026d77808844b7e715f53506254b1206d0a75920c81d",
+      "main_dist_sha256": "2e79ca0f736dc78e5007026d77808844b7e715f53506254b1206d0a75920c81d",
+      "identical": true
     }
-  ],
-  "recheckedAt": "2026-10-15T10:14:11.942761+00:00"
+  ]
 }

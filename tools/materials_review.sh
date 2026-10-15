@@ -34,8 +34,18 @@ node tools/materials_gunner.mjs
 node tools/materials_runtime.mjs
 node tools/visual_rig.mjs --url http://127.0.0.1:5322 --quality low --shots b17-beauty,top-formation,waist-interior --out docs/phase11/shots/02/low
 RENDERER_URL=http://127.0.0.1:5322 RENDERER_OUTPUT=docs/phase11/shots/02 node tools/renderer_visible_runtime.mjs
+node --input-type=module <<'JS'
+import fs from 'node:fs'; import os from 'node:os'; import {execFileSync} from 'node:child_process';
+const processes=execFileSync('ps',['-Ao','command'],{encoding:'utf8'}).split('\n');
+fs.writeFileSync('docs/phase11/shots/02/performance-environment.json',JSON.stringify({
+  capturedAt:new Date().toISOString(),heavySlotLimit:Number(process.env.HEAVY_SLOTS??3),
+  taskConcurrentBrowsers:1,otherHeadlessGPUProcesses:processes.filter(s=>s.startsWith('/')&&s.includes('chrome-headless-shell --type=gpu-process')).length,
+  voiceGenerationProcesses:processes.filter(s=>s.startsWith('/')&&s.includes('/python tools/voice/generate.py')).length,
+  loadAverage:os.loadavg(),logicalCPUs:os.cpus().length,
+},null,2)+'\n');
+JS
 node tools/materials_perf.mjs high
 node tools/materials_perf.mjs low
-PERF_URL=http://127.0.0.1:5322 PERF_OUTPUT=docs/phase11/shots/02/combat PERF_STEPS=600 node tools/presets_perf.mjs final
-PERF_URL=http://127.0.0.1:5322 PERF_OUTPUT=docs/phase11/shots/02/combat-throttled PERF_TIERS=low PERF_CPU=4 PERF_STEPS=600 node tools/presets_perf.mjs final
+PERF_URL=http://127.0.0.1:5322 PERF_OUTPUT=docs/phase11/shots/02/combat PERF_STEPS=600 MATERIALS_ISOLATED_OUTPUT=docs/phase11/shots/02/combat/combat.json node tools/materials_isolate.mjs node tools/presets_perf.mjs final
+PERF_URL=http://127.0.0.1:5322 PERF_OUTPUT=docs/phase11/shots/02/combat-throttled PERF_TIERS=low PERF_CPU=4 PERF_STEPS=600 MATERIALS_ISOLATED_OUTPUT=docs/phase11/shots/02/combat-throttled/combat.json node tools/materials_isolate.mjs node tools/presets_perf.mjs final
 node tools/materials_budget.mjs

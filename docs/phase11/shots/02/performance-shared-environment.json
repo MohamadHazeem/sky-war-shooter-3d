@@ -1,0 +1,13 @@
+{
+  "capturedAt": "2026-10-15T13:40:03.651Z",
+  "heavySlotLimit": 4,
+  "taskConcurrentBrowsers": 1,
+  "otherHeadlessGPUProcesses": 1,
+  "voiceGenerationProcesses": 2,
+  "loadAverage": [
+    17.7421875,
+    15.66650390625,
+    15.60498046875
+  ],
+  "logicalCPUs": 18
+}
