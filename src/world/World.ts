@@ -6,6 +6,7 @@ import { limitPlayerStraggle } from './FormationRules';
 import { LivingFormation } from './LivingFormation';
 import { FormationDress } from './FormationDress';
 import { onContact } from '../game/RadioChatter';
+import { encounters } from '../game/Museum';
 import { warmAAGuns } from '../game/AADefenceScene';
 import * as THREE from 'three';
 import { DitchingSea } from './DitchingSea';
@@ -532,6 +533,7 @@ export class World implements WorldView {
     const own = hasModel(variant.model as ModelKind);
     const f = new Fighter((own ? variant.model : 'fw190') as ModelKind, 'axis', variant.params, own ? variant.propRadius : 1.65);
     f.enemyType = type;
+    encounters.note(type);   // museum facts (Museum.ts)
     f.root.position.copy(pos);
     const dir = _v.copy(this.formationCenter).sub(pos).setY(0).normalize();
     f.root.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
@@ -600,6 +602,7 @@ export class World implements WorldView {
   private makeAlliedFighter(pos: THREE.Vector3, dir: THREE.Vector3, kind: EscortKind = 'p51d') {
     const spec = ESCORT_TYPES[kind];
     const f = new Fighter(kind, 'allied', spec.params, spec.propRadius);
+    encounters.note(kind);   // museum facts (Museum.ts)
     f.root.position.copy(pos);
     f.root.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), _v.copy(dir).normalize());
     f.fm.vel.copy(dir).normalize().multiplyScalar(140);

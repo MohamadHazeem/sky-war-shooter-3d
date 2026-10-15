@@ -29,6 +29,8 @@ import { crewRoomScene } from '../ui/CrewRoomScene';
 import { endBriefing } from '../ui/BriefingExtras';
 import { isTourId } from './Tour';
 import { mountTourReport } from '../ui/TourScreen';
+import { encounters, museumDebrief, nickOf, openSnapshot } from './Museum';
+import { mountMuseumNote } from '../ui/GalleryScreen';
 
 // Bail-out sequence when a gunner's B-17 is shot down (before the debrief): BailOutCinematic.ts
 const BAIL_SEQ_TIME = BAIL_TOTAL;
@@ -46,6 +48,7 @@ export class MissionFlow {
   private roundKills0 = 0;
 
   private prewarmed = false;
+  private museumBefore: ReturnType<typeof openSnapshot> = {};   // open museum facts at mission start (Museum.ts)
 
   constructor(private g: Game) {}
 
@@ -70,6 +73,7 @@ export class MissionFlow {
     g.gunner.detach();
     g.pilot.detach();
     g.world.reset();
+    encounters.arm(); this.museumBefore = openSnapshot(g.extras.museumStats()); // museum: types met this mission (Museum.ts)
     g.clearBombs();
     g.world.difficulty = 1;
     g.director.reset();
@@ -343,6 +347,7 @@ export class MissionFlow {
     mountShare(host, g.engine, () => shareStamp(g), () => ({ title: m.title, kills: d.kills, score: d.score, success: d.success, survival, waves: d.waves, role: m.role }));
     analytics.missionEnd(m, d);
     g.service.onDebrief(m, d, medals);
+    mountMuseumNote(host, museumDebrief(this.museumBefore, () => g.extras.museumStats()), nickOf); // museum facts opened by this mission
     mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers, score: g.score, ditched: g.ditching.ditched, interned: g.limping.interned ?? undefined }, g.prog, g.progress, toMap);
     g.specials.nemesis.onDebrief(m); // named Experten: this mission's ace outcomes (NemesisRuntime.ts)
     mountMissionRating(host, m, d); // player missions: plays, best score, star rating (MissionEditorScreen.ts)

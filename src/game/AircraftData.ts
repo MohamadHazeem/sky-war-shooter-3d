@@ -6,7 +6,7 @@
 import type { ModelKind } from '../world/Models';
 import type { EnemyType } from '../world/EnemyTypes';
 
-export type AircraftId = 'b17' | 'p51d' | EnemyType | 'boss';
+export type AircraftId = 'b17' | 'p51d' | 'p47d' | 'spitfire9' | EnemyType | 'boss';
 
 export interface AircraftSpec {
   id: AircraftId;
@@ -39,6 +39,20 @@ export const AIRCRAFT_SPECS: AircraftSpec[] = [
     armament: '6 × .50 cal M2 machine guns',
     speed: '437 mph (703 km/h)', first: '26 October 1940', size: '11.3 m × 9.8 m',
     tip: 'Friendly! Bubble canopy and a belly scoop: hold your fire when one dives past the bombers.',
+  },
+  {
+    id: 'p47d', model: 'p47d', side: 'allied', name: 'Republic P-47D Thunderbolt', nick: 'P-47',
+    role: 'Escort fighter · fighter-bomber', crew: '1',
+    armament: '8 × .50 cal M2 machine guns · up to 2,500 lb of bombs',
+    speed: '433 mph (697 km/h)', first: '6 May 1941', size: '12.4 m × 11.0 m',
+    tip: 'Friendly! A huge round nose and broad elliptical wings: the "Jug" rides with the bombers part of the way.',
+  },
+  {
+    id: 'spitfire9', model: 'spitfire9', side: 'allied', name: 'Supermarine Spitfire Mk IX', nick: 'Spitfire',
+    role: 'RAF fighter · escort', crew: '1',
+    armament: '2 × 20 mm Hispano cannon · 2 × .50 cal M2 machine guns',
+    speed: '408 mph (657 km/h)', first: '5 March 1936', size: '11.2 m × 9.5 m',
+    tip: 'Friendly! Thin elliptical wings and RAF roundels: Spitfires cover the bombers near the coast.',
   },
   {
     id: 'fw190', model: 'fw190', side: 'axis', name: 'Focke-Wulf Fw 190 A-8', nick: 'Fw 190',
