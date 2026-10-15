@@ -7,6 +7,7 @@ import type { Game } from './Game';
 import type { Mission } from './Missions';
 import { sound } from '../audio/Sound';
 import { Tutorial, TUTORIAL } from './Tutorial';
+import { GunneryRange, type RangeResult } from './GunneryRange';
 import { Hints } from './Hints';
 import { ControlsCard, ControlsHint } from '../ui/ControlsCard';
 import '../ui/onboarding.css';
@@ -26,10 +27,12 @@ interface Saved { tutorialDone: boolean; promptDismissed: boolean; missions?: nu
 export interface OnboardingHost {
   awardPerk(label: string): void;
   showCampaign(): void;
+  rangeDone(r: RangeResult): void;   // a gunnery range drill ended: back to the range screen with the result
 }
 
 export class Onboarding {
   readonly tutorial: Tutorial;
+  readonly range: GunneryRange;   // the Gunnery Range's practice flights (GunneryRange.ts), same hooks as the school
   readonly hints: Hints;
   readonly card = new ControlsCard();
   private hint = new ControlsHint();
@@ -46,6 +49,7 @@ export class Onboarding {
       onDone: () => { this.saved.tutorialDone = true; this.save(); },
       markHint: (id) => this.hints.markSeen(id),
     });
+    this.range = new GunneryRange(game, { done: (r) => host.rangeDone(r) });
     this.card.onClose = () => this.closeCard();
     // registered after Game's own key handler, so Esc closing the card never also pauses
     window.addEventListener('keydown', (e) => {
@@ -82,6 +86,7 @@ export class Onboarding {
   // Game.startMenu(): first flight starts once; no prompt overlays the title.
   onTitle() {
     this.tutorial.stop();
+    this.range.stop();
     if (this.card.open) { this.card.hide(); }
     this.hint.set(false);
     if (shouldStartFirstFlight(this.saved, this.game.progress, this.game.service.career.missions)) {
@@ -95,13 +100,14 @@ export class Onboarding {
     this.hints.onMissionStart();
     this.hintT = 0;
     if (!m.tutorial) { this.saved.missions = (this.saved.missions ?? 0) + 1; this.save(); }
-    if (m.tutorial) this.tutorial.start(); else this.tutorial.stop();
+    if (m.tutorial && !m.range) this.tutorial.start(); else this.tutorial.stop();
+    if (m.range) this.range.start(); else this.range.stop();
   }
 
   // Game.direct(): the tutorial replaces the director, waves and end conditions
   direct(dt: number, m: Mission): boolean {
     if (!m.tutorial) return false;
-    this.tutorial.update(dt);
+    if (m.range) this.range.update(dt); else this.tutorial.update(dt);
     return true;
   }
 
@@ -115,6 +121,7 @@ export class Onboarding {
     if (playing) this.hintT += dt;
     this.hint.set(controlsHintShown({ missions: this.saved.missions ?? 0, detail: hudRuntime.detail, playing, t: this.hintT, cardOpen: this.card.open }));
     if (this.tutorial.active && g.state !== 'playing' && g.state !== 'paused' && g.state !== 'ending') this.tutorial.stop();
+    if (this.range.active && g.state !== 'playing' && g.state !== 'paused' && g.state !== 'ending') this.range.stop();
     this.hints.update(dt);
   }
 

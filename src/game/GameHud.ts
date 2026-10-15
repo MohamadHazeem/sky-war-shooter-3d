@@ -77,7 +77,8 @@ export class GameHud {
     const alive = w.bombers().filter((b) => b.alive).length;
     const enemies = w.activeEnemies().length;
     let objective = m.objectives[0];
-    if (m.tutorial) objective = 'Gunnery School — follow the instructions';
+    if (m.range) objective = m.objectives[0];
+    else if (m.tutorial) objective = 'Gunnery School — follow the instructions';
     else if (m.round) {
       const r = roundDef(m, g.roundIdx);
       const left = Math.max(0, Math.ceil(r.duration - (w.time - g.roundT0)));
@@ -292,7 +293,8 @@ export class GameHud {
     if (visibility.extras) g.boss.drawHud(ctx, W, H, cam);
     // Lead indicator aim aid: pip for the enemy nearest the line of fire ('recruit' = only on Recruit difficulty)
     const leadMode = g.settings.leadPip ?? 'recruit';
-    if ((g.mission?.role === 'pilot' || g.settings.difficulty !== 'ace') && visibility.markers && pl?.alive && (g.loadout.leadPip || leadMode === 'always' || (leadMode === 'recruit' && g.settings.difficulty === 'recruit'))) this.drawLeadPip(ctx, W, H);
+    if ((g.mission?.role === 'pilot' || g.settings.difficulty !== 'ace') && visibility.markers && pl?.alive && (g.loadout.leadPip || leadMode === 'always' || (leadMode === 'recruit' && g.settings.difficulty === 'recruit')) && !g.onboarding.range.tutorOn) this.drawLeadPip(ctx, W, H);
+    g.onboarding.range.draw(ctx, W, H);   // gunnery range: lead tutor + ghost sight (GunneryRange.ts)
     // Gunner hip reticle: waist guns without the ring sight up (fades as RMB brings the eye down)
     if (g.mission?.role === 'gunner' && ((g.gunner.def.type === 'waist' && g.gunner.ads < 0.6) || g.gunner.def.id === 'top')) {
       const a = g.gunner.def.id === 'top' ? 0.85 : 0.85 * (1 - g.gunner.ads / 0.6);

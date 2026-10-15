@@ -53,6 +53,8 @@ import { showCampaignMap, prepareCampaignMission, isSideRaid } from '../ui/Campa
 import { TourRuntime } from './TourRuntime';
 import { showTour as showTourScreen, registerTourOpener } from '../ui/TourScreen';
 import { showHistoricalRaids as showRaidsScreen } from '../ui/HistoricalRaidsScreen';
+import { showGunneryRange as showRangeScreen } from '../ui/GunneryRangeScreen';
+import { RANGE_MISSION, type RangeResult } from './GunneryRange';
 import '../ui/CustomBattleScreen'; // registers the Custom Battle and Weekly Challenge modes + their Survival-screen tabs
 import { openMissionLink } from '../ui/MissionEditorScreen'; // registers the Mission Editor mode (Survival screen tab)
 import { CoopSession } from './CoopSession';
@@ -221,7 +223,7 @@ export class Game {
     const unlock = () => { sound.init(); window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock); };
     window.addEventListener('pointerdown', unlock);
     window.addEventListener('keydown', unlock);
-    this.onboarding = new Onboarding(this, engine, input, ui, { awardPerk: (l) => this.awardPerk(l), showCampaign: () => this.showCampaign() });
+    this.onboarding = new Onboarding(this, engine, input, ui, { awardPerk: (l) => this.awardPerk(l), showCampaign: () => this.showCampaign(), rangeDone: (r) => this.showGunneryRange(undefined, r) });
     this.service = new ServiceRecord(this, ui, { showBriefing: (m) => this.showBriefing(m) });
     this.skills = new SkillRuntime(this, ui);
     this.coop = new CoopSession(this, engine, ui);
@@ -352,6 +354,14 @@ export class Game {
   /** Historical raid mode (ui/HistoricalRaidsScreen.ts): famous raids with their real numbers. */
   showHistoricalRaids(back = () => this.startMenu()) {
     showRaidsScreen({ briefing: (m, b) => this.showBriefing(m, b), menu: back });
+  }
+
+  /** Gunnery Range 2.0 (ui/GunneryRangeScreen.ts): drills, free practice, ghosts and the lead tutor. A finished run comes back with its result. */
+  private rangeBack = () => this.startMenu();
+  showGunneryRange(back?: () => void, result?: RangeResult) {
+    if (back) this.rangeBack = back;
+    if (result) this.startMenu();
+    showRangeScreen({ fly: (run) => { this.ui.hideAll(); this.onboarding.range.prepare(run); this.startMission(RANGE_MISSION(run.drill.station, run.drill.title)); }, menu: () => this.rangeBack() }, result);
   }
 
   showBriefing(m: Mission, back = () => (m.number || isSideRaid(m) ? this.showCampaign() : this.startMenu())) {

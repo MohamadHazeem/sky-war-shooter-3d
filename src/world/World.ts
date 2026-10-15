@@ -530,7 +530,7 @@ export class World implements WorldView {
     attachEngineHaze(a);   // heat haze behind the engines (HeatHaze.ts)
   }
 
-  spawnEnemy(pos: THREE.Vector3, attack?: AttackType, skill = 1, dropTank = true, rockets = false, type: EnemyType = 'fw190'): Fighter {
+  spawnEnemy(pos: THREE.Vector3, attack?: AttackType, skill = 1, dropTank = true, rockets = false, type: EnemyType = 'fw190', paint?: THREE.Color): Fighter {
     const variant = ENEMY_VARIANTS[type];
     const own = hasModel(variant.model as ModelKind);
     const f = new Fighter((own ? variant.model : 'fw190') as ModelKind, 'axis', variant.params, own ? variant.propRadius : 1.65);
@@ -542,6 +542,7 @@ export class World implements WorldView {
     f.vel.copy(f.fm.vel);
     // Bf 109 paint: done before the drop tank and rockets are fitted so they keep their colours
     if (variant.tint && !own) tintModel(f.model, variant.tint);
+    if (paint) tintModel(f.model, paint);   // e.g. the gunnery range's orange target drones (GunneryRange.ts)
     dressEnemy(f, type, own); // per-type hit zones over the authored model
     // Fw 190 A-8: 2x MG 131 (13 mm) cowling, 4x MG 151/20 wing cannon
     const tracerY: [number, number, number] = [10, 8, 3.5];

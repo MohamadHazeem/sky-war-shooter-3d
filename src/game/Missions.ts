@@ -51,6 +51,7 @@ export interface Mission {
   round?: Round;              // continuous engagement (replaces the wave list when set)
   rounds?: number;            // the round is split into this many rounds, a hangar break between them (Infinity = survival)
   tutorial?: boolean;         // Gunnery School: Game's director skips it, Tutorial.ts drives the spawns
+  range?: boolean;            // with `tutorial`: the Gunnery Range (GunneryRange.ts) drives the spawns instead
   naval?: boolean;           // SeaOps surface-strike director; finite rounds can be used by campaigns
   // ---- scenario switches (custom battles and the weekly challenge; unset = the normal rules) ----
   enemyTypes?: EnemyType[];   // only these enemy types are sent (ModeRunner.enemyType)

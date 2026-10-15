@@ -310,3 +310,25 @@ Easing is quick, pushing slow and only after a minute; low health cancels any pu
 "Adaptive difficulty" (`settings.adaptive`, undefined = on) switches it off; the debrief shows what it
 did (`summary()`). Dev readout: `sws.game.adaptive.state()`. Balance runs with autoplay bots:
 `tools/adaptive_balance.mjs`. P-51 campaign missions run PilotOps' scripted rounds and are not adapted.
+
+## Gunnery Range 2.0 (Phase 11 goal 35)
+
+A free practice range: Hangar → *Aircraft & Armory* → **Gunnery Range** (`ui/GunneryRangeScreen.ts`). Pick a gun
+position, then one of four drills (steady shots, crossing targets, towed sleeve, long range) or free practice with
+your own target (drone / towed sleeve), speed, crossing angle and range. Two switches: the lead tutor and the ghost
+of your best run. The rules are pure (`game/GunneryRangeRules.ts`): each drill is a fixed timeline of straight passes
+flown in the bomber's frame (`passPoint` / `passVelocity`, kept inside the gun's field of fire by `passHalf`), so
+every run of a drill sees the same targets at the same moments and a saved ghost lines up. Score = hits, kills (more
+for an early kill) and an accuracy bonus; stars at 30 / 60 / 90 % of the drill's par. Records and the best run's
+ghost (aim in the bomber frame plus running score, 5 Hz) are saved in `sws3d.range.v1`.
+
+The flight is `game/GunneryRange.ts`, owned by `Onboarding` as `onboarding.range` and driven through the same hooks
+as the Gunnery School: the mission (`RANGE_MISSION`) has `tutorial: true` (no director, bookends, kill cams,
+service record or mastery) plus `range: true`, so `Onboarding.onMissionStart / direct / update` start and run the
+range instead of the school. Drones are gunless Fw 190s in target-drone orange (`World.spawnEnemy`'s `paint`
+argument) flown on rails; a towed sleeve is a cloth cone on a cable behind a gunless P-47 tow ship, and its hits come
+from `Ballistics.ground` (the hook is borrowed for the flight and handed back). `GameHud.drawOverlay` calls
+`range.draw()`: the ghost's blue sight and the tutor (lead ring, track with tenth-second ticks, lead angle, range,
+time of flight, and "more / less lead" coaching from `coachLead`); the ordinary lead pip is off while the tutor is
+on. At the end of a drill the range screen comes back with the result (`Game.showGunneryRange(back, result)`).
+Browser check: `tools/gunnery_range_check.mjs`.
