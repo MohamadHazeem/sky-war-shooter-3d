@@ -646,7 +646,7 @@ export class CoopSession {
     const box = document.querySelector<HTMLElement>('#debrief .box');
     if (box && this.scenario !== 'custom') mountLeaderboard(box, coopBoard(this.mode), 'CREW LEADERBOARD', this.role === 'host' ? {
       name: this.mode === 'pilot' ? crewName('Blue One', 'Blue Two') : crewName(...this.crewNames.filter(Boolean)), mode: coopBoard(this.mode), score: result.crew.score,
-      kills: result.crew.kills, rounds: d.waves ?? 0,
+      kills: result.crew.kills, rounds: d.waves ?? 0, duration: d.time,
     } : undefined);
   }
 

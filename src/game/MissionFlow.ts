@@ -325,7 +325,7 @@ export class MissionFlow {
     // online leaderboard: survival per role, campaign per mission
     const host = document.querySelector<HTMLElement>('#debrief .box');
     const board = leaderboardMode(m) ?? (survival ? `survival-${m.role}` : `campaign-${m.id}`);
-    if (host && !isSecondTourId(m.id) && !isChapterMission(m.id)) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: g.score, kills: w.stats.kills, rounds: g.roundIdx + 1 });
+    if (host && !isSecondTourId(m.id) && !isChapterMission(m.id)) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: g.score, kills: w.stats.kills, rounds: g.roundIdx + 1, duration: d.time });
     mountShare(host, g.engine, () => shareStamp(g), () => ({ title: m.title, kills: d.kills, score: d.score, success: d.success, survival, waves: d.waves, role: m.role }));
     analytics.missionEnd(m, d);
     g.service.onDebrief(m, d, medals);

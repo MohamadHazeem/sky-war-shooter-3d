@@ -12,6 +12,16 @@
       "collectionGroup": "scores",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "mode", "order": "ASCENDING" },
+        { "fieldPath": "season", "order": "ASCENDING" },
+        { "fieldPath": "shadow", "order": "ASCENDING" },
+        { "fieldPath": "score", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "scores",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "squadron", "order": "ASCENDING" },
         { "fieldPath": "mode", "order": "ASCENDING" },
         { "fieldPath": "score", "order": "DESCENDING" }
