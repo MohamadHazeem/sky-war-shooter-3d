@@ -74,3 +74,8 @@ body:has(#title.show) :is(#perkToast, #achv-toasts, #hudToast) { display:none; }
 #cb-screen .cb-grid > details { margin:0; }
 #theatreLib:not(.show) { display:none; }
 #briefing .menu-back { background:#e2d6b6; color:#403625; border:1px solid #8a7c58; }
+/* language picker on the title (UI.title) */
+#title.simple-title .title-lang { margin-inline-start:auto; display:flex; align-items:center; gap:7px; color:var(--ink-dim); min-height:44px; }
+#title.simple-title .title-lang select { background:transparent; color:var(--ink); border:0; border-bottom:1px solid rgba(219,204,157,.35); font:14px 'IBM Plex Mono','IBM Plex Sans Arabic',monospace; padding:6px 2px; cursor:pointer; }
+#title.simple-title .title-lang select option { background:#1b2320; }
+#title.simple-title .title-lang:focus-within { color:var(--ink); }

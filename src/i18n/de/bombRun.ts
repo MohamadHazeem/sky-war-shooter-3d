@@ -1,0 +1,25 @@
+// German for ar/bombRun.ts (same keys and patterns).
+import type { PhraseTable } from '../types';
+export default { phrases: {
+  'IP INBOUND': 'ANFLUG AUF DEN IP',
+  'STRAIGHT AND LEVEL': 'GERADEAUS UND WAAGERECHT',
+  'BOMB BAY DOORS OPEN': 'BOMBENKLAPPEN OFFEN',
+  'RELEASE IN {time}': 'ABWURF IN {time}',
+  'STRIKE BELOW': 'EINSCHLÄGE UNTER UNS',
+  'BOMBS AWAY': 'BOMBEN AUSGELÖST',
+  'BOMBS FALLING · {time} s': 'BOMBEN FALLEN · {time} s',
+  'RALLY POINT · FIGHTERS RETURNING': 'SAMMELPUNKT · JÄGER KEHREN ZURÜCK',
+  'Target markers below · Hold formation': 'Zielmarkierungen unter uns · Formation halten',
+  'Bombing through overcast · Following the lead ship': 'Abwurf durch die Wolkendecke · Wir folgen der Führungsmaschine',
+  'Watch the strike from the ball turret · 4': 'Verfolge die Einschläge aus dem Kugelturm · 4',
+  'Strike result: on target': 'Ergebnis: im Ziel',
+  'Strike result: off target': 'Ergebnis: neben dem Ziel',
+  'Initial point inbound. Fighters are pulling back. Hold formation.': 'Anflug auf den IP. Die Jäger ziehen sich zurück. Formation halten.',
+  'Steady. Straight and level. No evasive action.': 'Ruhig. Geradeaus und waagerecht. Keine Ausweichmanöver.',
+  'Bomb bay doors open. Cold air coming through.': 'Bombenklappen offen. Eiskalte Luft strömt herein.',
+  'Target hidden by overcast. Bombing on the lead ship.': 'Ziel unter der Wolkendecke. Abwurf mit der Führungsmaschine.',
+  'Target markers in sight. Smoke from the earlier wave.': 'Zielmarkierungen in Sicht. Rauch von der vorigen Welle.',
+  'Five seconds. Steady. Three. Two. One.': 'Fünf Sekunden. Ruhig. Drei. Zwei. Eins.',
+  'Rally point. Close the bays. Fighters coming back!': 'Sammelpunkt. Klappen schließen. Die Jäger kommen zurück!',
+  'Flak hit the ship beside us! Her engine is burning!': 'Flak hat die Maschine neben uns erwischt! Ihr Motor brennt!',
+} } satisfies PhraseTable;

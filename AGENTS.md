@@ -48,6 +48,11 @@ Sky War Shooter 3D: a WWII browser game (Three.js r186 + TypeScript + Vite). Rea
   (`export default` a `PhraseTable`). It is auto-discovered and loaded before the listed tables, so do NOT
   edit `src/i18n/phrases.ts` (only to deliberately change precedence). `tests/i18n.test.ts` enforces
   coverage of mission texts and recorded radio lines.
+- French, German and Spanish mirror the Arabic tables: `src/i18n/{fr,de,es}/<same name>.ts` (same English keys,
+  same pattern regexes; auto-discovered, lazy-loaded per language). Add them with your Arabic table;
+  `tests/i18nLocales.test.ts` enforces mission texts, upgrades, radio lines and >99% of the Arabic keys
+  (gap list: `I18N_GAPS=1 npx vitest run tests/i18nLocales.test.ts`). Interface keys of `en.ts` go in
+  `src/i18n/ui/{fr,de,es}.ts`.
 - New radio lines go in a new `tools/voice/lines.d/<goal>.json` (a JSON array starting with a
   `{"group": "..."}` header, then line objects), NOT in `tools/voice/lines.json`; files load in sorted
   filename order before the `briefings (tools/voice/briefings.mjs)` group. Then run

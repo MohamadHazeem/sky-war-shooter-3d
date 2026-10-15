@@ -1,0 +1,30 @@
+// German for ar/menu.ts (same keys and patterns).
+import type { PhraseTable } from '../types';
+const table: PhraseTable = { phrases: {
+  'The same skies and enemy schedule for every crew today.': 'Heute derselbe Himmel und derselbe Feindplan für jede Besatzung.',
+  'Skill branch': 'Fähigkeitszweig', 'Aircraft & Crew': 'Flugzeug & Besatzung', 'Enemy forces': 'Feindkräfte', 'Weather & Events': 'Wetter & Ereignisse',
+  'Profile & Help': 'Profil & Hilfe', 'Graphics': 'Grafik', 'Sound': 'Ton', 'Credits': 'Mitwirkende',
+  'Local scores': 'Lokale Punktestände', 'No scores yet.': 'Noch keine Punktestände.', '{n} rounds': '{n} Runden',
+  'Mode': 'Modus',
+  'Fly a Mission': 'Einsatz fliegen', 'Co-op': 'Koop', 'Hangar': 'Hangar',
+  'Man the guns. Bring your crew home.': 'Besetz die MGs. Bring deine Besatzung heim.',
+  'Mission {n} / {total} · {title}': 'Einsatz {n} / {total} · {title}',
+  'Endless B-17 gunner waves': 'Endlose Wellen für den B-17-Schützen',
+  'Crew a B-17 with a friend': 'Flieg eine B-17 mit einem Freund',
+  'New items': 'Neue Objekte', 'Between missions': 'Zwischen den Einsätzen',
+  'Crew & Skills': 'Besatzung & Fähigkeiten', 'Aircraft & Armory': 'Flugzeuge & Waffenkammer', 'Records': 'Aufzeichnungen', 'More': 'Mehr',
+  'Train your gunner': 'Trainiere deinen Schützen', 'Stations, skills and recovery': 'Stationen, Fähigkeiten und Erholung',
+  'Rank and flight record': 'Rang und Flugbuch', 'Recognition gallery and quiz': 'Erkennungsgalerie und Quiz',
+  'Aircraft, weapons and upgrades': 'Flugzeuge, Waffen und Verbesserungen', 'Name, nose art and paint': 'Name, Nose-Art und Lackierung',
+  'Your achievement collection': 'Deine Erfolgssammlung', 'Global and squadron scores': 'Globale und Staffel-Punktestände',
+  'Three orders for today': 'Drei Befehle für heute', 'A new operation each week': 'Jede Woche eine neue Operation',
+  'Your online squadron': 'Deine Online-Staffel', 'Learn the controls and tactics': 'Lerne Steuerung und Taktik',
+  'Read the latest bulletin': 'Lies das neueste Bulletin', 'Watch your saved moments': 'Sieh deine gespeicherten Momente',
+  'Story missions and side raids': 'Story-Einsätze und Nebenangriffe', 'Build your own battle': 'Bau deine eigene Schlacht',
+  'A guided gunner flight': 'Ein geführter Schützenflug',
+  'Defend the formation for as long as you can.': 'Verteidige die Formation so lange du kannst.',
+  'Fly as gunner': 'Als Schütze fliegen', 'More modes': 'Weitere Modi', 'P-51 Survival': 'P-51-Überleben',
+  'You’re ready, gunner. Choose your next flight.': 'Du bist bereit, Schütze. Wähl deinen nächsten Flug.',
+  'Leaderboards': 'Bestenlisten', 'Top scores': 'Höchstpunktzahlen', 'Customize': 'Anpassen', 'Service Record': 'Dienstakte',
+} };
+export default table;

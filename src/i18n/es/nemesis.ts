@@ -1,0 +1,192 @@
+// Spanish for ar/nemesis.ts (same keys and patterns).
+import type { PhraseTable, Pattern } from '../types';
+
+// German first names and surnames stay as they are
+const NAMES = [
+  'Heinz', 'Walter', 'Erich', 'Günther', 'Hans', 'Josef', 'Wolfgang', 'Gerhard', 'Helmut', 'Friedrich', 'Karl', 'Ernst', 'Werner', 'Rudolf', 'Egon', 'Anton',
+  'Horst', 'Dieter',
+  'Brückner', 'Dorn', 'Eckhardt', 'Faber', 'Gebhardt', 'Hollmann', 'Kranz', 'Lindner', 'Neumeyer', 'Ostermann', 'Pfeiffer', 'Reuter', 'Sauer', 'Thalberg',
+  'Vossberg', 'Wendt', 'Zeller', 'Kaltenbach', 'Riedel', 'Stahl', 'Winterfeld', 'Haller', 'Ritter', 'Engel',
+];
+const NAME: Record<string, string> = Object.fromEntries(NAMES.map((n) => [n, n]));
+
+// Luftwaffe ranks stay German
+const RANKS: Record<string, string> = {
+  Leutnant: 'Leutnant', Oberleutnant: 'Oberleutnant', Hauptmann: 'Hauptmann', Major: 'Major', Oberstleutnant: 'Oberstleutnant', Oberst: 'Oberst',
+};
+const SHORT: Record<string, string> = {
+  'Lt.': 'Lt.', 'Oblt.': 'Oblt.', 'Hptm.': 'Hptm.', 'Maj.': 'Maj.', 'Obstlt.': 'Obstlt.', 'Obst.': 'Obst.',
+};
+
+// Places (always used after "sobre")
+const PLACES: Record<string, string> = {
+  'the Reich': 'el Reich', 'the Ruhr': 'el Ruhr', 'the Netherlands': 'los Países Bajos', 'the Channel': 'el Canal',
+  Emden: 'Emden', Bremen: 'Bremen', Ludwigshafen: 'Ludwigshafen', Leipzig: 'Leipzig', Schweinfurt: 'Schweinfurt', Berlin: 'Berlín', Kiel: 'Kiel',
+  Regensburg: 'Ratisbona', Oschersleben: 'Oschersleben', Hamm: 'Hamm', 'Münster': 'Münster', 'Osnabrück': 'Osnabrück', Hannover: 'Hannover',
+  Rheine: 'Rheine', Twente: 'Twente', Oldenburg: 'Oldenburgo', Gelsenkirchen: 'Gelsenkirchen', Leuna: 'Leuna', Misburg: 'Misburg',
+  Wilhelmshaven: 'Wilhelmshaven', Brunswick: 'Brunswick', Kassel: 'Kassel', Gotha: 'Gotha',
+};
+
+const RK = '(Lt\\.|Oblt\\.|Hptm\\.|Maj\\.|Obstlt\\.|Obst\\.)';
+
+const patterns: Pattern[] = [
+  [/^(JG|KG|ZG) (\d+)$/, '$1 $2'],
+  [new RegExp(`^${RK} (\\S+)$`), (m, tr) => `${m[1]} ${tr(m[2])}`],
+  [/^(.+) \(Experte\)$/, (m, tr) => `${tr(m[1])} (as)`],
+  [/^Intelligence was right — that's (\S+)'s machine! Watch for his markings!$/, (m, tr) => `Inteligencia tenía razón — ¡es el avión de ${tr(m[1])}! ¡Atentos a sus marcas!`],
+  [/^You got (\S+)! That's one Experte off the board!$/, (m, tr) => `¡Has derribado a ${tr(m[1])}! ¡Un as menos!`],
+  [/^He's back — the one who wounded (.+) over (.+)!$/, (m, tr) => `Ha vuelto — ¡el que hirió a ${tr(m[1])} sobre ${tr(m[2])}!`],
+  [/^He's back — the one who shot us down over (.+)!$/, (m, tr) => `Ha vuelto — ¡el que nos derribó sobre ${tr(m[1])}!`],
+];
+
+const table: PhraseTable = {
+  phrases: {
+    ...NAME, ...RANKS, ...SHORT, ...PLACES,
+    // traits
+    'Head-on specialist': 'Especialista en ataque frontal',
+    "Comes in from twelve o'clock high and never turns away first.": 'Llega alto por las doce y nunca es el primero en apartarse.',
+    'Attacks out of the sun': 'Ataca desde el sol',
+    'Climbs up-sun and dives out of the glare, where the gunners cannot look.': 'Sube hacia el sol y se lanza desde el resplandor, donde los artilleros no pueden mirar.',
+    'Hunts stragglers': 'Caza rezagados',
+    'Circles the box and pounces on any bomber that falls behind.': 'Rodea la formación y se lanza sobre cualquier bombardero que se quede atrás.',
+    'Goes for the tail gunner': 'Va a por el artillero de cola',
+    'Kills the tail gun first: then the bomber is blind from behind.': 'Silencia primero la cola: así el bombardero queda ciego por detrás.',
+    'Fights the escorts': 'Combate a los escoltas',
+    'Leaves the bombers to his wingmen and goes looking for Mustangs.': 'Deja los bombarderos a sus puntos y sale a buscar Mustang.',
+    'Jet ace (Me 262)': 'As de reactor (Me 262)',
+    'One slashing pass at five hundred miles an hour, then gone.': 'Una pasada fulminante a quinientas millas por hora, y desaparece.',
+    'Sturmbock (armoured Fw 190)': 'Sturmbock (Fw 190 blindado)',
+    'Armour plate and heavy cannon: closes from astern to point-blank range.': 'Blindaje y cañones pesados: se acerca por detrás a quemarropa.',
+    'Zerstörer ace (Me 410)': 'As Zerstörer (Me 410)',
+    'Stands off at two kilometres and fires his 50 mm cannon.': 'Se queda a dos kilómetros y dispara su cañón de 50 mm.',
+    // colours and emblems
+    Yellow: 'Amarillo', Red: 'Rojo', Blue: 'Azul', White: 'Blanco', Black: 'Negro', Green: 'Verde', Orange: 'Naranja', Violet: 'Violeta',
+    'Ace of spades': 'As de picas', 'Red heart': 'Corazón rojo', "Wolf's head": 'Cabeza de lobo', 'Lightning bolt': 'Rayo', "Eagle's wings": 'Alas de águila',
+    'Red devil': 'Diablo rojo', 'Crown': 'Corona', 'Staffel star': 'Estrella de Staffel',
+    // dossier history lines
+    'Over {place}: you shot him down.': 'Sobre {place}: lo derribaste.',
+    'Over {place}: shot down by the formation.': 'Sobre {place}: derribado por la formación.',
+    'Over {place}: you shot him down, but he bailed out.': 'Sobre {place}: lo derribaste, pero saltó en paracaídas.',
+    'Over {place}: shot down, but he bailed out.': 'Sobre {place}: derribado, pero saltó en paracaídas.',
+    'Over {place}: badly shot up, he escaped.': 'Sobre {place}: muy tocado, escapó.',
+    'Over {place}: he broke off and went home.': 'Sobre {place}: abandonó y volvió a su base.',
+    'He wounded {crew}.': 'Hirió a {crew}.',
+    'He shot you down.': 'Te derribó.',
+    'He shot down your bomber.': 'Derribó tu bombardero.',
+    'He claimed one of ours.': 'Derribó a uno de los nuestros.',
+    'He claimed {n} of ours.': 'Derribó a {n} de los nuestros.',
+    'He shot up your aircraft.': 'Acribilló tu avión.',
+    'Promoted to {rank}.': 'Ascendido a {rank}.',
+    '+{n} merit.': '+{n} mérito.',
+    // debrief and campaign intelligence report
+    '{name} — shot down by you. +{n} merit.': '{name} — derribado por ti. +{n} mérito.',
+    '{name} — shot down by the formation.': '{name} — derribado por la formación.',
+    '{name} — shot down by you, +{n} merit. He bailed out and will be back.': '{name} — derribado por ti, +{n} mérito. Saltó en paracaídas y volverá.',
+    '{name} — shot down. He bailed out and will be back.': '{name} — derribado. Saltó en paracaídas y volverá.',
+    '{name} — escaped badly damaged. He will return with a grudge.': '{name} — escapó muy dañado. Volverá con ganas de venganza.',
+    '{name} — broke off and went home.': '{name} — abandonó y volvió a su base.',
+    '{name} wounded {crew}.': '{name} hirió a {crew}.',
+    '{name} shot you down.': '{name} te derribó.',
+    '{name} shot down your bomber.': '{name} derribó tu bombardero.',
+    '{name} now claims {n} victories.': '{name} se atribuye ya {n} victorias.',
+    '{name} has been promoted to {rank}.': '{name} ha sido ascendido a {rank}.',
+    '{name} of {unit} is promoted from the ranks to take his place.': '{name}, del {unit}, asciende desde la tropa para ocupar su puesto.',
+    'Most wanted: {name} · {n} victories · bounty {b} merit': 'Más buscado: {name} · {n} victorias · recompensa {b} mérito',
+    'Experten dossiers': 'Expedientes de ases',
+    // what the crew remembers (HUD card)
+    'Wounded {crew} over {place}': 'Hirió a {crew} sobre {place}',
+    'Shot us down over {place}': 'Nos derribó sobre {place}',
+    'Bailed out over {place}, back from hospital': 'Saltó sobre {place}, vuelve del hospital',
+    'Escaped us damaged over {place}': 'Se nos escapó dañado sobre {place}',
+    'Met over {place}': 'Encontrado sobre {place}',
+    // HUD: banner, card, panel, tags, tips, feed
+    'EXPERTE': 'AS',
+    '{n} VICTORIES': '{n} VICTORIAS',
+    'EXPERTE · {n} VICTORIES': 'AS · {n} VICTORIAS',
+    '{n} victories': '{n} victorias',
+    'victories': 'victorias',
+    '+{n} WINGMEN': '+{n} PUNTOS',
+    'ALONE': 'SOLO',
+    'ACE': 'AS',
+    'MOST WANTED': 'MÁS BUSCADO',
+    'INTELLIGENCE · EXPERTE': 'INTELIGENCIA · AS',
+    'Patched up after last time · out for revenge': 'Remendado desde la última vez · busca venganza',
+    'Experte down': 'As derribado',
+    'Most wanted — down': 'Más buscado — derribado',
+    'The Experte is coming for the <b>TAIL GUN</b> — <kbd>5</kbd>': 'El as va a por la <b>COLA</b> — <kbd>5</kbd>',
+    'The Experte attacks head-on — <b>TOP TURRET</b> <kbd>3</kbd>': 'El as ataca de frente — <b>TORRETA SUPERIOR</b> <kbd>3</kbd>',
+    'The Experte dives <b>OUT OF THE SUN</b> — watch the glare': 'El as se lanza <b>DESDE EL SOL</b> — cuidado con el resplandor',
+    'Bring down the Experte — {trait}': 'Derriba al as — {trait}',
+    '{name} shot down — +{n} merit bounty': '{name} derribado — recompensa de +{n} mérito',
+    '{name} shot down': '{name} derribado',
+    '{name} escaped, badly damaged': '{name} escapó, muy dañado',
+    '{name} broke off': '{name} se retiró',
+    'Luftwaffe Experten': 'Ases de la Luftwaffe',
+    // the Experten screen
+    'Killed in action': 'Muerto en combate',
+    'In hospital · back in {n} missions': 'En el hospital · vuelve en {n} misiones',
+    'On strength': 'En servicio',
+    '{n} encounters': '{n} encuentros',
+    'Never met': 'Nunca encontrado',
+    'wounded {crew}': 'hirió a {crew}',
+    'shot you down ×{n}': 'te derribó ×{n}',
+    'escaped you ×{n}': 'se te escapó ×{n}',
+    'Bounty: {n} merit': 'Recompensa: {n} mérito',
+    'Price on his head: {n} merit': 'Precio por su cabeza: {n} mérito',
+    'Patches': 'Remiendos',
+    'Grudge': 'Rencor',
+    'Took over from {name}': 'Sucedió a {name}',
+    'HISTORY WITH YOU': 'HISTORIAL CONTIGO',
+    'Last sighting: {mission} · over {place}': 'Último avistamiento: {mission} · sobre {place}',
+    'No Experten met yet. Intelligence expects them on every big raid.': 'Aún no hay ases encontrados. Inteligencia los espera en cada gran incursión.',
+    'SECRET': 'SECRETO',
+    '401ST BOMB SQUADRON · S-2 INTELLIGENCE': '401.º ESCUADRÓN DE BOMBARDEO · INTELIGENCIA S-2',
+    'ENEMY PERSONALITIES FILE': 'ARCHIVO DE PERSONALIDADES ENEMIGAS',
+    'Experten shot down by you: <b>{n}</b>': 'Ases derribados por ti: <b>{n}</b>',
+    'I. ON STRENGTH · {n}': 'I. EN SERVICIO · {n}',
+    'II. KILLED IN ACTION · {n}': 'II. MUERTOS EN COMBATE · {n}',
+    // achievements and the medal
+    'Scratch One Experte': 'Un as menos',
+    'Shoot down a named Luftwaffe Experte.': 'Derriba a un as conocido de la Luftwaffe.',
+    'Settled Score': 'Cuentas saldadas',
+    'Shoot down an Experte who hurt your crew or got away from you before.': 'Derriba a un as que hirió a tu tripulación o que ya se te escapó.',
+    'Most Wanted': 'El más buscado',
+    "Shoot down the Luftwaffe's most wanted Experte and collect the bounty.": 'Derriba al as más buscado de la Luftwaffe y cobra la recompensa.',
+    'Knight Hunter': 'Cazador de caballeros',
+    'Shoot down five named Experten.': 'Derriba a cinco ases conocidos.',
+    'Experten Killer': 'Matador de ases',
+    // German pilots on the radio (subtitles only)
+    'Head-on, Kinder. Straight through them, and nobody turns away before me.': 'De frente, Kinder. A través de ellos, y nadie se aparta antes que yo.',
+    'Out of the sun. They will not see us until it is too late.': 'Desde el sol. No nos verán hasta que sea demasiado tarde.',
+    'Look for the cripple at the back. Wounded birds fall easiest.': 'Buscad al tullido de atrás. Los pájaros heridos caen más fácil.',
+    'Kill the tail gunner first. Then the Viermot is blind.': 'Primero el artillero de cola. Luego el Viermot queda ciego.',
+    'Leave the bombers to the others. The Mustangs are mine.': 'Dejad los bombarderos a los demás. Los Mustang son míos.',
+    'Turbines at full power. Nobody can catch us today.': 'Turbinas a plena potencia. Hoy nadie nos alcanza.',
+    'Close in to a hundred metres. Sturm!': 'Acercaos a cien metros. ¡Sturm!',
+    'Stay out of their range. One shell is enough for a Viermot.': 'Quedaos fuera de su alcance. Un proyectil basta para un Viermot.',
+    'I remember your ship, Amis. Today we finish it.': 'Recuerdo vuestro avión, Amis. Hoy lo terminamos.',
+    'Two weeks in hospital because of you. Now it is my turn.': 'Dos semanas en el hospital por vuestra culpa. Ahora me toca a mí.',
+    'You again? You should have stayed in England.': '¿Otra vez vosotros? Deberíais haberos quedado en Inglaterra.',
+    // crew radio (recorded)
+    "That's the one who bailed out on us — he's flying again!": 'Es el que saltó la otra vez — ¡vuelve a volar!',
+    "He's back — you can still see the patches where we shot him up!": 'Ha vuelto — ¡aún se ven los remiendos donde le dimos!',
+    "Those markings again — it's the same Experte we tangled with before!": 'Esas marcas otra vez — ¡es el mismo as con el que ya nos enfrentamos!',
+    "He's breaking off, trailing smoke — don't let him get away!": 'Se retira echando humo — ¡que no se escape!',
+    "He's going after the Mustangs — he wants the little friends!": 'Va a por los Mustang — ¡quiere a los amiguitos!',
+    "He's going for the stragglers — the cripples are his meat!": 'Va a por los rezagados — ¡los tullidos son su presa!',
+    "He's lining up on the tail gun — watch six o'clock!": 'Se alinea con la cola — ¡vigila las seis!',
+    'Sturmbock! Armoured Fw 190s closing to point-blank — hit him hard!': '¡Sturmbock! Fw 190 blindados a quemarropa — ¡dale fuerte!',
+    "He's coming head-on, twelve o'clock high — he never turns away first!": 'Viene de frente, alto por las doce — ¡nunca se aparta primero!',
+    "He's coming out of the sun — watch the glare!": 'Sale del sol — ¡cuidado con el resplandor!',
+    "Jet Experte! One pass and he's gone — be ready!": '¡As de reactor! Una pasada y desaparece — ¡prepárate!',
+    "That Me 410 Experte is hanging back — he'll use the big gun!": 'Ese as del Me 410 se queda atrás — ¡va a usar el cañón grande!',
+    "He's coming straight for us — he's got a score to settle!": 'Viene directo a por nosotros — ¡tiene cuentas pendientes!',
+    'Somebody got the Experte! Scratch one ace!': '¡Alguien ha derribado al as! ¡Un as menos!',
+    "He's bailed out — there's his chute! He'll fly again.": 'Ha saltado — ¡ahí está su paracaídas! Volverá a volar.',
+    "He got away. He'll be back — and he'll remember us.": 'Se ha escapado. Volverá — y se acordará de nosotros.',
+    'That was the Experte! He got one of ours!': '¡Era el as! ¡Ha derribado a uno de los nuestros!',
+    'The Experte just got one of the Forts!': '¡El as acaba de derribar una Fortaleza!',
+  },
+  patterns,
+};
+export default table;

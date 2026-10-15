@@ -22,7 +22,7 @@ export class SimpleMenu {
     g.ui.title({
       campaign: () => g.showBriefing(nextCampaignMission(g.progress), () => g.startMenu()),
       survival: () => this.survival(), coop: () => g.coop.openMenu(),
-      hangar: () => this.hangar(), settings: () => this.settings(),
+      hangar: () => this.hangar(), settings: () => this.settings(), relang: () => g.startMenu(),
     }, nextCampaignMission(g.progress), notice);
   }
 

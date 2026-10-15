@@ -1,0 +1,25 @@
+// French for ar/bombRun.ts (same keys and patterns).
+import type { PhraseTable } from '../types';
+export default { phrases: {
+  'IP INBOUND': 'APPROCHE DU POINT INITIAL',
+  'STRAIGHT AND LEVEL': 'VOL STABILISÉ',
+  'BOMB BAY DOORS OPEN': 'TRAPPES DE SOUTE OUVERTES',
+  'RELEASE IN {time}': 'LARGAGE DANS {time}',
+  'STRIKE BELOW': 'IMPACTS EN DESSOUS',
+  'BOMBS AWAY': 'BOMBES LARGUÉES',
+  'BOMBS FALLING · {time} s': 'BOMBES EN CHUTE · {time} s',
+  'RALLY POINT · FIGHTERS RETURNING': 'POINT DE RALLIEMENT · LES CHASSEURS REVIENNENT',
+  'Target markers below · Hold formation': 'Marqueurs de cible en dessous · Gardez la formation',
+  'Bombing through overcast · Following the lead ship': "Bombardement à travers les nuages · On suit l'avion de tête",
+  'Watch the strike from the ball turret · 4': 'Suivez les impacts depuis la tourelle ventrale · 4',
+  'Strike result: on target': 'Résultat : sur la cible',
+  'Strike result: off target': 'Résultat : hors de la cible',
+  'Initial point inbound. Fighters are pulling back. Hold formation.': 'Point initial en vue. Les chasseurs se retirent. Gardez la formation.',
+  'Steady. Straight and level. No evasive action.': "Stable. Vol stabilisé. Aucune manœuvre d'évitement.",
+  'Bomb bay doors open. Cold air coming through.': "Trappes de soute ouvertes. L'air glacé s'engouffre.",
+  'Target hidden by overcast. Bombing on the lead ship.': "Cible masquée par les nuages. Largage sur l'avion de tête.",
+  'Target markers in sight. Smoke from the earlier wave.': 'Marqueurs de cible en vue. Fumée de la vague précédente.',
+  'Five seconds. Steady. Three. Two. One.': 'Cinq secondes. Stable. Trois. Deux. Un.',
+  'Rally point. Close the bays. Fighters coming back!': 'Point de ralliement. Fermez les soutes. Les chasseurs reviennent !',
+  'Flak hit the ship beside us! Her engine is burning!': "La flak a touché l'avion à côté ! Son moteur brûle !",
+} } satisfies PhraseTable;
