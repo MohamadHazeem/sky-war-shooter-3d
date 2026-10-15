@@ -62,6 +62,7 @@ async function boot() {
   document.head.append(style);
   engine.camera.updateMatrixWorld(true);
   engine.post.resetHistory(); engine.clouds.resetHistory();
+  engine.clouds.settleProbeForCapture(engine.renderer, engine.camera, engine.time);
   for (let i = 0; i < RIG_SETTLE; i++) await adapter.render(RIG_DT);
   await adapter.sync();
   const canvas = engine.renderer.domElement;
@@ -82,6 +83,7 @@ async function boot() {
       engine.camera.fov = pose.fov;
       engine.camera.updateProjectionMatrix(); engine.camera.updateMatrixWorld(true);
       engine.post.resetHistory(); engine.clouds.resetHistory();
+      engine.clouds.settleProbeForCapture(engine.renderer, engine.camera, engine.time);
       for (let i = 0; i < RIG_SETTLE; i++) await adapter.render(RIG_DT);
       await adapter.sync();
       metadata.camera = { position: engine.camera.position.toArray(), quaternion: engine.camera.quaternion.toArray(), fov: engine.camera.fov };

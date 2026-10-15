@@ -53,6 +53,7 @@ const VERT = /* glsl */ `
   }`;
 
 const FRAG = /* glsl */ `
+  uniform float uCondensation;
   uniform float uShape, uR, uTime, uRain, uSpeedK, uFlowV, uGlint, uDust, uOil, uSpat, uFrost, uCrackN, uAimK, uAspect;
   uniform vec3 uC, uAxis, uUp, uFlow, uFlowUp, uSun, uSunCol, uSky, uFlash;
   uniform vec4 uEdge, uAim;
@@ -268,6 +269,17 @@ const FRAG = /* glsl */ `
       col += uFlash * (spot * 0.9 + rim * 0.25 + body * 0.08);   // every drop catches the muzzle flash
     }
 
+    // Cloud droplets first make a fine, patchy film, then coalesce into beads.
+    // Surface coordinates keep it on the actual perspex during head movement.
+    if (uCondensation > 0.001) {
+      vec2 cuv = glassUV(rel, n);
+      vec2 cm = metric(dFdx(cuv), dFdy(cuv), dPx, dPy);
+      float film = smoothstep(0.25, 0.75, vnoise(cuv * 19.0 + vec2(uTime * 0.035, 0.0)));
+      vec3 mist = beads(cuv, 0.0035, uTime * 0.35, uCondensation, cm, pxm);
+      a += uCondensation * film * 0.09 + mist.y * 0.22;
+      col += uSky * uCondensation * film * 0.035 + (uSky + uSunCol * gk) * mist.z * 0.24;
+    }
+
     // oil film and spatter
     if (uOil + uSpat > 0.02) {
      vec2 ouv = glassUV(rel, n);
@@ -377,7 +389,7 @@ function glassMaterial(): THREE.ShaderMaterial {
     baseMat = new THREE.ShaderMaterial({
       uniforms: {
         uFrame: { value: new THREE.Matrix4() },
-        uShape: { value: 0 }, uR: { value: 0.4 }, uRain: { value: 0 }, uSpeedK: { value: 0 }, uFlowV: { value: 0 },
+        uCondensation: { value: 0 }, uShape: { value: 0 }, uR: { value: 0.4 }, uRain: { value: 0 }, uSpeedK: { value: 0 }, uFlowV: { value: 0 },
         uDust: { value: 0.6 }, uOil: { value: 0 }, uSpat: { value: 0 }, uFrost: { value: 0 }, uCrackN: { value: 0 },
         uC: { value: new THREE.Vector3() }, uAxis: { value: new THREE.Vector3(0, 0, -1) }, uUp: { value: new THREE.Vector3(0, 1, 0) },
         uFlow: { value: new THREE.Vector3(0, 0, -1) }, uFlowUp: { value: new THREE.Vector3(0, 1, 0) },
@@ -446,6 +458,7 @@ export class GlassPane {
   oil = 0;
   spat = 0;
   wet = 0;
+  condensation = 0;
   frost = 0;
   private cracks = 0;
   private frame: THREE.Object3D | null = null;   // the glass frame vP is expressed in (null: mesh local)
@@ -481,7 +494,7 @@ export class GlassPane {
   }
 
   reset() {
-    this.oil = this.spat = this.wet = this.frost = 0;
+    this.oil = this.spat = this.wet = this.frost = this.condensation = 0;
     this.cracks = 0;
     this.mat.uniforms.uCrackN.value = 0;
   }
@@ -570,6 +583,7 @@ export class GlassPane {
   apply(rain: number) {
     const U = this.mat.uniforms;
     U.uRain.value = weatherNow.effects ? rain : 0;
+    U.uCondensation.value = weatherNow.effects && rain > 0 ? this.condensation : 0;
     U.uOil.value = this.oil;
     U.uSpat.value = this.spat;
     U.uFrost.value = weatherNow.effects ? this.frost : 0;
@@ -577,6 +591,12 @@ export class GlassPane {
 }
 
 // ---------------- shared weather / environment ----------------
+
+/** Fine cloud water builds quickly and evaporates after exit; frame-rate independent. */
+export function cloudCondensation(current: number, inside: number, dt: number): number {
+  const target = Math.max(0, Math.min(1, inside));
+  return current + (target - current) * (1 - Math.exp(-Math.max(0, dt) / (target > current ? 1.2 : 12)));
+}
 
 // All panes share the blended condition; the quality toggle affects cosmetics only.
 export function rainTarget(time: number): number {
@@ -738,6 +758,7 @@ export class PilotGlass {
     pane.frost += (weatherNow.snow * .7 - pane.frost) * Math.min(1, dt / 8);
     const target = rainTarget(this.world.time);
     pane.wet += (target - pane.wet) * Math.min(1, dt / (target > pane.wet ? 5 : 20));
+    pane.condensation = cloudCondensation(pane.condensation, weatherNow.cloudInside, dt);
     if (!on) return;
     this.ads += ((zoom ? 1 : 0) - this.ads) * Math.min(1, dt * 9);
     updateEnv(this.engine, this.world.time, aimX, aimY, 0.16 + 0.04 * this.ads, 0.6 + 0.35 * this.ads);
@@ -889,6 +910,7 @@ export class GunnerGlass {
       const p = this.panes[id];
       if (!p) continue;
       p.wet += (target - p.wet) * Math.min(1, dt / (target > p.wet ? 5 : 20));
+      p.condensation = cloudCondensation(p.condensation, weatherNow.cloudInside, dt);
       p.frost = frost;
       p.mesh.visible = false;
     }

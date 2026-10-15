@@ -10,6 +10,11 @@ const local = process.env.CLOUD_URL ?? 'http://127.0.0.1:5323';
 const live = 'https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev';
 const out = 'docs/phase11/shots/03/live';
 const reference = JSON.parse(await fs.readFile('docs/phase11/shots/03/before/manifest.json', 'utf8'));
+const detail = JSON.parse(await fs.readFile('docs/phase11/shots/03/detail/metrics.json', 'utf8'));
+for (const view of ['sun-gap', 'sun-gap-towers', 'cloud-shoulder']) {
+  const d = detail.records.find(r => r.view === view && r.mode === 'after');
+  reference.shots.push({ shot: view, camera: d.camera, renderSize: [1920,1080], detail: true });
+}
 const shots = JSON.parse(await fs.readFile('tools/visual-shots.json', 'utf8'));
 const config = (await (await fetch(`${local}/src/dev/VisualRigConfig.ts`)).text()).replace(/^export /gm, '').replace(/\/\/# sourceMappingURL=.*$/gm, '');
 const scene = (await (await fetch(`${local}/src/dev/VisualRigScene.ts`)).text()).replace(/^import .*;\n/gm, '').replace(/^export /gm, '').replace(/\/\/# sourceMappingURL=.*$/gm, '');
@@ -51,6 +56,7 @@ try {
         engine.beforeFrame = undefined;
         const facts = setupRigShot(engine, game, shot, () => { tick++; engine.frame(RIG_DT, false); });
         engine.onFrame = undefined;
+        if (ref.detail) game.setWeather({sunEl:ref.shot.startsWith('sun-gap')?7:32,sunAz:250,low:.55,high:.25,...(ref.shot.startsWith('sun-gap')?{mood:'dusk'}:{})});
         engine.camera.position.fromArray(ref.camera.position);
         engine.camera.quaternion.fromArray(ref.camera.quaternion);
         engine.camera.fov = ref.camera.fov;
@@ -64,7 +70,7 @@ try {
           cloudShader:engine.clouds.tMat.fragmentShader };
       `);
       return run(e, g, THREE, CAMPAIGN, Atmos, applyWeather, shot, ref);
-    }, { config, scene, shot: shots.find(s => s.id === ref.shot), ref });
+    }, { config, scene, shot: shots.find(s => s.id === (ref.detail ? 'formation-chase' : ref.shot)), ref });
     assert.equal(result.formationCount, 18);
     assert.ok(Math.abs(result.time - 6) < 1e-8);
     assert.deepEqual(result.renderSize, ref.renderSize);

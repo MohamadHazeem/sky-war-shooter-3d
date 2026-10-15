@@ -138,7 +138,7 @@ export function createDetailNoise(size = 32): THREE.Data3DTexture {
   return tex;
 }
 
-// 2D weather/coverage map (tileable), R = coverage, G = cloud type variation.
+// 2D weather/coverage map (tileable), R = coverage, G = maturity, B = coherent cell core.
 export function createWeatherMap(size = 256): THREE.DataTexture {
   const data = new Uint8Array(size * size * 4);
   const p1 = makePerlin(4, 41), p2 = makePerlin(8, 42), p3 = makePerlin(16, 43);
@@ -151,7 +151,7 @@ export function createWeatherMap(size = 256): THREE.DataTexture {
       const c = Math.max(0, Math.min(1, (n - 0.32) * 2.2 * 0.7 + w1(u, v, 0.5) * 0.45));
       data[i++] = c * 255;
       data[i++] = p2(u, v, 0.8) * 255;
-      data[i++] = 0;
+      data[i++] = w1(u, v, 0.5) * 255;
       data[i++] = 255;
     }
   const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);

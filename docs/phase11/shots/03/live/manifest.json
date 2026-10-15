@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-10-15T09:49:42.666Z",
+  "capturedAt": "2026-10-15T11:25:11.400Z",
   "note": "Production game replay of VisualRigScene; camera locked to before manifest. Production startup differs from isolated rig startup.",
   "shots": [
     {
@@ -180,6 +180,120 @@
           0.9435300044290845,
           0.11728126811320087,
           -0.3074664231410787
+        ],
+        "fov": 58
+      },
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
+    },
+    {
+      "shot": "sun-gap",
+      "weather": {
+        "sunEl": 40,
+        "sunAz": 140,
+        "low": 0.55,
+        "high": 0.2,
+        "contrails": true
+      },
+      "subject": "formation-chase",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "camera": {
+        "position": [
+          -6000,
+          5100,
+          400
+        ],
+        "quaternion": [
+          0.05000803596083536,
+          0.5725066006767844,
+          -0.03501600375083917,
+          0.817624160603253
+        ],
+        "fov": 58
+      },
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
+    },
+    {
+      "shot": "sun-gap-towers",
+      "weather": {
+        "sunEl": 40,
+        "sunAz": 140,
+        "low": 0.55,
+        "high": 0.2,
+        "contrails": true
+      },
+      "subject": "formation-chase",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "camera": {
+        "position": [
+          -10000,
+          7000,
+          400
+        ],
+        "quaternion": [
+          0.05000803596083531,
+          0.5725066006767844,
+          -0.035016003750839145,
+          0.817624160603253
+        ],
+        "fov": 58
+      },
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
+    },
+    {
+      "shot": "cloud-shoulder",
+      "weather": {
+        "sunEl": 40,
+        "sunAz": 140,
+        "low": 0.55,
+        "high": 0.2,
+        "contrails": true
+      },
+      "subject": "formation-chase",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "camera": {
+        "position": [
+          -6000,
+          5500,
+          400
+        ],
+        "quaternion": [
+          -0.05752596844356631,
+          -0.5721603276460312,
+          -0.04028011674699903,
+          0.8171296314645946
         ],
         "fov": 58
       },

@@ -18,7 +18,7 @@ try {
   await page.goto(`${process.env.CLOUD_URL ?? 'http://127.0.0.1:5323'}/tools/visual-rig.html?shot=formation-chase&quality=high`);
   await page.waitForFunction(()=>window.visualRig?.ready,null,{timeout:180000});
   const records=[];
-  for(const view of ['sun-gap','cloud-shoulder']) for(const mode of ['before','after']) {
+  for(const view of ['sun-gap','sun-gap-towers','cloud-shoulder']) for(const mode of (process.argv.includes('--after-only') ? ['after'] : ['before','after'])) {
     const data=await page.evaluate(async ({baseline,view,mode})=>{
       const { Atmos, skyGLSL } = await import('/src/render/Atmosphere.ts');
       const { depthGLSL } = await import('/src/render/Clouds.ts');
@@ -26,16 +26,22 @@ try {
       const { DataUtils } = await import('/node_modules/.vite/deps/three.js');
       const e=visualRig.engine,g=visualRig.game,c=e.clouds;
       c.filmOriginal ??= c.tMat.fragmentShader;
+      c.filmSync ??= c.syncUniforms.bind(c);
+      c.syncUniforms = (...args) => { c.filmSync(...args); if (mode === 'before') { c.uniforms.uLow.value.y = 5900; c.uniforms.uLow.value.w = 3; } };
       const before=new Function('skyGLSL','depthGLSL','CLOUD_LIGHTS','return `'+baseline+'`')(skyGLSL,depthGLSL,CLOUD_LIGHTS);
       for(const mat of [c.tMat,c.shadowMat,c.probeMat]) {mat.fragmentShader=mode==='before'?before:c.filmOriginal;mat.needsUpdate=true;}
-      g.setWeather({sunEl:view==='sun-gap'?7:32,sunAz:250,low:.55,high:.25,...(view==='sun-gap'?{mood:'dusk'}:{})});
+      g.setWeather({sunEl:view.startsWith('sun-gap')?7:32,sunAz:250,low:.55,high:.25,...(view.startsWith('sun-gap')?{mood:'dusk'}:{})});
       const cam=e.camera;
-      cam.position.set(-6000,view==='sun-gap'?5100:5500,400);
-      const dir=Atmos.sunDir.clone();
+      cam.position.set(view==='sun-gap-towers'?-10000:-6000,view==='sun-gap-towers'?7000:view==='sun-gap'?5100:5500,400);
+      // Read the active renderer singleton after weather sync. A bare Vite import
+      // can be a second Atmos instance after HMR and point this camera at old sun.
+      e.render(0);
+      const dir=c.uniforms.uSunDir.value.clone();
       if(view==='cloud-shoulder') {dir.x=-dir.x;dir.y=-.12;}
       cam.lookAt(cam.position.clone().addScaledVector(dir,10000));cam.fov=58;
       cam.updateProjectionMatrix();cam.updateMatrixWorld(true);
       e.post.resetHistory();c.resetHistory();
+      c.settleProbeForCapture(e.renderer,cam,e.time);
       for(let i=0;i<48;i++) e.render(1/60);
       e.render(0);
       const png=e.renderer.domElement.toDataURL('image/png');

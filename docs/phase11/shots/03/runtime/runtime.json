@@ -1,12 +1,51 @@
 {
+  "condensation": 0.24959026054541697,
+  "condensationAfterExit": 0.1788392364950617,
+  "towers": [
+    {
+      "altitude": 6000,
+      "occupied": 18,
+      "samples": 121,
+      "maxDensity": 0.807843137254902
+    },
+    {
+      "altitude": 7000,
+      "occupied": 15,
+      "samples": 121,
+      "maxDensity": 0.9137254901960784
+    },
+    {
+      "altitude": 7800,
+      "occupied": 0,
+      "samples": 121,
+      "maxDensity": 0
+    }
+  ],
   "nonfinite": 0,
-  "tried": [],
-  "inside": 0.9882352941176471,
+  "tried": [
+    {
+      "position": [
+        180,
+        4400,
+        400
+      ],
+      "density": 0
+    },
+    {
+      "position": [
+        1980,
+        4400,
+        400
+      ],
+      "density": 0.25882352941176473
+    }
+  ],
+  "inside": 0.25882352941176473,
   "outside": 0,
-  "wetTarget": 0.6423529411764707,
-  "wet": 0.3541105963116665,
+  "wetTarget": 0.1682352941176471,
+  "wet": 0.09274325141496029,
   "effectsOff": 0,
-  "insideSun": 1.7048824460777536,
+  "insideSun": 3.9649733203189874,
   "cutHistory": 0,
   "rebased": [
     -10000,

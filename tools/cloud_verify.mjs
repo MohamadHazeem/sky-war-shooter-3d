@@ -9,8 +9,9 @@ const browser = await chromium.launch({ headless: true, executablePath: process.
 const output = process.argv[2] ?? 'docs/phase10/shots/03/performance.json';
 const results = [];
 const single = process.argv.includes('--single-frames');
+const quick = process.argv.includes('--quick');
 try {
-  for (const quality of (single ? ['high', 'ultra'] : ['high', 'ultra', 'low'])) for (const shot of (single ? ['sunset', 'formation-chase'] : ['sunset', 'overcast-rain', 'cloud-flythrough', 'ball-europe', 'formation-chase'])) {
+  for (const quality of (quick ? ['high'] : single ? ['high', 'ultra'] : ['high', 'ultra', 'low'])) for (const shot of (single || quick ? ['sunset', 'formation-chase'] : ['sunset', 'overcast-rain', 'cloud-flythrough', 'ball-europe', 'formation-chase'])) {
     const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
@@ -34,4 +35,6 @@ try {
   }
   await fs.mkdir(path.dirname(output), { recursive: true });
   await fs.writeFile(output, JSON.stringify(results, null, 2) + '\n');
+  for (const r of results) if (r.quality !== 'low')
+    assert.ok(r.median < (r.quality === 'high' ? 4 : 6), `${r.quality} ${r.shot} exceeds cloud budget: ${r.median.toFixed(2)} ms`);
 } finally { await browser.close(); }

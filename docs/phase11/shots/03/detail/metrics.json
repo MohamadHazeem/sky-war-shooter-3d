@@ -2,26 +2,6 @@
   "records": [
     {
       "view": "sun-gap",
-      "mode": "before",
-      "camera": {
-        "position": [
-          -6000,
-          5100,
-          400
-        ],
-        "quaternion": [
-          0.05000803596083536,
-          0.5725066006767844,
-          -0.03501600375083917,
-          0.817624160603253
-        ],
-        "fov": 58
-      },
-      "meanAlphaDelta": 0.0012249116642528918,
-      "maxAlphaDelta": 0.48828125
-    },
-    {
-      "view": "sun-gap",
       "mode": "after",
       "camera": {
         "position": [
@@ -37,28 +17,28 @@
         ],
         "fov": 58
       },
-      "meanAlphaDelta": 0.001117272431872163,
-      "maxAlphaDelta": 0.45556640625
+      "meanAlphaDelta": 0.0018836890637302268,
+      "maxAlphaDelta": 0.21533203125
     },
     {
-      "view": "cloud-shoulder",
-      "mode": "before",
+      "view": "sun-gap-towers",
+      "mode": "after",
       "camera": {
         "position": [
-          -6000,
-          5500,
+          -10000,
+          7000,
           400
         ],
         "quaternion": [
-          -0.05752596844356631,
-          -0.5721603276460312,
-          -0.04028011674699903,
-          0.8171296314645946
+          0.05000803596083531,
+          0.5725066006767844,
+          -0.035016003750839145,
+          0.817624160603253
         ],
         "fov": 58
       },
-      "meanAlphaDelta": 0.0034988311349446154,
-      "maxAlphaDelta": 0.8402099609375
+      "meanAlphaDelta": 0.0027524020200894203,
+      "maxAlphaDelta": 0.355224609375
     },
     {
       "view": "cloud-shoulder",
@@ -77,8 +57,8 @@
         ],
         "fov": 58
       },
-      "meanAlphaDelta": 0.002216098802196201,
-      "maxAlphaDelta": 0.7911376953125
+      "meanAlphaDelta": 0.003650519370378617,
+      "maxAlphaDelta": 0.30908203125
     }
   ],
   "errors": []

@@ -21,7 +21,8 @@ export const Atmos = {
   ground: new THREE.Color(0.11, 0.14, 0.17),
   // Cloud layers (meters, absolute altitude)
   lowBase: 3900,
-  lowTop: 5900,
+  lowTop: 5900,       // broad deck / Low preset
+  lowTowerTop: 8500,  // sparse convective heads on the temporal path
   lowCoverage: 0.7,
   lowDensity: 3.0,
   highBase: 8900,
@@ -91,13 +92,13 @@ vec3 skyRadiance(vec3 d) {
   } else {
     // Looking down through ~7 km of air: the ground is mostly lost in haze.
     float t = 1.0 - exp(y * 9.0);
-    col = mix(uHorizon * 0.92, mix(uHorizon * 0.55, uGround, 0.55), t);
+    col = mix(uHorizon, mix(uHorizon * 0.55, uGround, 0.55), t);
     col += uHorizon * 0.22 * exp(y * 40.0);   // the haze band continues just below the horizon
   }
   float mu = max(dot(d, uSunDir), 0.0);
   col += uSunColor * (pow(mu, 6.0) * 0.02 + pow(mu, 48.0) * 0.06 + pow(mu, 600.0) * 0.6);
-  if (uAtmosQuality > 0.5 && y >= 0.0) {
-    vec2 column = airColumn(uCamAlt, y);
+  if (uAtmosQuality > 0.5 && y > -0.08) {
+    vec2 column = airColumn(uCamAlt, max(0.0, y));
     vec3 extinct = airExtinction(column);
     float cosine = dot(d, uSunDir);
     float rayleigh = 0.75 * (1.0 + cosine * cosine);
@@ -106,7 +107,7 @@ vec3 skyRadiance(vec3 d) {
     vec3 scattering = (1.0 - exp(-extinct)) * (rayleigh + mie) * sunT;
     // The mission palette carries night and storm art direction; optical depth supplies
     // altitude, wavelength-dependent extinction and the sunward aerosol lobe.
-    col = mix(col, col * 0.65 + scattering * uSunColor * 0.55, 0.55);
+    col = mix(col, col * 0.65 + scattering * uSunColor * 0.55, 0.55 * smoothstep(-0.08, 0.0, y));
   }
   return col;
 }

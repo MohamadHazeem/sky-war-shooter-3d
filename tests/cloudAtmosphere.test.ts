@@ -4,7 +4,7 @@ import { opticalDepth, createAtmosphereLut, LUT_H, LUT_W } from '../src/render/A
 import { Atmos } from '../src/render/Atmosphere';
 import { applyWeather, DEFAULT_WEATHER, updateWeather } from '../src/render/Weather';
 import { weatherNow } from '../src/render/WeatherState';
-import { rainTarget } from '../src/game/GlassFx';
+import { rainTarget, cloudCondensation } from '../src/game/GlassFx';
 import type { Engine } from '../src/core/Engine';
 
 const engine = { scene: new THREE.Scene(), camera: new THREE.PerspectiveCamera(), sun: new THREE.DirectionalLight(),
@@ -45,6 +45,15 @@ describe('cloud weather coupling', () => {
     expect(Atmos.stratus).toBeCloseTo(.9);
     applyWeather(engine, { ...DEFAULT_WEATHER, preset: 'thunderstorm' });
     expect(Atmos.towers).toBe(1);
+  });
+  it('builds a cloud film quickly and retains evaporating beads after exit at any frame rate', () => {
+    const entered = cloudCondensation(0, .8, 2);
+    expect(entered).toBeGreaterThan(.6);
+    const exited = cloudCondensation(entered, 0, 2);
+    expect(exited).toBeGreaterThan(.45);
+    expect(cloudCondensation(exited, 0, 120)).toBeLessThan(.0001);
+    expect(cloudCondensation(cloudCondensation(0, .8, 1), .8, 1)).toBeCloseTo(entered, 12);
+    expect(cloudCondensation(entered, 0, 0)).toBe(entered);
   });
   it('adds cloud condensation without altering rain gameplay, respecting the visual switch', () => {
     weatherNow.rain = 0; weatherNow.cloudInside = .8;
