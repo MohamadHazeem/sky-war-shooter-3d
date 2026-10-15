@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Recorded crew voices for the radio/interphone, generated offline with Chatterbox or macOS `say`.
 
-Reads tools/voice/lines.json and writes:
+Reads tools/voice/lines.json (+ tools/voice/lines.d/*.json, see load()) and writes:
   public/audio/voice/<id>.m4a        mono AAC, small (speech is band-limited by the radio chain anyway)
   public/audio/voice/manifest.json   { roles, clips: { id: { file, role, text, dur, h } } }
   src/audio/voiceLines.ts            id -> { speakers, text } table for game code (RadioChatter)
@@ -36,9 +36,26 @@ HOURS = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'ni
 LEVELS = ['high', 'level', 'low']
 
 
-def load():
-    with open(os.path.join(HERE, 'lines.json'), encoding='utf-8') as f:
-        return json.load(f)
+BRIEFINGS_GROUP = 'briefings (tools/voice/briefings.mjs)'
+
+
+def load(here=None):
+    """lines.json plus every lines.d/*.json group (sorted by filename), inserted before the briefings
+    group so goals add radio lines in their own file instead of editing the shared lines.json."""
+    here = here or HERE
+    with open(os.path.join(here, 'lines.json'), encoding='utf-8') as f:
+        cfg = json.load(f)
+    extra = []
+    for path in sorted(Path(here, 'lines.d').glob('*.json')):
+        group = json.loads(path.read_text(encoding='utf-8'))
+        if not isinstance(group, list) or not group or not isinstance(group[0], dict) or 'group' not in group[0]:
+            sys.exit(f'{path}: must be a JSON array starting with a {{"group": "..."}} header')
+        extra += group
+    if extra:
+        lines = cfg['lines']
+        at = next((i for i, l in enumerate(lines) if l.get('group') == BRIEFINGS_GROUP), len(lines))
+        cfg['lines'] = lines[:at] + extra + lines[at:]
+    return cfg
 
 
 def expand(cfg):

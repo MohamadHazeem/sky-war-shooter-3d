@@ -43,11 +43,14 @@ Sky War Shooter 3D: a WWII browser game (Three.js r186 + TypeScript + Vite). Rea
   even headless, steals focus and the mouse from the owner. Or use the built-in browser tool. Save screenshots you rely on (small JPEGs) under
   `docs/phase6/shots/<task>/` and reference them in your report.
 - No network installs of new dependencies unless the task says so.
-- Every new player-visible string needs Arabic: add it to a table in `src/i18n/ar/*.ts` (register new
-  tables in `src/i18n/phrases.ts`). `tests/i18n.test.ts` enforces coverage of mission texts and
-  recorded radio lines.
-- New radio lines go into `tools/voice/lines.json`, inserted BEFORE the
-  `briefings (tools/voice/briefings.mjs)` group, then `python3 tools/voice/generate.py` (macOS `say`).
+- Every new player-visible string needs Arabic: put it in a NEW table file `src/i18n/ar/<goal>.ts`
+  (`export default` a `PhraseTable`). It is auto-discovered and loaded before the listed tables, so do NOT
+  edit `src/i18n/phrases.ts` (only to deliberately change precedence). `tests/i18n.test.ts` enforces
+  coverage of mission texts and recorded radio lines.
+- New radio lines go in a new `tools/voice/lines.d/<goal>.json` (a JSON array starting with a
+  `{"group": "..."}` header, then line objects), NOT in `tools/voice/lines.json`; files load in sorted
+  filename order before the `briefings (tools/voice/briefings.mjs)` group. Then run
+  `python3 tools/voice/generate.py` (macOS `say`).
 - Performance: no per-frame allocations in hot paths; no runtime shader recompiles (warm new
   materials in `World.prewarm`); keep the Low preset working.
 - Keep changes focused on the task; small hook lines in shared files (Game.ts, World.ts, UI.ts).
