@@ -62,7 +62,7 @@ class Sketchfab:
             self.meshes[k] = FG._bm(V,F,M,.0005)
         self.markers['eye_pilot'] = (0, .78, -.85) if bf else (0, .48, -1.50)
         # Smooth the economical Fw190 skin, retaining its original vertices.
-        if not bf: refine(self.meshes['airframe'], .22)
+        if not bf: refine(self.meshes['airframe'], .60)
         for o in new: bpy.data.objects.remove(o, do_unlink=True)
         for coll in (bpy.data.meshes, bpy.data.materials, bpy.data.images):
             for d in list(coll):

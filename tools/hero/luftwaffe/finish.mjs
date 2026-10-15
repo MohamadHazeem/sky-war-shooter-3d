@@ -106,12 +106,12 @@ for (const kind of kinds) {
   isolateNamedMeshes(doc);
   await doc.transform(
     prune({ keepLeaves: true, keepAttributes: false, keepExtras: true }),
-    textureCompress({ encoder: sharp, targetFormat: 'webp', quality: Q, effort: 90 }),
+    textureCompress({ encoder: sharp, targetFormat: 'webp', quality: ['bf109', 'fw190'].includes(kind) ? 95 : Q, effort: 90 }),
     meshopt({ encoder: MeshoptEncoder, level: 'high', quantizeTexcoord: 14 }),
   );
   const dst = join(OUT, `${kind}.glb`);
   await io.write(dst, doc);
-  const ace = await sharp(await png(kind, 'ace')).webp({ quality: Q, effort: 6 }).toBuffer();
+  const ace = await sharp(await png(kind, 'ace')).webp({ quality: ['bf109', 'fw190'].includes(kind) ? 95 : Q, effort: 6 }).toBuffer();
   writeFileSync(join(OUT, `${kind}_ace.webp`), ace);
   let k = '';
   if (BASISU) {

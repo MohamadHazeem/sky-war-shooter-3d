@@ -1,7 +1,7 @@
-// Replace inherited FlightGear figures with our frozen seated crew, preserving aircraft pivots.
+// Replace inherited FlightGear figures with our authored seated crew, preserving aircraft pivots.
 import {NodeIO} from '@gltf-transform/core';
 import {ALL_EXTENSIONS} from '@gltf-transform/extensions';
-import {copyToDocument, prune, unpartition, meshopt, transformPrimitive} from '@gltf-transform/functions';
+import {copyToDocument, prune, unpartition, meshopt, transformPrimitive, dequantizePrimitive} from '@gltf-transform/functions';
 import {MeshoptDecoder, MeshoptEncoder} from 'meshoptimizer';
 import {Matrix4} from 'three';
 import {pathToFileURL} from 'node:url';
@@ -9,7 +9,7 @@ import {readFileSync, writeFileSync, statSync} from 'node:fs';
 export const inheritedCrew = /ww2_pilot_old|pilotWWII|pilot-b|germanpilotsuit|germanheadgear|pilotsuit-ger|headgear-ger|^pilot1$/i;
 export async function replaceCrew(doc, source) {
   const root=doc.getRoot();
-  const crewMaterial = name => inheritedCrew.test(name) || /^crew(Cloth|Leather|Hard)$/.test(name);
+  const crewMaterial = name => inheritedCrew.test(name) || /^crew(Cloth|Leather|Hard|Fleece|Skin|Rubber|Webbing|Metal|Lens|Stitch)$/.test(name);
   const targets=root.listNodes().filter(n=>n.getMesh() && (n.getExtras().crewSource || n.getMesh().listPrimitives().some(p=>inheritedCrew.test(p.getMaterial()?.getName()??''))));
   if(!targets.length)return 0;
   const sourceNode=source.getRoot().listNodes().find(n=>n.getMesh());
@@ -37,11 +37,14 @@ export async function replaceCrew(doc, source) {
         // transformPrimitive mutates accessors, so every seated copy owns its attributes.
         for(const semantic of cp.listSemantics())cp.setAttribute(semantic,cp.getAttribute(semantic).clone());
         if(cp.getIndices())cp.setIndices(cp.getIndices().clone());
+        // Transform normals as floats: normalized integer writes in transformPrimitive
+        // otherwise collapse their directions before the final meshopt encoding.
+        dequantizePrimitive(cp);
         transformPrimitive(cp,local.elements);mesh.addPrimitive(cp);
       }
       count++;
     }
-    target.setMesh(mesh).setExtras({...target.getExtras(),crewSource:'project:tools/interior/build_crew.py',crewPose:'sit'});
+    target.setMesh(mesh).setExtras({...target.getExtras(),crewSource:'project:tools/hero/sketchfab/seated.py',crewPose:'sit'});
   }
   for(const n of root.listNodes())if(inheritedCrew.test(n.getName()))n.setName(n.getName().replace(inheritedCrew,'own_seated_crew'));
   await doc.transform(prune({keepLeaves:true,keepAttributes:true,keepExtras:true}), unpartition());

@@ -155,4 +155,4 @@ barrel and two FDL 131 barbette blisters (`src/world/EnemyDress.ts`). No He 219 
 
 ## Original seated exterior crew — Phase 11
 
-`seated-crew.glb` is a frozen, reduced version of our own `crew.glb` sit animation (about 3,500 triangles), built by `tools/hero/sketchfab/seated.py`. It replaces inherited figures and their textures in both B-17 exteriors, P-51, Do 335, He 111 and the archived converted models. Original Luftwaffe hero pilots remain project geometry. Source: `tools/interior/build_crew.py`; GPL-2.0-or-later. No inherited pilot figure is shipped.
+`seated-crew.glb` is an original, directly authored seated aircrew mesh with continuous bent sleeves and trousers, leather flying helmet, goggles, oxygen mask/hose, shearling collar, gloves, boots and harness. Its separate lit PBR materials are built by `tools/hero/sketchfab/seated.py`. It replaces inherited figures and their textures in both B-17 exteriors, P-51, Do 335, He 111 and the archived converted models. Original Luftwaffe hero pilots remain project geometry. Source: `tools/hero/sketchfab/seated.py`; GPL-2.0-or-later. No inherited pilot figure is shipped.

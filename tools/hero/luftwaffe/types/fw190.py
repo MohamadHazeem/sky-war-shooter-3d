@@ -56,6 +56,10 @@ def build():
             m.marker(nm, p)
     for s in (1, -1):
         sfx = 'left' if s > 0 else 'right'
+        # Source FrontGun islands are removed with the parked details: restore
+        # the two MG 131 barrels at the retained gameplay muzzle anchors.
+        cowl = fg.markers[f'muzzle_cowl_{sfx}']
+        P.gun_barrel(m, 'part_fuselage', (cowl[0], cowl[1], cowl[2] - .45), cowl, .025)
         mz = fg.markers[f'muzzle_wingroot_{sfx}']
         P.gun_barrel(m, 'part_wingL' if s > 0 else 'part_wingR', (mz[0], mz[1], mz[2] - 0.3), mz, 0.02)
         mz = fg.markers[f'muzzle_wingouter_{sfx}']
@@ -76,7 +80,7 @@ def build():
         spinner=dict(style='spiral', hubs=[fg.origins['prop_1']], base='70'),
         crosses_fus=[(-3.05, 0.0, 0.8)],
         crosses_wing=[(3.35, -0.45, 1.0)],
-        number=dict(text='8', z=-2.2, y=0.0, h=0.48, color='22', outline='21'),
+        number=dict(text='8', z=-2.2, y=0.0, h=0.56, color='22', outline='21'),
         fuel_triangle=(-2.75, -0.38), walkway=[(0.6, 1.1, -1.2, 0.5)],
         oil=[(0.0, -0.65, 0.6, 0.7), (0.4, -0.55, 0.6, 0.5), (-0.4, -0.55, 0.6, 0.5)], wear=.65, mottle_soft=True, seed=190,
         emblem_at=(0.95, 0.1, 0.32),

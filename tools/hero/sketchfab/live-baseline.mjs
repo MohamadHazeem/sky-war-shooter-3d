@@ -14,3 +14,5 @@ for(const kind of ['bf109','fw190'])for(const suffix of ['.glb','_base.ktx2','_n
 mkdirSync('docs/phase11/shots/01b',{recursive:true});
 writeFileSync('docs/phase11/shots/01b/live-assets.json',JSON.stringify({origin,fetchedAt:new Date().toISOString(),records},null,2)+'\n');
 console.log(records);
+
+if(records.some(r=>!r.matches))throw new Error("Deployed fighter assets changed; refresh the baseline before comparison.");

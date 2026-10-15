@@ -1,5 +1,5 @@
 {
-  "artifactSha256": "6d58534fa6cd359251b4335f8c414d1eb51c7e0609303fcff006785c3386a1c5",
+  "artifactSha256": "027ba4337c1911e4a3a7774b2d078bad5121f965effd40757e41bf45660b1649",
   "source": "https://app.aircorpslibrary.com/document/getsamplepage/tsteven3/6",
   "manual": "USAAF AN 01-20EG-2, 15 February 1945, Figure 1, printed page 2",
   "method": "Manually digitized outer contours from the public 1240x1607 scan. Gear, gun barrels, propeller blades, wires and scan annotations excluded. Points stay in scan pixels. No source image pixels redistributed.",
@@ -51,12 +51,12 @@
     },
     "side": {
       "legacy": {
-        "iou": 0.8411,
-        "boundaryTolerantIoU": 0.9348
+        "iou": 0.8406,
+        "boundaryTolerantIoU": 0.9344
       },
       "hero": {
-        "iou": 0.842,
-        "boundaryTolerantIoU": 0.9355
+        "iou": 0.8416,
+        "boundaryTolerantIoU": 0.9352
       }
     }
   },

@@ -63,12 +63,12 @@ def build():
     m.info.update(
         scheme='7475',
         yellow=[('under_cowl', 1.95, 0.4)],        # RLM 04 under the cowling (z from .. to)
-        band=(-3.95, -3.60, ['21']),
+        band=(-4.15, -3.80, ['21']),
         spinner=dict(style='spiral', hubs=[fg.origins['prop_1']], base='70', spiral='21'),
-        crosses_fus=[(-3.05, .55, 0.74)],          # fuselage Balkenkreuz centres (z, y, size)
+        crosses_fus=[(-2.98, .55, 0.66)],          # fuselage Balkenkreuz centres (z, y, size)
         crosses_wing=[(3.25, -0.3, 0.9)],          # (|x|, z, size) on top and bottom
         number=dict(text='7', z=-2.3, y=.53, h=0.55, color='04', outline='22'),
-        bar=dict(z=-3.4, y=.55, h=0.12, w=0.5, color='04'),
+        bar=dict(z=-3.54, y=.55, h=0.10, w=0.34, color='04'),
         fin_cross=None, fuel_triangle=(-1.95, -0.3), walkway=[(0.6, 1.05, -0.4, 0.5)],
         oil=[(0.0, -0.55, 1.8, 0.6)], wear=.65, mottle_soft=True, seed=109, emblem_at=(1.15, -0.05, 0.26),
         ace=dict(kills=48, emblem='heart', chevrons=True, rudder_white=False, spinner='white_spiral'),

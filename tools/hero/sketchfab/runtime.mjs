@@ -10,10 +10,11 @@ try{
   await context.route(/https:\/\/.*(googleapis|firebaseio|firestore|identitytoolkit|securetoken).*/,r=>r.abort());
   if(mode==='fallback')await context.route(/\/models\/(bf109|fw190)_.*\.ktx2/,r=>r.fulfill({status:404,body:''}));
   const p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));
+  p.on('console',m=>{if(m.type()==='warning'&&/KTX2|texture|WebGL/.test(m.text()))console.log(mode,m.text());});
   await p.goto('http://127.0.0.1:5330');await p.waitForFunction(()=>window.sws?.assetsReady(),null,{timeout:180000});
   await p.evaluate(()=>{sws.engine.loopOverride=()=>{};sws.game.input.lock=()=>{};});
   await p.evaluate(async()=>{const {instantiate}=await import('/src/world/Models.ts');window.fighterMapsReady=()=>['bf109','fw190'].every(k=>{let compressed=false;instantiate(k).traverse(o=>{if(o.material?.name===`hero_${k}`)compressed ||= !!o.material.map?.isCompressedTexture;});return compressed;});});
-  if(mode!=='fallback')await p.waitForFunction(()=>window.fighterMapsReady(),null,{timeout:60000});
+  if(mode!=='fallback')await p.waitForFunction(()=>window.fighterMapsReady(),null,{timeout:60000,polling:100});
   const result=await p.evaluate(async mode=>{
    const {instantiate}=await import('/src/world/Models.ts');const {sourceMeshes}=await import('/src/world/destruction/Split.ts');
    const kinds={};for(const kind of ['bf109','fw190']){
@@ -26,13 +27,24 @@ try{
     kinds[kind]={parts,compressed,lod2};
    }
    const destruction={};if(mode==='high'){const {destructionQa}=await import('/src/dev/destructionQa.ts');const qa=destructionQa(sws.engine,sws.game);for(const s of ['wing','tail'])destruction[s]=await qa.capture(s,false);}
-   return {mode,kinds,destruction};
+   const crew={};
+   for(const kind of ['p51d','b17']){
+    const materials={};instantiate(kind).traverse(o=>{if(o.isMesh)for(const m of Array.isArray(o.material)?o.material:[o.material])if(/^crew/.test(m.name))materials[m.name]={roughness:m.roughness,metalness:m.metalness};});
+    crew[kind]=materials;
+   }
+   return {mode,kinds,destruction,crew};
   },mode);
   results.push({...result,errors});console.log(JSON.stringify(result));
   for(const kind of Object.values(result.kinds)){
    assert.ok(kind.parts.every(n=>n>0),'all seven structural parts have geometry');
    assert.equal(kind.compressed,mode!=='fallback','compressed or embedded fallback as requested');
    assert.equal(kind.lod2,mode==='low','Low forces the far geometry; High retains close detail');
+  }
+  for(const crew of Object.values(result.crew)){
+   assert.ok(crew.crewLeather.roughness>.4&&crew.crewLeather.roughness<.6,'authored leather survives runtime tuning');
+   assert.ok(crew.crewCloth.roughness>.8,'cloth stays matte');
+   assert.ok(crew.crewMetal.metalness>.7,'crew equipment keeps its metal response');
+   assert.ok(crew.crewLens.roughness<.25,'goggle lenses keep their gloss');
   }
   assert.deepEqual(errors,[]);await context.close();
  }

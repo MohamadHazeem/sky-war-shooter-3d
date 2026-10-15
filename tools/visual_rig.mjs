@@ -84,6 +84,7 @@ export async function captureRig(argv) {
       assert.equal(metadata.formationCount, 18);
       if (id === 'waist-fw190') assert.ok(Math.abs(metadata.enemy.range - 150) < 1e-6 && metadata.aimDownSight > .99);
       if (id === 'tail-bf109') assert.equal(metadata.enemy.diving, true);
+      if (id === 'headon-fw190-zoom') assert.ok(Math.abs(metadata.enemy.range - 65) < 1e-6 && metadata.aimDownSight > .99);
       if (id === 'p51-cockpit') assert.equal(metadata.pilotView, 'cockpit');
       if (id === 'bomb-run') assert.ok(metadata.bombs > 0);
       if (id === 'damaged-neighbour') assert.equal(metadata.burningEngines.length, 2);

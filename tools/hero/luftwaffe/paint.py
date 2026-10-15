@@ -263,6 +263,9 @@ def paint(m, maps, size):
     cols = {'7475': ('74', '75', '76'), '7475m': ('74', '75', '76'), '8182': ('81', '82', '76'),
             '7071': ('70', '71', '65')}[scheme]
     c_a, c_b, c_lo = RLM[cols[0]], RLM[cols[1]], RLM[cols[2]]
+    if info.get('mottle_soft'):
+        # Fresh pale 76 below satin slate 74/75: retain separation after mipmapping.
+        c_a, c_b, c_lo = _c('353d40'), _c('5c6265'), _c('b4c2c7')
     hard = sstep(0.35, 0.65, splinter)
     upper_wing = mix(c_a[None, None, :] * np.ones((H, W, 1), np.float32), c_b, hard if scheme in ('7475', '7071') else blot)
     upper_body = mix(c_a[None, None, :] * np.ones((H, W, 1), np.float32), c_b, blot if scheme != '7071' else hard)
@@ -273,9 +276,11 @@ def paint(m, maps, size):
     mot_b = sstep(-0.02, 0.05, nz(5.8, 7) - (0.61 - 0.12 * dens)) * 0.88
     mot_c = sstep(-0.02, 0.05, nz(5.0, 9) - 0.68) * 0.7 if scheme in ('7475',) else np.zeros((H, W), np.float32)
     if info.get('mottle_soft'):
-        mot_a = sstep(-.055, .10, nz(6.5, 5) - (.63 - .10 * dens)) * .62
-        mot_b = sstep(-.055, .10, nz(5.8, 7) - (.64 - .10 * dens)) * .62
-        mot_c *= .5
+        # Irregular isolated spray patches with a narrow feather. A broad transition
+        # mixed several grey layers together and looked smeared at gunner distance.
+        mot_a = sstep(0, .04, nz(5.5, 5, 3) - (.67 - .06 * dens)) * .72
+        mot_b = sstep(0, .035, nz(7.0, 7, 3) - (.68 - .06 * dens)) * .60
+        mot_c *= .15
     if scheme == '8182':
         mot_a = sstep(0.0, 0.03, nz(4.5, 5) - (0.62 - 0.12 * dens))
         mot_b = sstep(0.0, 0.03, nz(4.0, 7) - (0.63 - 0.12 * dens))
@@ -317,7 +322,7 @@ def paint(m, maps, size):
         if band:
             z0, z1, colors = band
             zz = P[..., 2]
-            inb = bmask & (zz >= z0) & (zz <= z1) & (cls == SKIN)
+            inb = valid & (np.abs(P[..., 0]) < .65) & (zz >= z0) & (zz <= z1) & (cls == SKIN)
             k = np.clip(((zz - z0) / (z1 - z0) * len(colors)).astype(np.int32), 0, len(colors) - 1)
             for i, cname in enumerate(colors):
                 col = np.where((inb & (k == i))[..., None], RLM[cname], col)
@@ -456,7 +461,7 @@ def paint(m, maps, size):
             if a.get('band'):
                 z0, z1, colors = a['band']
                 zz = P[..., 2]
-                inb = bmask & (zz >= z0) & (zz <= z1) & (cls == SKIN)
+                inb = valid & (np.abs(P[..., 0]) < .65) & (zz >= z0) & (zz <= z1) & (cls == SKIN)
                 k = np.clip(((zz - z0) / (z1 - z0) * len(colors)).astype(np.int32), 0, len(colors) - 1)
                 for i, cname in enumerate(colors):
                     col = np.where((inb & (k == i))[..., None], RLM[cname], col)
@@ -577,7 +582,7 @@ def paint(m, maps, size):
         pc = pc + (lum * 1.08 - pc) * sun
         pc = pc + sun * 0.05
         col = np.where(skinm[..., None], pc, col)
-        rough = np.where(skinm, 0.6 + (lowf - 0.5) * 0.12 + (nz(9, 33, 3) - 0.5) * 0.08, rough)
+        rough = np.where(skinm, (0.48 if info.get('mottle_soft') else 0.6) + (lowf - 0.5) * 0.12 + (nz(9, 33, 3) - 0.5) * 0.08, rough)
         col = np.where(skinm[..., None], col * (1 - 0.32 * seam)[..., None], col)
         # streaks aft of the seams (dirt drawn back by the airflow): stretched noise
         streak = fbm(flatP, (22, 22, 0.45), 3, seed + 41).reshape(H, W)

@@ -14,5 +14,11 @@
   {"id":"damaged-neighbour","label":"Burning neighbouring B-17","pillars":[1,2,5,8,9,10],"weather":"clear"},
   {"id":"waist-interior","label":"Waist compartment / light shafts","pillars":[1,2,6,7,10],"station":"waistL","weather":"interior"},
   {"id":"bomb-run","label":"Bomb run over Emden","pillars":[4,5,7,8,10],"weather":"ground"},
-  {"id":"p51-cockpit","label":"P-51 cockpit","pillars":[1,2,6,7,10],"weather":"clear"}
+  {"id":"p51-cockpit","label":"P-51 cockpit","pillars":[1,2,6,7,10],"weather":"clear"},
+  {"id":"waist-fw190-close","label":"Waist gun / Fw 190 close pass at 65 m","pillars":[1,2,10],"station":"waistL","weather":"beauty"},
+  {"id":"tail-bf109-close","label":"Tail gun / Bf 109 close pass at 65 m","pillars":[1,2,10],"station":"tail","weather":"beauty"},
+  {"id":"headon-fw190-wedge","label":"Top turret / Fw 190 wedge at 65–164 m","pillars":[1,2,10],"station":"top","weather":"beauty"},
+  {"id":"waist-fw190-broadside","label":"Waist gun / Fw 190 broadside at 150 m","pillars":[1,2,10],"station":"waistL","weather":"clear"},
+  {"id":"waist-bf109-broadside","label":"Waist gun / Bf 109 broadside at 150 m","pillars":[1,2,10],"station":"waistL","weather":"clear"},
+  {"id":"headon-fw190-zoom","label":"Top turret / Fw 190 at 65 m through the gun sight","pillars":[1,2,10],"station":"top","weather":"beauty"}
 ]
