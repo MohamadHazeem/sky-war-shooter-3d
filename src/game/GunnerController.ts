@@ -67,6 +67,8 @@ export class GunnerController {
   private interiors: Partial<Record<StationId, THREE.Object3D>> = {};
   private guns: Partial<Record<StationId, GunModel[]>> = {};
   private waistInterior: THREE.Group | null = null;
+  /** The waist section built for this mission (TourRuntime hangs the repair patches on it). */
+  get waist(): THREE.Group | null { return this.waistInterior; }
   private dust: DustMotes | null = null;
   private sunLocal = new THREE.Vector3();
   private muzzleLight = new THREE.PointLight(0xffb060, 0, 6, 2);

@@ -84,5 +84,28 @@ PLACES.push(
   { key: 'Kassel', lat: 51.31, lon: 9.49, eng: ESSEX, ip: { lat: 51.3, lon: 3.3 } },
   { key: 'Gotha', lat: 50.95, lon: 10.7, eng: ESSEX, ip: { lat: 51.3, lon: 3.3 } },
 );
-export const CHART = { BASE, NORFOLK, ESSEX, KENT, BERLIN, FRANKFURT, PLACES, ENGLAND, MAINLAND, ISLANDS, COUNTRIES, KX } as const;
+// Chart-only targets of the Tour (game/Tour.ts): drawn on the briefing map, no far-terrain tiles
+// (FarTerrainData keeps to PLACES, so these missions fly over the generic ground)
+const DANISH_IP: Geo = { lat: 54.6, lon: 8.4 }, SOUTH_IP: Geo = { lat: 51.25, lon: 3.2 }, MAGDEBURG_IP: Geo = { lat: 52.55, lon: 4.6 };
+const EXTRA: Place[] = [
+  { key: 'Woensdrecht', lat: 51.43, lon: 4.3 },
+  { key: 'Frankfurt', lat: 50.11, lon: 8.68, eng: ESSEX, ip: { lat: 51.2, lon: 3.1 } },
+  { key: 'Saarbrücken', lat: 49.24, lon: 6.99, eng: ESSEX, ip: { lat: 50.95, lon: 2.3 } },
+  { key: 'Vegesack', lat: 53.17, lon: 8.62, ip: FRISIAN_IP },
+  { key: 'Marienburg', lat: 54.03, lon: 19.03, ip: DANISH_IP },
+  { key: 'Anklam', lat: 53.86, lon: 13.69, ip: DANISH_IP },
+  { key: 'Paris', lat: 48.86, lon: 2.35, eng: KENT, ip: { lat: 50.2, lon: 1.6 } },
+  { key: 'Solingen', lat: 51.17, lon: 7.08, eng: ESSEX, ip: { lat: 51.9, lon: 4.1 } },
+  { key: 'Halberstadt', lat: 51.9, lon: 11.05, ip: MAGDEBURG_IP },
+  { key: 'Aschersleben', lat: 51.75, lon: 11.46, ip: MAGDEBURG_IP },
+  { key: 'Bernburg', lat: 51.79, lon: 11.74, ip: MAGDEBURG_IP },
+  { key: 'Rostock', lat: 54.09, lon: 12.13, ip: { lat: 54.45, lon: 8.55 } },
+  { key: 'Augsburg', lat: 48.37, lon: 10.9, eng: ESSEX, ip: SOUTH_IP },
+  { key: 'Stuttgart', lat: 48.78, lon: 9.18, eng: ESSEX, ip: SOUTH_IP },
+  { key: 'Oranienburg', lat: 52.75, lon: 13.24, ip: { lat: 53.3, lon: 5.4 } },
+  { key: 'Sorau', lat: 51.63, lon: 15.32, ip: { lat: 53.3, lon: 5.4 } },
+  { key: 'Stettin', lat: 53.43, lon: 14.55, ip: { lat: 54.45, lon: 8.55 } },
+  { key: 'Friedrichshafen', lat: 47.65, lon: 9.48, eng: ESSEX, ip: SOUTH_IP },
+];
+export const CHART = { BASE, NORFOLK, ESSEX, KENT, BERLIN, FRANKFURT, PLACES, EXTRA, ENGLAND, MAINLAND, ISLANDS, COUNTRIES, KX } as const;
 export type ChartPlace = Place;

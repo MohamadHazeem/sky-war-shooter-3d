@@ -3988,6 +3988,86 @@
       "urgent": true
     },
     {
+      "group": "Phase 11 the tour (Tour.ts / ui/TourScreen.ts)"
+    },
+    {
+      "id": "tour_count_{i}",
+      "role": "pilot",
+      "text": "Pilot to crew: that's number {n} in the books.",
+      "vars": {
+        "n": [
+          "one",
+          "two",
+          "three",
+          "four",
+          "five",
+          "six",
+          "seven",
+          "eight",
+          "nine",
+          "ten",
+          "eleven",
+          "twelve",
+          "thirteen",
+          "fourteen",
+          "fifteen",
+          "sixteen",
+          "seventeen",
+          "eighteen",
+          "nineteen",
+          "twenty",
+          "twenty-one",
+          "twenty-two",
+          "twenty-three"
+        ]
+      }
+    },
+    {
+      "id": "tour_half",
+      "role": "copilot",
+      "text": "Halfway, boys. Twelve down and thirteen to go."
+    },
+    {
+      "id": "tour_last",
+      "role": "pilot",
+      "text": "One more, crew. One more and we all go home."
+    },
+    {
+      "id": "tour_home",
+      "role": "pilot",
+      "text": "That's twenty-five. Crew, we're going home."
+    },
+    {
+      "id": "tour_failed",
+      "role": "copilot",
+      "text": "They won't count that one. We go again."
+    },
+    {
+      "id": "tour_lost",
+      "role": "copilot",
+      "text": "We lost the ship. They'll find us another one."
+    },
+    {
+      "id": "tour_mail",
+      "role": "radio",
+      "text": "Mail call! Letters from home for everybody."
+    },
+    {
+      "id": "tour_flakhouse",
+      "role": "radio",
+      "text": "A week at the flak house. Real beds and real eggs."
+    },
+    {
+      "id": "tour_maxeffort",
+      "role": "pilot",
+      "text": "Maximum effort tomorrow. Get some sleep."
+    },
+    {
+      "id": "tour_fog",
+      "role": "nav",
+      "text": "Fog on the field. Nobody's flying today."
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {

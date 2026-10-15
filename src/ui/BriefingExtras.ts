@@ -1,5 +1,7 @@
 import { isSecondTourId, SECOND_TOUR_LENGTH } from '../game/SecondTour';
 import { DEEP_PENETRATION, isChapterMission } from '../game/DeepPenetration';
+import { isTourId, TOUR_LENGTH } from '../game/Tour';
+import { decorateTourBriefing } from './TourScreen';
 import { CAMPAIGN, type Mission } from '../game/Missions';
 import { briefingVoice } from '../audio/BriefingVoice';
 import { tx } from '../i18n';
@@ -93,8 +95,9 @@ export function decorateBriefing(root: HTMLElement, m: Mission) {
   ensureStyle();
   const sheet = root.querySelector<HTMLElement>('.sheet');
   if (!sheet) return;
-  const inCampaign = m.number > 0 && (CAMPAIGN.includes(m) || isChapterMission(m.id) || isSecondTourId(m.id));
-  const total = isChapterMission(m.id) ? DEEP_PENETRATION.length : isSecondTourId(m.id) ? SECOND_TOUR_LENGTH : CAMPAIGN.length;
+  const tour = isTourId(m.id);
+  const inCampaign = m.number > 0 && (CAMPAIGN.includes(m) || isChapterMission(m.id) || isSecondTourId(m.id) || tour);
+  const total = isChapterMission(m.id) ? DEEP_PENETRATION.length : isSecondTourId(m.id) ? SECOND_TOUR_LENGTH : tour ? TOUR_LENGTH : CAMPAIGN.length;
 
   // Mission badge + facts
   const kicker = sheet.querySelector<HTMLElement>('.kicker');
@@ -114,11 +117,12 @@ export function decorateBriefing(root: HTMLElement, m: Mission) {
     target.after(meta);
   }
   if (isChapterMission(m.id) && kicker) kicker.textContent = tx('Deep Penetration') + ' · ' + kicker.textContent;
+  if (tour) decorateTourBriefing(sheet);   // the Tour: kicker and the crew's own ship (TourScreen.ts)
   decorateCampaignBriefing(sheet, m); // dynamic campaign: side-raid kicker, strategic modifiers
 
   // Recorded briefing
   const text = sheet.querySelector<HTMLElement>('.brief-text');
-  if (!inCampaign || isSecondTourId(m.id) || !text) return;
+  if (!inCampaign || isSecondTourId(m.id) || tour || !text) return;
   const paras = Array.from(text.querySelectorAll<HTMLParagraphElement>(':scope > p'));
   const count = Math.min(paras.length, m.briefing.length);
   if (!count) return;

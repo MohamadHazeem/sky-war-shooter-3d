@@ -9,6 +9,7 @@
 // Game hooks: showCampaignMap (Game.showCampaign), mountCampaignReport (end of showDebrief),
 // isSideRaid (briefing Back button). Rendered into the #campaign layer UI.ts creates.
 import { mountChapterAccess } from './ChapterSelect';
+import { mountTourAccess } from './TourScreen';
 import { isChapterMission } from '../game/DeepPenetration';
 import { CAMPAIGN, type Mission } from '../game/Missions';
 import { STATIONS } from '../world/B17Layout';
@@ -499,6 +500,7 @@ export function showCampaignMap(progress: ProgressLike, onPick: (m: Mission) => 
   });
   root.querySelector('[data-secondtour]')?.addEventListener('click', () => { startSecondTour(d); selected = null; showCampaignMap(progress, onPick, onBack); });
   mountChapterAccess(root, progress, d, onPick, () => showCampaignMap(progress, onPick, onBack));
+  mountTourAccess(root);   // the 25-mission Tour (TourScreen.ts)
   showLayer();
 }
 
@@ -548,6 +550,7 @@ export function showCampaignSummary(progress: ProgressLike, onPick: (m: Mission)
   root.querySelector('[data-secondtour]')?.addEventListener('click', () => { startSecondTour(d); selected = null; showCampaignMap(progress, onPick, onBack); });
   root.querySelector('[data-newtour]')?.addEventListener('click', () => { showCampaignMap(progress, onPick, onBack); root.querySelector<HTMLElement>('[data-newtour]')?.click(); });
   mountChapterAccess(root, progress, d, onPick, () => showCampaignMap(progress, onPick, onBack));
+  mountTourAccess(root);   // the 25-mission Tour (TourScreen.ts)
   showLayer();
 }
 

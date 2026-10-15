@@ -94,6 +94,23 @@ async function boot() {
       current: () => campaignDev.currentStory(campaignDev.loadCampaign(game.progress)),
       state: () => campaignDev.loadCampaign(game.progress),
     };
+    const tourDev = await import('./game/Tour');
+    (window as any).sws.tour = {
+      // Dev-only: the Tour's saved state, a fresh tour, and synthetic sorties (credited unless told otherwise)
+      state: () => tourDev.loadTour(),
+      begin: (seed = 7) => { tourDev.saveTour(tourDev.newTour(seed)); game.showTour(); return tourDev.loadTour(); },
+      sim: (n = 1, o: Partial<import('./game/Tour').SortieOutcome> = {}) => {
+        let s = tourDev.loadTour() ?? tourDev.newTour(7);
+        for (let i = 0; i < n && !s.complete; i++) {
+          if (s.event) s = tourDev.resolveEvent(s, 0);
+          s = tourDev.applySortie(s, { success: true, kills: 4, shipLost: false, wounded: [], serious: [], zones: { engine2: 0.35, fuselageMid: 0.55, wingL: 0.7, tail: 0.8 }, danger: 3, ...o }).state;
+        }
+        tourDev.saveTour(s); return s;
+      },
+      mission: (opt = 0) => { const s = tourDev.loadTour()!; return tourDev.tourMission(s, s.done, opt); },
+      resolve: (choice = 0) => { const s = tourDev.loadTour(); if (s?.event) tourDev.saveTour(tourDev.resolveEvent(s, choice)); return tourDev.loadTour(); },
+      open: () => game.showTour(),
+    };
     const { tutorialAutoplay } = await import('./dev/tutorialAutoplay');
     (window as any).sws.tutorialAutoplay = (o?: any) => tutorialAutoplay(engine, game, o);
     Object.assign((window as any).sws, { game, engine });

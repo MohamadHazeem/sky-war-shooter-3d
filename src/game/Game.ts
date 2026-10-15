@@ -50,6 +50,8 @@ import { SpecialEvents } from './SpecialEvents';
 import { mountShare, shareStamp } from './Share';
 import { mountStatsToggle } from '../net/Analytics';
 import { showCampaignMap, prepareCampaignMission, isSideRaid } from '../ui/CampaignMap';
+import { TourRuntime } from './TourRuntime';
+import { showTour as showTourScreen, registerTourOpener } from '../ui/TourScreen';
 import '../ui/CustomBattleScreen'; // registers the Custom Battle and Weekly Challenge modes + their Survival-screen tabs
 import { CoopSession } from './CoopSession';
 import { qualityFallbackReady } from '../render/FrameTiming';
@@ -137,6 +139,7 @@ export class Game {
   readonly cine: Cinematics;       // kill cam, mission fly-by, best-moment replay (Cinematics.ts)
   readonly ditching: Ditching;
   readonly formationReturn = new FormationReturn(this);
+  readonly tour = new TourRuntime(this);   // the 25-mission tour in a mission (TourRuntime.ts)
   readonly b17Damage: B17DamageCrew;
   readonly bookends: Bookends;     // take-off / landing scenes at Deenethorpe (Bookends.ts)
   readonly distantBattle = new DistantBattle();
@@ -169,6 +172,7 @@ export class Game {
     this.bookends = new Bookends(engine, ui, this);
     this.ditching = new Ditching(this);
     this.b17Damage = new B17DamageCrew(this);
+    registerTourOpener(() => this.showTour(() => this.showCampaign()));
     this.abilities = new Abilities(engine, input, ui, this);
     this.boss = new BossBattle(this.world, ui, { score: (n) => { this.score += n; }, slowmo: (s) => { this.slowmo = Math.max(this.slowmo, s); }, perk: (l) => this.awardPerk(l), merit: (n) => this.prog.earn(n) });
     this.settings = load<Settings>(SETTINGS_KEY, { sensitivity: 1, invertY: false, volume: 0.8, musicVolume: 1, sfxVolume: 1, ambVolume: 1, radio: true, music: true, quality: 'high', markers: true, leadPip: 'always', aimAssist: 'high', flightMode: 'mouseAim', difficulty: 'veteran', fov: 65 });
@@ -331,6 +335,11 @@ export class Game {
 
   showCampaign(back = () => this.startMenu()) {
     showCampaignMap(this.progress, (m) => this.showBriefing(m, () => this.showCampaign(back)), back); // campaign map (CampaignMap.ts) replaces ui.campaign
+  }
+
+  /** The Tour of 25 missions (ui/TourScreen.ts): field orders, ship, crew, events, finale. */
+  showTour(back = () => this.startMenu()) {
+    showTourScreen({ briefing: (m, b) => this.showBriefing(m, b), menu: back });
   }
 
   showBriefing(m: Mission, back = () => (m.number || isSideRaid(m) ? this.showCampaign() : this.startMenu())) {
