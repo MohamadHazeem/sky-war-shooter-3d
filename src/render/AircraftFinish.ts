@@ -59,6 +59,13 @@ export function installAircraftFinish() {
   T.ShaderChunk.aomap_fragment += `
 #ifdef STANDARD
   if(swsFinish>.5 && swsFinish<1.5) {
+    #ifdef USE_AOMAP
+      // Baked wing-root/nacelle cavities also occlude the bright sky fill.
+      // Preserve open painted panels (AO=1) and direct sunlight/glints.
+      float cavity=clamp(ambientOcclusion,0.,1.);
+      reflectedLight.indirectDiffuse*=cavity*cavity;
+      reflectedLight.indirectSpecular*=cavity*cavity;
+    #endif
     // A bumped normal must not reflect light from below its geometric surface.
     vec3 reflected=reflect(-normalize(vViewPosition),normal);
     float horizon=clamp(1.+dot(reflected,nonPerturbedNormal),0.,1.);

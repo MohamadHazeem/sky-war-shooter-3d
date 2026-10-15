@@ -409,6 +409,16 @@ export class World implements WorldView {
     }
   }
 
+  /** Development fixtures supply motion randomness independently of art construction. */
+  seedFormationMotion(random: () => number) {
+    for (const b of this.bombers()) {
+      b.wobblePhase = random() * 100;
+      b.wobbleAmp = .6 + random() * .8;
+      holdPhase.set(b, { surge: random() * Math.PI * 2, yaw: random() * Math.PI * 2 });
+      this.placeBomber(b, 0);
+    }
+  }
+
   // Combat box: lead element + high and low elements, 3-ship vics, offsets in meters
   spawnFormation(count: number, playerSlot = 1) {
     const slots: THREE.Vector3[] = [];

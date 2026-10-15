@@ -21,7 +21,9 @@ try {
   const original=pane.mat.fragmentShader;
   // White = actual aircraft geometry in the reflected direction; the sky is excluded.
   pane.mat.fragmentShader=original
-   .replace('gl_FragColor = vec4(col * keep, a);','vec3 rayV=reflect(normalize((viewMatrix*vec4(vW,1.)).xyz),normalize(vNormal));vec3 rayW=normalize(vec3(vec4(rayV,0.)*viewMatrix));gl_FragColor=vec4(textureCube(swsFormationMap,rayW).aaa,1.);');
+   .replace('vec3 col = vec3(0.0);','float probeCoverage=0.;vec3 col = vec3(0.0);')
+   .replace('sky=mix(sky,aircraft.rgb,aircraft.a);','probeCoverage=aircraft.a;sky=mix(sky,aircraft.rgb,aircraft.a);')
+   .replace('gl_FragColor = vec4(col * keep, a);','gl_FragColor=vec4(vec3(probeCoverage),1.);');
   pane.mat.needsUpdate=true;
   e.post.resetHistory();for(let i=0;i<24;i++)e.render(1/60);
   const mask=await visualRig.png();

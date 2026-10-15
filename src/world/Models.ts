@@ -103,7 +103,7 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
       else prepareAircraftSurface(root, k, skins);
       // Authored aircraft nodes are static except these explicit mechanical pivots.
       root.traverse(o => { if (k !== 'p51d_cockpit' && o !== root && !/^(pilot|prop_\d+|fan_\d+|ctl_.*|turret_.*|gun_.*|flap_[LR]|bomb_bay_[LR]|gear_.*)$/.test(o.name)) { o.updateMatrix(); o.matrixAutoUpdate = false; } });
-      if (k === 'b17') compact = compactBomber(root);
+      if (k === 'b17') { compact = compactBomber(root); compactNear = compactBomber(root, 1); }
       cache.set(k, root);
     } catch (e) {
       console.warn(`Model ${k} unavailable, using placeholder`, e);
@@ -116,8 +116,9 @@ function loadModel(k: ModelKind, prio: number): Promise<void> {
 }
 
 let compact: THREE.Group | null = null;
-export function instantiateCompactBomber() {
-  const root = compact?.clone(true) ?? null;
+let compactNear: THREE.Group | null = null;
+export function instantiateCompactBomber(lod: 1 | 2 = 2) {
+  const root = (lod === 1 ? compactNear : compact)?.clone(true) ?? null;
   if (root) for (const part of root.children) part.userData.batchTint = new THREE.Color();
   return root;
 }

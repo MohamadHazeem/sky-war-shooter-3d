@@ -359,6 +359,13 @@ const FRAG = /* glsl */ `
     if(swsReflectionOn>.5 && uDust>0.) {
       vec3 vn=normalize(vNormal);
       vec3 wn=normalize(vec3(vec4(vn,0.)*viewMatrix));
+      // Flatten optical curvature for this approximate probe: an eye close to
+      // the dome's focus must not magnify one wing across the whole aiming view.
+      if(uShape>.5 && uShape<1.5) {
+        if(dot(wn,vd)<0.)wn=-wn;
+        wn=normalize(mix(wn,vd,.8));
+        vn=mat3(viewMatrix)*wn;
+      }
       vec3 vp=(viewMatrix*vec4(vW,1.)).xyz;
       float f=.14+.86*pow(1.-abs(dot(wn,normalize(cameraPosition-vW))),5.);
       vec4 reflected=swsGlassReflection(vp,vn);

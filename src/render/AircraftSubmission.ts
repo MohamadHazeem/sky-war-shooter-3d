@@ -7,9 +7,9 @@ const tintedSources = new WeakMap<T.Material, {source: T.MeshStandardMaterial; m
 export function registerBatchTint(source: T.MeshStandardMaterial, material: T.MeshStandardMaterial, tint: T.Color) {
   tintedSources.set(source, {source, material, tint, version: source.version});
 }
-const formationSources = new WeakMap<T.Object3D, { state: FormationState; compact: T.Object3D | null }>();
-export function registerFormationSource(root: T.Object3D, state: FormationState, compact: T.Object3D | null) {
-  formationSources.set(root, { state, compact });
+const formationSources = new WeakMap<T.Object3D, { state: FormationState; compact: T.Object3D | null; medium: T.Object3D | null }>();
+export function registerFormationSource(root: T.Object3D, state: FormationState, compact: T.Object3D | null, medium: T.Object3D | null = null) {
+  formationSources.set(root, { state, compact, medium });
 }
 
 /** Flat pre-order traversal: skip a hidden subtree in one jump instead of recursing
@@ -60,7 +60,7 @@ interface Batch {
   retired: boolean; mesh: T.BatchedMesh; previous: T.DataTexture; geometries: Map<T.BufferGeometry, number>;
   slots: Map<T.Mesh, Slot>; used: number; vertices: number; indices: number;
 }
-interface Cached { geometry: T.BufferGeometry; material: T.Material; flags: number; batch: Batch; slot: Slot }
+interface Cached { reflectionExcluded: boolean; geometry: T.BufferGeometry; material: T.Material; flags: number; batch: Batch; slot: Slot }
 const CAPACITY = 32, HISTORY_SIZE = 12;
 function mirrored(matrix: T.Matrix4) {
   const e = matrix.elements;
@@ -125,7 +125,7 @@ export class AircraftSubmission {
     const tint = shared ? binding.tint : m.userData.batchTint as T.Color | undefined;
     const flags = +m.castShadow + 2 * +m.receiveShadow + 4 * +m.frustumCulled + 8 * +(!!tint) + 16 * m.renderOrder;
     let c = this.cached.get(m);
-    if (!c || c.geometry !== m.geometry || c.material !== material || c.flags !== flags || c.batch.retired) {
+    if (!c || c.geometry !== m.geometry || c.material !== material || c.flags !== flags || c.reflectionExcluded !== this.reflectionExcluded || c.batch.retired) {
       if (c) { c.batch.mesh.deleteInstance(c.slot.id); c.batch.slots.delete(m); }
       let layout = this.layouts.get(m.geometry);
       if (!layout) {
@@ -174,7 +174,7 @@ export class AircraftSubmission {
       }
       const slot = { id: b.mesh.addInstance(geometry), previous: m.matrixWorld.clone(), frame: -1, source: m, visible: false };
       b.slots.set(m, slot);
-      c = { geometry: m.geometry, material, flags, batch: b, slot }; this.cached.set(m, c);
+      c = { reflectionExcluded: this.reflectionExcluded, geometry: m.geometry, material, flags, batch: b, slot }; this.cached.set(m, c);
     }
     const { batch: b, slot } = c;
     if (b.used !== this.frame) { this.scene.children.push(b.mesh); b.used = this.frame; }
@@ -242,9 +242,12 @@ export class AircraftSubmission {
           for (let i=0; !visible && i<this.shadows; i++) visible = this.shadowFrusta[i].intersectsSphere(this.sphere);
           if (!visible) { child.userData.submissionCulled = true; continue; }
         }
-        if (!this.warming && (this.low || this.medium || this.high) && this.allowCompact && f?.compact && state && !state.isPlayer && state.alive && !state.falling && !state.bayOpen && (!this.high || state.integrity > .999) && this.aircraftDistanceSq > (this.low ? 120 * 120 : this.medium ? 350 * 350 : shadowOnly ? 60 * 60 : 650 * 650)) {
+        // At 240–650 m keep the authored LOD1 surface but submit its static parts
+        // once per material. Close/reflected, damaged and film aircraft stay articulated.
+        const compact = this.high && !shadowOnly && this.aircraftDistanceSq <= 650 * 650 ? f?.medium : f?.compact;
+        if (!this.warming && (this.low || this.medium || this.high) && this.allowCompact && compact && state && !state.isPlayer && state.alive && !state.falling && !state.bayOpen && (!this.high || state.integrity > .999) && this.aircraftDistanceSq > (this.low ? 120 * 120 : this.medium ? 350 * 350 : shadowOnly ? 60 * 60 : 240 * 240)) {
           child.updateMatrix(); child.matrixWorld.multiplyMatrices(source.matrixWorld, child.matrix);
-          for (const part of f.compact.children) {
+          for (const part of compact.children) {
             part.matrixWorld.copy(child.matrixWorld);
             (part.userData.batchTint as T.Color).setScalar(.65 + .35 * state.integrity);
             this.collect(part);
@@ -252,7 +255,7 @@ export class AircraftSubmission {
         } else {
           updateVisiblePose(child, camera, this.collect);
           // Warm merged far geometry's attribute/tint variants before flight on every tier.
-          if (this.warming && f?.compact) for (const part of f.compact.children) {
+          if (this.warming && f) for (const geometry of [f.compact, f.medium]) for (const part of geometry?.children ?? []) {
             part.matrixWorld.copy(child.matrixWorld);
             (part.userData.batchTint as T.Color).setScalar(1);
             this.collect(part);

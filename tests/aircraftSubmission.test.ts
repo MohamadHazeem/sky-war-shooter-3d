@@ -21,6 +21,15 @@ describe('formation submission', () => {
     expect(f.meshes[1].parent).toBe(f.roots[1]); expect(f.scene.children).toEqual(f.roots);
     expect(f.meshes[0].visible).toBe(true); expect(b.material).toBe(f.material);
   });
+  it('moves an aircraft out of the reflection batches when the player takes it over', () => {
+    const f=fixture(),states=f.roots.map(()=>({isPlayer:false,alive:true,falling:false,integrity:1,radius:1000}));
+    f.roots.forEach((root,i)=>registerFormationSource(root,states[i],null));
+    expect(batches(f.submit.prepare(f.scene,f.camera))).toHaveLength(1);
+    states[1].isPlayer=true;
+    const out=batches(f.submit.prepare(f.scene,f.camera));expect(out).toHaveLength(2);
+    for(const batch of out)expect(batch.instanceCount).toBe(1);
+    expect(out.map(b=>b.userData.reflectionExcluded).sort()).toEqual([false,true]);
+  });
   it('keeps each instance damage, material swaps, prop pivots and previous pose independent', () => {
     const f = fixture(); f.submit.prepare(f.scene, f.camera);
     f.meshes[0].position.z = 3; f.meshes[1].visible = false;
@@ -112,6 +121,20 @@ describe('formation submission', () => {
     f.scene.add(sun,sun.target);const update=vi.spyOn(f.meshes[0],'updateMatrix');
     f.submit.prepare(f.scene,f.camera);expect(update).not.toHaveBeenCalled();
     f.submit.reflectionRange=400;f.submit.prepare(f.scene,f.camera);expect(update).toHaveBeenCalled();
+  });
+  it('merges the authored middle LOD on High without replacing nearby or articulated ships',()=>{
+    const f=fixture(),middle=new T.Group(),part=new T.Mesh(f.geometry,f.material);
+    middle.add(part);part.userData.batchTint=new T.Color();f.scene.remove(f.roots[1]);
+    const state={radius:1000,isPlayer:false,alive:true,falling:false,integrity:1,bayOpen:false};
+    registerFormationSource(f.roots[0],state,null,middle);f.submit.high=true;
+    const update=vi.spyOn(f.meshes[0],'updateMatrix');
+    f.roots[0].position.x=200;f.submit.prepare(f.scene,f.camera);expect(update).toHaveBeenCalled();update.mockClear();
+    f.roots[0].position.x=300;f.submit.prepare(f.scene,f.camera);expect(update).not.toHaveBeenCalled();
+    for(const key of ['isPlayer','falling','bayOpen'] as const){
+      state[key]=true;f.submit.prepare(f.scene,f.camera);expect(update).toHaveBeenCalled();update.mockClear();state[key]=false;
+    }
+    state.integrity=.9;f.submit.prepare(f.scene,f.camera);expect(update).toHaveBeenCalled();update.mockClear();
+    state.integrity=1;f.submit.allowCompact=false;f.submit.prepare(f.scene,f.camera);expect(update).toHaveBeenCalled();
   });
   it('bakes only the authored far LOD into a compact mesh without changing source transforms',()=>{
     const f=fixture(),source=new T.Group(),lod=new T.Group();lod.name='body_LOD2';

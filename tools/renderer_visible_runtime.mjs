@@ -2,10 +2,12 @@
 // Use an existing Playwright installation, with Vite on 5301. No dependencies downloaded.
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE??'playwright');
+import os from 'node:os';
+import path from 'node:path';
+const {chromium}=await import(process.env.PLAYWRIGHT_MODULE??path.join(os.homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs'));
 const output=process.env.RENDERER_OUTPUT??'docs/phase10/shots/01b';
 await fs.mkdir(output,{recursive:true});
-const browser=await chromium.launch({channel:'chrome',headless:true});
+const browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_EXECUTABLE,args:['--use-gl=angle','--use-angle=metal','--enable-gpu']});
 const results=[];
 try {
  for(const forward of [false,true]){
@@ -18,7 +20,7 @@ try {
   const p=await context.newPage(),errors=[];
   p.on('pageerror',e=>errors.push(e.message));
   p.on('console',m=>{if(m.type()==='error'&&/THREE|shader|WebGL/i.test(m.text()))errors.push(m.text());});
-  await p.goto('http://127.0.0.1:5301');
+  await p.goto(process.env.RENDERER_URL??'http://127.0.0.1:5301');
   await p.waitForFunction(()=>window.sws?.vqa&&sws.assetsReady(),null,{timeout:120000,polling:100});
   const result=await p.evaluate(async()=>{
    const T=sws.vqa.THREE,e=sws.engine,r=e.renderer,tr=e.temporal;

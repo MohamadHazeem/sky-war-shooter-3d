@@ -227,7 +227,7 @@ export class Bomber extends Aircraft {
 
   constructor() {
     super('b17', 'allied', 1.77);
-    registerFormationSource(this.root, this, instantiateCompactBomber());
+    registerFormationSource(this.root, this, instantiateCompactBomber(), instantiateCompactBomber(1));
     this.controls = new HeroB17Controls(this.model);
     const find = (n: string) => this.model.getObjectByName(n) ?? undefined;
     const turret = (key: string, y: string, p: string, rest: THREE.Vector3) => {

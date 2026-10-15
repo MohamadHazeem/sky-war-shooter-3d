@@ -282,7 +282,7 @@ refined depth hits, depth-edge rejection, grazing fades and a small clamped spat
 also use `FormationReflection`: a 256px aircraft-silhouette cubemap, one face every other frame,
 22–180 m, with no clouds, shadows, interior or effects passes. All six faces must be populated
 before sampling, and camera cuts invalidate them. The ordinary aircraft submission retains nearby
-ships behind the eye; probe render lists borrow their existing matrices without reparenting. Player-aircraft batches are separated and excluded from the probe so its own wings cannot become broad bands across the dome. The narrow dome rails sit at the view corners.
+ships behind the eye; probe render lists borrow their existing matrices without reparenting. Player-aircraft batches are separated and excluded from the probe. The dome's approximate reflection normal reduces focal magnification, and narrow rails sit at the view corners.
 `Engine.warmRenderer` warms batched/non-batched probe variants. The probe is an approximation:
 it supplies actual offscreen aircraft silhouettes, not full material/damage-shader shading.
 
@@ -297,13 +297,15 @@ SoftDepth, then upsamples with depth weights. Other transparencies retain native
 World prewarm also warms the shaft composite. Formation GTAO extends through 220 m with a
 3.2 m contact radius and stronger cavity weight beyond the cockpit.
 Submission retirement uses value iterators and changes instance visibility only when needed.
-High uses the existing authored compact far mesh beyond 650 m (60 m for offscreen shadow-only
-casters); close, reflected, damaged, player, falling, open-bay and object-blurred film aircraft
+High merges the existing authored LOD1 by material at 240–650 m, then uses compact LOD2 beyond
+650 m (60 m for offscreen shadow-only casters); close, reflected, damaged, player, falling, open-bay and object-blurred film aircraft
 retain their articulated source. Compact variants are warmed before play. These changes preserve
 the simulation and cloud-resolution budget.
 
-Fixture v4 retains turret-glass, close-shadow and formation-glints, resets the simulation RNG after
-art construction, and records formation poses. It waits for streamed mission terrain before
+Fixture v6 retains turret-glass, close-shadow and formation-glints. It explicitly seeds formation
+motion independently of art construction, neutralizes career crew effects and records formation poses. Its gunner reflection receiver is staged
+in the dome approximation's optical field, identically for baseline and candidate.
+It waits for streamed mission terrain before
 settling temporal history, and records SHA-256 hashes of all three region textures. Comparisons
 assert these hashes as well as the camera, weather and formation poses. Matched live-main provenance, crops, probe ablation,
 performance distributions and verification are in `docs/phase11/reports/02.md`.

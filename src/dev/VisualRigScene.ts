@@ -4,11 +4,15 @@ import type { Game } from '../game/Game';
 import { CAMPAIGN, type Mission } from '../game/Missions';
 import { Atmos } from '../render/Atmosphere';
 import { applyWeather } from '../render/Weather';
+import { crewRoster } from '../game/CrewRoster';
+import { NEUTRAL_EFFECTS } from '../game/CrewRoles';
 import { Searchlights } from '../render/Searchlights';
 import { RIG_DT, RIG_STEPS, RIG_WEATHER, RIG_SEED, seededRandom, type RigShot } from './VisualRigConfig';
 
 /** Staged fixtures use the production world, controllers, assets and effects. */
 export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: () => void, seed = RIG_SEED) {
+  // Compare rendering without career/crew bonuses changing the formation or camera.
+  crewRoster.effects = () => NEUTRAL_EFFECTS;
   const pilot = shot.id === 'p51-cockpit';
   const weather = { ...RIG_WEATHER[shot.weather] };
   const mission: Mission = { ...CAMPAIGN[0], id: 'visual-rig', number: 0, role: pilot ? 'pilot' : 'gunner',
@@ -26,6 +30,7 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
   applyWeather(engine, weather);
   Atmos.windOffset.set(0, 0, 0); Atmos.originOffset.set(0, 0, 0);
   engine.time = 0; w.time = 0;
+  w.seedFormationMotion(seededRandom(seed ^ 0xb17));
   engine.livingSky.reset();
   // Keep production simulation/render updates, but no combat director, progression or camera shake.
   engine.onFrame = dt => {
@@ -75,6 +80,10 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     const ray = new THREE.Raycaster(); ray.layers.enableAll(); ray.setFromCamera(new THREE.Vector2(.48, .28), cam);
     const hit = ray.intersectObject(pane)[0];
     const normal = pane.worldToLocal(hit.point.clone()).normalize().transformDirection(pane.matrixWorld);
+    // Stage the receiver in the approximate optical field used by the dome.
+    // This same fixture/aircraft pose is applied to the unmodified live renderer.
+    if(normal.dot(ray.ray.direction)<0)normal.negate();
+    normal.lerp(ray.ray.direction,.8).normalize();
     neighbour.pos.copy(hit.point).addScaledVector(ray.ray.direction.clone().reflect(normal), 95);
     facts.reflectionPoint = [.48, .28];
     facts.neighbourPosition = neighbour.pos.toArray();
