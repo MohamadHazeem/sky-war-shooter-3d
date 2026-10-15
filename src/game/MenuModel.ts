@@ -4,7 +4,7 @@ import type { Progress } from '../ui/UI';
 export const MAIN_ENTRIES = ['campaign', 'survival', 'coop', 'hangar', 'settings'] as const;
 export const HANGAR_TABS = [
   { id: 'crew', label: 'Crew & Skills', entries: [
-    ['tour', 'The Tour', 'Twenty-five missions, one ship, one crew'], ['skills', 'Skills', 'Train your gunner'], ['mastery', 'Gunner Mastery', 'Station ranks, challenges and unlocks'], ['crew', 'Crew', 'Stations, skills and recovery'], ['career', 'Career', 'Rank and flight record'],
+    ['tour', 'The Tour', 'Twenty-five missions, one ship, one crew'], ['raids', 'Historical Raids', 'Famous raids with their real numbers'], ['skills', 'Skills', 'Train your gunner'], ['mastery', 'Gunner Mastery', 'Station ranks, challenges and unlocks'], ['crew', 'Crew', 'Stations, skills and recovery'], ['career', 'Career', 'Rank and flight record'],
   ] },
   { id: 'aircraft', label: 'Aircraft & Armory', entries: [
     ['aircraft', 'Aircraft', 'Recognition gallery and quiz'], ['armory', 'Armory', 'Aircraft, weapons and upgrades'], ['customize', 'Customize', 'Name, nose art and paint'],

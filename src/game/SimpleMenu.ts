@@ -62,6 +62,7 @@ export class SimpleMenu {
       case 'theatre': g.ui.hideAll(); void g.cine.theatre.openLibrary(back); break;
       case 'campaign': g.showCampaign(back); break;
       case 'tour': g.showTour(back); break;
+      case 'raids': g.showHistoricalRaids(back); break;
       case 'custom': {
         const open = () => showCustomBattleScreen({ back, start: m => g.showBriefing(m, open) });
         open(); break;

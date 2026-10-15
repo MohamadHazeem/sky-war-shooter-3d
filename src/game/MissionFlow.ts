@@ -29,6 +29,8 @@ import { crewRoomScene } from '../ui/CrewRoomScene';
 import { endBriefing } from '../ui/BriefingExtras';
 import { isTourId } from './Tour';
 import { mountTourReport } from '../ui/TourScreen';
+import { compareRaid, isHistoricalId, loadRecords, parseHistId, recordRaid, saveRecords } from './HistoricalRaids';
+import { mountRaidReport } from '../ui/HistoricalRaidsScreen';
 
 // Bail-out sequence when a gunner's B-17 is shot down (before the debrief): BailOutCinematic.ts
 const BAIL_SEQ_TIME = BAIL_TOTAL;
@@ -301,7 +303,7 @@ export class MissionFlow {
       g.progress.survival.push({ name: 'You', score: g.score, waves: m.round ? g.roundIdx + (r.success ? 1 : 0) : Math.max(0, survivalWave - (r.success ? 0 : 1)), role: m.role, date: new Date().toLocaleDateString() });
       g.progress.survival.sort((a, b) => b.score - a.score);
       g.progress.survival = g.progress.survival.slice(0, 20);
-    } else if (!isTourId(m.id)) {   // the Tour keeps its own record (Tour.ts)
+    } else if (!isTourId(m.id) && !isHistoricalId(m.id)) {   // the Tour and the historical raids keep their own records
       const idx = CAMPAIGN.findIndex((c) => c.id === m.id);
       if (r.success && idx >= 0) g.progress.unlocked = Math.max(g.progress.unlocked, Math.min(CAMPAIGN.length - 1, idx + 1));
       const prev = new Set(g.progress.medals[m.id] ?? []);
@@ -328,18 +330,19 @@ export class MissionFlow {
     // the crew-room scene first after a story mission (CrewRoomScene.ts); `then` runs once the map is up
     const toMap = (then?: unknown) => crewRoomScene.play(m, () => { g.showCampaign(); if (typeof then === 'function') then(); });
     let tour: ReturnType<typeof g.tour.debrief> = null;   // the Tour's report, mounted again after the Armory
+    let raid: ReturnType<MissionFlow['bookRaid']> = null;   // the historical comparison, mounted again after the Armory
     const h = {
       next: toMap, // campaign map: next operation card + optional side raids
       retry: () => g.showBriefing(m),
       menu: () => g.startMenu(),
-      armory: () => g.ui.armory(g.prog, () => { g.ui.debrief({ ...d, merit: undefined, points: g.prog.points }, h); if (tour) mountTourReport(tour, () => g.showTour(), false); }),
+      armory: () => g.ui.armory(g.prog, () => { g.ui.debrief({ ...d, merit: undefined, points: g.prog.points }, h); if (tour) mountTourReport(tour, () => g.showTour(), false); if (raid) mountRaidReport(raid.c, raid.newBest, !!m.shuttle, () => g.showHistoricalRaids()); }),
     };
     g.ui.debrief(d, h);
     pushSave(); // progress to the cloud after every mission
     // online leaderboard: survival per role, campaign per mission
     const host = document.querySelector<HTMLElement>('#debrief .box');
     const board = leaderboardMode(m) ?? (survival ? `survival-${m.role}` : `campaign-${m.id}`);
-    if (host && !isSecondTourId(m.id) && !isChapterMission(m.id) && !isTourId(m.id)) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: g.score, kills: w.stats.kills, rounds: g.roundIdx + 1, duration: d.time });
+    if (host && !isSecondTourId(m.id) && !isChapterMission(m.id) && !isTourId(m.id) && !isHistoricalId(m.id)) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: g.score, kills: w.stats.kills, rounds: g.roundIdx + 1, duration: d.time });
     mountShare(host, g.engine, () => shareStamp(g), () => ({ title: m.title, kills: d.kills, score: d.score, success: d.success, survival, waves: d.waves, role: m.role }));
     analytics.missionEnd(m, d);
     g.service.onDebrief(m, d, medals);
@@ -349,5 +352,19 @@ export class MissionFlow {
     crewRoomScene.capture(g, m, d); // the outcome the crew-room scene talks about
     tour = g.tour.debrief(m, r.success, w.stats.kills, merit);
     if (tour) mountTourReport(tour, () => g.showTour());
+    raid = this.bookRaid(m, d);
+    if (raid) mountRaidReport(raid.c, raid.newBest, !!m.shuttle, () => g.showHistoricalRaids());
+  }
+
+  /** Historical raid mode: the player's group against history, booked once per sortie (HistoricalRaids.ts). */
+  private bookRaid(m: Mission, d: DebriefData) {
+    const at = parseHistId(m.id);
+    if (!at) return null;
+    const g = this.g, pb = g.world.playerBomber;
+    const fate = g.limping.interned ? 'interned' : g.ditching.ditched ? 'ditched' : !pb || !pb.alive ? 'lost' : 'home';
+    const c = compareRaid(at.raid.id, { success: d.success, bombersLost: d.bombersLost, bombersTotal: d.bombersTotal, kills: d.kills, fate });
+    const { records, newBest } = recordRaid(loadRecords(), c);
+    saveRecords(records);
+    return { c, newBest };
   }
 }

@@ -1,0 +1,48 @@
+{
+  "force": "SCHWEINFURT-REGENSBURG · 17 AUGUST 1943\n\nTwo forces were meant to split the German defences: the Regensburg force would fly on to North Africa and the Schweinfurt force would follow close behind. Fog in England held the second force back for hours, so the fighters could meet each force in turn.\n\nEscort: No escort past the border · Airmen lost: about 550 · Luftwaffe fighters lost: about 27\n\nREGENSBURG FORCE\nSCHWEINFURT FORCE\n\nTarget: Ball-bearing plants, Schweinfurt\n\nFLY THIS RAID",
+  "sr": {
+    "kicker": "HISTORICAL RAID · SURVIVAL",
+    "id": "hist-sr-1",
+    "date": "17 August 1943",
+    "fighters": null,
+    "report": "HISTORICAL RAID · SCHWEINFURT-REGENSBURG\nAS IN HISTORY\n\nYour group paid about what the real raid paid. That is how close to the edge these missions were. A new best for this raid.\n\n\tYOUR GROUP\tHISTORY, SCALED TO 12 SHIPS\tHISTORY, THE WHOLE RAID\nBOMBERS LOST\t2/12\t1.9/12\t60/376\nLOSS RATE\t17%\t16%\nFIGHTERS DOWNED\t0\t0.9\tabout 27\nYOUR SHIP\tCame home\n\nWhat really happened: Both targets were hit hard. The Messerschmitt plant at Regensburg lost weeks of output, and Schweinfurt's bearing production fell by about a third for a time. One Fortress in six did not come back.\n\nThe bomber gunners claimed 288 fighters that day; the Luftwaffe actually lost about 27.\n\nBACK TO HISTORICAL RAIDS"
+  },
+  "listAfter": "17 AUGUST 1943\nSchweinfurt-Regensburg\n376\nDISPATCHED\n60\nLOST\n16%\nLOSS RATE\nYour best: 2 of 12 lost · As in history",
+  "bt": {
+    "kicker": "HISTORICAL RAID · SURVIVAL",
+    "id": "hist-bt-0",
+    "date": "14 October 1943",
+    "fighters": null,
+    "report": "HISTORICAL RAID · BLACK THURSDAY\nBETTER THAN HISTORY\n\nYour group came home with fewer losses than the real raid. The men who flew it that day would have given a lot for that. A new best for this raid.\n\n\tYOUR GROUP\tHISTORY, SCALED TO 12 SHIPS\tHISTORY, THE WHOLE RAID\nBOMBERS LOST\t0/12\t2.5/12\t60/291\nLOSS RATE\t0.0%\t21%\nFIGHTERS DOWNED\t0\t1.6\tabout 38\nYOUR SHIP\tCame home\n\nWhat really happened: The bearing plants were badly damaged, but Germany dispersed production and drew on its stocks. The losses were too high to repeat: deep raids beyond escort range stopped until the long-range fighters came.\n\nA further 17 bombers were wrecked on return and never flew again.\n\nThe bomber gunners claimed 186 fighters that day; the Luftwaffe actually lost about 38.\n\nBACK TO HISTORICAL RAIDS"
+  },
+  "records": {
+    "sr": {
+      "flown": 1,
+      "best": {
+        "verdict": "even",
+        "lost": 2,
+        "total": 12,
+        "kills": 0
+      }
+    },
+    "bt": {
+      "flown": 1,
+      "best": {
+        "verdict": "better",
+        "lost": 0,
+        "total": 12,
+        "kills": 0
+      }
+    }
+  },
+  "listArLatin": [],
+  "bn": {
+    "kicker": "غارة تاريخية · البقاء",
+    "id": "hist-bn-0",
+    "date": "6 March 1944",
+    "fighters": null,
+    "report": "غارة تاريخية · برلين\nأسوأ من التاريخ\n\nخسرت مجموعتك أكثر مما خسرته الغارة الحقيقية. شدّ التشكيل وأعلن عن المقاتلات مبكراً، ثم نفّذها مجدداً. أفضل نتيجة جديدة لهذه الغارة.\n\n\tمجموعتك\tالتاريخ، بمقياس 12 قاذفة\tالتاريخ، الغارة كاملة\nالقاذفات المفقودة\t3/12\t1.1/12\t69/730\nنسبة الخسائر\t25%\t9.5%\nالمقاتلات المُسقطة\t0\t1.1\tنحو 66\nطائرتك\tعادت إلى القاعدة\n\nما حدث فعلاً: شتّتت الغيوم القصف فلم تُمسّ الأهداف الرئيسية إلا قليلاً. لكن اللوفتفافه صعدت للدفاع عن عاصمتها وتكبدت خسائر فادحة، وبعد يومين عادت القوة الثامنة فوق برلين.\n\nادّعى مدفعيو القاذفات إسقاط 97 مقاتلة ذلك اليوم، بينما خسرت اللوفتفافه فعلياً نحو 66.\n\nالعودة إلى الغارات التاريخية"
+  },
+  "phoneOverflow": false,
+  "errors": []
+}
