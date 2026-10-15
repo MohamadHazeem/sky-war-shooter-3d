@@ -325,8 +325,12 @@ export function recordStrike(d0: StrategicData, op: { id: string; target: string
     const soonest = Math.min(...pending.flatMap((s) => d.sites[s.id].queue.map((q) => q[0])));
     forecast.push({ text: 'Damage still working through the factories: shortages bite in about {w} weeks', vars: { w: Math.max(1, soonest - d.week + 1) } });
   }
-  if (f1.fw190 < f0.fw190 - 0.03) forecast.push({ text: 'Fewer Fw 190s expected: the Focke-Wulf lines are short', tone: 'good' });
-  if (f1.bf109 < f0.bf109 - 0.03) forecast.push({ text: 'Fewer Bf 109s expected: Messerschmitt deliveries are down', tone: 'good' });
+  // One short type is replaced by the other (industryType), so "fewer 190s" means "more 109s":
+  // when both fall, only the total of single-engine fighters drops and the line says just that.
+  const fwDown = f1.fw190 < f0.fw190 - 0.03, bfDown = f1.bf109 < f0.bf109 - 0.03;
+  if (fwDown && bfDown) forecast.push({ text: 'Single-engine fighter deliveries down: fewer Fw 190s and Bf 109s alike', tone: 'good' });
+  else if (fwDown) forecast.push({ text: 'Fewer Fw 190s expected: the Focke-Wulf lines are short, more Bf 109s fill in', tone: 'good' });
+  else if (bfDown) forecast.push({ text: 'Fewer Bf 109s expected: Messerschmitt deliveries are down, more Fw 190s fill in', tone: 'good' });
   if (f1.heavy < f0.heavy - 0.03) forecast.push({ text: 'Fewer twin-engine destroyers: Bf 110 and Ju 88 output is down', tone: 'good' });
   if (f1.jets < f0.jets - 0.02) forecast.push({ text: 'The jet programme is set back about {w} weeks', vars: { w: Math.round(d.jetDelay) }, tone: 'good' });
   if (f1.skill < f0.skill - 0.003) forecast.push({ text: 'Fuel is short: green pilots in the German cockpits', tone: 'good' });

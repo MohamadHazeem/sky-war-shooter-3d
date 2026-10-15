@@ -11,6 +11,7 @@ import {
   CAMPAIGN_KEY, applyModifiers, defaultCampaign, prepareCampaignMission, recordCampaignOutcome, saveCampaign, strategicModifiersFor, modifiersFor,
 } from '../src/game/CampaignState';
 import { hasPhrase, setLang } from '../src/i18n';
+import { INDUSTRY_CHART, industryXY } from '../src/ui/StrategicPanel';
 
 const byId = (id: string) => CAMPAIGN.find((m) => m.id === id)!;
 const win = { success: true, bombersLost: 1, bombersTotal: 12 };
@@ -132,6 +133,19 @@ describe('war industry model', () => {
     expect(quiet.headline.text).toMatch(/press on/);
   });
 
+  it('forecasts the fighter mix without contradicting the type swap', () => {
+    const texts = (r: { forecast: { text: string }[] }) => r.forecast.map((l) => l.text).join(' | ');
+    // only the Focke-Wulf lines are short: 109s fill in
+    const fw = recordStrike(defaultStrategic(3), { id: 'x1', target: 'Focke-Wulf works, Bremen', date: '1 May 1944' }, win, '19 June 1944').reel;
+    expect(texts(fw)).toMatch(/Fewer Fw 190s expected.*more Bf 109s fill in/);
+    expect(texts(fw)).not.toMatch(/Fewer Bf 109s/);
+    // both single-engine types cut: one plain line, never "fewer 190s" and "fewer 109s" side by side
+    const a = recordStrike(defaultStrategic(3), { id: 'x1', target: 'Focke-Wulf works, Bremen', date: '1 May 1944' }, win, '8 May 1944');
+    const both = recordStrike(a.data, { id: 'x2', target: 'Erla aircraft works, Leipzig', date: '8 May 1944' }, win, '19 June 1944').reel;
+    expect(texts(both)).toMatch(/Single-engine fighter deliveries down/);
+    expect(texts(both)).not.toMatch(/Fewer Fw 190s|Fewer Bf 109s/);
+  });
+
   it('saves, sanitizes and rebuilds from the operations log', () => {
     const d = recordStrike(defaultStrategic(11), op('m8'), win, byId('m3').date).data;
     const back = sanitizeStrategic(JSON.parse(JSON.stringify(d)))!;
@@ -190,7 +204,11 @@ describe('Arabic', () => {
     const texts = new Set<string>(['War industry', 'Industry map', 'Newsreel', 'Aircraft factories', 'Ball bearings', 'Oil', 'Rail',
       'Untouched: German industry is at full output', 'From industry: fighters x{a} · skill x{b}', 'No German works hit yet.',
       'Dark wedge: damage. Dashed ring: damage still on its way to the production lines.', 'Fighter deliveries {a} · pilot training {b} · jets {c}',
-      'The air war this week · {date}', 'The air war · {n} weeks from {date}']);
+      'The air war this week · {date}', 'The air war · {n} weeks from {date}', 'GERMAN WAR INDUSTRY · 1943–45', 'Frontier, 1937',
+      'BALTIC SEA', 'NORTH SEA', 'FRANCE', 'HOLLAND', 'GERMANY', 'Rhine', 'Main', 'Neckar', 'Danube', 'Elbe', 'Saale', 'Weser', 'Ems', 'Oder',
+      'Single-engine fighter deliveries down: fewer Fw 190s and Bf 109s alike',
+      'Fewer Fw 190s expected: the Focke-Wulf lines are short, more Bf 109s fill in',
+      'Fewer Bf 109s expected: Messerschmitt deliveries are down, more Fw 190s fill in']);
     for (const s of SITES) { texts.add(s.name); texts.add(s.city); }
     // every newsreel line the model can write
     let d = defaultStrategic(8);
@@ -205,5 +223,27 @@ describe('Arabic', () => {
       }
     }
     for (const t of texts) expect(hasPhrase(t), t).toBe(true);
+  });
+});
+
+describe('industry map', () => {
+  it('frames every site inside the chart, clear of the frame', () => {
+    const { W, H } = INDUSTRY_CHART;
+    for (const s of SITES) {
+      const [x, y] = industryXY(s);
+      expect(x, s.id).toBeGreaterThan(24);
+      expect(x, s.id).toBeLessThan(W - 24);
+      expect(y, s.id).toBeGreaterThan(24);
+      expect(y, s.id).toBeLessThan(H - 24);
+    }
+  });
+
+  it('keeps every marker apart (no two sites drawn on top of each other)', () => {
+    for (const a of SITES) for (const b of SITES) {
+      if (a.id >= b.id) continue;
+      const [ax, ay] = industryXY(a), [bx, by] = industryXY(b);
+      const ra = 4 + Math.sqrt(a.output) * 1.2, rb = 4 + Math.sqrt(b.output) * 1.2;
+      expect(Math.hypot(ax - bx, ay - by), `${a.id}/${b.id}`).toBeGreaterThan(ra + rb);
+    }
   });
 });
