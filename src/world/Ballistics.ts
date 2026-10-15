@@ -178,6 +178,19 @@ export class Ballistics {
     }
   }
 
+  // The burning tracer nearest the eye within maxDist (night: it lights the airframe it passes),
+  // written to out; false if none. No allocation.
+  nearestTracer(eye: THREE.Vector3, maxDist: number, out: THREE.Vector3): boolean {
+    let best = maxDist * maxDist, found = false;
+    for (let i = 0; i < this.n; i++) {
+      if (!this.tracer[i] || (!this.cannon[i] && tracerBurn(this.age[i]) <= 0)) continue;
+      const dx = this.px[i] - eye.x, dy = this.py[i] - eye.y, dz = this.pz[i] - eye.z;
+      const d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < best) { best = d2; out.set(this.px[i], this.py[i], this.pz[i]); found = true; }
+    }
+    return found;
+  }
+
   renderTracers(camera: THREE.PerspectiveCamera, screenH: number) {
     const tr = this.tracers;
     tr.begin();

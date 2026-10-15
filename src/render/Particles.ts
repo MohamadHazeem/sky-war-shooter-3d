@@ -77,6 +77,7 @@ export interface ParticleOpts {
   drag?: number;
   rise?: number; // upward accel (m/s^2), negative = gravity
   rotVel?: number;
+  rot?: number;      // initial rotation (default: random)
   lit?: boolean; // shade with sun/ambient (smoke)
   age?: number;  // s already lived: a puff back-dated along a trail starts part-way through its life
 }
@@ -177,7 +178,7 @@ export class ParticleSystem {
     this.frame[i] = o.frame ?? 0;
     this.drag[i] = o.drag ?? 0;
     this.rise[i] = o.rise ?? 0;
-    this.rot[i] = Math.random() * Math.PI * 2;
+    this.rot[i] = o.rot ?? Math.random() * Math.PI * 2;
     this.rotVel[i] = o.rotVel ?? (Math.random() - 0.5) * 0.6;
   }
 

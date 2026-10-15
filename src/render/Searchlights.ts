@@ -11,7 +11,7 @@ import { markOwned, disposeOwned } from './Dispose';
 export interface BeamTarget { pos: THREE.Vector3; alive: boolean; remove?: boolean }
 
 const LENGTH = 9000;            // m
-const HALF_ANGLE = 0.022;       // rad, ~1.3 deg: a narrow beam that widens with range
+const HALF_ANGLE = 0.011;       // rad, ~0.6 deg: a narrow beam that widens with range
 const CONE_HIT = 0.03;          // rad: inside this a locked beam lights him up
 const CATCH = 0.06;             // rad: a sweeping beam that passes this close catches him
 const UP = new THREE.Vector3(0, 1, 0);
@@ -31,15 +31,20 @@ interface Beam<T extends BeamTarget> {
   scanT: number;
 }
 
-// Soft-edged additive cone: brightest at the lamp, fading up the beam and toward the silhouette
+// Additive light cone read as a shaft of lit haze rather than a glowing solid: a bright core
+// across the beam (the chord through the cone, sharpened), haze that thins with altitude so a beam
+// fades as it climbs, the lamp's light spreading with range, and forward scattering, so a beam
+// pointing toward the camera blazes and one pointing away is a faint grey line.
 function beamMaterial() {
   return markOwned(new THREE.ShaderMaterial({
-    uniforms: { uColor: { value: new THREE.Color(0.75, 0.82, 1.0) }, uIntensity: { value: 0.32 } },
+    uniforms: { uColor: { value: new THREE.Color(0.78, 0.85, 1.0) }, uIntensity: { value: 0.32 } },
     vertexShader: /* glsl */ `
       varying float vT;
       varying vec3 vN;
       varying vec3 vV;
       varying float vCut;
+      varying float vHeight;
+      varying float vPhase;
       void main() {
         vT = uv.y;
         // how much of the near-lamp glow to cut (see the fragment shader): by the camera's height
@@ -47,7 +52,14 @@ function beamMaterial() {
         // ~1200 m up (the night fighter flies at 3-8 km) the cut is fully in.
         float camH = cameraPosition.y - modelMatrix[3].y;
         vCut = smoothstep(250.0, 1200.0, camH);
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vec4 world = modelMatrix * vec4(position, 1.0);
+        vHeight = world.y - modelMatrix[3].y;
+        // beam axis (local +Y) and the direction from this point to the eye
+        vec3 axis = normalize(mat3(modelMatrix) * vec3(0.0, 1.0, 0.0));
+        float cs = dot(axis, normalize(cameraPosition - world.xyz));
+        // Henyey-Greenstein, g = 0.4 (haze aerosol), normalised to 1 side-on
+        vPhase = pow(1.16 / (1.16 - 0.8 * cs), 1.5);
+        vec4 mv = viewMatrix * world;
         vN = normalize(normalMatrix * normal);
         vV = -mv.xyz;
         gl_Position = projectionMatrix * mv;
@@ -59,6 +71,8 @@ function beamMaterial() {
       varying vec3 vN;
       varying vec3 vV;
       varying float vCut;
+      varying float vHeight;
+      varying float vPhase;
       void main() {
         float edge = abs(dot(normalize(vN), normalize(vV)));
         // no glow right at the lamp when seen from high above: from the bomber stream the narrow
@@ -67,9 +81,17 @@ function beamMaterial() {
         // fades out with the camera's height (vCut).
         // 1 - vT is clamped: vT interpolates a hair past 1 at the open end, and pow() of a
         // negative is NaN (bloom spread those NaN pixels into white blobs at the beam tips too)
-        float near = mix(smoothstep(0.0, 0.006, vT), smoothstep(0.04, 0.3, vT), vCut);
-        float along = pow(clamp(1.0 - vT, 0.0, 1.0), 1.6) * near;
-        float a = min(uIntensity * along * pow(edge, 1.4), 0.14);
+        float near = mix(smoothstep(0.0, 0.006, vT), smoothstep(0.03, 0.22, vT), vCut);
+        // the beam carries to the end of its reach, then dies out
+        float along = (1.0 - smoothstep(0.86, 1.0, vT)) * near;
+        // haze thins with height (scale height ~2.2 km) but never quite clears
+        float haze = 0.3 + 0.7 * exp(-max(vHeight, 0.0) / 2200.0);
+        // light spreads as the beam widens
+        float spread = 1.0 / (1.0 + vT * 2.5);
+        // across the beam: a hot core inside a soft sheath
+        float across = pow(edge, 2.5) * 0.7 + pow(edge, 1.0) * 0.3;
+        float phase = clamp(vPhase, 0.4, 4.0);
+        float a = min(uIntensity * along * haze * spread * across * phase * 1.6, 0.16);
         gl_FragColor = vec4(uColor * a, a);
       }`,
     transparent: true,
@@ -77,6 +99,20 @@ function beamMaterial() {
     blending: THREE.AdditiveBlending,
     side: THREE.DoubleSide,
   }));
+}
+
+// A coned raider's belly lit by the beams: a cold point light held a few metres below him, on
+// the beam axis, from the combat-light pool (Effects.flashLight: fixed light count, no new
+// programs). Call once per frame after update(); several beams on one raider light him once.
+const _belly = new THREE.Vector3();
+export interface CombatLights { flashLight(pos: THREE.Vector3, intensity: number, life: number, color?: number, range?: number): void }
+export function lightConed<T extends BeamTarget>(lights: Searchlights<T>, fx: CombatLights) {
+  let last: T | null = null;
+  lights.forEachLit((t, dir) => {
+    if (t === last) return;
+    last = t;
+    fx.flashLight(_belly.copy(t.pos).addScaledVector(dir, -14), 260, 0.06, 0xd8e4ff, 40);
+  });
 }
 
 export class Searchlights<T extends BeamTarget = BeamTarget> {
@@ -187,6 +223,23 @@ export class Searchlights<T extends BeamTarget = BeamTarget> {
         if (to.angleTo(b.dir) < CONE_HIT) this.coned.add(b.target);
       }
     }
+  }
+
+  // A crew picks up a raider (a staged fixture, a scripted cone): the beam pointing nearest
+  // to him locks on at once; the neighbours swing across to join on their next scans.
+  lock(target: T, hold = 10) {
+    let pick: Beam<T> | null = null, best = Infinity;
+    for (const b of this.beams) {
+      const ang = _d.copy(target.pos).sub(this.lamp(b, _w)).normalize().angleTo(b.dir);
+      if (!b.target && ang < best) { best = ang; pick = b; }
+    }
+    if (pick) { pick.target = target; pick.holdT = hold; }
+  }
+
+  // Each raider held inside a locked beam, with the beam's direction (lamp -> raider): the
+  // caller lights his belly from below (lightConed)
+  forEachLit(cb: (target: T, beamDir: THREE.Vector3) => void) {
+    for (const b of this.beams) if (b.target && this.coned.has(b.target)) cb(b.target, b.dir);
   }
 
   // Beams locked on a raider (radio / tests)

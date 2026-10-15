@@ -69,6 +69,36 @@ export function updateExhausts(aircraft: readonly Aircraft[], glow: ParticleSyst
   }
 }
 
+// Night (Atmos.night via World): the B-17s' turbo-supercharger exhausts under each nacelle show
+// as short orange-blue flames, so the box reads at night as rows of paired engine glows.
+// The far ones are skipped; a dead engine goes dark.
+const TURBO: [number, number, number][] = [[6.51, -0.62, 1.2], [3.02, -1.02, 1.75], [-3.02, -1.02, 1.75], [-6.51, -0.62, 1.2]];
+const TURBO_ORANGE: [number, number, number] = [7, 3.2, 1.1];
+const TURBO_BLUE: [number, number, number] = [2.4, 3.3, 7];
+let nightTick = 0;
+// own flicker sequence: the night flames never shift the shared Math.random stream
+let seed = 0x2545f491;
+const flick = () => { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return (seed >>> 0) / 4294967296; };
+export function updateBomberNightExhaust(aircraft: readonly Aircraft[], glow: ParticleSystem, night: number, eye: THREE.Vector3 | null) {
+  if (++nightTick & 1) return;
+  for (const a of aircraft) {
+    if (!(a instanceof Bomber) || !a.alive || a.remove) continue;
+    if (eye && a.pos.distanceToSquared(eye) > 3000 * 3000) continue;
+    for (let k = 0; k < TURBO.length; k++) {
+      if (a.engineDead[k] || flick() > 0.8) continue;
+      const [x, y, z] = TURBO[k];
+      a.localToWorld(_p.set(x, y, z), _p);
+      a.forward(_v).multiplyScalar(-9).addScaledVector(a.vel, 0.05);
+      const sz = 0.85 * (0.7 + 0.6 * flick());
+      glow.spawn({
+        pos: _p, vel: _v, life: 0.06 + flick() * 0.04, size0: sz, size1: sz * 0.4,
+        color0: flick() < 0.35 ? TURBO_BLUE : TURBO_ORANGE,
+        alpha0: 0.85 * night, alpha1: 0, frame: 1, rotVel: (flick() - 0.5) * 8, rot: flick() * 6.283,
+      });
+    }
+  }
+}
+
 // Heat haze behind the engines (render/HeatHaze.ts): a shimmering plume streaming back from
 // each B-17 nacelle and from both exhaust banks of the fighters with modelled stacks (the
 // P-51's own stubs in the cockpit view, close Fw 190s). Called once per aircraft from

@@ -15,6 +15,7 @@ export const RIG_WEATHER = {
   sunset: { sunEl: 7, sunAz: 250, low: .55, high: .25, mood: 'dusk', contrails: true },
   rain: { sunEl: 28, sunAz: 140, low: .9, high: .95, mood: 'overcast', preset: 'heavyRain' },
   night: { sunEl: 26, sunAz: 140, low: .08, high: .12, mood: 'night' },
+  nightCloud: { sunEl: 26, sunAz: 140, low: .62, high: .12, mood: 'night' },
   interior: { sunEl: 22, sunAz: 90, low: .35, high: .1 },
 } satisfies Record<string, Weather>;
 

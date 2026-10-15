@@ -14,6 +14,8 @@ const LIFE = PTS * INTERVAL;
 
 interface Trail { emit: () => THREE.Vector3 | null; px: Float32Array; born: Float32Array; head: number; last: number; alive: boolean }
 
+const _cool = new THREE.Color();
+
 export class Contrails {
   readonly mesh: THREE.Mesh;
   private trails: Trail[] = [];
@@ -51,7 +53,7 @@ export class Contrails {
     this.geo.setAttribute('aSeed', this.seed);
     this.geo.setIndex(idx);
     this.mat = new THREE.ShaderMaterial({
-      uniforms: { ...cloudOcclusionUniforms, uLife: { value: LIFE }, uSun: { value: new THREE.Vector3() }, uSunCol: { value: new THREE.Color() }, uSky: { value: new THREE.Color() }, uTime: { value: 0 } },
+      uniforms: { ...cloudOcclusionUniforms, uLife: { value: LIFE }, uSun: { value: new THREE.Vector3() }, uSunCol: { value: new THREE.Color() }, uSky: { value: new THREE.Color() }, uTime: { value: 0 }, uFloor: { value: 0.45 } },
       vertexShader: /* glsl */ `
         attribute vec3 aDir; attribute float aAge; attribute float aSide; attribute float aSeed;
         uniform float uLife; uniform float uTime; uniform vec3 uSun;
@@ -87,7 +89,7 @@ export class Contrails {
         }`,
       fragmentShader: /* glsl */ `
         ${cloudOcclusionGLSL}
-        uniform vec3 uSunCol; uniform vec3 uSky;
+        uniform vec3 uSunCol; uniform vec3 uSky; uniform float uFloor;
         varying float vDistance; varying float vAlpha; varying float vSide; varying float vT; varying float vSeed; varying float vNear; varying float vSun; varying float vPhase;
         float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vnoise(vec2 p) {
@@ -112,7 +114,7 @@ export class Contrails {
           float optical = (0.4 + 1.8 * puff) * sqrt(max(0.0, 1.0 - vSide * vSide));
           float transmission = exp(-optical * (1.0 - sunSide));
           float ph = min(vPhase, 9.0);
-          vec3 col = uSunCol * (0.45 + 0.4 * ph) * mix(0.55, 1.2, transmission) + uSky;
+          vec3 col = uSunCol * (uFloor + 0.4 * ph) * mix(0.55, 1.2, transmission) + uSky;
           // thin young trail toward the sun: a bright filament even where it is barely dense
           a *= 1.0 + 0.25 * smoothstep(1.5, 6.0, ph);
           a = (1.0 - exp(-a * 0.9)) * 0.72;
@@ -144,10 +146,18 @@ export class Contrails {
   update(time: number) {
     const u = this.mat.uniforms;
     u.uTime.value = time;
-    u.uSunCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.32);
+    // a low sun gilds the trails (more sun, less of the cooling sky light); moonlight barely shows them
+    u.uSunCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.32 * (1 + 0.9 * Atmos.twilight) * (1 - 0.85 * Atmos.night));
     u.uSun.value.copy(Atmos.sunDir);
+    u.uFloor.value = 0.45;
     u.uSky.value.setRGB(Atmos.horizon.r * 0.55 + Atmos.zenith.r * 0.45, Atmos.horizon.g * 0.55 + Atmos.zenith.g * 0.45, Atmos.horizon.b * 0.55 + Atmos.zenith.b * 0.45)
       .multiplyScalar(0.8 + Atmos.cloudAmbient * 0.3);
+    // at twilight the sky light on the trails cools toward the rose anti-solar sky (Atmosphere.ts twilightHorizon)
+    if (Atmos.twilight > 0) {
+      const l = (Atmos.horizon.r * 0.2126 + Atmos.horizon.g * 0.7152 + Atmos.horizon.b * 0.0722) * 0.55;
+      _cool.setRGB(0.5 * l, 0.42 * l, 0.56 * l);
+      u.uSky.value.lerp(_cool, Atmos.twilight * 0.4);
+    }
     this.mesh.visible = this.enabled;
     if (!this.enabled) return;
     const P = this.pos.array as Float32Array, D = this.dir.array as Float32Array, A = this.age.array as Float32Array;

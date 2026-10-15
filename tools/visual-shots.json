@@ -20,5 +20,9 @@
   {"id":"headon-fw190-wedge","label":"Top turret / Fw 190 wedge at 65–164 m","pillars":[1,2,10],"station":"top","weather":"beauty"},
   {"id":"waist-fw190-broadside","label":"Waist gun / Fw 190 broadside at 150 m","pillars":[1,2,10],"station":"waistL","weather":"clear"},
   {"id":"waist-bf109-broadside","label":"Waist gun / Bf 109 broadside at 150 m","pillars":[1,2,10],"station":"waistL","weather":"clear"},
-  {"id":"headon-fw190-zoom","label":"Top turret / Fw 190 at 65 m through the gun sight","pillars":[1,2,10],"station":"top","weather":"beauty"}
+  {"id":"headon-fw190-zoom","label":"Top turret / Fw 190 at 65 m through the gun sight","pillars":[1,2,10],"station":"top","weather":"beauty"},
+  {"id":"night-formation","label":"Night / moonlit box, burning neighbour, fires below","pillars":[2,5,7,8,10],"weather":"night"},
+  {"id":"sunset-rim","label":"B-17 against a low sun / rim light and contrails","pillars":[1,2,3,7,10],"weather":"sunset"},
+  {"id":"night-clouds","label":"Night / flak glowing in the clouds, a coned bomber","pillars":[2,3,5,7,10],"weather":"nightCloud"},
+  {"id":"night-waist","label":"Night / waist gun: a fighter's tracers light the gun, exhaust flames","pillars":[2,5,6,7,10],"station":"waistL","weather":"nightCloud"}
 ]

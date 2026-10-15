@@ -5,7 +5,7 @@ import type { Game } from './Game';
 import { Aircraft, Fighter, WRECK_FLOOR } from '../world/Aircraft';
 import { ENEMY_VARIANTS, type EnemyType } from '../world/EnemyTypes';
 import { segSphere } from '../world/Ballistics';
-import { Searchlights } from '../render/Searchlights';
+import { lightConed, Searchlights } from '../render/Searchlights';
 import { updateNightExhaust } from '../render/NightExhaust';
 import { weatherNow } from '../render/Weather';
 import { access } from '../core/Accessibility';
@@ -268,7 +268,7 @@ export class AADefence {
     }
     if (this.burnTime >= 0.12) this.burnTime = 0;
     this.lights.group.visible = weatherNow.night > 0.5;
-    if (weatherNow.night > 0.5) { this.lights.update(dt, this.targets); updateNightExhaust(this.targets, w.effects.glow); }
+    if (weatherNow.night > 0.5) { this.lights.update(dt, this.targets); lightConed(this.lights, w.effects); updateNightExhaust(this.targets, w.effects.glow); }
     this.camera(dt);
     this.smokeTime += dt;
     for (let i = 0; i < this.mounts.length; i++) {

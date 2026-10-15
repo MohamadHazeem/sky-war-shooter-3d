@@ -32,6 +32,8 @@ export const Atmos = {
   stratus: 0,
   towers: 0.25,
   envFloor: 1,       // brightness of the cloud-sea floor in the reflection map (Weather: ~0 at night)
+  twilight: 0,       // 0..1: low-sun sky (Weather): earth shadow and belt of Venus opposite the sun, glow toward it
+  night: 0,          // 0..1: moonlit night sky (Weather): stars, fires on the ground
   haze: 1,           // distance-haze length scale (1 = clear air; storms and overcast thicken the murk: < 1)
   windOffset: new THREE.Vector3(), // accumulated wind drift + floating-origin shift
   originOffset: new THREE.Vector3(), // accumulated floating-origin shift only (ground)
@@ -55,6 +57,8 @@ export const atmosUniforms = {
   uGround: { value: new THREE.Vector3() },
   uCamAlt: { value: 7600 },
   uWeatherFog: { value: 0 },
+  uTwilight: { value: 0 },
+  uNightSky: { value: 0 },
   uHaze: { value: 1 },   // Atmos.haze (declared only by the shaders that use it: cloud march, composite, storm wall)
 };
 
@@ -65,6 +69,8 @@ export function syncAtmosUniforms() {
   atmosUniforms.uHorizon.value.set(Atmos.horizon.r, Atmos.horizon.g, Atmos.horizon.b);
   atmosUniforms.uGround.value.set(Atmos.ground.r, Atmos.ground.g, Atmos.ground.b);
   atmosUniforms.uHaze.value = Atmos.haze;
+  atmosUniforms.uTwilight.value = Atmos.twilight;
+  atmosUniforms.uNightSky.value = Atmos.night;
 }
 syncAtmosUniforms();
 
@@ -78,26 +84,59 @@ uniform vec3 uZenith;
 uniform vec3 uHorizon;
 uniform vec3 uGround;
 uniform float uCamAlt;
+uniform float uTwilight;
+uniform float uNightSky;
+
+// Twilight (low sun, uTwilight): the horizon is no longer one colour all round. Toward the sun it
+// burns gold and orange; away from it the haze cools toward rose and blue (less of the sun's
+// aerosol glow, more Rayleigh sky) with the pink belt of Venus a few degrees above the horizon.
+// The shift is partial, so the far side stays warm-tinted, and it is continuous across the
+// horizon (no band below it). Everything hazed with skyRadiance (clouds, distant aircraft, ground)
+// takes the same split.
+const float TWILIGHT_COOL = 0.5;
+vec3 twilightHorizon(vec3 d, float y, out float anti) {
+  vec2 sh = uSunDir.xz / max(length(uSunDir.xz), 1e-4);
+  vec2 dh = d.xz / max(length(d.xz), 1e-4);
+  float c = dot(dh, sh);
+  float toward = (c * 0.5 + 0.5) * (c * 0.5 + 0.5);
+  float away = (1.0 - toward) * TWILIGHT_COOL;
+  anti = away * uTwilight;
+  float lum = dot(uHorizon, vec3(0.2126, 0.7152, 0.0722));
+  vec3 cool = vec3(0.50, 0.42, 0.56) * lum * 1.08;
+  vec3 sunward = uHorizon * vec3(1.28, 1.0, 0.66);
+  vec3 h = mix(mix(uHorizon, sunward, toward), cool, away);
+  // belt of Venus: a rose band above the horizon only, fading in from it
+  float belt = smoothstep(0.0, 0.06, y) * (1.0 - smoothstep(0.08, 0.3, y));
+  h += vec3(0.62, 0.36, 0.42) * lum * 0.45 * belt * away;
+  return mix(uHorizon, h, uTwilight);
+}
 
 vec3 skyRadiance(vec3 d) {
   float y = d.y;
   vec3 col;
+  float anti = 0.0;
+  vec3 hor = uTwilight > 0.0 ? twilightHorizon(d, y, anti) : uHorizon;
   if (y >= 0.0) {
     // the horizon colour reaches a little higher (paler, airier mid sky), then a bright
     // milky haze band hugs the horizon itself
     float t = pow(clamp(y, 0.0, 1.0), 0.5);
-    col = mix(uHorizon, uZenith, t);
-    col += uHorizon * 0.22 * exp(-y * 9.0);
+    col = mix(hor, uZenith, t);
+    col += hor * 0.22 * exp(-y * 9.0) * (1.0 - 0.5 * anti);
   } else {
     // Looking down through ~7 km of air: the ground is mostly lost in haze.
     float t = 1.0 - exp(y * 9.0);
-    col = mix(uHorizon * 0.92, mix(uHorizon * 0.55, uGround, 0.55), t);
-    col += uHorizon * 0.22 * exp(y * 40.0);   // the haze band continues just below the horizon
+    col = mix(hor * 0.92, mix(hor * 0.55, uGround, 0.55), t);
+    col += hor * 0.22 * exp(y * 40.0) * (1.0 - 0.5 * anti);   // the haze band continues just below the horizon
   }
   float mu = max(dot(d, uSunDir), 0.0);
   col += uSunColor * (pow(mu, 6.0) * 0.02 + pow(mu, 48.0) * 0.06 + pow(mu, 600.0) * 0.6);
-  if (uAtmosQuality > 0.5 && y >= 0.0) {
-    vec2 column = airColumn(uCamAlt, y);
+  // low sun: a wide orange aureole lying along the horizon on the sun's side
+  col += uSunColor * uTwilight * pow(mu, 4.0) * exp(-abs(y) * 5.0) * 0.05;
+  // At twilight the scattered light continues a little below the horizon and fades out, so the
+  // sky and the hazed cloud sea meet without a seam (by day the term stops at the horizon, as before).
+  float below = y >= 0.0 ? 1.0 : exp(y * 25.0) * uTwilight;
+  if (uAtmosQuality > 0.5 && below > 0.001) {
+    vec2 column = airColumn(uCamAlt, max(y, 0.0));
     vec3 extinct = airExtinction(column);
     float cosine = dot(d, uSunDir);
     float rayleigh = 0.75 * (1.0 + cosine * cosine);
@@ -106,7 +145,7 @@ vec3 skyRadiance(vec3 d) {
     vec3 scattering = (1.0 - exp(-extinct)) * (rayleigh + mie) * sunT;
     // The mission palette carries night and storm art direction; optical depth supplies
     // altitude, wavelength-dependent extinction and the sunward aerosol lobe.
-    col = mix(col, col * 0.65 + scattering * uSunColor * 0.55, 0.55);
+    col = mix(col, col * 0.65 + scattering * uSunColor * 0.55, 0.55 * (1.0 - 0.6 * anti) * below);
   }
   return col;
 }

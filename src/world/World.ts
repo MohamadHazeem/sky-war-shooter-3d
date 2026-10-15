@@ -23,7 +23,8 @@ import { sound } from '../audio/Sound';
 import { playRicochet } from '../audio/Ricochet';
 import { Contrails } from '../render/Contrails';
 import { Wrecks } from './Wrecks';
-import { attachEngineHaze, updateExhausts } from './Exhaust';
+import { attachEngineHaze, updateBomberNightExhaust, updateExhausts } from './Exhaust';
+import { Atmos } from '../render/Atmosphere';
 import { heatHaze } from '../render/HeatHaze';
 import { WingVapor } from './WingVapor';
 import { makeDropTank } from './Props';
@@ -63,6 +64,7 @@ export const CRUISE = 75;          // m/s formation speed (~170 mph)
 export const ALTITUDE = 7600;      // m (25,000 ft)
 
 const _v = new THREE.Vector3();
+const _tracerLit = new THREE.Vector3();
 const _damagePos = new THREE.Vector3(), _gunPos = new THREE.Vector3(), _gunAim = new THREE.Vector3();
 const GUNNER_COLOR: [number, number, number] = [9, 2.4, 0.8];
 const _v2 = new THREE.Vector3();
@@ -875,6 +877,7 @@ export class World implements WorldView {
       this.damageEffects(a, dt);
     }
     updateExhausts(this.aircraft, this.effects.glow);
+    if (Atmos.night > 0.3) updateBomberNightExhaust(this.aircraft, this.effects.glow, Atmos.night, this.effects.vol.hasCam ? this.effects.vol.camPos : null);
     this.wingVapor.update(this.aircraft, dt, this.listener);
     this.bomberGunners(dt);
     this.flak(dt);
@@ -885,6 +888,7 @@ export class World implements WorldView {
     updateFighterDeath(dt);
     this.destruction.update(dt);
     this.ballistics.update(dt, this.aircraft);
+    this.nightTracerLight();
     this.effects.update(dt);
     this.wrecks.update(dt);
     this.contrails.update(this.time);
@@ -947,6 +951,13 @@ export class World implements WorldView {
       }
     }
     this.rockets = this.rockets.filter((r) => r.fuse >= 0 && r.age < 8);
+  }
+
+  // Night: the tracer streaking past nearest the eye throws a flicker of light on the airframe
+  // (one light from the fixed combat-light pool, Effects.flashLight)
+  nightTracerLight() {
+    if (Atmos.night > 0.3 && this.effects.vol.hasCam && this.ballistics.nearestTracer(this.effects.vol.camPos, 40, _tracerLit))
+      this.effects.flashLight(_tracerLit, 90 * Atmos.night, 0.035, 0xffa060, 16);
   }
 
   // Fires: burning engines eat into the wing; on the player's ship the pilot fights them
