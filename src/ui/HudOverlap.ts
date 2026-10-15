@@ -14,7 +14,7 @@ export function findHudOverlaps(rects: readonly HudRect[], width: number, height
 /** Dev-only invocation: measures panel leaves, not intentionally nested containers/scene markers. */
 export function checkHudOverlaps() {
   const rects: HudRect[] = [];
-  const selectors = '#hud .hud-tl, #hud .hud-tr, #hBL, #hBR, #feed, #subs, #tip, #controlsHint, #hudToast, #abilityBar, #objCard, #evPrompt, #spPanel, #nemCard, #streakMeter, #banner, #touchHud button, #touchHud .th-thr';
+  const selectors = '#hud .hud-tl, #hud .hud-tr, #hBL, #hBR, #feed, #subs, #tip, #controlsHint, #hudToast, #abilityBar, #objCard, #evPrompt, #spPanel, #nemCard, #limpHome, #streakMeter, #banner, #touchHud button, #touchHud .th-thr';
   for (const el of document.querySelectorAll<HTMLElement>(selectors)) {
     if (!el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) continue;
     const r = el.getBoundingClientRect();

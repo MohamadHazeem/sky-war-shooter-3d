@@ -4,7 +4,7 @@ import { tx } from '../i18n';
 import { sound } from '../audio/Sound';
 import {
   ASK_AT, CHOICE_KEYS, DECIDE_TIME, FUEL, HUNTER_TIMES, LIMP_RADIO, LIMP_TEXT, ROUTE, burnRate, choiceLabel, decide, distanceLeft,
-  PLAYER_WEIGHT, internReason, limpingDue, neutralFor, options, startFuel, tally, type LimpChoice, type LimpState, type Neutral, type Tally,
+  ALL_HANDS, CREW_SEATS, PLAYER_WEIGHT, internReason, shortLabel, limpingDue, neutralFor, options, startFuel, tally, type LimpChoice, type LimpState, type Neutral, type Tally,
 } from './LimpingHomeRules';
 
 // Limping home (Phase 11 goal 12). When a campaign gunner mission would end in success but the ship is
@@ -33,6 +33,11 @@ const CSS = `
 #limpHome .lh-o.mine { border-color: #c6a85e; background: #c6a85e22; }
 #limpHome .lh-o.win { border-color: #efe6cf; }
 #limpHome .lh-r { margin-top: 6px; font-size: 13px; }
+#limpHome .lh-c { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 8px; margin-top: 6px; padding-top: 5px; border-top: 1px solid #fff2; font-size: 10px; line-height: 1.3; }
+#limpHome .lh-c .cv { opacity: .62; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#limpHome .lh-c .cv.on { opacity: 1; color: #efe6cf; }
+#limpHome .lh-c .cv.me { color: #c6a85e; opacity: 1; }
+#limpHome .lh-n { margin-top: 4px; font-size: 10px; color: #d9a07a; }
 @media (max-height: 520px) { #limpHome { top: 120px; padding: 4px 7px; } #limpHome .lh-s { display: none; } }
 `;
 
@@ -241,11 +246,17 @@ export class LimpingHome {
     } else if (this.votes) {
       const t = this.votes = tally(s, this.opts);   // hands change as the gauges fall
       const winner = decide(s, this.vote, this.opts);
+      const mine = this.vote;
       body = `<div class="lh-q">${esc(tx(LIMP_TEXT.ask))}</div>` + this.opts.map((c, i) => {
-        const n = t.votes[c] + (this.vote === c ? PLAYER_WEIGHT : 0);
-        const who = t.voters[c].map((v) => tx(v)).join(', ');
-        return `<div class="lh-o${this.vote === c ? ' mine' : ''}${winner === c && this.vote ? ' win' : ''}" data-limp="${c}"><kbd>${CHOICE_KEYS[i].slice(5)}</kbd><span class="l">${esc(tx(choiceLabel(c, s.neutral)))}</span><span class="v" title="${esc(who)}">${esc(n === 1 ? tx(LIMP_TEXT.vote1) : tx(LIMP_TEXT.votes, { n }))}</span></div>`;
-      }).join('') + `<div class="lh-s">${esc(this.vote ? tx(LIMP_TEXT.yourVote, { choice: tx(choiceLabel(this.vote, s.neutral)) }) : tx(LIMP_TEXT.press, { keys: this.opts.map((_, i) => CHOICE_KEYS[i].slice(5)).join('/'), s: Math.max(0, Math.ceil(DECIDE_TIME - (this.t - ASK_AT))) }))}</div>`;
+        const n = t.votes[c] + (mine === c ? PLAYER_WEIGHT : 0);
+        return `<div class="lh-o${mine === c ? ' mine' : ''}${winner === c ? ' win' : ''}" data-limp="${c}"><kbd>${CHOICE_KEYS[i].slice(5)}</kbd><span class="l">${esc(tx(choiceLabel(c, s.neutral)))}</span><span class="v">${esc(n === 1 ? tx(LIMP_TEXT.vote1) : tx(LIMP_TEXT.votes, { n }))}</span></div>`;
+      }).join('');
+      // every man's hand, so the nine personalities show: "Engineer: Woodbridge"
+      const hand = (seat: string, c: LimpChoice | null, cls: string) =>
+        `<span class="${cls}${c && c === winner ? ' on' : ''}">${esc(tx(LIMP_TEXT.seatVote, { seat: tx(seat), choice: c ? tx(shortLabel(c, s.neutral)) : tx(LIMP_TEXT.undecided) }))}</span>`;
+      body += `<div class="lh-c">${CREW_SEATS.map((k) => hand(k, t.seat[k], 'cv')).join('')}${hand(LIMP_TEXT.you, mine, 'cv me')}</div>`;
+      if (this.opts.includes('neutral')) body += `<div class="lh-n">${esc(tx(LIMP_TEXT.majority, { n: Math.floor(ALL_HANDS / 2) + 1, all: ALL_HANDS }))}</div>`;
+      body += `<div class="lh-s">${esc(mine ? tx(LIMP_TEXT.yourVote, { choice: tx(choiceLabel(mine, s.neutral)) }) : tx(LIMP_TEXT.press, { keys: this.opts.map((_, i) => CHOICE_KEYS[i].slice(5)).join('/'), s: Math.max(0, Math.ceil(DECIDE_TIME - (this.t - ASK_AT))) }))}</div>`;
     }
     const html = `<div class="lh-k">${esc(tx(LIMP_TEXT.title))}</div><div class="lh-s">${esc(status.join(' · '))}</div>`
       + `<div class="lh-f"><span>${esc(tx(LIMP_TEXT.fuel))}</span><span class="bar"><i style="width:${Math.min(100, fuel * 2.5)}%"></i></span><b>${fuel}%</b></div>${body}`;
