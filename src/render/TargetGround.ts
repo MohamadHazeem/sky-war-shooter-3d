@@ -55,7 +55,7 @@ uniform vec3 uImpBound;   // circle holding every impact's marks and pall: x, z,
 // city's water as a signed side distance (m) with its half-width (0 = no mapped water: the
 // procedural river below)
 float tgtLand = 1.0, tgtRiverV = 0.0, tgtRiverW = 0.0;   // tgtRiverW < 0: a harbour shore (no river band)
-float tgtDry = 1.0;
+float tgtDry = 1.0, tgtEffectLand = 1.0;
 float tgtOwnTown = 0.0;   // 1: the map draws the city's streets itself (no block grid here)
 
 // 1 inside [a, b], antialiased over w metres
@@ -142,7 +142,7 @@ vec3 tCity(vec2 rel, vec3 base, float fw) {
   }
   // the river, wide and dark, fading out well beyond the city
   float rw = tgtRiverW > 0.0 ? tgtRiverW : tgtRiverW < 0.0 ? 0.0 : 110.0 * (1.0 - smoothstep(1.5, 2.1, length(rel) / R));
-  water = max(water, 1.0 - smoothstep(rw - fw * 0.5, rw + fw * 0.5, abs(vr)));
+  if (rw > 0.0) water = max(water, 1.0 - smoothstep(rw - fw * 0.5, rw + fw * 0.5, abs(vr)));
   vec3 wc = vec3(0.03, 0.055, 0.07);
   // bridges stay dry
   float bridge = max(tBand(u, -712.0, -690.0, fw), tBand(u, 820.0, 842.0, fw)) * step(abs(vr), rw + 20.0);
@@ -173,23 +173,29 @@ vec3 tCity(vec2 rel, vec3 base, float fw) {
       c = mix(c, mix(vec3(0.065, 0.06, 0.05), vec3(0.4, 0.4, 0.36), tanks), zone * dry);
     }
   }
-  tgtDry = tgtLand * (1.0 - water * (1.0 - bridge));
+  tgtDry = tgtLand * tgtEffectLand * (1.0 - water * (1.0 - bridge));
   // Four-gun revetments identify the flashing batteries between salvos.
   float rr = length(rel);
   if (rr > R * 0.45 && rr < R * 2.1) {
     vec2 bc = floor(rel / 520.0);
     if (h2(bc + 3.7) < 0.16) {
       vec2 site = (bc + 0.3 + 0.4 * vec2(h2(bc + 1.3), h2(bc + 7.1))) * 520.0;
-      vec2 q = abs(rel - site) - 50.0;
-      float pit = length(q);
+      vec2 local = rel - site;
+      // Joined earthworks with square open revetments and a shared soil apron.
       float siteDetail = 1.0 - smoothstep(16.0, 28.0, fw);
-      float earth = tBand(pit, 20.0, 37.0, fw * 0.65);
-      float gun = 1.0 - smoothstep(10.0, 18.0 + fw, pit);
-      c = mix(c, vec3(0.32, 0.23, 0.12), earth * tgtDry * siteDetail);
-      c = mix(c, vec3(0.035), gun * tgtDry * siteDetail * 0.9);
+      float apron = 1.0 - smoothstep(65.0, 115.0, length(local * vec2(0.9, 1.1)));
+      c = mix(c, vec3(0.13, 0.125, 0.095), apron * tgtDry * siteDetail * 0.45);
+      vec2 q = abs(local) - 50.0;
+      q.x += q.y * 0.18;
+      float earth = warBox(q, vec2(27.0, 23.0), fw);
+      float pit = warBox(q + vec2(3.0, 0.0), vec2(14.0, 13.0), fw);
+      // Leave an entrance on one side and use a neutral soil value for the bank.
+      earth *= smoothstep(-30.0, -12.0, q.x);
+      c = mix(c, vec3(0.15, 0.145, 0.115), earth * tgtDry * siteDetail * 0.75);
+      c = mix(c, vec3(0.075, 0.078, 0.06), pit * tgtDry * siteDetail * 0.65);
     }
   }
-  return groundWarTraffic(uv, c, fw, tgtLand * (1.0 - water));
+  return groundWarTraffic(uv, c, fw, tgtLand * tgtEffectLand * (1.0 - water));
 }
 
 // The bombs' work: returns lit ground colour with flashes, fires, scars and pall.

@@ -267,7 +267,7 @@ vec3 farWater(vec3 base, vec2 p, vec2 xz, float rough, float fw, float shadow) {
 
 vec3 terrain(vec2 xz, float dist) {
   farSpec = vec3(0.0);
-  tgtLand = 1.0; tgtRiverW = 0.0; tgtRiverV = 0.0; tgtOwnTown = 0.0;
+  tgtEffectLand = 1.0; tgtLand = 1.0; tgtRiverW = 0.0; tgtRiverV = 0.0; tgtOwnTown = 0.0;
   float season = uFarSeason;
   vec2 rel = xz - uFarFocus;
   float fw = max(uFarFw * dist / max(uCamAlt / dist, 0.06), 0.3);   // footprint (m), stretched at grazing angles
@@ -286,20 +286,18 @@ vec3 terrain(vec2 xz, float dist) {
     if (inR > 0.0) {
       vec4 L2 = texture2D(tFarLines, uv);
       if (uFarQuality < 0.5) {
-        // The early Low return must still publish its coast/river mask to target effects.
-        // Reuse the one existing line sample; no cover/relief or extra texture reads.
+        // Retain Low's continuous procedural city river and original coast appearance.
+        // Publishing per-texel mapped river widths here switched river models at tile
+        // coverage boundaries, breaking the city river into blobs. The mapped mask is
+        // only for effects; it must not repaint Low's terrain or draw distant SDF spurs.
         vec4 lowLines = mix(Ln, L2, inR);
         float lowLand = smoothstep(0.495, 0.505, lowLines.r);
         float lowSide = (lowLines.g * 2.0 - 1.0) * ${GRID.SIDE_RANGE}.0;
         float lowWidth = lowLines.b * 510.0;
-        float lowSpur = step(abs(dFdx(lowSide)) + abs(dFdy(lowSide)), fw * 3.0 + 4.0);
-        float lowRiver = lowWidth > 0.5 ? farLine(lowSide, lowWidth, fw) * lowSpur : 0.0;
-        tgtLand = lowLand * (1.0 - lowRiver);
-        if (uFarCityWater > 1.5) tgtRiverW = -1.0;
-        else if (uFarCityWater > 0.5 && lowWidth > 0.5 && abs(lowSide) < 1500.0) {
-          tgtRiverV = lowSide; tgtRiverW = max(lowWidth, 45.0);
-        }
-        return mix(water, grass, tgtLand);
+        float lowRiver = lowWidth > 0.5
+          ? 1.0 - smoothstep(lowWidth, lowWidth + fw, abs(lowSide)) : 0.0;
+        tgtEffectLand = lowLand * (1.0 - lowRiver);
+        return mix(water, grass, lowLand);
       }
       Ln = mix(Ln, L2, inR);
       Cv = mix(Cv, texture2D(tFarCover, uv), inR);

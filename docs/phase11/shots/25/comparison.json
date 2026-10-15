@@ -648,7 +648,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "high",
     "shot": "bomb-release",
@@ -676,8 +676,8 @@
     "bombsight": false,
     "flak": 0.9921379692431697,
     "perf": {
-      "mean": 5.019999999801318,
-      "p95": 8.799999982118607,
+      "mean": 4.750000000993411,
+      "p95": 8.300000011920929,
       "programsBefore": 271,
       "programsAfter": 271,
       "renderSize": [
@@ -714,7 +714,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "high",
     "shot": "walking-strikes",
@@ -742,8 +742,8 @@
     "bombsight": false,
     "flak": 0.9999999999300259,
     "perf": {
-      "mean": 4.719999999801318,
-      "p95": 9.699999988079071,
+      "mean": 4.593333331743876,
+      "p95": 7.4000000059604645,
       "programsBefore": 271,
       "programsAfter": 271,
       "renderSize": [
@@ -780,7 +780,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "high",
     "shot": "burning-city",
@@ -808,8 +808,8 @@
     "bombsight": false,
     "flak": 0.9999999999999959,
     "perf": {
-      "mean": 4.730000000198682,
-      "p95": 12.400000005960464,
+      "mean": 4.780000000198682,
+      "p95": 10.5,
       "programsBefore": 271,
       "programsAfter": 271,
       "renderSize": [
@@ -846,7 +846,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "high",
     "shot": "wind-columns",
@@ -874,8 +874,8 @@
     "bombsight": false,
     "flak": 0.9999999999999959,
     "perf": {
-      "mean": 8.17333333293597,
-      "p95": 9.899999976158142,
+      "mean": 10.12333333293597,
+      "p95": 13,
       "programsBefore": 271,
       "programsAfter": 271,
       "renderSize": [
@@ -912,7 +912,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "high",
     "shot": "airfield-rail",
@@ -940,8 +940,8 @@
     "bombsight": false,
     "flak": 1,
     "perf": {
-      "mean": 5.659999999403953,
-      "p95": 12.900000005960464,
+      "mean": 4.7,
+      "p95": 7.899999976158142,
       "programsBefore": 271,
       "programsAfter": 271,
       "renderSize": [
@@ -978,7 +978,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "high",
     "shot": "bombsight-takeoff",
@@ -1006,8 +1006,8 @@
     "bombsight": true,
     "flak": 1,
     "perf": {
-      "mean": 3.3666666666666667,
-      "p95": 6.699999988079071,
+      "mean": 5.160000000397364,
+      "p95": 8.200000017881393,
       "programsBefore": 271,
       "programsAfter": 271,
       "renderSize": [
@@ -1044,7 +1044,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "high",
     "shot": "bombsight-moving",
@@ -1072,8 +1072,8 @@
     "bombsight": true,
     "flak": 1,
     "perf": {
-      "mean": 4.433333332339923,
-      "p95": 8.199999988079071,
+      "mean": 4.60000000099341,
+      "p95": 7.200000017881393,
       "programsBefore": 271,
       "programsAfter": 271,
       "renderSize": [
@@ -1137,7 +1137,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "low",
     "shot": "bomb-release",
@@ -1165,8 +1165,8 @@
     "bombsight": false,
     "flak": 0.9921379692431697,
     "perf": {
-      "mean": 1.0366666654745738,
-      "p95": 2,
+      "mean": 1.3199999988079072,
+      "p95": 2.699999988079071,
       "programsBefore": 254,
       "programsAfter": 254,
       "renderSize": [
@@ -1203,7 +1203,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "low",
     "shot": "walking-strikes",
@@ -1231,8 +1231,8 @@
     "bombsight": false,
     "flak": 0.9999999999300259,
     "perf": {
-      "mean": 1.1366666674613952,
-      "p95": 2.2000000178813934,
+      "mean": 1.0399999996026357,
+      "p95": 2.0999999940395355,
       "programsBefore": 254,
       "programsAfter": 254,
       "renderSize": [
@@ -1269,7 +1269,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "low",
     "shot": "burning-city",
@@ -1297,7 +1297,7 @@
     "bombsight": false,
     "flak": 0.9999999999999959,
     "perf": {
-      "mean": 1.2633333335320154,
+      "mean": 1.1566666662693024,
       "p95": 2.5,
       "programsBefore": 254,
       "programsAfter": 254,
@@ -1335,7 +1335,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "low",
     "shot": "wind-columns",
@@ -1363,8 +1363,8 @@
     "bombsight": false,
     "flak": 0.9999999999999959,
     "perf": {
-      "mean": 2.6733333339293797,
-      "p95": 3.5999999940395355,
+      "mean": 2.8466666668653486,
+      "p95": 3.600000023841858,
       "programsBefore": 254,
       "programsAfter": 254,
       "renderSize": [
@@ -1401,7 +1401,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "low",
     "shot": "airfield-rail",
@@ -1429,8 +1429,8 @@
     "bombsight": false,
     "flak": 1,
     "perf": {
-      "mean": 1.076666667064031,
-      "p95": 2.300000011920929,
+      "mean": 1.1533333331346511,
+      "p95": 2.5,
       "programsBefore": 254,
       "programsAfter": 254,
       "renderSize": [
@@ -1467,7 +1467,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "low",
     "shot": "bombsight-takeoff",
@@ -1495,8 +1495,8 @@
     "bombsight": true,
     "flak": 1,
     "perf": {
-      "mean": 1.2533333331346512,
-      "p95": 2.0999999940395355,
+      "mean": 1.2333333333333334,
+      "p95": 2.4000000059604645,
       "programsBefore": 254,
       "programsAfter": 254,
       "renderSize": [
@@ -1533,7 +1533,7 @@
     "url": "http://127.0.0.1:5325",
     "scripts": [
       "http://127.0.0.1:5325/@vite/client",
-      "http://127.0.0.1:5325/src/main.ts?t=1792070785477"
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
     ],
     "quality": "low",
     "shot": "bombsight-moving",
@@ -1561,8 +1561,8 @@
     "bombsight": true,
     "flak": 1,
     "perf": {
-      "mean": 1.1399999996026358,
-      "p95": 2.199999988079071,
+      "mean": 0.9933333327372869,
+      "p95": 1.699999988079071,
       "programsBefore": 254,
       "programsAfter": 254,
       "renderSize": [
