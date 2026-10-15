@@ -5,11 +5,19 @@ Sky War Shooter 3D: a WWII browser game (Three.js r186 + TypeScript + Vite). Rea
 
 ## Workflow
 - You work in a git worktree on your own branch. Commit there with the repo's local git config
-  (already set to the personal profile). Never change git config, never push, never deploy
-  (`npm run deploy` is off limits), never touch other branches.
+  (already set to the personal profile). Never change git config, never deploy (`npm run deploy` is off
+  limits), never touch other branches. You MAY push your own task branch (`git push -u origin HEAD`) —
+  never main or integration — so GitHub Actions runs the full check (the repo is public: CI is free, ~2 min).
 - End every commit message with: `Co-Authored-By: OpenAI Codex <noreply@openai.com>`
 - `node_modules` is a symlink to the main checkout: never commit it; `git add` specific paths.
-- Before committing: `npm run check` (tsc + vite build + vitest) must pass.
+- Checks: while iterating run `npx tsc --noEmit` + only related tests (`npx vitest run tests/<file>.test.ts`).
+  For the full suite push your branch and wait for CI: `~/.local/bin/gh run watch --exit-status $(~/.local/bin/gh run list
+  --branch <your-branch> --limit 1 --json databaseId --jq '.[0].databaseId')`. Your work is done only when CI is green.
+  Run the full `npm run check` locally only if CI is unavailable.
+- Heavy jobs (Blender, capture rig, full local build, long autoplay) go through `tools/heavy.sh <cmd>` (a
+  machine-wide slot limit) so ~10 parallel agents don't overload the Mac.
+- Quality gate: before finishing, compare your result with the LIVE game (main) using the same capture-rig
+  shots; if it is not clearly better in the shots your goal touches, keep working. Weak results get rejected.
 - When done, write a short report to the path given in the task (what changed, files, hook lines,
   test results, anything not done) — this is how your work gets reviewed.
 
