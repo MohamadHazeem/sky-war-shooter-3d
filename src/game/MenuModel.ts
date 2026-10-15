@@ -7,7 +7,7 @@ export const HANGAR_TABS = [
     ['tour', 'The Tour', 'Twenty-five missions, one ship, one crew'], ['raids', 'Historical Raids', 'Famous raids with their real numbers'], ['skills', 'Skills', 'Train your gunner'], ['mastery', 'Gunner Mastery', 'Station ranks, challenges and unlocks'], ['crew', 'Crew', 'Stations, skills and recovery'], ['career', 'Career', 'Rank and flight record'],
   ] },
   { id: 'aircraft', label: 'Aircraft & Armory', entries: [
-    ['aircraft', 'Aircraft', 'Recognition gallery and quiz'], ['armory', 'Armory', 'Aircraft, weapons and upgrades'], ['customize', 'Customize', 'Name, nose art and paint'],
+    ['aircraft', 'Museum', 'Aircraft, crew, medals and operations'], ['armory', 'Armory', 'Aircraft, weapons and upgrades'], ['customize', 'Customize', 'Name, nose art and paint'],
   ] },
   { id: 'records', label: 'Records', entries: [
     ['trophies', 'Trophies', 'Your achievement collection'], ['leaderboards', 'Leaderboards', 'Global and squadron scores'], ['daily', 'Daily Orders', 'Three orders for today'],

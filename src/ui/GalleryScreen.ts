@@ -6,9 +6,20 @@
 // take clicks. The gamepad moves between its buttons; B presses Back (data-back).
 // Phones (812×375 landscape): a narrow list, a compact spec card and a slim top bar.
 // Arabic: the list and the card swap sides.
+// Museum (Phase 11 goal 30): the card has four sections (specs, history, crew, facts: the facts
+// unlock as you meet each type, game/Museum.ts), the list marks aircraft with facts not yet read,
+// and the Codex tab shows crew roles, medals and operations (ui/CodexPanel.ts).
 import { tx, num } from '../i18n';
-import type { AircraftId, AircraftSpec } from '../game/AircraftData';
+import { serviceLabel, type AircraftId, type AircraftSpec } from '../game/AircraftData';
+import { ruleText, type MuseumEntry } from '../game/Museum';
+import type { CodexCtx, CodexEntry } from '../game/Codex';
+import { CodexPanel, CODEX_CSS } from './CodexPanel';
 import { onBackKey } from './serviceCommon';
+
+/** The museum side of the card for one aircraft. */
+export interface MuseumView { entry: MuseumEntry; open: boolean[] }
+export type CardSection = 'specs' | 'history' | 'crew' | 'facts';
+const SECTIONS: [CardSection, string][] = [['specs', 'Specs'], ['history', 'History'], ['crew', 'Crew'], ['facts', 'Facts']];
 
 export interface GalleryControl {
   select(id: AircraftId): void;
@@ -18,6 +29,10 @@ export interface GalleryControl {
   answer(id: AircraftId): void;
   nextRound(): void;
   back(): void;
+  /** The Codex tab (the 3D aircraft keeps turning behind it). */
+  openCodex(): void;
+  /** The facts of this aircraft are on screen: they are no longer news. */
+  factsSeen(id: AircraftId): void;
 }
 
 const CSS = `
@@ -110,6 +125,36 @@ const CSS = `
   #acGallery .ag-qrow { margin-top: 6px; }
   #acGallery .ag-qbest { margin-top: 3px; }
 }
+#acGallery .ag-list button.fresh b::after { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #e8a317; margin-inline-start: 6px; vertical-align: 3px; box-shadow: 0 0 6px #e8a317; }
+#acGallery .ag-sec { display: flex; gap: 3px; margin: 2px 0 10px; border-bottom: 1px solid rgba(43,37,24,.25); }
+#acGallery .ag-sec button { flex: 1; background: none; border: 0; border-bottom: 3px solid transparent; padding: 5px 2px 4px; min-height: 34px; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: #6b5a3a; white-space: nowrap; }
+#acGallery .ag-sec button.on { color: #2b2518; border-bottom-color: #8c1d15; font-weight: 600; }
+#acGallery .ag-sec button:focus-visible { outline: 2px solid #8c1d15; outline-offset: -2px; }
+#acGallery .ag-sec button.fresh::after { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #c26a0c; margin-inline-start: 4px; vertical-align: 2px; }
+#acGallery .ag-hist { margin: 0; font: 14px/1.55 "Special Elite", monospace; }
+#acGallery .ag-crew { margin: 0; padding-inline-start: 22px; font-size: 14.5px; line-height: 1.5; }
+#acGallery .ag-crew li::marker { font: 11px "IBM Plex Mono", monospace; color: #6b5a3a; }
+#acGallery .ag-crewn { font: 11px/1.4 "IBM Plex Mono", monospace; color: #6b5a3a; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+#acGallery .ag-facts { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 7px; }
+#acGallery .ag-facts li { padding: 7px 9px; background: rgba(61,90,31,.08); border-inline-start: 3px solid #3d5a1f; font: 13px/1.45 "Special Elite", monospace; }
+#acGallery .ag-facts li.locked { background: none; border: 1px dashed rgba(43,37,24,.35); color: #6b5a3a; font: 11.5px/1.4 "IBM Plex Mono", monospace; }
+#acGallery .ag-facts li.locked b { display: block; letter-spacing: 2px; text-transform: uppercase; font-size: 10px; }
+#acGallery .ag-fcount { font: 11px/1.4 "IBM Plex Mono", monospace; color: #6b5a3a; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+#acGallery .ag-card.more::after { content: '▾ ' attr(data-more); position: sticky; bottom: -14px; display: block; box-sizing: border-box; height: 32px; margin: -32px -16px 0; padding: 19px 0 0;
+  text-align: center; pointer-events: none; font: 600 9.5px/1 "IBM Plex Mono", monospace; letter-spacing: 1px; text-transform: uppercase; color: #6b5a3a;
+  background: linear-gradient(rgba(222,211,180,0), rgba(222,211,180,.97) 55%); }
+@media (max-height: 520px), (max-width: 760px) {
+  #acGallery .ag-card.more::after { bottom: -10px; margin: -32px -11px 0; }
+  #acGallery .ag-sec { margin-bottom: 6px; }
+  #acGallery .ag-sec button { font-size: 10.5px; letter-spacing: 0; min-height: 30px; padding: 3px 1px; }
+  #acGallery .ag-hist, #acGallery .ag-facts li { font-size: 11.5px; line-height: 1.4; }
+  #acGallery .ag-crew { font-size: 12px; line-height: 1.4; }
+  #acGallery .ag-facts li { padding: 5px 7px; }
+}
+html[lang=ar] #acGallery .ag-sec button, html[lang=ar] #acGallery .ag-card.more::after { letter-spacing: 0; }
+html[lang=ar] #acGallery .ag-card.more::after { font-family: "IBM Plex Mono", "IBM Plex Sans Arabic", monospace; }
+html[lang=ar] #acGallery .ag-hist, html[lang=ar] #acGallery .ag-facts li { font-family: "Special Elite", "Noto Naskh Arabic", serif; line-height: 1.7; }
+html[lang=ar] #acGallery .ag-crewn, html[lang=ar] #acGallery .ag-fcount, html[lang=ar] #acGallery .ag-facts li.locked { font-family: "IBM Plex Mono", "IBM Plex Sans Arabic", monospace; letter-spacing: 0; }
 html[lang=ar] #acGallery { font-family: Oswald, "Noto Kufi Arabic", "Arial Narrow", sans-serif; }
 html[lang=ar] #acGallery .ag-h, html[lang=ar] #acGallery .ag-tab, html[lang=ar] #acGallery .ag-back, html[lang=ar] #acGallery .ag-qprompt, html[lang=ar] #acGallery .ag-nav .ag-name { letter-spacing: 0; }
 html[lang=ar] #acGallery .ag-k, html[lang=ar] #acGallery .ag-card dt, html[lang=ar] #acGallery .ag-kills, html[lang=ar] #acGallery .ag-note, html[lang=ar] #acGallery .ag-hint,
@@ -131,17 +176,19 @@ function injectCss() {
   if (cssDone) return;
   cssDone = true;
   const s = document.createElement('style');
-  s.textContent = CSS;
+  s.textContent = CSS + CODEX_CSS;
   document.head.appendChild(s);
 }
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
-const sideLabel = (s: AircraftSpec) => (s.fictional ? 'Fictional · boss' : s.side === 'allied' ? 'Allied · USAAF' : 'Luftwaffe');
 
 export class GalleryScreen {
   root: HTMLElement | null = null;
   private c: GalleryControl | null = null;
   private specs: AircraftSpec[] = [];
+  private section: CardSection = 'specs';
+  private codex: CodexPanel | null = null;
+  private last: { s: AircraftSpec; kills: number | null; m: MuseumView | null } | null = null;
 
   show(specs: AircraftSpec[], c: GalleryControl) {
     injectCss();
@@ -158,9 +205,9 @@ export class GalleryScreen {
     r.className = 'layer';
     r.innerHTML = `
       <div class="ag-p ag-top">
-        <div><div class="ag-k">${tx('Aircraft recognition')}</div><div class="ag-h">${tx('Hangar 2 · Deenethorpe')}</div></div>
+        <div><div class="ag-k">${tx('Museum and codex')}</div><div class="ag-h">${tx('Hangar 2 · Deenethorpe')}</div></div>
         <div class="ag-sp"></div>
-        <button class="ag-tab on" data-tab="gallery">${tx('Gallery')}</button><button class="ag-tab" data-tab="quiz">${tx('Recognition quiz')}</button>
+        <button class="ag-tab on" data-tab="gallery">${tx('Aircraft')}</button><button class="ag-tab" data-tab="codex">${tx('Codex')}</button><button class="ag-tab" data-tab="quiz">${tx('Recognition quiz')}</button>
         <button class="ag-back" data-back>${tx('Back')}</button>
       </div>
       <div class="ag-p ag-list" role="listbox" aria-label="${esc(tx('Aircraft'))}">${specs.map((s) => `<button data-id="${s.id}" class="${s.side}${s.fictional ? ' fict' : ''}" role="option"><i></i><span><b>${esc(tx(s.nick))}</b><small>${esc(tx(s.role))}</small></span></button>`).join('')}</div>
@@ -168,6 +215,7 @@ export class GalleryScreen {
       <div class="ag-hint">${tx('Drag to orbit · wheel or pinch to zoom · ← → change aircraft · gamepad: right stick, LT / RT, LB / RB')}</div>
       <div class="ag-p ag-nav"><button data-step="-1" aria-label="${esc(tx('Previous aircraft'))}">‹</button><div class="ag-name"></div><button data-step="1" aria-label="${esc(tx('Next aircraft'))}">›</button></div>
       <div class="ag-load">${tx('Wheeling her out…')}</div>
+      <div class="ag-p ag-codex"></div>
       <div class="ag-p ag-quiz">
         <div class="ag-qhead"><span class="ag-qround"></span><span class="ag-qscore"></span></div>
         <div class="ag-qprompt"></div>
@@ -177,17 +225,24 @@ export class GalleryScreen {
       </div>`;
     r.querySelectorAll<HTMLButtonElement>('.ag-list [data-id]').forEach((b) => b.addEventListener('click', () => c.select(b.dataset.id as AircraftId)));
     r.querySelectorAll<HTMLButtonElement>('[data-step]').forEach((b) => b.addEventListener('click', () => c.step(+b.dataset.step!)));
-    r.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => b.addEventListener('click', () => (b.dataset.tab === 'quiz' ? c.startQuiz() : c.stopQuiz())));
+    r.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => b.addEventListener('click', () => (b.dataset.tab === 'quiz' ? c.startQuiz() : b.dataset.tab === 'codex' ? c.openCodex() : c.stopQuiz())));
     r.querySelector('[data-back]')!.addEventListener('click', () => c.back());
+    const card = r.querySelector<HTMLElement>('.ag-card')!;
+    card.addEventListener('scroll', this.updateMore, { passive: true });
+    card.dataset.more = tx('Scroll for more');
+    addEventListener('resize', this.updateMore);
     document.querySelectorAll('.layer').forEach((l) => l.classList.toggle('show', l === r));
     onBackKey(r, () => c.back());
   }
 
   close() {
+    removeEventListener('resize', this.updateMore);
     this.root?.classList.remove('show');
     if (this.root) this.root.innerHTML = '';
     this.root = null;
     this.c = null;
+    this.codex = null;
+    this.last = null;
   }
 
   get open() { return !!this.root && this.root.classList.contains('show'); }
@@ -195,9 +250,10 @@ export class GalleryScreen {
   setLoading(on: boolean) { this.root?.classList.toggle('loading', on); }
 
   /** The spec card and list selection for one aircraft; kills null = not an enemy. */
-  setCurrent(s: AircraftSpec, kills: number | null) {
+  setCurrent(s: AircraftSpec, kills: number | null, m: MuseumView | null = null) {
     const r = this.root;
     if (!r) return;
+    this.last = { s, kills, m };
     r.querySelectorAll<HTMLElement>('.ag-list [data-id]').forEach((b) => {
       const on = b.dataset.id === s.id;
       b.classList.toggle('on', on);
@@ -205,18 +261,85 @@ export class GalleryScreen {
       if (on) b.scrollIntoView({ block: 'nearest' });
     });
     r.querySelector('.ag-name')!.textContent = tx(s.nick);
+    const sec = m ? this.section : 'specs';
+    if (m && sec === 'facts') this.c?.factsSeen(s.id);   // read now: clears the marks before they are drawn
+    const fresh = r.querySelector(`.ag-list [data-id="${s.id}"]`)?.classList.contains('fresh');
+    const tabs = m ? `<div class="ag-sec" role="tablist">${SECTIONS.map(([id, label]) => `<button role="tab" data-sec="${id}" class="${id === sec ? 'on' : ''}${id === 'facts' && fresh ? ' fresh' : ''}" aria-selected="${id === sec}">${tx(label)}</button>`).join('')}</div>` : '';
+    const card = r.querySelector('.ag-card')!;
+    card.innerHTML = `
+      <div class="ag-k${s.side === 'allied' ? ' allied' : ''}">${tx(serviceLabel(s))}</div>
+      <h3>${esc(tx(s.name))}</h3>
+      <div class="ag-role">${esc(tx(s.role))}</div>
+      ${tabs}
+      <div class="ag-body">${m && sec !== 'specs' ? this.museumBody(sec, m) : this.specsBody(s, kills)}</div>`;
+    card.querySelectorAll<HTMLButtonElement>('[data-sec]').forEach((b) => b.addEventListener('click', () => this.setSection(b.dataset.sec as CardSection, true)));
+    card.scrollTop = 0;
+    this.updateMore();
+  }
+
+  /** Card taller than the screen (phones): fade the bottom edge and show "more" until scrolled down. */
+  private updateMore = () => {
+    const card = this.root?.querySelector<HTMLElement>('.ag-card');
+    if (card) card.classList.toggle('more', card.scrollHeight - card.scrollTop - card.clientHeight > 4);
+  }
+
+  /** Switch the card section (kept while the aircraft changes). */
+  setSection(sec: CardSection, focus = false) {
+    this.section = sec;
+    const l = this.last;
+    if (!l) return;
+    this.setCurrent(l.s, l.kills, l.m);
+    if (focus) this.root?.querySelector<HTMLButtonElement>('.ag-sec .on')?.focus({ preventScroll: true });
+  }
+
+  get cardSection() { return this.section; }
+
+  /** The list's "new facts" marks. */
+  setFresh(ids: AircraftId[]) {
+    this.root?.querySelectorAll<HTMLElement>('.ag-list [data-id]').forEach((b) => b.classList.toggle('fresh', ids.includes(b.dataset.id as AircraftId)));
+  }
+
+  private specsBody(s: AircraftSpec, kills: number | null) {
     const row = (k: string, v: string) => `<dt>${tx(k)}</dt><dd>${esc(tx(v))}</dd>`;
     const killLine = kills === null ? `<div class="ag-kills">${tx('On our side: hold your fire')}</div>`
       : `<div class="ag-kills">${tx(s.fictional ? 'Warships downed by you:' : 'Shot down by you:')}<b>${num(kills)}</b></div>`;
-    r.querySelector('.ag-card')!.innerHTML = `
-      <div class="ag-k${s.side === 'allied' ? ' allied' : ''}">${tx(sideLabel(s))}</div>
-      <h3>${esc(tx(s.name))}</h3>
-      <div class="ag-role">${esc(tx(s.role))}</div>
-      <dl>${row('Crew', s.crew)}${row('Armament', s.armament)}${row('Top speed', s.speed)}${row('First flight', s.first)}${row('Span × length', s.size)}</dl>
+    return `
+      <dl>${row('Crew', s.crew)}${row('Armament', s.armament)}${row('Top speed', s.speed)}${row('Type first flight', s.first)}${row('Span × length', s.size)}</dl>
       <div class="ag-tip"><b>${tx('Gunner\'s note')}</b>${esc(tx(s.tip))}</div>
       ${killLine}
       ${s.note ? `<div class="ag-note${s.fictional ? ' fict' : ''}">${esc(tx(s.note))}</div>` : ''}`;
   }
+
+  private museumBody(sec: CardSection, m: MuseumView) {
+    const e = m.entry;
+    if (sec === 'history') return `<p class="ag-hist">${esc(tx(e.history))}</p>`;
+    if (sec === 'crew') {
+      return `<div class="ag-crewn">${tx('Positions on board: {n}', { n: e.crew.length })}</div>
+        <ol class="ag-crew">${e.crew.map((c) => `<li>${esc(tx(c))}</li>`).join('')}</ol>`;
+    }
+    const n = m.open.filter(Boolean).length;
+    return `<div class="ag-fcount">${tx('Facts found: {n} / {total}', { n, total: e.facts.length })}</div>
+      <ul class="ag-facts">${e.facts.map((f, i) => {
+        if (m.open[i]) return `<li>${esc(tx(f.text))}</li>`;
+        const [rule, p] = ruleText(f.rule);
+        return `<li class="locked"><b>${tx('Locked')}</b>${esc(tx(rule, p))}</li>`;
+      }).join('')}</ul>`;
+  }
+
+  // ---------------- codex ----------------
+  setCodex(on: boolean, entries?: CodexEntry[], ctx?: CodexCtx) {
+    const r = this.root;
+    if (!r) return;
+    r.classList.toggle('codex', on);
+    if (on) r.classList.remove('quiz');
+    r.querySelectorAll<HTMLElement>('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === (on ? 'codex' : r.classList.contains('quiz') ? 'quiz' : 'gallery')));
+    if (on && entries && ctx) {
+      this.codex = new CodexPanel(r.querySelector<HTMLElement>('.ag-codex')!, entries, ctx);
+      this.codex.render(true);
+    }
+  }
+
+  get codexPanel() { return this.codex; }
 
   /** What the panels cover at each edge (px), for centring the view in the space left over. */
   insets(): { left: number; right: number; top: number; bottom: number } {
@@ -246,7 +369,8 @@ export class GalleryScreen {
     const r = this.root;
     if (!r) return;
     r.classList.toggle('quiz', on);
-    r.querySelectorAll<HTMLElement>('[data-tab]').forEach((b) => b.classList.toggle('on', (b.dataset.tab === 'quiz') === on));
+    if (on) r.classList.remove('codex');
+    r.querySelectorAll<HTMLElement>('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === (on ? 'quiz' : 'gallery')));
   }
 
   quizRound(i: number, n: number, score: number, choices: AircraftId[]) {
@@ -301,4 +425,28 @@ export class GalleryScreen {
     row.querySelector('[data-gal]')!.addEventListener('click', () => this.c?.stopQuiz());
     row.querySelector<HTMLButtonElement>('[data-again]')!.focus({ preventScroll: true });
   }
+}
+
+// ---------------- debrief ----------------
+
+const NOTE_CSS = `#debrief .museum-note { margin: 10px 0 0; padding: 7px 10px; border: 1px solid rgba(232,163,23,.45); background: rgba(232,163,23,.08); font: 13px/1.4 "IBM Plex Mono", monospace; color: var(--ink, #e9e2cf); }
+#debrief .museum-note b { color: #e8a317; letter-spacing: 1px; text-transform: uppercase; margin-inline-end: 6px; }
+#debrief .museum-note small { display: block; opacity: .7; font-size: 11px; }
+html[lang=ar] #debrief .museum-note { font-family: "IBM Plex Mono", "IBM Plex Sans Arabic", monospace; }
+html[lang=ar] #debrief .museum-note b { letter-spacing: 0; }`;
+
+/** Debrief: one line naming the aircraft whose museum files gained facts this mission. */
+export function mountMuseumNote(host: HTMLElement | null, ids: AircraftId[], nick: (id: AircraftId) => string = (id) => id) {
+  if (!host || !ids.length) return;
+  if (!document.getElementById('museumNoteCss')) {
+    const st = document.createElement('style');
+    st.id = 'museumNoteCss';
+    st.textContent = NOTE_CSS;
+    document.head.appendChild(st);
+  }
+  host.querySelector('.museum-note')?.remove();
+  const d = document.createElement('div');
+  d.className = 'museum-note';
+  d.innerHTML = `<b>${tx('Museum')}</b>${esc(tx('New facts: {list}', { list: ids.map((id) => tx(nick(id))).join(tx(', ')) }))}<small>${tx('Hangar → Aircraft & Armory → Museum')}</small>`;
+  host.appendChild(d);
 }

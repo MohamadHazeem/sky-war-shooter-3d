@@ -5,7 +5,9 @@ import { CAMPAIGN, survivalMission } from './Missions';
 import { buildCustomMission } from './CustomBattle';
 import { showNemesisScreen } from '../ui/NemesisScreen';
 import { AircraftGallery } from './AircraftGallery';
-import type { AircraftId } from './AircraftData';
+import { specById, type AircraftId } from './AircraftData';
+import { loadMuseum, type MuseumStats } from './Museum';
+import type { CodexCtx } from './Codex';
 import { NEWS, WHATS_NEW_VERSION, markSeen, type TryTarget } from './WhatsNew';
 import { hideWhatsNew, showWhatsNew } from '../ui/WhatsNewScreen';
 import { ManualHooks } from './ManualHooks';
@@ -27,6 +29,8 @@ export class TitleExtras {
     this.gallery = new AircraftGallery(engine, {
       kills: (id) => this.kills(id),
       onClose: () => { if (this.galleryBack) this.galleryBack(); else this.backToMenu(); },
+      museum: () => this.museumStats(),
+      codex: () => this.codexCtx(),
     });
     this.manual = new ManualHooks(game, back => this.openGallery(undefined, back));
   }
@@ -116,8 +120,19 @@ export class TitleExtras {
     this.gallery.open(id);
   }
 
+  /** Museum fact unlocks: encounters (Museum.ts log), career kills and missions. */
+  museumStats(): MuseumStats {
+    const seen = loadMuseum().seen;
+    return { seen: (id) => seen[id] ?? 0, kills: (id) => this.kills(id) ?? 0, missions: this.game.service?.career?.missions ?? 0 };
+  }
+
+  private codexCtx(): CodexCtx {
+    const c = this.game.service?.career, p = this.game.progress;
+    return { medals: (name) => c?.medals[name] ?? 0, flown: (id) => !!c?.campaignWins.includes(id) || !!p?.medals?.[id]?.length };
+  }
+
   private kills(id: AircraftId): number | null {
-    if (id === 'b17' || id === 'p51d') return null;
+    if (specById(id).side === 'allied') return null;
     const c = this.game.service?.career;
     if (!c) return 0;
     return id === 'boss' ? c.bosses ?? 0 : c.killsByType[id] ?? 0;

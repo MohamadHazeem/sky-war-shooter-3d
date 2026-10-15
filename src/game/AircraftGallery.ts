@@ -12,6 +12,9 @@ import { GalleryScreen, type GalleryControl } from '../ui/GalleryScreen';
 import { achievements } from './Achievements';
 import { quizFeats } from './Feats';
 import { AIRCRAFT_SPECS, QUIZ_ROUNDS, quizChoices, quizSequence, saveQuiz, specById, type AircraftId } from './AircraftData';
+import { ESCORT_TYPES, isEscortKind } from '../world/EscortTypes';
+import { MUSEUM, factOpen, freshFacts, markKnown, type MuseumStats } from './Museum';
+import { codexEntries, type CodexCtx } from './Codex';
 
 // Aircraft recognition gallery (Phase 5 goal 28): a hangar where every aircraft in the game
 // turns slowly under studio lights, with its spec card (AircraftData.ts), orbit / zoom by
@@ -41,6 +44,10 @@ export interface GalleryHost {
   kills(id: AircraftId): number | null;
   /** The gallery closed (Back, or another screen took over). */
   onClose(): void;
+  /** Museum: encounters, kills and missions (fact unlocks). */
+  museum(): MuseumStats;
+  /** Codex: medals held and operations flown. */
+  codex(): CodexCtx;
 }
 
 interface Shown { id: AircraftId; a: Aircraft; holder: THREE.Group; dispose(): void }
@@ -100,7 +107,9 @@ export class AircraftGallery implements GalleryControl {
     this.zoom = 1; this.yaw = 0.75; this.pitch = 0.12; this.idleT = 0;
     this.buildStudio();
     this.screen.show(AIRCRAFT_SPECS, this);
-    this.screen.setCurrent(specById(start), this.host.kills(start));
+    this.stats = this.host.museum();
+    this.refreshFresh();
+    this.screen.setCurrent(specById(start), this.host.kills(start), this.museumView(start));
     this.screen.setLoading(true);
     // take over the frame loop (the menu world freezes) and keep the post settings to restore
     this.savedFrame = e.onFrame;
@@ -263,7 +272,8 @@ export class AircraftGallery implements GalleryControl {
       return { a: s, dispose: () => { disposeOwned(s.root); s.dispose(); } };
     }
     let f: Fighter;
-    if (id === 'b17' || id === 'p51d') f = new Fighter(id, 'allied', FW190_PARAMS, id === 'b17' ? 1.77 : 1.7);
+    if (id === 'b17') f = new Fighter(id, 'allied', FW190_PARAMS, 1.77);
+    else if (isEscortKind(id)) f = new Fighter(id, 'allied', ESCORT_TYPES[id].params, ESCORT_TYPES[id].propRadius);
     else {
       // fitted with the same per-type hit layout as World.spawnEnemy
       const type = id as EnemyType, v = ENEMY_VARIANTS[type];
@@ -280,7 +290,7 @@ export class AircraftGallery implements GalleryControl {
     if (!this.active || (id === this.current && this.shown?.id === id && !force)) return;
     if (this.quiz) return;
     this.current = id;
-    this.screen.setCurrent(specById(id), this.host.kills(id));
+    this.screen.setCurrent(specById(id), this.host.kills(id), this.museumView(id));
     this.layoutDirty = true;
     void this.show(id);
   }
@@ -334,6 +344,7 @@ export class AircraftGallery implements GalleryControl {
 
   startQuiz() {
     if (!this.active || !this.ready) return;
+    this.screen.setCodex(false);
     this.quiz = { seq: quizSequence(), i: -1, score: 0, phase: 'load', t: 0, choices: [], view: VIEWS[0] };
     this.screen.setQuiz(true);
     this.setStage(true);
@@ -342,6 +353,7 @@ export class AircraftGallery implements GalleryControl {
   }
 
   stopQuiz() {
+    this.closeCodex();
     if (!this.quiz) return;
     this.quiz = null;
     this.loadSeq++;
@@ -420,6 +432,39 @@ export class AircraftGallery implements GalleryControl {
   }
 
   back() { this.close(); }
+
+  // ---------------- museum and codex ----------------
+
+  private stats: MuseumStats | null = null;
+
+  private museumView(id: AircraftId) {
+    const s = this.stats;
+    if (!s) return null;
+    const entry = MUSEUM[id];
+    return { entry, open: entry.facts.map((f) => factOpen(f.rule, id, s)) };
+  }
+
+  private refreshFresh() {
+    if (this.stats) this.screen.setFresh(Object.keys(freshFacts(this.stats)) as AircraftId[]);
+  }
+
+  factsSeen(id: AircraftId) {
+    if (!this.stats) return;
+    markKnown(id, this.stats);
+    this.refreshFresh();
+  }
+
+  openCodex() {
+    if (!this.active) return;
+    if (this.quiz) this.stopQuiz();
+    this.screen.setCodex(true, codexEntries(), this.host.codex());
+    this.layoutDirty = true;
+  }
+
+  private closeCodex() {
+    this.screen.setCodex(false);
+    this.layoutDirty = true;
+  }
 
   // ---------------- frame ----------------
 
@@ -528,6 +573,7 @@ export class AircraftGallery implements GalleryControl {
       if (n && q.choices[+n[1] - 1]) { ev.preventDefault(); this.answer(q.choices[+n[1] - 1]); }
       return;
     }
+    if (this.screen.codexPanel && this.screen.root?.classList.contains('codex')) return;   // the codex reads with the menu focus
     if (ev.code === 'ArrowLeft' || ev.code === 'ArrowRight') {
       // the list reads from the right in Arabic: the arrows follow it
       const rtl = document.documentElement.dir === 'rtl';
@@ -564,16 +610,19 @@ export class AircraftGallery implements GalleryControl {
     if (Math.abs(zt) > 0.05) { this.setZoom(this.zoom * Math.exp(zt * 1.3 * dt)); this.poke(); }
     const now = new Set<number>();
     for (const i of [4, 5]) if (p.buttons[i]?.pressed) now.add(i);
-    if (!this.quiz) {
+    if (!this.quiz && !this.screen.root?.classList.contains('codex')) {
       if (now.has(4) && !this.padPrev.has(4)) this.step(-1);
       if (now.has(5) && !this.padPrev.has(5)) this.step(1);
     }
     this.padPrev = now;
   }
 
+  /** Dev / tests: show a card section. */
+  section(sec: 'specs' | 'history' | 'crew' | 'facts') { this.screen.setSection(sec); }
+
   /** Dev / tests: the current state. */
   get state() {
-    return { active: this.active, ready: this.ready, current: this.current, shown: this.shown?.id ?? null, quiz: this.quiz ? { i: this.quiz.i, phase: this.quiz.phase, score: this.quiz.score, answer: this.quiz.seq[this.quiz.i] } : null };
+    return { active: this.active, ready: this.ready, current: this.current, shown: this.shown?.id ?? null, section: this.screen.cardSection, codex: this.screen.root?.classList.contains('codex') ? this.screen.codexPanel?.state ?? null : null, quiz: this.quiz ? { i: this.quiz.i, phase: this.quiz.phase, score: this.quiz.score, answer: this.quiz.seq[this.quiz.i] } : null };
   }
 }
 
