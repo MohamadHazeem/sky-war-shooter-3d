@@ -10,6 +10,7 @@ import {
   ROOKIES, ROOKIE_SKILL, xpFor,
 } from '../game/CrewRoster';
 import { tx } from '../i18n';
+import { crewDecisions } from '../game/CrewDecisions';
 import { ROLE_STATS, ROLE_LABEL, ROLE_HELP, TALENTS } from '../game/CrewRoles';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
@@ -108,6 +109,7 @@ function statusOf(id: ManId): { cls: string; text: string } {
     if (crewRoster.resting.has(id)) return { cls: 'bad', text: 'Resting this mission' };
     return { cls: 'ok', text: 'Fit' };
   }
+  if (st.rest > 0 && crewDecisions.leave.has(id)) return { cls: 'bad', text: 'On a 48-hour pass — misses the next mission' };
   if (st.rest > 0) return { cls: 'bad', text: st.rest > 1 ? 'Serious wound — hospital for two missions' : 'Hospital — misses the next mission' };
   return { cls: 'ok', text: 'Fit' };
 }
@@ -131,7 +133,7 @@ function manCard(id: ManId, post: Post | null): string {
     bonus = `<div class="cr-bonus">${tx('{sign}{pct}% {what} {where}', { sign, pct, what: tx(d.bonus.what), where })}</div>`;
   }
   const s = statusOf(id);
-  const heal = s.cls === 'bad' && !st.dead && !crewRoster.benched.has(id) && rosterProg
+  const heal = s.cls === 'bad' && !st.dead && !crewRoster.benched.has(id) && !crewDecisions.leave.has(id) && rosterProg
     ? `<button class="btn ghost cr-heal" data-heal="${id}" ${rosterProg.points < HEAL_COST ? 'disabled' : ''}>${tx('Flight surgeon · {n}', { n: HEAL_COST })}</button>` : '';
   const isNew = !st.dead && fresh.has(id) ? `<span class="cr-new">${tx('LEVEL UP')}</span>` : '';
   return `<div class="cr-man ${s.cls === 'bad' ? 'out' : ''}">

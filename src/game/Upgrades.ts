@@ -2,6 +2,7 @@
 // plus one-mission perks handed out at random during play. Everything folds into a
 // Loadout of multipliers that the gun controllers and the world read.
 import { applyWeaponMod } from './WeaponMods';
+import { groundCrewLoadout } from './CrewDecisions';
 import { SkillBook, applySkills, skillDefaults, type SkillLoadout } from './Skills';
 
 export type UpgradeId = 'firepower' | 'rate' | 'cooling' | 'velocity' | 'armor' | 'gyro';
@@ -171,7 +172,7 @@ export class Progression {
     const L = this.levels, n = (p: PerkId) => this.perks.filter((x) => x === p).length;
     const weapon = WEAPONS.find((w) => w.id === this.weapon[this.role]) ?? WEAPONS[this.role === 'gunner' ? 0 : 4];
     const aircraft = AIRCRAFT.find((a) => a.id === this.aircraft[this.role]) ?? AIRCRAFT[this.role === 'gunner' ? 0 : 3];
-    return applySkills(applyWeaponMod({
+    return groundCrewLoadout(applySkills(applyWeaponMod({
       damage: (1 + 0.12 * L.firepower) * (1 + 0.25 * n('ap')),
       rate: (1 + 0.07 * L.rate) * (1 + 0.15 * n('rapid')) * aircraft.rate,
       heat: (1 - 0.12 * L.cooling) * Math.pow(0.6, n('cool')),
@@ -198,6 +199,6 @@ export class Progression {
       power: aircraft.power,
       weapon, aircraft,
       ...skillDefaults(),
-    }, this.mods[weapon.id]), this.skills.owned);
+    }, this.mods[weapon.id]), this.skills.owned), this.role);   // + the ground crew's work (CrewDecisions.ts)
   }
 }

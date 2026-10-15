@@ -24,6 +24,7 @@ import { mountHangarExtras } from './CrateUI';
 import { foldHangar } from './HangarFold';
 import { bomberName, withName } from '../game/Customize';
 import { mountCrewRoster } from './CrewPanel';
+import { mountCrewDecisions } from './CrewDecisionsPanel';
 import { mountCloudSave } from './CloudSavePanel';
 import { mountStatsToggle } from '../net/Analytics';
 import { t, tx, getLang, setLang, applyDocumentLang, type Lang } from '../i18n';
@@ -613,7 +614,7 @@ export class UI {
         }).join('')}</div>
         <div class="row" style="margin-top:18px"><button class="btn" data-go>${info.next === 'Back' ? t('common.back') : t('hangar.launch', { next: esc(tx(info.next)) })}</button><button class="btn ghost" data-settings>${t('common.settings')}</button></div>
       </div>`;
-      if (role === 'gunner' && !info.section) mountCrewRoster(el.querySelector('.hwrap')!, prog);
+      if (role === 'gunner' && !info.section) { mountCrewRoster(el.querySelector('.hwrap')!, prog); mountCrewDecisions(el.querySelector('.hwrap')!, prog); }
       el.querySelectorAll<HTMLButtonElement>('[data-a]').forEach((b) => b.addEventListener('click', () => {
         const a = AIRCRAFT.find((x) => x.id === b.dataset.a)!;
         if (prog.unlock(a.id, a.cost)) { prog.selectAircraft(a); sound.play('click', null, { gain: 0.6 }); render(); }
@@ -641,7 +642,7 @@ export class UI {
         if (e.code === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); launch(); }
         return;
       }
-      if ((e.target as HTMLElement)?.closest('.crewroster')) return;
+      if ((e.target as HTMLElement)?.closest('.crewroster, .crewdec')) return;
       if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); launch(); }
     };
     const launch = () => { removeEventListener('keydown', key, true); el.classList.remove('show'); onLaunch(); };
