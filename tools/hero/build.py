@@ -7,7 +7,7 @@ import numpy as np
 from mathutils import Vector, Matrix
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from detail import scan_variation, sheet_relief, curvature
+from detail import scan_variation, sheet_relief, curvature, finish_normals
 ROOT=Path(__file__).resolve().parents[2]; OUT=ROOT/'tools/hero/output'; OUT.mkdir(exist_ok=True)
 bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
 bpy.ops.import_scene.gltf(filepath=str(OUT/'flightgear.glb'))
@@ -139,27 +139,38 @@ for x0,y0,x1,y1,kind in mark_boxes+[(270,186,356,232,0)]:
 # Original image values are sRGB. Keep markings, neutral grey and existing localized stains.
 base=atlas.copy();lum=np.mean(atlas,axis=2);fade=.008*(noise-.5)
 panel_tone=np.zeros((S,S),np.float32)
-# Sparse panel boundaries in original UV charts. Metre-scale texture islands, not a checker overlay.
-seam=np.zeros((S,S),np.float32);rivets=np.zeros_like(seam)
-# Fuselage longitudinal charts, wings and stabilisers use different spacing/layout.
-for x0,x1,y0,y1,nx,ny,length,width in [(0.02,.98,.65,.87,26,4,22,6),(.01,.88,.46,.64,28,7,31,4),(.01,.88,.28,.45,28,7,31,4),(.01,.87,.14,.27,22,5,10,3)]:
+# Staggered sheet laps: broad skins, narrow butt joints and occasional heavier service joints.
+seam=np.zeros((S,S),np.float32);rivets=np.zeros_like(seam);laps=np.zeros_like(seam)
+metric_x=np.full_like(seam,.014);metric_y=np.full_like(seam,.014)
+for x0,x1,y0,y1,nx,ny,length,width in [(0.02,.98,.65,.87,17,3,22,6),(.01,.88,.46,.64,19,4,31,4),(.01,.88,.28,.45,19,4,31,4),(.01,.87,.14,.27,13,3,10,3)]:
     region=(u>x0)&(u<x1)&(v>y0)&(v<y1)
-    a=(u-x0)/(x1-x0)*nx;b=(v-y0)/(y1-y0)*ny
-    da=np.minimum(a%1,1-a%1);db=np.minimum(b%1,1-b%1)
-    panel_tone=np.where(region,.028*np.sin(np.floor(a)*12.989+np.floor(b)*7.23),panel_tone)
-    seam=np.maximum(seam,region*np.maximum(np.exp(-(da/.022)**2),np.exp(-(db/.018)**2)))
-    # 45 mm pitch, 16 mm edge offset, 5 mm heads filtered to atlas texel footprint.
     sm=(u-x0)/(x1-x0)*length;tm=(v-y0)/(y1-y0)*width
-    row=np.abs(da*length/nx-.016)
-    along=np.abs((tm+.0225)%.045-.0225)
-    footprint=max(.0025,length/((x1-x0)*S)*.45)
-    rivets=np.maximum(rivets,region*np.exp(-(row/footprint)**2-(along/footprint)**2)*min(1,.005/footprint))
+    a=sm/length*nx
+    # Alternate broad/narrow bays and stagger longitudinal sheet ends.
+    a += .12*np.sin(a*1.37)
+    b=tm/width*ny+.31*(np.floor(a)%2)
+    ds=((a+.5)%1-.5)*length/nx;dt=((b+.5)%1-.5)*width/ny
+    joint=.5+.5*np.sin(np.floor(a+.5)*7.13)
+    ws=.005+.007*joint;wt=.003+.004*(.5+.5*np.cos(np.floor(b+.5)*3.7))
+    line=np.maximum(np.exp(-(ds/ws)**2)*(.35+.65*joint),np.exp(-(dt/wt)**2)*.4)
+    seam=np.maximum(seam,region*line)
+    laps+=region*(.00065*np.tanh(ds/ws)*np.exp(-(ds/.055)**2)+.0003*np.tanh(dt/wt)*np.exp(-(dt/.035)**2))
+    panel_tone=np.where(region,.012*np.sin(np.floor(a)*12.989+np.floor(b)*7.23),panel_tone)
+    metric_x=np.where(region,length/((x1-x0)*S),metric_x)
+    metric_y=np.where(region,width/((y1-y0)*S),metric_y)
+    # 45 mm pitch, 16 mm edge offset. Filter small heads to the shipped texel footprint.
+    footprint=max(.003,length/((x1-x0)*S)*.60)
+    row=np.abs(np.abs(ds)-.016);along=np.abs((tm+.0225)%.045-.0225)
+    rv=np.exp(-(row/footprint)**2-(along/footprint)**2)
+    row2=np.abs(np.abs(dt)-.016);along2=np.abs((sm+.0225)%.045-.0225)
+    rv=np.maximum(rv,.7*np.exp(-(row2/footprint)**2-(along2/footprint)**2))
+    rivets=np.maximum(rivets,region*rv)
 for c,k in enumerate([.305,.315,.185]):base[:,:,c]=np.where(olive,k*(.58+.48*np.clip(lum/.19,0,1.2))+fade+panel_tone,atlas[:,:,c])
 # Larger slotted access-panel fasteners share the skin relief bake.
 au=(u*26+.12)%1;av=(v*24+.12)%1
 fasteners=np.exp(-(np.minimum(au,1-au)/.045)**2-(np.minimum(av,1-av)/.045)**2)*seam
 slots=fasteners*np.exp(-(np.minimum(au,1-au)/.012)**2)
-height=-.00045*seam+.00035*rivets+.0008*fasteners-.0005*slots
+height=laps-.0003*seam+.0011*rivets+.0012*fasteners-.0008*slots
 # Large-scale skin tension survives the shipped 1024 normal atlas; microdetail stays restrained.
 for x0,x1,y0,y1,length,width in [(0.02,.98,.65,.87,22,6),(.01,.88,.46,.64,31,4),(.01,.88,.28,.45,31,4),(.01,.87,.14,.27,10,3)]:
     region=(u>x0)&(u<x1)&(v>y0)&(v<y1)
@@ -170,11 +181,11 @@ for x0,x1,y0,y1,length,width in [(0.02,.98,.65,.87,22,6),(.01,.88,.46,.64,31,4),
         ax=np.abs(sm-length*cx);ay=np.abs(tm-width*cy)
         edge=np.maximum(ax-.24,ay-.16)
         cover=region*np.exp(-(edge/.014)**2)
-        seam=np.maximum(seam,cover);height-=cover*.0007
+        seam=np.maximum(seam,cover);height-=cover*.0012
         for sx in [-1,1]:
             for sy in [-1,1]:
                 screw=region*np.exp(-((sm-length*cx-sx*.20)/.016)**2-((tm-width*cy-sy*.12)/.016)**2)
-                height+=screw*.0008;fasteners=np.maximum(fasteners,screw)
+                height+=screw*.0016;fasteners=np.maximum(fasteners,screw)
 # Fabric-covered elevators/rudder: rib tapes and soft sag on the source tail atlas.
 fabric=(v>.15)&(v<.25)&(u>.03)&(u<.85)
 ph=(u*10/.18)%1
@@ -186,11 +197,9 @@ for cx,cy in [(.32,.71),(.61,.52),(.23,.34)]:
 scan_color,scan_rough=scan_variation(u*3.1,v*2.7)
 base*=1+scan_color[:,:,None]*olive[:,:,None]*.08
 leading=((u<.43)&(abs(v-(.571+.17*u))<.003))|((u>.46)&(u<.88)&(abs(v-(.64-.17*(u-.46)))<.003))
-chip=(noise>.82)&((seam>.65)|leading)&olive
-# Dark seam/rivet recesses and brighter service fasteners survive downsampling.
-base*=1-.48*seam[:,:,None]
-base-=.085*rivets[:,:,None]*olive[:,:,None]
-base+=.045*fasteners[:,:,None]*olive[:,:,None]
+chip=(noise>.82)&leading&olive
+# Restrained recess grime only; fasteners read through relief and specular response.
+base*=1-.09*seam[:,:,None]
 base[chip]=(.48,.50,.46)
 # Directional soot fans behind the four turbos in the underside UV chart.
 soot=np.zeros_like(seam)
@@ -205,15 +214,15 @@ base*=1-(soot+oil)[:,:,None]
 walkway=(((u>.397)&(u<.416))|((u>.478)&(u<.497)))&(v>.475)&(v<.613)
 scuff=.075+.035*noise+.025*(np.sin(v*910+u*230)**8)
 for c in range(3):base[:,:,c]=np.where(walkway,scuff,base[:,:,c])
-orm=np.stack((1-.16*seam,np.clip(.50+panel_tone*3+.10*(curvature(height)-.5)+.10*scan_rough+.025*(noise-.5)-chip*.22-oil*.35+soot*.15+fabric*.16,0,1),np.where(chip,.78,.04)),axis=-1)
+orm=np.stack((1-.16*seam,np.clip(.46+panel_tone*5-.18*rivets-.22*fasteners+.10*(curvature(height)-.5)+.10*scan_rough+.025*(noise-.5)-chip*.22-oil*.35+soot*.15+fabric*.16,0,1),np.where(chip,.78,.04)),axis=-1)
 silver=base.copy();painted=(olive|((np.max(atlas,axis=2)-np.min(atlas,axis=2)<.08)&(lum>.25)))&~walkway
 for c,k in enumerate([.60,.625,.65]):silver[:,:,c]=np.where(painted,k*(.80+.20*np.clip(lum/.3,0,1))+.012*np.sin(u*700)+panel_tone,base[:,:,c])
-silver*=1-(.2*seam+soot+oil)[:,:,None]
+silver*=1-(.07*seam+soot+oil)[:,:,None]
 silverorm=orm.copy();silverorm[:,:,1]=np.where(painted,.32+.065*scan_rough+.025*np.sin(u*111),orm[:,:,1]);silverorm[:,:,2]=np.where(painted,.88,orm[:,:,2])
 
 def image(name,data):
     im=bpy.data.images.new(name,width=S,height=S,alpha=True);im.colorspace_settings.name='Non-Color';arr=np.ones((S,S,4),np.float32);arr[:,:,:3]=data if data.ndim==3 else data[:,:,None];im.pixels.foreach_set(arr.ravel());im.filepath_raw=str(OUT/(name+'.png'));im.file_format='PNG';im.save();return im
-maps={n:image(n,d) for n,d in [('base',base),('orm',orm),('silver',silver),('silver-orm',silverorm),('height',height/.002+.5)]}
+maps={n:image(n,d) for n,d in [('base',base),('orm',orm),('silver',silver),('silver-orm',silverorm),('height',height/.008+.5)]}
 # Build real high-poly relief on the source skin and bake tangent normals/AO to its UVs.
 skin_objects=[o for o in meshes if skin in list(o.data.materials)]
 bpy.ops.object.select_all(action='DESELECT');copies=[]
@@ -224,12 +233,17 @@ bpy.context.view_layer.objects.active=copies[0];bpy.ops.object.join();low=bpy.co
 bm=bmesh.new();bm.from_mesh(low.data);bmesh.ops.delete(bm,geom=[f for f in bm.faces if low.data.materials[f.material_index]!=skin],context='FACES');bm.to_mesh(low.data);bm.free()
 hi=low.copy();hi.data=low.data.copy();bpy.context.collection.objects.link(hi);hi.name='HIGH_AIRCRAFT_PANELS_RIVETS';bpy.context.view_layer.objects.active=hi
 sub=hi.modifiers.new('high_poly_relief','SUBSURF');sub.subdivision_type='SIMPLE';sub.levels=3;bpy.ops.object.modifier_apply(modifier=sub.name)
-tex=bpy.data.textures.new('panel_height',type='IMAGE');tex.image=maps['height'];disp=hi.modifiers.new('fasteners_and_seams','DISPLACE');disp.texture=tex;disp.texture_coords='UV';disp.uv_layer=hi.data.uv_layers[0].name;disp.strength=.002;disp.mid_level=.5;bpy.ops.object.modifier_apply(modifier=disp.name)
+tex=bpy.data.textures.new('panel_height',type='IMAGE');tex.image=maps['height'];disp=hi.modifiers.new('fasteners_and_seams','DISPLACE');disp.texture=tex;disp.texture_coords='UV';disp.uv_layer=hi.data.uv_layers[0].name;disp.strength=.008;disp.mid_level=.5;bpy.ops.object.modifier_apply(modifier=disp.name)
 scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=48;bake=scene.render.bake;bake.use_selected_to_active=True;bake.cage_extrusion=.012;bake.max_ray_distance=.03;bake.margin=8
 bm=material('bake_target',(1,1,1));low.data.materials.clear();low.data.materials.append(bm);tn=bm.node_tree.nodes.new('ShaderNodeTexImage');bm.node_tree.nodes.active=tn
 for o in meshes:o.hide_render=True
 for kind,name in [('NORMAL','normal'),('AO','ao')]:
     im=image(name,np.zeros((S,S,3),np.float32));im.scale(1024,1024);tn.image=im;bpy.ops.object.select_all(action='DESELECT');hi.select_set(True);low.select_set(True);bpy.context.view_layer.objects.active=low;bpy.ops.object.bake(type=kind);im.save();maps[name]=im
+# Recover the sub-vertex rivet and lap slopes in the final tangent map.
+px=np.empty(1024*1024*4,np.float32);maps['normal'].pixels.foreach_get(px)
+n=finish_normals(px.reshape(1024,1024,4)[...,:3],height,(metric_x,metric_y),7.0,filter_slopes=True)
+rgba=np.ones((1024,1024,4),np.float32);rgba[...,:3]=n
+maps['normal'].pixels.foreach_set(rgba.ravel());maps['normal'].save()
 for o in meshes:o.hide_render=False
 maps['ao'].scale(S,S);px=np.empty(S*S*4,np.float32);maps['ao'].pixels.foreach_get(px);orm[:,:,0]=np.clip(px.reshape(S,S,4)[:,:,0],.25,1);maps['orm']=image('orm_final',orm);maps['orm'].filepath_raw=str(OUT/'orm.png');maps['orm'].save();silverorm[:,:,0]=orm[:,:,0];maps['silver-orm']=image('silver-orm-final',silverorm);maps['silver-orm'].filepath_raw=str(OUT/'silver-orm.png');maps['silver-orm'].save()
 image('curvature',curvature(height))
@@ -242,7 +256,7 @@ p.inputs['Metallic'].default_value=1;p.inputs['Roughness'].default_value=1
 for key in ['base','normal','orm']:
     im=maps[key].copy();im.name='boot_'+key;im.pack();t=nt.nodes.new('ShaderNodeTexImage');t.image=im
     if key=='base':im.colorspace_settings.name='sRGB';nt.links.new(t.outputs['Color'],p.inputs['Base Color'])
-    elif key=='normal':nn=nt.nodes.new('ShaderNodeNormalMap');nn.inputs['Strength'].default_value=.65;nt.links.new(t.outputs['Color'],nn.inputs['Color']);nt.links.new(nn.outputs['Normal'],p.inputs['Normal'])
+    elif key=='normal':nn=nt.nodes.new('ShaderNodeNormalMap');nn.inputs['Strength'].default_value=1.1;nt.links.new(t.outputs['Color'],nn.inputs['Color']);nt.links.new(nn.outputs['Normal'],p.inputs['Normal'])
     else:sep=nt.nodes.new('ShaderNodeSeparateColor');nt.links.new(t.outputs['Color'],sep.inputs[0]);nt.links.new(sep.outputs['Green'],p.inputs['Roughness']);nt.links.new(sep.outputs['Blue'],p.inputs['Metallic'])
 # Independent alpha-tested stencils conform to the original UV-mapped skin.
 # Clipping keeps this to small patches rather than duplicating the whole airframe.
@@ -275,8 +289,8 @@ for ob in list(meshes):
             for p,uv in poly:vs.append(tuple(p+tri.normal*.006));uvs.append(((uv.x-a)/(b-a),(.5 if row==0 else 0)+(uv.y-c)/(d-c)*.5))
     if fs:
         patch=mesh('stencil_patch',vs,fs,stencil,ob.parent,uvs);patch.matrix_basis=ob.matrix_basis.copy()
-# Glass stays readable over clouds, with authored transmission and an opaque frame.
-glass=material('hero_glass',(.62,.76,.78),.075);p=glass.node_tree.nodes.get('Principled BSDF');p.inputs['Transmission Weight'].default_value=.15;p.inputs['Coat Weight'].default_value=.65;p.inputs['Coat Roughness'].default_value=.08;p.inputs['IOR'].default_value=1.46;p.inputs['Alpha'].default_value=.23;glass.surface_render_method='DITHERED'
+# Low-opacity neutral glazing catches the existing sky environment; opaque framing stays separate.
+glass=material('hero_glass',(.12,.145,.15),.045);p=glass.node_tree.nodes.get('Principled BSDF');p.inputs['Transmission Weight'].default_value=0;p.inputs['Coat Weight'].default_value=.35;p.inputs['Coat Roughness'].default_value=.08;p.inputs['IOR'].default_value=1.46;p.inputs['Alpha'].default_value=.075;glass.surface_render_method='DITHERED'
 for o in meshes:
     for i,m in enumerate(o.data.materials):
         if 'glass' in m.name:
@@ -403,10 +417,10 @@ for o in merged:
             elif source==glass:
                 # Low needs transparent, lightly tinted glass too; an opaque pale material
                 # turns the nose/canopy into white blocks. No transmission/clearcoat shader.
-                simple.diffuse_color=(.18,.25,.28,.23)
+                simple.diffuse_color=(.12,.145,.15,.075)
                 gp=simple.node_tree.nodes.get('Principled BSDF')
-                gp.inputs['Base Color'].default_value=(.18,.25,.28,1)
-                gp.inputs['Alpha'].default_value=.23;gp.inputs['Roughness'].default_value=.12
+                gp.inputs['Base Color'].default_value=(.12,.145,.15,1)
+                gp.inputs['Alpha'].default_value=.075;gp.inputs['Roughness'].default_value=.12
                 gp.inputs['Metallic'].default_value=0;simple.surface_render_method='DITHERED'
             elif parent.name.startswith('prop_'):
                 simple=source # Preserve black blades and yellow-tip source UVs on Low.

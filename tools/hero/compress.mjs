@@ -4,6 +4,7 @@ import {ALL_EXTENSIONS, KHRTextureBasisu} from '@gltf-transform/extensions';
 import {meshopt,textureCompress} from '@gltf-transform/functions';
 import {MeshoptEncoder} from 'meshoptimizer';
 import sharp from 'sharp';
+import { finishNormalPng } from './normal-finish.mjs';
 import {mkdirSync,writeFileSync,statSync,copyFileSync,readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
@@ -29,7 +30,8 @@ const ktx=process.env.TOKTX, basis=process.env.BASISU;
 const names=['base','normal','orm','silver','silver-orm'];
 for(const name of names) {
   const input=src+'/'+name+'-detail.png';
-  await sharp(src+'/'+name+'.png').resize(['base','silver'].includes(name)?2048:1024).png().toFile(input);
+  if(name==='normal') writeFileSync(input,await finishNormalPng(src+'/'+name+'.png',1024,2));
+  else await sharp(src+'/'+name+'.png').resize(['base','silver'].includes(name)?2048:1024).png().toFile(input);
   await sharp(input).webp({quality:95,lossless:!['base','silver'].includes(name)}).toFile(out+'/'+name+'.webp');
   if(ktx) execFileSync(ktx,['--t2','--encode','uastc','--uastc_quality','2','--zcmp','18','--genmipmap','--assign_oetf',['base','silver'].includes(name)?'srgb':'linear',out+'/'+name+'.ktx2',input],{stdio:'inherit'});
   else if(basis) execFileSync(basis,['-ktx2','-uastc','-uastc_level','2','-uastc_rdo_l',name==='normal'?'0.8':'2.0','-mipmap',...(name==='normal'?['-normal_map']:[]),...(['base','silver'].includes(name)?['-srgb']:['-linear']),'-file',input,'-output_file',out+'/'+name+'.ktx2'],{stdio:'inherit'});

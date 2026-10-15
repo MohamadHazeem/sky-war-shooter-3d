@@ -23,6 +23,7 @@ import { ALL_EXTENSIONS, KHRMaterialsClearcoat, KHRMaterialsIOR } from '@gltf-tr
 import { meshopt, textureCompress, prune } from '@gltf-transform/functions';
 import { MeshoptEncoder, MeshoptDecoder } from 'meshoptimizer';
 import sharp from 'sharp';
+import { finishNormalPng } from '../normal-finish.mjs';
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '../../..');
 const SRC = process.env.HERO_SRC ?? join(REPO, 'tools/hero/luftwaffe/out');
@@ -49,6 +50,7 @@ function isolateNamedMeshes(doc) {
 }
 
 async function png(kind, map, size = TEX[map] ?? TEX.base) {
+  if (map === 'normal') return finishNormalPng(readFileSync(join(SRC, `${kind}_${map}.png`)), size);
   return sharp(readFileSync(join(SRC, `${kind}_${map}.png`))).resize(size, size).png().toBuffer();
 }
 
@@ -65,7 +67,8 @@ async function ktx2(kind, map, name) {
   const dir = mkdtempSync(join(tmpdir(), 'herok-'));
   const src = join(dir, `${kind}_${name}.png`);
   writeFileSync(src, await png(kind, map));
-  const args = ['-ktx2', '-uastc', '-uastc_level', '2', '-uastc_rdo_l', name === 'base' ? '0.6' : '1.0', '-mipmap',
+  // The Bf 109's dense atlas needs slightly more colour RDO to retain its 8 MiB budget.
+  const args = ['-ktx2', '-uastc', '-uastc_level', '2', '-uastc_rdo_l', name === 'base' ? (kind === 'bf109' ? '1.3' : '0.6') : '1.0', '-mipmap',
     '-ktx2_zstandard_level', '12', '-output_path', dir];
   if (name !== 'base') args.push('-linear');
   if (name === 'normal') args.push('-normal_map');
@@ -93,12 +96,12 @@ for (const kind of kinds) {
   skin.setBaseColorFactor([1, 1, 1, 1]).setBaseColorTexture(base)
     .setMetallicFactor(1).setRoughnessFactor(1).setMetallicRoughnessTexture(orm)
     .setOcclusionTexture(orm).setOcclusionStrength(1)
-    .setNormalTexture(nrm).setNormalScale(1)
+    .setNormalTexture(nrm).setNormalScale(1.15)
     .setDoubleSided(false).setAlphaMode('OPAQUE');
   if (glass) {
-    glass.setExtension('KHR_materials_clearcoat',doc.createExtension(KHRMaterialsClearcoat).createClearcoat().setClearcoatFactor(.6).setClearcoatRoughnessFactor(.08));
+    glass.setExtension('KHR_materials_clearcoat',doc.createExtension(KHRMaterialsClearcoat).createClearcoat().setClearcoatFactor(.35).setClearcoatRoughnessFactor(.08));
     glass.setExtension('KHR_materials_ior',doc.createExtension(KHRMaterialsIOR).createIOR().setIOR(1.46));
-    glass.setBaseColorFactor([0.52, 0.67, 0.71, 0.26]).setAlphaMode('BLEND').setRoughnessFactor(0.075)
+    glass.setBaseColorFactor([0.12, 0.145, 0.15, 0.085]).setAlphaMode('BLEND').setRoughnessFactor(0.045)
       .setMetallicFactor(0).setDoubleSided(true).setBaseColorTexture(null).setMetallicRoughnessTexture(null);
   }
   isolateNamedMeshes(doc);

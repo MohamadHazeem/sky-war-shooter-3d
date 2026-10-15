@@ -66,7 +66,7 @@ atlas charts, fabric rib tapes, satin paint, and dark steel radial fins/pushrods
 These are plausible material details, not a factory rivet-plan reconstruction.
 Normals/AO now bake at the shipped 1024 resolution with 48 samples; colour remains 2048.
 Curvature controls roughness and is retained as a build intermediate. Basis normal mipmaps
-use normal-map mode and lower RDO loss. Glass has restrained tint and a clearcoat layer.
+use normal-map mode and lower RDO loss. Glass uses low-opacity neutral tint and clearcoat, with the existing sky environment reflection; it has no transmission layer.
 
 Phase 11 QA (port **5321**, bundled headless shell, no desktop browser):
 
@@ -102,3 +102,19 @@ gate checks completion, presets, seed, weather, range, camera, aircraft and arti
 part poses. Close daylight pairs use matched frontal light; dusk uses the production
 dusk weather with the low sun facing the visible aircraft surfaces. No extra light or
 exposure override is added.
+
+### Second review: clear glazing and lighting-driven skin detail
+
+The glass alpha is 0.075 (B-17 including Low) / 0.085 (fighters), with neutral dark tint;
+`Models.ts` / `HeroLook.ts` already bind the dynamic sky reflection. No extra runtime pass.
+Skin laps have asymmetric relief, variable joint widths and staggered B-17 sheet ends.
+Recess colour is restrained and rivet colour highlights are removed. `finish_normals` adds
+metric tangent slopes at 1024 px to recover relief finer than the subdivided source mesh;
+fastener roughness supplies their specular response. `normal-finish.mjs` preserves fine
+slope contrast during export while excluding steep edges and normalizing each texel. This is an offline finish of the
+geometric normal bake, not additional runtime geometry or a higher-resolution texture.
+
+The detail rig also captures `waist-fw190-25m` and `tail-bf109-25m` using the production
+ADS eye and 34-degree field of view. `targetRange` is measured in model metres (world
+range divided by the game's target scale), and the comparison gate requires exactly 25 m.
+Both live and revised assets use identical target, bomber, camera and articulated poses.

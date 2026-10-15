@@ -4,6 +4,20 @@
   "views": [
     {
       "kind": "fw190",
+      "glass": [
+        {
+          "name": "hero_fw190_glass",
+          "opacity": 0.085,
+          "color": [
+            0.12,
+            0.145,
+            0.15
+          ],
+          "envMap": true,
+          "envIntensity": 1.5,
+          "transmission": 0
+        }
+      ],
       "weather": {
         "sunEl": 38,
         "sunAz": 55,
@@ -60,16 +74,30 @@
       ],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 246,
-        "programsAfter": 246,
-        "mean": 4.331111110581292,
-        "p50": 4.299999982118607,
-        "p95": 5.600000023841858,
+        "programsBefore": 244,
+        "programsAfter": 244,
+        "mean": 4.4222222222222225,
+        "p50": 4.5,
+        "p95": 6,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "bf109",
+      "glass": [
+        {
+          "name": "hero_bf109_glass",
+          "opacity": 0.085,
+          "color": [
+            0.12,
+            0.145,
+            0.15
+          ],
+          "envMap": true,
+          "envIntensity": 1.5,
+          "transmission": 0
+        }
+      ],
       "weather": {
         "sunEl": 38,
         "sunAz": 55,
@@ -126,16 +154,30 @@
       ],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 246,
-        "programsAfter": 246,
-        "mean": 4.315555555290646,
-        "p50": 4.100000023841858,
-        "p95": 5.5,
+        "programsBefore": 244,
+        "programsAfter": 244,
+        "mean": 5.095555555820465,
+        "p50": 4.4000000059604645,
+        "p95": 8.599999994039536,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "me262",
+      "glass": [
+        {
+          "name": "hero_me262_glass",
+          "opacity": 0.085,
+          "color": [
+            0.12,
+            0.145,
+            0.15
+          ],
+          "envMap": true,
+          "envIntensity": 1.5,
+          "transmission": 0
+        }
+      ],
       "weather": {
         "sunEl": 38,
         "sunAz": 55,
@@ -192,16 +234,30 @@
       ],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 246,
-        "programsAfter": 246,
-        "mean": 4.153333333465788,
-        "p50": 4.0999999940395355,
-        "p95": 4.800000011920929,
+        "programsBefore": 244,
+        "programsAfter": 244,
+        "mean": 4.497777777910232,
+        "p50": 4.299999982118607,
+        "p95": 6,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "bf110",
+      "glass": [
+        {
+          "name": "hero_bf110_glass",
+          "opacity": 0.085,
+          "color": [
+            0.12,
+            0.145,
+            0.15
+          ],
+          "envMap": true,
+          "envIntensity": 1.5,
+          "transmission": 0
+        }
+      ],
       "weather": {
         "sunEl": 38,
         "sunAz": 55,
@@ -258,16 +314,30 @@
       ],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 246,
-        "programsAfter": 246,
-        "mean": 4.582222221957313,
-        "p50": 4.4000000059604645,
-        "p95": 5.899999976158142,
+        "programsBefore": 244,
+        "programsAfter": 244,
+        "mean": 4.582222222619587,
+        "p50": 4.300000011920929,
+        "p95": 6.399999976158142,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "ju88",
+      "glass": [
+        {
+          "name": "hero_ju88_glass",
+          "opacity": 0.085,
+          "color": [
+            0.12,
+            0.145,
+            0.15
+          ],
+          "envMap": true,
+          "envIntensity": 1.5,
+          "transmission": 0
+        }
+      ],
       "weather": {
         "sunEl": 38,
         "sunAz": 55,
@@ -324,11 +394,11 @@
       ],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 246,
-        "programsAfter": 246,
-        "mean": 4.506666665607028,
+        "programsBefore": 244,
+        "programsAfter": 244,
+        "mean": 4.611111111111111,
         "p50": 4.4000000059604645,
-        "p95": 5.700000017881393,
+        "p95": 6.299999982118607,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     }

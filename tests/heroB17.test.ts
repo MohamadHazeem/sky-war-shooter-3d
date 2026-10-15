@@ -54,7 +54,7 @@ describe('shipped B-17 asset contract', () => {
     expect(qa.pass).toBe(true);
     for(const section of Object.values(qa.sections) as {relativeError:number;tolerance:number}[])expect(section.relativeError).toBeLessThanOrEqual(section.tolerance);
   });
-  it('ships meshopt, UVs, normal/ORM maps and transmission under the download budget', () => {
+  it('ships meshopt, UVs, normal/ORM maps and clear glazing under the download budget', () => {
     const r=asset.getRoot();
     expect(r.listExtensionsRequired().map(e=>e.extensionName)).toContain('EXT_meshopt_compression');
     const stencils=r.listMaterials().find(m=>m.getName()==='hero_stencils')!;
@@ -69,7 +69,7 @@ describe('shipped B-17 asset contract', () => {
     expect(lowGlass.getExtension('KHR_materials_transmission')).toBeNull();
     const skin=r.listMaterials().find(m=>m.getName()==='hero_skin')!;
     expect(skin.getBaseColorTexture()).toBeTruthy();expect(skin.getNormalTexture()).toBeTruthy();expect(skin.getOcclusionTexture()).toBeTruthy();
-    expect(r.listMaterials().some(m=>!!m.getExtension('KHR_materials_transmission'))).toBe(true);
+    expect(r.listMaterials().find(m=>m.getName()==='hero_glass')!.getExtension('KHR_materials_transmission')).toBeNull();
     for(const m of r.listMeshes())for(const p of m.listPrimitives())expect(p.getAttribute('TEXCOORD_0')).toBeTruthy();
     const manifest=JSON.parse(readFileSync('public/models/hero/manifest.json','utf8'));
     expect(manifest.format).toBe('ktx2');expect(manifest.fallback).toBe('webp');

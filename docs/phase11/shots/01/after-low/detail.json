@@ -4,6 +4,32 @@
   "views": [
     {
       "kind": "b17",
+      "glass": [
+        {
+          "name": "hero_glass",
+          "opacity": 0.07500000298023224,
+          "color": [
+            0.11999999731779099,
+            0.14499999582767487,
+            0.15000000596046448
+          ],
+          "envMap": true,
+          "envIntensity": 1.3,
+          "transmission": 0
+        },
+        {
+          "name": "hero_glass_low",
+          "opacity": 0.07500000298023224,
+          "color": [
+            0.11999999731779099,
+            0.14499999582767487,
+            0.15000000596046448
+          ],
+          "envMap": true,
+          "envIntensity": 1.3,
+          "transmission": 0
+        }
+      ],
       "weather": {
         "sunEl": 38,
         "sunAz": 55,
@@ -60,16 +86,30 @@
       ],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 238,
-        "programsAfter": 238,
-        "mean": 4.117777778042687,
-        "p50": 3.7000000178813934,
-        "p95": 6.200000017881393,
+        "programsBefore": 236,
+        "programsAfter": 236,
+        "mean": 2.8133333338631523,
+        "p50": 2.7000000178813934,
+        "p95": 4,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
     {
       "kind": "fw190",
+      "glass": [
+        {
+          "name": "hero_fw190_glass",
+          "opacity": 0.085,
+          "color": [
+            0.12,
+            0.145,
+            0.15
+          ],
+          "envMap": true,
+          "envIntensity": 1.5,
+          "transmission": 0
+        }
+      ],
       "weather": {
         "sunEl": 38,
         "sunAz": 55,
@@ -117,11 +157,11 @@
       "textures": [],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 238,
-        "programsAfter": 238,
-        "mean": 1.3822222219573126,
-        "p50": 1.2000000178813934,
-        "p95": 2.300000011920929,
+        "programsBefore": 236,
+        "programsAfter": 236,
+        "mean": 1.4911111116409301,
+        "p50": 1.199999988079071,
+        "p95": 3.4000000059604645,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     }

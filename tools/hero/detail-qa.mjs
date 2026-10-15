@@ -12,8 +12,9 @@ const report=process.env.DETAIL_MERGE?JSON.parse(await fs.readFile(`${out}/detai
 if(report.quality!==quality)throw Error('Partial recapture quality mismatch');
 report.complete=false;
 try {
- for(const kind of (process.env.DETAIL_KINDS ?? 'b17,fw190,bf109,me262,bf110,ju88,b17-30m,fw190-30m,b17-dusk,b17-beauty,waist-fw190,tail-bf109').split(',')) {
-  const fixture=['b17-beauty','waist-fw190','tail-bf109'].includes(kind);
+ for(const kind of (process.env.DETAIL_KINDS ?? 'b17,fw190,bf109,me262,bf110,ju88,b17-30m,fw190-30m,b17-dusk,b17-beauty,waist-fw190,tail-bf109,waist-fw190-25m,tail-bf109-25m').split(',')) {
+  const fixture=['b17-beauty','waist-fw190','tail-bf109','waist-fw190-25m','tail-bf109-25m'].includes(kind);
+  const fixtureName=kind.replace(/-25m$/, '');
   const context=await browser.newContext({viewport:{width:1920,height:1080},serviceWorkers:'block'});
   if(process.env.DETAIL_BASELINE) await context.route('**/models/**',async route=>{
    const relative=new URL(route.request().url()).pathname.slice('/models/'.length);
@@ -21,9 +22,10 @@ try {
   });
   if(process.env.DETAIL_FALLBACK) await context.route('**/*.ktx2',route=>route.abort());
   const page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));
-  await page.goto(`http://127.0.0.1:5321/tools/visual-rig.html?shot=${fixture?kind:'b17-beauty'}&quality=${quality}`);
+  await page.goto(`http://127.0.0.1:5321/tools/visual-rig.html?shot=${fixture?fixtureName:'b17-beauty'}&quality=${quality}`);
   await page.waitForFunction(()=>window.visualRig?.ready||window.visualRig?.error,null,{timeout:180000});
   const state=await page.evaluate(async ({view,fixture,ktx,night})=>{
+   const midrange=view.endsWith('-25m');
    const kind=view.split('-')[0], range30=view.endsWith('-30m'), dusk=view.endsWith('-dusk');
    const r=window.visualRig;if(r.error)throw Error(r.error);
    const THREE=await import('/node_modules/three/build/three.module.js');
@@ -44,13 +46,15 @@ try {
    if(fixture && view!=='b17-beauty'){
     const gun=r.game.gunner,st=gun.state;
     st.yaw=st.tYaw=st.pitch=st.tPitch=st.vYaw=st.vPitch=0;
-    gun.update(0);r.engine.camera.updateMatrixWorld(true);
-    const enemy=w.aircraft.find(a=>a.team==='axis') ?? w.aircraft.find(a=>a.kind===(view==='waist-fw190'?'fw190':'bf109'));
+    gun.update(0);
+    if(midrange){gun.zoom=true;gun.adsK=1;gun.fov=34;gun.updateCamera(0);}
+    r.engine.camera.updateMatrixWorld(true);
+    const enemy=w.aircraft.find(a=>a.team==='axis') ?? w.aircraft.find(a=>a.kind===(view.startsWith('waist-fw190')?'fw190':'bf109'));
     if(!enemy)throw Error('Missing fixture fighter');
-    const tail=view==='tail-bf109';
-    enemy.pos.copy(r.engine.camera.position).addScaledVector(r.engine.camera.getWorldDirection(new THREE.Vector3()),tail?180:150);
-    enemy.quat.setFromUnitVectors(new THREE.Vector3(0,0,1),new THREE.Vector3(...(tail?[.15,-.65,1]:[-1,-.08,.3])).normalize());
-    enemy.root.rotateZ(tail?.4:-.45);enemy.root.updateMatrixWorld(true);
+    const tail=view.startsWith('tail-bf109');
+    enemy.pos.copy(r.engine.camera.position).addScaledVector(r.engine.camera.getWorldDirection(new THREE.Vector3()),midrange?25*enemy.model.scale.x:(tail?180:150));
+    enemy.quat.setFromUnitVectors(new THREE.Vector3(0,0,1),new THREE.Vector3(...(midrange?(tail?[.85,-.12,-.5]:[-.3,.02,.95]):(tail?[.15,-.65,1]:[-1,-.08,.3]))).normalize());
+    enemy.root.rotateZ(midrange?.55:(tail?.4:-.45));enemy.root.updateMatrixWorld(true);
    }
    if(ktx){
     const hero=await import('/src/world/HeroLook.ts');hero.enableHeroKtx2(r.engine.renderer);
@@ -94,8 +98,10 @@ try {
     const parts=[];plane.model.traverse(o=>{if(articulated.test(o.name))parts.push({name:o.name,quaternion:o.quaternion.toArray()});});
     return {kind:plane.kind,position:plane.pos.toArray(),quaternion:plane.quat.toArray(),scale:plane.model.scale.toArray(),parts:parts.sort((a,b)=>a.name.localeCompare(b.name))};
    };
+   const target=fixture && view!=='b17-beauty'?w.aircraft.find(p=>p.team==='axis'):null;
+   const glass=[];a.model.traverse(o=>{if(o.isMesh && /glass/.test(o.material.name))glass.push({name:o.material.name,opacity:o.material.opacity,color:o.material.color.toArray(),envMap:!!o.material.envMap,envIntensity:o.material.envMapIntensity,transmission:o.material.transmission??0});});
    const textures=[];a.model.traverse(o=>{if(o.isMesh && o.material.name?.startsWith('hero_') && o.material.normalMap)textures.push({name:o.material.name,compressed:!!o.material.map?.isCompressedTexture,normalSize:[o.material.normalMap.image?.width,o.material.normalMap.image?.height]});});
-   return {kind:view,weather:dusk?{sunEl:10,sunAz:55,low:.15,mood:'dusk'}:night?{mood:'night'}:!fixture?{sunEl:38,sunAz:55,low:.15}:r.metadata.weather,fixture,aircraft:fixture?w.aircraft.map(pose):undefined,glow:(night||dusk)?{count:w.effects.glow.count,alpha:Array.from(w.effects.glow.iCol.array.slice(0,8)),visible:w.effects.glow.mesh.visible,night:(await import('/src/render/WeatherState.ts')).weatherNow.night}:undefined,subject:pose(a),modelRange:fixture?cam.position.distanceTo(b.pos)/scale:from.distanceTo(at)/scale,camera:r.metadata.camera,textures:[...new Map(textures.map(t=>[t.name,t])).values()]};
+   return {kind:view,targetRange:target?cam.position.distanceTo(target.pos)/target.model.scale.x:undefined,glass:[...new Map(glass.map(m=>[m.name,m])).values()],weather:dusk?{sunEl:10,sunAz:55,low:.15,mood:'dusk'}:night?{mood:'night'}:!fixture?{sunEl:38,sunAz:55,low:.15}:r.metadata.weather,fixture,aircraft:fixture?w.aircraft.map(pose):undefined,glow:(night||dusk)?{count:w.effects.glow.count,alpha:Array.from(w.effects.glow.iCol.array.slice(0,8)),visible:w.effects.glow.mesh.visible,night:(await import('/src/render/WeatherState.ts')).weatherNow.night}:undefined,subject:pose(a),modelRange:fixture?cam.position.distanceTo(b.pos)/scale:from.distanceTo(at)/scale,camera:r.metadata.camera,textures:[...new Map(textures.map(t=>[t.name,t])).values()]};
   },{view:kind,fixture,ktx:!!process.env.DETAIL_KTX2 && !fixture && !kind.startsWith('b17'),night:!!process.env.DETAIL_NIGHT});
   // Compact exact pose fingerprints avoid repeating thousands of identical pivots.
   for(const pose of [state.subject,...(state.aircraft ?? [])]){

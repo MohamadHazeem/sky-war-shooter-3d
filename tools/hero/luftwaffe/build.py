@@ -486,8 +486,10 @@ for kind in KINDS:
     for o in originals:
         o.hide_render = False
     tex = paint.paint(m, maps, SIZE)
-    relief, relief_vertices = bake_relief(opaque, tex.pop('height'), kind)
-    tex['normal'] = relief['normal']
+    height=tex.pop('height')
+    relief, relief_vertices = bake_relief(opaque, height, kind)
+    from detail import finish_normals
+    tex['normal'] = finish_normals(relief['normal'],height,(tex.pop('metric_x'),tex.pop('metric_y')),2.0)
     # AO comes from the relief source; pack it at the same 1024 size as the shipped ORM.
     orm=tex['orm'].reshape(1024,2,1024,2,3).mean(axis=(1,3))
     orm[...,0]=np.minimum(orm[...,0],np.clip(relief['ao'][...,0],.3,1))
