@@ -9,13 +9,18 @@ import { onBackKey } from './serviceCommon';
 // timeline runs full width along the bottom with 40 px+ buttons, and the free camera gets an
 // on-screen move pad (a thumb stick plus up / down). Dragging the view orbits / looks and two
 // fingers pinch to zoom (Theatre.ts). The desktop layout is unchanged.
+//
+// Phase 11 goal 20 adds a Chase camera (5), 0.1x, and to the photo panel: the film look, a
+// "Slow motion on moments" switch, "Share card" and "Record clip" (a red REC tag in the top
+// bar while a clip records).
 import { tx, isAr } from '../i18n';
 import { stickValue } from '../core/Touch';
+import { STUDIO_LOOKS, LOOK_LABEL, type StudioLook } from '../game/ReplayStudio';
 
-export type CamMode = 'player' | 'orbit' | 'free' | 'director';
-export const SPEEDS = [0.25, 0.5, 1, 2];
-/** camera modes in button / cycling order (keys 1–4, gamepad Y) */
-export const MODE_ORDER: CamMode[] = ['player', 'orbit', 'free', 'director'];
+export type CamMode = 'player' | 'orbit' | 'free' | 'director' | 'chase';
+export const SPEEDS = [0.1, 0.25, 0.5, 1, 2];
+/** camera modes in button / cycling order (keys 1–5, gamepad Y) */
+export const MODE_ORDER: CamMode[] = ['player', 'orbit', 'free', 'director', 'chase'];
 
 export interface PhotoSettings {
   fov: number;        // degrees; 0 = automatic (recorded / per shot)
@@ -32,6 +37,7 @@ export interface TheatreControl {
   readonly t: number; readonly t0: number; readonly t1: number;
   readonly playing: boolean; readonly speed: number; readonly mode: CamMode; readonly orbitId: number;
   readonly photo: PhotoSettings; readonly title: string;
+  readonly look: StudioLook; readonly slowmo: boolean; readonly recording: boolean;
   marks(): TimelineMark[];
   aircraft(): AircraftItem[];
   present(id: number): boolean;
@@ -42,6 +48,11 @@ export interface TheatreControl {
   /** free camera move pad (touch): strafe right, up, forward, each -1..1 */
   setMove(x: number, y: number, z: number): void;
   screenshot(): Promise<string>; saveMoment(): Promise<string>;
+  setLook(l: StudioLook): void; setSlowmo(on: boolean): void;
+  /** one-click share card of the current view */
+  shareCard(): Promise<string>;
+  /** starts (or stops) a WebM clip of the best moment; returns the status line */
+  recordClip(): string;
   close(): void;
 }
 
@@ -58,6 +69,11 @@ const CSS = `
 #theatre .th-k { font: 600 12px/1 "IBM Plex Mono", monospace; letter-spacing: 3px; color: #d9573f; }
 #theatre .th-title { font-size: 17px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #theatre .th-sp { flex: 1; }
+#theatre .th-rec { display: none; font: 600 12px/1 "IBM Plex Mono", monospace; letter-spacing: 2px; color: #fff; background: #c4362a; padding: 4px 8px; animation: thRec 1s steps(2) infinite; }
+#theatre.rec .th-rec { display: block; }
+@keyframes thRec { 50% { opacity: .45; } }
+#theatre .th-chk { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+#theatre .th-chk input { width: 18px; height: 18px; accent-color: var(--khaki, #b9a76f); }
 #theatre .th-h { font: 11px/1 "IBM Plex Mono", monospace; letter-spacing: 2px; color: var(--ink-dim, #b9b19b); margin: 12px 0 7px; text-transform: uppercase; }
 #theatre .th-h small { letter-spacing: 1px; opacity: .7; }
 #theatre .th-h:first-child { margin-top: 0; }
@@ -171,7 +187,7 @@ html[dir=rtl] #theatreLib .box { text-align: right; }
 `;
 
 const TICK_COL: Record<number, string> = { 2: '#e0b445', 3: '#d9573f', 4: '#d9573f', 5: '#6fb3d9', 6: '#6fb3d9' };
-const MODE_LABEL: Record<CamMode, string> = { player: 'Player', orbit: 'Orbit', free: 'Free', director: 'Director' };
+const MODE_LABEL: Record<CamMode, string> = { player: 'Player', orbit: 'Orbit', free: 'Free', director: 'Director', chase: 'Chase' };
 const MODES: [CamMode, string][] = MODE_ORDER.map((m) => [m, MODE_LABEL[m]]);
 /** the compact (phone / touch) layout */
 const compactView = () => document.body.classList.contains('touch') || innerHeight <= 520;
@@ -199,7 +215,7 @@ export class TheatreScreen {
   private c: TheatreControl | null = null;
   private els: Record<string, HTMLElement> = {};
   private listBtns = new Map<number, HTMLElement>();
-  private last = { playing: false, mode: '', speed: -1, orbit: -2, mark: '' };
+  private last = { playing: false, mode: '', speed: -1, orbit: -2, mark: '', rec: false };
   private listT = 0;
   private marks: TimelineMark[] = [];
   private dragging = false;
@@ -214,7 +230,7 @@ export class TheatreScreen {
     const r = document.createElement('div');
     r.id = 'theatre';
     r.innerHTML = `
-      <div class="th-top th-panel"><div class="th-k">${tx('REPLAY THEATRE')}</div><div class="th-title">${esc(tx(c.title))}</div><div class="th-sp"></div>
+      <div class="th-top th-panel"><div class="th-k">${tx('REPLAY THEATRE')}</div><div class="th-title">${esc(tx(c.title))}</div><div class="th-rec">● ${tx('REC')}</div><div class="th-sp"></div>
         <button class="th-dbtn" data-a="dcam" aria-expanded="false">${tx('Camera')}</button><button class="th-dbtn" data-a="dphoto" aria-expanded="false">${tx('Photo')}</button>
         <button data-a="hide" title="${tx('Hide the interface (H)')}">${tx('Hide UI')}</button><button data-a="exit" title="${tx('Back (Esc)')}">${tx('Exit')}</button></div>
       <div class="th-left th-panel">
@@ -222,7 +238,7 @@ export class TheatreScreen {
         <div class="th-modes">${MODES.map(([m, l], i) => `<button data-m="${m}" title="${tx(l)} (${i + 1})">${tx(l)}</button>`).join('')}</div>
         <div class="th-h">${tx('Aircraft')} <small>${tx('· Tab cycles')}</small></div>
         <div class="th-list"></div>
-        <div class="th-help th-help-keys">${tx('Space play/pause · ←/→ frame · Shift+←/→ 5 s · ,/. moments · 1–4 camera · Free: WASD Q/E, drag to look, Shift fast · Orbit: drag, wheel · H hide UI · Esc exit')}</div>
+        <div class="th-help th-help-keys">${tx('Space play/pause · ←/→ frame · Shift+←/→ 5 s · ,/. moments · 1–5 camera · Free: WASD Q/E, drag to look, Shift fast · Orbit: drag, wheel · H hide UI · Esc exit')}</div>
         <div class="th-help th-help-touch">${tx('Drag to orbit or look around · pinch with two fingers to zoom · Free camera: the move pad bottom left, ▲ ▼ up / down')}</div>
       </div>
       <div class="th-move th-panel">
@@ -237,7 +253,11 @@ export class TheatreScreen {
         <label>${tx('Focus distance')} <span data-v="focus"></span><input type="range" data-p="focus" min="2" max="400" step="1"></label>
         <label>${tx('Exposure')} <span data-v="exposure"></span><input type="range" data-p="exposure" min="0.3" max="2.5" step="0.05"></label>
         <label>${tx('Resolution')}<select data-p="res"><option value="1">${tx('Screen')}</option><option value="2">${tx('2× screen')}</option><option value="3">${tx('3× screen')}</option></select></label>
+        <label>${tx('Film look')}<select data-look>${STUDIO_LOOKS.map((l) => `<option value="${l}">${tx(LOOK_LABEL[l])}</option>`).join('')}</select></label>
+        <label class="th-chk"><input type="checkbox" data-slowmo> ${tx('Slow motion on moments')}</label>
         <button class="th-btn" data-a="shot">${tx('Save screenshot')}</button>
+        <button class="th-btn" data-a="card" title="${tx('The current view as a picture card with the mission, the moment and your kills')}">${tx('Share card')}</button>
+        <button class="th-btn" data-a="clip" title="${tx('Plays the best moment and saves it as a short WebM video')}">${tx('Record clip')}</button>
         <div class="th-h" style="margin-top:16px">${tx('Moments')}</div>
         <button class="th-btn" data-a="moment" title="${tx('Keep the 15 s around the playhead (up to 5 saved)')}">${tx('Save moment')}</button>
         <div class="th-status"></div>
@@ -267,6 +287,8 @@ export class TheatreScreen {
     r.querySelectorAll<HTMLButtonElement>('[data-a]').forEach((b) => b.addEventListener('click', () => this.action(b.dataset.a!)));
     r.querySelectorAll<HTMLButtonElement>('[data-m]').forEach((b) => b.addEventListener('click', () => c.setMode(b.dataset.m as CamMode)));
     r.querySelectorAll<HTMLButtonElement>('[data-s]').forEach((b) => b.addEventListener('click', () => c.setSpeed(+b.dataset.s!)));
+    r.querySelector<HTMLSelectElement>('[data-look]')!.addEventListener('change', (ev) => c.setLook((ev.target as HTMLSelectElement).value as StudioLook));
+    r.querySelector<HTMLInputElement>('[data-slowmo]')!.addEventListener('change', (ev) => c.setSlowmo((ev.target as HTMLInputElement).checked));
     r.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-p]').forEach((inp) => inp.addEventListener('input', () => {
       c.setPhoto({ [inp.dataset.p!]: +inp.value } as Partial<PhotoSettings>);
       this.syncPhoto();
@@ -281,7 +303,7 @@ export class TheatreScreen {
     this.refreshMarks();
     this.buildList();
     this.syncPhoto();
-    this.last = { playing: !c.playing, mode: '', speed: -1, orbit: -2, mark: '' };
+    this.last = { playing: !c.playing, mode: '', speed: -1, orbit: -2, mark: '', rec: !c.recording };
     this.update(1);
   }
 
@@ -393,6 +415,10 @@ export class TheatreScreen {
     set('exposure', p.exposure, p.exposure.toFixed(2));
     const sel = r.querySelector<HTMLSelectElement>('[data-p="res"]');
     if (sel) sel.value = String(p.res);
+    const look = r.querySelector<HTMLSelectElement>('[data-look]');
+    if (look) look.value = c.look;
+    const sm = r.querySelector<HTMLInputElement>('[data-slowmo]');
+    if (sm) sm.checked = c.slowmo;
   }
 
   private bindTrack() {
@@ -427,6 +453,8 @@ export class TheatreScreen {
       case 'fovauto': c.setPhoto({ fov: 0 }); this.syncPhoto(); break;
       case 'shot': this.status('Rendering…'); c.screenshot().then((s) => this.status(s)); break;
       case 'moment': this.status('Saving…'); c.saveMoment().then((s) => this.status(s)); break;
+      case 'card': this.status('Rendering…'); c.shareCard().then((s) => this.status(s)); break;
+      case 'clip': this.status(c.recordClip()); break;
     }
   }
 
@@ -448,6 +476,12 @@ export class TheatreScreen {
       this.root.classList.toggle('m-free', c.mode === 'free');
       const mb = this.root.querySelector<HTMLElement>('[data-a="mode"]');
       if (mb) mb.textContent = `◉ ${tx(MODE_LABEL[c.mode])}`;
+    }
+    if (L.rec !== c.recording) {
+      L.rec = c.recording;
+      this.root.classList.toggle('rec', c.recording);
+      const b = this.root.querySelector<HTMLElement>('[data-a="clip"]');
+      if (b) { b.textContent = tx(c.recording ? 'Stop recording' : 'Record clip'); b.classList.toggle('on', c.recording); }
     }
     if (L.speed !== c.speed) {
       L.speed = c.speed;

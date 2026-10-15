@@ -17,7 +17,12 @@ import {
   Recorder, type ClipData, type EntityMeta, findFrame, samplePose, sampleCamera, sliceClip, markLabel,
   MAX_ENT, GUN_SLOTS, F_ALIVE, F_FIRE, stageOf, EV_KILL, EV_EXPLOSION, EV_FLAK, MK_KILL,
 } from './Recorder';
-import { tx } from '../i18n';
+import { tx, isAr } from '../i18n';
+import {
+  type StudioLook, studioLook, momentSpeed, bestWindow, pickVideoType, studioFileName, chaseOffset, coverCrop, drawCard,
+  LOOK_LABEL, CARD_W, CARD_H, CLIP_FPS, CLIP_BITRATE, CLIP_REAL_MAX,
+} from './ReplayStudio';
+import { GAME_NAME, SHARE_URL, loadFonts, shareFile, toast } from './Share';
 import { achievements } from './Achievements';
 import { TheatreScreen, SPEEDS, MODE_ORDER, type CamMode, type PhotoSettings, type TheatreControl, type TimelineMark, type AircraftItem, type MomentItem } from '../ui/TheatreScreen';
 import type { TheatreAxes, TheatrePad } from '../core/Gamepad';
@@ -47,6 +52,12 @@ import type { TheatreAxes, TheatrePad } from '../core/Gamepad';
 // player's film look), with a title card; any key or click ends it. The director's camera
 // language includes a long lens from a neighbouring B-17 and a wing-tip camera; every
 // director shot focuses the film look's DOF on its subject.
+//
+// Replay and photo mode 2.0 (Phase 11 goal 20, ReplayStudio.ts): a chase camera (key 5) behind
+// the selected aircraft, 0.1x playback and an automatic slow-motion ramp through every moment,
+// the theatre's own film look (restored to Settings on exit), a one-click 1200x675 share card
+// of the current view, and "Record clip": the best moment replayed and captured from the
+// canvas as a WebM video (MediaRecorder), then downloaded.
 
 const MAX_SAVED = 5;
 const MOMENT_BEFORE = 10, MOMENT_AFTER = 5;
@@ -138,6 +149,8 @@ export class Theatre implements TheatreControl, TheatrePad {
   orbitId = -1;
   photo: PhotoSettings = { fov: 0, dof: 0, focus: 60, exposure: 1, res: 1 };
   title = '';
+  look: StudioLook = 'auto';
+  slowmo = false;
   // playback
   private prevT = 0;
   private jumped = true;
@@ -189,6 +202,10 @@ export class Theatre implements TheatreControl, TheatrePad {
   private padFast = false;
   private touchMove = new THREE.Vector3();
   private busy = false;
+  // chase camera: smoothed offset from the subject (world axes)
+  private chase = { off: new THREE.Vector3(), init: false };
+  // a WebM clip being recorded
+  private clipRec: { mr: MediaRecorder; stream: MediaStream; end: number; left: number; label: string } | null = null;
 
   constructor(private engine: Engine, private input: Input, private ui: UI, private game: Game) {
     this.rec.origin = Atmos.originOffset;   // the live offset object (mutated by rebases)
@@ -419,6 +436,9 @@ export class Theatre implements TheatreControl, TheatrePad {
     this.playing = true;
     this.speed = 1;
     this.mode = 'director';
+    this.look = 'auto';
+    this.slowmo = false;
+    this.chase.init = false;
     this.orbitId = clip.playerId >= 0 && this.byId.has(clip.playerId) ? clip.playerId : (clip.meta[0]?.id ?? -1);
     this.orbit.dist = 0;
     this.dir.end = -1;
@@ -450,6 +470,7 @@ export class Theatre implements TheatreControl, TheatrePad {
   close() {
     if (!this.active) return;
     const e = this.engine, w = this.game.world;
+    this.finishClip();
     this.active = false;
     removeEventListener('keydown', this.onKey, true);
     removeEventListener('keyup', this.onKeyUp, true);
@@ -485,6 +506,7 @@ export class Theatre implements TheatreControl, TheatrePad {
     p.exposure = s.exposure; p.motionBlur = s.motionBlur; p.damageFlash = s.damageFlash; p.desat = s.desat; p.flash = s.flash; p.zoomPulse = s.zoomPulse;
     if (this.reel) { this.reel = null; this.overlay.show(false); this.overlay.setFade(0); }
     p.film.setShot(null);
+    p.film.setLook(this.game.settings.filmLook);   // the theatre's film look was its own
     p.film.heroes = this.savedHeroes;
     e.camera.up.set(0, 1, 0);
     this.snap.restore(e);
@@ -562,6 +584,7 @@ export class Theatre implements TheatreControl, TheatrePad {
     }
     if (m === 'orbit' && this.mode !== 'orbit') this.orbitFromCamera();
     if (m === 'director') this.dir.end = -1;
+    if (m === 'chase') this.chase.init = false;
     this.mode = m;
     this.engine.post.resetHistory();
   }
@@ -570,6 +593,7 @@ export class Theatre implements TheatreControl, TheatrePad {
     const changed = id !== this.orbitId;
     this.orbitId = id;
     if (changed) this.orbit.dist = 0;
+    if (this.mode === 'chase') { if (changed) this.chase.init = false; return; }   // chase follows the pick
     if (this.mode !== 'orbit') this.setMode('orbit');
     else if (changed) this.orbitFromCamera();
   }
@@ -635,6 +659,121 @@ export class Theatre implements TheatreControl, TheatrePad {
     a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
     return `Saved ${this.lastShot.w}×${this.lastShot.h} PNG`;
+  }
+
+  // ---------------- replay and photo mode 2.0 ----------------
+
+  /** The theatre's film stock ('auto' = the player's Settings look). */
+  setLook(l: StudioLook) {
+    this.look = l;
+    this.engine.post.film.setLook(studioLook(l, this.game.settings.filmLook));
+  }
+  setSlowmo(on: boolean) { this.slowmo = on; }
+  get recording() { return !!this.clipRec; }
+
+  /** Kills credited to the player in the open recording. */
+  private playerKills() {
+    const c = this.clip;
+    let n = 0;
+    if (c) for (let i = 0; i < c.evN; i++) if (c.evType[i] === EV_KILL && c.evS[i] > 0) n++;
+    return n;
+  }
+
+  /** The label of the major moment nearest the playhead (within 6 s), else 'Moment'. */
+  private momentHere() {
+    let label = 'Moment', bd = 6;
+    for (const m of this.marks()) { const d = Math.abs(m.t - this.t); if (d < bd && m.major) { bd = d; label = m.label; } }
+    return label;
+  }
+
+  /** One click: the current view as a 1200x675 card with the title, the moment and the
+   *  kills, shared (Web Share with files) or downloaded. */
+  async shareCard(): Promise<string> {
+    if (!this.clip || this.busy) return '';
+    this.busy = true;
+    try {
+      await loadFonts();
+      const e = this.engine, cv = e.renderer.domElement;
+      this.applyLens();
+      e.post.resetHistory();
+      e.render(1 / 60);
+      // the drawing buffer is only valid in this task: compose right away
+      const card = document.createElement('canvas');
+      card.width = CARD_W; card.height = CARD_H;
+      const ctx = card.getContext('2d');
+      if (!ctx) return 'Screenshot failed';
+      const [sx, sy, sw, sh] = coverCrop(cv.width, cv.height, CARD_W, CARD_H);
+      ctx.drawImage(cv, sx, sy, sw, sh, 0, 0, CARD_W, CARD_H);
+      const kills = this.playerKills(), moment = this.momentHere();
+      drawCard(ctx, {
+        game: GAME_NAME, title: tx(this.title), moment: tx(moment),
+        stats: kills === 1 ? tx('1 kill in this replay') : tx('{n} kills in this replay', { n: kills }),
+        look: tx(LOOK_LABEL[this.look === 'auto' ? this.engine.post.film.lookName : this.look]),
+        url: SHARE_URL, rtl: isAr(),
+      });
+      const blob = await new Promise<Blob | null>((res) => card.toBlob(res, 'image/png'));
+      if (!blob) return 'Screenshot failed';
+      const text = `${moment} — ${this.title} · ${kills} kill${kills === 1 ? '' : 's'} — ${GAME_NAME}`;
+      const out = await shareFile(blob, studioFileName('card', this.title, 'png', new Date()), text, 'Card saved');
+      return out === 'shared' ? 'Card shared' : out === 'cancelled' ? '' : 'Card saved';
+    } catch (err) {
+      console.warn('Theatre: card failed', err);
+      return 'Screenshot failed';
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  /** Starts (or stops) a WebM clip of the best moment: seeks there, plays it (with the
+   *  current camera, speed, slow motion and film look) and records the canvas. */
+  recordClip(): string {
+    if (this.clipRec) { this.finishClip(); return 'Saving clip…'; }
+    const cv = this.engine.renderer.domElement as HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream };
+    const type = typeof MediaRecorder === 'undefined' ? '' : pickVideoType((t) => MediaRecorder.isTypeSupported(t));
+    if (!type || typeof cv.captureStream !== 'function') return 'Video clips are not supported in this browser';
+    const c = this.clip;
+    if (!c) return '';
+    const marks = [];
+    for (let i = 0; i < c.mkN; i++) marks.push({ t: c.mkT[i], type: c.mkType[i], a: c.mkA[i], label: markLabel(c.mkType[i], c.mkA[i]) });
+    const win = bestWindow(marks, this.t0, this.t1, this.t);
+    if (win.end - win.start < 0.5) return 'Nothing to save here';
+    let stream: MediaStream, mr: MediaRecorder;
+    try {
+      stream = cv.captureStream(CLIP_FPS);
+      mr = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: CLIP_BITRATE });
+    } catch (err) {
+      console.warn('Theatre: clip recorder failed', err);
+      return 'Video clips are not supported in this browser';
+    }
+    const chunks: Blob[] = [];
+    const title = this.title, label = win.label;
+    mr.ondataavailable = (ev) => { if (ev.data.size) chunks.push(ev.data); };
+    mr.onstop = () => {
+      for (const tr of stream.getTracks()) tr.stop();
+      if (!chunks.length) { toast('Could not record the clip'); return; }
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const a = document.createElement('a');
+      a.download = studioFileName('clip', `${label} ${title}`, 'webm', new Date());
+      a.href = URL.createObjectURL(blob);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 8000);
+      toast('Clip saved (WebM video)');
+      this.screen.status('Clip saved (WebM video)');
+    };
+    this.seek(win.start);
+    this.playing = true;
+    this.clipRec = { mr, stream, end: win.end, left: CLIP_REAL_MAX, label };
+    mr.start(250);
+    return 'Recording the best moment…';
+  }
+
+  private finishClip() {
+    const r = this.clipRec;
+    if (!r) return;
+    this.clipRec = null;
+    try { if (r.mr.state !== 'inactive') r.mr.stop(); } catch { for (const tr of r.stream.getTracks()) tr.stop(); }
   }
 
   /** Last capture's pixel size (for the status line / tests). */
@@ -708,9 +847,12 @@ export class Theatre implements TheatreControl, TheatrePad {
     const real = Math.min(0.1, Math.max(0, dt));
     if (this.reel && !this.reelFrame(real)) return;
     if (this.playing && !this.jumped) {
-      this.t += real * this.speed;
+      const c = this.clip!;
+      this.t += real * (this.slowmo && !this.reel ? momentSpeed(this.t, c.mkT, c.mkN, this.speed) : this.speed);
       if (this.t >= this.t1) { this.t = this.t1; this.playing = false; }
     }
+    const cr = this.clipRec;
+    if (cr) { cr.left -= real; if (this.t >= cr.end || !this.playing || cr.left <= 0) this.finishClip(); }
     const pdt = this.jumped ? 0 : Math.max(0, this.t - this.prevT);
     this.pdt = pdt;
     this.apply(pdt);
@@ -835,6 +977,7 @@ export class Theatre implements TheatreControl, TheatrePad {
         break;
       case 'orbit': fov = this.orbitCam(real); break;
       case 'free': this.freeCam(real); break;
+      case 'chase': fov = this.chaseCam(real); break;
       case 'director': {
         const r = this.director(real);
         fov = r.fov; pov = r.pov;
@@ -892,6 +1035,24 @@ export class Theatre implements TheatreControl, TheatrePad {
     cam.up.copy(UP);
     cam.lookAt(px.root.position);
     return 50;
+  }
+
+  // Chase: behind and above the selected aircraft along its flight path, the offset smoothed
+  // in the subject's frame so a 150 m/s fighter never outruns the camera.
+  private chaseCam(real: number): number {
+    const px = this.byId.get(this.orbitId) ?? this.player, cam = this.engine.camera, ch = this.chase;
+    if (!px || !px.present) return 50;
+    _a.copy(px.vel);
+    if (_a.lengthSq() < 4) _a.set(0, 0, 1).applyQuaternion(px.root.quaternion);   // nose is +Z
+    _a.normalize();
+    _b.set(0, 1, 0).applyQuaternion(px.root.quaternion).lerp(UP, 0.6).normalize();   // bank a little with it
+    chaseOffset(_a, _b, px.meta.radius, _v);
+    if (!ch.init) { ch.off.copy(_v); ch.init = true; } else ch.off.lerp(_v, 1 - Math.exp(-real * 3));
+    cam.position.copy(px.root.position).add(ch.off);
+    cam.up.copy(UP);
+    cam.lookAt(_p.copy(px.root.position).addScaledVector(_a, Math.max(10, px.meta.radius * 2)));
+    this.engine.post.film.focusTarget = ch.off.length();
+    return 55;
   }
 
   private freeCam(real: number) {
@@ -1109,6 +1270,7 @@ export class Theatre implements TheatreControl, TheatrePad {
       case 'Digit2': this.setMode('orbit'); break;
       case 'Digit3': this.setMode('free'); break;
       case 'Digit4': this.setMode('director'); break;
+      case 'Digit5': this.setMode('chase'); break;
       case 'BracketLeft': this.speed = SPEEDS[Math.max(0, SPEEDS.indexOf(this.speed) - 1)]; break;
       case 'BracketRight': this.speed = SPEEDS[Math.min(SPEEDS.length - 1, SPEEDS.indexOf(this.speed) + 1)]; break;
       case 'KeyH': if (!e.repeat) this.screen.toggleHidden(); break;
