@@ -1,0 +1,28 @@
+{
+  "bf109": {
+    "files": {
+      "bf109.glb": 1178524,
+      "bf109_ace.webp": 411382,
+      "bf109_base.ktx2": 2611478,
+      "bf109_normal.ktx2": 151655,
+      "bf109_orm.ktx2": 811210
+    },
+    "totalBytes": 5164249,
+    "lod0": 47039,
+    "lod1": 10000,
+    "lod2": 2599
+  },
+  "fw190": {
+    "files": {
+      "fw190.glb": 1489568,
+      "fw190_ace.webp": 462130,
+      "fw190_base.ktx2": 2440794,
+      "fw190_normal.ktx2": 84755,
+      "fw190_orm.ktx2": 842593
+    },
+    "totalBytes": 5319840,
+    "lod0": 66980,
+    "lod1": 10000,
+    "lod2": 2600
+  }
+}

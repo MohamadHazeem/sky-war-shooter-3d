@@ -1,0 +1,108 @@
+{
+ "_method": {
+  "references": "tools/hero/luftwaffe/silhouette/refs.json",
+  "scale": "uniform per sheet from captioned span",
+  "registration": "translation only",
+  "open_m": 0.04,
+  "tolerance_m": 0.06,
+  "gate": {
+   "top": 0.88,
+   "side": 0.85,
+   "front": 0.75
+  }
+ },
+ "bf109": {
+  "reference": "https://archive.org/details/USANJOR194501/page/n55",
+  "publication": "U.S. Army-Navy Journal of Recognition, January 1945, p. 15",
+  "ppm": 67.39,
+  "live": {
+   "file": "/tmp/01b-live/bf109.glb",
+   "top": {
+    "iou": 0.9074,
+    "tolerant": 0.975,
+    "extra": 0.0655,
+    "missing": 0.0271
+   },
+   "side": {
+    "iou": 0.9,
+    "tolerant": 0.982,
+    "extra": 0.0877,
+    "missing": 0.0123
+   },
+   "front": {
+    "iou": 0.7588,
+    "tolerant": 0.9133,
+    "extra": 0.1828,
+    "missing": 0.0585
+   }
+  },
+  "hero": {
+   "file": "public/models/bf109.glb",
+   "top": {
+    "iou": 0.9215,
+    "tolerant": 0.9882,
+    "extra": 0.0199,
+    "missing": 0.0586
+   },
+   "side": {
+    "iou": 0.8927,
+    "tolerant": 0.9683,
+    "extra": 0.0308,
+    "missing": 0.0765
+   },
+   "front": {
+    "iou": 0.7316,
+    "tolerant": 0.9304,
+    "extra": 0.0144,
+    "missing": 0.254
+   }
+  }
+ },
+ "fw190": {
+  "reference": "https://archive.org/details/Fm30-30/page/n112",
+  "publication": "War Department FM 30-30 / Navy BuAer 3, Aircraft Recognition Pictorial Manual, April 1943",
+  "ppm": 76.93,
+  "live": {
+   "file": "/tmp/01b-live/fw190.glb",
+   "top": {
+    "iou": 0.9118,
+    "tolerant": 0.977,
+    "extra": 0.0391,
+    "missing": 0.0492
+   },
+   "side": {
+    "iou": 0.9466,
+    "tolerant": 0.9974,
+    "extra": 0.0469,
+    "missing": 0.0065
+   },
+   "front": {
+    "iou": 0.7468,
+    "tolerant": 0.9565,
+    "extra": 0.0823,
+    "missing": 0.1708
+   }
+  },
+  "hero": {
+   "file": "public/models/fw190.glb",
+   "top": {
+    "iou": 0.9399,
+    "tolerant": 0.9905,
+    "extra": 0.0345,
+    "missing": 0.0256
+   },
+   "side": {
+    "iou": 0.83,
+    "tolerant": 0.9286,
+    "extra": 0.1036,
+    "missing": 0.0665
+   },
+   "front": {
+    "iou": 0.7065,
+    "tolerant": 0.9014,
+    "extra": 0.1012,
+    "missing": 0.1923
+   }
+  }
+ }
+}

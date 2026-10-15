@@ -2,15 +2,17 @@
 import {NodeIO, Document} from '@gltf-transform/core';
 import {ALL_EXTENSIONS, KHRTextureBasisu} from '@gltf-transform/extensions';
 import {meshopt,textureCompress} from '@gltf-transform/functions';
-import {MeshoptEncoder} from 'meshoptimizer';
+import {MeshoptEncoder, MeshoptDecoder} from 'meshoptimizer';
+import {replaceCrew} from './sketchfab/replace-crew.mjs';
 import sharp from 'sharp';
 import {mkdirSync,writeFileSync,statSync,copyFileSync,readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
 const src=resolve('tools/hero/output'),out=resolve('public/models/hero');mkdirSync(out,{recursive:true});
-await MeshoptEncoder.ready;
-const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'meshopt.encoder':MeshoptEncoder});
+await Promise.all([MeshoptEncoder.ready, MeshoptDecoder.ready]);
+const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'meshopt.encoder':MeshoptEncoder,'meshopt.decoder':MeshoptDecoder});
 const doc=await io.read(src+'/b17.glb');
+await replaceCrew(doc,await io.read('public/models/seated-crew.glb'));
 // GLTFLoader names unnamed nodes after their mesh. Never let these shadow a pivot.
 doc.getRoot().listMeshes().forEach((m,i)=>m.setName('hero_geometry_'+i));
 for(const n of doc.getRoot().listNodes()) if(n.getMesh()) {

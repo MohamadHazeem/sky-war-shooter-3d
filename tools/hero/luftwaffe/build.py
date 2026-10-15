@@ -61,6 +61,8 @@ def reset():
     sc = bpy.context.scene
     sc.render.engine = 'CYCLES'
     try:
+        if os.environ.get('HERO_CPU') == '1':
+            raise RuntimeError('CPU bake requested')
         prefs = bpy.context.preferences.addons['cycles'].preferences
         prefs.compute_device_type = 'METAL'
         prefs.get_devices()

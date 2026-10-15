@@ -101,9 +101,8 @@ if (q.get('pilot') === '1') {
   });
   document.getElementById('l').textContent = `${kind} pilot`;
   window.ready = { tris: 0, size: size.toArray(), ktx2: ktxInfo };
-  throw new Error('pilot view done');
-}
-if (q.get('cam')) {
+
+} else if (q.get('cam')) {
   // one full-frame view: ?cam=x,y,z&at=x,y,z (model metres, +Z nose, +X left wing)
   const c = q.get('cam').split(',').map(Number), a = (q.get('at') ?? '0,0,0').split(',').map(Number);
   cam.aspect = W / H; cam.fov = Number(q.get('fov') ?? 30); cam.updateProjectionMatrix();
@@ -111,8 +110,7 @@ if (q.get('cam')) {
   renderer.render(scene, cam);
   document.getElementById('l').textContent = `${kind} lod${lod}`;
   window.ready = { tris: 0, size: size.toArray(), ktx2: ktxInfo };
-  throw new Error('single view done');
-}
+} else {
 renderer.setScissorTest(true);
 const yaw0 = Number(q.get('yaw') ?? 0);
 views.forEach(([yaw, el, k, off], i) => {
@@ -127,6 +125,7 @@ views.forEach(([yaw, el, k, off], i) => {
 });
 document.getElementById('l').textContent = `${kind} lod${lod} ${Math.round(tris)} tris${q.get('ace') === '1' ? ' (ace)' : ''}${ktxInfo ? ' (KTX2)' : ''}`;
 window.ready = { tris: Math.round(tris), size: size.toArray(), ktx2: ktxInfo };
+}
 </script>
 </body>
 </html>

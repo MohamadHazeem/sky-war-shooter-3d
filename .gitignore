@@ -26,3 +26,6 @@ tools/interior/out/
 __pycache__/
 
 .vite-cache/
+
+# Phase 11: compact JPEG evidence is committed; lossless capture intermediates stay local.
+docs/phase11/shots/**/*.png

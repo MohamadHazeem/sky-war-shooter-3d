@@ -37,6 +37,8 @@ def assemble(m, src, spec):
         Plane((0, 0, spec['fus_split']), (0, 0, 1), ((-W['root'] - 0.4, -3, spec['fus_split'] - 0.5), (W['root'] + 0.4, 3, spec['fus_split'] + 0.5))),
         Plane((0, 0, spec['tail_z']), (0, 0, 1), ((-big, -big, spec['tail_z'] - 0.5), (big, big, spec['tail_z'] + 0.5))),
     ]
+    if 'nose_z' in spec:
+        planes.append(Plane((0, 0, spec['nose_z']), (0, 0, 1)))
     wbox = lambda x0, x1: ((x0, W['y'][0], W['z'][0]), (x1, W['y'][1], W['z'][1]))
     for s in (1, -1):
         for x in (W['root'], W['joint']):
@@ -52,6 +54,19 @@ def assemble(m, src, spec):
     m.node('airframe')
     for n in ('part_fuselage', 'part_fuselage_aft', 'part_tail', 'part_wingL', 'part_wingLtip', 'part_wingR', 'part_wingRtip'):
         m.node(n, 'airframe', lod=True)
+    if 'nose_z' in spec:
+        m.node('part_core', 'airframe')
+        for name in ('part_fuselage', 'part_fuselage_aft'):
+            m.nodes[name].parent = 'part_core'
+        # Parents must precede children in the Blender assembly order.
+        m.order.remove('part_core'); m.order.insert(m.order.index('part_fuselage'), 'part_core')
+        m.node('part_nose', 'airframe', lod=True)
+        for part, point in [('nose', (0, 0, spec['nose_z'])), ('tail', (0, 0, spec['tail_z']))]:
+            m.marker('joint_' + part, point)
+        for side, sign in [('L', 1), ('R', -1)]:
+            for suffix, x in [('', W['root']), ('tip', W['joint'])]:
+                m.marker('joint_wing' + side + suffix, (sign*x, sum(W['y'])/2, -.5))
+        m.marker('fuel_core', (0, -.15, spec['fus_split']))
     for n in nac:
         m.node(n['name'], 'airframe', lod=True)
     for h in hinges:
@@ -111,6 +126,8 @@ def assemble(m, src, spec):
             if abs(c[0]) > W['joint']:
                 return f'part_wing{side}tip', 'wing_out'
             return f'part_wing{side}', 'wing_in'
+        if 'nose_z' in spec and c[2] > spec['nose_z']:
+            return 'part_nose', 'fus'
         return ('part_fuselage' if c[2] >= spec['fus_split'] else 'part_fuselage_aft'), 'fus'
 
     def classify(c, n, mat):

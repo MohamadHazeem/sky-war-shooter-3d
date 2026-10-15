@@ -139,7 +139,7 @@ export const en = {
   // credits
   'credits.kicker': 'CREDITS',
   'credits.p1': 'Game design, code, volumetric sky, effects and procedural audio: built with Three.js.',
-  'credits.p2': 'Aircraft models from the FlightGear open-source hangar (GPL-2.0): Boeing B-17G, Focke-Wulf Fw 190 A-8 and North American P-51D. See public/models/CREDITS.md for authors.',
+  'credits.p2': 'Aircraft: FlightGear contributors (GPL-2.0); Bf 109 by GRIP420 and Fw 190 by Saman Salili, from Sketchfab (CC BY 4.0), modified with our paint, parts and LODs. Crew figures are original project work. Sources and licences: public/models/CREDITS.md.',
   'credits.p3': 'Sound effects from Freesound.org contributors (CC0 / CC BY — Fight2FlyPhoto, mattew, zimbot, poissonmort, juskiddink, Halleck and others) and music by Kevin MacLeod (incompetech.com, CC BY 4.0: "For the Fallen", "Clenched Teeth", "Constance", "Heroic Age", "Long Road Ahead", "Taps"). Full list: public/audio/CREDITS.md.',
   'credits.p4': 'Visual reference: the B-17 waist gunner shot in Yarnhub\'s animated short "When a B-17 Pilot Attacked the Copilot". All characters and bomber names in this game are fictional.',
   'credits.p5': 'Map of Europe below the formation: ESA WorldCover 2021 (CC BY 4.0, contains modified Copernicus Sentinel data), GeoNames (CC BY 4.0), Natural Earth (public domain) and AWS Terrain Tiles elevation (SRTM, EU-DEM and others). Full list: public/terrain/CREDITS.md.',

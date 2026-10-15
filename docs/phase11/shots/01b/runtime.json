@@ -1,0 +1,128 @@
+[
+  {
+    "mode": "high",
+    "kinds": {
+      "bf109": {
+        "parts": [
+          11058,
+          16206,
+          6534,
+          1870,
+          1022,
+          1870,
+          1028
+        ],
+        "compressed": true,
+        "lod2": false
+      },
+      "fw190": {
+        "parts": [
+          15863,
+          5692,
+          9132,
+          7046,
+          5780,
+          7039,
+          6323
+        ],
+        "compressed": true,
+        "lod2": false
+      }
+    },
+    "destruction": {
+      "wing": {
+        "seq": "wing",
+        "log": [
+          "after rounds: alive=false kind=25 bits=11000 pieces=2",
+          "t=0.05: alive=false remove=false pieces=2 hulks=1 stats={\"separations\":2,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":0}",
+          "t=0.6: alive=false remove=false pieces=2 hulks=1 stats={\"separations\":2,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":0}",
+          "t=1.4: alive=false remove=false pieces=2 hulks=1 stats={\"separations\":2,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":0}",
+          "t=2.6: alive=false remove=false pieces=2 hulks=1 stats={\"separations\":2,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":0}",
+          "t=4.2: alive=false remove=false pieces=2 hulks=1 stats={\"separations\":2,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":0}"
+        ],
+        "files": [],
+        "programs": 270
+      },
+      "tail": {
+        "seq": "tail",
+        "log": [
+          "after rounds: alive=false kind=82 bits=100 pieces=1",
+          "t=0.05: alive=false remove=false pieces=1 hulks=1 stats={\"separations\":1,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":0}",
+          "t=0.5: alive=false remove=false pieces=1 hulks=1 stats={\"separations\":1,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":2}",
+          "t=1.2: alive=false remove=false pieces=1 hulks=1 stats={\"separations\":1,\"explosions\":0,\"shards\":0,\"bailouts\":1,\"debrisHits\":0,\"fires\":2}",
+          "t=2.2: alive=false remove=false pieces=1 hulks=1 stats={\"separations\":1,\"explosions\":0,\"shards\":0,\"bailouts\":1,\"debrisHits\":0,\"fires\":2}",
+          "t=3.6: alive=false remove=false pieces=1 hulks=1 stats={\"separations\":1,\"explosions\":0,\"shards\":0,\"bailouts\":1,\"debrisHits\":0,\"fires\":2}"
+        ],
+        "files": [],
+        "programs": 273
+      }
+    },
+    "errors": []
+  },
+  {
+    "mode": "low",
+    "kinds": {
+      "bf109": {
+        "parts": [
+          11058,
+          16206,
+          6534,
+          1870,
+          1022,
+          1870,
+          1028
+        ],
+        "compressed": true,
+        "lod2": true
+      },
+      "fw190": {
+        "parts": [
+          15863,
+          5692,
+          9132,
+          7046,
+          5780,
+          7039,
+          6323
+        ],
+        "compressed": true,
+        "lod2": true
+      }
+    },
+    "destruction": {},
+    "errors": []
+  },
+  {
+    "mode": "fallback",
+    "kinds": {
+      "bf109": {
+        "parts": [
+          11058,
+          16206,
+          6534,
+          1870,
+          1022,
+          1870,
+          1028
+        ],
+        "compressed": false,
+        "lod2": false
+      },
+      "fw190": {
+        "parts": [
+          15863,
+          5692,
+          9132,
+          7046,
+          5780,
+          7039,
+          6323
+        ],
+        "compressed": false,
+        "lod2": false
+      }
+    },
+    "destruction": {},
+    "errors": []
+  }
+]

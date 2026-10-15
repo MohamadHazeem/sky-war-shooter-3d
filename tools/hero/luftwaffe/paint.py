@@ -272,6 +272,10 @@ def paint(m, maps, size):
     mot_a = sstep(-0.02, 0.05, nz(6.5, 5) - (0.6 - 0.12 * dens)) * 0.88
     mot_b = sstep(-0.02, 0.05, nz(5.8, 7) - (0.61 - 0.12 * dens)) * 0.88
     mot_c = sstep(-0.02, 0.05, nz(5.0, 9) - 0.68) * 0.7 if scheme in ('7475',) else np.zeros((H, W), np.float32)
+    if info.get('mottle_soft'):
+        mot_a = sstep(-.055, .10, nz(6.5, 5) - (.63 - .10 * dens)) * .62
+        mot_b = sstep(-.055, .10, nz(5.8, 7) - (.64 - .10 * dens)) * .62
+        mot_c *= .5
     if scheme == '8182':
         mot_a = sstep(0.0, 0.03, nz(4.5, 5) - (0.62 - 0.12 * dens))
         mot_b = sstep(0.0, 0.03, nz(4.0, 7) - (0.63 - 0.12 * dens))
