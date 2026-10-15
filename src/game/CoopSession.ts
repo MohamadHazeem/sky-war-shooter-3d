@@ -65,6 +65,9 @@ import { CombatTally } from './CombatTally';
 import { freeSeat, canTakeSeat, crewCode, snapshotInterval, type CrewSeat } from '../net/Crew';
 import { CrewPings } from './CrewPings';
 import { makeCode } from '../net/Signal';
+import { fetchListings, HEARTBEAT_MS, inviteCode, inviteLink, listingFields, localRegion, publishListing, PUBLISH_GAP_MS, quickJoinOrder, rankLobbies, removeListing, sameListing, withoutInvite, type ListingFields } from '../net/Lobbies';
+import { clearTicket, lossAction, MIGRATE_GAP_MS, MIGRATE_TRIES, pickHeir, RECONNECT_GAP_MS, RECONNECT_TRIES, saveTicket, validPlan, type MigrationPlan } from '../net/Rejoin';
+import type { DebriefData } from '../ui/UI';
 
 interface CrewPeer {
   id: number; run: number; link: CoopLink; signal: Signalling | null; seat: StationId; name: string; ready: boolean;
@@ -80,6 +83,7 @@ export const INPUT_HZ = 30;
 const TRACERS_PER_SNAP = 40;
 const INPUT_STALE = 0.75;           // s without guest input (sim and wall clock) -> trigger released
 const CONNECT_TIMEOUT_MS = 25000;
+const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
 // snapshot aircraft flags
 export const F_ALIVE = 1, F_PB = 2, F_BURN = 4, F_SMOKE = 8, F_ENG0 = 16; // F_ENG0 << i: engine i dead
@@ -123,6 +127,18 @@ export class CoopSession {
   private snapInterval = 1 / SNAP_HZ;
   private roomIce: RTCIceServer[] = [];
   private crewNames: string[] = [];
+  // public listing, rejoin and host migration (net/Lobbies.ts, net/Rejoin.ts)
+  private publicGame = false;
+  private listed: ListingFields | null = null;
+  private listAt = 0;
+  private listBeat: ReturnType<typeof setInterval> | null = null;
+  private region = localRegion();
+  private nextCode = '';                       // host: where the crew regroups if we leave mid-round
+  private plan: MigrationPlan | null = null;   // guest: the host's latest migration plan
+  private hostLeft = false;                    // guest: the host announced it is leaving
+  private rejoining = false;                   // guest: reconnected mid-round, accept the same run's start
+  private followCode = '';                     // guest: the heir's code, rejoined from the debrief
+  private inviteChecked = false;
   broadcast(m: unknown) {
     if (this.role === 'host' && this.mode === 'gunner') { for (const p of this.peers) p.link.sendEvent(m); }
     else this.link?.sendEvent(m);
@@ -221,14 +237,18 @@ export class CoopSession {
     this.pilots = new CoopPilot(game, m => this.link?.sendEvent({ ...m, run: this.run }), this.origin);
     this.screen = new CoopScreen({
       mode: (mode, scenario) => { if (this.role === 'guest' || (this.role === 'host' && mode !== this.mode)) return; this.mode = mode; this.scenario = mode === 'gunner' ? 'survival' : scenario; this.sendLobby(); this.renderLobby(this.lobbyStatus); },
-      host: () => { void this.host(); },
+      host: (pub) => { this.publicGame = pub && this.mode === 'gunner'; void this.host(); },
       join: (c) => { void this.join(c); },
+      quick: () => { void this.quickJoin(); },
+      browse: () => { void this.browse(); },
+      rejoin: (c) => { void this.join(c, RECONNECT_TRIES); },
+      invite: () => { void this.invite(); },
       seat: (s) => this.pickSeat(s),
       start: () => this.startHostMission(),
       ready: () => this.toggleReady(),
       ping: () => this.pings.mark(),
-      leave: () => { this.leave(); this.screen.menu(); },
-      back: () => { this.leave(); this.game.startMenu(); },
+      leave: () => { clearTicket(); this.leave(); this.screen.menu(); },
+      back: () => { clearTicket(); this.leave(); this.game.startMenu(); },
     });
   }
 
@@ -239,7 +259,13 @@ export class CoopSession {
 
   onTitle() {
     if (this.phase !== 'idle') this.leave();
-
+    // a friend's invite link (?join=CODE): once per page load, after the title screen is up
+    if (this.inviteChecked || typeof location === 'undefined') return;
+    this.inviteChecked = true;
+    const code = inviteCode(location.href);
+    if (!code) return;
+    try { history.replaceState(history.state, '', withoutInvite(location.href)); } catch { /* file:// */ }
+    setTimeout(() => { if (this.phase === 'idle' && this.game.state === 'menu') void this.join(code); }, 0);
   }
 
   // Game.direct(): the guest never runs the director, spawns or end conditions
@@ -300,6 +326,7 @@ export class CoopSession {
         }
         this.code = code;
         this.refreshCrew();
+        this.syncListing(true);
       } else {
         const link = this.newLink('host', ice);
         const sig = await hostSignal(link.pc, e => console.warn('Co-op: signalling', e));
@@ -323,7 +350,9 @@ export class CoopSession {
     peer.signal = sig;
   }
 
-  private async join(input: string) {
+  // tries > 1: keep retrying (rejoin, or following the heir while it opens its rooms);
+  // fallbacks: further codes to try when this one is full or gone (quick join)
+  private async join(input: string, tries = 1, fallbacks: readonly string[] = []) {
     const code = normalizeCode(input);
     if (!code) { this.screen.menu('A join code is 6 letters and digits.', input); return; }
     this.leave();
@@ -331,23 +360,40 @@ export class CoopSession {
     this.screen.busy(`Joining ${code}…`);
     const attempt = this.connectionAttempt;
     const ice = await fetchIceServers();
-    if (attempt !== this.connectionAttempt) return;
-    let lastError: unknown, expectedHost: string | undefined;
-    for (let slot = 0; slot < 3; slot++) {
-      const link = this.newLink('guest', ice);
-      try {
-        const sig = await joinSignal(link.pc, crewCode(code, slot), e => console.warn('Co-op: signalling', e), expectedHost);
-        if (attempt !== this.connectionAttempt) { void sig.close(); return; }
-        this.signal = sig;
+    for (let i = 0; i < tries; i++) {
+      if (attempt !== this.connectionAttempt) return;
+      const link = await this.trySlots(code, ice, attempt);
+      if (link === 'stale') return;
+      if (link) {
         if (!this.connected) this.screen.busy('Connecting to the host…');
         this.connectTimer = setTimeout(() => {
           if (this.link !== link || this.connected) return;
           this.leave(); this.screen.menu('Could not connect to the host. Try another network or try again.', code);
         }, CONNECT_TIMEOUT_MS);
         return;
+      }
+      if (i + 1 < tries) await sleep(tries === RECONNECT_TRIES ? RECONNECT_GAP_MS : MIGRATE_GAP_MS);
+    }
+    if (attempt !== this.connectionAttempt) return;
+    if (fallbacks.length) { void this.join(fallbacks[0], 1, fallbacks.slice(1)); return; }
+    this.leave();
+    this.screen.menu('Crew full or unavailable. Try again shortly.', code);
+  }
+
+  // Claim the first free crew slot of a game: the open link, null (full / gone) or 'stale' (cancelled)
+  private async trySlots(code: string, ice: RTCIceServer[], attempt: number): Promise<CoopLink | null | 'stale'> {
+    let lastError: unknown, expectedHost: string | undefined;
+    for (let slot = 0; slot < 3; slot++) {
+      const link = this.newLink('guest', ice);
+      try {
+        const sig = await joinSignal(link.pc, crewCode(code, slot), e => console.warn('Co-op: signalling', e), expectedHost);
+        if (attempt !== this.connectionAttempt) { void sig.close(); link.close('local', false); return 'stale'; }
+        this.signal = sig;
+        return link;
       } catch (e) {
-        if (attempt !== this.connectionAttempt) return;
-        this.link = null; link.close('local', false); lastError = e;
+        if (this.link === link) this.link = null;
+        link.close('local', false); lastError = e;
+        if (attempt !== this.connectionAttempt) return 'stale';
         if (slot === 0) {
           if (!(e instanceof RoomError) || !e.host) break;
           expectedHost = e.host;
@@ -355,8 +401,168 @@ export class CoopSession {
       }
     }
     console.warn('Co-op: join failed', lastError);
+    return null;
+  }
+
+  // ---------------- public games, quick join, invites ----------------
+
+  private async quickJoin() {
     this.leave();
-    this.screen.menu('Crew full or unavailable. Try again shortly.', code);
+    this.screen.busy('Looking for a crew…');
+    const attempt = this.connectionAttempt;
+    let codes: string[] = [];
+    try {
+      const { list, uid } = await fetchListings();
+      codes = quickJoinOrder(list, this.region, Date.now(), uid);
+    } catch (e) { console.warn('Co-op: lobby list failed', e); }
+    if (attempt !== this.connectionAttempt) return;
+    if (!codes.length) { this.screen.menu('No open crews right now. Host a public game and others can find it.'); return; }
+    void this.join(codes[0], 1, codes.slice(1));
+  }
+
+  private async browse() {
+    this.leave();
+    this.screen.browser(null, this.region);
+    const attempt = this.connectionAttempt;
+    try {
+      const { list, uid } = await fetchListings();
+      if (attempt !== this.connectionAttempt) return;
+      this.screen.browser(rankLobbies(list, this.region, Date.now(), uid), this.region);
+    } catch (e) {
+      if (attempt !== this.connectionAttempt) return;
+      console.warn('Co-op: lobby list failed', e);
+      this.screen.menu('Could not load the game list. Check your connection and try again.');
+    }
+  }
+
+  private async invite() {
+    if (!this.code || typeof location === 'undefined') return;
+    const url = inviteLink(location.href, this.code);
+    try {
+      if (typeof navigator.share === 'function' && matchMedia('(pointer: coarse)').matches) { await navigator.share({ url }); return; }
+      await navigator.clipboard.writeText(url);
+      this.screen.toast('Invite link copied — send it to a friend', 3000);
+    } catch (e) {
+      if ((e as Error)?.name === 'AbortError') return;
+      this.screen.toast(url, 8000);
+    }
+  }
+
+  // The host's public listing: published on hosting, refreshed on changes and every minute
+  private syncListing(force = false) {
+    if (!this.publicGame || this.role !== 'host' || this.mode !== 'gunner' || !this.code || this.phase === 'idle') return;
+    this.listBeat ??= setInterval(() => this.syncListing(), 2000);
+    const now = Date.now();
+    const f = listingFields(this.myName, this.activeCrew.length, this.phase === 'mission' ? 'mission' : 'lobby', this.phase === 'mission' ? this.game.roundIdx + 1 : 0, this.region);
+    if (!force && sameListing(this.listed, f) && now - this.listAt < HEARTBEAT_MS) return;
+    if (now - this.listAt < PUBLISH_GAP_MS) return;   // the 2 s beat brings it back
+    this.listed = f; this.listAt = now;
+    publishListing(this.code, f).catch((e) => { console.warn('Co-op: listing failed', e); this.listed = null; });
+  }
+
+  private unlist() {
+    if (this.listBeat) { clearInterval(this.listBeat); this.listBeat = null; }
+    if (this.listAt && this.code && this.role === 'host') removeListing(this.code).catch((e) => console.warn('Co-op: unlisting failed (it goes stale in 3 min)', e));
+    this.listed = null; this.listAt = 0;
+  }
+
+  // ---------------- rejoin and host migration ----------------
+
+  private hostPlan(): MigrationPlan {
+    this.nextCode ||= makeCode();
+    return { heir: pickHeir(this.roster ?? []), next: this.nextCode, pub: !!this.publicGame };
+  }
+
+  // Guest, mid-round: the link to the host closed
+  private onHostLost(why: 'left' | 'lost') {
+    if (this.connectTimer) { clearTimeout(this.connectTimer); this.connectTimer = null; }
+    void this.signal?.close(); this.signal = null;
+    this.link = null; this.connected = false;
+    const hostLeft = this.hostLeft || why === 'left';
+    this.afterLoss(lossAction({ crewMode: this.mode === 'gunner', plan: this.plan, myId: this.myId, hostLeft, reconnectFailed: false }), why);
+  }
+
+  private afterLoss(action: ReturnType<typeof lossAction>, why: 'left' | 'lost') {
+    if (action === 'reconnect') void this.reconnect();
+    else if (action === 'takeover') void this.takeOver();
+    else if (action === 'follow') this.gracefulEnd('The host left. Return to the co-op lobby to rejoin your crew under the new host.', this.plan!.next);
+    else this.gracefulEnd(why === 'left' ? 'The host left the game. Co-op session ended.' : 'Lost the connection to the host. Co-op session ended.', '');
+  }
+
+  // Our own connection may be what failed: the host re-offers our slot, so try the same code
+  private async reconnect() {
+    const code = this.code, attempt = ++this.connectionAttempt;
+    this.screen.waiting('Connection lost — rejoining…');
+    const ice = await fetchIceServers();
+    for (let i = 0; i < RECONNECT_TRIES; i++) {
+      if (attempt !== this.connectionAttempt || this.phase !== 'mission') return;
+      const link = await this.trySlots(code, ice, attempt);
+      if (link === 'stale') return;
+      if (link) {
+        this.rejoining = true;
+        const t0 = Date.now();
+        while (Date.now() - t0 < CONNECT_TIMEOUT_MS && attempt === this.connectionAttempt && link.status === 'connecting') await sleep(250);
+        if (attempt !== this.connectionAttempt) return;
+        if (link.status === 'open') return;   // the host sends 'start': the round reloads around us
+        if (this.link === link) this.link = null;
+        link.close('local', false); void this.signal?.close(); this.signal = null;
+      }
+      if (i + 1 < RECONNECT_TRIES) await sleep(RECONNECT_GAP_MS);
+    }
+    if (attempt !== this.connectionAttempt || this.phase !== 'mission') return;
+    this.rejoining = false;
+    this.screen.waiting(null);
+    this.afterLoss(lossAction({ crewMode: true, plan: this.plan, myId: this.myId, hostLeft: this.hostLeft, reconnectFailed: true }), 'lost');
+  }
+
+  // We are the heir: our puppet world becomes the real battle (the proxies are ordinary aircraft,
+  // the director picks up at the synced round) and the crew regroups under the plan's code.
+  private async takeOver() {
+    const plan = this.plan!;
+    const attempt = ++this.connectionAttempt;
+    this.teardownGuest();
+    this.screen.waiting(null);
+    this.role = 'host'; this.myId = 0; this.hostLeft = false; this.plan = null; this.rejoining = false;
+    this.hostSeat = this.game.gunner.station; this.myReady = true; this.partnerReady = true;
+    this.peers.length = 0; this.departed = []; this.link = null; this.connected = false;
+    this.code = plan.next; this.nextCode = ''; this.publicGame = plan.pub;
+    this.crewNames = [this.myName];
+    this.installHost();
+    this.refreshCrew();
+    this.ui.tip('The host left — you now run the battle', 4500);
+    this.ui.feed('You are the new host', 'mine');
+    try {
+      this.roomIce = await fetchIceServers();
+      for (let slot = 0; slot < 3; slot++) {
+        if (attempt !== this.connectionAttempt) return;
+        await this.offerSlot(slot, plan.next, attempt);
+      }
+      this.syncListing(true);
+    } catch (e) {
+      if (attempt !== this.connectionAttempt) return;
+      console.warn('Co-op: could not reopen the crew rooms', e);
+      this.ui.tip('Could not reopen the crew rooms — carrying on alone', 4000);
+    }
+  }
+
+  // No one can carry the round on (or we follow the heir): a debrief of the sortie so far, with
+  // personal rewards, from the last scores the host streamed. `follow`: the code to rejoin from it.
+  private gracefulEnd(reason: string, follow: string) {
+    this.screen.waiting(null);
+    this.rejoining = false;
+    this.followCode = follow;
+    if (follow) saveTicket(follow); else clearTicket();
+    const g = this.game, w = g.world, m = this.mission;
+    if (!m || this.result || this.role !== 'guest') {
+      this.reset(); g.startMenu(); this.screen.toast(reason, 6000);
+      return;
+    }
+    this.endWhy = reason;
+    const base: DebriefData = {
+      success: false, title: m.title, reason, kills: 0, accuracy: 0, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers,
+      time: w.time, score: g.score, medals: [], survival: m.duration === Infinity, waves: g.roundIdx, nextAvailable: false,
+    };
+    this.presentDebrief(buildCoopDebrief(Math.max(1, this.run), base, this.hostScore, this.guestScore, w.combatLosses, w.crewWounded > 0));
   }
 
   private onOpen(link: CoopLink) {
@@ -374,12 +580,22 @@ export class CoopSession {
     void this.signal?.close();
     this.signal = null;
     if (this.role === 'host') { this.sendLobby(); this.renderLobby(this.mode === 'pilot' ? 'Partner connected — ready to fly' : 'Partner connected — pick your guns and start'); sound.confirm('kill_confirm'); }
-    else { link.sendEvent({ t: 'hello', name: this.myName }); this.renderLobby('Connected — waiting for the host to start'); }
+    else {
+      link.sendEvent({ t: 'hello', name: this.myName }); this.renderLobby('Connected — waiting for the host to start');
+      if (this.mode === 'gunner') saveTicket(this.code);
+      if (this.rejoining) { this.screen.waiting(null); this.ui.tip('Back aboard', 2000); }
+    }
   }
 
   // The user leaves (or a title screen appears): tell the partner, drop everything
   leave() {
     this.connectionAttempt++;
+    // mid-round, the crew carries on under the heir (net/Rejoin.ts)
+    if (this.role === 'host' && this.phase === 'mission' && this.mode === 'gunner' && !this.endWhy) {
+      const plan = this.hostPlan();
+      if (plan.heir > 0) for (const p of this.peers) p.link.sendEvent({ t: 'migrate', ...plan });
+    }
+    this.unlist();
     this.myName = cleanName(savedName());
     const link = this.link;
     this.link = null;
@@ -390,6 +606,7 @@ export class CoopSession {
   }
 
   private reset() {
+    this.unlist();
     if (this.connectTimer) { clearTimeout(this.connectTimer); this.connectTimer = null; }
     void this.signal?.close();
     this.signal = null;
@@ -404,6 +621,7 @@ export class CoopSession {
     this.code = '';
     this.roster = []; this.departed = []; this.myId = 0; this.myReady = false; this.pings.reset();
     this.run = 0; this.rewardedRun = 0; this.result = null; this.partnerReady = true;
+    this.plan = null; this.hostLeft = false; this.rejoining = false; this.nextCode = '';
     this.engine.paused = false;
     this.screen.waiting(null);
     this.screen.markPartner(null);
@@ -443,7 +661,9 @@ export class CoopSession {
       }
       return;
     }
+    if (phase === 'mission' && !ended) { this.onHostLost(why); return; }
     const msg = ended ? `Mission over — ${this.endWhy}` : why === 'left' ? 'The host left the game. Co-op session ended.' : 'Lost the connection to the host. Co-op session ended.';
+    if (why === 'left') clearTicket();
     this.reset();
     if (phase === 'mission') { this.game.startMenu(); this.screen.toast(msg, 6000); }
     else this.screen.menu(msg);
@@ -458,6 +678,7 @@ export class CoopSession {
       mine: this.role === 'host' ? this.hostSeat : this.guestSeat,
       partner: this.partnerSeat,
       crew: this.mode === 'gunner' ? this.roster : undefined, myId: this.myId, ready: this.myReady,
+      listed: this.role === 'host' && this.mode === 'gunner' ? !!this.publicGame : undefined,
     });
   }
   private lobbyStatus = '';
@@ -465,7 +686,9 @@ export class CoopSession {
   private sendLobby() {
     if (this.role === 'host' && this.mode === 'gunner') {
       this.refreshCrew();
-      for (const p of this.peers) p.link.sendEvent({ t: 'lobby', mode: this.mode, scenario: this.scenario, hs: this.hostSeat, gs: p.seat, name: this.myName, crew: this.roster, id: p.id });
+      const plan = this.hostPlan();
+      for (const p of this.peers) p.link.sendEvent({ t: 'lobby', mode: this.mode, scenario: this.scenario, hs: this.hostSeat, gs: p.seat, name: this.myName, crew: this.roster, id: p.id, plan });
+      this.syncListing();
     } else this.link?.sendEvent({ t: 'lobby', mode: this.mode, scenario: this.scenario, hs: this.hostSeat, gs: this.guestSeat, name: this.myName });
   }
   private toggleReady() {
@@ -504,6 +727,9 @@ export class CoopSession {
       return;
     }
     switch (m.t) {
+      case 'migrate':
+        if (this.role === 'guest' && validPlan(m)) { this.plan = { heir: m.heir, next: m.next, pub: m.pub }; this.hostLeft = true; }
+        break;
       case 'crewWait':
         if (this.role === 'guest') this.renderLobby('Waiting for the host…');
         break;
@@ -539,6 +765,7 @@ export class CoopSession {
           this.myReady = this.roster.find(p => p.id === this.myId)?.ready ?? false;
         }
         this.partnerName = cleanName(String(m.name ?? 'Gunner'));
+        if (validPlan(m.plan)) this.plan = m.plan;
         if (m.hs in STATIONS) this.hostSeat = m.hs;
         if (m.gs in STATIONS) this.guestSeat = m.gs;
         this.renderLobby(this.lobbyStatus);
@@ -651,7 +878,13 @@ export class CoopSession {
   }
 
   private returnToLobby() {
-    if (!this.connected || this.link?.status !== 'open') { this.game.startMenu(); return; }
+    const follow = this.followCode;
+    this.followCode = '';
+    if (!this.connected || this.link?.status !== 'open') {
+      this.game.startMenu();
+      if (follow) void this.join(follow, MIGRATE_TRIES);   // regroup under the heir
+      return;
+    }
     this.teardownHost(); this.teardownGuest();
     this.phase = 'lobby'; this.mission = null;
     this.game.state = 'paused'; this.engine.paused = true;
@@ -688,11 +921,15 @@ export class CoopSession {
 
   private sendStart(p: CrewPeer) {
     p.run = this.run;
-    p.link.sendEvent({ t: 'start', run: this.run, mode: 'gunner', scenario: this.scenario, w: this.mission?.weather, hs: this.hostSeat, gs: p.seat });
+    p.link.sendEvent({ t: 'start', run: this.run, mode: 'gunner', scenario: this.scenario, w: this.mission?.weather, hs: this.hostSeat, gs: p.seat, plan: this.hostPlan() });
   }
 
   private startGuestMission(msg: any) {
-    if (!Number.isSafeInteger(msg.run) || msg.run <= this.run) return;
+    if (!Number.isSafeInteger(msg.run) || msg.run < this.run || (msg.run === this.run && !this.rejoining)) return;
+    this.rejoining = false; this.hostLeft = false;
+    if (validPlan(msg.plan)) this.plan = msg.plan;
+    this.screen.waiting(null);
+    this.rewardedRun = Math.min(this.rewardedRun, msg.run - 1);
     this.teardownGuest();
     this.beginRun(msg.run);
     this.mode = msg.mode === 'pilot' ? 'pilot' : 'gunner';
