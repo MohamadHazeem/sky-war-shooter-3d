@@ -75,7 +75,7 @@ export class WorldEvents {
           // debrief record: gun position that fired (gunner) and range at the kill
           const range = w.player ? victim.pos.distanceTo(w.player.pos) : Infinity;
           g.tally.recordKill(this.streak, range, g.mission?.role === 'gunner' ? w.playerStation : null);
-          if (w.stats.kills >= 5 && !this.aceAwarded) {
+          if (w.stats.kills >= 5 && !this.aceAwarded && !g.mission?.range) {
             this.aceAwarded = true;
             g.score += 500;
             g.ui.banner('FIVE CONFIRMED', 'Ace in a day', 3500);
@@ -89,9 +89,12 @@ export class WorldEvents {
           else if (big || this.streak >= 3) g.slowmo = g.loadout.bulletTime ? 1.1 : 0.6;
           else if (g.loadout.bulletTime) g.slowmo = 0.35;
           g.cine.onKill(victim, this.streak);
-          const lines = ['Got him! He\'s going down!', 'You got him! Nice shooting!', 'He\'s smoking — he\'s finished!', victim.label === 'Bf 109' ? 'Scratch one Messerschmitt!' : 'Scratch one Focke-Wulf!'];
+          // a gunnery-range drone is an orange Fw 190 airframe with nobody in it: no type or chute calls
+          const drone = !!g.mission?.range;
+          const lines = ['Got him! He\'s going down!', 'You got him! Nice shooting!', 'He\'s smoking — he\'s finished!'];
+          if (!drone) lines.push(victim.label === 'Bf 109' ? 'Scratch one Messerschmitt!' : 'Scratch one Focke-Wulf!');
           w.callout('kill', ['Tail', 'Pilot', 'Top Turret', 'Navigator'][Math.floor(Math.random() * 4)], lines[Math.floor(Math.random() * lines.length)], 3, 2);
-          Chatter.onFighterKilled(this.streak);
+          if (!drone) Chatter.onFighterKilled(this.streak);
         } else {
           g.ui.feed(killFeedText(victim, null));
           Chatter.onWingmanKill();

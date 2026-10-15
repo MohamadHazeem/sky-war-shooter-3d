@@ -14,7 +14,7 @@ function fixture() {
     service: { career: { xp: 0 }, openCareer: vi.fn(), openDaily: vi.fn(), openTrophies: vi.fn() },
     skills: { open: vi.fn() }, coop: { openMenu: vi.fn() },
     onboarding: { startTutorial: vi.fn() }, extras: { openGallery: vi.fn(), openWhatsNew: vi.fn(), manual: { open: vi.fn() } },
-    cine: { theatre: { openLibrary: vi.fn() } }, showCampaign: vi.fn(), showBriefing: vi.fn(), startMenu: vi.fn(),
+    cine: { theatre: { openLibrary: vi.fn() } }, showCampaign: vi.fn(), showGunneryRange: vi.fn(), showBriefing: vi.fn(), startMenu: vi.fn(),
   };
   const menus = new SimpleMenu(g as unknown as Game);
   return { g, menus };
@@ -47,7 +47,7 @@ describe('menu routing', () => {
     const { g, menus } = fixture(); const back = vi.fn();
     const cases: [HangarRoute, ReturnType<typeof vi.fn>][] = [
       ['skills', g.skills.open], ['career', g.service.openCareer], ['daily', g.service.openDaily], ['trophies', g.service.openTrophies],
-      ['whatsnew', g.extras.openWhatsNew], ['theatre', g.cine.theatre.openLibrary], ['campaign', g.showCampaign],
+      ['whatsnew', g.extras.openWhatsNew], ['theatre', g.cine.theatre.openLibrary], ['campaign', g.showCampaign], ['range', g.showGunneryRange],
     ];
     for (const [route, target] of cases) { menus.open(route, back); expect(target).toHaveBeenLastCalledWith(back); }
     menus.open('aircraft', back); expect(g.extras.openGallery).toHaveBeenCalledWith(undefined, back);

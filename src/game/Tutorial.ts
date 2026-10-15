@@ -386,8 +386,8 @@ export class Tutorial {
   }
 }
 
-// No guns, no rockets, a thinner skin: a training target
-function harmless(f: Fighter, toughness: number) {
+// No guns, no rockets, a thinner skin: a training target (also the gunnery range's drones)
+export function harmless(f: Fighter, toughness: number) {
   f.guns = [];
   f.rockets = 0;
   f.fireRockets = false;

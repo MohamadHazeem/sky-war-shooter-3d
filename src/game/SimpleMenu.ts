@@ -63,6 +63,7 @@ export class SimpleMenu {
       case 'campaign': g.showCampaign(back); break;
       case 'tour': g.showTour(back); break;
       case 'raids': g.showHistoricalRaids(back); break;
+      case 'range': g.showGunneryRange(back); break;
       case 'custom': {
         const open = () => showCustomBattleScreen({ back, start: m => g.showBriefing(m, open) });
         open(); break;

@@ -66,6 +66,7 @@ export class GunnerController {
   private gunPivot = new THREE.Group();   // rotates yaw/pitch
   private interiors: Partial<Record<StationId, THREE.Object3D>> = {};
   private guns: Partial<Record<StationId, GunModel[]>> = {};
+  private rings: Partial<Record<StationId, THREE.Object3D>> = {};   // the ring of each ring-and-post sight
   private waistInterior: THREE.Group | null = null;
   /** The waist section built for this mission (TourRuntime hangs the repair patches on it). */
   get waist(): THREE.Group | null { return this.waistInterior; }
@@ -173,6 +174,8 @@ export class GunnerController {
     this.interiors.waistR = this.waistInterior;
     this.guns.waistL = [buildM2({ ringSight: true, belt: true, beltSide: 1 })];
     this.guns.waistR = [buildM2({ ringSight: true, belt: true, beltSide: -1 })];
+    this.rings.waistL = this.guns.waistL[0].sight[0];
+    this.rings.waistR = this.guns.waistR[0].sight[0];
     const top = buildTurret('top');
     top.sight.visible = false; // the eye sits above it now; the HUD reticle takes over
     this.guns.top = top.guns;
@@ -195,6 +198,7 @@ export class GunnerController {
     }
     // ring-and-post sight on a bracket above the guns, on the gunner's eye line
     const sightGun = buildM2({ ringSight: true, belt: false, beltSide: 1 });
+    this.rings.tail = sightGun.sight[0];
     // only the ring and the bead near the muzzle stay (the receiver's rivets and charging-handle
     // knob are spheres too: they floated in the air across the tail window)
     sightGun.group.traverse((o) => {
@@ -841,6 +845,13 @@ export class GunnerController {
     this.engine.post.nearFocus = def.type === 'waist' ? 0.42 : def.type === 'tail' ? 0.5 : 0.4;
     this.engine.post.dofStrength = 1;
     this.engine.post.noBlurDist = 1.4;
+  }
+
+  /** The ring of this station's ring-and-post sight while it is on screen (waist: aim view only), else null. */
+  sightRing(): THREE.Object3D | null {
+    const ring = this.rings[this.station];
+    for (let o: THREE.Object3D | null = ring ?? null; o; o = o.parent) if (!o.visible) return null;
+    return ring ?? null;
   }
 
   aimDirection(out = new THREE.Vector3()) {
