@@ -5,6 +5,7 @@ import { achievements, ACHIEVEMENTS } from '../game/Achievements';
 import { ENEMY_VARIANTS, type EnemyType } from '../world/EnemyTypes';
 import { STATION_ORDER, STATIONS } from '../world/B17Layout';
 import { savedName } from '../net/Leaderboard';
+import { streamer } from './Streamer';
 import { esc, fmtDate, fmtHours, insigniaSvg, onBackKey, showLayer } from './serviceCommon';
 import { num, tx } from '../i18n';
 import { showNemesisScreen } from './NemesisScreen';
@@ -12,7 +13,7 @@ import { showNemesisScreen } from './NemesisScreen';
 export function showCareerScreen(c: CareerData, h: { back(): void; trophies(): void }) {
   const el = showLayer('svc-career');
   const r = rankFor(c.xp);
-  const name = savedName() || tx('Unnamed airman');
+  const name = streamer.on ? tx('You') : savedName() || tx('Unnamed airman');
   const acc = lifetimeAccuracy(c);
   const row = (k: string, v: string | number) => `<tr><td>${esc(tx(k))}</td><td>${typeof v === 'number' ? num(v) : esc(v)}</td></tr>`;
   const maxType = Math.max(1, ...ENEMY_KINDS.map((t) => c.killsByType[t] ?? 0));

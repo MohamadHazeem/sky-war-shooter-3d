@@ -1,6 +1,7 @@
 import { escortKind } from '../world/EscortTypes';
 import { FormationReturn } from './FormationReturn';
 import { setHudDetail } from '../ui/HudDetail';
+import { streamer } from '../ui/Streamer';
 import { SimpleMenu } from './SimpleMenu';
 import { Atmos } from '../render/Atmosphere';
 import { weatherNow } from '../render/WeatherState';
@@ -280,6 +281,7 @@ export class Game {
   applySettings() {
     const s = this.settings;
     setHudDetail(s.hudDetail);
+    streamer.apply(s);   // streamer mode (ui/Streamer.ts)
     sound.setVoiceVolume(s.voiceVolume ?? 1);
     weatherNow.effects = s.weatherEffects !== false;
     this.input.sensitivity = s.sensitivity;
@@ -547,6 +549,7 @@ export class Game {
     this.feel.update(dt, !this.menuMode && (this.state === 'playing' || this.state === 'ending'));
     this.combat.update(dt, !this.menuMode && this.state === 'playing');
     this.cine.update(dt);
+    this.coop.afterView(dt);   // co-op spectator: cinematic camera and overlay (Spectator.ts)
     this.bombardier.camera();
     this.bombardier.capture();
     this.autoQuality(dt);

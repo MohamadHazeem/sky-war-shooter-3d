@@ -1,0 +1,156 @@
+{
+  "lobby": {
+    "roster": [
+      [
+        0,
+        "waistL"
+      ],
+      [
+        1,
+        "tail"
+      ]
+    ],
+    "watchers": 1,
+    "peers": [
+      [
+        1,
+        false,
+        "open"
+      ],
+      [
+        2,
+        false,
+        "connecting"
+      ],
+      [
+        3,
+        false,
+        "connecting"
+      ],
+      [
+        4,
+        true,
+        "open"
+      ],
+      [
+        5,
+        true,
+        "connecting"
+      ]
+    ]
+  },
+  "rejoined": [
+    [
+      3,
+      false,
+      "waistR",
+      "connecting"
+    ],
+    [
+      2,
+      false,
+      "waistR",
+      "connecting"
+    ],
+    [
+      1,
+      false,
+      "waistR",
+      "open"
+    ],
+    [
+      4,
+      true,
+      "waistL",
+      "open"
+    ],
+    [
+      5,
+      true,
+      "waistL",
+      "connecting"
+    ]
+  ],
+  "start": {
+    "active": true,
+    "view": "waistL",
+    "station": "waistL",
+    "snaps": 22,
+    "inputs": 0
+  },
+  "tail": {
+    "gunner": [
+      3.491592653589792,
+      0.11999999999999951
+    ],
+    "spectator": {
+      "station": "tail",
+      "aim": [
+        3.489797914702308,
+        0.11899718512380804
+      ],
+      "fire": 16,
+      "inputs": 0
+    }
+  },
+  "waist": {
+    "host": [
+      1.2707963261126012,
+      0.15000000034114763
+    ],
+    "spectator": [
+      "waistL",
+      1.2710003510322694,
+      0.14999984227549212
+    ]
+  },
+  "cine": [
+    {
+      "shot": "chase",
+      "view": "cine",
+      "cam": 57.59922277253397
+    },
+    {
+      "shot": "wing",
+      "view": "cine",
+      "cam": 34.27115202785216
+    },
+    {
+      "shot": "below",
+      "view": "cine",
+      "cam": 19.865578672668963
+    },
+    {
+      "shot": "nose",
+      "view": "cine",
+      "cam": 44.09636429457646
+    }
+  ],
+  "action": {
+    "shot": "action",
+    "subject": true
+  },
+  "streamer": {
+    "bar": "Left WaistGunner 1Right WaistAI gunnerTop TurretAI gunnerBall TurretAI gunnerTail GunGunner 2CinematicAuto cameraStop watchingLeave the game",
+    "body": "spectating hud-mission streamer"
+  },
+  "delay": {
+    "hostT0": 12.70000000000021,
+    "held": 6,
+    "host": 13.000000000000226,
+    "specLatest": 12.7,
+    "releasedAfterMs": 9911,
+    "releasedLatest": 13
+  },
+  "debrief": {
+    "state": "debrief",
+    "active": false,
+    "merit": 110,
+    "points": 0
+  },
+  "mask": {
+    "code": "•••••• Show",
+    "crew": "You · Left Waist · Not readyGunner 2 · Tail Gun · Not readyOpen crew slot · AI coveringOpen crew slot · AI covering"
+  },
+  "errors": []
+}

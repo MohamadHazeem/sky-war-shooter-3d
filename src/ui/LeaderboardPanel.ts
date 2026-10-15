@@ -1,4 +1,5 @@
 import { BoardRow, cleanName, saveName, savedName, ScoreEntry, submitScoreDetailed, topScores } from '../net/Leaderboard';
+import { streamer } from './Streamer';
 import { fmtCountdown, loadSeasons, msUntilSeasonEnd, nextTier, recordSortie, seasonalBoard, seasonKey, seasonNumber, shiftSeason, FIRST_SEASON, TIERS, type SeasonRecord, type Tier } from '../game/Seasons';
 import { Progression } from '../game/Upgrades';
 import { cachedSquadron } from '../net/SquadronProfile';
@@ -10,7 +11,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 
 export function leaderboardTable(rows: BoardRow[]) {
   if (!rows.length) return `<div class="lb-empty">${tx('No scores yet — be the first.')}</div>`;
-  return `<table class="leader lb"><tbody>${rows.map((r, i) => `<tr class="${r.mine ? 'me' : ''}"><td>${i + 1}</td><td dir="auto">${esc(r.name)}</td><td>${tx('{n} kills', { n: r.kills })}</td><td style="text-align:end">${r.score}</td></tr>`).join('')}</tbody></table>`;
+  return `<table class="leader lb"><tbody>${rows.map((r, i) => `<tr class="${r.mine ? 'me' : ''}"><td>${i + 1}</td><td dir="auto">${esc(r.mine && streamer.on ? tx('You') : r.name)}</td><td>${tx('{n} kills', { n: r.kills })}</td><td style="text-align:end">${r.score}</td></tr>`).join('')}</tbody></table>`;
 }
 
 const tierLabel = (t: Tier | null) => tx(t ? TIERS.find(d => d.id === t)!.label : 'No tier yet');

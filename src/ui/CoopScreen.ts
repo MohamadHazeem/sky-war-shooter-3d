@@ -13,6 +13,8 @@ import { tx } from '../i18n';
 import { savedName, saveName } from '../net/Leaderboard';
 import { estimateRtt, latencyBars, REGION_LABEL, MAX_CREW, type LobbyListing, type Region } from '../net/Lobbies';
 import { loadTicket } from '../net/Rejoin';
+import { SPECTATOR_DELAYS } from '../game/SpectatorRules';
+import { crewLabel, revealable, streamer, wireReveal } from './Streamer';
 
 const PUBLIC_KEY = 'sws3d.coopPublic';
 function publicPref() { try { return localStorage.getItem(PUBLIC_KEY) !== '0'; } catch { return true; } }
@@ -22,6 +24,9 @@ export interface CoopScreenHandlers {
   host(pub: boolean): void;
   mode(mode: CoopMode, scenario: string): void;
   join(code: string): void;
+  watch(code: string): void;   // join as a spectator (no gun)
+  delay(seconds: number): void;   // the spectator's broadcast delay (Settings)
+  delayNow(): number;
   quick(): void;             // quick join: the best public crew
   browse(): void;            // the public game list
   rejoin(code: string): void;
@@ -47,6 +52,8 @@ export interface LobbyView {
   myId: number;
   ready: boolean;
   listed?: boolean;   // host, B-17 crew: shown in the public game list
+  watching?: boolean;   // we are a spectator
+  watchers?: number;    // spectators connected
 }
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
@@ -68,6 +75,9 @@ const CSS = `
 #coop .joinrow { display: flex; gap: 8px; margin-top: 8px; }
 #coop .joinrow input { flex: 1; min-width: 0; font-family: 'IBM Plex Mono', monospace; font-size: 22px; letter-spacing: 6px; text-transform: uppercase; padding: 8px 12px; background: rgba(0,0,0,0.4); color: var(--ink); border: 1px solid var(--line); }
 #coop .joinrow input:focus { outline: 2px solid var(--khaki); }
+#coop .delayrow { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--ink-dim); }
+#coop .watchnote { color: #9cc6ec; }
+body.streamer #coop input[data-name]:not(:focus), body.streamer .lb-submit input:not(:focus) { filter: blur(6px); }
 #coop .btn:disabled { opacity: 0.4; cursor: default; filter: none; }
 #coop .sep { border: none; border-top: 1px solid var(--line); margin: 20px 0 14px; }
 #coop .check { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 14px; color: var(--ink-dim); cursor: pointer; }
@@ -175,7 +185,8 @@ export class CoopScreen {
       <hr class="sep" />
       <div class="hud-label">${tx('Join a game')}</div>
       <div class="row" style="margin:8px 0 10px"><button class="btn" data-quick>${tx('Quick join')}</button><button class="btn ghost" data-browse>${tx('Find a game')}</button></div>
-      <div class="joinrow"><input maxlength="7" placeholder="${esc(tx('CODE'))}" autocomplete="off" spellcheck="false" value="${esc(code)}" aria-label="${esc(tx('Join code'))}" /><button class="btn ghost" data-join>${tx('Join')}</button></div>
+      <div class="joinrow"><input maxlength="7" placeholder="${esc(tx('CODE'))}" autocomplete="off" spellcheck="false" value="${esc(code)}" aria-label="${esc(tx('Join code'))}" /><button class="btn ghost" data-join>${tx('Join')}</button><button class="btn ghost" data-watch title="${esc(tx('Watch the crew without a gun: any gun position or a cinematic camera'))}">${tx('Watch')}</button></div>
+      <label class="delayrow">${tx('Spectator delay')} <select data-delay>${SPECTATOR_DELAYS.map(n => `<option value="${n}" ${this.h.delayNow() === n ? 'selected' : ''}>${n ? tx('{n} s', { n }) : tx('Off')}</option>`).join('')}</select></label>
       ${ticket ? `<div class="row" style="margin-top:10px"><button class="btn ghost" data-rejoin>${tx('Rejoin your last crew')} <span dir="ltr">${esc(ticket.code)}</span></button></div>` : ''}
       <div class="err" role="alert">${esc(tx(error))}</div>
       <p class="note">${tx('Shared crew score and personal rewards. Relay support is used when available.')}</p>
@@ -188,6 +199,9 @@ export class CoopScreen {
     pub.addEventListener('change', () => savePublicPref(pub.checked));
     this.root.querySelector('[data-host]')!.addEventListener('click', () => { saveName(name.value); this.h.mode(this.root.querySelector<HTMLSelectElement>('[data-mode]')!.value as CoopMode, this.root.querySelector<HTMLSelectElement>('[data-scenario]')!.value); this.h.host(pub.checked); });
     this.root.querySelector('[data-join]')!.addEventListener('click', join);
+    this.root.querySelector('[data-watch]')!.addEventListener('click', () => { saveName(name.value); this.h.watch(input.value); });
+    const delay = this.root.querySelector<HTMLSelectElement>('[data-delay]')!;
+    delay.addEventListener('change', () => this.h.delay(Number(delay.value)));
     this.root.querySelector('[data-quick]')!.addEventListener('click', () => { saveName(name.value); this.h.quick(); });
     this.root.querySelector('[data-browse]')!.addEventListener('click', () => { saveName(name.value); this.h.browse(); });
     this.root.querySelector('[data-rejoin]')?.addEventListener('click', () => { saveName(name.value); if (ticket) this.h.rejoin(ticket.code); });
@@ -228,24 +242,27 @@ export class CoopScreen {
     onBackKey(this.root, () => this.root.querySelector<HTMLButtonElement>('[data-back], [data-leave]')?.click());
   }
 
-  private crewRows(crew: CrewSeat[]) {
+  private crewRows(crew: CrewSeat[], myId: number) {
     const rows = Array.from({ length: 4 }, (_, i) => {
       const p = crew[i];
-      const label = p ? `${esc(p.name)} · ${tx(STATIONS[p.seat].label)} · ${tx(p.ready ? 'Ready' : 'Not ready')}` : tx('Open crew slot · AI covering');
+      const label = p ? `${esc(crewLabel(p.name, p.id, p.id === myId))} · ${tx(STATIONS[p.seat].label)} · ${tx(p.ready ? 'Ready' : 'Not ready')}` : tx('Open crew slot · AI covering');
       return `<p data-crew="${i}">${label}</p>`;
     });
     return `<div class="crew-roster">${rows.join('')}</div>`;
   }
 
   lobby(v: LobbyView) {
+    if (v.watching) { this.watchLobby(v); return; }
     const occupied = (s: StationId) => v.crew ? v.crew.some(p => p.id !== v.myId && p.seat === s) : s === v.partner;
+    const watchers = v.watchers ? tx('Spectators watching: {n}', { n: v.watchers }) : '';
     this.root.innerHTML = `<div class="screen-center"><div class="box panel">
       <div class="kicker">${tx(v.mode === 'pilot' ? 'P-51 escort (pilots)' : 'CO-OP (BETA) · SURVIVAL · B-17 GUNNERS')}</div>
       <div class="hud-label" style="margin-top:12px">${tx(v.role === 'host' ? 'Join code — give it to your partner' : 'Joined game')}</div>
-      <div class="code">${esc(v.code)}</div>
+      <div class="code">${revealable(v.code, 'code-text')}</div>
       <div class="status ${v.connected ? 'ok' : ''}" data-status>${esc(tx(v.status))}</div>
       ${this.modeChoice(v.mode, v.scenario, v.role === 'guest')}
-      ${v.crew ? this.crewRows(v.crew) : ''}
+      ${v.crew ? this.crewRows(v.crew, v.myId) : ''}
+      ${watchers ? `<p class="note watchnote" style="margin:0 0 10px">${esc(watchers)}</p>` : ''}
       ${v.mode === 'pilot' ? `<p>${tx(v.role === 'host' ? 'Blue One' : 'Blue Two')} · ${tx('PARTNER')}: ${tx(v.role === 'host' ? 'Blue Two' : 'Blue One')}</p>` : ''}
       <div ${v.mode === 'pilot' ? 'hidden' : ''}><div class="hud-label">${tx('Your gun position')}</div>
       <div class="seats">${STATION_ORDER.map((s) => `<button data-s="${s}" class="${s === v.mine ? 'mine' : occupied(s) ? 'partner' : ''}" ${occupied(s) ? 'disabled' : ''}>${tx(STATIONS[s].label)}</button>`).join('')}</div></div>
@@ -255,6 +272,7 @@ export class CoopScreen {
       <p class="note">${tx(v.role === 'host' ? 'You run the battle: if your partner drops out you carry on alone.' : 'The host starts the mission. If the host leaves, the game ends.')}</p>
     </div></div>`;
     this.wireMode();
+    wireReveal(this.root);
     this.root.querySelectorAll<HTMLButtonElement>('[data-s]').forEach((b) => b.addEventListener('click', () => this.h.seat(b.dataset.s as StationId)));
     this.root.querySelector<HTMLSelectElement>('[data-mode]')!.disabled = true;
     this.root.querySelector('[data-ready]')?.addEventListener('click', () => this.h.ready());
@@ -265,23 +283,43 @@ export class CoopScreen {
     onBackKey(this.root, () => this.root.querySelector<HTMLButtonElement>('[data-back], [data-leave]')?.click());
   }
 
+  // A spectator's lobby: the crew as it forms up, no seat, no ready, no start
+  private watchLobby(v: LobbyView) {
+    const delay = this.h.delayNow();
+    const behind = delay ? ' ' + tx('The broadcast runs {n} s behind.', { n: delay }) : '';
+    this.root.innerHTML = `<div class="screen-center"><div class="box panel">
+      <div class="kicker">${tx('CO-OP (BETA) · SURVIVAL · B-17 GUNNERS')}</div>
+      <div class="hud-label" style="margin-top:12px">${tx('Watching game')}</div>
+      <div class="code">${revealable(v.code, 'code-text')}</div>
+      <div class="status ok" data-status>${esc(tx(v.status))}</div>
+      ${v.crew ? this.crewRows(v.crew, -1) : ''}
+      <p class="note watchnote" style="margin:0 0 12px">${tx('You are a spectator: watch any gun position or the cinematic camera. You cannot fire.')}${esc(behind)}</p>
+      <div class="row"><button class="btn ghost" data-leave>${tx('Leave')}</button></div>
+    </div></div>`;
+    wireReveal(this.root);
+    this.root.querySelector('[data-leave]')!.addEventListener('click', () => this.h.leave());
+    this.show();
+    onBackKey(this.root, () => this.root.querySelector<HTMLButtonElement>('[data-leave]')?.click());
+  }
+
   // The public game list (B-17 crews): null while loading
   browser(list: readonly LobbyListing[] | null, me: Region) {
     const row = (l: LobbyListing) => {
       const rtt = estimateRtt(me, l.region);
       const where = l.phase === 'mission' ? tx('In battle · wave {n}', { n: Math.max(1, l.round) }) : tx('In the lobby');
-      return `<div class="lobbyrow"><span class="bars q${latencyBars(rtt)}" title="${esc(tx('Estimated round trip: {ms} ms', { ms: rtt }))}"><i></i><i></i><i></i><i></i></span><div class="who"><b>${esc(l.name)}</b><small><span dir="ltr">${l.crew}/${MAX_CREW}</span> · ${tx(REGION_LABEL[l.region])} · ${where}</small></div><button class="btn" data-code="${l.code}">${tx('Join')}</button></div>`;
+      return `<div class="lobbyrow"><span class="bars q${latencyBars(rtt)}" title="${esc(tx('Estimated round trip: {ms} ms', { ms: rtt }))}"><i></i><i></i><i></i><i></i></span><div class="who"><b>${esc(l.name)}</b><small><span dir="ltr">${l.crew}/${MAX_CREW}</span> · ${tx(REGION_LABEL[l.region])} · ${where}</small></div><button class="btn" data-code="${l.code}">${tx('Join')}</button><button class="btn ghost" data-watchcode="${l.code}">${tx('Watch')}</button></div>`;
     };
     const body = list === null ? `<div class="status">${tx('Looking for games…')}</div>`
       : list.length ? `<div class="lobbies">${list.map(row).join('')}</div>`
         : `<div class="status">${tx('No open crews right now. Host a public game and others can find it.')}</div>`;
     this.root.innerHTML = `<div class="screen-center"><div class="box panel">
       <div class="kicker">${tx('CO-OP (BETA) · SURVIVAL · B-17 GUNNERS')}</div><h2 class="h2">${tx('Public games')}</h2>
-      <p class="note" style="margin-top:4px">${tx('Your region')}: ${tx(REGION_LABEL[me])} · ${tx('Closest crews first; the bars estimate the connection.')}</p>
+      <p class="note" style="margin-top:4px">${streamer.on ? '' : `${tx('Your region')}: ${tx(REGION_LABEL[me])} · `}${tx('Closest crews first; the bars estimate the connection.')}</p>
       ${body}
       <div class="row"><button class="btn ghost" data-refresh ${list === null ? 'disabled' : ''}>${tx('Refresh')}</button><button class="btn ghost" data-back>${tx('Back')}</button></div>
     </div></div>`;
     this.root.querySelectorAll<HTMLButtonElement>('[data-code]').forEach((b) => b.addEventListener('click', () => this.h.join(b.dataset.code!)));
+    this.root.querySelectorAll<HTMLButtonElement>('[data-watchcode]').forEach((b) => b.addEventListener('click', () => this.h.watch(b.dataset.watchcode!)));
     this.root.querySelector('[data-refresh]')!.addEventListener('click', () => this.h.browse());
     this.root.querySelector('[data-back]')!.addEventListener('click', () => this.menu());
     this.show();

@@ -27,6 +27,11 @@ import { isEscortKind } from '../world/EscortTypes';
 //             frame():      this.coop.update(dt)           (right after world.update)
 //             direct():     if (this.coop.blocksDirector) return;
 //   World.ts  remoteStations set, skipped by bomberGunners()
+// Spectators (Phase 11 goal 34): two more rooms per B-17 crew game (slots 3 and 4, SPEC_SLOTS) take
+// a guest without a gun. It gets the same lobby, start, snapshots and events as the gunners (plus
+// every gun's aim, `ca`/`cf`, which also swings the crewmates' guns on everyone's ship), never
+// sends input, is left out of the roster, seats, debrief split and host migration, and holds the
+// whole broadcast back by its delay setting (DelayLine). Its camera is game/Spectator.ts.
 // Instance-level wrappers (installed for a co-op mission, removed when it ends): World.update
 // (guest), World.rebase (origin tracking), Ballistics.fire/onHit (host: tracers, the guest's
 // hits), GunnerController.requestStation (no sitting on the partner's gun), and World.events.kill
@@ -40,7 +45,7 @@ import { CAMPAIGN, survivalMission } from './Missions';
 import { CoopLink, Sample, sampleTrack, advanceClock } from '../net/Coop';
 import { hostSignal, joinSignal, normalizeCode, RoomError, Signalling } from '../net/Signal';
 import { CoopScreen } from '../ui/CoopScreen';
-import { STATIONS, StationId, dirFromYawPitch, wrapAngle } from '../world/B17Layout';
+import { STATIONS, STATION_ORDER, StationId, dirFromYawPitch, wrapAngle } from '../world/B17Layout';
 import { Aircraft, Bomber, Fighter } from '../world/Aircraft';
 import type { HitEvent } from '../world/Ballistics';
 import { ENEMY_VARIANTS, EnemyType } from '../world/EnemyTypes';
@@ -69,12 +74,16 @@ import { makeCode } from '../net/Signal';
 import { fetchListings, HEARTBEAT_MS, inviteCode, inviteLink, listingFields, localRegion, publishListing, PUBLISH_GAP_MS, quickJoinOrder, rankLobbies, removeListing, sameListing, withoutInvite, type ListingFields } from '../net/Lobbies';
 import { clearTicket, lossAction, MIGRATE_GAP_MS, MIGRATE_TRIES, pickHeir, RECONNECT_GAP_MS, RECONNECT_TRIES, saveTicket, validPlan, type MigrationPlan } from '../net/Rejoin';
 import type { DebriefData } from '../ui/UI';
+import { Spectator } from './Spectator';
+import { DelayLine, aimOf, delaySeconds, fireMask, packAims, readAims } from './SpectatorRules';
+import { crewLabel, streamer } from '../ui/Streamer';
 
 interface CrewPeer {
   id: number; run: number; link: CoopLink; signal: Signalling | null; seat: StationId; name: string; ready: boolean;
   owner: Aircraft; score: ReturnType<typeof emptyGunnerScore>; tally: CombatTally;
   inp: RemoteInput | null; age: number; wall: number; seq: number; cd: number; shots: number;
   hits: number[]; streak: number; lastKill: number;
+  spec: boolean;   // a spectator (slots 3-4): no gun, no seat, not in the roster
 }
 
 
@@ -84,6 +93,10 @@ export const INPUT_HZ = 30;
 const TRACERS_PER_SNAP = 40;
 const INPUT_STALE = 0.75;           // s without guest input (sim and wall clock) -> trigger released
 const CONNECT_TIMEOUT_MS = 25000;
+export const CREW_SLOTS = [0, 1, 2] as const;
+export const SPEC_SLOTS = [3, 4] as const;   // spectator rooms (crewCode slots), opened after the crew's
+// guest -> host events and snapshots a spectator holds back by its broadcast delay (lobby and seat traffic stays live)
+const HELD_EVENTS = new Set(['start', 'k', 'h', 'end', 'debrief', 'wx', 'mark']);
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
 // snapshot aircraft flags
@@ -140,6 +153,15 @@ export class CoopSession {
   private rejoining = false;                   // guest: reconnected mid-round, accept the same run's start
   private followCode = '';                     // guest: the heir's code, rejoined from the debrief
   private inviteChecked = false;
+  // spectating (game/Spectator.ts)
+  readonly spectator: Spectator;
+  watching = false;                            // guest: we joined a spectator room
+  watchers = 0;                                // spectators connected (host counts, guests are told)
+  readonly crewAim = new Float32Array(10);     // every gun's aim from the latest snapshot (`ca`)
+  crewFire = 0;                                // guns firing (`cf`)
+  private held = new DelayLine<{ s: boolean; m: any }>();
+  private heldStart = false;                   // a held 'start' is waiting in the line
+  private heldT = 0;
   broadcast(m: unknown) {
     if (this.role === 'host' && this.mode === 'gunner') { for (const p of this.peers) p.link.sendEvent(m); }
     else this.link?.sendEvent(m);
@@ -149,15 +171,16 @@ export class CoopSession {
   get epoch() { return this.run; }
   get localId() { return this.myId; }
   get activeCrew(): CrewSeat[] {
-    return [{ id: 0, name: this.myName, seat: this.hostSeat, ready: this.myReady }, ...this.peers.filter(p => p.link.status === 'open').map(p => ({ id: p.id, name: p.name, seat: p.seat, ready: p.ready }))];
+    return [{ id: 0, name: this.myName, seat: this.hostSeat, ready: this.myReady }, ...this.peers.filter(p => p.link.status === 'open' && !p.spec).map(p => ({ id: p.id, name: p.name, seat: p.seat, ready: p.ready }))];
   }
   private refreshCrew() {
     this.roster = this.activeCrew;
     this.connected = this.roster.length > 1;
     this.partnerReady = this.myReady && this.roster.every(p => p.ready);
-    this.link = this.peers.find(p => p.link.status === 'open')?.link ?? this.peers[0]?.link ?? null;
+    this.link = this.peers.find(p => p.link.status === 'open' && !p.spec)?.link ?? this.peers.find(p => !p.spec)?.link ?? null;
+    this.watchers = this.peers.filter(p => p.spec && p.link.status === 'open').length;
     this.game.world.remoteStations.clear();
-    if (this.phase === 'mission') for (const p of this.peers) if (p.link.status === 'open') this.game.world.remoteStations.add(p.seat);
+    if (this.phase === 'mission') for (const p of this.peers) if (p.link.status === 'open' && !p.spec) this.game.world.remoteStations.add(p.seat);
   }
   private aggregateGuests() {
     const total = this.guestScore; total.kills = total.hits = total.shots = total.score = 0;
@@ -236,10 +259,20 @@ export class CoopSession {
   constructor(private game: Game, private engine: Engine, private ui: UI) {
     this.pings = new CrewPings(game, this);
     this.pilots = new CoopPilot(game, m => this.link?.sendEvent({ ...m, run: this.run }), this.origin);
+    const session = this;
+    this.spectator = new Spectator(game, engine, game.input, {
+      crew: () => this.roster, get myId() { return session.myId; }, aims: this.crewAim, get fire() { return session.crewFire; },
+      delay: () => this.delay, waiting: () => this.latestTm < 0,
+      station: (id) => { if (this.game.gunner.station !== id) this.reqStation0?.call(this.game.gunner, id); },
+      leave: () => { this.leave(); this.game.startMenu(); },
+    });
     this.screen = new CoopScreen({
       mode: (mode, scenario) => { if (this.role === 'guest' || (this.role === 'host' && mode !== this.mode)) return; this.mode = mode; this.scenario = mode === 'gunner' ? 'survival' : scenario; this.sendLobby(); this.renderLobby(this.lobbyStatus); },
       host: (pub) => { this.publicGame = pub && this.mode === 'gunner'; void this.host(); },
       join: (c) => { void this.join(c); },
+      watch: (c) => { void this.join(c, 1, [], true); },
+      delay: (n) => { this.game.settings.spectatorDelay = delaySeconds(n); this.game.applySettings(); },
+      delayNow: () => this.delay,
       quick: () => { void this.quickJoin(); },
       browse: () => { void this.browse(); },
       rejoin: (c) => { void this.join(c, RECONNECT_TRIES); },
@@ -274,6 +307,7 @@ export class CoopSession {
 
   // Game.frame(), right after world.update(dt)
   update(dt: number) {
+    if (this.watching) this.release(dt);
     const link = this.link;
     this.pings.update(dt);
     this.screen.setPing(link?.rtt ?? -1, !!link && link.status === 'open', this.phase === 'mission', this.mode === 'gunner');
@@ -284,7 +318,33 @@ export class CoopSession {
 
   get partnerSeat(): StationId | null {
     if (!this.connected || this.mode === 'pilot') return null;
-    return this.role === 'host' ? this.peers.find(p => p.link.status === 'open')?.seat ?? null : this.role === 'guest' ? this.hostSeat : null;
+    return this.role === 'host' ? this.peers.find(p => p.link.status === 'open' && !p.spec)?.seat ?? null : this.role === 'guest' ? this.hostSeat : null;
+  }
+
+  // Game.frame(), right after Cinematics: the spectator's cinematic camera and overlay
+  afterView(dt: number) { if (this.watching && this.phase === 'mission') this.spectator.post(dt); }
+
+  /** The spectator's broadcast delay in seconds (Settings → Spectator delay). */
+  get delay() { return delaySeconds(this.game.settings.spectatorDelay); }
+
+  // Spectator: messages from the host go through the delay line (Settings delay, 0 = straight through)
+  private ingest(snap: boolean, m: any) {
+    if (!this.watching || !(snap || HELD_EVENTS.has(m?.t)) || (!this.delay && !this.held.length)) { this.dispatch(snap, m); return; }
+    if (m?.t === 'start') this.heldStart = true;
+    this.held.push(performance.now(), { s: snap, m });
+  }
+  private dispatch(snap: boolean, m: any) {
+    if (snap) this.onSnap(m); else this.onEvent(m);
+  }
+  private release(dt: number) {
+    if (!this.held.length) return;
+    this.held.drain(performance.now(), this.delay * 1000, (x) => { if (x.m?.t === 'start') this.heldStart = false; this.dispatch(x.s, x.m); });
+    this.heldT -= dt;
+    if (this.heldStart && this.phase === 'lobby' && this.heldT <= 0) {
+      this.heldT = 0.5;
+      const n = Math.ceil(this.held.wait(performance.now(), this.delay * 1000, false));
+      this.renderLobby(tx('The mission has started — your delayed picture begins in {n} s', { n }));
+    }
   }
 
   // ---------------- session ----------------
@@ -292,18 +352,19 @@ export class CoopSession {
   private newLink(role: 'host' | 'guest', iceServers?: RTCIceServer[], slot = 0) {
     const link = new CoopLink(role, iceServers);
     if (role === 'host' && this.mode === 'gunner') {
-      const seat = freeSeat(this.activeCrew, 'waistR')!;
-      const peer: CrewPeer = { id: slot + 1, run: 0, link, signal: null, seat, name: 'Gunner', ready: false,
+      const spec = (SPEC_SLOTS as readonly number[]).includes(slot);
+      const seat = spec ? STATION_ORDER[0] : freeSeat(this.activeCrew, 'waistR') ?? STATION_ORDER[0];
+      const peer: CrewPeer = { id: slot + 1, run: 0, link, signal: null, seat, name: spec ? 'Spectator' : 'Gunner', ready: spec,
         owner: Object.freeze({ remoteGunner: slot + 1 }) as unknown as Aircraft, score: emptyGunnerScore(), tally: new CombatTally(),
-        inp: null, age: 99, wall: 0, seq: -1, cd: 0, shots: 0, hits: [], streak: 0, lastKill: -99 };
+        inp: null, age: 99, wall: 0, seq: -1, cd: 0, shots: 0, hits: [], streak: 0, lastKill: -99, spec };
       this.peers.push(peer);
     }
     this.link ??= link;
     if (role === 'guest' || this.mode === 'pilot') this.link = link;
     link.onOpen = () => this.onOpen(link);
     link.onClose = (why) => this.onLinkClosed(link, why);
-    link.onEvent = (m) => { const peer = this.peers.find(p => p.link === link); if (peer || this.link === link) this.onEvent(m, peer); };
-    link.onState = (m) => { const peer = this.peers.find(p => p.link === link); if (peer || this.link === link) { if (role === 'host') this.onInput(m, peer); else this.onSnap(m); } };
+    link.onEvent = (m) => { const peer = this.peers.find(p => p.link === link); if (peer) this.onEvent(m, peer); else if (this.link === link) this.ingest(false, m); };
+    link.onState = (m) => { const peer = this.peers.find(p => p.link === link); if (peer || this.link === link) { if (role === 'host') this.onInput(m, peer); else this.ingest(true, m); } };
     if (role === 'host') link.pingInfo = () => this.game.state;
     else link.onPingInfo = (x) => { this.hostState = String(x); };
     return link;
@@ -328,6 +389,7 @@ export class CoopSession {
         this.code = code;
         this.refreshCrew();
         this.syncListing(true);
+        void this.openSpecSlots(code, attempt);
       } else {
         const link = this.newLink('host', ice);
         const sig = await hostSignal(link.pc, e => console.warn('Co-op: signalling', e));
@@ -343,6 +405,19 @@ export class CoopSession {
     }
   }
 
+  // Spectator rooms: best effort (a clash or an error only means this game can't be watched)
+  private async openSpecSlots(code: string, attempt: number) {
+    for (const slot of SPEC_SLOTS) {
+      if (attempt !== this.connectionAttempt) return;
+      try { await this.offerSlot(slot, code, attempt); }
+      catch (e) {
+        console.warn('Co-op: spectator room unavailable', e);
+        const i = this.peers.findIndex(p => p.id === slot + 1 && !p.signal);
+        if (i >= 0) { this.peers[i].link.close('local', false); this.peers.splice(i, 1); }
+      }
+    }
+  }
+
   private async offerSlot(slot: number, code: string, attempt: number) {
     const link = this.newLink('host', this.roomIce, slot);
     const peer = this.peers.find(p => p.link === link)!;
@@ -353,12 +428,12 @@ export class CoopSession {
 
   // tries > 1: keep retrying (rejoin, or following the heir while it opens its rooms);
   // fallbacks: further codes to try when this one is full or gone (quick join)
-  private async join(input: string, tries = 1, fallbacks: readonly string[] = []) {
+  private async join(input: string, tries = 1, fallbacks: readonly string[] = [], watch = false) {
     const code = normalizeCode(input);
     if (!code) { this.screen.menu('A join code is 6 letters and digits.', input); return; }
     this.leave();
-    this.role = 'guest'; this.phase = 'lobby'; this.code = code;
-    this.screen.busy(`Joining ${code}…`);
+    this.role = 'guest'; this.phase = 'lobby'; this.code = code; this.watching = watch;
+    this.screen.busy(watch ? 'Joining as a spectator…' : `Joining ${code}…`);
     const attempt = this.connectionAttempt;
     const ice = await fetchIceServers();
     for (let i = 0; i < tries; i++) {
@@ -378,13 +453,14 @@ export class CoopSession {
     if (attempt !== this.connectionAttempt) return;
     if (fallbacks.length) { void this.join(fallbacks[0], 1, fallbacks.slice(1)); return; }
     this.leave();
-    this.screen.menu('Crew full or unavailable. Try again shortly.', code);
+    this.screen.menu(watch ? 'No spectator seat free, or this game cannot be watched.' : 'Crew full or unavailable. Try again shortly.', code);
   }
 
   // Claim the first free crew slot of a game: the open link, null (full / gone) or 'stale' (cancelled)
   private async trySlots(code: string, ice: RTCIceServer[], attempt: number): Promise<CoopLink | null | 'stale'> {
     let lastError: unknown, expectedHost: string | undefined;
-    for (let slot = 0; slot < 3; slot++) {
+    const slots = this.watching ? SPEC_SLOTS : CREW_SLOTS;
+    for (const slot of slots) {
       const link = this.newLink('guest', ice);
       try {
         const sig = await joinSignal(link.pc, crewCode(code, slot), e => console.warn('Co-op: signalling', e), expectedHost);
@@ -395,7 +471,7 @@ export class CoopSession {
         if (this.link === link) this.link = null;
         link.close('local', false); lastError = e;
         if (attempt !== this.connectionAttempt) return 'stale';
-        if (slot === 0) {
+        if (slot === slots[0]) {
           if (!(e instanceof RoomError) || !e.host) break;
           expectedHost = e.host;
         }
@@ -445,7 +521,7 @@ export class CoopSession {
       this.screen.toast('Invite link copied — send it to a friend', 3000);
     } catch (e) {
       if ((e as Error)?.name === 'AbortError') return;
-      this.screen.toast(url, 8000);
+      this.screen.toast(streamer.on ? 'Could not copy the invite link.' : url, 8000);
     }
   }
 
@@ -539,6 +615,7 @@ export class CoopSession {
         await this.offerSlot(slot, plan.next, attempt);
       }
       this.syncListing(true);
+      void this.openSpecSlots(plan.next, attempt);
     } catch (e) {
       if (attempt !== this.connectionAttempt) return;
       console.warn('Co-op: could not reopen the crew rooms', e);
@@ -554,6 +631,7 @@ export class CoopSession {
     this.followCode = follow;
     if (follow) saveTicket(follow); else clearTicket();
     const g = this.game, w = g.world, m = this.mission;
+    if (this.watching) { this.reset(); g.startMenu(); this.screen.toast('The host left — the broadcast has ended.', 6000); return; }
     if (!m || this.result || this.role !== 'guest') {
       this.reset(); g.startMenu(); this.screen.toast(reason, 6000);
       return;
@@ -568,8 +646,9 @@ export class CoopSession {
 
   private onOpen(link: CoopLink) {
     const peer = this.peers.find(p => p.link === link);
+    if (peer?.spec) { this.refreshCrew(); this.sendLobby(); this.renderLobby(this.lobbyStatus || 'Waiting for your partner to join…'); this.ui.feed(tx('A spectator is watching'), 'mine'); return; }
     if (peer) {
-      peer.seat = freeSeat(this.activeCrew.filter(p => p.id !== peer.id), peer.seat)!;
+      peer.seat = freeSeat(this.activeCrew.filter(p => p.id !== peer.id), peer.seat) ?? peer.seat;
       this.refreshCrew(); this.sendLobby();
       this.renderLobby('Crew connected — pick a seat and ready up');
       return;
@@ -582,8 +661,8 @@ export class CoopSession {
     this.signal = null;
     if (this.role === 'host') { this.sendLobby(); this.renderLobby(this.mode === 'pilot' ? 'Partner connected — ready to fly' : 'Partner connected — pick your guns and start'); sound.confirm('kill_confirm'); }
     else {
-      link.sendEvent({ t: 'hello', name: this.myName }); this.renderLobby('Connected — waiting for the host to start');
-      if (this.mode === 'gunner') saveTicket(this.code);
+      link.sendEvent({ t: 'hello', name: this.myName, spec: this.watching || undefined }); this.renderLobby(this.watching ? 'Watching — waiting for the host to start' : 'Connected — waiting for the host to start');
+      if (this.mode === 'gunner' && !this.watching) saveTicket(this.code);
       if (this.rejoining) { this.screen.waiting(null); this.ui.tip('Back aboard', 2000); }
     }
   }
@@ -623,6 +702,7 @@ export class CoopSession {
     this.roster = []; this.departed = []; this.myId = 0; this.myReady = false; this.pings.reset();
     this.run = 0; this.rewardedRun = 0; this.result = null; this.partnerReady = true;
     this.plan = null; this.hostLeft = false; this.rejoining = false; this.nextCode = '';
+    this.spectator?.end(); this.watching = false; this.watchers = 0; this.held?.clear(); this.heldStart = false; this.crewAim?.fill(0); this.crewFire = 0;
     this.engine.paused = false;
     this.screen.waiting(null);
     this.screen.markPartner(null);
@@ -632,6 +712,18 @@ export class CoopSession {
   private onLinkClosed(link: CoopLink, why: 'left' | 'lost' | 'local') {
     if (why === 'local') return;
     const peer = this.peers.find(p => p.link === link);
+    if (peer?.spec) {
+      this.peers.splice(this.peers.indexOf(peer), 1);
+      this.refreshCrew(); this.sendLobby(); this.renderLobby(this.lobbyStatus);
+      const attempt = this.connectionAttempt, code = this.code;
+      void (async () => {
+        await peer.signal?.close();
+        if (attempt !== this.connectionAttempt || !code) return;
+        try { await this.offerSlot(peer.id - 1, code, attempt); }
+        catch (e) { console.warn('Co-op: spectator room unavailable', e); }
+      })();
+      return;
+    }
     if (peer) {
       this.peers.splice(this.peers.indexOf(peer), 1); this.departed.push(peer);
       this.refreshCrew(); this.sendLobby(); this.renderLobby('Crew connected — pick a seat and ready up');
@@ -680,6 +772,7 @@ export class CoopSession {
       partner: this.partnerSeat,
       crew: this.mode === 'gunner' ? this.roster : undefined, myId: this.myId, ready: this.myReady,
       listed: this.role === 'host' && this.mode === 'gunner' ? !!this.publicGame : undefined,
+      watching: this.watching, watchers: this.watchers,
     });
   }
   private lobbyStatus = '';
@@ -688,12 +781,12 @@ export class CoopSession {
     if (this.role === 'host' && this.mode === 'gunner') {
       this.refreshCrew();
       const plan = this.hostPlan();
-      for (const p of this.peers) p.link.sendEvent({ t: 'lobby', mode: this.mode, scenario: this.scenario, hs: this.hostSeat, gs: p.seat, name: this.myName, crew: this.roster, id: p.id, plan });
+      for (const p of this.peers) p.link.sendEvent({ t: 'lobby', mode: this.mode, scenario: this.scenario, hs: this.hostSeat, gs: p.seat, name: this.myName, crew: this.roster, id: p.id, plan, watchers: this.watchers });
       this.syncListing();
     } else this.link?.sendEvent({ t: 'lobby', mode: this.mode, scenario: this.scenario, hs: this.hostSeat, gs: this.guestSeat, name: this.myName });
   }
   private toggleReady() {
-    if (this.phase !== 'lobby') return;
+    if (this.phase !== 'lobby' || this.watching) return;
     this.myReady = !this.myReady;
     if (this.role === 'host') this.sendLobby();
     else this.link?.sendEvent({ t: 'crewReady', ready: this.myReady });
@@ -701,7 +794,7 @@ export class CoopSession {
   }
 
   private pickSeat(s: StationId) {
-    if (this.phase !== 'lobby' || !(s in STATIONS)) return;
+    if (this.phase !== 'lobby' || !(s in STATIONS) || this.watching) return;
     if (this.mode === 'gunner') {
       if (!canTakeSeat(this.roster, this.myId, s)) return;
       if (this.role === 'host') { this.hostSeat = s; this.myReady = false; this.sendLobby(); }
@@ -712,6 +805,15 @@ export class CoopSession {
   }
 
   private onEvent(m: any, peer?: CrewPeer) {
+    if (peer?.spec) {
+      // a spectator only introduces itself: no seat, no ready, no marks
+      if (m.t !== 'hello') return;
+      peer.name = cleanName(String(m.name ?? 'Spectator'));
+      this.sendLobby();
+      if (this.phase === 'mission' && !this.endWhy) { this.sendStart(peer); if (this.sentWx) peer.link.sendEvent({ t: 'wx', w: this.sentWx }); }
+      else if (this.phase === 'debrief') peer.link.sendEvent({ t: 'crewWait' });
+      return;
+    }
     if (m.t === 'mark') { this.pings.receive(m, peer?.id); return; }
     if (peer) {
       if (m.t === 'hello') {
@@ -766,6 +868,7 @@ export class CoopSession {
           this.myReady = this.roster.find(p => p.id === this.myId)?.ready ?? false;
         }
         this.partnerName = cleanName(String(m.name ?? 'Gunner'));
+        this.watchers = Number.isInteger(m.watchers) ? Math.max(0, Math.min(SPEC_SLOTS.length, m.watchers)) : 0;
         if (validPlan(m.plan)) this.plan = m.plan;
         if (m.hs in STATIONS) this.hostSeat = m.hs;
         if (m.gs in STATIONS) this.guestSeat = m.gs;
@@ -841,12 +944,12 @@ export class CoopSession {
     const tally = (t: CombatTally) => ({ bestStreak: t.bestStreak, closestKill: Number.isFinite(t.closestKill) ? t.closestKill : null, killsByGun: this.mode === 'gunner' ? t.killsByGun() : undefined });
     Object.assign(result.host, tally(g.tally)); Object.assign(result.guest, tally(this.guestTally));
     if (this.mode === 'gunner') {
-      const members = [{ score: host, tally: g.tally }, ...this.peers.filter(p => p.link.status === 'open' && p.run === this.run), ...this.departed.filter(p => p.run === this.run)];
+      const members = [{ score: host, tally: g.tally }, ...this.peers.filter(p => p.link.status === 'open' && p.run === this.run && !p.spec), ...this.departed.filter(p => p.run === this.run)];
       const personal = crewDebriefs(this.run, result.host, members.map(p => p.score), w.combatLosses, w.crewWounded > 0);
       personal.forEach((d, i) => Object.assign(d, tally(members[i].tally)));
       result.host = personal[0];
       let i = 1;
-      for (const p of this.peers) if (p.link.status === 'open' && p.run === this.run) p.link.sendEvent({ ...result, guest: personal[i++] });
+      for (const p of this.peers) if (p.link.status === 'open' && p.run === this.run) p.link.sendEvent({ ...result, guest: p.spec ? result.host : personal[i++] });
     } else this.link?.sendEvent(result);
     this.presentDebrief(result);
     return true;
@@ -855,6 +958,7 @@ export class CoopSession {
   private presentDebrief(result: CoopDebrief) {
     if (result.run <= this.rewardedRun || !this.mission) return;
     this.rewardedRun = result.run; this.result = result; this.phase = 'debrief';
+    if (this.watching) { this.watchDebrief(result); return; }
     const g = this.game, d = this.role === 'host' ? result.host : result.guest;
     g.score = result.crew.score;
     Object.assign(g.world.stats, { kills: d.kills, shots: d.rounds, hits: d.hits, bombersLost: d.bombersLost });
@@ -878,6 +982,21 @@ export class CoopSession {
     } : undefined);
   }
 
+  // A spectator's debrief: the crew's totals, no personal rewards, medals or service record
+  private watchDebrief(result: CoopDebrief) {
+    const g = this.game, c = result.crew;
+    this.spectator.end();
+    const d: DebriefData = { ...result.host, kills: c.kills, rounds: c.shots, hits: c.hits, accuracy: c.shots ? Math.min(1, c.hits / c.shots) : 0,
+      personalScore: c.score, merit: 0, medals: [] };
+    g.score = c.score;
+    Object.assign(g.world.stats, { kills: d.kills, shots: d.rounds, hits: d.hits, bombersLost: d.bombersLost });
+    g.endResult = { success: d.success, reason: d.reason };
+    g.state = 'debrief'; this.engine.paused = true; g.input.unlock();
+    this.screen.waiting(null); this.screen.markPartner(null);
+    sound.stopSpeech(); sound.music.stinger(d.success); sound.setMode('menu');
+    g.ui.debrief(d, { next: () => this.returnToLobby(), retry: () => this.returnToLobby(), menu: () => g.startMenu(), armory: () => this.returnToLobby() });
+  }
+
   private returnToLobby() {
     const follow = this.followCode;
     this.followCode = '';
@@ -892,7 +1011,7 @@ export class CoopSession {
     this.myReady = false;
     if (this.mode === 'gunner' && this.role === 'host') { for (const p of this.peers) p.ready = false; this.sendLobby(); }
     if (this.role === 'guest') this.link.sendEvent({ t: 'ready', run: this.run });
-    this.renderLobby(this.role === 'host' && !this.partnerReady ? 'Waiting for your partner to return…' : this.role === 'host' ? (this.mode === 'pilot' ? 'Partner connected — ready to fly' : 'Partner connected — pick your guns and start') : 'Connected — waiting for the host to start');
+    this.renderLobby(this.role === 'host' && !this.partnerReady ? 'Waiting for your partner to return…' : this.role === 'host' ? (this.mode === 'pilot' ? 'Partner connected — ready to fly' : 'Partner connected — pick your guns and start') : this.watching ? 'Watching — waiting for the host to start' : 'Connected — waiting for the host to start');
   }
 
   // ---------------- mission start ----------------
@@ -945,6 +1064,7 @@ export class CoopSession {
     this.installGuest();
     this.engine.paused = false;
     this.game.startMission(m);
+    if (this.watching) this.spectator.begin();
   }
 
   // instance wrappers shared by both sides
@@ -1001,7 +1121,7 @@ export class CoopSession {
         this.guestLastKill = w.time;
         if (peer) { peer.streak = w.time - peer.lastKill < 9 ? peer.streak + 1 : 1; peer.lastKill = w.time; peer.tally.recordKill(peer.streak, victim.pos.distanceTo(w.playerBomber!.pos), STATIONS[peer.seat]); }
         this.guestTally.recordKill(this.guestStreak, victim.pos.distanceTo(this.mode === 'pilot' && this.pilots.remote ? this.pilots.remote.pos : w.playerBomber!.pos), this.mode === 'pilot' ? null : STATIONS[this.guestSeat]);
-        this.ui.feed(tx(this.mode === 'pilot' ? '{name} destroyed {target}' : '{name} (partner) destroyed {target}', { name: this.mode === 'pilot' ? tx('Blue Two') : peer?.name ?? this.partnerName, target: tx(victim.label) }), 'mine');
+        this.ui.feed(tx(this.mode === 'pilot' ? '{name} destroyed {target}' : '{name} (partner) destroyed {target}', { name: this.mode === 'pilot' ? tx('Blue Two') : peer ? crewLabel(peer.name, peer.id, false) : this.partnerName, target: tx(victim.label) }), 'mine');
         return;
       }
       const before = this.game.score;
@@ -1079,7 +1199,7 @@ export class CoopSession {
     this.lastT = w.time;
     if (g.gunner.transition <= 0) this.hostSeat = g.gunner.station;
     this.screen.markPartner(this.mode === 'gunner' ? this.roster : null, this.myId);
-    if (this.flying) this.pilots.hostTick(dt); else { for (const p of this.peers) if (p.link.status === 'open') this.remoteGun(dt, p); this.guestScore = this.aggregateGuests(); }
+    if (this.flying) this.pilots.hostTick(dt); else { for (const p of this.peers) if (p.link.status === 'open' && !p.spec) this.remoteGun(dt, p); this.guestScore = this.aggregateGuests(); }
     // kills: anything alive last frame that is not now
     for (const [id, a] of this.tracked) {
       if (!a.alive) {
@@ -1153,6 +1273,9 @@ export class CoopSession {
     }
   }
 
+  private aimBuf = new Float32Array(10);
+  private wantBuf = STATION_ORDER.map(() => new THREE.Vector3());
+  private aim2: [number, number] = [0, 0];
   private buildSnap() {
     const w = this.game.world, o = this.origin, pb = w.playerBomber;
     const a: SnapAircraft[] = [];
@@ -1183,6 +1306,18 @@ export class CoopSession {
       ph: this.pbHits, tr: this.tracers.flat(),
     };
     msg.a = packAircraft(a);
+    if (this.mode === 'gunner' && pb) {
+      // every gun's aim and who is firing: the spectator's views, and the crewmates' guns on each ship
+      const aims = this.aimBuf;
+      STATION_ORDER.forEach((s, i) => {
+        if (s === g.station) { aims[i * 2] = g.def.rest.yaw + g.state.yaw; aims[i * 2 + 1] = g.def.rest.pitch + g.state.pitch; return; }
+        const tg = pb.guns.get(s);
+        if (tg) { aimOf(tg.cur, this.aim2); aims[i * 2] = this.aim2[0]; aims[i * 2 + 1] = this.aim2[1]; }
+        else { aims[i * 2] = STATIONS[s].rest.yaw; aims[i * 2 + 1] = STATIONS[s].rest.pitch; }
+      });
+      msg.ca = packAims(aims);
+      msg.cf = fireMask(s => s === g.station ? g.firing : this.peers.some(p => !p.spec && p.seat === s && !!p.inp?.f && p.age < INPUT_STALE));
+    }
     if (this.mode === 'pilot') { msg.pi = [this.pilots.hostId, this.pilots.guestId]; delete msg.ha; delete msg.hs; delete msg.ph; delete msg.z; }
     const budget = 1400;
     while (msg.tr.length && JSON.stringify(msg).length > budget) msg.tr.splice(-10);
@@ -1282,6 +1417,7 @@ export class CoopSession {
     }
     this.screen.markPartner(this.roster, this.myId);
     this.screen.waiting(this.hostState === 'paused' ? 'Waiting for the host…' : null);
+    if (this.watching) { this.spectator.pre(); return; }
     // our gun, to the host
     this.inAcc += dt / Math.max(0.05, this.engine.timeScale);
     if (this.inAcc >= 1 / INPUT_HZ && gun.bomber) {
@@ -1432,6 +1568,16 @@ export class CoopSession {
       // the partner's gun swings on our ship
       const tg = pb.guns.get(this.hostSeat);
       if (tg && Array.isArray(m.ha)) { tg.want ??= new THREE.Vector3(); dirFromYawPitch(Number(m.ha[0]) || 0, Number(m.ha[1]) || 0, tg.want); }
+      // the rest of the crew's guns (our own station is the first-person gun)
+      if (readAims(m.ca, this.crewAim)) {
+        this.crewFire = Number.isInteger(m.cf) ? m.cf : 0;
+        const mine = this.game.gunner.station;
+        STATION_ORDER.forEach((s, i) => {
+          if (s === mine || s === this.hostSeat) return;
+          const g = pb.guns.get(s);
+          if (g) g.want = dirFromYawPitch(this.crewAim[i * 2], this.crewAim[i * 2 + 1], this.wantBuf[i]);
+        });
+      }
     }
   }
 
