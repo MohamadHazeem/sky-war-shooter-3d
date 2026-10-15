@@ -46,7 +46,7 @@ async function open(lang, viewport = { width: 1280, height: 800 }) {
       const g = sws.game, r = g.onboarding.range, gun = g.gunner, inp = g.input, w = g.world;
       let burst = 0;
       for (let k = 0; k < frames && r.active && r.phase !== 'result' && r.t < stopAt; k++) {
-        inp.locked = true; inp.buttons = 0;
+        inp.locked = true; inp.buttons = window.__zoom ? 4 : 0;
         const tg = r.current, pb = w.playerBomber;
         if (tg && pb && !tg.downed && !(tg.f && !tg.f.alive)) {
           const cam = g.engine.camera.position;
@@ -64,7 +64,7 @@ async function open(lang, viewport = { width: 1280, height: 800 }) {
           const s = gun.state;
           s.tYaw += (dy - s.tYaw) * 0.3; s.tPitch += (pr - s.tPitch) * 0.3;
           burst = (burst + 1 / 60) % 0.8;
-          if (Math.abs(dy - s.yaw) < 0.02 && Math.abs(pr - s.pitch) < 0.02 && d < 1100 && !s.overheated && burst < 0.5) inp.buttons |= 1;
+          if (!window.__hold && Math.abs(dy - s.yaw) < 0.02 && Math.abs(pr - s.pitch) < 0.02 && d < 1100 && !s.overheated && burst < 0.5) inp.buttons |= 1;
         }
         sws.step(1, 1 / 60, false);
       }
@@ -116,6 +116,8 @@ try {
   // -- the same drill again, sloppier (too little lead), against the ghost
   await start(page, 'crossers');
   facts.ghostRun = await page.evaluate(() => window.__rangeBot(6000, -0.45, sws.game.onboarding.range.length * 0.45));
+  facts.ghostShown = await page.evaluate(() => sws.game.onboarding.range.ghostShown);
+  assert.ok(facts.ghostShown, 'the ghost marker is on screen in the ghost shot');
   await shot(page, 'ghost-en');
   facts.ghostCard = await page.locator('#rangeCard').innerText();
   assert.match(facts.ghostCard, /Ghost/);
@@ -123,23 +125,30 @@ try {
   assert.match(facts.second, /ghost/i);
   await shot(page, 'result-ghost-en');
 
-  // -- towed sleeve: close-up of the sleeve and tow cable with the tutor
+  // -- towed sleeve at the drilled range (600 m): the sleeve, cable and tow ship with the tutor,
+  // then a closer framing through the ring sight (right mouse)
   await start(page, 'sleeve');
-  facts.sleeveMid = await page.evaluate(() => {
-    const out = window.__rangeBot(6000, 0, 4 + 3.5);
-    sws.game.gunner.adsK = 1; sws.step(20, 1 / 60, true);
-    return out;
-  });
+  // track without firing so the first sleeve is whole on its cable for the shot
+  facts.sleeveMid = await page.evaluate(() => { window.__hold = true; const o = window.__rangeBot(6000, 0, 4 + 3); window.__hold = false; return o; });
+  facts.card2 = await page.evaluate(() => { const s = getComputedStyle(document.getElementById('rangeCard')); return s.display + ' ' + s.opacity; });
+  assert.equal(facts.card2, 'block 1', 'the run card is fully shown');
   await shot(page, 'sleeve-en');
+  await page.evaluate(() => { window.__zoom = window.__hold = true; window.__rangeBot(40, 0); window.__hold = false; });
+  await shot(page, 'sleeve-close-en');
+  await page.evaluate(() => { window.__zoom = false; });
   facts.sleeve = await finish(page, 0);
 
   // -- free practice: the four choices
   await page.locator('#gunRange [data-drill="free"]').click();
-  await page.locator('#gunRange [data-free="speed"]').selectOption('fast');
-  await page.locator('#gunRange [data-free="angle"]').selectOption('90');
+  await page.locator('#gunRange [data-free="speed"][data-val="fast"]').click();
+  await page.locator('#gunRange [data-free="angle"][data-val="90"]').click();
+  await page.locator('#gunRange [data-free="kind"][data-val="sleeve"]').click();
+  facts.freeSelects = await page.locator('#gunRange select').count();
+  assert.equal(facts.freeSelects, 0, 'free practice uses chips, not browser selects');
   await shot(page, 'free-en');
   facts.freeSaved = await page.evaluate(() => JSON.parse(localStorage.getItem('sws3d.range.v1')).prefs.free);
   assert.equal(facts.freeSaved.speed, 'fast');
+  assert.equal(facts.freeSaved.kind, 'sleeve');
   await ctx.close();
   }
 

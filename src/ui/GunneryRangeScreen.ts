@@ -29,7 +29,6 @@ function ensureStyle() {
 .rng-sub { margin: 0 0 14px; color: var(--ink-dim); font-family: 'Special Elite', monospace; font-size: 14px; }
 .rng h3 { margin: 16px 0 8px; font-size: 13px; letter-spacing: 3px; color: var(--khaki); font-weight: 500; font-family: 'Special Elite', monospace; text-transform: uppercase; }
 .rng-seats { display: flex; flex-wrap: wrap; gap: 8px; }
-.rng-seats button[aria-pressed="true"] { border-color: var(--khaki); color: var(--khaki); background: rgba(185,167,111,0.1); }
 .rng-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
 .rng-drill { text-align: start; background: var(--panel); border: 1px solid var(--line); color: var(--ink); padding: 12px 14px; font-family: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 5px; min-height: 44px; }
 .rng-drill.sel { border-color: var(--khaki); background: rgba(185,167,111,0.1); box-shadow: inset 0 0 0 1px var(--khaki); }
@@ -39,9 +38,13 @@ function ensureStyle() {
 .rng-drill .best { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-dim); margin-top: auto; }
 .rng-stars { color: #ffc85a; letter-spacing: 2px; }
 .rng-stars i { color: rgba(255,255,255,0.2); font-style: normal; }
-.rng-free { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; margin-top: 10px; }
-.rng-free label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-dim); }
-.rng-free select { min-height: 36px; }
+.rng-free { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 18px; background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; margin-top: 10px; }
+.rng-free .grp { display: flex; flex-direction: column; gap: 6px; }
+.rng-free .lbl { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-dim); }
+/* free-practice choices are chips like the gun positions (Phase 8 menu style), not browser selects */
+.rng-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.rng-chips .btn { min-height: 36px; padding: 6px 12px; font-size: 15px; letter-spacing: 0.5px; text-transform: none; }
+.rng-seats button[aria-pressed="true"], .rng-chips button[aria-pressed="true"] { border-color: var(--khaki); color: var(--khaki); background: rgba(185,167,111,0.1); }
 .rng-opts { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 4px; }
 .rng-opts label { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; max-width: 440px; min-height: 36px; }
 .rng-opts input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--khaki); flex: none; }
@@ -59,8 +62,9 @@ function ensureStyle() {
 /* top right in both directions: the kill feed sits top left (cleanHud.css) */
 #rangeCard { position: fixed; right: 24px; top: 118px; z-index: 7; width: min(320px, calc(100vw - 32px)); pointer-events: none;
   background: rgba(12,14,9,0.78); border: 1px solid rgba(185,167,111,0.55); border-left: 3px solid var(--khaki);
-  padding: 10px 14px; box-sizing: border-box; opacity: 0; transition: opacity 0.3s; }
-#rangeCard.show { opacity: 1; }
+  padding: 10px 14px; box-sizing: border-box; display: none; }
+/* shown at once and fully opaque (no fade: a fade read as a washed-out card over bright sky) */
+#rangeCard.show { display: block; }
 #rangeCard .k { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2.5px; color: var(--ink-dim); }
 #rangeCard .t { font-size: 21px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--khaki); margin: 3px 0 4px; }
 #rangeCard .b { font-size: 14px; line-height: 1.45; color: var(--ink); }
@@ -136,8 +140,9 @@ function render(host: RangeScreenHost, save: RangeSave, panel: string) {
   const station = p.station;
   const drills = drillsFor(station);
   const free = freeDrill(station, p.free);
-  const opt = <T extends string | number>(name: string, vals: readonly T[], cur: T, label: (v: T) => string) =>
-    `<select data-free="${name}">${vals.map((v) => `<option value="${v}"${v === cur ? ' selected' : ''}>${esc(label(v))}</option>`).join('')}</select>`;
+  const opt = <T extends string | number>(name: string, title: string, vals: readonly T[], cur: T, label: (v: T) => string) =>
+    `<div class="grp"><span class="lbl" id="rng-${name}">${esc(title)}</span><div class="rng-chips" role="group" aria-labelledby="rng-${name}">${vals.map((v) =>
+      `<button type="button" class="btn ghost" data-free="${name}" data-val="${v}" aria-pressed="${v === cur}">${esc(label(v))}</button>`).join('')}</div></div>`;
   root.innerHTML = `<div class="rng"><button class="btn ghost menu-back" data-back>${esc(tx('Back'))}</button>
     <div class="kicker">${esc(tx('GUNNERY RANGE'))}</div><h2>${esc(tx('Practise your gunnery'))}</h2>
     <p class="rng-sub">${esc(tx('Target drones and towed sleeves over the Wash. Nobody shoots back. Every run of a drill flies the same targets, so you can beat your ghost.'))}</p>
@@ -147,10 +152,10 @@ function render(host: RangeScreenHost, save: RangeSave, panel: string) {
     <h3>${esc(tx('Drill'))}</h3>
     <div class="rng-list">${drills.map((d) => drillCard(d, save.records[d.id])).join('')}${drillCard(free, save.records[free.id])}</div>
     ${sel === 'free' ? `<div class="rng-free" data-freebox>
-      <label>${esc(tx('Target'))}${opt('kind', ['drone', 'sleeve'] as const, p.free.kind, (v) => tx(KIND_LABEL[v]))}</label>
-      <label>${esc(tx('Speed'))}${opt('speed', SPEEDS, p.free.speed, (v) => tx(SPEED_LABEL[v]))}</label>
-      <label>${esc(tx('Angle'))}${opt('angle', ANGLES, p.free.angle, (v) => tx(ANGLE_LABEL[v]))}</label>
-      <label>${esc(tx('Range'))}${opt('range', DISTS, p.free.range, (v) => tx('{n} m', { n: v }))}</label>
+      ${opt('kind', tx('Target'), ['drone', 'sleeve'] as const, p.free.kind, (v) => tx(KIND_LABEL[v]))}
+      ${opt('speed', tx('Speed'), SPEEDS, p.free.speed, (v) => tx(SPEED_LABEL[v]))}
+      ${opt('angle', tx('Angle'), ANGLES, p.free.angle, (v) => tx(ANGLE_LABEL[v]))}
+      ${opt('range', tx('Range'), DISTS, p.free.range, (v) => tx('{n} m', { n: v }))}
     </div>` : ''}
     <h3>${esc(tx('Options'))}</h3>
     <div class="rng-opts">
@@ -166,13 +171,13 @@ function render(host: RangeScreenHost, save: RangeSave, panel: string) {
   onBackKey(root, back);
   root.querySelectorAll<HTMLElement>('[data-seat]').forEach((b) => { b.onclick = () => { p.station = b.dataset.seat as StationId; persist(); again(); }; });
   root.querySelectorAll<HTMLElement>('[data-drill]').forEach((b) => { b.onclick = () => { sel = b.dataset.drill as Sel; again(); root.querySelector<HTMLElement>(`[data-drill="${sel}"]`)?.focus(); }; });
-  root.querySelectorAll<HTMLSelectElement>('[data-free]').forEach((s) => {
-    s.onchange = () => {
-      const k = s.dataset.free!;
-      const v = k === 'angle' || k === 'range' ? Number(s.value) : s.value;
+  root.querySelectorAll<HTMLElement>('[data-free]').forEach((b) => {
+    b.onclick = () => {
+      const k = b.dataset.free!, raw = b.dataset.val!;
+      const v = k === 'angle' || k === 'range' ? Number(raw) : raw;
       (p.free as unknown as Record<string, unknown>)[k] = v;
       persist(); again();
-      root.querySelector<HTMLElement>(`[data-free="${k}"]`)?.focus();
+      root.querySelector<HTMLElement>(`[data-free="${k}"][data-val="${raw}"]`)?.focus();
     };
   });
   root.querySelectorAll<HTMLInputElement>('[data-opt]').forEach((c) => { c.onchange = () => { p[c.dataset.opt as 'tutor' | 'ghost'] = c.checked; persist(); }; });

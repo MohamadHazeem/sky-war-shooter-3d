@@ -35,7 +35,7 @@ export interface RangeResult {
 }
 export interface RangeHost { done(r: RangeResult): void }
 
-interface Sleeve { mesh: THREE.Mesh; cable: THREE.Mesh; hits: number; falling: boolean; vel: THREE.Vector3; t: number }
+interface Sleeve { mesh: THREE.Group; cable: THREE.Mesh; hits: number; falling: boolean; vel: THREE.Vector3; t: number }
 interface Target {
   win: Window;
   f: Fighter | null;        // the drone, or the tow ship of a sleeve
@@ -52,11 +52,22 @@ const _z = new THREE.Vector3(0, 0, 1), _up = new THREE.Vector3(0, 1, 0), ZERO = 
 const _p = { x: 0, y: 0, z: 0 };
 const _g: GhostSample = { yaw: 0, pitch: 0, score: 0, on: false };
 const _lead = new THREE.Vector3(), _aim = new THREE.Vector3(), _o = new THREE.Vector3();
-// The sleeve is drawn (and hit) larger than life, like the game's fighters (World.ENEMY_SCALE):
-// a true 9 m sleeve is two pixels wide at 600 m.
-const SLEEVE_LEN = 22, SLEEVE_R = 2.1;
-const SLEEVE_SPHERES = [-SLEEVE_LEN / 3, 0, SLEEVE_LEN / 3];   // three hit spheres along its length
+// The sleeve is drawn (and hit) larger than life, like the game's fighters (World.ENEMY_SCALE ×6):
+// a true 7 m sleeve is two pixels wide at 600 m. Five orange and white bands, mouth forward.
+const SLEEVE_LEN = 40, SLEEVE_R = 3.4, SLEEVE_BANDS = 5;
+const SLEEVE_SPHERES = [-SLEEVE_LEN * 0.3, 0, SLEEVE_LEN * 0.3];   // three hit spheres along its length
+const SLEEVE_HIT_R = SLEEVE_R * 1.5;
+const TOW_SCALE = 4;   // the tow ship reads at range like the (×6) drones
+// the cable is kept at least ~2 px thick on screen: radius grows with distance from the eye
+const CABLE_PX = 0.0016;
+// the tutor's labels and the ghost marker keep clear of the gun's sight ring, the target and each other
+const PLATE_PAD = 6;
 const DRONE_TINT = new THREE.Color(2.6, 1.25, 0.32);   // target-drone orange over the Fw 190 paint
+/** Does the rectangle (x, y, w, h) touch the circle (cx, cy, r)? */
+const rectCircle = (x: number, y: number, w: number, h: number, cx: number, cy: number, r: number) => {
+  const dx = cx - Math.min(Math.max(cx, x), x + w), dy = cy - Math.min(Math.max(cy, y), y + h);
+  return dx * dx + dy * dy < r * r;
+};
 const fmtT = (s: number) => `${Math.floor(s / 60)}:${String(Math.max(0, Math.floor(s % 60))).padStart(2, '0')}`;
 
 export class GunneryRange {
@@ -76,9 +87,9 @@ export class GunneryRange {
   private card: HTMLElement | null = null;
   private lastHtml = '';
   private prevGround: typeof this.game.world.ballistics.ground = null;
-  private sleeveMat: THREE.MeshStandardMaterial | null = null;
+  private sleeveMats: THREE.MeshStandardMaterial[] | null = null;
   private cableMat: THREE.MeshStandardMaterial | null = null;
-  private sleeveGeo: THREE.CylinderGeometry | null = null;
+  private sleeveGeos: THREE.BufferGeometry[] | null = null;
   private cableGeo: THREE.CylinderGeometry | null = null;
   coach: string = '';             // last coaching word (dev / tests)
   readonly lead = new THREE.Vector3();   // the tutor's lead point this frame (world; valid while leadOn)
@@ -198,6 +209,7 @@ export class GunneryRange {
     } else {
       const f = w.spawnEscort(tg.pos.clone(), new THREE.Vector3(), 'p47d');
       f.guns = [];
+      f.setScale(TOW_SCALE);
       f.label = 'Tow ship';
       tg.f = f;
       tg.sleeve = this.makeSleeve();
@@ -296,7 +308,8 @@ export class GunneryRange {
     const tow = tg.f!.pos;
     sl.cable.position.copy(tg.pos).add(tow).multiplyScalar(0.5);
     sl.cable.quaternion.setFromUnitVectors(_up, _v2.copy(tow).sub(tg.pos).normalize());
-    sl.cable.scale.set(1, tow.distanceTo(tg.pos), 1);
+    const cr = Math.max(0.3, this.game.engine.camera.position.distanceTo(sl.cable.position) * CABLE_PX);
+    sl.cable.scale.set(cr, tow.distanceTo(tg.pos), cr);
     // shredding: the cloth thins and greys as it takes hits
     const k = Math.min(1, sl.hits / SLEEVE_HP);
     sl.mesh.scale.set(1 - 0.35 * k, 1, 1 - 0.35 * k);
@@ -308,7 +321,7 @@ export class GunneryRange {
     const sl = this.cur?.sleeve;
     if (player && !axis && sl && !sl.falling) {
       const p = sl.mesh.position;
-      const r = SLEEVE_R * 1.9 * this.game.world.ballistics.playerHitScale;
+      const r = SLEEVE_HIT_R * this.game.world.ballistics.playerHitScale;
       _o.set(0, 1, 0).applyQuaternion(sl.mesh.quaternion);
       for (const k of SLEEVE_SPHERES) {
         if (segSphere(ax, ay, az, bx, by, bz, p.x + _o.x * k, p.y + _o.y * k, p.z + _o.z * k, r) >= 0) {
@@ -332,15 +345,28 @@ export class GunneryRange {
   }
 
   private makeSleeve(): Sleeve {
-    // a plain double-sided standard material: World.prewarm already compiled that program
-    this.sleeveMat ??= new THREE.MeshStandardMaterial({ color: 0xff7a2e, roughness: 0.95, side: THREE.DoubleSide });
-    this.cableMat ??= new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6 });
-    this.sleeveGeo ??= new THREE.CylinderGeometry(SLEEVE_R, SLEEVE_R * 0.7, SLEEVE_LEN, 16, 1, true);
-    this.cableGeo ??= new THREE.CylinderGeometry(0.12, 0.12, 1, 4, 1, true);
-    const mesh = new THREE.Mesh(this.sleeveGeo, this.sleeveMat);
+    // plain double-sided standard materials (emissive is a uniform): World.prewarm already compiled
+    // that program. Bright orange and white bands so the cloth reads against haze and cloud.
+    this.sleeveMats ??= [
+      new THREE.MeshStandardMaterial({ color: 0xff5a0a, emissive: 0x8a2c00, roughness: 0.9, side: THREE.DoubleSide }),
+      new THREE.MeshStandardMaterial({ color: 0xfaf6ea, emissive: 0x4a4842, roughness: 0.9, side: THREE.DoubleSide }),
+    ];
+    this.cableMat ??= new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6 });
+    if (!this.sleeveGeos) {
+      // a tapering cone in bands, +Y (the open mouth) towards the tow ship
+      const step = SLEEVE_LEN / SLEEVE_BANDS, rAt = (i: number) => SLEEVE_R * (1 - 0.35 * i / SLEEVE_BANDS);
+      this.sleeveGeos = Array.from({ length: SLEEVE_BANDS }, (_, i) =>
+        new THREE.CylinderGeometry(rAt(i), rAt(i + 1), step, 16, 1, true).translate(0, SLEEVE_LEN / 2 - (i + 0.5) * step, 0));
+    }
+    this.cableGeo ??= new THREE.CylinderGeometry(1, 1, 1, 5, 1, true);
+    const mesh = new THREE.Group();
+    this.sleeveGeos.forEach((geo, i) => {
+      const band = new THREE.Mesh(geo, this.sleeveMats![i % 2]);
+      band.frustumCulled = false; band.castShadow = true;
+      mesh.add(band);
+    });
     const cable = new THREE.Mesh(this.cableGeo, this.cableMat);
-    mesh.frustumCulled = false; cable.frustumCulled = false;
-    mesh.castShadow = true;
+    cable.frustumCulled = false;
     const scene = this.game.world.scene;
     scene.add(mesh); scene.add(cable);
     return { mesh, cable, hits: 0, falling: false, vel: new THREE.Vector3(), t: 0 };
@@ -380,7 +406,9 @@ export class GunneryRange {
   }
 
   // ---------------- overlay: lead tutor + ghost sight (GameHud.drawOverlay) ----------------
+  private gx = 0; private gy = 0; private ghostShown = false;
   draw(ctx: CanvasRenderingContext2D, W: number, H: number) {
+    this.ghostShown = false;
     if (!this.active || !this.run || this.phase === 'result') return;
     const g = this.game, cam = g.engine.camera, b = g.world.playerBomber;
     if (!b) return;
@@ -388,23 +416,50 @@ export class GunneryRange {
     if (this.run.ghost && ghostAt(this.run.ghost, this.t, _g).on) {
       dirFromYawPitch(_g.yaw, _g.pitch, _v).applyQuaternion(b.quat).multiplyScalar(600).add(cam.position);
       const sp = projectMarker(_v, cam);
-      if (sp.on) {
-        const x = (sp.x * 0.5 + 0.5) * W, y = (-sp.y * 0.5 + 0.5) * H;
-        ctx.save();
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.stroke();
-        ctx.strokeStyle = 'rgba(150,205,255,0.95)'; ctx.lineWidth = 2;
-        ctx.setLineDash([5, 4]);
-        ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(170,215,255,0.85)';
-        ctx.font = `600 10px ${CANVAS_MONO}`;
-        ctx.textAlign = 'center';
-        ctx.fillText(tx('GHOST'), x, y - 22);
-        ctx.restore();
-      }
+      if (sp.on) { this.gx = (sp.x * 0.5 + 0.5) * W; this.gy = (-sp.y * 0.5 + 0.5) * H; this.ghostShown = true; }
     }
     if (this.run.tutor) this.drawTutor(ctx, W, H);
+    if (this.ghostShown) this.drawGhost(ctx, this.gx, this.gy);
+  }
+
+  /** A solid blue ring on a dark halo, four ticks and a labelled plate: reads on sky, cloud and sea. */
+  private drawGhost(ctx: CanvasRenderingContext2D, x: number, y: number) {
+    const r = 18;
+    ctx.save();
+    ctx.fillStyle = 'rgba(30,90,255,0.2)';
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    for (let k = 0; k < 2; k++) {
+      ctx.lineWidth = k ? 3 : 7; ctx.strokeStyle = k ? 'rgba(70,140,255,1)' : 'rgba(0,0,0,0.6)';
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.moveTo(x - r - 9, y); ctx.lineTo(x - r + 3, y); ctx.moveTo(x + r - 3, y); ctx.lineTo(x + r + 9, y);
+      ctx.moveTo(x, y + r - 3); ctx.lineTo(x, y + r + 9);
+      ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(70,140,255,1)';
+    ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.font = `700 11px ${CANVAS_MONO}`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const label = tx('GHOST'), lw = ctx.measureText(label).width + 12;
+    ctx.fillStyle = 'rgba(14,34,96,0.9)';
+    ctx.fillRect(x - lw / 2, y - r - 22, lw, 16);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(label, x, y - r - 14);
+    ctx.restore();
+  }
+
+  // what the tutor's label plate must keep clear of this frame (screen px)
+  private sx = 0; private sy = 0; private sr = 0;            // the gun's sight ring
+  private lx = 0; private ly = 0; private lr = 0;            // the lead ring
+  private tx = 0; private ty = 0; private tr = 0;            // the target
+  private W = 0; private H = 0;
+  private clearAt(x: number, y: number, w: number, h: number) {
+    const hit = rectCircle;
+    if (x < 8 || y < 8 || x + w > this.W - 8 || y + h > this.H - 8) return false;
+    if (hit(x, y, w, h, this.sx, this.sy, this.sr) || hit(x, y, w, h, this.lx, this.ly, this.lr) || hit(x, y, w, h, this.tx, this.ty, this.tr)) return false;
+    if (this.ghostShown && hit(x, y, w, h, this.gx, this.gy, 44)) return false;
+    // the gun's post runs down the middle of the screen below the sight
+    if (x < this.sx + 34 && x + w > this.sx - 34 && y + h > this.sy) return false;
+    return true;
   }
 
   private drawTutor(ctx: CanvasRenderingContext2D, W: number, H: number) {
@@ -430,7 +485,7 @@ export class GunneryRange {
     const ax = (ap.x * 0.5 + 0.5) * W, ay = (-ap.y * 0.5 + 0.5) * H;
     // tolerance: the target's size on screen (a hit lands inside it), never smaller than 9 px
     const fovPx = H / (2 * Math.tan(THREE.MathUtils.degToRad((cam as THREE.PerspectiveCamera).fov) / 2));
-    const tol = Math.max(9, (tg.sleeve ? 3.5 : 7) / Math.max(1, range) * fovPx);
+    const tol = Math.max(9, (tg.sleeve ? 5 : 7) / Math.max(1, range) * fovPx);
     // the aim's error split along the target's motion on screen
     let mx = lx - tx0, my = ly - ty0;
     const ml = Math.hypot(mx, my);
@@ -457,24 +512,43 @@ export class GunneryRange {
     ctx.strokeStyle = on ? 'rgba(120,235,140,0.95)' : 'rgba(255,200,90,0.95)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(lx, ly, tol, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(lx - 4, ly); ctx.lineTo(lx + 4, ly); ctx.moveTo(lx, ly - 4); ctx.lineTo(lx, ly + 4); ctx.stroke();
-    // labels: lead angle, range, time of flight, and the coach's word
+    // one label plate: the coach's word, lead angle and range, time of flight. It sits beside the
+    // lead ring on the side away from the target, and keeps clear of the sight ring, the target,
+    // the ghost and the gun's post (further out, then below or above, until it fits)
     const deg = leadDegrees(origin, tg.pos, _lead);
-    ctx.font = `600 11px ${CANVAS_MONO}`;
-    // the labels go on the side away from the target, so they never cover it
-    const right = tx0 <= lx;
-    ctx.textAlign = right ? 'left' : 'right';
-    const lx2 = right ? lx + tol + 8 : lx - tol - 8;
+    const word = tx(COACH_TEXT[coach]);
     const l1 = tx('LEAD {d}° · {r} m', { d: deg.toFixed(1), r: Math.round(range) }), l2 = tx('Time of flight {t} s', { t: tof.toFixed(2) });
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    const bw = Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width) + 10;
-    ctx.fillRect(right ? lx2 - 5 : lx2 - bw + 5, ly - 26, bw, 40);
-    ctx.fillStyle = 'rgba(255,224,150,0.95)';
-    ctx.fillText(l1, lx2, ly - 12);
-    ctx.fillText(l2, lx2, ly + 2);
     ctx.font = `700 15px ${CANVAS_MONO}`;
-    ctx.textAlign = 'center';
-    ctx.fillStyle = on ? 'rgba(120,235,140,0.95)' : 'rgba(255,214,120,0.95)';
-    ctx.fillText(tx(COACH_TEXT[coach]), W / 2, H * 0.68);
+    const ww = ctx.measureText(word).width;
+    ctx.font = `600 11px ${CANVAS_MONO}`;
+    const pw = Math.max(ww, ctx.measureText(l1).width, ctx.measureText(l2).width) + 16, ph = 56;
+    this.W = W; this.H = H;
+    this.sx = W / 2; this.sy = H / 2; this.sr = Math.min(W, H) * 0.05 + 14;
+    this.lx = lx; this.ly = ly; this.lr = tol + 4;
+    this.tx = tx0; this.ty = ty0; this.tr = Math.max(16, (tg.sleeve ? SLEEVE_LEN * 0.55 : 30) / Math.max(1, range) * fovPx) + 4;
+    const away = tx0 <= lx ? 1 : -1;
+    let px = NaN, py = NaN;
+    for (let d = PLATE_PAD; d <= 190 && Number.isNaN(px); d += 46) {
+      for (let c = 0; c < 4; c++) {
+        const s = c === 0 ? away : -away;
+        const x = c < 2 ? (s > 0 ? lx + tol + d : lx - tol - d - pw) : lx - pw / 2;
+        const y = c < 2 ? ly - ph / 2 : c === 2 ? ly + tol + d : ly - tol - d - ph;
+        if (this.clearAt(x, y, pw, ph)) { px = x; py = y; break; }
+      }
+    }
+    // nothing fits near the lead point: a fixed spot left of the sight, above the gun's post
+    if (Number.isNaN(px)) { px = W / 2 - this.sr - 60 - pw; py = H / 2 - this.sr - ph - 30; }
+    ctx.fillStyle = 'rgba(8,10,6,0.82)';
+    ctx.fillRect(px, py, pw, ph);
+    ctx.fillStyle = on ? 'rgba(120,235,140,0.95)' : 'rgba(255,200,90,0.95)';
+    ctx.fillRect(px, py, 3, ph);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.font = `700 15px ${CANVAS_MONO}`;
+    ctx.fillText(word, px + 10, py + 19);
+    ctx.font = `600 11px ${CANVAS_MONO}`;
+    ctx.fillStyle = 'rgba(255,224,150,0.95)';
+    ctx.fillText(l1, px + 10, py + 35);
+    ctx.fillText(l2, px + 10, py + 49);
     ctx.restore();
   }
 }

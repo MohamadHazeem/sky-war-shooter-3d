@@ -9,43 +9,46 @@
   "mid": {
     "t": 21.752500000000047,
     "phase": "run",
-    "score": 306,
+    "score": 314,
     "downed": 1,
     "coach": "on"
   },
-  "card": "GUNNERY RANGE · Left Waist\n306\nTarget 2 / 6 · 0:46",
-  "first": "CROSSING TARGETS\n1,206\n★★★\nFIRST SCORE ON THIS DRILL\nTargets down: 4/6\nHits: 54\nAccuracy: 62%\nAccuracy bonus: +124",
+  "card": "GUNNERY RANGE · Left Waist\n314\nTarget 2 / 6 · 0:46",
+  "first": "CROSSING TARGETS\n835\n★★★\nFIRST SCORE ON THIS DRILL\nTargets down: 3/6\nHits: 35\nAccuracy: 40%\nAccuracy bonus: +80",
   "firstRecord": {
-    "best": 1206,
-    "stars": 3,
+    "best": 835,
+    "stars": 2,
     "runs": 1,
     "ghost": 340
   },
   "ghostRun": {
-    "t": 30.57166666666621,
+    "t": 30.57416666666621,
     "phase": "run",
-    "score": 495,
-    "downed": 2,
-    "coach": "more"
+    "score": 708,
+    "downed": 3,
+    "coach": ""
   },
-  "ghostCard": "GUNNERY RANGE · Left Waist\n495\nGhost 592\nTarget 3 / 6 · 0:37",
-  "second": "CROSSING TARGETS\n829\n★★★\nBEST 1,206\nTargets down: 3/6\nHits: 37\nAccuracy: 15%\nAccuracy bonus: +30\nYour ghost was 253 ahead",
+  "ghostShown": true,
+  "ghostCard": "GUNNERY RANGE · Left Waist\n708\nGhost 528\nTarget 3 / 6 · 0:37",
+  "second": "CROSSING TARGETS\n1,011\n★★★\nNEW BEST!\nTargets down: 4/6\nHits: 45\nAccuracy: 17%\nAccuracy bonus: +34\nYou beat your ghost by 256",
   "sleeveMid": {
-    "t": 7.533333333333312,
+    "t": 7.033333333333314,
     "phase": "run",
-    "score": 30,
+    "score": 0,
     "downed": 0,
     "coach": "on"
   },
-  "sleeve": "TOWED SLEEVE\n565\n★★★\nFIRST SCORE ON THIS DRILL\nTargets down: 2/4\nHits: 17\nAccuracy: 12%\nAccuracy bonus: +23",
+  "card2": "block 1",
+  "sleeve": "TOWED SLEEVE\n810\n★★★\nFIRST SCORE ON THIS DRILL\nTargets down: 3/4\nHits: 24\nAccuracy: 24%\nAccuracy bonus: +47",
+  "freeSelects": 0,
   "freeSaved": {
-    "kind": "drone",
+    "kind": "sleeve",
     "speed": "fast",
     "angle": 90,
     "range": 500
   },
   "arLatin": [],
-  "arCard": "ميدان الرماية · الجانب الأيسر\n279\nالهدف 1 / 5 · 0:53",
+  "arCard": "ميدان الرماية · الجانب الأيسر\n288\nالهدف 1 / 5 · 0:53",
   "phoneOverflow": false,
   "errors": []
 }
