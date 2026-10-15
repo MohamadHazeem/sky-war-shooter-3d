@@ -136,7 +136,7 @@ try {
   // 6. Tail: the mask hose comes loose, the picture greys, press O
   await page.evaluate(() => { sws.game.ui.hideAll(); sws.game.onboarding.startLesson('tail'); });
   assert.ok(await toStep(page, 'hose'));
-  results.tailHose = await page.evaluate(() => { const l = sws.game.gunner.survival; sws.step(420, 1 / 60); return { oxygen: l.oxygen, hypoxia: +l.hypoxia.toFixed(2) }; });
+  results.tailHose = await page.evaluate(() => { const l = sws.game.gunner.survival; for (let i = 0; i < 1200 && l.hypoxia < 0.55; i++) sws.engine.frame(1 / 60, false); return { oxygen: l.oxygen, hypoxia: +l.hypoxia.toFixed(2) }; });
   results.tailCard = await card(page);
   assert.equal(results.tailHose.oxygen, true); assert.ok(results.tailHose.hypoxia > 0.3);
   await shot(page, 'tail-oxygen-en');
@@ -167,6 +167,13 @@ try {
   await phone.page.evaluate(() => sws.step(60, 1 / 60));
   results.phoneCard = await card(phone.page);
   results.phoneSkip = await phone.page.evaluate(() => { const b = document.querySelector('#tutCard [data-skip]').getBoundingClientRect(); return { text: document.querySelector('#tutCard [data-skip]').textContent, h: b.height, right: b.right, innerW: innerWidth }; });
+  // a radio line while the card shows: the subtitle sits clear of the card
+  results.phoneSubs = await phone.page.evaluate(() => {
+    sws.game.world.callout('lessonwaisthold', 'Navigator', 'Don\'t chase his tail — get ahead of him.', 0, 3); sws.step(2, 1 / 60);
+    const c = document.getElementById('tutCard').getBoundingClientRect(), l = document.querySelector('#subs .line')?.getBoundingClientRect();
+    return l ? { overlap: !(l.left >= c.right || l.right <= c.left || l.top >= c.bottom || l.bottom <= c.top), cardBottom: Math.round(c.bottom) } : { overlap: null };
+  });
+  assert.equal(results.phoneSubs.overlap, false, 'subtitle clear of the lesson card');
   assert.equal(results.phoneSkip.text, 'Skip step'); assert.ok(results.phoneSkip.h >= 44);
   await shot(phone.page, 'waist-pip-phone');
   // the touch button really skips the step

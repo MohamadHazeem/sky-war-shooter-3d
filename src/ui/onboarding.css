@@ -99,6 +99,17 @@
   background: transparent; border: 1px solid rgba(185, 167, 111, 0.45); }
 #tutCard.lesson .skip:hover, #tutCard.lesson .skip:focus-visible { color: var(--khaki); border-color: var(--khaki); outline: none; }
 body.touch #tutCard.lesson .skip { min-height: 44px; font-size: 14px; }
+/* short screens (phones in landscape): a compact card under the score line, and the radio
+   subtitles move to the free side so they never run under it */
+@media (max-height: 500px) {
+  #tutCard.lesson { top: 44px; width: min(330px, 42vw); padding: 8px 12px; }
+  #tutCard.lesson .t { font-size: 18px; margin: 2px 0 3px; }
+  #tutCard.lesson .b { font-size: 13px; line-height: 1.35; }
+  #tutCard.lesson .skip { margin-top: 6px; }
+  #tutCard.lesson .dots { margin-top: 6px; }
+  body:has(#tutCard.lesson.show) #subs { left: auto; right: 16px; transform: none; width: min(44vw, 420px); }
+  html[dir=rtl] body:has(#tutCard.lesson.show) #subs { right: auto; left: 16px; }
+}
 
 /* Hangar → Training (ui/TrainingScreen.ts): compact so the five rows and the totals fit a
    720p screen; shorter screens and phones scroll the sheet (visible khaki scrollbar) */
