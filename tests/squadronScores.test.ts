@@ -22,7 +22,7 @@ vi.mock('firebase/firestore', () => {
   };
 });
 import { submitScore } from '../src/net/Leaderboard';
-const entry = { name: 'Editable name', mode: 'survival-gunner', score: 1200, kills: 5, rounds: 1 };
+const entry = { name: 'Editable name', mode: 'survival-gunner', score: 1200, kills: 5, rounds: 1, duration: 300 };
 const boardId = 'abc123'.repeat(5) + 'ab';
 const bestPath = 'squadrons/ABC234/bests/pilot-a_survival-gunner';
 beforeEach(() => { stubStorage(); mock.docs.clear(); mock.fail = false; mock.id = 0; });
@@ -63,4 +63,17 @@ it('restored cache does not grant membership to a new anonymous identity', async
 });
 it('custom battles never submit', async () => {
   expect(await submitScore({ ...entry, mode: '' })).toBe(false); expect(mock.docs.size).toBe(0);
+});
+it('tags each entry with its duration, the current season and the shadow flag the rules demand', async () => {
+  const { seasonKey } = await import('../src/game/Seasons');
+  const { submitScoreDetailed } = await import('../src/net/Leaderboard');
+  expect(await submitScoreDetailed(entry)).toEqual({ ok: true, shadow: false });
+  expect(mock.docs.get('scores/score-1')).toMatchObject({ duration: 300, season: seasonKey(), shadow: false });
+  // implausible but possible: stored, flagged
+  expect(await submitScoreDetailed({ ...entry, score: 31000, kills: 10 })).toEqual({ ok: true, shadow: true });
+  expect(mock.docs.get('scores/score-2').shadow).toBe(true);
+  // a shadow-banned player: every entry flagged, the squadron best mirrors it
+  mock.docs.set('shadowbans/pilot-a', { reason: 'manual' });
+  join(); expect(await submitScoreDetailed(entry)).toEqual({ ok: true, shadow: true });
+  expect(mock.docs.get(bestPath)).toMatchObject({ shadow: true, season: seasonKey(), duration: 300 });
 });

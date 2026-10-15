@@ -15,3 +15,8 @@
 .lb-tabs button[aria-pressed=true] { border-color: var(--khaki); color: var(--khaki); }
 .lb-panel .lb-status { display: block; }
 @media (max-width: 650px) { .sq-week { grid-template-columns: 1fr; } .squadron-sheet.panel { padding: 18px; } .squadron-sheet .leader { font-size: 12px; } }
+.lb-season { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-block: 6px; }
+.lb-season span, .lb-tier, .lb-archive { color: var(--ink-dim); }
+.lb-tier { margin-block: 4px 8px; }
+.lb-archive { margin-block: 6px 10px; }
+.lb-archive ul { padding-inline-start: 22px; line-height: 1.7; margin: 6px 0; }

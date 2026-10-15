@@ -1,5 +1,6 @@
 export const AA_LEADERBOARD = 'survival-aa';
 import { cachedSquadron } from './SquadronProfile';
+import { seasonKey, shadowFlag, visibleRows } from '../game/Seasons';
 // Online leaderboard on Firebase (Firestore + anonymous auth). The SDK is loaded on demand
 // so the game's first load stays small. The web config below is public by design: access is
 // controlled by firestore.rules (validated, rate-limited, append-only entries).
@@ -19,9 +20,11 @@ export interface ScoreEntry {
   score: number;
   kills: number;
   rounds: number;
+  duration: number;  // mission length in seconds (plausibility checks, Seasons.ts / firestore.rules)
 }
 
-export interface BoardRow extends ScoreEntry { uid: string; mine: boolean }
+export interface BoardRow extends Omit<ScoreEntry, 'duration'> { uid: string; mine: boolean; shadow?: boolean }
+export interface SubmitResult { ok: boolean; shadow: boolean }
 
 const NAME_KEY = 'sws3d.pilotName';
 
@@ -66,11 +69,23 @@ function fb(): Promise<Fb> {
 }
 
 // One entry per call. The rules require the per-player 'limits' document to be stamped in the
-// same batch, which enforces at most one submission every 20 s per player.
-export async function submitScore(e: ScoreEntry): Promise<boolean> {
-  if (!e.mode) return false;   // a mode that never posts (custom battles)
+// same batch, which enforces at most one submission every 20 s per player. Each entry is tagged
+// with the current season (pinned to the server clock) and its shadow flag, which the rules
+// demand for implausible scores and for shadow-banned players (Seasons.ts).
+export async function submitScore(e: ScoreEntry): Promise<boolean> { return (await submitScoreDetailed(e)).ok; }
+
+export async function submitScoreDetailed(e: ScoreEntry): Promise<SubmitResult> {
+  if (!e.mode) return { ok: false, shadow: false };   // a mode that never posts (custom battles)
   try {
     const { db, uid, fs } = await fb();
+    const claim = {
+      score: Math.max(0, Math.round(e.score)), kills: Math.max(0, Math.round(e.kills)), rounds: Math.max(0, Math.round(e.rounds)),
+      duration: Math.min(36000, Math.max(0, Math.round(e.duration || 0))),
+    };
+    let banned = false;
+    try { banned = (await fs.getDoc(fs.doc(db, 'shadowbans', uid))).exists(); } catch { /* unreadable: assume not */ }
+    const shadow = shadowFlag(claim, banned);
+    const fair = { ...claim, season: seasonKey(), shadow };
     const cached = cachedSquadron();
     if (cached && !e.mode.startsWith('coop-')) {
       const { squadronProfile } = await import('./Squadrons');
@@ -81,42 +96,49 @@ export async function submitScore(e: ScoreEntry): Promise<boolean> {
         const bestRef = fs.doc(db, 'squadrons', profile.code, 'bests', `${uid}_${e.mode}`);
         await fs.runTransaction(db, async t => {
           const [best, squad] = await Promise.all([t.get(bestRef), t.get(fs.doc(db, 'squadrons', profile.code))]);
-          const data = {
-            uid, name: profile.callsign, mode: e.mode, squadron: squad.data()!.boardId,
-            score: Math.max(0, Math.round(e.score)), kills: Math.max(0, Math.round(e.kills)), rounds: Math.max(0, Math.round(e.rounds)),
-            createdAt: fs.serverTimestamp(), v: 1,
-          };
+          const data = { uid, name: profile.callsign, mode: e.mode, squadron: squad.data()!.boardId, ...fair, createdAt: fs.serverTimestamp(), v: 1 };
           t.set(fs.doc(db, 'limits', uid), { last: fs.serverTimestamp() });
           t.set(scoreRef, data);
           if (!best.exists() || data.score > best.data().score) t.set(bestRef, { ...data, scoreId: scoreRef.id });
         });
-        return true;
+        return { ok: true, shadow };
       }
     }
     const batch = fs.writeBatch(db);
     batch.set(fs.doc(db, 'limits', uid), { last: fs.serverTimestamp() });
-    batch.set(fs.doc(fs.collection(db, 'scores')), {
-      uid, name: cleanScoreName(e.name, e.mode), mode: e.mode,
-      score: Math.max(0, Math.round(e.score)), kills: Math.max(0, Math.round(e.kills)), rounds: Math.max(0, Math.round(e.rounds)),
-      createdAt: fs.serverTimestamp(), v: 1,
-    });
+    batch.set(fs.doc(fs.collection(db, 'scores')), { uid, name: cleanScoreName(e.name, e.mode), mode: e.mode, ...fair, createdAt: fs.serverTimestamp(), v: 1 });
     await batch.commit();
-    return true;
+    return { ok: true, shadow };
   } catch (err) {
     console.warn('Leaderboard: submit failed', err);
-    return false;
+    return { ok: false, shadow: false };
   }
 }
 
-export async function topScores(mode: string, n = 10): Promise<BoardRow[]> {
+const toRow = (x: any, uid: string): BoardRow => ({
+  name: String(x.name), mode: String(x.mode), score: Number(x.score), kills: Number(x.kills), rounds: Number(x.rounds),
+  uid: String(x.uid), mine: x.uid === uid, ...(x.shadow === true ? { shadow: true } : {}),
+});
+
+// A season board (season = yyyymm) lists only fair entries, plus the viewer's own best even
+// when it is shadow-flagged (a shadow-banned player sees no difference). Without a season:
+// the all-time board, where shadow entries of other players are filtered out.
+export async function topScores(mode: string, n = 10, season?: number): Promise<BoardRow[]> {
   try {
     const { db, uid, fs } = await fb();
-    const q = fs.query(fs.collection(db, 'scores'), fs.where('mode', '==', mode), fs.orderBy('score', 'desc'), fs.limit(n));
-    const snap = await fs.getDocs(q);
-    return snap.docs.map((d) => {
-      const x = d.data() as any;
-      return { name: String(x.name), mode: String(x.mode), score: Number(x.score), kills: Number(x.kills), rounds: Number(x.rounds), uid: String(x.uid), mine: x.uid === uid };
-    });
+    const scores = fs.collection(db, 'scores');
+    if (season === undefined) {
+      const snap = await fs.getDocs(fs.query(scores, fs.where('mode', '==', mode), fs.orderBy('score', 'desc'), fs.limit(n * 2)));
+      return visibleRows(snap.docs.map(d => toRow(d.data(), uid))).slice(0, n);
+    }
+    const [fair, mine] = await Promise.all([
+      fs.getDocs(fs.query(scores, fs.where('mode', '==', mode), fs.where('season', '==', season), fs.where('shadow', '==', false), fs.orderBy('score', 'desc'), fs.limit(n))),
+      fs.getDocs(fs.query(scores, fs.where('mode', '==', mode), fs.where('season', '==', season), fs.where('uid', '==', uid), fs.limit(20))),
+    ]);
+    const rows = fair.docs.map(d => toRow(d.data(), uid));
+    const own = mine.docs.map(d => toRow(d.data(), uid)).sort((a, b) => b.score - a.score)[0];
+    if (own && !rows.some(r => r.mine && r.score >= own.score)) rows.push(own);
+    return rows.sort((a, b) => b.score - a.score).slice(0, Math.max(n, rows.findIndex(r => r.mine) + 1));
   } catch (err) {
     console.warn('Leaderboard: read failed', err);
     return [];

@@ -5,6 +5,11 @@ rules_version = '2';
 // - Signed-in (anonymous) players can only append entries: no edits, no deletes.
 // - Every entry is validated (fields, types, ranges, plausibility) and must be written in the
 //   same batch as the player's 'limits' stamp, which allows one entry per 20 seconds.
+// - Seasons and fair boards (src/game/Seasons.ts, Phase 11 · 19): every entry carries the current
+//   monthly season (yyyymm from the server clock, so old seasons are frozen archives) and its
+//   mission duration. Hard plausibility limits reject an entry; soft limits, or an entry in
+//   'shadowbans' (written only from the Firebase console / Admin SDK), require shadow == true:
+//   the entry is stored and its player still sees it, but boards hide it from everyone else.
 // Anonymous gameplay stats (src/net/Analytics.ts): one append-only summary per mission in
 // 'analytics_events', no personal data, never readable by clients, rate-limited through
 // 'analytics_limits' (one write per 10 seconds per player).
@@ -187,7 +192,7 @@ service cloud.firestore {
       match /bests/{id} {
         allow read: if squadMember(code);
         allow create, update: if squadMember(code)
-          && request.resource.data.keys().hasOnly(['uid', 'name', 'mode', 'score', 'kills', 'rounds', 'createdAt', 'v', 'squadron', 'scoreId'])
+          && request.resource.data.keys().hasOnly(['uid', 'name', 'mode', 'score', 'kills', 'rounds', 'duration', 'season', 'shadow', 'createdAt', 'v', 'squadron', 'scoreId'])
           && request.resource.data.scoreId is string && request.resource.data.scoreId.size() <= 40
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.squadron == get(/databases/$(database)/documents/squadrons/$(code)).data.boardId
@@ -211,11 +216,39 @@ service cloud.firestore {
       }
     }
 
+    // Shadow bans: set by the operator only. A player may read their own entry (the client
+    // needs it to tag new scores correctly), nobody may write one from a client.
+    match /shadowbans/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, write: if false;
+    }
+
+    // Plausibility (numbers mirrored in src/game/Seasons.ts LIMITS; tests/seasons.test.ts checks).
+    // HARD: points per kill / round are capped (bosses and multipliers included), points per
+    // second, kills per second (30 a minute) and rounds per second (10 s a round) too.
+    function plausibleHard(d) {
+      return d.score <= d.kills * 4000 + d.rounds * 3000 + 5000
+        && d.score <= d.duration * 1500 + 20000
+        && d.kills * 2 <= d.duration + 20
+        && d.rounds * 10 <= d.duration + 60;
+    }
+    // SOFT: beyond any run seen in play (24k points or 15 kills a minute) → shadow entry
+    function plausibleSoft(d) {
+      return d.score <= d.kills * 2500 + d.rounds * 2000 + 3000
+        && d.score <= d.duration * 400 + 10000
+        && d.kills * 4 <= d.duration + 40;
+    }
+    function shadowOk(d) {
+      return d.shadow is bool && (d.shadow == true
+        || (plausibleSoft(d) && !exists(/databases/$(database)/documents/shadowbans/$(request.auth.uid))));
+    }
+
     match /scores/{id} {
       allow read: if true;
       allow update, delete: if false;
       allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly(['uid', 'name', 'mode', 'score', 'kills', 'rounds', 'createdAt', 'v', 'squadron'])
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'mode', 'score', 'kills', 'rounds', 'duration', 'season', 'shadow', 'createdAt', 'v', 'squadron'])
+        && request.resource.data.keys().hasAll(['duration', 'season', 'shadow'])
         && squadScore(request.resource.data)
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= (request.resource.data.mode == 'coop-gunner' ? 89 : request.resource.data.mode == 'coop-pilot' ? 43 : 20)
@@ -224,8 +257,11 @@ service cloud.firestore {
         && request.resource.data.score is int && request.resource.data.score >= 0 && request.resource.data.score <= 5000000
         && request.resource.data.kills is int && request.resource.data.kills >= 0 && request.resource.data.kills <= 5000
         && request.resource.data.rounds is int && request.resource.data.rounds >= 0 && request.resource.data.rounds <= 500
-        // plausibility: points per kill are capped (bosses and multipliers included)
-        && request.resource.data.score <= request.resource.data.kills * 4000 + request.resource.data.rounds * 3000 + 5000
+        && intIn(request.resource.data.duration, 0, 36000)
+        // the season is the server's current month: boards reset monthly, past seasons are frozen
+        && request.resource.data.season == request.time.year() * 100 + request.time.month()
+        && plausibleHard(request.resource.data)
+        && shadowOk(request.resource.data)
         && request.resource.data.createdAt == request.time
         && request.resource.data.v == 1
         && getAfter(/databases/$(database)/documents/limits/$(request.auth.uid)).data.last == request.time;
