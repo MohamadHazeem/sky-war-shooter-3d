@@ -52,7 +52,10 @@ function ensureStyle() {
 @media (prefers-reduced-motion: no-preference) { .sw-reel h4 { animation: sw-flicker 2.4s steps(12) 1; } }
 @keyframes sw-flicker { 0% { opacity: 0.2; } 10% { opacity: 0.9; } 14% { opacity: 0.55; } 30%, 100% { opacity: 1; } }
 .sw-map { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; background: rgba(6,7,4,0.82); padding: 16px; }
-.sw-map .cm-card { width: min(980px, 100%); max-height: 100%; overflow-y: auto; }
+/* opaque, and only the body scrolls: Back stays pinned at the foot on any screen height */
+.sw-map .cm-card { width: min(980px, 100%); max-height: 100%; display: flex; flex-direction: column; overflow: hidden; background: #12120d; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.sw-map .sw-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.sw-map .cm-foot { flex: none; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
 .sw-map .grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr); gap: 14px; align-items: start; }
 .sw-map svg { display: block; width: min(100%, calc((100vh - 190px) * ${(W / H).toFixed(3)})); min-width: min(100%, 320px); height: auto; margin: 0 auto; background: #e7dbb8; }
 .sw-map .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--ink-dim); margin-top: 8px; }
@@ -60,7 +63,19 @@ function ensureStyle() {
 .sw-map .legend span.fr::before { content: '—·—'; letter-spacing: -1px; color: #4d3b1e; }
 .sw-map .sites { font-size: 13px; line-height: 1.55; color: var(--ink-dim); margin: 0; padding: 0; list-style: none; }
 .sw-map .sites li b { color: var(--ink); font-weight: 500; }
-@media (max-width: 760px) { .sw-map .grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) {
+  .sw-map { padding: 10px; }
+  .sw-map .cm-card { padding: 12px 12px 10px; }
+  .sw-map .cm-card h3 { margin-bottom: 8px; }
+  .sw-map .grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .sw-map svg { min-width: 0; width: min(100%, calc((100vh - 520px) * ${(W / H).toFixed(3)})); }
+  .sw-map .legend { margin-top: 4px; font-size: 11px; gap: 2px 10px; }
+  .sw-map .sw-sec { font-size: 11px; margin-bottom: 2px; }
+  .sw-map .sw-sec .cm-bar { height: 6px; margin: 2px 0 1px; }
+  .sw-map .sw-note { font-size: 11px; margin-top: 4px; }
+  .sw-map .sites { font-size: 12px; line-height: 1.4; margin-top: 4px; }
+  .sw-map .cm-foot { margin-top: 8px; padding-top: 8px; }
+}
 html[lang=ar] .sw-reel .k, html[lang=ar] .sw-reel p, html[lang=ar] .sw-head { font-family: 'Special Elite', 'Noto Naskh Arabic', monospace; letter-spacing: 0; line-height: 1.7; }
 html[lang=ar] .sw-reel h4, html[lang=ar] .sw-sec { letter-spacing: 0; }
 html[lang=ar] .sw-note { font-family: 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; line-height: 1.6; }
@@ -226,13 +241,13 @@ export function showIndustryMap(c: CampaignData) {
     .sort((a, b) => d.sites[b.id].dmg - d.sites[a.id].dmg).slice(0, 6);
   const f = industryFactors(d);
   wrap.innerHTML = `<div class="cm-card" role="dialog" aria-modal="true"><h3>${tx('Industry map')}</h3>
-    <div class="grid"><div>${mapSvg(d)}
+    <div class="sw-body"><div class="grid"><div>${mapSvg(d)}
       <div class="legend">${SECTORS.map((s) => `<span style="--c:${SECTOR_COLOR[s]}">${esc(tx(SECTOR_LABEL[s]))}</span>`).join('')}<span class="fr">${esc(tx('Frontier, 1937'))}</span></div></div>
       <div>${sectorBars(d)}
         <p class="sw-note">${esc(tx('Dark wedge: damage. Dashed ring: damage still on its way to the production lines.'))}</p>
         <ul class="sites">${worst.map((s) => `<li><b>${esc(tx(s.city))}</b> · ${esc(tx(s.name))} · ${pct(1 - d.sites[s.id].dmg)}${d.sites[s.id].queue.length ? ' ⌛' : ''}</li>`).join('') || `<li>${esc(tx('No German works hit yet.'))}</li>`}</ul>
         <p class="sw-note">${esc(tx('Fighter deliveries {a} · pilot training {b} · jets {c}', { a: pct(d.fighters), b: pct(d.pilots), c: pct(f.jets) }))}</p>
-      </div></div>
+      </div></div></div>
     <div class="cm-foot"><button class="btn" data-sw-back>${tx('Back')}</button></div></div>`;
   // Esc / Backspace close the map only (captured before the campaign screen's own Back key)
   const key = (e: KeyboardEvent) => {
