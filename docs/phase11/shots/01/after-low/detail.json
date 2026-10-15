@@ -43,11 +43,11 @@
       ],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 237,
-        "programsAfter": 237,
-        "mean": 3.0933333337306976,
-        "p50": 3.2000000178813934,
-        "p95": 4.200000017881393,
+        "programsBefore": 238,
+        "programsAfter": 238,
+        "mean": 2.9133333332008786,
+        "p50": 2.7999999821186066,
+        "p95": 4.699999988079071,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     },
@@ -84,11 +84,11 @@
       "textures": [],
       "frameMs": {
         "samples": 45,
-        "programsBefore": 237,
-        "programsAfter": 237,
-        "mean": 1.395555555820465,
-        "p50": 1.100000023841858,
-        "p95": 2.5,
+        "programsBefore": 238,
+        "programsAfter": 238,
+        "mean": 2.693333333068424,
+        "p50": 2,
+        "p95": 4.899999976158142,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       }
     }
