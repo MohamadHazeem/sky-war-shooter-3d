@@ -52,6 +52,7 @@ import { mountStatsToggle } from '../net/Analytics';
 import { showCampaignMap, prepareCampaignMission, isSideRaid } from '../ui/CampaignMap';
 import { TourRuntime } from './TourRuntime';
 import { showTour as showTourScreen, registerTourOpener } from '../ui/TourScreen';
+import { showHistoricalRaids as showRaidsScreen } from '../ui/HistoricalRaidsScreen';
 import '../ui/CustomBattleScreen'; // registers the Custom Battle and Weekly Challenge modes + their Survival-screen tabs
 import { openMissionLink } from '../ui/MissionEditorScreen'; // registers the Mission Editor mode (Survival screen tab)
 import { CoopSession } from './CoopSession';
@@ -346,6 +347,11 @@ export class Game {
   /** The Tour of 25 missions (ui/TourScreen.ts): field orders, ship, crew, events, finale. */
   showTour(back = () => this.startMenu()) {
     showTourScreen({ briefing: (m, b) => this.showBriefing(m, b), menu: back });
+  }
+
+  /** Historical raid mode (ui/HistoricalRaidsScreen.ts): famous raids with their real numbers. */
+  showHistoricalRaids(back = () => this.startMenu()) {
+    showRaidsScreen({ briefing: (m, b) => this.showBriefing(m, b), menu: back });
   }
 
   showBriefing(m: Mission, back = () => (m.number || isSideRaid(m) ? this.showCampaign() : this.startMenu())) {

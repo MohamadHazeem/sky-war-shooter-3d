@@ -2,6 +2,8 @@ import { isSecondTourId, SECOND_TOUR_LENGTH } from '../game/SecondTour';
 import { DEEP_PENETRATION, isChapterMission } from '../game/DeepPenetration';
 import { isTourId, TOUR_LENGTH } from '../game/Tour';
 import { decorateTourBriefing } from './TourScreen';
+import { decorateRaidBriefing } from './HistoricalRaidsScreen';
+import { isHistoricalId } from '../game/HistoricalRaids';
 import { CAMPAIGN, type Mission } from '../game/Missions';
 import { USER_MISSION_ID } from '../game/MissionEditor';
 import { briefingVoice } from '../audio/BriefingVoice';
@@ -120,6 +122,7 @@ export function decorateBriefing(root: HTMLElement, m: Mission) {
   if (m.id === USER_MISSION_ID && kicker) kicker.textContent = tx('PLAYER MISSION');   // Phase 11 goal 27 (MissionEditor.ts)
   if (isChapterMission(m.id) && kicker) kicker.textContent = tx('Deep Penetration') + ' · ' + kicker.textContent;
   if (tour) decorateTourBriefing(sheet);   // the Tour: kicker and the crew's own ship (TourScreen.ts)
+  if (isHistoricalId(m.id)) decorateRaidBriefing(sheet);   // historical raid mode (HistoricalRaidsScreen.ts)
   decorateCampaignBriefing(sheet, m); // dynamic campaign: side-raid kicker, strategic modifiers
 
   // Recorded briefing
