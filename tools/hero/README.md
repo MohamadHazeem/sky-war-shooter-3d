@@ -55,3 +55,29 @@ PLAYWRIGHT_MODULE=/absolute/path/to/installed/playwright/index.mjs node tools/he
 This uses an existing Playwright/Chrome installation, explicitly drives frames, and writes small JPEGs and JSON to `docs/phase10/shots/02c/`. It compares the retained legacy GLB and hero under matching gallery cameras, captures Low, silver and mechanics, tests corrupt/failed KTX2 requests and fresh Low startup, and checks shader stability after LOD transitions. It creates legacy-left/hero-right sheets for close, beauty, waist, wide and near formation, silver, Low and Low silver, plus idle and mechanical evidence. Render time is fixed and temporal passes are settled; mission wall-clock timing can still shift clouds/background aircraft slightly. The established gallery/VQA rig is used because goal 00's rig is absent on this branch.
 
 `render.py` supports `HERO_RENDER_LOD=2`, `HERO_RENDER_PREFIX=low-turntable`, and `HERO_RENDER_MODEL=tools/convert_models/output/b17.glb` for matching studio comparisons. `npm run check` validates the shipped artifact as well as runtime code.
+
+## Phase 11 detail pass
+
+Run every Blender/compression/capture job through `tools/heavy.sh`. The existing accurate
+silhouette and shared mechanical owners are preserved. `detail.py` supplies metric sheet
+relief and CC0 scan residuals (licence and source hashes in `references/CREDITS.md`).
+The B-17 adds service covers, shallow dents, oil-canning, 45 mm rivet pitch on calibrated
+atlas charts, fabric rib tapes, satin paint, and dark steel radial fins/pushrods.
+These are plausible material details, not a factory rivet-plan reconstruction.
+Normals/AO now bake at the shipped 1024 resolution with 48 samples; colour remains 2048.
+Curvature controls roughness and is retained as a build intermediate. Basis normal mipmaps
+use normal-map mode and lower RDO loss. Glass has restrained tint and a clearcoat layer.
+
+Phase 11 QA (port **5321**, bundled headless shell, no desktop browser):
+
+```sh
+node tools/visual_rig.mjs --url http://127.0.0.1:5321 --out docs/phase11/shots/01/after --shots b17-beauty,waist-fw190,tail-bf109
+node tools/hero/detail-qa.mjs after
+```
+
+Set `PLAYWRIGHT_EXECUTABLE` only to an existing bundled **chrome-headless-shell** if the
+installed Playwright package expects another revision. `detail-qa.mjs` uses the production
+rig scene for six 15–17 m model-space detail views; `DETAIL_BASELINE=/path/to/models`
+serves preserved baseline assets, `DETAIL_QUALITY=low` exercises Low, and
+`DETAIL_FALLBACK=1` aborts KTX2 to exercise fallback. All pages and contexts close in `finally`.
+`HERO_SILHOUETTE_OUT=docs/phase11/shots/01` preserves the historical goal-02c gate.

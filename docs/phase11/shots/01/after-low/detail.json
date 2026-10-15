@@ -1,0 +1,97 @@
+{
+  "quality": "low",
+  "views": [
+    {
+      "kind": "b17",
+      "subject": {
+        "position": [
+          110,
+          7620,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "modelRange": 15,
+      "camera": {
+        "position": [
+          120,
+          7625,
+          402
+        ],
+        "quaternion": [
+          -0.15622985705189124,
+          0.3771722397422857,
+          0.06471252563850327,
+          0.9105743365364628
+        ],
+        "fov": 46
+      },
+      "textures": [
+        {
+          "name": "hero_skin_damage",
+          "compressed": false,
+          "normalSize": [
+            512,
+            512
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 237,
+        "programsAfter": 237,
+        "mean": 3.0933333337306976,
+        "p50": 3.2000000178813934,
+        "p95": 4.200000017881393,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "fw190",
+      "subject": {
+        "position": [
+          110,
+          7680,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "modelRange": 17.029386365926403,
+      "camera": {
+        "position": [
+          182,
+          7710,
+          450
+        ],
+        "quaternion": [
+          -0.13588333844051473,
+          0.39820170466884447,
+          0.05977531380221468,
+          0.9052060718935404
+        ],
+        "fov": 20
+      },
+      "textures": [],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 237,
+        "programsAfter": 237,
+        "mean": 1.395555555820465,
+        "p50": 1.100000023841858,
+        "p95": 2.5,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    }
+  ],
+  "errors": []
+}

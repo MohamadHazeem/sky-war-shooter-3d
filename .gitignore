@@ -26,3 +26,6 @@ tools/interior/out/
 __pycache__/
 
 .vite-cache/
+
+# Phase 11 rig originals stay local; compact JPEG evidence is committed.
+docs/phase11/shots/**/*.png

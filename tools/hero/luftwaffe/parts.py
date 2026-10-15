@@ -383,3 +383,37 @@ def annular_fan(m, node, centre, fr, blades=12):
         bl.merge(tube([p0, p1], 0.035, 4, 0.006, up_hint=(0, 0, 1)))
     bl.merge(revolve([(-0.05, fr * 0.36), (0.03, fr * 0.36)], (cx, cy, fz), (0, 0, 1), 20, cap0=True, cap1=True))
     m.add(node, bl, FANMETAL)
+
+
+def finish_fittings(m):
+    """Depth at original glass boundaries and hollow rims on measured exhaust outlets.
+    No replacement canopy shape; all additions stay attached to structural owners.
+    """
+    glass=m.nodes.get('glass')
+    if glass:
+        edges={}
+        for mesh, _ in glass.meshes:
+            for face in mesh.faces:
+                for ia,ib in zip(face,face[1:]+face[:1]):
+                    a=tuple(round(c,5) for c in mesh.verts[ia]);b=tuple(round(c,5) for c in mesh.verts[ib])
+                    edge=tuple(sorted((a,b)));edges[edge]=edges.get(edge,0)+1
+        seals=Mesh()
+        for (a,b),count in edges.items():
+            if count==1 and sum((a[i]-b[i])**2 for i in range(3))>.0001:
+                seals.merge(tube([a,b],.009,6))
+        if seals.faces:m.add('part_fuselage',seals,FRAME)
+    for x,y,z in m.info.get('exhausts',[]):
+        side=1 if x>0 else -1
+        owner=('part_engine1' if x>0 else 'part_engine2') if 'part_engine1' in m.nodes else 'part_fuselage'
+        end=(x+side*.055,y-.012,z-.065)
+        m.add(owner,tube([(x,y,z),end],.034,8,.025,cap=False),EXHAUST)
+        # Dark recessed throat plus a rolled lip; the open mouth remains visible.
+        m.add(owner,tube([(x,y,z),(end[0]-side*.006,end[1],end[2]+.008)],.026,8,.018),GRILLE)
+    if m.kind=='fw190':
+        # Two staggered BMW 801 cylinder rows, behind the existing cooling fan.
+        for row in range(2):
+            for j in range(7):
+                a=2*math.pi*(j+row*.5)/7
+                cx,cy=.33*math.cos(a),-.086+.33*math.sin(a)
+                m.add('part_fuselage',tube([(cx*.65,-.086+(cy+.086)*.65,1.45-row*.12),
+                    (cx*1.6,-.086+(cy+.086)*1.6,1.45-row*.12)],.075,8),GUNMETAL)

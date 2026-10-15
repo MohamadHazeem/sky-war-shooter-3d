@@ -146,3 +146,13 @@ barrel and two FDL 131 barbette blisters (`src/world/EnemyDress.ts`). No He 219 
   Goal 13 adds original sculpted garment folds, stitched seams and pockets in `build_crew.py`;
   cloth/leather normal and roughness maps are original procedural work in `src/render/CrewFabric.ts`.
 * `b17_interior.glb`: waist, radio room and bomb bay structure and equipment, ambient occlusion baked in Cycles.
+
+## Phase 11 aircraft surface detail
+
+B-17 and the five Luftwaffe heroes retain their FlightGear geometry licences above.
+The new relief, service fasteners, fabric tapes, skin deformation, radial fins and pushrods
+are project-authored derivatives. Colour/roughness variation incorporates Poly Haven's
+[Painted Metal Shutter](https://polyhaven.com/a/painted_metal_shutter), **CC0 1.0**:
+Charlotte Baglioni (photography), Dario Barresi (baking), Rico Cilliers (processing).
+The corrugation is removed; only restrained scan variation is baked into aircraft paint.
+Source files, licence and hashes: `tools/hero/references/CREDITS.md`.

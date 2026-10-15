@@ -49,7 +49,7 @@ describe('shipped B-17 asset contract', () => {
     expect(totals[2]).toBeLessThan(totals[1]*.75);expect(totals[2]).toBeLessThan(26000);
   });
   it('matches the artifact verified against the USAAF three-view and section widths',()=>{
-    const qa=JSON.parse(readFileSync('docs/phase10/shots/02c/silhouette.json','utf8'));
+    const qa=JSON.parse(readFileSync('docs/phase11/shots/01/silhouette.json','utf8'));
     expect(qa.artifactSha256).toBe(createHash('sha256').update(readFileSync('public/models/hero/b17.glb')).digest('hex'));
     expect(qa.pass).toBe(true);
     for(const section of Object.values(qa.sections) as {relativeError:number;tolerance:number}[])expect(section.relativeError).toBeLessThanOrEqual(section.tolerance);
@@ -63,6 +63,10 @@ describe('shipped B-17 asset contract', () => {
     const lowSkin=r.listMaterials().find(m=>m.getName()==='hero_skin_low')!;
     expect(lowSkin.getBaseColorTexture()!.getSize()).toEqual([512,512]);
     expect(lowSkin.getNormalTexture()).toBeNull();
+    const lowGlass=r.listMaterials().find(m=>m.getName()==='hero_glass_low')!;
+    expect(lowGlass.getAlphaMode()).toBe('BLEND');
+    expect(lowGlass.getBaseColorFactor()[3]).toBeLessThan(.4);
+    expect(lowGlass.getExtension('KHR_materials_transmission')).toBeNull();
     const skin=r.listMaterials().find(m=>m.getName()==='hero_skin')!;
     expect(skin.getBaseColorTexture()).toBeTruthy();expect(skin.getNormalTexture()).toBeTruthy();expect(skin.getOcclusionTexture()).toBeTruthy();
     expect(r.listMaterials().some(m=>!!m.getExtension('KHR_materials_transmission'))).toBe(true);

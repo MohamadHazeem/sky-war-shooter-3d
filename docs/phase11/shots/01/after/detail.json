@@ -1,0 +1,306 @@
+{
+  "quality": "high",
+  "views": [
+    {
+      "kind": "b17",
+      "subject": {
+        "position": [
+          110,
+          7620,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "modelRange": 15,
+      "camera": {
+        "position": [
+          120,
+          7625,
+          402
+        ],
+        "quaternion": [
+          -0.15622985705189124,
+          0.3771722397422857,
+          0.06471252563850327,
+          0.9105743365364628
+        ],
+        "fov": 46
+      },
+      "textures": [
+        {
+          "name": "hero_skin_damage",
+          "compressed": true,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 246,
+        "programsAfter": 246,
+        "mean": 6.784444444709354,
+        "p50": 6.600000023841858,
+        "p95": 8.899999976158142,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "fw190",
+      "subject": {
+        "position": [
+          110,
+          7680,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "modelRange": 17.029386365926403,
+      "camera": {
+        "position": [
+          182,
+          7710,
+          450
+        ],
+        "quaternion": [
+          -0.13588333844051473,
+          0.39820170466884447,
+          0.05977531380221468,
+          0.9052060718935404
+        ],
+        "fov": 20
+      },
+      "textures": [
+        {
+          "name": "hero_fw190",
+          "compressed": false,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 246,
+        "programsAfter": 246,
+        "mean": 6.4866666661368475,
+        "p50": 5.5,
+        "p95": 11.099999994039536,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "bf109",
+      "subject": {
+        "position": [
+          110,
+          7680,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "modelRange": 17.029386365926403,
+      "camera": {
+        "position": [
+          185.60000000000002,
+          7711.5,
+          453
+        ],
+        "quaternion": [
+          -0.13588333844051467,
+          0.3982017046688445,
+          0.059775313802214666,
+          0.9052060718935405
+        ],
+        "fov": 20
+      },
+      "textures": [
+        {
+          "name": "hero_bf109",
+          "compressed": false,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 246,
+        "programsAfter": 246,
+        "mean": 5.028888889153799,
+        "p50": 4.700000017881393,
+        "p95": 9.400000005960464,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "me262",
+      "subject": {
+        "position": [
+          110,
+          7680,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "modelRange": 17.029386365926403,
+      "camera": {
+        "position": [
+          182,
+          7710,
+          450
+        ],
+        "quaternion": [
+          -0.13588333844051473,
+          0.39820170466884447,
+          0.05977531380221468,
+          0.9052060718935404
+        ],
+        "fov": 20
+      },
+      "textures": [
+        {
+          "name": "hero_me262",
+          "compressed": false,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 246,
+        "programsAfter": 246,
+        "mean": 6.91555555595292,
+        "p50": 6.199999988079071,
+        "p95": 12.599999994039536,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "bf110",
+      "subject": {
+        "position": [
+          110,
+          7680,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "modelRange": 17.029386365926406,
+      "camera": {
+        "position": [
+          171.2,
+          7705.5,
+          441
+        ],
+        "quaternion": [
+          -0.13588333844051473,
+          0.39820170466884436,
+          0.05977531380221466,
+          0.9052060718935405
+        ],
+        "fov": 20
+      },
+      "textures": [
+        {
+          "name": "hero_bf110",
+          "compressed": false,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 246,
+        "programsAfter": 246,
+        "mean": 4.7688888880941604,
+        "p50": 4.600000023841858,
+        "p95": 6.5999999940395355,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "ju88",
+      "subject": {
+        "position": [
+          110,
+          7680,
+          390
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "modelRange": 17.029386365926403,
+      "camera": {
+        "position": [
+          164,
+          7702.5,
+          435
+        ],
+        "quaternion": [
+          -0.13588333844051473,
+          0.39820170466884447,
+          0.05977531380221468,
+          0.9052060718935404
+        ],
+        "fov": 20
+      },
+      "textures": [
+        {
+          "name": "hero_ju88",
+          "compressed": false,
+          "normalSize": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 246,
+        "programsAfter": 246,
+        "mean": 5.322222222884496,
+        "p50": 5.5,
+        "p95": 7.0999999940395355,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    }
+  ],
+  "errors": []
+}

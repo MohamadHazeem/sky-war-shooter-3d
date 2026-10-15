@@ -7,12 +7,15 @@ t/8+0.5, surface id/64), 'ao'. Output (H, W, 3) arrays in file colour space:
           chipping to bare aluminium and primer, fading
   ace     the same with the ace's markings (kill bars, emblem, Kommandeur chevrons, spinner)
   orm     R occlusion (baked AO), G roughness, B metalness (glTF packing)
-  normal  tangent-space normal map from the height field (panel-line grooves, rivet heads,
-          fabric rib tapes), derived in the atlas's own UV frame
+  height  metre-valued relief, displaced onto a high-poly copy and baked in build.py
+  curvature  signed relief curvature at the 1024 shipped detail-map resolution
 Everything is a function of the 3D position / surface coordinates, so markings and seams run
 across UV islands without seams in the pattern.
 """
-import math, os
+import math, os, sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from detail import scan_variation, sheet_relief, curvature
 import numpy as np
 
 DEBUG = bool(os.environ.get('HERO_DEBUG'))
@@ -510,7 +513,18 @@ def paint(m, maps, size):
             # fasteners at the corners and along the edges
             rv = np.maximum(rv, np.where(inside, rivets(d, along_s if s.kind == 'body' else along_t) * 0.8, 0))
         ln_mask = 1 - sstep(0.35, 1.15, dmin)
-        h = -ln_mask * 0.6 + rv * (0.14 if texel < 0.008 else 0.0)
+        h = -ln_mask * .30 + rv * .14
+        # Metric thin-skin deformation, retained between the existing measured panel stations.
+        h += 1.6 * sheet_relief(Ss, along_s, .58, .36) / .0022
+        # Countersunk service fasteners: broader collar, recessed slot, not giant rivet heads.
+        for s0, s1, t0, t1 in s.hatches:
+            for cs in (s0+.035, s1-.035):
+                for ct in (t0+.035, t1-.035):
+                    dx=(Ss-cs)/gSs;dy=(Ts-ct)/gTs
+                    collar=np.exp(-(dx*dx+dy*dy)/1.4)
+                    slot=np.exp(-dx*dx/.12-dy*dy/1.0)
+                    h += .22*collar-.26*slot
+                    rv=np.maximum(rv,collar*.7)
         if s.fabric > 0:
             ph = (Ss / s.fabric) % 1.0
             rib = 1 - sstep(0.0, 0.06, np.abs(ph - 0.5) - 0.0)
@@ -573,7 +587,17 @@ def paint(m, maps, size):
         pc = pc + (lum * 1.08 - pc) * sun
         pc = pc + sun * 0.05
         col = np.where(skinm[..., None], pc, col)
-        rough = np.where(skinm, 0.6 + (lowf - 0.5) * 0.12 + (nz(9, 33, 3) - 0.5) * 0.08, rough)
+        scan_color, scan_rough = scan_variation(P[..., 2] * .37 + P[..., 0] * .19, P[..., 1] * .5 + P[..., 0] * .23)
+        col *= 1 + (skinm * scan_color * .045)[..., None]
+        # Sheet-to-sheet finish changes interrupt the reflection without painting a dark grid.
+        panel = np.sin(np.floor(S / .58) * 12.989 + np.floor(T / .42) * 7.233)
+        rough = np.where(skinm, .49 + panel * .075 + (lowf - .5) * .14 + scan_rough * .075, rough)
+        col *= 1 + (skinm * panel * .022)[...,None]
+        col += (skinm * rivet * .055)[...,None]
+        rough = np.where(skinm, rough - rivet * .08, rough)
+        for k, surface in enumerate(m.surfs):
+            if surface and surface.fabric:
+                rough = np.where((sid == k) & skinm, .76 + .04 * scan_rough, rough)
         col = np.where(skinm[..., None], col * (1 - 0.32 * seam)[..., None], col)
         # streaks aft of the seams (dirt drawn back by the airflow): stretched noise
         streak = fbm(flatP, (22, 22, 0.45), 3, seed + 41).reshape(H, W)
@@ -656,18 +680,11 @@ def paint(m, maps, size):
     base_c, rough, metal = weather(base_m)
     ace_c, _, _ = weather(ace_m)
 
-    # ---------------- normal map from the height field (metres)
-    hm = height * 0.0022
-    dHc, dHr = safe_grad(hm, P, valid)
-    nx = -dHc / texel
-    ny = -dHr / texel
-    nzv = np.ones_like(nx)
-    nl = np.sqrt(nx * nx + ny * ny + 1)
-    nrm = np.stack([nx / nl, ny / nl, nzv / nl], -1) * 0.5 + 0.5
-    nrm[~valid] = (0.5, 0.5, 1.0)
-
+    # Metre-valued relief is displaced onto a subdivided aircraft in build.py, then baked.
+    hm = height * .0022
     orm = np.stack([ao, rough, metal], -1)
-    out = {'base': base_c, 'ace': ace_c, 'orm': orm.astype(np.float32), 'normal': nrm.astype(np.float32)}
+    out = {'base': base_c, 'ace': ace_c, 'orm': orm.astype(np.float32), 'height': hm,
+           'curvature': np.repeat(curvature(hm.reshape(1024,2,1024,2).mean(axis=(1,3)))[...,None],3,-1)}
     if DEBUG:
         rngc = np.random.default_rng(5).random((256, 3)).astype(np.float32)
         out['dbg_node'] = np.where(valid[..., None], rngc[np.clip(nid, 0, 255)], 0)

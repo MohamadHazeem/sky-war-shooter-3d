@@ -19,7 +19,7 @@ import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { NodeIO } from '@gltf-transform/core';
-import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { ALL_EXTENSIONS, KHRMaterialsClearcoat, KHRMaterialsIOR } from '@gltf-transform/extensions';
 import { meshopt, textureCompress, prune } from '@gltf-transform/functions';
 import { MeshoptEncoder, MeshoptDecoder } from 'meshoptimizer';
 import sharp from 'sharp';
@@ -27,10 +27,10 @@ import sharp from 'sharp';
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '../../..');
 const SRC = process.env.HERO_SRC ?? join(REPO, 'tools/hero/luftwaffe/out');
 const OUT = process.env.HERO_OUT ?? join(REPO, 'public/models');
-// texture sizes: colour carries the markings and seams at full size; the normal map (grooves, rivets)
-// and ORM (AO, roughness, metalness) are low-frequency enough for half (GPU memory: no KTX2 here)
+// Shipped sizes: 2048 colour/markings, 1024 normal/packed material maps.
+// Mipmapped KTX2 replaces the embedded WebP without adding runtime texture slots.
 const TEX = { base: Number(process.env.HERO_TEX ?? 2048), normal: 1024, orm: 1024, ace: Number(process.env.HERO_TEX ?? 2048) };
-const Q = Number(process.env.WEBP_QUALITY ?? 86);
+const Q = Number(process.env.WEBP_QUALITY ?? 95);
 
 await MeshoptEncoder.ready;
 await MeshoptDecoder.ready;
@@ -96,7 +96,9 @@ for (const kind of kinds) {
     .setNormalTexture(nrm).setNormalScale(1)
     .setDoubleSided(false).setAlphaMode('OPAQUE');
   if (glass) {
-    glass.setBaseColorFactor([0.62, 0.68, 0.7, 0.2]).setAlphaMode('BLEND').setRoughnessFactor(0.04)
+    glass.setExtension('KHR_materials_clearcoat',doc.createExtension(KHRMaterialsClearcoat).createClearcoat().setClearcoatFactor(.6).setClearcoatRoughnessFactor(.08));
+    glass.setExtension('KHR_materials_ior',doc.createExtension(KHRMaterialsIOR).createIOR().setIOR(1.46));
+    glass.setBaseColorFactor([0.52, 0.67, 0.71, 0.26]).setAlphaMode('BLEND').setRoughnessFactor(0.075)
       .setMetallicFactor(0).setDoubleSided(true).setBaseColorTexture(null).setMetallicRoughnessTexture(null);
   }
   isolateNamedMeshes(doc);

@@ -2,11 +2,11 @@
 No nonuniform fit per view: one metre-to-pixel scale (span), translation and the
 manual's side-view ground pitch only. Thin appendages are not part of area IoU.
 """
-import json,math,hashlib
+import json,math,hashlib,os
 from pathlib import Path
 import numpy as np
 from PIL import Image,ImageDraw,ImageFilter
-ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'docs/phase10/shots/02c';OUT.mkdir(parents=True,exist_ok=True)
+ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/os.environ.get('HERO_SILHOUETTE_OUT','docs/phase10/shots/02c');OUT.mkdir(parents=True,exist_ok=True)
 ref=json.loads((ROOT/'tools/hero/silhouette-reference.json').read_text());data=json.loads((ROOT/'tools/hero/output/projections.json').read_text())
 # Scan span establishes scale. Side drawing shares it; front is separately printed at same span.
 scale=1004/31.62

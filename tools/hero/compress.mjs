@@ -32,7 +32,7 @@ for(const name of names) {
   await sharp(src+'/'+name+'.png').resize(['base','silver'].includes(name)?2048:1024).png().toFile(input);
   await sharp(input).webp({quality:95,lossless:!['base','silver'].includes(name)}).toFile(out+'/'+name+'.webp');
   if(ktx) execFileSync(ktx,['--t2','--encode','uastc','--uastc_quality','2','--zcmp','18','--genmipmap','--assign_oetf',['base','silver'].includes(name)?'srgb':'linear',out+'/'+name+'.ktx2',input],{stdio:'inherit'});
-  else if(basis) execFileSync(basis,['-ktx2','-uastc','-uastc_level','2','-uastc_rdo_l','3.0','-mipmap',...(['base','silver'].includes(name)?['-srgb']:['-linear']),'-file',input,'-output_file',out+'/'+name+'.ktx2'],{stdio:'inherit'});
+  else if(basis) execFileSync(basis,['-ktx2','-uastc','-uastc_level','2','-uastc_rdo_l',name==='normal'?'0.8':'2.0','-mipmap',...(name==='normal'?['-normal_map']:[]),...(['base','silver'].includes(name)?['-srgb']:['-linear']),'-file',input,'-output_file',out+'/'+name+'.ktx2'],{stdio:'inherit'});
 }
 if(ktx || basis) {
   for(const f of ['basis_transcoder.js','basis_transcoder.wasm'])copyFileSync('node_modules/three/examples/jsm/libs/basis/'+f,out+'/'+f);

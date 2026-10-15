@@ -2,8 +2,8 @@
 import fs from 'node:fs/promises';
 import sharp from 'sharp';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const out='docs/phase10/shots/02c';await fs.mkdir(out,{recursive:true});
-const browser=await chromium.launch({headless:true,channel:'chrome',args:['--autoplay-policy=no-user-gesture-required']});
+const out=process.env.HERO_QA_OUT || 'docs/phase10/shots/02c';await fs.mkdir(out,{recursive:true});
+const browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_EXECUTABLE,args:['--autoplay-policy=no-user-gesture-required']});
 const results={};
 try {
  for(const mode of (process.env.HERO_QA_MODES?.split(',') ?? ['legacy','hero','fallback','low-start'])) {
@@ -15,7 +15,7 @@ try {
   if(mode==='legacy')await context.route('**/models/hero/b17.glb',route=>route.fulfill({path:'public/models/b17.glb',contentType:'model/gltf-binary'}));
   if(mode==='fallback')await context.route('**/models/hero/*.ktx2',route=>route.request().url().endsWith('/base.ktx2')?route.fulfill({body:Buffer.from('invalid KTX2 for fallback QA')}):route.abort());
   const page=await context.newPage(),errors=[],warnings=[],detailRequests=[];page.on('request',r=>{if(/models\/hero\/.*\.(ktx2|webp)$/.test(r.url()))detailRequests.push(r.url());});page.on('pageerror',e=>{errors.push(e.message);console.log(mode,'ERROR',e.stack);});page.on('console',m=>{if(m.type()==='warning')warnings.push(m.text());});
-  console.log(mode,'loading');await page.goto('http://127.0.0.1:5302');console.log(mode,'page loaded');await page.waitForFunction(()=>window.sws?.assetsReady()&&sws.vqa,null,{timeout:120000});
+  console.log(mode,'loading');await page.goto(process.env.HERO_QA_URL || 'http://127.0.0.1:5302');console.log(mode,'page loaded');await page.waitForFunction(()=>window.sws?.assetsReady()&&sws.vqa,null,{timeout:120000});
   console.log(mode,'ready');
   if(mode==='low-start'){
    const state=await page.evaluate(()=>{sws.vqa.freeze();sws.gallery.setup('formation');return {quality:sws.engine.quality,hero:!!sws.game.world.playerBomber.model.getObjectByName('B17G_HERO'),props:sws.game.world.playerBomber.props.length,bench:sws.bench(45)};});
@@ -54,7 +54,7 @@ if(results['low-start'] && (results['low-start'].quality!=='low'||results['low-s
 if(results.hero && (results.hero.props!==4||results.hero.textures.length===0))throw Error('Hero pivot/material contract');
 if((results.hero && !results.hero.textures.every(t=>t.compressed))||(results.fallback && !results.fallback.textures.every(t=>!t.compressed)))throw Error('Texture fallback contract');
 
-for(const view of ['close','beauty','waist','formation','silver','low-beauty','formation-detail','low-silver']) {
+if(results.legacy && results.hero) for(const view of ['close','beauty','waist','formation','silver','low-beauty','formation-detail','low-silver']) {
  const images=await Promise.all(['legacy','hero'].map(mode=>sharp(`${out}/${mode}-${view}.jpg`).resize(960).toBuffer()));
  const {height}=await sharp(images[0]).metadata();
  const label=Buffer.from(`<svg width="1920" height="44"><rect width="1920" height="44" fill="#17202a"/><g fill="white" font-family="sans-serif" font-size="23"><text x="20" y="30">LEGACY | ${view}</text><text x="980" y="30">HERO | ${view}</text></g></svg>`);

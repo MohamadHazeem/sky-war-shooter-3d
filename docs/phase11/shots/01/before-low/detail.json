@@ -1,0 +1,71 @@
+{
+  "quality": "low",
+  "views": [
+    {
+      "kind": "b17",
+      "modelRange": 14.69693845669911,
+      "camera": {
+        "position": [
+          113.1764368678905,
+          7625.919839802159,
+          398.33195896372956
+        ],
+        "quaternion": [
+          -0.149356789111335,
+          0.3760081222215034,
+          0.0615494686614085,
+          0.9124264926432756
+        ],
+        "fov": 46
+      },
+      "textures": [
+        {
+          "name": "hero_skin_damage",
+          "compressed": false,
+          "normalSize": [
+            512,
+            512
+          ]
+        }
+      ],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 235,
+        "programsAfter": 235,
+        "mean": 3.022222222222222,
+        "p50": 3,
+        "p95": 3.5999999940395355,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    },
+    {
+      "kind": "fw190",
+      "modelRange": 17.02938636592636,
+      "camera": {
+        "position": [
+          173.73639143785263,
+          7716.240071011695,
+          445.6307483973329
+        ],
+        "quaternion": [
+          -0.15919288167679968,
+          0.39456657668718903,
+          0.0696141302477813,
+          0.9022908155659316
+        ],
+        "fov": 30
+      },
+      "textures": [],
+      "frameMs": {
+        "samples": 45,
+        "programsBefore": 235,
+        "programsAfter": 235,
+        "mean": 4.222222222222222,
+        "p50": 4.199999988079071,
+        "p95": 4.899999976158142,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      }
+    }
+  ],
+  "errors": []
+}
