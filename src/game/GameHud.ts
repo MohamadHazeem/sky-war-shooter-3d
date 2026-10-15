@@ -1,4 +1,5 @@
 import { gunLead } from '../world/Gunnery';
+import { drawHudSight } from './GunSights';
 import { BOMB_RUN_TEXT } from './BombRunState';
 import { aircraftMarkerAlpha, liveMarkerTarget, projectAircraft, projectMarker } from '../ui/MarkerProjection';
 import { recordMarker } from '../ui/MarkerAudit';
@@ -285,16 +286,7 @@ export class GameHud {
     // Gunner hip reticle: waist guns without the ring sight up (fades as RMB brings the eye down)
     if (g.mission?.role === 'gunner' && ((g.gunner.def.type === 'waist' && g.gunner.ads < 0.6) || g.gunner.def.id === 'top')) {
       const a = g.gunner.def.id === 'top' ? 0.85 : 0.85 * (1 - g.gunner.ads / 0.6);
-      const r = Math.min(W, H) * 0.05;
-      ctx.save();
-      ctx.strokeStyle = `rgba(255,236,190,${a})`; ctx.fillStyle = ctx.strokeStyle; ctx.lineWidth = 1.5;
-      ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 3;
-      ctx.beginPath(); ctx.arc(W / 2, H / 2, r, 0, Math.PI * 2); ctx.stroke();
-      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-        ctx.beginPath(); ctx.moveTo(W / 2 + dx * r * 0.45, H / 2 + dy * r * 0.45); ctx.lineTo(W / 2 + dx * r * 0.85, H / 2 + dy * r * 0.85); ctx.stroke();
-      }
-      ctx.beginPath(); ctx.arc(W / 2, H / 2, 1.8, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
+      drawHudSight(ctx, W / 2, H / 2, Math.min(W, H) * 0.05, a);   // the Locker's gun sight style (GunSights.ts)
     }
     // Pilot gunsight
     if (g.mission?.role === 'pilot' && w.playerFighter?.alive) {

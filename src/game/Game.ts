@@ -61,6 +61,7 @@ import { MenuScene } from './MenuScene';
 import { WorldEvents } from './WorldEvents';
 import { TitleExtras } from './TitleExtras';
 import { FeatWatch } from './FeatWatch';
+import { MasteryWatch } from './MasteryWatch';
 import { firstRunGraphics } from './AutoGraphics';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
@@ -108,6 +109,7 @@ export class Game {
   readonly worldEvents: WorldEvents; // world.events handlers: kill scoring, radio (WorldEvents.ts)
   readonly extras: TitleExtras;   // What's new bulletin + aircraft recognition gallery (TitleExtras.ts)
   readonly feats: FeatWatch;      // Phase 5 achievements: mission watcher + kill / frame hooks (FeatWatch.ts)
+  readonly mastery: MasteryWatch; // Gunner Mastery: station ranks, challenges, weekly Ace Hunt, Locker (MasteryWatch.ts)
   settings: Settings;
   progress: Progress;
   mission: Mission | null = null;
@@ -216,6 +218,7 @@ export class Game {
     this.extras = new TitleExtras(this, engine);
     this.aa = new AADefence(this);
     this.feats = new FeatWatch(this); // after worldEvents.wire / service: chains world.events.kill
+    this.mastery = new MasteryWatch(this); // chains world.events.kill / playerHit like FeatWatch
   }
 
   // Compile shaders for objects that only appear mid-mission (debris, chutes, bombs,

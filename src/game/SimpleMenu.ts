@@ -10,6 +10,7 @@ import { MODES, mountModePanel } from './Modes';
 import { survivalMission } from './Missions';
 import { loadSeen, WHATS_NEW_VERSION } from './WhatsNew';
 import { tx } from '../i18n';
+import { huntMode } from './Mastery';
 
 /** Menu navigation owns its return callbacks; gameplay/dev entry points remain on Game. */
 export class SimpleMenu {
@@ -50,6 +51,7 @@ export class SimpleMenu {
     switch (route) {
       case 'settings': this.settings(back); break;
       case 'skills': g.skills.open(back); break;
+      case 'mastery': g.mastery.open(back); break;
       case 'career': g.service.openCareer(back); break;
       case 'trophies': g.service.openTrophies(back); break;
       case 'daily': g.service.openDaily(back); break;
@@ -89,6 +91,7 @@ export class SimpleMenu {
     const root = this.sheet('recordsBoards', 'Leaderboards', back);
     const box = root.querySelector<HTMLElement>('.box')!;
     const boards = MODES.flatMap(m => (m.roles ?? ['gunner', 'pilot'] as const).map(role => ({ id: m.board(role), label: `${tx(m.title)} · ${tx(role === 'gunner' ? 'B-17 Gunner' : 'P-51 Escort')}` }))).filter(b => b.id);
+    boards.push({ id: huntMode(), label: tx('Weekly Ace Hunt · B-17 Gunner') });   // Gunner Mastery (Mastery.ts)
     box.insertAdjacentHTML('beforeend', `<label>${tx('Mode')} <select data-board>${boards.map(b => `<option value="${esc(b.id)}">${esc(b.label)}</option>`).join('')}</select></label><div data-scores></div>`);
     const draw = () => {
       const host = box.querySelector<HTMLElement>('[data-scores]')!;

@@ -1,0 +1,115 @@
+{
+  "mission": {
+    "result": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 2 enemies 3 bombers 9 playing\n56s kills 8 enemies 5 bombers 9 playing\n86s kills 8 enemies 5 bombers 9 playing\n116s kills 8 enemies 5 bombers 9 playing\n",
+    "state": "debrief",
+    "worldStats": {
+      "kills": 25,
+      "shots": 1675,
+      "hits": 517,
+      "damage": 6223.7169629442415,
+      "bombersLost": 4,
+      "scriptedLost": 1,
+      "assists": 0,
+      "enemiesSpawned": 64
+    },
+    "shots": 1675,
+    "hits": 517,
+    "kills": 25,
+    "stations": [
+      {
+        "id": "waistL",
+        "gained": 10,
+        "rank": 1,
+        "kills": 1,
+        "shots": 31,
+        "hits": 9,
+        "time": 20.40250000000012,
+        "deflection": 0,
+        "aces": 0,
+        "long": 0,
+        "heavy": 0,
+        "clean": 0,
+        "xp": 10
+      },
+      {
+        "id": "top",
+        "gained": 265,
+        "rank": 3,
+        "kills": 13,
+        "shots": 1092,
+        "hits": 356,
+        "time": 219.67226985373887,
+        "deflection": 5,
+        "aces": 0,
+        "long": 4,
+        "heavy": 2,
+        "clean": 0,
+        "xp": 230
+      },
+      {
+        "id": "ball",
+        "gained": 85,
+        "rank": 1,
+        "kills": 5,
+        "shots": 278,
+        "hits": 51,
+        "time": 82.01083333332983,
+        "deflection": 1,
+        "aces": 0,
+        "long": 2,
+        "heavy": 1,
+        "clean": 0,
+        "xp": 85
+      },
+      {
+        "id": "tail",
+        "gained": 140,
+        "rank": 2,
+        "kills": 6,
+        "shots": 274,
+        "hits": 101,
+        "time": 54.55916666666505,
+        "deflection": 3,
+        "aces": 0,
+        "long": 3,
+        "heavy": 0,
+        "clean": 0,
+        "xp": 120
+      }
+    ],
+    "hunt": {
+      "gained": 490,
+      "points": 490,
+      "goal": 1500,
+      "reached": false,
+      "quarry": {
+        "id": "heavies",
+        "name": "Heavy fighters (Bf 110 / Ju 88 / Me 410)",
+        "types": [
+          "bf110",
+          "ju88",
+          "me410"
+        ]
+      }
+    },
+    "rewards": [
+      "+250 merit",
+      "Crew patch: Top Hat",
+      "+250 merit"
+    ]
+  },
+  "locker": {
+    "sight": "chevron",
+    "patch": "ballbearing"
+  },
+  "flight-waistL": {
+    "state": "playing",
+    "station": "waistL"
+  },
+  "flight-ball": {
+    "state": "playing",
+    "station": "ball"
+  },
+  "arabicDir": "rtl",
+  "errors": []
+}
