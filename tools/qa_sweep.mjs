@@ -8,8 +8,13 @@
 //
 // Sets: campaign (every gunner campaign mission + Deep Penetration, Veteran, human level),
 // difficulty (the same at Recruit and Ace), survival (gunner Survival to round 11 per difficulty),
-// highar (High quality + Arabic subset), ace (near-perfect bot on m1, Veteran vs Ace), smoke.
+// highar (High quality + Arabic subset), ace (near-perfect bot on m1, Veteran vs Ace), smoke,
+// nightly (Phase 11 goal 22, .github/workflows/nightly-qa.yml: every gunner campaign mission at each
+// of QA_DIFFS (default recruit,veteran,ace), gunner Survival to round 6 and m1 in High/Arabic).
+// Env: QA_SHARD=i/n runs every n-th job (CI matrix), QA_SWIFTSHADER=1 software WebGL (no GPU),
+// QA_JOB_TIMEOUT_S (default 1500) records a job that hangs the page as a softlock and moves on.
 import fs from 'node:fs';
+import { parseShard, shardJobs } from './nightly_qa.mjs';
 
 const PORT = process.env.QA_PORT ?? 5297;
 const args = process.argv.slice(2);
@@ -19,17 +24,23 @@ if (args[0] === '--report') { report(args[1]); process.exit(0); }
 const set = args[0] ?? 'smoke';
 const out = args[1] ?? `docs/phase9/reports/07-sweep.jsonl`;
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
-const browser = await chromium.launch({ headless: true, args: ['--enable-precise-memory-info', '--autoplay-policy=no-user-gesture-required'] });
+// QA_SWIFTSHADER=1: software WebGL (CI runners have no GPU; the Playwright headless shell + SwiftShader)
+const glArgs = process.env.QA_SWIFTSHADER ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : [];
+const browser = await chromium.launch({ headless: true, args: ['--enable-precise-memory-info', '--autoplay-policy=no-user-gesture-required', ...glArgs] });
 
 // One context (warm HTTP cache: assets load once); every job wipes the game's saved state, writes
 // its settings and reloads, so each run still starts from a clean profile.
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
 await ctx.route(/https:\/\/.*(googleapis|firebaseio|firestore|identitytoolkit|securetoken).*/, (r) => r.abort());
-const p = await ctx.newPage();
+let p;
 let errors = [];
-p.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
-p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(`console: ${m.text().slice(0, 300)}`); });
-await p.goto(`http://127.0.0.1:${PORT}/`);
+async function openPage() {
+  p = await ctx.newPage();
+  p.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+  p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(`console: ${m.text().slice(0, 300)}`); });
+  await p.goto(`http://127.0.0.1:${PORT}/`);
+}
+await openPage();
 async function page(opts) {
   await p.evaluate((o) => {
     for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k.startsWith('sws3d.') || k.startsWith('swsbal.')) localStorage.removeItem(k); }
@@ -62,6 +73,14 @@ if (set === 'campaign' || set === 'difficulty') {
 if (set === 'survival') for (const diff of ['recruit', 'veteran', 'ace']) add({ kind: 'survival', role: 'gunner', rounds: 11, skill: 0, diff, steps: 90000, tag: set });
 if (set === 'highar') for (const id of ['m1', 'm12', 'dp2', 'dp5']) add({ kind: 'campaign', id, skill: 0, tag: set }, { quality: 'high', lang: 'ar' });
 if (set === 'ace') for (const diff of ['veteran', 'ace', 'ace', 'ace']) add({ kind: 'campaign', id: 'm1', skill: 1, diff, tag: set });
+if (set === 'nightly') {
+  const ids = await gunnerIds();
+  for (const diff of (process.env.QA_DIFFS ?? 'recruit,veteran,ace').split(',')) for (const id of ids) add({ kind: 'campaign', id, skill: 0, diff, tag: set });
+  add({ kind: 'survival', role: 'gunner', rounds: 6, skill: 0, diff: 'veteran', steps: 60000, tag: set });
+  add({ kind: 'campaign', id: 'm1', skill: 0, tag: set }, { quality: 'high', lang: 'ar' });
+}
+const shard = parseShard(process.env.QA_SHARD);
+if (shard) jobs.splice(0, jobs.length, ...shardJobs(jobs, shard.shard, shard.n));
 if (process.env.QA_ONLY) jobs.splice(0, jobs.length, ...jobs.filter((j) => j.job.id === process.env.QA_ONLY || j.job.diff === process.env.QA_ONLY));
 
 console.log(`${jobs.length} jobs → ${out}`);
@@ -70,10 +89,17 @@ for (const [i, { job, env }] of jobs.entries()) {
   let line;
   const { p, errors } = await page({ ...env, diff: job.diff });
   try {
-    const r = await p.evaluate((j) => sws.qa(j), job);
+    const limit = +(process.env.QA_JOB_TIMEOUT_S ?? 1500) * 1000;
+    let timer;
+    const hung = new Promise((_, rej) => { timer = setTimeout(() => rej(new Error(`job timeout after ${limit / 1000} s (softlock?)`)), limit); });
+    let r;
+    try { r = await Promise.race([p.evaluate((j) => sws.qa(j), job), hung]); } finally { clearTimeout(timer); }
     line = { ...r, env, errors: [...new Set(errors())].slice(0, 20), wallS: Math.round((Date.now() - t0) / 1000) };
   } catch (e) {
     line = { job, env, crash: String(e).slice(0, 500), errors: [...new Set(errors())].slice(0, 20), wallS: Math.round((Date.now() - t0) / 1000) };
+    // a hung or crashed page is not reused: the next job gets a fresh one
+    await p.close().catch(() => {});
+    await openPage();
   }
   fs.appendFileSync(out, JSON.stringify(line) + '\n');
   const q = line.qa;
