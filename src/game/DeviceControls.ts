@@ -5,6 +5,10 @@ import { GamepadInput } from '../core/Gamepad';
 import { isPortrait, isTouchDevice } from '../core/Touch';
 import { access } from '../core/Accessibility';
 import { TouchHud } from '../ui/TouchHud';
+import { InstallPrompt } from '../ui/InstallPrompt';
+import { requestGyro } from '../core/Gyro';
+import { phoneProfile } from '../render/PhonePerf';
+import { deviceInfo } from './AutoGraphics';
 import { STATION_ORDER } from '../world/B17Layout';
 import { tx } from '../i18n';
 import { keyMap } from '../core/KeyMap';
@@ -28,6 +32,9 @@ export class DeviceControls {
   private touchMode = false;
   private lastT = 0;
   private wingRow: HTMLElement;
+  readonly install: InstallPrompt;
+  private installT = 0;
+  private sortieOf: unknown = null;   // the mission the install card last counted
 
   constructor(private engine: Engine, private input: Input, private game: Game) {
     this.touch = new TouchHud(input);
@@ -36,16 +43,21 @@ export class DeviceControls {
       else if (a === 'map') input.tap('Tab');
       else if (a === 'help') input.tap('KeyH');
       else if (a === 'view') input.tap('KeyV');
+      else if (a === 'seatPrev' || a === 'seatNext') this.cycleSeat(a === 'seatNext' ? 1 : -1);
     };
+    // GYRO on the touch HUD: ask for motion access (iOS) inside the tap, then save the choice
+    this.touch.onGyro = () => {
+      if (access.prefs.gyro) { access.set('gyro', false); this.toast(tx('Gyro aim off')); return; }
+      void requestGyro().then((r) => {
+        if (r === 'granted') { access.set('gyro', true); this.toast(tx('Gyro aim on — turn the phone to aim')); }
+        else this.toast(r === 'denied' ? tx('Motion access was refused: allow it in the browser settings') : tx('This device has no gyro'));
+      });
+    };
+    this.install = new InstallPrompt();
     this.pad = new GamepadInput(input, {
       flying: () => this.flying(),
       role: () => (this.game.mission ? this.game.mission.role : null),
-      cycleSeat: (dir) => {
-        if (this.game.aa.active) { this.game.aa.switchPit((this.game.aa.selected + dir + this.game.aa.unlocked) % this.game.aa.unlocked); return; }
-        const g = this.game.gunner;
-        const i = STATION_ORDER.indexOf(g.station);
-        g.requestStation(STATION_ORDER[(i + dir + STATION_ORDER.length) % STATION_ORDER.length]);
-      },
+      cycleSeat: (dir) => this.cycleSeat(dir),
       togglePause: () => this.togglePause(),
       photo: () => this.game.state === 'playing' && !!this.game.mission && this.game.photo.active,
       theatre: () => {
@@ -78,7 +90,15 @@ export class DeviceControls {
     window.addEventListener('pointermove', (e) => {
       if (e.pointerType === 'mouse' && !this.touchFirst && this.lastTouch && (e.movementX || e.movementY)) { this.lastTouch = false; this.refreshMode(); }
     }, true);
-    access.onChange(() => { this.refreshMode(); this.touch.sensitivity = access.prefs.touchSens; });
+    access.onChange(() => {
+      this.refreshMode();
+      const p = access.prefs;
+      this.touch.sensitivity = p.touchSens;
+      this.touch.gyroSens = p.gyroSens;
+      this.touch.setGyro(p.gyro);
+      // phone performance mode: fewer pixels and particles on a phone's GPU (render/PhonePerf.ts)
+      this.engine.setPhoneProfile(phoneProfile(deviceInfo(), p.phonePerf));
+    });
     access.apply();
 
     // run before the game's frame (engine.beforeFrame, so the replay theatre taking over
@@ -88,6 +108,14 @@ export class DeviceControls {
 
   private flying() {
     return this.input.active && this.game.state === 'playing' && !!this.game.mission && !this.game.photo.active && !this.game.cine?.theatre?.active;
+  }
+
+  // previous / next gun position (gamepad LB/RB, the touch ◀ ▶ buttons); AA defence: the gun pits
+  private cycleSeat(dir: number) {
+    if (this.game.aa.active) { this.game.aa.switchPit((this.game.aa.selected + dir + this.game.aa.unlocked) % this.game.aa.unlocked); return; }
+    const g = this.game.gunner;
+    const i = STATION_ORDER.indexOf(g.station);
+    g.requestStation(STATION_ORDER[(i + dir + STATION_ORDER.length) % STATION_ORDER.length]);
   }
 
   private refreshMode() {
@@ -145,6 +173,16 @@ export class DeviceControls {
     const school = !!g.mission?.tutorial;
     if (this.touch.el.classList.contains('school') !== school) this.touch.el.classList.toggle('school', school);
     this.touch.update(real, g.pilot.throttleCmd);
+    // install card: counts sorties, shows on the title screen (checked a few times a second)
+    if (g.mission && g.mission !== this.sortieOf && role) { this.sortieOf = g.mission; this.install.sortie(); }
+    this.installT -= real;
+    if (g.state !== 'menu') this.install.update(false);   // gone the moment a mission starts
+    else if (this.installT <= 0) {
+      this.installT = 0.5;
+      // (not over the first-run onboarding prompt, which has the same corner)
+      const ob = document.querySelector<HTMLElement>('#title .ob-prompt');
+      this.install.update(g.state === 'menu' && !!document.getElementById('title')?.classList.contains('show') && !ob?.offsetParent);
+    }
     // portrait on a phone: hold the game until it is turned sideways
     if (this.touchMode && g.state === 'playing' && isPortrait()) g.pause();
   }

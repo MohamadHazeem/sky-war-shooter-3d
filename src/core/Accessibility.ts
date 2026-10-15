@@ -5,6 +5,8 @@
 // The subtitle size and background are CSS variables on <html>; the reduce-motion and
 // colour-blind classes on <body> let stylesheets follow along.
 
+import type { PhonePerfPref } from '../render/PhonePerf';
+
 export type SubSize = 'S' | 'M' | 'L';
 export type TouchPref = 'auto' | 'on' | 'off';
 
@@ -15,6 +17,9 @@ export interface AccessPrefs {
   reduceMotion: boolean;   // less camera shake, softer flashes, no hit-stop
   touch: TouchPref;        // on-screen touch controls
   touchSens: number;       // touch aim sensitivity multiplier
+  gyro: boolean;           // gyro aim (turn the phone to turn the gun, core/Gyro.ts)
+  gyroSens: number;        // gyro aim sensitivity multiplier (1 = the gun turns as far as the phone)
+  phonePerf: PhonePerfPref; // phone performance mode (render/PhonePerf.ts)
 }
 
 const STORE_KEY = 'sws3d.access.v1';
@@ -29,7 +34,7 @@ const SUB_SCALE: Record<SubSize, number> = { S: 0.85, M: 1, L: 1.4 };
 
 function defaults(): AccessPrefs {
   const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  return { colorBlind: false, subSize: 'M', subBg: 0.55, reduceMotion: reduce, touch: 'auto', touchSens: 1 };
+  return { colorBlind: false, subSize: 'M', subBg: 0.55, reduceMotion: reduce, touch: 'auto', touchSens: 1, gyro: false, gyroSens: 1, phonePerf: 'auto' };
 }
 
 class Access {
