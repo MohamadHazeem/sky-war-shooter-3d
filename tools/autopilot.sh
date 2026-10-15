@@ -29,11 +29,7 @@ while :; do
     verdict=$(cd "$wt" && claude -p --model opus "You are the quality gate for the Sky War Shooter 3D game (owner wants 100/100 graphics, B-17 gunner focus). Review task branch $branch. Read its spec (docs/phase11/ file matching the report number), the report $report, and LOOK at the before/after screenshots it links (Read the image files). Decide whether the result is clearly better than the live game in the shots it touches and meets the spec's Done-when. Reply with the FIRST line exactly 'APPROVE' or 'REJECT', then up to 8 short lines of concrete reasons / required fixes." 2>/dev/null < /dev/null)
     touch "$S/$k.reviewed-$head"; echo "$verdict" > "$S/$k.verdict"
     if echo "$verdict" | head -1 | grep -q APPROVE; then
-      log "APPROVED $branch"; touch "$S/$k.approved"
-      ( flock 9 2>/dev/null || true
-        tools/codex_merge.sh "$branch" >> "$S/log" 2>&1
-        for i in $(seq 1 40); do tools/ship.sh >> "$S/log" 2>&1 && { touch "$S/$k.shipped"; log "SHIPPED $branch"; break; }; sleep 30; done
-      ) 9>"$S/merge.lock"
+      log "APPROVED $branch"; touch "$S/$k.approved"; echo "$branch" >> "$S/merge.queue"
     else
       r=$(( $(cat "$S/$k.round" 2>/dev/null || echo 0) + 1 )); echo $r > "$S/$k.round"; log "REJECTED $branch (round $r)"
       echo "$verdict" > "$S/$k.rejected"
@@ -48,6 +44,11 @@ while :; do
       fi
     fi
   done < .claude/autopilot.list
+  if [ -s "$S/merge.queue" ]; then
+    batch=$(sort -u "$S/merge.queue" | tr '\n' ' '); : > "$S/merge.queue"; log "merging batch: $batch"
+    tools/codex_merge.sh $batch >> "$S/log" 2>&1
+    for i in $(seq 1 40); do tools/ship.sh >> "$S/log" 2>&1 && { for b in $batch; do touch "$S/$(key "$b").shipped"; done; log "SHIPPED batch: $batch"; break; }; sleep 30; done
+  fi
   if [ ! -f "$S/scorecard.started" ] && [ -f docs/phase11/09-scorecard.md ]; then
     left=$(grep -v "^phase11/09" .claude/autopilot.list | grep -c . ); done_n=$(ls "$S"/*.shipped 2>/dev/null | wc -l | tr -d ' ')
     if [ "$done_n" -ge "$left" ]; then touch "$S/scorecard.started"; log "starting final scorecard (09)"
