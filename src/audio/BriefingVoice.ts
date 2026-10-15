@@ -3,9 +3,11 @@
 // + generate.py). Played clean, not through the radio chain (he is in the room with you), on the
 // sfx bus with the music ducked under him. A missing clip is skipped, so a briefing whose text
 // changed after the last render simply reads the paragraphs it has.
+// In Arabic the Arabic takes play (VoiceLang.ts), falling back to the English clip per paragraph.
 import { sound } from './Sound';
+import { isAr } from '../i18n';
+import { voiceUrlReady } from './VoiceLang';
 
-const BASE = import.meta.env.BASE_URL + 'audio/voice/';
 const GAIN = 0.95;
 const GAP_S = 0.55;        // pause between paragraphs
 const DUCK_DEPTH = 0.5;    // music level while he talks
@@ -32,8 +34,9 @@ class BriefingVoice {
   preload(missionId: string, count: number) {
     const ctx = sound.ctx;
     if (!ctx) return;
-    // keep only this mission's clips around
-    for (const k of this.bufs.keys()) if (!k.startsWith(`brief_${missionId}_`)) this.bufs.delete(k);
+    // keep only this mission's clips (in the current language) around
+    const keep = `${isAr() ? 'ar:' : ''}brief_${missionId}_`;
+    for (const k of this.bufs.keys()) if (!k.startsWith(keep)) this.bufs.delete(k);
     for (let i = 0; i < count; i++) this.load(ctx, briefingClipId(missionId, i));
   }
 
@@ -94,11 +97,12 @@ class BriefingVoice {
   }
 
   private load(ctx: AudioContext, id: string): Promise<AudioBuffer | null> {
-    let p = this.bufs.get(id);
+    const key = (isAr() ? 'ar:' : '') + id;
+    let p = this.bufs.get(key);
     if (!p) {
       p = (async () => {
         try {
-          const r = await fetch(BASE + id + '.m4a');
+          const r = await fetch(await voiceUrlReady(id, id + '.m4a'));
           // a dev server / SPA host answers a missing file with index.html
           if (!r.ok || (r.headers.get('content-type') ?? '').includes('text/html')) return null;
           const data = await r.arrayBuffer();
@@ -108,7 +112,7 @@ class BriefingVoice {
           });
         } catch { return null; }
       })();
-      this.bufs.set(id, p);
+      this.bufs.set(key, p);
     }
     return p;
   }

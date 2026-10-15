@@ -159,7 +159,7 @@ class PipelineTests(unittest.TestCase):
                 original[c['id']] = dict(file=c['id'] + '.m4a', role=c['role'], text=c['text'], dur=1, h='old')
             g.atomic_json(out / 'manifest.json', {'clips': original})
             Path(out, 'unrelated.m4a').write_bytes(b'untouched')
-            def fake(c, cfg, tmp, model):
+            def fake(c, cfg, tmp, model, out_dir=None):
                 Path(out, c['id'] + '.m4a').write_bytes(b'new')
                 return 2, {}
             with patch.multiple(g, OUT=str(out), HERE=tmp, TS_OUT=str(Path(tmp, 'table.ts'))), patch.object(g, 'load', return_value=cfg), patch.object(g, 'expand', return_value=clips), patch.object(g, 'check', return_value=True), patch.object(g, 'render', side_effect=fake) as render:
@@ -175,6 +175,67 @@ class PipelineTests(unittest.TestCase):
                 with patch.object(sys, 'argv', ['generate.py', '--only', clips[1]['id'], '--limit', '1']):
                     self.assertEqual(g.main(), 1)
                 self.assertEqual(json.loads((out / 'manifest.json').read_text())['clips'][clips[1]['id']], original[clips[1]['id']])
+
+    def test_arabic_localize_covers_every_clip(self):
+        ar = g.localize(self.clips, self.cfg, 'ar')
+        self.assertEqual([c['id'] for c in ar], [c['id'] for c in self.clips])
+        for en, c in zip(self.clips, ar):
+            self.assertEqual(c['en'], en['text'])
+            self.assertEqual((c['role'], c['exa'], c['lang']), (en['role'], en['exa'], 'ar'))
+            self.assertRegex(c['text'], '[؀-ۿ]')
+            # the speech model gets words only: no digits or Latin designations
+            self.assertNotRegex(c['spoken'], '[A-Za-z0-9]', c['id'])
+        self.assertIs(g.localize(self.clips, self.cfg, 'en'), self.clips)
+
+    def test_arabic_hash_differs_and_uses_multilingual_model(self):
+        cfg = copy.deepcopy(self.cfg)
+        cfg['audio']['engine'] = 'chatterbox'
+        en = next(c for c in self.clips if c['role'] == 'pilot')
+        ar = g.localize([en], cfg, 'ar')[0]
+        self.assertNotEqual(g.clip_hash(en, cfg), g.clip_hash(ar, cfg))
+        self.assertNotEqual(g.clip_hash(ar, cfg), g.clip_hash(dict(ar, lang='xx'), cfg))
+
+    def test_arabic_chunks(self):
+        self.assertEqual(g.split_chunks('مقاتلات،'), ['مقاتلات,'])
+        self.assertEqual(g.split_chunks('المزيد قادمون من اليسار! راقبوا الساعة التاسعة!'),
+                         ['المزيد قادمون من اليسار!', 'راقبوا الساعة التاسعة!'])
+        long = 'المراقبة إلى السرب الأزرق، غارة قادمة، طائرات يونكرز بغطاء من المقاتلات.'
+        self.assertEqual(g.split_chunks(long), ['المراقبة إلى السرب الأزرق، غارة قادمة,', 'طائرات يونكرز بغطاء من المقاتلات.'])
+        for c in g.localize(self.clips, self.cfg, 'ar'):
+            chunks = g.split_chunks(c['spoken'])
+            self.assertEqual(' '.join(chunks).replace(',', '،').split(), c['spoken'].replace(',', '،').split(), c['id'])
+
+    def test_merged_json_keeps_other_workers_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp, 'm.json')
+            g.merged_json(p, lambda cur: {**cur, 'a': 1})
+            g.merged_json(p, lambda cur: {**cur, 'b': 2})
+            self.assertEqual(json.loads(p.read_text()), {'a': 1, 'b': 2})
+
+    def test_arabic_run_writes_its_own_manifest_and_shards(self):
+        cfg = copy.deepcopy(self.cfg)
+        cfg['audio']['engine'] = 'chatterbox'
+        clips = [c for c in self.clips if c['kind'] == 'line'][:4]
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp, 'audio'); out.mkdir()
+            calls = []
+            def fake(c, cfg, tmp_, model, out_dir=None):
+                calls.append(c['id'])
+                Path(out_dir, c['id'] + '.m4a').write_bytes(b'ar')
+                return 1.5, {}
+            with patch.multiple(g, OUT=str(out), AR_OUT=str(out / 'ar'), HERE=tmp, TS_OUT=str(Path(tmp, 'table.ts'))), \
+                    patch.object(g, 'load', return_value=cfg), patch.object(g, 'expand', return_value=clips), \
+                    patch.object(g, 'render', side_effect=fake), patch.object(g, 'ensure_tts_python'), patch.object(g, 'clip_hash', return_value='h'), \
+                    patch.dict(sys.modules, {'torch': MagicMock(), 'chatterbox': MagicMock(), 'chatterbox.mtl_tts': MagicMock()}):
+                for shard in ('0/2', '1/2'):
+                    with patch.object(sys, 'argv', ['generate.py', '--lang', 'ar', '--no-asr', '--shard', shard]):
+                        self.assertEqual(g.main(), 0)
+            self.assertEqual(sorted(calls), sorted(c['id'] for c in clips))
+            man = json.loads((out / 'ar' / 'manifest.json').read_text())
+            self.assertEqual(man['lang'], 'ar')
+            self.assertEqual(set(man['clips']), {c['id'] for c in clips})
+            self.assertFalse((out / 'manifest.json').exists())
+            self.assertFalse(Path(tmp, 'table.ts').exists())
 
 
 if __name__ == '__main__':

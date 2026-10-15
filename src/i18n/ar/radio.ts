@@ -2,7 +2,8 @@ import type { PhraseTable, Pattern } from '../types';
 
 // Arabic for the radio texts, keyed by the exact English shown in game.
 // Radio lines reach the screen through World.callout -> events.radio -> UI.subtitle, which
-// translates both the speaker and the line. The recorded voices stay English.
+// translates both the speaker and the line. The recorded voices play their Arabic takes
+// (tools/voice/arabic.mjs speaks exactly these texts; re-run it after changing one).
 
 // ---------- building blocks ----------
 

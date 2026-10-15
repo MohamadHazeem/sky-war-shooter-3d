@@ -7,7 +7,7 @@
 //                    itself is the key; the Arabic lives in the phrase tables under ./ar/.
 //                    Strings built at runtime are matched by the phrase tables' patterns.
 // Both return the English when English is active, so wrapping a string never changes the
-// English game. Radio voices stay English: only the displayed subtitle is translated.
+// English game. Recorded voices play their Arabic takes in Arabic (src/audio/VoiceLang.ts).
 import { en, type UiKey } from './en';
 import { ar } from './ar';
 import { PHRASES, PATTERNS } from './phrases';
