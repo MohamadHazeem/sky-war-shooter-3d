@@ -243,7 +243,9 @@ export class LivingSky {
         void main() {
           float edge = 1.0 - vSide * vSide;
           float a = vA * edge * (0.85 + 0.15 * sin(vT * 160.0 + vSeed));
-          vec3 col = uSunCol * 0.24 + vec3(0.42, 0.47, 0.55) * uFill;
+          // at twilight the trails take the sky behind them (its warm/cool split), not a fixed daylight fill
+          vec3 fill = uTwilight > 0.0 ? mix(vec3(0.42, 0.47, 0.55), skyRadiance(normalize(vW - cameraPosition)) * 0.8, uTwilight) : vec3(0.42, 0.47, 0.55);
+          vec3 col = uSunCol * 0.24 * (1.0 - 0.4 * uTwilight) + fill * uFill;
           gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
       transparent: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true,

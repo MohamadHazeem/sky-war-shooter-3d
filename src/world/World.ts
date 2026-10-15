@@ -64,6 +64,7 @@ export const CRUISE = 75;          // m/s formation speed (~170 mph)
 export const ALTITUDE = 7600;      // m (25,000 ft)
 
 const _v = new THREE.Vector3();
+const _tracerLit = new THREE.Vector3();
 const _damagePos = new THREE.Vector3(), _gunPos = new THREE.Vector3(), _gunAim = new THREE.Vector3();
 const GUNNER_COLOR: [number, number, number] = [9, 2.4, 0.8];
 const _v2 = new THREE.Vector3();
@@ -887,6 +888,9 @@ export class World implements WorldView {
     updateFighterDeath(dt);
     this.destruction.update(dt);
     this.ballistics.update(dt, this.aircraft);
+    // night: the tracer streaking past nearest the eye throws a flicker of light on the airframe
+    if (Atmos.night > 0.3 && this.effects.vol.hasCam && this.ballistics.nearestTracer(this.effects.vol.camPos, 40, _tracerLit))
+      this.effects.flashLight(_tracerLit, 90 * Atmos.night, 0.035, 0xffa060, 16);
     this.effects.update(dt);
     this.wrecks.update(dt);
     this.contrails.update(this.time);

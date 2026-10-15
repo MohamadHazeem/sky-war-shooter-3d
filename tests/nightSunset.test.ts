@@ -3,7 +3,8 @@ import * as THREE from 'three';
 import { applyWeather, DEFAULT_WEATHER } from '../src/render/Weather';
 import { Atmos, atmosUniforms, skyGLSL } from '../src/render/Atmosphere';
 import { NIGHT_SKY_GLSL } from '../src/render/NightSky';
-import { Searchlights } from '../src/render/Searchlights';
+import { lightConed, Searchlights } from '../src/render/Searchlights';
+import { Ballistics } from '../src/world/Ballistics';
 import { installSunRim } from '../src/render/SunRim';
 import type { Engine } from '../src/core/Engine';
 
@@ -51,5 +52,32 @@ describe('searchlights', () => {
     for (let i = 0; i < 60; i++) lights.update(.1, [raider]);
     expect(lights.coned.has(raider)).toBe(true);
     lights.clear();
+  });
+});
+
+describe('night lights', () => {
+  it('lights a coned raider once, from below on the beam axis', () => {
+    const lights = new Searchlights(new THREE.Scene());
+    lights.setup([new THREE.Vector3(-800, 0, 0), new THREE.Vector3(800, 0, 0)], new THREE.Vector3(0, 0, -1));
+    const raider = { pos: new THREE.Vector3(0, 5000, -1500), alive: true };
+    lights.lock(raider);
+    for (let i = 0; i < 60; i++) lights.update(.1, [raider]);
+    const calls: THREE.Vector3[] = [];
+    lightConed(lights, { flashLight: (p) => { calls.push(p.clone()); } });
+    expect(calls.length).toBeGreaterThanOrEqual(1);
+    expect(calls[0].y).toBeLessThan(raider.pos.y);
+    expect(calls[0].distanceTo(raider.pos)).toBeLessThan(20);
+    lights.clear();
+  });
+  it('finds the burning tracer nearest the eye', () => {
+    const b = new Ballistics(16);
+    const eye = new THREE.Vector3();
+    const out = new THREE.Vector3();
+    expect(b.nearestTracer(eye, 40, out)).toBe(false);
+    b.fire(new THREE.Vector3(30, 0, 0), new THREE.Vector3(0, 0, 800), 'axis', 1, true, [1, .5, .2], null, true);
+    b.fire(new THREE.Vector3(10, 0, 0), new THREE.Vector3(0, 0, 800), 'axis', 1, true, [1, .5, .2], null, true);
+    b.fire(new THREE.Vector3(2, 0, 0), new THREE.Vector3(0, 0, 800), 'axis', 1, false, [1, .5, .2], null, true);
+    expect(b.nearestTracer(eye, 40, out)).toBe(true);
+    expect(out.x).toBe(10);
   });
 });

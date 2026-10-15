@@ -7,7 +7,7 @@ import { EnemyPilot, leadPoint, steerTo, type PilotOverride, type WorldView } fr
 import { DogfightAI } from '../world/DogfightAI';
 import type { EnemyType } from '../world/EnemyTypes';
 import { Atmos } from '../render/Atmosphere';
-import { Searchlights } from '../render/Searchlights';
+import { lightConed, Searchlights } from '../render/Searchlights';
 import { updateNightExhaust } from '../render/NightExhaust';
 import type { UI } from '../ui/UI';
 import type { Incoming } from '../ui/Radar';
@@ -634,6 +634,7 @@ export class RaidDefence {
     const w = this.world;
     const inbound = this.inbound();
     this.lights.update(dt, inbound);
+    lightConed(this.lights, w.effects);   // the beams light the raider's belly
     for (const f of this.lights.coned) {
       // the raider caught in the beams: a silvery sheen around him
       w.effects.glow.spawn({ pos: f.pos, vel: f.vel, life: 0.07, size0: 26 * f.model.scale.x / 4.5, size1: 30 * f.model.scale.x / 4.5, color0: [1.4, 1.5, 1.8], alpha0: 0.22, alpha1: 0, frame: 1 });

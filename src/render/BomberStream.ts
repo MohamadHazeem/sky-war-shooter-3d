@@ -108,6 +108,20 @@ void streamHaze(vec3 wp) {
   vStreamHaze = vec4(skyRadiance(d / max(dist, 1.0)), 1.0 - exp(-dist / (26000.0 * max(uHaze, 0.05))));
 }
 `;
+// The horizon light a sheet or trail takes at twilight: the same warm/cool split as the sky
+// (Atmosphere.ts twilightHorizon). Needs uHorizon, uSunDir, uTwilight declared by the shader.
+const twilightSkyGLSL = /* glsl */ `
+vec3 twilightSky(vec3 v) {
+  vec2 sh = uSunDir.xz / max(length(uSunDir.xz), 1e-4);
+  vec2 dh = v.xz / max(length(v.xz), 1e-4);
+  float c = dot(dh, sh);
+  float toward = (c * 0.5 + 0.5) * (c * 0.5 + 0.5);
+  float away = (1.0 - toward) * 0.5;
+  float lum = dot(uHorizon, vec3(0.2126, 0.7152, 0.0722));
+  vec3 h = mix(mix(uHorizon, uHorizon * vec3(1.28, 1.0, 0.66), toward), vec3(0.50, 0.42, 0.56) * lum * 1.08, away);
+  return mix(uHorizon, h, uTwilight);
+}
+`;
 const hazeGLSL = /* glsl */ `
 ${cloudOcclusionGLSL}
 uniform vec3 uHorizon;
@@ -438,13 +452,15 @@ export class BomberStream {
         }`,
       fragmentShader: /* glsl */ `
         ${hazeGLSL}
-        uniform vec3 uStreamSun;
+        uniform vec3 uStreamSun; uniform vec3 uSunDir; uniform float uTwilight;
         varying float vA; varying float vSide; varying float vT; varying vec3 vW; varying float vSeed; varying float vSun;
+        ${twilightSkyGLSL}
         void main() {
           float edge = 1.0 - vSide * vSide;
           float a = vA * edge * (0.85 + 0.15 * sin(vT * 140.0 + vSeed));
           if (a < 0.002) discard;
-          vec3 col = (uStreamSun * 0.22 + uHorizon * 0.78) * mix(0.9, 1.15, clamp(vSun * 0.5 + 0.5, 0.0, 1.0));
+          // the trails' sky light follows the twilight split, so they melt into the sky behind them
+          vec3 col = (uStreamSun * 0.22 + twilightSky(normalize(vW - cameraPosition)) * 0.78) * mix(0.9, 1.15, clamp(vSun * 0.5 + 0.5, 0.0, 1.0));
           gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));
@@ -494,6 +510,7 @@ export class BomberStream {
         ${noiseGLSL}
         uniform vec3 uStreamSun; uniform vec3 uSunDir; uniform float uTwilight;
         varying float vA; varying float vSide; varying float vAge; varying vec3 vW; varying float vSeed; varying float vSun;
+        ${twilightSkyGLSL}
         void main() {
           float edge = pow(max(1.0 - vSide * vSide, 0.0), 1.8);
           // wispy streaks along the band, like spreading cirrus
@@ -508,9 +525,7 @@ export class BomberStream {
           float mu = dot(normalize(vW - cameraPosition), uSunDir);
           float phase = min(3.0, 0.51 / pow(max(0.09, 1.49 - 1.4 * mu), 1.5));
           float transmission = exp(-density * 1.2);
-          // low sun: down-sun the sheet takes the cool earth-shadow sky, not the burning horizon (Atmosphere.ts)
-          float toward = (mu * 0.5 + 0.5) * (mu * 0.5 + 0.5);
-          vec3 skyLight = mix(uHorizon, vec3(0.30, 0.34, 0.56) * dot(uHorizon, vec3(0.2126, 0.7152, 0.0722)) * 1.05, uTwilight * (1.0 - toward));
+          vec3 skyLight = twilightSky(normalize(vW - cameraPosition));
           vec3 col = skyLight * 0.62 + uStreamSun * 0.16 * (0.4 + 0.6 * transmission) * (0.7 + phase);
           gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,

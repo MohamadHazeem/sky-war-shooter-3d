@@ -683,6 +683,10 @@ export class Effects {
   // glow swelling with the puff, then dying), and a flash big enough to read from the bomber
   // stream: against a black sky the bursts are flashes and embers, not black puffs.
   private nightFlak(pos: THREE.Vector3, scale: number, night: number) {
+    // the cloud it bursts in flashes orange from inside, then keeps a dull red glow while the
+    // fireball's smoke burns out (CloudLights: the strongest four reach the cloud march)
+    cloudLights.flash(pos, 1.0, 0.55, 0.22, 24 * scale * night, 200 * scale, 0.3);
+    cloudLights.flash(pos, 1.0, 0.36, 0.1, 12 * scale * night, 220 * scale, 1.1);
     // (no Math.random: the shared stream that places the barrage stays as it is by day)
     const h = Math.abs(Math.sin(pos.x * 12.9898 + pos.y * 78.233 + pos.z * 37.719) * 43758.5453) % 1;
     this.glow.spawn({ pos, life: 0.22, size0: 12 * scale, size1: 24 * scale, color0: [30, 15, 5], alpha0: night, alpha1: 0, frame: 1, rotVel: 0, rot: h * 6.283 });

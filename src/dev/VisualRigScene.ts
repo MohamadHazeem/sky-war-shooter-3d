@@ -4,7 +4,7 @@ import type { Game } from '../game/Game';
 import { CAMPAIGN, type Mission } from '../game/Missions';
 import { Atmos } from '../render/Atmosphere';
 import { applyWeather } from '../render/Weather';
-import { Searchlights } from '../render/Searchlights';
+import { lightConed, Searchlights } from '../render/Searchlights';
 import { RIG_DT, RIG_STEPS, RIG_WEATHER, type RigShot } from './VisualRigConfig';
 
 /** Staged fixtures use the production world, controllers, assets and effects. */
@@ -159,6 +159,23 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     facts.searchlights = lights.count;
     facts.burningEngines = damaged.zones.filter(z => z.burning).map(z => z.name);
   }
+  let coneLights: Searchlights | null = null;
+  if (shot.id === 'night-clouds') {
+    // From just under the box, looking ahead and down at the cloud deck: the barrage bursting in
+    // the cloud tops lights them, and the searchlights cone the bomber ahead, lighting his belly.
+    const fwd = w.formationForward.clone().setY(0).normalize();
+    const side = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
+    const lead = nearestNeighbour(w.bombers(), b);
+    look(lead.pos.clone().addScaledVector(fwd, -230).addScaledVector(side, 60).add(new THREE.Vector3(0, -45, 0)),
+      lead.pos.clone().addScaledVector(fwd, 260).add(new THREE.Vector3(0, -110, 0)), 66);
+    coneLights = new Searchlights(engine.scene);
+    coneLights.setup(Array.from({ length: 6 }, (_, i) => lead.pos.clone().addScaledVector(fwd, 900 + (i % 3) * 600)
+      .addScaledVector(side, (i - 2.5) * 600).setY(0)), fwd.clone().negate());
+    coneLights.lock(lead);
+    for (let i = 0; i < 60; i++) coneLights.update(.1, w.bombers());
+    facts.searchlights = coneLights.count;
+    facts.conedBombers = coneLights.coned.size;
+  }
   if (shot.id === 'sunset-rim') {
     // The player's B-17 against the low sun: rim light on the airframe, contrails catching it.
     const sun = new THREE.Vector3(Atmos.sunDir.x, 0, Atmos.sunDir.z).normalize();
@@ -169,7 +186,7 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
   if (shot.id === 'explosion-close') look(local([10, 8, 45]), local([10, 8, 140]), 55);
   // effects-only updates below age the burning neighbour's flames: keep its fire emitting
   const burn = (dt: number) => { if (shot.id === 'night-formation' && damaged) (w as unknown as { damageEffects(a: unknown, dt: number): void }).damageEffects(damaged, dt); };
-  if (['explosion-close', 'flak-barrage', 'night-flak', 'night-formation'].includes(shot.id)) {
+  if (['explosion-close', 'flak-barrage', 'night-flak', 'night-formation', 'night-clouds'].includes(shot.id)) {
     const forward = cam.getWorldDirection(new THREE.Vector3());
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(cam.quaternion);
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(cam.quaternion);
@@ -177,6 +194,17 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     if (shot.id === 'explosion-close') {
       w.effects.explosion(cam.position.clone().addScaledVector(forward, 95), new THREE.Vector3(10, 0, 0), 1.5, 'heavy');
       facts.effectAge = .4;
+    } else if (shot.id === 'night-clouds') {
+      // bursts in and just above the cloud tops ahead, the last ones still burning
+      const flat = forward.clone().setY(0).normalize();
+      for (let i = 0; i < 14; i++) {
+        const depth = 2800 + Math.random() * 3500;
+        const pos = cam.position.clone().addScaledVector(flat, depth).addScaledVector(right, (Math.random() - .5) * depth * .8);
+        pos.y = Atmos.lowTop - 1000 + Math.random() * 1000;
+        w.effects.flak(pos);
+        w.effects.update(.08);
+      }
+      facts.flakBursts = 14; facts.effectAge = 14 * .08 + .4;
     } else if (shot.id === 'night-formation') {
       // a sparse barrage beyond the box, some of it still burning
       for (let i = 0; i < 12; i++) {
@@ -199,6 +227,7 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
       facts.flakBursts = 28; facts.effectAge = 28 * .035 + .4;
     }
     for (let i = 0; i < 24; i++) { burn(RIG_DT); w.effects.update(RIG_DT); }
+    if (coneLights) lightConed(coneLights, w.effects);
   }
   // Precipitation is camera-relative, so update once after placing the final camera.
   engine.precipitation.update(0, engine.time, engine.quality);

@@ -11,7 +11,7 @@ import { markOwned, disposeOwned } from './Dispose';
 export interface BeamTarget { pos: THREE.Vector3; alive: boolean; remove?: boolean }
 
 const LENGTH = 9000;            // m
-const HALF_ANGLE = 0.016;       // rad, ~0.9 deg: a narrow beam that widens with range
+const HALF_ANGLE = 0.011;       // rad, ~0.6 deg: a narrow beam that widens with range
 const CONE_HIT = 0.03;          // rad: inside this a locked beam lights him up
 const CATCH = 0.06;             // rad: a sweeping beam that passes this close catches him
 const UP = new THREE.Vector3(0, 1, 0);
@@ -83,7 +83,7 @@ function beamMaterial() {
         // negative is NaN (bloom spread those NaN pixels into white blobs at the beam tips too)
         float near = mix(smoothstep(0.0, 0.006, vT), smoothstep(0.03, 0.22, vT), vCut);
         // the beam carries to the end of its reach, then dies out
-        float along = (1.0 - smoothstep(0.72, 1.0, vT)) * near;
+        float along = (1.0 - smoothstep(0.86, 1.0, vT)) * near;
         // haze thins with height (scale height ~2.2 km) but never quite clears
         float haze = 0.3 + 0.7 * exp(-max(vHeight, 0.0) / 2200.0);
         // light spreads as the beam widens
@@ -99,6 +99,20 @@ function beamMaterial() {
     blending: THREE.AdditiveBlending,
     side: THREE.DoubleSide,
   }));
+}
+
+// A coned raider's belly lit by the beams: a cold point light held a few metres below him, on
+// the beam axis, from the combat-light pool (Effects.flashLight: fixed light count, no new
+// programs). Call once per frame after update(); several beams on one raider light him once.
+const _belly = new THREE.Vector3();
+export interface CombatLights { flashLight(pos: THREE.Vector3, intensity: number, life: number, color?: number, range?: number): void }
+export function lightConed<T extends BeamTarget>(lights: Searchlights<T>, fx: CombatLights) {
+  let last: T | null = null;
+  lights.forEachLit((t, dir) => {
+    if (t === last) return;
+    last = t;
+    fx.flashLight(_belly.copy(t.pos).addScaledVector(dir, -14), 260, 0.06, 0xd8e4ff, 40);
+  });
 }
 
 export class Searchlights<T extends BeamTarget = BeamTarget> {
@@ -220,6 +234,12 @@ export class Searchlights<T extends BeamTarget = BeamTarget> {
       if (!b.target && ang < best) { best = ang; pick = b; }
     }
     if (pick) { pick.target = target; pick.holdT = hold; }
+  }
+
+  // Each raider held inside a locked beam, with the beam's direction (lamp -> raider): the
+  // caller lights his belly from below (lightConed)
+  forEachLit(cb: (target: T, beamDir: THREE.Vector3) => void) {
+    for (const b of this.beams) if (b.target && this.coned.has(b.target)) cb(b.target, b.dir);
   }
 
   // Beams locked on a raider (radio / tests)

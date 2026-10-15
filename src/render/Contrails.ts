@@ -153,11 +153,11 @@ export class Contrails {
     u.uFloor.value = 0.45 - 0.25 * Atmos.twilight;
     u.uSky.value.setRGB(Atmos.horizon.r * 0.55 + Atmos.zenith.r * 0.45, Atmos.horizon.g * 0.55 + Atmos.zenith.g * 0.45, Atmos.horizon.b * 0.55 + Atmos.zenith.b * 0.45)
       .multiplyScalar(0.8 + Atmos.cloudAmbient * 0.3);
-    // at twilight the sky light on the trails is the cool earth-shadow blue, not the glowing horizon
+    // at twilight the sky light on the trails cools toward the rose anti-solar sky (Atmosphere.ts twilightHorizon)
     if (Atmos.twilight > 0) {
       const l = (Atmos.horizon.r * 0.2126 + Atmos.horizon.g * 0.7152 + Atmos.horizon.b * 0.0722) * 0.55;
-      _cool.setRGB(0.42 * l, 0.47 * l, 0.78 * l);
-      u.uSky.value.lerp(_cool, Atmos.twilight * 0.85);
+      _cool.setRGB(0.5 * l, 0.42 * l, 0.56 * l);
+      u.uSky.value.lerp(_cool, Atmos.twilight * 0.4);
     }
     this.mesh.visible = this.enabled;
     if (!this.enabled) return;
