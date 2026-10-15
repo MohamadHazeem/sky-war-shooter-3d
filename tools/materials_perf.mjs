@@ -1,5 +1,6 @@
 // Re-measure frozen rig costs without another task-owned browser competing for the GPU.
 import fs from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,6 +9,7 @@ const quality=process.argv[2]??'high',budget=quality==='low'?6:11;
 assert.ok(['high','low'].includes(quality));
 const root='docs/phase11/shots/02',reference=JSON.parse(await fs.readFile(`${root}/${quality==='low'?'low':'after'}/manifest.json`));
 
+const sourceRevision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),capturedAt=new Date().toISOString();
 const results=[];
 const selected=process.argv[3]?.split(',');
 for(const shot of reference.shots.filter(s=>!selected||selected.includes(s.shot))){
@@ -26,7 +28,7 @@ for(const shot of reference.shots.filter(s=>!selected||selected.includes(s.shot)
   const critical=quality==='high';
   const reflectionVisible=await page.evaluate(()=>window.visualRig.engine.reflectionVisible);
   results.push({shot:shot.shot,mean,p95,budget,reflectionVisible,warmup,passes:mean<=budget && (!critical || p95<budget),batches,errors});
-  await fs.writeFile(process.env.MATERIALS_PERF_OUTPUT??`${root}/performance${quality==='low'?'-low':''}.json`,JSON.stringify({method:'180 warm-up frames followed by one continuous 180-frame rig benchmark per shot; a fresh browser process per fixture releases all prior scene/GPU resources. Frozen simulation, GPU fenced; p95 of all 180 frames. No other task-owned capture concurrent.',results},null,2)+'\n');
+  await fs.writeFile(process.env.MATERIALS_PERF_OUTPUT??`${root}/performance${quality==='low'?'-low':''}.json`,JSON.stringify({sourceRevision,capturedAt,method:'180 warm-up frames followed by one continuous 180-frame rig benchmark per shot; a fresh browser process per fixture releases all prior scene/GPU resources. Frozen simulation, GPU fenced; p95 of all 180 frames. No other task-owned capture concurrent.',results},null,2)+'\n');
   console.log(`${shot.shot}: ${mean.toFixed(2)} ms, p95 ${p95.toFixed(2)} / ${budget} ms`);assert.equal(errors.length,0);await page.close();
  }finally{await browser.close();}
 }

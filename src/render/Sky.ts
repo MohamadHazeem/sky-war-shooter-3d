@@ -17,7 +17,7 @@ export class SkyDome {
   constructor() {
     const geo = new THREE.SphereGeometry(1, 64, 32);
     const mat = new THREE.ShaderMaterial({
-      uniforms: { ...atmosUniforms, ...targetUniforms, ...farTerrainUniforms, ...skyGround, uEnvCapture: { value: 0 }, uEnvCoverage: { value: 0 }, uCirrus: this.cirrus, uSunDisk: { value: 1 }, uGroundXZ: { value: new THREE.Vector2() } },
+      uniforms: { ...atmosUniforms, ...targetUniforms, ...farTerrainUniforms, ...skyGround, uCirrus: this.cirrus, uSunDisk: { value: 1 }, uGroundXZ: { value: new THREE.Vector2() } },
       vertexShader: /* glsl */ `
         varying vec3 vDir;
         void main() {
@@ -34,7 +34,6 @@ export class SkyDome {
         ${skyGLSL}
         uniform vec2 uGroundXZ;
         uniform float uGroundHaze;
-        uniform float uEnvCapture, uEnvCoverage;
         uniform float uCirrus;
         uniform float uSunDisk;
         uniform float uHaze;
@@ -105,16 +104,6 @@ export class SkyDome {
             float forward = pow(max(dot(d, uSunDir), 0.0), 6.0);
             col = mix(col, uSunColor * (0.07 + 0.08 * forward), cir * 0.23);
           }
-          // Low-frequency cloud structure in IBL gives metal and glass a reflected
-          // cloud horizon rather than the old featureless grey floor. Capture-only;
-          // PMREM filters it for rough paint and weather refreshes retain the shaders.
-          if(uEnvCapture>.5) {
-            vec2 q=d.xz/max(abs(d.y),.16)*1.3;
-            float cloud=smoothstep(.45,.72,fbm(q)+uEnvCoverage*.28);
-            float deck=d.y<0.?mix(.40,.88,cloud):cloud*.45*smoothstep(.02,.2,d.y);
-            vec3 cloudLight=uSunColor*.12+uHorizon*.32;
-            col=mix(col,cloudLight,deck);
-          }
           // Sun disk (very bright so bloom catches it)
           float mu = dot(d, uSunDir);
           col += uSunColor * smoothstep(0.99985, 0.99993, mu) * 60.0 * uSunDisk;
@@ -135,7 +124,7 @@ export class SkyDome {
 
 // Retain PMREM shaders and the capture scene across weather updates. The old implementation
 // disposed/recompiled these during fronts, causing multi-hundred-ms stalls in flight.
-interface EnvironmentCapture { floor: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>; material: THREE.ShaderMaterial; scene: THREE.Scene; pmrem: THREE.PMREMGenerator }
+interface EnvironmentCapture { scene: THREE.Scene; floor: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>; pmrem: THREE.PMREMGenerator }
 const captures = new WeakMap<THREE.WebGLRenderer, EnvironmentCapture>();
 const targets = new WeakMap<THREE.Texture, THREE.WebGLRenderTarget>();
 export function disposeEnvironment(texture: THREE.Texture) {
@@ -147,14 +136,12 @@ export function buildEnvironment(renderer: THREE.WebGLRenderer, sky: SkyDome): T
     const scene=new THREE.Scene(),dome=sky.mesh.clone(),source=sky.material;
     dome.material=new THREE.ShaderMaterial({vertexShader:source.vertexShader,fragmentShader:source.fragmentShader,
       side:source.side,depthWrite:false,depthTest:false,
-      uniforms:{...source.uniforms,...atmosUniforms,uEnvCapture:{value:1},uEnvCoverage:{value:Atmos.lowCoverage},uSunDisk:{value:0},uFarMapped:{value:0},uFarQuality:{value:0},uTgt:{value:new THREE.Vector4()},uGroundHaze:{value:24000}}});
+      uniforms:{...source.uniforms,...atmosUniforms,uSunDisk:{value:0},uFarMapped:{value:0},uFarQuality:{value:0},uTgt:{value:new THREE.Vector4()},uGroundHaze:{value:24000}}});
     scene.add(dome);
     const floor=new THREE.Mesh(new THREE.CircleGeometry(5000,32),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));
     floor.rotation.x=-Math.PI/2;floor.position.y=-60;scene.add(floor);
-    capture={scene,floor,material:dome.material as THREE.ShaderMaterial,pmrem:new THREE.PMREMGenerator(renderer)};captures.set(renderer,capture);
+    capture={scene,floor,pmrem:new THREE.PMREMGenerator(renderer)};captures.set(renderer,capture);
   }
-  capture.material.uniforms.uEnvCoverage.value = Atmos.lowCoverage;
-  // Retain the calibrated lower-hemisphere fill on guns and cockpit frames.
   capture.floor.material.color.setRGB(.95,.96,1).multiplyScalar(.55*Atmos.envFloor);
   // Direct solar disk belongs to the sun light; including it in IBL double-counts energy.
   const rt=capture.pmrem.fromScene(capture.scene,0,.1,20000,{size:128});

@@ -37,8 +37,10 @@ describe('aircraft finishes and safe glass reflections', () => {
     glass.onBeforeCompile(shader, {} as T.WebGLRenderer);
     expect(shader.fragmentShader).toContain('#define SWS_GLASS');
     expect(glass.customProgramCacheKey()).not.toBe(clone.customProgramCacheKey());
-    for (const name of ['crew', 'interior', 'rubber', 'propeller']) {
-      const m = new T.MeshStandardMaterial(); m.name = name; expect(aircraftFinish(m)).toBe(0);
+    for (const name of ['crew', 'interior', 'rubber', 'propeller', 'DDenclosure_2s']) {
+      const m = new T.MeshStandardMaterial(); m.name = name;
+      if (name === 'DDenclosure_2s') m.userData.surf = { k: 'p51d' };
+      expect(aircraftFinish(m)).toBe(0);
     }
   });
   it('uses a thin dielectric without a costly transmission pass and leaves paint alone', () => {

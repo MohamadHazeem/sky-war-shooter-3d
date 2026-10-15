@@ -278,8 +278,8 @@ occlusion. Paint roughness stays close to its authored value to avoid silver-whi
 refined depth hits, depth-edge rejection, grazing fades and a small clamped spatial filter.
 `Engine.sortLayers` gates the copy/trace to nearby visible glass; Low and Medium retain IBL.
 
-`GlassFx` uses smooth pane normals and the weather-refreshed sky/cloud PMREM. The original
-lower-hemisphere fill preserves cockpit-frame contrast; depth masking keeps nearby guns clear of reflection wash. Occupied High+ panes
+`GlassFx` uses smooth pane normals and the original weather-refreshed sky PMREM. The global
+sky-lighting experiment is reverted; the cockpit enclosure retains its authored finish, and depth masking keeps nearby guns clear of reflection wash. Occupied High+ panes
 also use `FormationReflection`: a 256px aircraft-silhouette cubemap, one face every other frame,
 22–180 m, with no clouds, shadows, interior or effects passes. All six faces must be populated
 before sampling, and camera cuts invalidate them. The ordinary aircraft submission retains nearby

@@ -6,6 +6,7 @@ const aircraftName = /^hero_(skin|neutral_grey|fw190|bf109|bf110|ju88|me262)/;
 
 export function aircraftFinish(m: T.Material): number {
   if (glassName.test(m.name)) return m.transparent ? 2 : 0;
+  if (/enclosure/i.test(m.name)) return 0; // cockpit frame keeps its authored finish
   if (aircraftName.test(m.name) || m.userData.surf) return 1;
   return 0;
 }
