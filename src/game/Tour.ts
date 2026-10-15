@@ -160,11 +160,15 @@ export const ZONE_LABEL: Record<string, string> = {
   engine1: 'Engine 1', engine2: 'Engine 2', engine3: 'Engine 3', engine4: 'Engine 4', wingL: 'Left wing', wingLtip: 'Left wingtip', wingR: 'Right wing', wingRtip: 'Right wingtip',
 };
 export const REPAIR = 0.7;          // share of a sortie's damage the ground crew fixes overnight
-export const ROUGH_ENGINE = 0.25;   // carried engine wear shown as "running rough"
-export interface ShipState { name: string; serial: string; missions: number; patches: number; wear: Record<string, number> }
+export const ROUGH_ENGINE = 0.25;
+export const PATCHES_PER_DAMAGE = 6;   // patches for a zone's whole strength shot away   // carried engine wear shown as "running rough"
+export interface ShipState {
+  name: string; serial: string; missions: number; patches: number; wear: Record<string, number>;
+  patchZones: Record<string, number>;   // where the patches are: per hit zone (RepairPatches clusters them there)
+}
 
 function newShip(name: string, r: () => number): ShipState {
-  return { name, serial: `42-${31000 + Math.floor(r() * 8999)}`, missions: 0, patches: 0, wear: {} };
+  return { name, serial: `42-${31000 + Math.floor(r() * 8999)}`, missions: 0, patches: 0, wear: {}, patchZones: {} };
 }
 
 /** Zone strength (0..1) a mission starts with: the carried wear, never below a flyable floor. */
@@ -404,16 +408,16 @@ export function applySortie(s0: TourState, o: SortieOutcome, rand: () => number 
     lines.push({ text: 'A replacement Fortress is assigned to the crew: the {ship}.', vars: { ship: s.ship.name }, tone: 'good' });
   } else {
     ship.missions++;
-    let fresh = 0;
+    let patches = 0;
     for (const z of SHIP_ZONES) {
       const end = clamp(num(o.zones?.[z], startHealth(z, ship.wear[z] ?? 0)), 0, 1);
       const dmg = 1 - end;
       const was = 1 - startHealth(z, ship.wear[z] ?? 0);
-      fresh += Math.max(0, dmg - was);
+      const n = Math.round(Math.max(0, dmg - was) * PATCHES_PER_DAMAGE);   // new holes in this zone, patched overnight
+      if (n) { ship.patchZones[z] = (ship.patchZones[z] ?? 0) + n; patches += n; }
       ship.wear[z] = +(clamp(dmg * (1 - REPAIR) + (z.startsWith('engine') && dmg > 0.7 ? 0.15 : 0), 0, 0.6)).toFixed(3);
       if (ship.wear[z] < 0.01) delete ship.wear[z];
     }
-    const patches = Math.round(fresh * 6);
     ship.patches += patches;
     if (patches) lines.push({ text: 'The ground crew put {n} new patches on the {ship}. She carries {total} now.', vars: { n: patches, ship: ship.name, total: ship.patches } });
     else lines.push({ text: 'The {ship} came home without a scratch.', vars: { ship: ship.name }, tone: 'good' });
@@ -635,6 +639,8 @@ export function sanitizeTour(raw: unknown): TourState | null {
     s.ship.patches = clamp(Math.floor(num(o.ship.patches, 0)), 0, 999);
     s.ship.wear = {};
     if (o.ship.wear && typeof o.ship.wear === 'object') for (const z of SHIP_ZONES) { const w = num(o.ship.wear[z], 0); if (w > 0) s.ship.wear[z] = clamp(w, 0, 0.6); }
+    s.ship.patchZones = {};
+    if (o.ship.patchZones && typeof o.ship.patchZones === 'object') for (const z of SHIP_ZONES) { const n = Math.floor(num(o.ship.patchZones[z], 0)); if (n > 0) s.ship.patchZones[z] = Math.min(999, n); }
   }
   s.lostShips = Array.isArray(o.lostShips) ? o.lostShips.filter((n: unknown) => typeof n === 'string').slice(-10) : [];
   if (Array.isArray(o.crew)) s.crew = POSITIONS.map((p, i) => cleanMan(o.crew.find((m: any) => m?.pos === p) ?? o.crew[i], p) ?? original(p));

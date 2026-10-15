@@ -39,6 +39,7 @@ async function open(lang, viewport = { width: 1280, height: 800 }, context = nul
   }, lang);
   await page.goto(URL);
   await page.waitForFunction(() => window.sws?.tour && window.sws?.game, { timeout: 120000 });
+  await page.addStyleTag({ content: '#hudToast { display: none !important; }' });   // achievement toasts are not part of these screens
   await page.evaluate(() => { sws.engine.loopOverride = () => {}; sws.game.input.lock = () => {}; });
   return { page, ctx };
 }
@@ -90,7 +91,7 @@ try {
 
   // -- ten more missions, with damage, wounds and a loss: the board mid-tour
   await page.evaluate(() => {
-    const dmg = { engine2: 0.3, engine3: 0.7, fuselageMid: 0.45, fuselageAft: 0.6, wingL: 0.6, tail: 0.75, nose: 0.8 };
+    const dmg = { fuselageMid: 0.55, fuselageAft: 0.5, wingL: 0.6, tail: 0.7, engine3: 0.6, wingR: 0.8 };
     sws.tour.sim(6, { zones: dmg, danger: 3 });
     sws.tour.sim(1, { zones: dmg, wounded: ['ball', 'waistR'], serious: ['ball'] });
     sws.tour.sim(1, { zones: dmg, wounded: ['tail'], serious: ['tail'], success: false });
@@ -135,10 +136,16 @@ try {
   await page.evaluate(() => {
     const g = sws.game, b = g.world.playerBomber, cam = sws.engine.camera, V = cam.position.constructor;
     g.gunner.detach();
+    cam.position.copy(b.localToWorld(new V(-4, 3.5, 3))); cam.up.set(0, 1, 0); cam.lookAt(b.localToWorld(new V(-5, 0, -1))); cam.fov = 50;
+    cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
+  });
+  facts.programsOutside = await pair('outside-patches');   // close over the right wing
+  await page.evaluate(() => {
+    const b = sws.game.world.playerBomber, cam = sws.engine.camera, V = cam.position.constructor;
     cam.position.copy(b.localToWorld(new V(12, 9, 8))); cam.up.set(0, 1, 0); cam.lookAt(b.localToWorld(new V(1, 0, -3))); cam.fov = 50;
     cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
   });
-  facts.programsOutside = await pair('outside-patches');
+  facts.programsBeauty = await pair('beauty-patches');   // 3/4 above: markings stay clear
   facts.waist = await page.evaluate(async () => {
     const { STATIONS } = await import('/src/world/B17Layout.ts');
     const g = sws.game, m = sws.tour.mission(0); m.station = 'waistL';
@@ -153,7 +160,7 @@ try {
   });
   assert.ok(facts.waist.attached && facts.waist.shown > 0, 'patches hang in the waist');
   facts.programsWaist = await pair('waist-patches');
-  for (const p of [facts.programsTop, facts.programsOutside, facts.programsWaist]) assert.equal(p[0], p[1], 'the patches compile nothing new');
+  for (const p of [facts.programsTop, facts.programsOutside, facts.programsBeauty, facts.programsWaist]) assert.equal(p[0], p[1], 'the patches compile nothing new');
   await page.evaluate(() => sws.game.startMenu());
 
   // -- the finale

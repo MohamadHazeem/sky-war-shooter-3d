@@ -8,7 +8,7 @@ import type { Game } from './Game';
 import type { Mission } from './Missions';
 import { CREW, crewMember, type CrewId } from '../world/Crew';
 import { crewRoster, ROOKIES } from './CrewRoster';
-import { RepairPatches } from './RepairPatches';
+import { RepairPatches, shownPatches } from './RepairPatches';
 import {
   applySortie, crewFactor, effectiveDanger, flyingAt, isTourId, loadTour, manName, parseTourId, POSITIONS, saveTour, SCHEDULE, startHealth,
   type Danger, type SortieOutcome, type TourReport, type TourState,
@@ -53,9 +53,10 @@ export class TourRuntime {
     const s = f.state;
     for (const z of pb.zones) z.hp = z.maxHp * startHealth(z.name, s.ship.wear[z.name] ?? 0);
     const seed = parseInt(s.ship.serial.replace(/\D/g, ''), 10) || s.seed;
-    this.patches.set(s.ship.patches, seed);
+    const shown = shownPatches(s.ship.patches);   // a slow ramp: one sheet in three, clustered where she was hit
+    this.patches.set(shown.inside, seed);
     this.patches.attach(g.gunner.waist);
-    this.patches.setOutside(pb.root, pb.model, s.ship.patches, seed);
+    this.patches.setOutside(pb.root, pb.model, shown.outside, seed, s.ship.patchZones);
     // the radio names whoever actually sits at each position (tour replacements, spares)
     for (const pos of POSITIONS) {
       if (crewRoster.occupant(pos)) continue;

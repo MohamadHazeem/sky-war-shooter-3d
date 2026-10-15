@@ -40,7 +40,10 @@ describe('Arabic table auto-discovery', () => {
       const fresh = await server.ssrLoadModule('/phrases.ts') as typeof import('../src/i18n/phrases');
       expect(fresh.PHRASES[key]).toBe('مسبار');
       expect(fresh.ALL_TABLES.length).toBe(ALL_TABLES.length + 1);
-      expect(fresh.ALL_TABLES[0].phrases[key]).toBe('مسبار');
+      // among the discovered tables (other goals' files may be discovered too), before every explicit one
+      const probe = fresh.ALL_TABLES.findIndex((t) => t.phrases[key] === 'مسبار');
+      expect(probe).toBeGreaterThanOrEqual(0);
+      expect(probe).toBeLessThan(fresh.ALL_TABLES.findIndex((t) => t.phrases['Pause'] !== undefined && t.phrases['Pause'] !== 'probe'));
       // placed first: an explicit table's wording still wins
       expect(fresh.PHRASES['Pause']).toBe(PHRASES['Pause']);
     } finally {

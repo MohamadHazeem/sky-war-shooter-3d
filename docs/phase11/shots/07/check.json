@@ -17,15 +17,14 @@
   },
   "midTour": {
     "done": 10,
-    "patches": 125,
+    "patches": 103,
     "wear": {
-      "nose": 0.06,
-      "fuselageMid": 0.165,
-      "fuselageAft": 0.12,
-      "tail": 0.075,
-      "engine2": 0.21,
-      "engine3": 0.09,
-      "wingL": 0.12
+      "fuselageMid": 0.135,
+      "fuselageAft": 0.15,
+      "tail": 0.09,
+      "engine3": 0.12,
+      "wingL": 0.12,
+      "wingR": 0.06
     },
     "crew": [
       "pilot:Brenner:fit:10",
@@ -37,54 +36,56 @@
       "ball:Reilly:fit:9",
       "waistL:Price:fit:10",
       "waistR:Walsh:fit:10",
-      "tail:Fisher:fit:2"
+      "tail:Dawson:wounded:8"
     ],
-    "gone": [
-      "Dawson"
-    ],
-    "event": null,
-    "morale": 80,
-    "fatigue": 47
+    "gone": [],
+    "event": "charm",
+    "morale": 89,
+    "fatigue": 35
   },
   "carried": {
     "id": "tour-11-0",
-    "patches": 125,
-    "outside": 40,
+    "patches": 103,
+    "outside": 36,
     "zones": {
-      "nose": 0.94,
+      "nose": 1,
       "cockpit": 1,
       "fuselageFwd": 1,
-      "fuselageMid": 0.835,
-      "fuselageAft": 0.88,
-      "tail": 0.925,
+      "fuselageMid": 0.865,
+      "fuselageAft": 0.85,
+      "tail": 0.91,
       "engine1": 1,
-      "engine2": 0.79,
-      "engine3": 0.91,
+      "engine2": 1,
+      "engine3": 0.88,
       "engine4": 1,
       "wingL": 0.88,
       "wingLtip": 1,
-      "wingR": 1,
+      "wingR": 0.94,
       "wingRtip": 1
     },
-    "factor": 1.04,
+    "factor": 1.063,
     "programs0": 267,
-    "programs1": 265
+    "programs1": 266
   },
   "programsTop": [
-    265,
-    265
+    266,
+    266
   ],
   "programsOutside": [
-    265,
-    265
+    266,
+    266
+  ],
+  "programsBeauty": [
+    266,
+    266
   ],
   "waist": {
     "shown": 30,
     "attached": true
   },
   "programsWaist": [
-    265,
-    265
+    266,
+    266
   ],
   "arBriefingLatin": [],
   "errors": []
