@@ -283,7 +283,7 @@ export class GameHud {
     // Lead indicator aim aid: pip for the enemy nearest the line of fire ('recruit' = only on Recruit difficulty)
     const leadMode = g.settings.leadPip ?? 'recruit';
     const pipOn = this.forceLeadPip || ((g.mission?.role === 'pilot' || g.settings.difficulty !== 'ace') && (g.loadout.leadPip || leadMode === 'always' || (leadMode === 'recruit' && g.settings.difficulty === 'recruit')));
-    if (pipOn && visibility.markers && pl?.alive) this.drawLeadPip(ctx, W, H);
+    if (pipOn && (visibility.markers || this.forceLeadPip) && pl?.alive) this.drawLeadPip(ctx, W, H);
     // Gunner hip reticle: waist guns without the ring sight up (fades as RMB brings the eye down)
     if (g.mission?.role === 'gunner' && ((g.gunner.def.type === 'waist' && g.gunner.ads < 0.6) || g.gunner.def.id === 'top')) {
       const a = g.gunner.def.id === 'top' ? 0.85 : 0.85 * (1 - g.gunner.ads / 0.6);
