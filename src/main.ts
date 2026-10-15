@@ -11,6 +11,7 @@ import { installShare } from './game/Share';
 import { AutoGraphics } from './game/AutoGraphics';
 import { analytics } from './net/Analytics';
 import { langReady } from './i18n';
+import { checkSavesAtBoot, openSaveRecovery } from './ui/SaveRecoveryScreen';
 import './style.css';
 import './ui/cleanHud.css';
 
@@ -37,8 +38,15 @@ async function boot() {
   ui.loading(0.1, 'Loading aircraft…');
   await Promise.all([essentials, langReady()]);   // a lazy language pack (fr/de/es) before the menu
   ui.loading(0.9, 'Forming up over England…');
+  await checkSavesAtBoot();   // Save 2.0: migrations, backup, recovery screen if the profile is damaged
   const input = new Input(engine.renderer.domElement);
-  const game = new Game(engine, input, ui);
+  let game: Game;
+  try {
+    game = new Game(engine, input, ui);
+  } catch (e) {
+    await openSaveRecovery({ reason: 'crash', live: true });   // a restore / repair reloads the page
+    throw e;
+  }
   engine.livingSky.bind(game.world);   // distant boxes, dogfights and flak fly with our formation
   engine.bomberStream.bind(game.world);   // the bomber stream around our box (render/BomberStream.ts)
   const devices = new DeviceControls(engine, input, game);   // touch, gamepad, accessibility
