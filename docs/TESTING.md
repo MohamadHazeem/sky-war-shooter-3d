@@ -78,3 +78,22 @@ npx vite --port 5297 --strictPort &
 PLAYWRIGHT_MODULE=/abs/path/playwright/index.mjs node tools/qa_sweep.mjs campaign out.jsonl   # or difficulty, survival, highar, ace, smoke
 node tools/qa_sweep.mjs --report out.jsonl                                                    # Markdown table
 ```
+
+## Nightly QA in CI (`.github/workflows/nightly-qa.yml`)
+
+Every night (02:17 UTC, or by hand: Actions → Nightly QA → Run workflow) GitHub runs the `nightly` sweep set: every
+gunner campaign mission (incl. Deep Penetration) at Recruit, Veteran and Ace, gunner Survival to round 6, and m1 in
+High/Arabic, split over 10 runners (`QA_SHARD=i/10`) on the dev server in the Playwright headless shell with
+SwiftShader WebGL (`QA_SWIFTSHADER=1`; no GPU, so frame times are not judged). A job that hangs the page for
+`QA_JOB_TIMEOUT_S` (1500 s) is recorded as a softlock and the sweep moves on with a fresh page.
+
+`tools/nightly_qa.mjs` merges the shards into a summary (job summary + `nightly-qa-summary` artifact with every JSON
+line) and flags crashes, page errors, softlocks (mission never ended, world clock frozen ≥ 5 s, hung job), HUD
+overlaps, false markers and B-17 losses counted twice. New findings open an issue labelled `nightly-qa`, or add a
+comment to the open one; findings already listed there (hidden `nightly-qa-keys`) are not repeated. Close the issue
+once fixed. A push that edits the workflow runs the one-mission smoke set as a self-test that must be clean.
+
+```
+node tools/nightly_qa.mjs summary out.jsonl --md summary.md --json findings.json   # same check locally
+QA_SHARD=1/10 QA_SWIFTSHADER=1 PLAYWRIGHT_MODULE=… node tools/qa_sweep.mjs nightly out.jsonl
+```
