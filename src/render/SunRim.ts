@@ -8,7 +8,7 @@ import * as THREE from 'three';
 //
 // A global patch of the standard/physical lights chunk, like AircraftLook's sky rim: no new
 // uniform, no new program; it reads the sun (directional light 0) and the view matrix.
-export const SUN_RIM = 0.9;
+export const SUN_RIM = 1.5;
 const SUN_RIM_GLSL = /* glsl */ `
 #if defined( STANDARD ) && NUM_DIR_LIGHTS > 0
 {

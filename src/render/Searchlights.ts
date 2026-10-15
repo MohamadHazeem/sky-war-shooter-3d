@@ -91,7 +91,7 @@ function beamMaterial() {
         // across the beam: a hot core inside a soft sheath
         float across = pow(edge, 2.5) * 0.7 + pow(edge, 1.0) * 0.3;
         float phase = clamp(vPhase, 0.4, 4.0);
-        float a = min(uIntensity * along * haze * spread * across * phase * 2.2, 0.2);
+        float a = min(uIntensity * along * haze * spread * across * phase * 1.6, 0.16);
         gl_FragColor = vec4(uColor * a, a);
       }`,
     transparent: true,
