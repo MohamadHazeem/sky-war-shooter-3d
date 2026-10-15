@@ -573,7 +573,7 @@ export class Game {
     this.engine.post.hypoxia = !this.menuMode && this.mission?.role === 'gunner' && this.state === 'playing' ? this.gunner.survival.hypoxia : 0;
     this.engine.post.desat = this.woundT < 0.002 ? 0 : this.woundT;
     if (this.bombRun.holding) {
-      this.midRound.hud.hideAll(); this.specials.hud.hideAll();
+      this.midRound.hud.hideAll(); this.midRound.events.stop(); this.specials.hud.hideAll();
     } else {
       this.midRound.update(dt, this.roundIdx, this.roundT0);
       this.specials.update(dt, this.roundIdx, this.roundT0);

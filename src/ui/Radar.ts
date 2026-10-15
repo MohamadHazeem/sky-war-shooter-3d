@@ -155,3 +155,28 @@ export function draw(ctx: CanvasRenderingContext2D, W: number, H: number, world:
   }
   ctx.restore();
 }
+
+// Radio/radar jamming (MissionEvents, Phase 11 goal 28): static snow over the dial and a JAMMED stamp
+export function jam(ctx: CanvasRenderingContext2D, W: number, H: number, expanded: number) {
+  const e = THREE.MathUtils.smoothstep(expanded, 0, 1);
+  const smallR = THREE.MathUtils.clamp(Math.min(W, H) * 0.08, 38, 64);
+  const R = THREE.MathUtils.lerp(smallR, Math.min(W, H) * 0.4, e);
+  const scx = H <= 500 ? W - 120 : W - INSET - smallR, scy = H <= 500 ? H - 120 : H - INSET - smallR - 24;
+  const cx = THREE.MathUtils.lerp(scx, W / 2, e), cy = THREE.MathUtils.lerp(scy, H / 2, e);
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.clip();
+  ctx.fillStyle = 'rgba(20,24,18,0.55)';
+  ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+  for (let i = 0; i < 70; i++) {
+    const y = cy - R + Math.random() * R * 2, x = cx - R + Math.random() * R * 2;
+    ctx.fillStyle = `rgba(200,220,190,${(0.15 + Math.random() * 0.45).toFixed(2)})`;
+    ctx.fillRect(x, y, 2 + Math.random() * R * 0.5, 1);
+  }
+  ctx.restore();
+  ctx.save();
+  ctx.font = `600 ${Math.round(Math.max(11, R * 0.24))}px Oswald, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(240,190,80,0.95)';
+  ctx.fillText(tx('JAMMED'), cx, cy);
+  ctx.restore();
+}

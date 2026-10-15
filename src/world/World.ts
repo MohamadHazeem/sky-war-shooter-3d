@@ -126,6 +126,7 @@ export class World implements WorldView {
   playerFighter: Fighter | null = null;
   remoteFighter: Fighter | null = null; // co-op partner: local flight, host damage
   playerStation: StationDef | null = null;
+  frozenStations = new Set<string>(); // AI crew guns gone quiet for a moment (MissionEvents: a gunner freezing)
   remoteStations = new Set<string>(); // co-op: gun positions on the player's ship manned by the remote partner (CoopSession); their AI crewmen stand down
   time = 0;
   difficulty = 1;
@@ -624,6 +625,8 @@ export class World implements WorldView {
   }
 
   // ---------- radio ----------
+  /** Hold low-priority chatter back for s seconds (a scripted moment owns the interphone; MissionEvents) */
+  holdRadio(s: number) { this.radioCooldown = Math.max(this.radioCooldown, s); }
   callout(key: string, speaker: string, text: string, cooldown = 8, priority = 1) {
     const last = this.lastCallout.get(key) ?? -999;
     if (this.time - last < cooldown) return;
@@ -1040,6 +1043,7 @@ export class World implements WorldView {
         if (b.isPlayer && g.station && this.playerStation && g.station.id === this.playerStation.id) continue;
         if (b.isPlayer && g.station && this.remoteStations.has(g.station.id)) continue;
         if (b.isPlayer && g.station && this.crew.wounded.has(STATION_CREW[g.station.id])) { g.burst = 0; continue; }
+        if (b.isPlayer && g.station && this.frozenStations.has(g.station.id)) { g.burst = 0; continue; }
         const sk = aiGunnerSkill(b.isPlayer ? g.station?.id : null); // crew skill (CrewRoster); default elsewhere
         g.retarget -= dt;
         g.cooldown -= dt;

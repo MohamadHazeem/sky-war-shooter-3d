@@ -90,6 +90,19 @@ plays and `Cinematics.drama()` gives them a short drama shot. Their losses go th
 `World.scriptedLoss` and are left out of `world.combatLosses`, which the mission's loss limit uses.
 Trigger one with `sws.drama('flakHit')` (or `collision`, `bombBay`, `straggler`, `littleFriends`).
 
+Dynamic in-mission events (Phase 11 goal 28) are a data-driven library of 22 short gunner moments:
+a near miss, a friendly bomber exploding, chutes to count, radio jamming, an oxygen fire, a gunner
+freezing, a crippled Bf 109 pilot saluting, a lost Mustang joining up, a cook-off, a storm wall ahead
+and more. The data and the director's pure rules (`eventDue`, `eventFits`, `pickEvent`) are in
+`game/MissionEventLib.ts`: each event is a list of timed beats (a radio line and/or an action from a
+small vocabulary). `game/MissionEvents.ts` (owned by `MidRound` as `midRound.events`) runs one at a
+time, stages a B-17 into the gun's view first when it needs one (`SetPieces.stage`), and puts back
+whatever it changed when it ends. MidRound's objectives, random events and set pieces wait while
+one plays (`events.busy`), and it waits for theirs. Radio lines: `tools/voice/lines.d/28-mission-events.json`;
+Arabic: `i18n/ar/missionEvents.ts`; banner (HUD detail Full only): `ui/EventBanner.ts`. To add an
+event, add an entry and its lines; only a new kind of action needs code. Trigger one with
+`sws.missionEvent('salute')` (no id lists them); browser check: `tools/mission_events_check.mjs`.
+
 Enemy aircraft break up where they are hit (`world/destruction/`, owned by `World.destruction`).
 `World.onHit` books every round on an axis fighter to a structural part (the failure model). It decides
 whether a wingtip, wing or tail comes off, or a tank catches fire and cooks off.

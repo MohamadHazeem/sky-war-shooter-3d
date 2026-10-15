@@ -279,6 +279,7 @@ export class GameHud {
     // Radar plot (bottom-left; Tab expands it into the big map)
     this.mapT += ((this.mapOpen ? 1 : 0) - this.mapT) * Math.min(1, (1 / 60) * 9);
     if (visibility.radar && g.mission) Radar.draw(ctx, W, H, w, this.mapT, g.director.incoming, w.time);
+    if (visibility.radar && g.mission && g.midRound.events.jammed) Radar.jam(ctx, W, H, this.mapT);
     if (visibility.extras) g.boss.drawHud(ctx, W, H, cam);
     // Lead indicator aim aid: pip for the enemy nearest the line of fire ('recruit' = only on Recruit difficulty)
     const leadMode = g.settings.leadPip ?? 'recruit';
