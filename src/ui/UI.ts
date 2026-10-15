@@ -52,6 +52,7 @@ export interface Settings {
   aimAssist: 'off' | 'low' | 'high';
   flightMode: 'mouseAim' | 'direct';
   difficulty: 'recruit' | 'veteran' | 'ace';
+  adaptive?: boolean;   // adaptive difficulty director (game/Adaptive.ts); undefined = on
   fov: number;   // base field of view in degrees (gunner and P-51 views); zoom scales from it
   killCam?: boolean;   // cinematic kill cam on special kills (Cinematics.ts); undefined = on
   cineDirector?: 'off' | 'rare' | 'often';   // combat director shots (CombatDirector.ts); undefined = rare
@@ -91,6 +92,7 @@ export interface DebriefData {
   ditched?: boolean;
   escape?: import('../game/B17DamageRules').EscapeEntry[];
   merit?: number;    // points earned for the Armory
+  adaptive?: 'off' | 'eased' | 'steady' | 'pushed';   // what the adaptive difficulty director did (Adaptive.summary)
   points?: number;   // Armory balance after this mission
 }
 
@@ -102,6 +104,10 @@ export interface PauseInfo {
   bombersAlive: number;
   bombersTotal: number;
 }
+
+// Adaptive difficulty (game/Adaptive.ts): the Settings hint and the debrief's one word
+const ADAPTIVE_HINT = 'Eases or presses the enemy to match how you fly, within your difficulty. Never lowers your score.';
+const ADAPTIVE_WORD = { eased: 'Eased off', steady: 'Steady', pushed: 'Pressed harder' } as const;   // Arabic: plain words, no tashkeel (big tile font)
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 
@@ -450,6 +456,7 @@ export class UI {
       <label class="setting">${tx('Voice volume')} <input type="range" min="0" max="1" step="0.05" data-k="voiceVolume" value="${s.voiceVolume ?? 1}"></label>
       <label class="setting">${t('settings.language')} <select data-lang><option value="en" lang="en">English</option><option value="ar" lang="ar" ${getLang() === 'ar' ? 'selected' : ''}>العربية</option></select></label>
       <label class="setting">${t('settings.difficulty')} <select data-k="difficulty"><option value="recruit" ${s.difficulty === 'recruit' ? 'selected' : ''}>${t('settings.diff.recruit')}</option><option value="veteran" ${s.difficulty === 'veteran' ? 'selected' : ''}>${t('settings.diff.veteran')}</option><option value="ace" ${s.difficulty === 'ace' ? 'selected' : ''}>${t('settings.diff.ace')}</option></select></label>
+      <label class="setting"><span>${tx('Adaptive difficulty')}<br><small class="adaptive-hint" style="display:block;max-width:30ch;font-size:11px;line-height:1.35;color:var(--ink-dim)">${tx(ADAPTIVE_HINT)}</small></span> <select data-k="adaptive"><option value="true">${t('common.on')}</option><option value="false" ${s.adaptive === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
       <label class="setting">${t('settings.sensitivity')} <input type="range" min="0.3" max="2.5" step="0.05" data-k="sensitivity" value="${s.sensitivity}"></label>
       <label class="setting"><span>${t('settings.fov')} <b class="fov-val" style="font-weight:400;color:var(--ink-dim)">${s.fov}°</b></span> <input type="range" min="50" max="80" step="1" data-k="fov" value="${s.fov}"></label>
       <label class="setting">${t('settings.invertY')} <select data-k="invertY"><option value="false">${t('common.off')}</option><option value="true" ${s.invertY ? 'selected' : ''}>${t('common.on')}</option></select></label>
@@ -482,7 +489,7 @@ export class UI {
       const k = i.dataset.k as keyof Settings;
       let v: any = i.value;
       if (k === 'voiceVolume' || k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume' || k === 'fov') v = parseFloat(v);
-      if (k === 'lensDirt' || k === 'weatherEffects' || k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'musicCues' || k === 'killCam' || k === 'fpsCounter' || k === 'breathing' || k === 'bookends' || k === 'crewRoom') v = v === 'true';
+      if (k === 'lensDirt' || k === 'weatherEffects' || k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'musicCues' || k === 'adaptive' || k === 'killCam' || k === 'fpsCounter' || k === 'breathing' || k === 'bookends' || k === 'crewRoom') v = v === 'true';
       (s as any)[k] = v;
       if (k === 'quality') { delete s.gfxAuto; s.graphicsMode = 'manual'; st.querySelector<HTMLSelectElement>('[data-graphics]')!.value = graphicsChoice(s); }   // the player's choice wins over the first-launch pick
       if (k === 'fov') { const b = i.closest('label')?.querySelector('.fov-val'); if (b) b.textContent = `${v}°`; }
@@ -536,7 +543,7 @@ export class UI {
       if (row.querySelector('[data-lang], [data-graphics]') || BASIC_SETTINGS.includes(control?.dataset.k as typeof BASIC_SETTINGS[number])) continue;
       advanced.append(row);
     }
-    for (const selector of ['[data-graphics]', '[data-k="difficulty"]', '[data-k="hudDetail"]', '[data-k="volume"]', '[data-k="musicVolume"]', '[data-k="voiceVolume"]', '[data-lang]', '[data-k="sensitivity"]', '[data-k="invertY"]']) {
+    for (const selector of ['[data-graphics]', '[data-k="difficulty"]', '[data-k="adaptive"]', '[data-k="hudDetail"]', '[data-k="volume"]', '[data-k="musicVolume"]', '[data-k="voiceVolume"]', '[data-lang]', '[data-k="sensitivity"]', '[data-k="invertY"]']) {
       box.insertBefore(box.querySelector(selector)!.closest('.setting')!, advanced);
     }
     st.classList.add('show');
@@ -686,6 +693,7 @@ export class UI {
     if (d.hits !== undefined) extra.push(tile(t('debrief.hits'), d.hits));
     if (d.bestStreak !== undefined) extra.push(tile(t('debrief.streak'), d.bestStreak));
     if (d.closestKill !== undefined) extra.push(tile(t('debrief.closest'), range));
+    if (d.adaptive) extra.push(tile(tx('Adaptive difficulty'), d.adaptive === 'off' ? t('common.off') : tx(ADAPTIVE_WORD[d.adaptive])));
     if (d.killsByGun) {
       // one tile per gun position that scored; a zero tile when none did
       if (d.killsByGun.length) for (const g of d.killsByGun) extra.push(tile(t('debrief.gunKills', { gun: tx(g.label) }), g.kills));

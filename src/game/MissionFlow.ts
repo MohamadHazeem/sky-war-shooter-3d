@@ -93,7 +93,7 @@ export class MissionFlow {
     g.worldEvents.reset(); g.trauma = 0;
     g.hud.reset();
     g.prog.perks = []; g.killsSincePerk = 0;
-    g.adaptive.reset(); g.roundIdx = 0; g.roundT0 = 0; this.scoreBanked = 0; this.roundKills0 = 0;
+    g.adaptive.reset(diff, m.role, g.world.playerFocus); g.roundIdx = 0; g.roundT0 = 0; this.scoreBanked = 0; this.roundKills0 = 0;
     g.combo.reset();
     g.feel.reset(); g.combat.reset();
     g.tally.reset();
@@ -320,7 +320,7 @@ export class MissionFlow {
       closestKill: g.tally.closestKill === Infinity ? null : g.tally.closestKill,
       killsByGun: m.role === 'gunner' ? g.tally.killsByGun() : undefined,
       escape: g.b17Damage.escape.length ? g.b17Damage.escape : undefined,
-      merit, ditched: g.ditching.ditched, points: g.prog.points, bombing: g.bombardier.result ?? undefined,
+      merit, adaptive: g.coop.role ? undefined : g.adaptive.summary(), ditched: g.ditching.ditched, points: g.prog.points, bombing: g.bombardier.result ?? undefined,
     };
     // the crew-room scene first after a story mission (CrewRoomScene.ts); `then` runs once the map is up
     const toMap = (then?: unknown) => crewRoomScene.play(m, () => { g.showCampaign(); if (typeof then === 'function') then(); });

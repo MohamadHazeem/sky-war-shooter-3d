@@ -1,0 +1,41 @@
+{
+ "checks": [
+  {
+   "name": "desktop-en",
+   "off": true
+  },
+  {
+   "name": "desktop-en",
+   "on": true
+  },
+  {
+   "name": "desktop-en",
+   "tile": "CONFIRMED KILLS\n14\nACCURACY\n21%\nBOMBERS LOST\n2/12\nTIME\n6:12\nSCORE\n4210\nMERIT EARNED\n+4210\nROUNDS FIRED\n2410\nROUNDS ON TARGET\n506\nBEST STREAK\n3\nCLOSEST KILL\n240 m\nADAPTIVE DIFFICULTY\nEased off"
+  },
+  {
+   "name": "desktop-ar",
+   "off": true
+  },
+  {
+   "name": "desktop-ar",
+   "on": true
+  },
+  {
+   "name": "desktop-ar",
+   "tile": "إسقاطات مؤكدة\n14\nدقة الإصابة\n21%\nالقاذفات المفقودة\n2/12\nالزمن\n6:12\nالنقاط\n4210\nالاستحقاق المكتسب\n+4210\nالطلقات المُطلقة\n2410\nالطلقات المصيبة\n506\nأفضل سلسلة\n3\nأقرب إسقاط\n240 م\nالصعوبة التكيفية\nأسهل"
+  },
+  {
+   "name": "phone-ar",
+   "off": true
+  },
+  {
+   "name": "phone-ar",
+   "on": true
+  },
+  {
+   "name": "phone-ar",
+   "tile": "إسقاطات مؤكدة\n14\nدقة الإصابة\n21%\nالقاذفات المفقودة\n2/12\nالزمن\n6:12\nالنقاط\n4210\nالاستحقاق المكتسب\n+4210\nالطلقات المُطلقة\n2410\nالطلقات المصيبة\n506\nأفضل سلسلة\n3\nأقرب إسقاط\n240 م\nالصعوبة التكيفية\nأسهل"
+  }
+ ],
+ "errors": []
+}
