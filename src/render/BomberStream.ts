@@ -526,7 +526,8 @@ export class BomberStream {
           float phase = min(3.0, 0.51 / pow(max(0.09, 1.49 - 1.4 * mu), 1.5));
           float transmission = exp(-density * 1.2);
           vec3 skyLight = twilightSky(normalize(vW - cameraPosition));
-          vec3 col = skyLight * 0.62 + uStreamSun * 0.16 * (0.4 + 0.6 * transmission) * (0.7 + phase);
+          // a low sun gilds the sheet's ice
+          vec3 col = skyLight * 0.62 + uStreamSun * 0.16 * (0.4 + 0.6 * transmission) * (0.7 + phase) * (1.0 + 0.9 * uTwilight);
           gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));

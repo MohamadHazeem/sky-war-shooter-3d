@@ -85,28 +85,29 @@ function skyFor(w: Weather, o: Sky): Sky {
     // blue glow on the horizon, dark ground and barely any fill. Exhaust flames, searchlights
     // and flares carry the scene (Searchlights.ts, NightExhaust.ts, Flares.ts).
     set3(SUN, 0.62, 0.72, 1.0);
-    o[SUN_I] = 0.26;
+    // (a full moon: enough key and fill that silhouettes and moonlit tops stay readable)
+    o[SUN_I] = 0.42;
     set3(ZEN, 0.0018, 0.0026, 0.0075);
     set3(HOR, 0.012, 0.016, 0.03);
     set3(GND, 0.005, 0.006, 0.009);
-    o[AMB] = 0.045;
+    o[AMB] = 0.075;
     // a night should read as night: the grade's print-film black lift and a little exposure come
     // off, so the flames, flares, beams and tracers carry the frame against a near-black sky
     o[EXPO] = 0.82; o[LIFT] = 0.25;
     o[ENV_FLOOR] = 0.02;   // no sunlit cloud sea to light the aircraft from below
-    o[ENV_I] = 0.25;
+    o[ENV_I] = 0.32;
     o[NIGHT] = 1; o[DARK] = 1; o[TWI] = 0;
   } else if (w.mood === 'dusk') {
     // sun on the horizon: deep orange light, dimming violet zenith, a glowing red rim
-    set3(SUN, 1.0, 0.5, 0.26);
-    o[SUN_I] = 2.4;
+    set3(SUN, 1.0, 0.55, 0.27);
+    o[SUN_I] = 2.7;
     set3(ZEN, 0.05, 0.07, 0.2);
     set3(HOR, 0.78, 0.46, 0.34);
-    o[AMB] = 0.34;
+    o[AMB] = 0.42;
     o[DARK] = 0.25;
     // the light is going: a little less exposure keeps the glow toward the sun and the cool
     // shadow side apart instead of lifting the whole frame to day brightness
-    o[EXPO] = 0.86;
+    o[EXPO] = 0.93;
   } else if (w.mood === 'overcast') {
     // flat grey light under a high deck: little direct sun, bright diffuse sky
     set3(SUN, 0.92, 0.93, 0.95);

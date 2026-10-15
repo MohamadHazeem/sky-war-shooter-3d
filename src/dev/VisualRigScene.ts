@@ -5,6 +5,7 @@ import { CAMPAIGN, type Mission } from '../game/Missions';
 import { Atmos } from '../render/Atmosphere';
 import { applyWeather } from '../render/Weather';
 import { lightConed, Searchlights } from '../render/Searchlights';
+import { updateExhausts } from '../world/Exhaust';
 import { RIG_DT, RIG_STEPS, RIG_WEATHER, type RigShot } from './VisualRigConfig';
 
 /** Staged fixtures use the production world, controllers, assets and effects. */
@@ -53,6 +54,7 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
   }
   const facts: Record<string, unknown> = { weather, subject: shot.id };
+  let coneLights: Searchlights | null = null, nightLights: Searchlights | null = null;
   if (shot.id === 'ball-europe') {
     const s = gun.state;
     s.yaw = s.tYaw = 0; s.pitch = s.tPitch = -.65; s.vPitch = s.vYaw = 0;
@@ -62,6 +64,32 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     const s = gun.state;
     s.yaw = s.tYaw = -.3; s.pitch = s.tPitch = .12; s.vPitch = s.vYaw = 0;
     gun.update(0);
+  }
+  if (shot.id === 'night-waist') {
+    // A night fighter closing on the waist window fires: the tracer stream passes beside the
+    // fuselage and its light flickers on the gun and the window frame; his exhaust glows.
+    const direction = cam.getWorldDirection(new THREE.Vector3());
+    const pos = cam.position.clone().addScaledVector(direction, 130).add(new THREE.Vector3(0, 10, 0));
+    const f = w.spawnEnemy(pos, 'beam', 1, false, false, 'fw190');
+    const toward = cam.position.clone().sub(pos).normalize();
+    f.quat.setFromUnitVectors(new THREE.Vector3(0, 0, 1), toward); f.root.updateMatrixWorld(true);
+    w.effects.vol.camPos.copy(cam.position); w.effects.vol.hasCam = true;
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(cam.quaternion);
+    for (let i = 0; i < 14; i++) {
+      // aimed a few metres wide of the window, a slight spread per round; rounds, exhaust, tracer
+      // light and effects advance between rounds (the fixture clock stays frozen at six seconds)
+      const aim = cam.position.clone().addScaledVector(right, 6 + (i % 3)).add(new THREE.Vector3(0, -3 + (i % 2) * 2, 0));
+      const muzzle = f.localToWorld(new THREE.Vector3(i % 2 ? 1.2 : -1.2, -0.2, 2.5));
+      w.ballistics.fire(muzzle, aim.sub(muzzle).normalize().multiplyScalar(820), 'axis', 0, true, [1, 0.62, 0.25], f, true);
+      if (i % 2 === 0) w.effects.muzzleFlash(muzzle, toward, 1.4, f.vel);
+      w.effects.vol.camPos.copy(cam.position);
+      w.ballistics.update(RIG_DT, []);
+      updateExhausts([f], w.effects.glow); updateExhausts([f], w.effects.glow);
+      w.nightTracerLight();
+      w.effects.update(RIG_DT);
+    }
+    w.ballistics.renderTracers(cam, engine.renderer.domElement.height);
+    facts.enemy = { type: f.kind, range: f.pos.distanceTo(cam.position) };
   }
   if (/^(waist-(fw190|bf109)|tail-bf109|headon-fw190)/.test(shot.id)) {
     const tail = shot.id.startsWith('tail');
@@ -148,7 +176,7 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     const side = new THREE.Vector3().crossVectors(moon, new THREE.Vector3(0, 1, 0)).normalize();
     look(damaged.pos.clone().addScaledVector(moon, -150).addScaledVector(side, 55).add(new THREE.Vector3(0, -6, 0)),
       damaged.pos.clone().addScaledVector(moon, 300).add(new THREE.Vector3(0, 50, 0)), 62);
-    const lights = new Searchlights(engine.scene);
+    const lights = nightLights = new Searchlights(engine.scene);
     lights.setup(Array.from({ length: 7 }, (_, i) => damaged.pos.clone().addScaledVector(moon, 900 + (i % 3) * 700)
       .addScaledVector(side, (i - 3) * 700).setY(0)), moon.clone().negate());
     // the beams sweep for six seconds and the crews cone what they catch
@@ -159,7 +187,6 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     facts.searchlights = lights.count;
     facts.burningEngines = damaged.zones.filter(z => z.burning).map(z => z.name);
   }
-  let coneLights: Searchlights | null = null;
   if (shot.id === 'night-clouds') {
     // From just under the box, looking ahead and down at the cloud deck: the barrage bursting in
     // the cloud tops lights them, and the searchlights cone the bomber ahead, lighting his belly.
@@ -228,6 +255,7 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     }
     for (let i = 0; i < 24; i++) { burn(RIG_DT); w.effects.update(RIG_DT); }
     if (coneLights) lightConed(coneLights, w.effects);
+    if (nightLights) lightConed(nightLights, w.effects);
   }
   // Precipitation is camera-relative, so update once after placing the final camera.
   engine.precipitation.update(0, engine.time, engine.quality);

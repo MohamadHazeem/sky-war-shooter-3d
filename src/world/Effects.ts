@@ -690,7 +690,7 @@ export class Effects {
     // (no Math.random: the shared stream that places the barrage stays as it is by day)
     const h = Math.abs(Math.sin(pos.x * 12.9898 + pos.y * 78.233 + pos.z * 37.719) * 43758.5453) % 1;
     this.glow.spawn({ pos, life: 0.22, size0: 12 * scale, size1: 24 * scale, color0: [30, 15, 5], alpha0: night, alpha1: 0, frame: 1, rotVel: 0, rot: h * 6.283 });
-    this.glow.spawn({ pos, vel: _d.set(0, 1, 0), life: 0.5 + h * 0.5, size0: 12 * scale, size1: 28 * scale, color0: [1.3, 0.48, 0.15], color1: [0.3, 0.08, 0.02], alpha0: 0.8 * night, alpha1: 0, frame: 1, rotVel: 0.3, rot: h * 17.0 });
+    this.glow.spawn({ pos, vel: _d.set(0, 1, 0), life: 0.5 + h * 0.5, size0: 16 * scale, size1: 36 * scale, color0: [1.1, 0.4, 0.13], color1: [0.3, 0.08, 0.02], alpha0: 0.8 * night, alpha1: 0, frame: 1, rotVel: 0.3, rot: h * 17.0 });
   }
 
   // Effects 2.0 flak: the simulated 88 mm burst (an orange heart inside an instantly black, lumpy

@@ -87,7 +87,7 @@ export function updateBomberNightExhaust(aircraft: readonly Aircraft[], glow: Pa
       const [x, y, z] = TURBO[k];
       a.localToWorld(_p.set(x, y, z), _p);
       a.forward(_v).multiplyScalar(-9).addScaledVector(a.vel, 0.05);
-      const sz = 0.55 * (0.7 + 0.6 * flick());
+      const sz = 0.85 * (0.7 + 0.6 * flick());
       glow.spawn({
         pos: _p, vel: _v, life: 0.06 + flick() * 0.04, size0: sz, size1: sz * 0.4,
         color0: flick() < 0.35 ? TURBO_BLUE : TURBO_ORANGE,

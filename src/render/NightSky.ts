@@ -65,15 +65,15 @@ float fireCell(vec2 xz, float size, float fp, float district, float seed) {
   float core = exp(-d * d / (re * re)) * (r * r) / (re * re);
   float gr = max(r * 3.5, fp * 1.5);
   float glow = exp(-d * d / (gr * gr)) * 0.16 * min(1.0, (r * r * 12.0) / (gr * gr));
-  return core * (12.0 + 30.0 * h2(c + seed + 9.4)) + glow * 3.0;
+  return core * (16.0 + 36.0 * h2(c + seed + 9.4)) + glow * 4.5;
 }
 
 vec3 nightFires(vec2 xz, float fp, float nearTarget, vec3 albedo) {
   // land only (open water has a dark, blue-dominant albedo)
   float land = smoothstep(0.0, 0.03, albedo.r - albedo.b * 0.6);
   // burning regions (~10 km), and within them the towns (~1.5 km clusters) that are alight
-  float region = smoothstep(0.42, 0.7, vnoise(xz * 0.00009 + 11.3));
-  float town = smoothstep(0.45, 0.75, vnoise(xz / 1500.0 + 7.0));
+  float region = smoothstep(0.35, 0.62, vnoise(xz * 0.00009 + 11.3));
+  float town = smoothstep(0.4, 0.7, vnoise(xz / 1500.0 + 7.0));
   float district = max(region * town, nearTarget * (0.35 + 0.65 * town)) * land;
   if (district <= 0.0) return vec3(0.0);
   float k = fireCell(xz, 170.0, fp, district * 0.75, 0.0) + 0.8 * fireCell(xz + 59.0, 380.0, fp, district * 0.5, 41.0);

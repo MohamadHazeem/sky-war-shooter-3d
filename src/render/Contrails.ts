@@ -147,10 +147,9 @@ export class Contrails {
     const u = this.mat.uniforms;
     u.uTime.value = time;
     // a low sun gilds the trails (more sun, less of the cooling sky light); moonlight barely shows them
-    u.uSunCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.32 * (1 + 0.45 * Atmos.twilight) * (1 - 0.85 * Atmos.night));
+    u.uSunCol.value.copy(Atmos.sunColor).multiplyScalar(Atmos.sunIntensity * 0.32 * (1 + 0.9 * Atmos.twilight) * (1 - 0.85 * Atmos.night));
     u.uSun.value.copy(Atmos.sunDir);
-    // low sun: little light scatters back down-sun (dull rose trails), the sunward ones burn gold
-    u.uFloor.value = 0.45 - 0.25 * Atmos.twilight;
+    u.uFloor.value = 0.45;
     u.uSky.value.setRGB(Atmos.horizon.r * 0.55 + Atmos.zenith.r * 0.45, Atmos.horizon.g * 0.55 + Atmos.zenith.g * 0.45, Atmos.horizon.b * 0.55 + Atmos.zenith.b * 0.45)
       .multiplyScalar(0.8 + Atmos.cloudAmbient * 0.3);
     // at twilight the sky light on the trails cools toward the rose anti-solar sky (Atmosphere.ts twilightHorizon)

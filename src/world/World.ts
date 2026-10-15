@@ -888,9 +888,7 @@ export class World implements WorldView {
     updateFighterDeath(dt);
     this.destruction.update(dt);
     this.ballistics.update(dt, this.aircraft);
-    // night: the tracer streaking past nearest the eye throws a flicker of light on the airframe
-    if (Atmos.night > 0.3 && this.effects.vol.hasCam && this.ballistics.nearestTracer(this.effects.vol.camPos, 40, _tracerLit))
-      this.effects.flashLight(_tracerLit, 90 * Atmos.night, 0.035, 0xffa060, 16);
+    this.nightTracerLight();
     this.effects.update(dt);
     this.wrecks.update(dt);
     this.contrails.update(this.time);
@@ -953,6 +951,13 @@ export class World implements WorldView {
       }
     }
     this.rockets = this.rockets.filter((r) => r.fuse >= 0 && r.age < 8);
+  }
+
+  // Night: the tracer streaking past nearest the eye throws a flicker of light on the airframe
+  // (one light from the fixed combat-light pool, Effects.flashLight)
+  nightTracerLight() {
+    if (Atmos.night > 0.3 && this.effects.vol.hasCam && this.ballistics.nearestTracer(this.effects.vol.camPos, 40, _tracerLit))
+      this.effects.flashLight(_tracerLit, 90 * Atmos.night, 0.035, 0xffa060, 16);
   }
 
   // Fires: burning engines eat into the wing; on the player's ship the pilot fights them
