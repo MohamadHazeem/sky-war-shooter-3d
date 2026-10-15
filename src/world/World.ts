@@ -23,7 +23,8 @@ import { sound } from '../audio/Sound';
 import { playRicochet } from '../audio/Ricochet';
 import { Contrails } from '../render/Contrails';
 import { Wrecks } from './Wrecks';
-import { attachEngineHaze, updateExhausts } from './Exhaust';
+import { attachEngineHaze, updateBomberNightExhaust, updateExhausts } from './Exhaust';
+import { Atmos } from '../render/Atmosphere';
 import { heatHaze } from '../render/HeatHaze';
 import { WingVapor } from './WingVapor';
 import { makeDropTank } from './Props';
@@ -875,6 +876,7 @@ export class World implements WorldView {
       this.damageEffects(a, dt);
     }
     updateExhausts(this.aircraft, this.effects.glow);
+    if (Atmos.night > 0.3) updateBomberNightExhaust(this.aircraft, this.effects.glow, Atmos.night, this.effects.vol.hasCam ? this.effects.vol.camPos : null);
     this.wingVapor.update(this.aircraft, dt, this.listener);
     this.bomberGunners(dt);
     this.flak(dt);

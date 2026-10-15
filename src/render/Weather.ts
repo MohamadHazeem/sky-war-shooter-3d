@@ -58,8 +58,8 @@ const WALL_FAR = 46000, WALL_NEAR = 4500, WALL_GONE = 1500;   // m
 
 // ---------------- the sky for a weather: one flat state that can be blended ----------------
 const SUN = 0, SUN_I = 3, ZEN = 4, HOR = 7, GND = 10, AMB = 13, ENV_FLOOR = 14, ENV_I = 15, LOW = 16, HIGH = 17, HAZE = 18, NIGHT = 19, DARK = 20, EXPO = 21, LIFT = 22;
-const STRATUS = 23, TOWERS = 24;
-const N = 25;
+const STRATUS = 23, TOWERS = 24, TWI = 25;
+const N = 26;
 const BASE_EXPOSURE = 1.06;                                      // PostFX.baseExposure by day
 const BASE_LIFT = new THREE.Vector3(0.003, 0.004, 0.006);        // PostFX.grade.lift by day
 type Sky = Float64Array;
@@ -78,6 +78,8 @@ function skyFor(w: Weather, o: Sky): Sky {
   o[ENV_FLOOR] = 1; o[ENV_I] = 0.75;
   o[LOW] = w.low; o[HIGH] = w.high;
   o[HAZE] = 1; o[NIGHT] = 0; o[DARK] = 0; o[EXPO] = 1; o[LIFT] = 1;
+  // a low sun splits the horizon: earth shadow and belt of Venus opposite, a burning glow toward it
+  o[TWI] = 1 - THREE.MathUtils.smoothstep(w.sunEl, 3, 18);
   if (w.mood === 'night') {
     // moonlight (the "sun" is the moon): a faint cold key light, a near-black sky with a deep
     // blue glow on the horizon, dark ground and barely any fill. Exhaust flames, searchlights
@@ -93,15 +95,18 @@ function skyFor(w: Weather, o: Sky): Sky {
     o[EXPO] = 0.82; o[LIFT] = 0.25;
     o[ENV_FLOOR] = 0.02;   // no sunlit cloud sea to light the aircraft from below
     o[ENV_I] = 0.25;
-    o[NIGHT] = 1; o[DARK] = 1;
+    o[NIGHT] = 1; o[DARK] = 1; o[TWI] = 0;
   } else if (w.mood === 'dusk') {
     // sun on the horizon: deep orange light, dimming violet zenith, a glowing red rim
     set3(SUN, 1.0, 0.5, 0.26);
     o[SUN_I] = 2.4;
     set3(ZEN, 0.05, 0.07, 0.2);
     set3(HOR, 0.78, 0.46, 0.34);
-    o[AMB] = 0.42;
+    o[AMB] = 0.34;
     o[DARK] = 0.25;
+    // the light is going: a little less exposure keeps the glow toward the sun and the cool
+    // shadow side apart instead of lifting the whole frame to day brightness
+    o[EXPO] = 0.86;
   } else if (w.mood === 'overcast') {
     // flat grey light under a high deck: little direct sun, bright diffuse sky
     set3(SUN, 0.92, 0.93, 0.95);
@@ -109,7 +114,7 @@ function skyFor(w: Weather, o: Sky): Sky {
     set3(ZEN, 0.16, 0.19, 0.24);
     set3(HOR, 0.55, 0.58, 0.62);
     o[AMB] = 0.75;
-    o[HAZE] = 0.85; o[DARK] = 0.12;
+    o[HAZE] = 0.85; o[DARK] = 0.12; o[TWI] *= 0.3;
   } else if (w.mood === 'storm') {
     // towering dark cloud: dim, cold, heavy, the murk closing in
     set3(SUN, 0.75, 0.8, 0.9);
@@ -117,7 +122,7 @@ function skyFor(w: Weather, o: Sky): Sky {
     set3(ZEN, 0.07, 0.08, 0.11);
     set3(HOR, 0.3, 0.32, 0.36);
     o[AMB] = 0.5;
-    o[HAZE] = 0.62; o[DARK] = 0.45;
+    o[HAZE] = 0.62; o[DARK] = 0.45; o[TWI] *= 0.1;
   }
   const condition = WEATHER_PRESETS[presetFor(w)];
   const cloud = condition.cloud;
@@ -129,6 +134,7 @@ function skyFor(w: Weather, o: Sky): Sky {
     const grey = (o[i] + o[i + 1] + o[i + 2]) / 3;
     for (let j = 0; j < 3; j++) o[i + j] = THREE.MathUtils.lerp(o[i + j], grey, cloud * .85) * (1 - cloud * .22);
   }
+  o[TWI] *= 1 - cloud * .8;
   o[LOW] = Math.max(o[LOW], cloud * .97);
   o[HIGH] = Math.max(o[HIGH], cloud * .98);
   return o;
@@ -148,6 +154,8 @@ function pushSky(engine: Engine, s: Sky) {
   Atmos.lowCoverage = s[LOW];
   Atmos.highCoverage = s[HIGH];
   Atmos.haze = s[HAZE];
+  Atmos.twilight = s[TWI];
+  Atmos.night = s[NIGHT];
   weatherNow.night = s[NIGHT];
   weatherNow.dark = s[DARK];
   engine.scene.environmentIntensity = s[ENV_I];

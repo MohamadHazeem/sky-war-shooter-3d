@@ -89,7 +89,7 @@ export async function captureRig(argv) {
         assert.ok(metadata.enemies.every(e => e.propellersSpinning), 'Airborne fighter props initialized without stepping');
       if (id === 'p51-cockpit') assert.equal(metadata.pilotView, 'cockpit');
       if (id === 'bomb-run') assert.ok(metadata.bombs > 0);
-      if (id === 'damaged-neighbour') assert.equal(metadata.burningEngines.length, 2);
+      if (id === 'damaged-neighbour' || id === 'night-formation') assert.equal(metadata.burningEngines.length, 2);
       if (id === 'night-flak') assert.ok(metadata.searchlights === 8 && metadata.flakBursts === 28);
       if (id === 'waist-interior' && args.quality !== 'low') assert.ok(metadata.visibleSunShafts > 0);
       const data = await page.evaluate(() => window.visualRig.png());

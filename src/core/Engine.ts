@@ -22,6 +22,7 @@ import { buildEnvironment, SkyDome } from '../render/Sky';
 import { envRef } from '../render/EnvRef';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { freshEnv, installAircraftLook, retargetEnvMaps, retireEnv, syncAircraftLook } from '../render/AircraftLook';
+import { installSunRim } from '../render/SunRim';
 import { LivingSky } from '../render/LivingSky';
 import { BomberStream } from '../render/BomberStream';
 import { FpsCounter } from '../render/FpsCounter';
@@ -189,6 +190,7 @@ export class Engine {
     this.scene.add(this.hemi);
     // sky rim / Fresnel on aircraft, coloured from the sky (AircraftLook.ts)
     installAircraftLook();
+    installSunRim();   // low-sun burning edge on silhouettes (SunRim.ts)
 
     this.clouds = new CloudRenderer(this.reversed);
     this.post = new PostFX(this.reversed);

@@ -307,7 +307,13 @@ export class Effects {
         this.flipbook('fire', _p, _v, life, life, W * k, W * k * 1.35, this.grey(0.05), 0.95, 0.6, 1.1 + Math.random() * 0.4, 0.7, 0, 0, 0, rot + (Math.random() - 0.5) * 0.5, t);
       }
       // the fire lights what is around it (its own wing and nacelle, a neighbour), flickering
-      if (this.vol.hasCam && far < 260) this.flashLight(pos, (700 + Math.random() * 600) * scale, 0.09, 0xff7428, 26 * scale);
+      // At night it carries further: a burning bomber lights its neighbours in the box.
+      const nl = weatherNow.night;
+      if (this.vol.hasCam && far < 260 + 900 * nl) {
+        // (beyond the day range the flicker comes from the emitter's path, not the shared random stream)
+        const r = far < 260 ? Math.random() : 0.5 + 0.5 * Math.sin(pos.x * 3.1 + pos.z * 1.7);
+        this.flashLight(pos, (700 + r * 600) * scale * (1 + 2.5 * nl), 0.09, 0xff7428, 26 * scale * (1 + 2 * nl));
+      }
     } else if (fire) {
       const s0 = 1.9 * scale;
       // flame puffs about a third of their size apart along that path (far away two do: sub-pixel
@@ -632,6 +638,7 @@ export class Effects {
   private flakBurst(pos: THREE.Vector3, scale: number, core: boolean) {
     // a brief orange glow inside the cloud it bursts in or near (CloudLights; dark skies only)
     cloudLights.flash(pos, 1.0, 0.55, 0.22, 3 * scale, 150 * scale, 0.35);
+    if (weatherNow.night > 0.3) this.nightFlak(pos, scale, weatherNow.night);
     if (this.flipOn) { this.flipFlak(pos, scale, core); return; }
     if (!this.volumetric || this.vol.camDist(pos) > VOL_FAR) { this.legacyFlakBurst(pos, scale, core); return; }
     this.flashLight(pos, 2600 * scale, 0.16, 0xffaa66, 110);
@@ -670,6 +677,16 @@ export class Effects {
       q.billow0 = 0.9; q.billow1 = 1.3; q.drag = 1.6; q.rise = 0.2; q.windK = 1;
       q.fadeIn = 0.05; q.fadeOut = 0.5;
     }
+  }
+
+  // Night flak: the burst's fireball lights its own smoke from inside for a moment (a dull red
+  // glow swelling with the puff, then dying), and a flash big enough to read from the bomber
+  // stream: against a black sky the bursts are flashes and embers, not black puffs.
+  private nightFlak(pos: THREE.Vector3, scale: number, night: number) {
+    // (no Math.random: the shared stream that places the barrage stays as it is by day)
+    const h = Math.abs(Math.sin(pos.x * 12.9898 + pos.y * 78.233 + pos.z * 37.719) * 43758.5453) % 1;
+    this.glow.spawn({ pos, life: 0.22, size0: 12 * scale, size1: 24 * scale, color0: [30, 15, 5], alpha0: night, alpha1: 0, frame: 1, rotVel: 0, rot: h * 6.283 });
+    this.glow.spawn({ pos, vel: _d.set(0, 1, 0), life: 0.5 + h * 0.5, size0: 12 * scale, size1: 28 * scale, color0: [1.3, 0.48, 0.15], color1: [0.3, 0.08, 0.02], alpha0: 0.8 * night, alpha1: 0, frame: 1, rotVel: 0.3, rot: h * 17.0 });
   }
 
   // Effects 2.0 flak: the simulated 88 mm burst (an orange heart inside an instantly black, lumpy

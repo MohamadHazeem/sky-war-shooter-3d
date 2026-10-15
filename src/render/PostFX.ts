@@ -544,7 +544,8 @@ export class PostFX {
     sunW.project(camera);
     u.uSunUV.value.set(sunW.x * 0.5 + 0.5, sunW.y * 0.5 + 0.5);
     const inView = facing > 0 && Math.abs(sunW.x) < 1.1 && Math.abs(sunW.y) < 1.1;
-    u.uSunOn.value = inView ? this.flareStrength * THREE.MathUtils.smoothstep(facing, 0, 0.3) : 0;
+    // the moon gets only a trace of the sun's starburst and ghosts
+    u.uSunOn.value = inView ? this.flareStrength * THREE.MathUtils.smoothstep(facing, 0, 0.3) * (1 - 0.75 * Atmos.night) : 0;
     u.uSunCol.value.set(Atmos.sunColor.r, Atmos.sunColor.g, Atmos.sunColor.b).multiplyScalar(Atmos.sunIntensity);
     u.tCloud.value = this.cloudTex;
     u.uAspect.value = camera.aspect;

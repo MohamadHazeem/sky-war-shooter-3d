@@ -4,9 +4,9 @@ import { rigOptions, seededRandom, RIG_WEATHER, type RigShot } from '../src/dev/
 
 const shots: RigShot[] = JSON.parse(readFileSync(new URL('../tools/visual-shots.json', import.meta.url), 'utf8'));
 describe('visual rig fixture contract', () => {
-  it('covers every pillar with 22 unique, safe names and fixed weather', () => {
-    expect(shots).toHaveLength(22);
-    expect(new Set(shots.map(s => s.id)).size).toBe(22);
+  it('covers every pillar with 24 unique, safe names and fixed weather', () => {
+    expect(shots).toHaveLength(24);
+    expect(new Set(shots.map(s => s.id)).size).toBe(24);
     expect([...new Set(shots.flatMap(s => s.pillars))].sort((a, b) => a - b)).toEqual([1,2,3,4,5,6,7,8,9,10]);
     for (const shot of shots) {
       expect(shot.id).toMatch(/^[a-z0-9-]+$/);

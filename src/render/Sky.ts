@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Atmos, atmosUniforms, skyGLSL } from './Atmosphere';
 import { FAR_TERRAIN_GLSL, farTerrainUniforms } from './FarTerrain';
 import { TARGET_GLSL, targetUniforms } from './TargetGround';
+import { NIGHT_SKY_GLSL } from './NightSky';
 
 // Ground haze distance (m) for the dome's far terrain. Low-level operations (Countryside.ts) shorten
 // it to match the haze on their own ground mesh, so the seam where the mesh ends disappears.
@@ -64,6 +65,7 @@ export class SkyDome {
         }
 
         ${FAR_TERRAIN_GLSL}
+        ${NIGHT_SKY_GLSL}
 
         void main() {
           vec3 d = normalize(vDir);
@@ -73,6 +75,7 @@ export class SkyDome {
           float tg = uCamAlt / max(-d.y, 1e-3);
           vec2 relG = (uGroundXZ - uTgt.xy) + d.xz * tg;
           float fw = max(length(dFdx(relG)), length(dFdy(relG)));
+          float px = max(length(dFdx(d)), length(dFdy(d)));
           if (d.y < -0.002) {
             float t = uCamAlt / -d.y;
             vec2 xz = uGroundXZ + d.xz * t;
@@ -82,6 +85,8 @@ export class SkyDome {
             if (uTgt.w > 0.0) g = targetGround(relG, alb, fw, light, uGroundXZ - uTgt.xy, d);
             else g = alb * light;
             g += farSpec;   // water glint and sky reflection (FarTerrain.ts)
+            // a burning country at night: towns alight, the target blazing after the raid (NightSky.ts)
+            if (uNightSky > 0.0) g += nightFires(xz, fw, uTgt.w > 0.0 ? 1.0 - smoothstep(900.0, 3800.0, length(relG)) : 0.0, alb) * uNightSky;
             // air between the camera and the ground: low-level haze, aerial perspective at altitude (FarTerrain.ts)
             col = farAerial(g, col, t, d);
           }
@@ -104,9 +109,13 @@ export class SkyDome {
             float forward = pow(max(dot(d, uSunDir), 0.0), 6.0);
             col = mix(col, uSunColor * (0.07 + 0.08 * forward), cir * 0.23);
           }
+          if (uNightSky > 0.0) col += nightStars(d, px) * uNightSky;
           // Sun disk (very bright so bloom catches it)
           float mu = dot(d, uSunDir);
-          col += uSunColor * smoothstep(0.99985, 0.99993, mu) * 60.0 * uSunDisk;
+          float disk = smoothstep(0.99985, 0.99993, mu);
+          // at night the disk is the moon: dimmer, with its grey maria (NightSky.ts)
+          if (uNightSky > 0.0 && disk > 0.0) disk *= mix(1.0, moonFace(d) * 0.45, uNightSky);
+          col += uSunColor * disk * 60.0 * uSunDisk;
           gl_FragColor = vec4(col, 1.0);
         }`,
       side: THREE.BackSide,

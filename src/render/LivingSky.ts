@@ -121,6 +121,7 @@ const shared = {
   uAnchorY: { value: 7600 },      // world altitude of the frame origin
   uLowTop: { value: 5900 },
   uSunCol: { value: new THREE.Vector3() },
+  uFill: { value: 1 },            // sky fill on the distant trails and smoke: 1 by day, a trace by moonlight
 };
 
 // World position + camera-facing side offset with a minimum on-screen width (in pixels);
@@ -237,12 +238,12 @@ export class LivingSky {
       fragmentShader: /* glsl */ `
         ${hazeGLSL}
         ${cloudOcclusionGLSL}
-        uniform vec3 uSunCol;
+        uniform vec3 uSunCol; uniform float uFill;
         varying float vA; varying float vSide; varying float vT; varying vec3 vW; varying float vSeed;
         void main() {
           float edge = 1.0 - vSide * vSide;
           float a = vA * edge * (0.85 + 0.15 * sin(vT * 160.0 + vSeed));
-          vec3 col = uSunCol * 0.24 + vec3(0.42, 0.47, 0.55);
+          vec3 col = uSunCol * 0.24 + vec3(0.42, 0.47, 0.55) * uFill;
           gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
       transparent: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true,
@@ -288,13 +289,13 @@ export class LivingSky {
         }`,
       fragmentShader: /* glsl */ `
         ${hazeGLSL}
-        uniform vec3 uSunCol;
+        uniform vec3 uSunCol; uniform float uFill;
         varying float vA; varying float vSide; varying float vT; varying vec3 vW;
         void main() {
           float edge = 1.0 - vSide * vSide;
           float a = vA * edge * mix(0.95, 0.5, vT);
           // oily black at the fire, thinning to grey
-          vec3 col = mix(vec3(0.025, 0.022, 0.02), vec3(0.16, 0.16, 0.17) + uSunCol * 0.03, smoothstep(0.0, 0.5, vT));
+          vec3 col = mix(vec3(0.025, 0.022, 0.02), vec3(0.16, 0.16, 0.17) * uFill + uSunCol * 0.03, smoothstep(0.0, 0.5, vT));
           gl_FragColor = vec4(hazed(col, vW), a);
         }`,
       transparent: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true,
@@ -483,6 +484,7 @@ export class LivingSky {
     shared.uAnchorY.value = anchor.y;
     shared.uLowTop.value = Atmos.lowTop;
     shared.uSunCol.value.set(Atmos.sunColor.r, Atmos.sunColor.g, Atmos.sunColor.b).multiplyScalar(Atmos.sunIntensity);
+    shared.uFill.value = 1 - 0.96 * Atmos.night;
     shared.uPx.value = (2 * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2))) / Math.max(1, heightPx);
     this.updateBombers(time);
     this.updateDogfights(time, dt);

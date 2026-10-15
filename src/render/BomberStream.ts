@@ -492,7 +492,7 @@ export class BomberStream {
       fragmentShader: /* glsl */ `
         ${hazeGLSL}
         ${noiseGLSL}
-        uniform vec3 uStreamSun; uniform vec3 uSunDir;
+        uniform vec3 uStreamSun; uniform vec3 uSunDir; uniform float uTwilight;
         varying float vA; varying float vSide; varying float vAge; varying vec3 vW; varying float vSeed; varying float vSun;
         void main() {
           float edge = pow(max(1.0 - vSide * vSide, 0.0), 1.8);
@@ -508,7 +508,10 @@ export class BomberStream {
           float mu = dot(normalize(vW - cameraPosition), uSunDir);
           float phase = min(3.0, 0.51 / pow(max(0.09, 1.49 - 1.4 * mu), 1.5));
           float transmission = exp(-density * 1.2);
-          vec3 col = uHorizon * 0.62 + uStreamSun * 0.16 * (0.4 + 0.6 * transmission) * (0.7 + phase);
+          // low sun: down-sun the sheet takes the cool earth-shadow sky, not the burning horizon (Atmosphere.ts)
+          float toward = (mu * 0.5 + 0.5) * (mu * 0.5 + 0.5);
+          vec3 skyLight = mix(uHorizon, vec3(0.30, 0.34, 0.56) * dot(uHorizon, vec3(0.2126, 0.7152, 0.0722)) * 1.05, uTwilight * (1.0 - toward));
+          vec3 col = skyLight * 0.62 + uStreamSun * 0.16 * (0.4 + 0.6 * transmission) * (0.7 + phase);
           gl_FragColor = vec4(hazed(col, vW), a * cloudVisibility(distance(cameraPosition, vW)));
         }`,
     }));

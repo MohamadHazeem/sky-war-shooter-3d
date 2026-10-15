@@ -34,7 +34,8 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     if (pilot) game.pilot.update(dt); else gun.update(dt);
     game.input.endFrame();
   };
-  const damaged = shot.id === 'damaged-neighbour' ? w.bombers().find(b => b !== w.playerBomber)! : null;
+  const damaged = shot.id === 'damaged-neighbour' ? w.bombers().find(b => b !== w.playerBomber)!
+    : shot.id === 'night-formation' ? nearestNeighbour(w.bombers(), w.playerBomber!) : null;
   for (let i = 0; i < RIG_STEPS; i++) {
     if (damaged && i === 180) {
       for (const name of ['engine1', 'engine2']) {
@@ -140,8 +141,35 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     lights.update(6, []);
     facts.searchlights = lights.count;
   }
+  if (shot.id === 'night-formation' && damaged) {
+    // Toward the moon from behind the burning neighbour: silhouettes against the moonlit sky,
+    // the fire lighting the box, searchlights and fires on the ground below.
+    const moon = new THREE.Vector3(Atmos.sunDir.x, 0, Atmos.sunDir.z).normalize();
+    const side = new THREE.Vector3().crossVectors(moon, new THREE.Vector3(0, 1, 0)).normalize();
+    look(damaged.pos.clone().addScaledVector(moon, -150).addScaledVector(side, 55).add(new THREE.Vector3(0, -6, 0)),
+      damaged.pos.clone().addScaledVector(moon, 300).add(new THREE.Vector3(0, 50, 0)), 62);
+    const lights = new Searchlights(engine.scene);
+    lights.setup(Array.from({ length: 7 }, (_, i) => damaged.pos.clone().addScaledVector(moon, 900 + (i % 3) * 700)
+      .addScaledVector(side, (i - 3) * 700).setY(0)), moon.clone().negate());
+    // the beams sweep for six seconds and the crews cone what they catch
+    const raiders = w.bombers();
+    lights.lock(damaged);
+    for (let i = 0; i < 60; i++) lights.update(.1, raiders);
+    facts.conedBombers = lights.coned.size;
+    facts.searchlights = lights.count;
+    facts.burningEngines = damaged.zones.filter(z => z.burning).map(z => z.name);
+  }
+  if (shot.id === 'sunset-rim') {
+    // The player's B-17 against the low sun: rim light on the airframe, contrails catching it.
+    const sun = new THREE.Vector3(Atmos.sunDir.x, 0, Atmos.sunDir.z).normalize();
+    const side = new THREE.Vector3().crossVectors(sun, new THREE.Vector3(0, 1, 0)).normalize();
+    look(b.pos.clone().addScaledVector(sun, -42).addScaledVector(side, -16).add(new THREE.Vector3(0, -3, 0)),
+      b.pos.clone().addScaledVector(sun, 30).addScaledVector(side, 6).add(new THREE.Vector3(0, 4, 0)), 50);
+  }
   if (shot.id === 'explosion-close') look(local([10, 8, 45]), local([10, 8, 140]), 55);
-  if (['explosion-close', 'flak-barrage', 'night-flak'].includes(shot.id)) {
+  // effects-only updates below age the burning neighbour's flames: keep its fire emitting
+  const burn = (dt: number) => { if (shot.id === 'night-formation' && damaged) (w as unknown as { damageEffects(a: unknown, dt: number): void }).damageEffects(damaged, dt); };
+  if (['explosion-close', 'flak-barrage', 'night-flak', 'night-formation'].includes(shot.id)) {
     const forward = cam.getWorldDirection(new THREE.Vector3());
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(cam.quaternion);
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(cam.quaternion);
@@ -149,6 +177,17 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     if (shot.id === 'explosion-close') {
       w.effects.explosion(cam.position.clone().addScaledVector(forward, 95), new THREE.Vector3(10, 0, 0), 1.5, 'heavy');
       facts.effectAge = .4;
+    } else if (shot.id === 'night-formation') {
+      // a sparse barrage beyond the box, some of it still burning
+      for (let i = 0; i < 12; i++) {
+        const depth = 500 + Math.random() * 900;
+        const pos = cam.position.clone().addScaledVector(forward, depth)
+          .addScaledVector(right, (Math.random() - .5) * depth * .9).addScaledVector(up, (Math.random() - .3) * depth * .35);
+        w.effects.flak(pos);
+        burn(.06);
+        w.effects.update(.06);
+      }
+      facts.flakBursts = 12; facts.effectAge = 12 * .06 + .4;
     } else {
       for (let i = 0; i < 28; i++) {
         const depth = 280 + Math.random() * 650;
@@ -159,7 +198,7 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
       }
       facts.flakBursts = 28; facts.effectAge = 28 * .035 + .4;
     }
-    for (let i = 0; i < 24; i++) w.effects.update(RIG_DT);
+    for (let i = 0; i < 24; i++) { burn(RIG_DT); w.effects.update(RIG_DT); }
   }
   // Precipitation is camera-relative, so update once after placing the final camera.
   engine.precipitation.update(0, engine.time, engine.quality);
@@ -170,4 +209,10 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
   engine.scene.traverse(o => { if (o.name === 'sunShaft' && o.visible) shafts++; });
   facts.visibleSunShafts = shafts;
   return facts;
+}
+
+function nearestNeighbour<T extends { pos: THREE.Vector3 }>(all: T[], player: T): T {
+  let best = all.find(b => b !== player)!, d = Infinity;
+  for (const b of all) if (b !== player && b.pos.distanceTo(player.pos) < d) { d = b.pos.distanceTo(player.pos); best = b; }
+  return best;
 }
