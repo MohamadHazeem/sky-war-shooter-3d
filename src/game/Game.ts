@@ -279,6 +279,7 @@ export class Game {
     sound.setAmbVolume(s.ambVolume);
     sound.radioEnabled = s.radio;
     sound.setMusic(s.music);
+    sound.music.cues = s.musicCues !== false;
     sound.setDetail(s.audioDetail ?? 'normal');
     sound.setBreathing(s.breathing !== false);
     this.pilot.mode = s.flightMode;

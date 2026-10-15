@@ -155,7 +155,7 @@ async function main() {
   // updateFighterVoices: 0.65 x radial gain, ref 70 m, enemy at 250 m
   MIX.push(['engines', 'enemy radial @250 m', mix([{ buf: file(man.loops.radial_exterior.file), gain: 0.65 * L('radial_exterior') * at(70, 250), rate: 2.2 }], 5), 'I']);
   // music: track gain (music bus 1, before ducking); tension also plays at 0.6 when calm
-  for (const k of ['menu', 'tension', 'combat', 'climax']) {
+  for (const k of ['menu', 'tension', 'combat', 'climax', 'bombrun']) {
     const e = man.music[k];
     if (!e) continue;
     const b = file(e.file);
@@ -174,6 +174,9 @@ async function main() {
   climaxPart('climax drums', (k) => ({ buf: S.get(k % 4 === 3 ? 'layer:climax:taiko_fill' : 'layer:climax:taiko_drive'), gain: 0.9 * layerMix.drums, at: k * bar130 }));
   climaxPart('climax brass', (k) => ({ buf: S.get(k % 2 ? 'layer:climax:brass_F' : 'layer:climax:brass_A'), gain: 0.85 * layerMix.brass, at: k * bar130 }));
   climaxPart('climax strings', (k) => ({ buf: S.get('layer:climax:strings_A'), gain: 0.8 * layerMix.strings, at: k * bar130 }));
+  climaxPart('climax snare (score 2.0)', (k) => ({ buf: S.get('layer:climax:snare_march'), gain: 0.65 * layerMix.snare, at: k * bar130 }));
+  const bar100 = 4 * 60 / 100;
+  MIX.push(['music', 'bomb-run snare (countdown, full)', mix(Array.from({ length: 4 }, (_, k) => ({ buf: S.get('layer:bombrun:snare_march'), gain: layerMix.snare, at: k * bar100 })), 4 * bar100), 'I']);
   const bar166 = 4 * 60 / 166;
   MIX.push(['music', 'music layers (combat drums 0.7)', mix(Array.from({ length: 8 }, (_, k) => ({ buf: S.get(k % 4 === 3 ? 'layer:combat:taiko_fill' : 'layer:combat:taiko_drive'), gain: 0.7 * layerMix.drums, at: k * bar166 })), 8 * bar166), 'I']);
   const bar83 = 4 * 60 / 83;
