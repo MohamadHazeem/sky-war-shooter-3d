@@ -14,5 +14,8 @@
   {"id":"damaged-neighbour","label":"Burning neighbouring B-17","pillars":[1,2,5,8,9,10],"weather":"clear"},
   {"id":"waist-interior","label":"Waist compartment / light shafts","pillars":[1,2,6,7,10],"station":"waistL","weather":"interior"},
   {"id":"bomb-run","label":"Bomb run over Emden","pillars":[4,5,7,8,10],"weather":"ground"},
-  {"id":"p51-cockpit","label":"P-51 cockpit","pillars":[1,2,6,7,10],"weather":"clear"}
+  {"id":"p51-cockpit","label":"P-51 cockpit","pillars":[1,2,6,7,10],"weather":"clear"},
+  {"id":"turret-glass","label":"Gunner eye / curved turret glass","pillars":[1,2,6,10],"station":"top","weather":"clear"},
+  {"id":"close-shadow","label":"Close formation / 35 m self shadow","pillars":[1,2,10],"weather":"clear"},
+  {"id":"formation-glints","label":"Sun-facing close formation / metal glints","pillars":[1,2,8,10],"weather":"beauty"}
 ]

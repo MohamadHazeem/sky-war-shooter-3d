@@ -1,17 +1,21 @@
 import * as T from 'three';
 import { GLASS_REFLECTION_GLSL } from './GlassReflection';
 
+const glassName = /glass/i;
+const aircraftName = /^hero_(skin|neutral_grey|fw190|bf109|bf110|ju88|me262)/;
+
 export function aircraftFinish(m: T.Material): number {
-  if (/glass/i.test(m.name)) return 2;
-  if (/^hero_(skin|neutral_grey|fw190|bf109|bf110|ju88|me262)/.test(m.name) || m.userData.surf) return 1;
+  if (glassName.test(m.name)) return m.transparent ? 2 : 0;
+  if (aircraftName.test(m.name) || m.userData.surf) return 1;
   return 0;
 }
 /** Clear perspex retains dielectric Fresnel rather than a tinted opaque bubble. */
 export function tuneAircraftGlass(m: T.MeshStandardMaterial) {
-  if (!/glass/i.test(m.name)) return;
+  if (!glassName.test(m.name)) return;
   m.color.setRGB(.82, .91, .96);
   m.roughness = .065; m.metalness = 0;
   m.opacity = .24; m.transparent = true; m.depthWrite = false;
+  m.forceSinglePass = true; // thin panes need one double-sided draw, not two sorted shells
   const physical = m as T.MeshPhysicalMaterial;
   if (physical.isMeshPhysicalMaterial) { physical.transmission = 0; physical.ior = 1.46; }
 }

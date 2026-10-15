@@ -25,6 +25,9 @@ export function installCascadeShader(){
      vec3 weights=mix(vec3(1.,0.,0.),vec3(1.-fade.x,fade.x*(1.-fade.y),fade.y),swsShadowRanges.z);
      // Wide FOVs and rapid turns can expose the fitted map edge. Blend back to
      // the far map rather than treating an out-of-map receiver as fully lit.
+     vec2 closeUV=vDirectionalShadowCoord[0].xy/vDirectionalShadowCoord[0].w;
+     float closeEdge=smoothstep(.82,.98,max(abs(closeUV.x*2.-1.),abs(closeUV.y*2.-1.)));
+     weights.y+=weights.x*closeEdge;weights.x*=1.-closeEdge;
      vec2 formationUV=vDirectionalShadowCoord[1].xy/vDirectionalShadowCoord[1].w;
      float outside=smoothstep(.86,.99,max(abs(formationUV.x*2.-1.),abs(formationUV.y*2.-1.)));
      weights.z+=weights.y*outside;weights.y*=1.-outside;
@@ -52,7 +55,7 @@ export class SunCascades {
  readonly lights:T.DirectionalLight[];
  private rotation=new T.Matrix4();private inverse=new T.Matrix4();private point=new T.Vector3();private origin=new T.Vector3();private up=new T.Vector3(0,1,0);
  private forward=new T.Vector3();
- private frame=0;private active=true;private disabled=false;private ranges=[40,240,3000];private lastSun=new T.Vector3();
+ private closeFit=1;private frame=0;private active=true;private disabled=false;private ranges=[40,240,3000];private lastSun=new T.Vector3();
  constructor(scene:T.Scene,sun:T.DirectionalLight,reversed=false){
   installCascadeShader();this.lights=[sun,new T.DirectionalLight(),new T.DirectionalLight()];
   for(let i=0;i<3;i++){const l=this.lights[i];l.castShadow=true;l.layers.enableAll();l.userData.noRebase=true;l.target.userData.noRebase=true;l.shadow.autoUpdate=false;l.shadow.normalBias=i===0?.008:.035;l.shadow.bias=(reversed?1:-1)*.000012;l.shadow.radius=1.4;
@@ -60,10 +63,10 @@ export class SunCascades {
   }
  }
  quality(size:number,range:number,enabled:boolean){
-  this.active=enabled;this.disabled=size<=1;this.ranges[0]=range;cascadeUniform.value.set(range,240,this.disabled?-1:enabled?1:0);this.frame=0;
+  this.active=enabled;this.disabled=size<=1;this.ranges[0]=enabled?Math.max(64,range):range;this.closeFit=range/this.ranges[0];cascadeUniform.value.set(this.ranges[0],240,this.disabled?-1:enabled?1:0);this.frame=0;
   for(let i=0;i<3;i++){const l=this.lights[i],s=i===0?size:enabled?(i===1?Math.min(size,2048):1024):1;
    if(l.shadow.mapSize.x!==s){l.shadow.map?.dispose();l.shadow.map=null;l.shadow.mapSize.set(s,s);}
-   const c=l.shadow.camera,r=this.ranges[i];const fit=i===1?.72:1;c.left=-r*fit;c.right=r*fit;c.top=r*fit;c.bottom=-r*fit;c.near=1;c.far=r*4+600;c.updateProjectionMatrix();l.shadow.needsUpdate=true;
+   const c=l.shadow.camera,r=this.ranges[i];const fit=i===0?this.closeFit:i===1?.72:1;c.left=-r*fit;c.right=r*fit;c.top=r*fit;c.bottom=-r*fit;const depth=i===0?80:i===1?260:r*2+299;c.near=r*2+300-depth;c.far=r*2+300+depth;c.updateProjectionMatrix();l.shadow.needsUpdate=true;
   }
  }
  update(camera:T.Camera,intensity:number){
@@ -77,9 +80,10 @@ export class SunCascades {
    if(i>0&&!changed&&this.frame>0&&this.frame%(i===1?4:12)!==(i===1?0:6))continue;
    this.point.setFromMatrixPosition(camera.matrixWorld);
    // Fit the formation map to the visible 10–200 m corridor. Shift toward the
-   // view direction in the light plane; keep its deep caster volume unchanged.
+   // view direction in the light plane, with a fitted caster-depth interval.
+   if(i===0&&this.active)this.point.addScaledVector(this.forward.set(0,0,-1).transformDirection(camera.matrixWorld),20);
    if(i===1)this.point.addScaledVector(this.forward.set(0,0,-1).transformDirection(camera.matrixWorld),85);
-   this.point.applyMatrix4(this.inverse);const texel=2*range*(i===1?.72:1)/l.shadow.mapSize.x;
+   this.point.applyMatrix4(this.inverse);const texel=2*range*(i===0?this.closeFit:i===1?.72:1)/l.shadow.mapSize.x;
    this.point.x=Math.round(this.point.x/texel)*texel;this.point.y=Math.round(this.point.y/texel)*texel;this.point.applyMatrix4(this.rotation);
    l.position.copy(this.point).addScaledVector(Atmos.sunDir,range*2+300);l.target.position.copy(this.point);l.target.updateMatrixWorld();l.shadow.needsUpdate=true;
   }

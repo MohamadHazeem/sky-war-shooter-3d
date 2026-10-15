@@ -90,6 +90,29 @@ describe('formation submission', () => {
     state.integrity=.5;const out=f.submit.prepare(f.scene,f.camera);expect(sourceUpdate).not.toHaveBeenCalled();
     const tint=new T.Color();batches(out)[0].getColorAt(0,tint);expect(tint.r).toBeCloseTo(.825);
   });
+  it('uses the authored far mesh on High only beyond 650 m for undamaged, non-film ships',()=>{
+    const f=fixture(),compact=new T.Group(),part=new T.Mesh(f.geometry,f.material);
+    compact.add(part);part.userData.batchTint=new T.Color();f.scene.remove(f.roots[1]);
+    const state={radius:1000,isPlayer:false,alive:true,falling:false,integrity:1,bayOpen:false};
+    registerFormationSource(f.roots[0],state,compact);f.submit.high=true;
+    const update=vi.spyOn(f.meshes[0],'updateMatrix');
+    f.roots[0].position.x=640;f.submit.prepare(f.scene,f.camera);expect(update).toHaveBeenCalled();update.mockClear();
+    f.roots[0].position.x=700;f.submit.prepare(f.scene,f.camera);expect(update).not.toHaveBeenCalled();
+    state.integrity=.9;f.submit.prepare(f.scene,f.camera);expect(update).toHaveBeenCalled();update.mockClear();
+    state.integrity=1;f.submit.allowCompact=false;f.submit.prepare(f.scene,f.camera);expect(update).toHaveBeenCalled();
+  });
+  it('uses compact High casters outside the view while retaining reflected aircraft',()=>{
+    const f=fixture(),compact=new T.Group(),part=new T.Mesh(f.geometry,f.material);
+    compact.add(part);part.userData.batchTint=new T.Color();f.scene.remove(f.roots[1]);
+    f.camera.updateMatrixWorld();f.roots[0].position.set(300,0,-10);f.submit.high=true;
+    registerFormationSource(f.roots[0],{radius:1,isPlayer:false,alive:true,falling:false,integrity:1},compact);
+    const sun=new T.DirectionalLight();sun.castShadow=true;sun.shadow.autoUpdate=false;sun.shadow.needsUpdate=true;
+    sun.position.set(300,100,-10);sun.target.position.set(300,0,-10);sun.target.updateMatrixWorld();
+    sun.shadow.camera.left=-50;sun.shadow.camera.right=50;sun.shadow.camera.top=50;sun.shadow.camera.bottom=-50;sun.shadow.camera.updateProjectionMatrix();
+    f.scene.add(sun,sun.target);const update=vi.spyOn(f.meshes[0],'updateMatrix');
+    f.submit.prepare(f.scene,f.camera);expect(update).not.toHaveBeenCalled();
+    f.submit.reflectionRange=400;f.submit.prepare(f.scene,f.camera);expect(update).toHaveBeenCalled();
+  });
   it('bakes only the authored far LOD into a compact mesh without changing source transforms',()=>{
     const f=fixture(),source=new T.Group(),lod=new T.Group();lod.name='body_LOD2';
     const body=new T.Mesh(f.geometry,f.material);body.position.x=3;lod.add(body);source.add(lod);

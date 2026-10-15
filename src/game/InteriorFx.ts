@@ -42,7 +42,7 @@ export function shaftMaterial(): THREE.ShaderMaterial {
         float a = pow(vF, 2.0) * across * smoothstep(0.0, 0.12, vT) * (1.0 - smoothstep(0.3, 1.0, vT)) * smoothstep(0.25, 0.9, vNear);
         gl_FragColor = vec4(uCol * a, 1.0);
       }`,
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, forceSinglePass: true,
   });
   return shaftMat;
 }
@@ -53,10 +53,29 @@ export function shaftMaterial(): THREE.ShaderMaterial {
 // when the eye is inside the beam (from the eye to the face), so nothing is counted twice and
 // the beam needs no depth texture. Along the ray: drifting dust (two octaves of value noise
 // with bright motes), soft edges, fading with distance from the window.
+// Cache the lattice once: one filtered 3D lookup replaces eight procedural hashes
+// per octave at every ray step, retaining the same smooth value-noise response.
+let shaftNoise: THREE.Data3DTexture | null = null;
+function shaftNoiseTexture() {
+  if (shaftNoise) return shaftNoise;
+  const size = 32, data = new Uint8Array(size ** 3);
+  let seed = 1943;
+  for (let i = 0; i < data.length; i++) {
+    seed = Math.imul(seed, 1664525) + 1013904223 | 0;
+    data[i] = seed >>> 24;
+  }
+  shaftNoise = new THREE.Data3DTexture(data, size, size, size);
+  shaftNoise.format = THREE.RedFormat;
+  shaftNoise.wrapS = shaftNoise.wrapT = shaftNoise.wrapR = THREE.RepeatWrapping;
+  shaftNoise.minFilter = shaftNoise.magFilter = THREE.LinearFilter;
+  shaftNoise.unpackAlignment = 1; shaftNoise.needsUpdate = true;
+  return shaftNoise;
+}
 let shaftVolMat: THREE.ShaderMaterial | null = null;
 export function shaftVolumeMaterial(): THREE.ShaderMaterial {
   shaftVolMat ??= new THREE.ShaderMaterial({
     uniforms: {
+      uDustNoise: { value: shaftNoiseTexture() },
       uCol: { value: new THREE.Color() }, uCam: { value: new THREE.Vector3() }, uTime: { value: 0 },
       uPlanes: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) }, uLen: { value: SHAFT_LEN },
     },
@@ -67,10 +86,10 @@ export function shaftVolumeMaterial(): THREE.ShaderMaterial {
       uniform vec3 uCol; uniform vec3 uCam; uniform float uTime; uniform vec4 uPlanes[6]; uniform float uLen;
       varying vec3 vP;
       float h31(vec3 p) { p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+      uniform highp sampler3D uDustNoise;
       float vnoise(vec3 p) {
-        vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-        return mix(mix(mix(h31(i), h31(i + vec3(1,0,0)), f.x), mix(h31(i + vec3(0,1,0)), h31(i + vec3(1,1,0)), f.x), f.y),
-                   mix(mix(h31(i + vec3(0,0,1)), h31(i + vec3(1,0,1)), f.x), mix(h31(i + vec3(0,1,1)), h31(i + vec3(1,1,1)), f.x), f.y), f.z);
+        vec3 f=fract(p);f=f*f*(3.-2.*f);
+        return texture(uDustNoise,(floor(p)+f+.5)/32.).r;
       }
       void main() {
         vec3 rd = vP - uCam; float dist = length(rd); rd /= dist;
@@ -91,22 +110,32 @@ export function shaftVolumeMaterial(): THREE.ShaderMaterial {
         const int N = 10;
         float dt = (t1 - t0) / float(N), acc = 0.0;
         float j = h31(vec3(gl_FragCoord.xy, uTime * 60.0));
+        // Plane distances vary linearly along the ray. Hoist their dot products
+        // out of the march; the normalized ray also makes eye distance exactly t.
+        vec4 edge0, edgeStep;
+        for (int i = 0; i < 4; i++) {
+          edge0[i] = uPlanes[i].w - dot(uPlanes[i].xyz, uCam);
+          edgeStep[i] = -dot(uPlanes[i].xyz, rd);
+        }
+        float along0 = (uPlanes[4].w - dot(uPlanes[4].xyz, uCam)) / uLen;
+        float alongStep = -dot(uPlanes[4].xyz, rd) / uLen;
         for (int k = 0; k < N; k++) {
-          vec3 p = uCam + rd * (t0 + (float(k) + j) * dt);
+          float t = t0 + (float(k) + j) * dt;
+          vec3 p = uCam + rd * t;
           // soft edges: distance inside the nearest side plane
-          float e = 1e3;
-          for (int i = 0; i < 4; i++) e = min(e, uPlanes[i].w - dot(uPlanes[i].xyz, p));
-          float along = clamp((uPlanes[4].w - dot(uPlanes[4].xyz, p)) / uLen, 0.0, 1.0);   // 0 at the window
+          vec4 edges = edge0 + edgeStep * t;
+          float e = min(min(edges.x, edges.y), min(edges.z, edges.w));
+          float along = clamp(along0 + alongStep * t, 0.0, 1.0);   // 0 at the window
           vec3 q = p * 9.0 + vec3(0.0, uTime * 0.25, uTime * 0.6);
           float dust = 0.55 + 0.45 * vnoise(q) + 0.35 * vnoise(q * 2.7 + 7.1);
           float mote = smoothstep(0.83, 0.95, vnoise(p * 55.0 + vec3(uTime * 0.4, 0.0, uTime * 1.3)));
-          float near = smoothstep(0.15, 0.6, length(p - uCam));
+          float near = smoothstep(0.15, 0.6, t);
           acc += (dust + 2.5 * mote) * smoothstep(0.0, 0.06, e) * smoothstep(0.0, 0.08, along) * (1.0 - smoothstep(0.35, 1.0, along)) * near;
         }
         float a = acc * dt;
         gl_FragColor = vec4(uCol * a, 1.0);
       }`,
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, forceSinglePass: true,
   });
   return shaftVolMat;
 }
@@ -145,6 +174,7 @@ export class SunShafts {
       geo.boundingSphere = new THREE.Sphere(corners[0].clone(), 4);
       const mat = shaftMaterial().clone();
       const vol = shaftVolumeMaterial().clone();
+      vol.uniforms.uDustNoise.value = shaftNoiseTexture();
       const mesh = new THREE.Mesh(geo, mat);
       mesh.renderOrder = 2;
       mesh.name = 'sunShaft';

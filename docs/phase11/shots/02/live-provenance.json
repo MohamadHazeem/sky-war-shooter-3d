@@ -7,13 +7,16 @@
       "file": "assets/index-DT4N_VKK.js",
       "live_sha256": "e59ce20752d4c1f5cd076c36b9101f65055b898e058baee987f306a9761f147b",
       "main_dist_sha256": "e59ce20752d4c1f5cd076c36b9101f65055b898e058baee987f306a9761f147b",
-      "identical": true
+      "identical": true,
+      "recheck_sha256": "e59ce20752d4c1f5cd076c36b9101f65055b898e058baee987f306a9761f147b"
     },
     {
       "file": "sw.js",
       "live_sha256": "840e1547c0e9023ef7313f486efd3f475edc875951b1dabc0b95e7951f494ddd",
       "main_dist_sha256": "840e1547c0e9023ef7313f486efd3f475edc875951b1dabc0b95e7951f494ddd",
-      "identical": true
+      "identical": true,
+      "recheck_sha256": "840e1547c0e9023ef7313f486efd3f475edc875951b1dabc0b95e7951f494ddd"
     }
-  ]
+  ],
+  "recheckedAt": "2026-10-15T10:14:11.942761+00:00"
 }

@@ -53,7 +53,7 @@ async function boot() {
   game.world.effects.setQuality(options.quality);
   // No Engine.start(), auto graphics, live input, director, or wall-clock animation loop.
   Math.random = seededRandom(options.seed);
-  const facts = setupRigShot(engine, game, shot, () => { tick++; engine.frame(RIG_DT, false); });
+  const facts = setupRigShot(engine, game, shot, () => { tick++; engine.frame(RIG_DT, false); }, options.seed);
   engine.onFrame = undefined;
   engine.beforeFrame = undefined;
   // Hide all game chrome; the standalone development page has no player-facing controls.

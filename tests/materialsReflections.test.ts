@@ -4,6 +4,7 @@ import { aircraftFinish, tuneAircraftGlass } from '../src/render/AircraftFinish'
 import { auditMaterial } from '../src/render/MaterialAudit';
 import { bindGlassReflection, reflectionUniforms } from '../src/render/GlassReflection';
 import { SunCascades } from '../src/render/SunCascades';
+import { FormationReflection, formationReflectionUniforms } from '../src/render/FormationReflection';
 import { Atmos } from '../src/render/Atmosphere';
 
 describe('aircraft finishes and safe glass reflections', () => {
@@ -48,6 +49,14 @@ describe('aircraft finishes and safe glass reflections', () => {
     const cascade = new SunCascades(scene, sun), camera = new T.PerspectiveCamera(62, 16 / 9, .03, 3000);
     camera.position.set(0, 7600, 0); camera.updateMatrixWorld();
     cascade.quality(2048, 40, true); cascade.update(camera, 4);
+    // Nearby wing/fuselage intersections remain in the fine map through 38 m.
+    const close = cascade.lights[0]; close.updateMatrixWorld(); close.shadow.updateMatrices(close);
+    expect((close.shadow.camera.right - close.shadow.camera.left) / 2048).toBeLessThan(.07);
+    for (const d of [10, 35, 50]) {
+      const p = new T.Vector3(0, 7600, -d).applyMatrix4(close.shadow.matrix);
+      expect(p.x).toBeGreaterThan(0); expect(p.x).toBeLessThan(1);
+      expect(p.y).toBeGreaterThan(0); expect(p.y).toBeLessThan(1);
+    }
     const light = cascade.lights[1]; light.updateMatrixWorld(); light.shadow.updateMatrices(light);
     expect((light.shadow.camera.right - light.shadow.camera.left) / 2048).toBeLessThan(520 / 2048 * .7);
     for (const d of [10, 50, 100, 150, 200]) {
@@ -57,4 +66,26 @@ describe('aircraft finishes and safe glass reflections', () => {
     }
     expect(Atmos.sunDir.length()).toBeCloseTo(1);
   });
+  it('stages six probe faces, skips unoccupied views and preserves borrowed aircraft parents', () => {
+    const probe = new FormationReflection(), scene = new T.Scene(), eye = new T.PerspectiveCamera();
+    const skin = new T.MeshStandardMaterial(); skin.name = 'hero_skin';
+    const aircraft = new T.Mesh(new T.BoxGeometry(), skin); scene.add(aircraft);
+    let draws = 0;
+    const renderer = {
+      autoClear: true, shadowMap: { autoUpdate: true },
+      getRenderTarget: () => null, getActiveCubeFace: () => 0, getActiveMipmapLevel: () => 0,
+      getClearAlpha: () => 1, getClearColor: (c: T.Color) => c.set(0), setClearColor() {}, setRenderTarget() {},
+      render: (borrowed: T.Scene) => { draws++; expect(borrowed.children).toContain(aircraft); expect(aircraft.parent).toBe(scene); },
+    } as unknown as T.WebGLRenderer;
+    probe.update(renderer, scene, eye, false); expect(draws).toBe(0);
+    for (let i = 0; i < 10; i++) probe.update(renderer, scene, eye, true);
+    expect(formationReflectionUniforms.swsFormationOn.value).toBe(0);
+    probe.update(renderer, scene, eye, true);
+    expect(draws).toBe(6); expect(formationReflectionUniforms.swsFormationOn.value).toBe(1);
+    expect(renderer.autoClear).toBe(true); expect(renderer.shadowMap.autoUpdate).toBe(true);
+    eye.position.x = 100; probe.update(renderer, scene, eye, true);
+    expect(formationReflectionUniforms.swsFormationOn.value).toBe(0);
+    probe.update(renderer, scene, eye, false); expect(formationReflectionUniforms.swsFormationOn.value).toBe(0);
+  });
+
 });

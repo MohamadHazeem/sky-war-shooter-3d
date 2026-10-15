@@ -1,0 +1,891 @@
+[
+  {
+    "stage": "180-frame warmup, High shadow-only compact beyond 180 m",
+    "method": "180 warm-up frames followed by one continuous 180-frame rig benchmark per shot; a fresh browser process per fixture releases all prior scene/GPU resources. Frozen simulation, GPU fenced; p95 of all 180 frames. No other task-owned capture concurrent.",
+    "results": [
+      {
+        "shot": "waist-interior",
+        "mean": 10.395555555654896,
+        "p95": 12.400000005960464,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 245,
+          "programsAfter": 245,
+          "mean": 11.305555555721124,
+          "p50": 10.599999994039536,
+          "p95": 13.100000023841858,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": false,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 245,
+            "programsAfter": 245,
+            "mean": 10.395555555654896,
+            "p50": 10.300000011920929,
+            "p95": 12.400000005960464,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "sunset",
+        "mean": 8.5605555554231,
+        "p95": 10.299999982118607,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 245,
+          "programsAfter": 245,
+          "mean": 10.548888888955116,
+          "p50": 9,
+          "p95": 17.599999994039536,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 245,
+            "programsAfter": 245,
+            "mean": 8.5605555554231,
+            "p50": 8.400000005960464,
+            "p95": 10.299999982118607,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      }
+    ]
+  },
+  {
+    "stage": "High shadow-only compact beyond 80 m",
+    "method": "180 warm-up frames followed by one continuous 180-frame rig benchmark per shot; a fresh browser process per fixture releases all prior scene/GPU resources. Frozen simulation, GPU fenced; p95 of all 180 frames. No other task-owned capture concurrent.",
+    "results": [
+      {
+        "shot": "waist-interior",
+        "mean": 9.284444444543785,
+        "p95": 11.300000011920929,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 245,
+          "programsAfter": 245,
+          "mean": 9.582222221957313,
+          "p50": 9.299999982118607,
+          "p95": 12.099999994039536,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": false,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 245,
+            "programsAfter": 245,
+            "mean": 9.284444444543785,
+            "p50": 9.199999988079071,
+            "p95": 11.300000011920929,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "sunset",
+        "mean": 8.313888888888888,
+        "p95": 10.200000017881393,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 245,
+          "programsAfter": 245,
+          "mean": 8.080000000033113,
+          "p50": 8,
+          "p95": 9.5,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 245,
+            "programsAfter": 245,
+            "mean": 8.313888888888888,
+            "p50": 8.299999982118607,
+            "p95": 10.200000017881393,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      }
+    ]
+  },
+  {
+    "stage": "Full run before half-resolution shaft pass",
+    "method": "180 warm-up frames followed by one continuous 180-frame rig benchmark per shot; a fresh browser process per fixture releases all prior scene/GPU resources. Frozen simulation, GPU fenced; p95 of all 180 frames. No other task-owned capture concurrent.",
+    "results": [
+      {
+        "shot": "b17-beauty",
+        "mean": 8.455555555721125,
+        "p95": 11.5,
+        "budget": 11,
+        "reflectionVisible": true,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 244,
+          "programsAfter": 244,
+          "mean": 8.491666666832234,
+          "p50": 8.099999994039536,
+          "p95": 12.5,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 244,
+            "programsAfter": 244,
+            "mean": 8.455555555721125,
+            "p50": 8.200000017881393,
+            "p95": 11.5,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "top-formation",
+        "mean": 9.33611111111111,
+        "p95": 13.900000005960464,
+        "budget": 11,
+        "reflectionVisible": true,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 247,
+          "programsAfter": 247,
+          "mean": 8.716111111144224,
+          "p50": 8.200000017881393,
+          "p95": 11.799999982118607,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 247,
+            "programsAfter": 247,
+            "mean": 9.33611111111111,
+            "p50": 8.899999976158142,
+            "p95": 13.900000005960464,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "p51-cockpit",
+        "mean": 6.564444444576899,
+        "p95": 8.599999994039536,
+        "budget": 11,
+        "reflectionVisible": true,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 243,
+          "programsAfter": 243,
+          "mean": 6.686111111111111,
+          "p50": 6.799999982118607,
+          "p95": 8.899999976158142,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 243,
+            "programsAfter": 243,
+            "mean": 6.564444444576899,
+            "p50": 6.699999988079071,
+            "p95": 8.599999994039536,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "waist-interior",
+        "mean": 10.128888888822662,
+        "p95": 12.100000023841858,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 245,
+          "programsAfter": 245,
+          "mean": 11.19722222238779,
+          "p50": 10.700000017881393,
+          "p95": 14.899999976158142,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": false,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 245,
+            "programsAfter": 245,
+            "mean": 10.128888888822662,
+            "p50": 9.899999976158142,
+            "p95": 12.100000023841858,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "sunset",
+        "mean": 8.10333333330022,
+        "p95": 9.800000011920929,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 245,
+          "programsAfter": 245,
+          "mean": 7.951666666898462,
+          "p50": 8,
+          "p95": 9.299999982118607,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 245,
+            "programsAfter": 245,
+            "mean": 8.10333333330022,
+            "p50": 8.199999988079071,
+            "p95": 9.800000011920929,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "night-flak",
+        "mean": 3.97166666669978,
+        "p95": 5,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 239,
+          "programsAfter": 239,
+          "mean": 3.9238888889551164,
+          "p50": 3.5999999940395355,
+          "p95": 5.299999982118607,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 239,
+            "programsAfter": 239,
+            "mean": 3.97166666669978,
+            "p50": 3.800000011920929,
+            "p95": 5,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "turret-glass",
+        "mean": 7.029444444345104,
+        "p95": 8.599999994039536,
+        "budget": 11,
+        "reflectionVisible": true,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 247,
+          "programsAfter": 247,
+          "mean": 7.1738888889551164,
+          "p50": 7.100000023841858,
+          "p95": 9.100000023841858,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 247,
+            "programsAfter": 247,
+            "mean": 7.029444444345104,
+            "p50": 7.0999999940395355,
+            "p95": 8.599999994039536,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "close-shadow",
+        "mean": 7.212222222155995,
+        "p95": 8.900000005960464,
+        "budget": 11,
+        "reflectionVisible": true,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 245,
+          "programsAfter": 245,
+          "mean": 7.589999999933773,
+          "p50": 7.699999988079071,
+          "p95": 9.099999994039536,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 245,
+            "programsAfter": 245,
+            "mean": 7.212222222155995,
+            "p50": 7.200000017881393,
+            "p95": 8.900000005960464,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "formation-glints",
+        "mean": 5.788333333532015,
+        "p95": 7.9000000059604645,
+        "budget": 11,
+        "reflectionVisible": true,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 244,
+          "programsAfter": 244,
+          "mean": 5.842777777877119,
+          "p50": 5.9000000059604645,
+          "p95": 8.100000023841858,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 244,
+            "programsAfter": 244,
+            "mean": 5.788333333532015,
+            "p50": 5.799999982118607,
+            "p95": 7.9000000059604645,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      }
+    ]
+  },
+  {
+    "stage": "Six shaft steps, reverted",
+    "method": "180 warm-up frames followed by one continuous 180-frame rig benchmark per shot; a fresh browser process per fixture releases all prior scene/GPU resources. Frozen simulation, GPU fenced; p95 of all 180 frames. No other task-owned capture concurrent.",
+    "results": [
+      {
+        "shot": "waist-interior",
+        "mean": 9.588333333200879,
+        "p95": 11.699999988079071,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 245,
+          "programsAfter": 245,
+          "mean": 10.52166666669978,
+          "p50": 10.199999988079071,
+          "p95": 13.5,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": false,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 245,
+            "programsAfter": 245,
+            "mean": 9.588333333200879,
+            "p50": 9.400000005960464,
+            "p95": 11.699999988079071,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      }
+    ]
+  },
+  {
+    "stage": "Half-resolution shafts, 80 m offscreen compact threshold",
+    "method": "180 warm-up frames followed by one continuous 180-frame rig benchmark per shot; a fresh browser process per fixture releases all prior scene/GPU resources. Frozen simulation, GPU fenced; p95 of all 180 frames. No other task-owned capture concurrent.",
+    "results": [
+      {
+        "shot": "waist-interior",
+        "mean": 9.739444444576899,
+        "p95": 12.199999988079071,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 247,
+          "programsAfter": 247,
+          "mean": 9.009444444543785,
+          "p50": 8.700000017881393,
+          "p95": 11.200000017881393,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": false,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 247,
+            "programsAfter": 247,
+            "mean": 9.739444444576899,
+            "p50": 9.5,
+            "p95": 12.199999988079071,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      }
+    ]
+  },
+  {
+    "stage": "Half-resolution shafts, 60 m compact caster threshold; other Blender/basisu/TTS jobs active",
+    "method": "180 warm-up frames followed by one continuous 180-frame rig benchmark per shot; a fresh browser process per fixture releases all prior scene/GPU resources. Frozen simulation, GPU fenced; p95 of all 180 frames. No other task-owned capture concurrent.",
+    "results": [
+      {
+        "shot": "waist-interior",
+        "mean": 11.026111111210453,
+        "p95": 12.900000005960464,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 247,
+          "programsAfter": 247,
+          "mean": 10.727777777612209,
+          "p50": 10.5,
+          "p95": 12.799999982118607,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": false,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 247,
+            "programsAfter": 247,
+            "mean": 11.026111111210453,
+            "p50": 10.899999976158142,
+            "p95": 12.900000005960464,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "sunset",
+        "mean": 8.962222222321563,
+        "p95": 12.099999994039536,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 247,
+          "programsAfter": 247,
+          "mean": 10.05277777761221,
+          "p50": 9.199999988079071,
+          "p95": 14.800000011920929,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": false,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 247,
+            "programsAfter": 247,
+            "mean": 8.962222222321563,
+            "p50": 8.5,
+            "p95": 12.099999994039536,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      }
+    ]
+  },
+  {
+    "stage": "Full High run with half-resolution shaft experiment (reverted)",
+    "method": "180 warm-up frames followed by one continuous 180-frame rig benchmark per shot; a fresh browser process per fixture releases all prior scene/GPU resources. Frozen simulation, GPU fenced; p95 of all 180 frames. No other task-owned capture concurrent.",
+    "results": [
+      {
+        "shot": "b17-beauty",
+        "mean": 8.168333333233992,
+        "p95": 9.799999982118607,
+        "budget": 11,
+        "reflectionVisible": true,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 246,
+          "programsAfter": 246,
+          "mean": 8.439999999933773,
+          "p50": 8.399999976158142,
+          "p95": 10.199999988079071,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 246,
+            "programsAfter": 246,
+            "mean": 8.168333333233992,
+            "p50": 8.099999994039536,
+            "p95": 9.799999982118607,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "top-formation",
+        "mean": 8.358333333498901,
+        "p95": 9,
+        "budget": 11,
+        "reflectionVisible": true,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 249,
+          "programsAfter": 249,
+          "mean": 8.526111111210453,
+          "p50": 8.300000011920929,
+          "p95": 10.5,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 249,
+            "programsAfter": 249,
+            "mean": 8.358333333498901,
+            "p50": 8.399999976158142,
+            "p95": 9,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "p51-cockpit",
+        "mean": 6.533888889021344,
+        "p95": 8.300000011920929,
+        "budget": 11,
+        "reflectionVisible": true,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 245,
+          "programsAfter": 245,
+          "mean": 6.448888888955116,
+          "p50": 6.5999999940395355,
+          "p95": 8.299999982118607,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 245,
+            "programsAfter": 245,
+            "mean": 6.533888889021344,
+            "p50": 6.699999988079071,
+            "p95": 8.300000011920929,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "waist-interior",
+        "mean": 12.134444444543785,
+        "p95": 13.599999994039536,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 247,
+          "programsAfter": 247,
+          "mean": 10.576666666732894,
+          "p50": 10.400000005960464,
+          "p95": 13,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": false,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 247,
+            "programsAfter": 247,
+            "mean": 12.134444444543785,
+            "p50": 10.900000005960464,
+            "p95": 13.599999994039536,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "sunset",
+        "mean": 8.10666666660044,
+        "p95": 9.100000023841858,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 247,
+          "programsAfter": 247,
+          "mean": 10.510000000066228,
+          "p50": 9.100000023841858,
+          "p95": 17.80000001192093,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 247,
+            "programsAfter": 247,
+            "mean": 8.10666666660044,
+            "p50": 8.099999994039536,
+            "p95": 9.100000023841858,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "night-flak",
+        "mean": 4.197222221891085,
+        "p95": 5.4000000059604645,
+        "budget": 11,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 241,
+          "programsAfter": 241,
+          "mean": 4.4127777775128685,
+          "p50": 4.4000000059604645,
+          "p95": 6,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 241,
+            "programsAfter": 241,
+            "mean": 4.197222221891085,
+            "p50": 4,
+            "p95": 5.4000000059604645,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "turret-glass",
+        "mean": 7.743333333399561,
+        "p95": 9.100000023841858,
+        "budget": 11,
+        "reflectionVisible": true,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 249,
+          "programsAfter": 249,
+          "mean": 8.260555555588668,
+          "p50": 8,
+          "p95": 11.099999994039536,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 249,
+            "programsAfter": 249,
+            "mean": 7.743333333399561,
+            "p50": 7.800000011920929,
+            "p95": 9.100000023841858,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "close-shadow",
+        "mean": 9.352777777943347,
+        "p95": 12.200000017881393,
+        "budget": 11,
+        "reflectionVisible": true,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 247,
+          "programsAfter": 247,
+          "mean": 8.497777777744664,
+          "p50": 8.199999988079071,
+          "p95": 10.700000017881393,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 247,
+            "programsAfter": 247,
+            "mean": 9.352777777943347,
+            "p50": 8.900000005960464,
+            "p95": 12.200000017881393,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "formation-glints",
+        "mean": 6.303888888657093,
+        "p95": 8.700000017881393,
+        "budget": 11,
+        "reflectionVisible": true,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 246,
+          "programsAfter": 246,
+          "mean": 7.177777777777778,
+          "p50": 6.9000000059604645,
+          "p95": 10.299999982118607,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 246,
+            "programsAfter": 246,
+            "mean": 6.303888888657093,
+            "p50": 6.200000017881393,
+            "p95": 8.700000017881393,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      }
+    ]
+  },
+  {
+    "stage": "Low repeat under concurrent machine load",
+    "method": "180 warm-up frames followed by one continuous 180-frame rig benchmark per shot; a fresh browser process per fixture releases all prior scene/GPU resources. Frozen simulation, GPU fenced; p95 of all 180 frames. No other task-owned capture concurrent.",
+    "results": [
+      {
+        "shot": "b17-beauty",
+        "mean": 3.9977777779102324,
+        "p95": 5.4000000059604645,
+        "budget": 6,
+        "reflectionVisible": true,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 240,
+          "programsAfter": 240,
+          "mean": 3.4005555553568736,
+          "p50": 3.2000000178813934,
+          "p95": 5.5,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 240,
+            "programsAfter": 240,
+            "mean": 3.9977777779102324,
+            "p50": 3.800000011920929,
+            "p95": 5.4000000059604645,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "top-formation",
+        "mean": 4.610555555588669,
+        "p95": 6.700000017881393,
+        "budget": 6,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 241,
+          "programsAfter": 241,
+          "mean": 3.5655555557873515,
+          "p50": 3.300000011920929,
+          "p95": 4.800000011920929,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": true,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 241,
+            "programsAfter": 241,
+            "mean": 4.610555555588669,
+            "p50": 4.4000000059604645,
+            "p95": 6.700000017881393,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      },
+      {
+        "shot": "waist-interior",
+        "mean": 6.009444444378217,
+        "p95": 8.199999988079071,
+        "budget": 6,
+        "reflectionVisible": false,
+        "warmup": {
+          "samples": 180,
+          "programsBefore": 242,
+          "programsAfter": 242,
+          "mean": 5.35722222228845,
+          "p50": 4.700000017881393,
+          "p95": 8.099999994039536,
+          "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+        },
+        "passes": false,
+        "batches": [
+          {
+            "samples": 180,
+            "programsBefore": 242,
+            "programsAfter": 242,
+            "mean": 6.009444444378217,
+            "p50": 5.5999999940395355,
+            "p95": 8.199999988079071,
+            "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+          }
+        ],
+        "errors": []
+      }
+    ]
+  }
+]

@@ -20,11 +20,11 @@ try {
    const T=await import(performance.getEntriesByType('resource').find(r=>new URL(r.name).pathname.endsWith('/three.js')).name);
    const {GLASS_REFLECTION_GLSL,reflectionUniforms:u,bindGlassReflection}=await import(resource('/src/render/GlassReflection.ts'));
    // A controlled view-space surface reflects a coloured opaque receiver at a known depth.
-   const depth=new T.DataTexture(new Float32Array([2+.18*Math.pow(1.95,6)-.1]),1,1,T.RedFormat,T.FloatType);depth.needsUpdate=true;
+   const depth=new T.DataTexture(new Float32Array([2+.5*.3*Math.pow(2.25,5)-.1]),1,1,T.RedFormat,T.FloatType);depth.needsUpdate=true;
    const color=new T.DataTexture(new Uint8Array([220,80,30,255]),1,1);color.needsUpdate=true;
-   const camera=new T.PerspectiveCamera(62,1,.03,1000);
+   const camera=new T.PerspectiveCamera(140,1,.03,1000);
    bindGlassReflection(color,depth,camera,true);
-   const mat=new T.ShaderMaterial({uniforms:u,vertexShader:'void main(){gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:GLASS_REFLECTION_GLSL+'\nvoid main(){gl_FragColor=swsGlassReflection(vec3(0.,0.,-2.),vec3(1.,0.,0.));}',depthTest:false,depthWrite:false});
+   const mat=new T.ShaderMaterial({uniforms:u,vertexShader:'void main(){gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:GLASS_REFLECTION_GLSL+'\nvoid main(){gl_FragColor=swsGlassReflection(vec3(0.,0.,-2.),vec3(.8660254,0.,.5));}',depthTest:false,depthWrite:false});
    const scene=new T.Scene(),quad=new T.Mesh(new T.PlaneGeometry(2,2),mat);scene.add(quad);
    const target=new T.WebGLRenderTarget(4,4),pixel=new Uint8Array(4);
    const sample=()=>{r.setRenderTarget(target);r.render(scene,camera);r.readRenderTargetPixels(target,2,2,1,1,pixel);return [...pixel];};

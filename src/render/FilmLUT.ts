@@ -3,7 +3,7 @@ export type FilmMood='warm'|'cold'|'overcast'|'dusk'|'night';
 export const FILM_MOODS:FilmMood[]=['warm','cold','overcast','dusk','night'];
 // Look references: Poly Haven Kloofendal 48d (neutral sun/cool fill), Kiara 1 Dawn
 // (violet shade/peach horizon). See docs/phase11/shots/02/CREDITS.md.
-const looks:Record<FilmMood,readonly number[]>={warm:[.88,.97,1.08,1.045,1,.95,1.02],cold:[.80,.96,1.17,1.01,1,1.04,.97],overcast:[.87,.98,1.12,1.01,1,1,.93],dusk:[.90,.90,1.15,1.10,.97,.87,1.04],night:[.72,.88,1.15,.94,1,1.09,.88]};
+const looks:Record<FilmMood,readonly number[]>={warm:[.88,.97,1.08,1.045,1,.95,1.02],cold:[.80,.96,1.17,1.01,1,1.04,.97],overcast:[.87,.98,1.12,1.01,1,1,.93],dusk:[.65,.80,1.32,1.12,1.00,.88,1.06],night:[.72,.88,1.15,.94,1,1.09,.88]};
 export function filmColor(r:number,g:number,b:number,mood:FilmMood):[number,number,number]{
  // A bounded print shoulder/toe keeps bright cloud tops while separating middle tones.
  const contrast=mood==='night'?.10:mood==='overcast'?.22:.30;

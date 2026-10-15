@@ -135,7 +135,8 @@ class Bloom {
       renderer.setRenderTarget(this.down[i]);
       this.quad.render(renderer);
     }
-    this.upMat.uniforms.uConserve.value = levels === 3 ? 0 : 1;
+    // Preserve radiance on every tier; three compact levels retain crisp sun glints.
+    this.upMat.uniforms.uConserve.value = 1;
     this.quad.material = this.upMat;
     let prev = this.down[levels - 1];
     for (let i = levels - 2; i >= 0; i--) {

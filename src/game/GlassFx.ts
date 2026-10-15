@@ -1,4 +1,5 @@
-import { GLASS_REFLECTION_GLSL, reflectionUniforms } from '../render/GlassReflection';
+import { formationReflectionUniforms } from '../render/FormationReflection';
+import { GLASS_ENV_GLSL, GLASS_REFLECTION_GLSL, reflectionUniforms } from '../render/GlassReflection';
 import * as THREE from 'three';
 import type { World } from '../world/World';
 import type { Bomber, Fighter, HitZone } from '../world/Aircraft';
@@ -44,16 +45,20 @@ const SHAPE_CANOPY = 0, SHAPE_SPHERE = 1, SHAPE_PLANE = 2;
 
 const VERT = /* glsl */ `
   uniform mat4 uFrame;
-  varying vec3 vP; varying vec3 vW; varying vec4 vClip;
+  varying vec3 vP; varying vec3 vW; varying vec3 vNormal; varying vec4 vClip;
   void main() {
     vP = (uFrame * vec4(position, 1.0)).xyz;
     vec4 w = modelMatrix * vec4(position, 1.0);
     vW = w.xyz;
+    vNormal = normalize(normalMatrix * normal);
     gl_Position = projectionMatrix * viewMatrix * w;
     vClip = gl_Position;
   }`;
 
 const FRAG = /* glsl */ `
+  uniform samplerCube swsFormationMap;
+  uniform float swsFormationOn;
+  ${GLASS_ENV_GLSL}
   ${GLASS_REFLECTION_GLSL}
   uniform float uShape, uR, uTime, uRain, uSpeedK, uFlowV, uGlint, uDust, uOil, uSpat, uFrost, uCrackN, uAimK, uAspect;
   uniform vec3 uC, uAxis, uUp, uFlow, uFlowUp, uSun, uSunCol, uSky, uFlash;
@@ -61,7 +66,7 @@ const FRAG = /* glsl */ `
   uniform vec2 uOilMask, uSunNdc;
   uniform vec4 uCrackP[${MAX_CRACKS}], uCrackA[${MAX_CRACKS}], uCrackB[${MAX_CRACKS}];
   uniform sampler2D uFrostTex;
-  varying vec3 vP; varying vec3 vW; varying vec4 vClip;
+  varying vec3 vP; varying vec3 vW; varying vec3 vNormal; varying vec4 vClip;
 
   float h12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
   vec2 h22(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973)); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.xx + p3.yz) * p3.zy); }
@@ -352,13 +357,21 @@ const FRAG = /* glsl */ `
 
     // Perspex reflects the visible formation/cloud composite; offscreen rays use sky fill.
     if(swsReflectionOn>.5 && uDust>0.) {
-      vec3 wn=normalize(cross(dFdx(vW),dFdy(vW)));
-      vec3 vn=normalize(mat3(viewMatrix)*wn);
+      vec3 vn=normalize(vNormal);
+      vec3 wn=normalize(vec3(vec4(vn,0.)*viewMatrix));
       vec3 vp=(viewMatrix*vec4(vW,1.)).xyz;
-      float f=.035+.965*pow(1.-abs(dot(wn,normalize(cameraPosition-vW))),5.);
+      float f=.075+.925*pow(1.-abs(dot(wn,normalize(cameraPosition-vW))),5.);
       vec4 reflected=swsGlassReflection(vp,vn);
-      float weight=min(.24,f)*.65;
-      col+=mix(uSky*.32,reflected.rgb,reflected.a)*weight;
+      float weight=min(.30,f);
+      vec3 rd=reflect(vd,wn);
+      // Reflection behind the eye uses the same cloud/sky IBL as the outer glass.
+      vec3 sky=textureCubeUV(swsReflectionEnvironment,rd,.12).rgb;
+      if(swsFormationOn>.5) {
+        vec4 aircraft=textureCube(swsFormationMap,rd);
+        sky=mix(sky,aircraft.rgb,aircraft.a);
+        reflected.a*=1.-aircraft.a; // a real offscreen receiver wins over SSR sky misses
+      }
+      col+=mix(sky*1.3,reflected.rgb,reflected.a)*weight;
       a+=weight;
     }
     // keep the gunsight clear: everything thins out around the aim point (most in ADS)
@@ -370,6 +383,7 @@ const FRAG = /* glsl */ `
 
 // Uniforms shared by every pane (one frame's environment)
 const env = {
+  ...formationReflectionUniforms,
   ...reflectionUniforms,
   uTime: { value: 0 },
   uSun: { value: new THREE.Vector3(0, 1, 0) },
@@ -389,6 +403,7 @@ function glassMaterial(): THREE.ShaderMaterial {
   if (!baseMat) {
     const cracks = () => Array.from({ length: MAX_CRACKS }, () => new THREE.Vector4());
     baseMat = new THREE.ShaderMaterial({
+      name: 'gunner_glass_overlay',
       uniforms: {
         uFrame: { value: new THREE.Matrix4() },
         uShape: { value: 0 }, uR: { value: 0.4 }, uRain: { value: 0 }, uSpeedK: { value: 0 }, uFlowV: { value: 0 },
@@ -412,9 +427,14 @@ function glassMaterial(): THREE.ShaderMaterial {
 }
 
 function paneMaterial(): THREE.ShaderMaterial {
-  const m = glassMaterial().clone();
-  // the clone copies uniform values: point the environment back at the shared objects
-  for (const k of Object.keys(env) as (keyof typeof env)[]) m.uniforms[k] = env[k];
+  const source = glassMaterial();
+  // Render-target samplers are shared, never passed through UniformsUtils.clone.
+  const owned = Object.fromEntries(Object.entries(source.uniforms).filter(([k]) => !(k in env)));
+  const m = new THREE.ShaderMaterial({
+    name: source.name, vertexShader: source.vertexShader, fragmentShader: source.fragmentShader,
+    transparent: true, premultipliedAlpha: true, depthWrite: false, side: THREE.DoubleSide,
+    uniforms: { ...THREE.UniformsUtils.clone(owned), ...env },
+  });
   return m;
 }
 

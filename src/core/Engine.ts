@@ -1,3 +1,4 @@
+import { FormationReflection } from '../render/FormationReflection';
 import { bindGlassReflection, reflectionUniforms } from '../render/GlassReflection';
 import { AircraftSubmission } from '../render/AircraftSubmission';
 import { SkyCache } from '../render/SkyCache';
@@ -62,6 +63,8 @@ export interface Updatable { update(dt: number, time: number): void }
 
 // Owns the WebGL renderer and the frame pipeline:
 // scene (HDR + depth) -> volumetric clouds + aerial perspective -> bloom/motion blur/DOF/grade -> screen
+const glassMaterialName = /glass/i;
+
 export class Engine {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
@@ -135,6 +138,7 @@ export class Engine {
   private fpsCounter: FpsCounter | null = null;
 
   constructor(container: HTMLElement) {
+    this.submission.high = true; // Match the default tier even before a settings change.
     this.renderer = new THREE.WebGLRenderer({
       antialias: false,
       powerPreference: 'high-performance',
@@ -190,6 +194,7 @@ export class Engine {
 
     this.clouds = new CloudRenderer(this.reversed);
     this.post = new PostFX(this.reversed);
+    this.post.bloomLevels = 3;
     this.temporal = new TemporalFrame(this.reversed);
     this.post.cloudTex = this.clouds.texture;
     this.post.warmTextures(this.renderer);
@@ -242,6 +247,7 @@ export class Engine {
     this.quality = q;
     this.submission.low = q === 'low';
     this.submission.medium = q === 'medium';
+    this.submission.high = q === 'high';
     this.resetDynamicResolution();
     this.post.film.setPreset(q);
     setHeroQuality(q === 'low');
@@ -271,7 +277,7 @@ export class Engine {
     this.post.ao = p.temporal ? 0 : p.ao;
     this.post.economy = q === 'low';
     atmosUniforms.uAtmosQuality.value = q === 'low' ? 0 : 1;
-    this.post.bloomLevels = q === 'cinematic' ? 6 : q === 'ultra' ? 5 : 4;
+    this.post.bloomLevels = q === 'cinematic' ? 6 : q === 'ultra' ? 5 : q === 'high' ? 3 : 4;
     this.heatHaze.enabled = p.haze;
     this.livingSky.setQuality(p.particles);
     this.bomberStream.setQuality(q === 'cinematic' ? 'ultra' : q, this.sceneRT.samples);
@@ -467,9 +473,12 @@ export class Engine {
     r.clear();
     // Pass 1: opaque geometry (layer 0) -> HDR + depth
     // Film velocity uses the articulated source graph; keep that pose current during a shot.
-    this.submission.allowCompact = this.quality !== 'medium' || !(this.post.film.shot ?? this.post.film.look).objectBlur;
+    this.submission.allowCompact = (this.quality !== 'medium' && this.quality !== 'high') || !(this.post.film.shot ?? this.post.film.look).objectBlur;
+    this.submission.reflectionRange = this.reflectionInterior && this.quality !== 'low' && this.quality !== 'medium' ? 160 : 0;
     const drawScene = this.submission.prepare(this.scene, cam, r.shadowMap.needsUpdate);
     this.sortLayers(drawScene);
+    this.glassProbe.update(r, drawScene, cam, this.reflectionInterior && this.quality !== 'low' && this.quality !== 'medium');
+    r.setRenderTarget(this.sceneRT);
     cam.layers.set(0);
     r.render(drawScene, cam);
     // Opaque, transparent and velocity passes share one simulation pose. Three otherwise
@@ -484,7 +493,8 @@ export class Engine {
       // canopy or turret dome doesn't mask the exhaust shimmer seen through it)
       this.post.hazeTex = this.heatHaze.render(r, cam, this.sceneRT.depthTexture!);
       // linear depth copy for the soft effects (render/SoftDepth.ts), only when something wants it
-      if (this.quality !== 'low' && this.quality !== 'medium') softDepth.want();
+      const traceGlass = this.reflectionVisible && this.quality !== 'low' && this.quality !== 'medium';
+      if (traceGlass) softDepth.want();
       softDepth.capture(r, cam, this.sceneRT.depthTexture!, this.clouds.sunShadow);
       // Copy the composite back over the scene colour (keeping its depth buffer), then
       // pass 2: transparent effects (layer 1) on top of the clouds, depth-tested.
@@ -492,7 +502,7 @@ export class Engine {
       r.setRenderTarget(this.sceneRT);
       this.copyMat.uniforms.tSrc.value = this.hdrRT.texture;
       this.copyQuad.render(r);
-      bindGlassReflection(this.hdrRT.texture, softDepth.uniforms.tSoftDepth.value, cam, this.quality !== 'low' && this.quality !== 'medium');
+      bindGlassReflection(this.hdrRT.texture, softDepth.uniforms.tSoftDepth.value, cam, traceGlass, this.scene.environment);
       cam.layers.set(1);
       r.shadowMap.autoUpdate = false;
       r.render(drawScene, cam);
@@ -518,6 +528,7 @@ export class Engine {
       syncSurfaceDetail(quality);
       softDepth.want(); // compile the depth-copy pass before the first damage trail
       this.render(1/60);
+      this.glassProbe.update(this.renderer, this.submission.scene, this.camera, false, true);
       // Mission-owned interior/damage meshes also need their batched variants before a hit or station switch.
       this.submission.warming = true;
       this.renderer.shadowMap.needsUpdate = true;
@@ -563,8 +574,18 @@ export class Engine {
     return p;
   }
 
+  private glassProbe = new FormationReflection();
+  private reflectionInterior = false;
+  private reflectionVisible = false;
+  private reflectionSphere = new THREE.Sphere();
+  private reflectionFrustum = new THREE.Frustum();
+  private reflectionMatrix = new THREE.Matrix4();
+
   // Transparent materials go to layer 1 (drawn after the clouds), everything else layer 0
   private sortLayers(scene = this.scene) {
+    this.reflectionVisible = false;
+    this.reflectionInterior = false;
+    this.reflectionFrustum.setFromProjectionMatrix(this.reflectionMatrix.multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse), this.camera.coordinateSystem, this.camera.reversedDepth);
     scene.traverseVisible((o) => {
       if ((o as THREE.Light).isLight) { o.layers.enableAll(); return; }
       const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
@@ -572,6 +593,18 @@ export class Engine {
       if (Array.isArray(m)) { for (const material of m) { auditMaterial(material); freshEnv(material); } } else { auditMaterial(m); freshEnv(m); }   // back from outside the scene: the current sky
       const transparent = Array.isArray(m) ? m.some((x) => x.transparent) : m.transparent;
       o.layers.set(transparent && o !== this.sky.mesh ? 1 : 0);
+      if (!Array.isArray(m) && m.name === 'gunner_glass_overlay') this.reflectionInterior = true;
+      if (!this.reflectionVisible && transparent && !Array.isArray(m) && glassMaterialName.test(m.name)) {
+        const mesh = o as THREE.Mesh, geometry = mesh.geometry;
+        if (geometry) {
+          if (!geometry.boundingSphere) geometry.computeBoundingSphere();
+          this.reflectionSphere.copy(geometry.boundingSphere!).applyMatrix4(o.matrixWorld);
+          const distance = this.reflectionSphere.center.distanceTo(this.camera.position);
+          this.reflectionVisible = distance < 80 + this.reflectionSphere.radius &&
+            this.reflectionSphere.radius / Math.max(1, distance) > .012 &&
+            this.reflectionFrustum.intersectsSphere(this.reflectionSphere);
+        }
+      }
     });
   }
 

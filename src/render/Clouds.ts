@@ -238,6 +238,7 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
 #endif
   float tt = t0 + dt * jitter;
   float sigma = 0.0042;
+  float twilight=(1.-smoothstep(.12,.38,uSunDir.y))*smoothstep(.0,.07,uSunDir.y);
   for (int i = 0; i < 96; i++) {
     if (i >= steps || tt > t1 || T < 0.02) break;
 #ifdef CLOUD_TYPES
@@ -278,6 +279,10 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
       if (sel < 0.5) sun *= cloudShadow(p);
 #endif
       vec3 amb = mix(uHorizon * 0.3 + vec3(0.02), uZenith * 0.7 + uHorizon * 0.45, h) * uAmb * mix(0.42, 1.0, h * h * (3.0 - 2.0 * h));
+      // Low sun: blue skylight fills the shadowed lobes; direct light keeps peach rims.
+      sun*=mix(1.,mix(.28,1.,exp(-ls*.65)),twilight);
+      float ambL=dot(amb,vec3(.2126,.7152,.0722));
+      amb=mix(amb,ambL*vec3(.32,.54,1.35),twilight);
       if (sel < 0.5 && uGlow.w > 0.0) {
         vec2 gq = p.xz - uGlow.xy;
         amb += vec3(1.0, 0.45, 0.15) * uGlow.w * exp(-dot(gq, gq) / (uGlow.z * uGlow.z)) * (1.0 - h);

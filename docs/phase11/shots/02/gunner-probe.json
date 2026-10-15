@@ -1,0 +1,24 @@
+{
+  "faces": [
+    269,
+    63,
+    17,
+    429,
+    0,
+    123
+  ],
+  "ready": 63,
+  "active": 1,
+  "materials": [
+    "hero_glass",
+    "hero_interior",
+    "hero_panel",
+    "hero_seat",
+    "hero_ww2_pilot_old",
+    "hero_guns",
+    "hero_skin",
+    "hero_exhaust",
+    "hero_stencils",
+    "hero_aluminium"
+  ]
+}

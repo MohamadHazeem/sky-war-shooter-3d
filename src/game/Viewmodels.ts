@@ -535,16 +535,16 @@ export function buildTurret(kind: 'top' | 'ball'): { group: THREE.Group; guns: G
   const sightBody = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.045, 0.12), new THREE.MeshStandardMaterial({ color: 0x1c1d1a, roughness: 0.6, metalness: 0.5 }));
   sightBody.position.set(0, -0.085, 0.27);
   sightBody.visible = false; // sat right under the aim point; the reticle floats on its own
-  // Dome struts: left out of the view (they cut the sky into panels); the faint glass stays
+  // Two peripheral dome rails anchor the curved perspex; keep the firing lane open.
   const R = kind === 'ball' ? 0.62 : 0.68;
-  for (let i = 0; i < 0; i++) {
-    const a = (i / 6) * Math.PI * 2 + 0.3;
+  for (let i = 0; i < (kind === 'top' ? 2 : 0); i++) {
+    const a = i === 0 ? -.95 : .95;
     const pts: THREE.Vector3[] = [];
     for (let k = 0; k <= 12; k++) {
       const el = (k / 12) * Math.PI * 0.5;
       pts.push(new THREE.Vector3(Math.sin(a) * Math.cos(el) * R, (kind === 'ball' ? 1 : 1) * Math.sin(el) * R * (kind === 'ball' ? -1 : 1) - 0.15, Math.cos(a) * Math.cos(el) * R));
     }
-    const strut = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 12, 0.012, 4), fmat);
+    const strut = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.012, 6), fmat);
     g.add(strut);
   }
   const ring = new THREE.Mesh(new THREE.TorusGeometry(R, 0.04, 6, 48), fmat);

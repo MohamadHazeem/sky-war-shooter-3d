@@ -272,15 +272,32 @@ already-installed **headless shell**, never the desktop Chrome application.
 
 ### Phase 11 material reflections
 
-`AircraftFinish` keeps baked ORM maps while narrowing painted-metal highlights, bending bare-metal
-reflection normals along the UV brushing direction, and occluding reflections below the geometric
-surface. `MaterialAudit` binds its clone-safe finish uniforms; only glass compiles the reflection
-samplers. `Models` sets thin dielectric glass before prewarm, removing the redundant physical
-transmission pass. `GlassReflection` traces ten bounded view-space steps into the existing HDR
-cloud composite and **SoftDepth's linear depth copy**, never an attached depth texture. `Engine`
-binds these immediately before transparency; High+ enables tracing, Low/Medium/studio use IBL.
-`GlassFx` shares the same lookup with its turret/canopy overlay. All variants warm through the
-existing `World.prewarm` → `Engine.warmRenderer` path. The formation cascade fits a forward-shifted
-345.6 m square at the existing resolution, with edge blending back to the far cascade.
-The sky PMREM includes broad procedural cloud variation; HDR reference sources and matched
-live-main provenance are recorded in `docs/phase11/reports/02.md`.
+`AircraftFinish` retains baked ORM, satin paint, UV-oriented brushed-metal response and specular
+occlusion. Thin glass skips physical transmission and uses a single double-sided draw.
+`GlassReflection` reads the safe HDR composite and SoftDepth copy, with eight bounded trace steps,
+refined depth hits, depth-edge rejection, grazing fades and a small clamped spatial filter.
+`Engine.sortLayers` gates the copy/trace to nearby visible glass; Low and Medium retain IBL.
+
+`GlassFx` uses smooth pane normals and the weather-refreshed sky/cloud PMREM. Occupied High+ panes
+also use `FormationReflection`: a 256px aircraft-silhouette cubemap, one face every other frame,
+22–180 m, with no clouds, shadows, interior or effects passes. All six faces must be populated
+before sampling, and camera cuts invalidate them. The ordinary aircraft submission retains nearby
+ships behind the eye; probe render lists borrow their existing matrices without reparenting.
+`Engine.warmRenderer` warms batched/non-batched probe variants. The probe is an approximation:
+it supplies actual offscreen aircraft silhouettes, not full material/damage-shader shading.
+
+The near sun cascade keeps its 80 m map width/3.9 cm High texels, shifts 20 m toward the view and
+covers receivers through 38 m before blending. Near/mid caster depth is fitted to 160/520 m;
+map-edge fades retain fallback coverage. The formation map retains its 345.6 m width.
+Low-sun cloud illumination separates cool ambient fill from warm direct edges, alongside the
+mood LUT. High uses three radiance-normalized bloom levels for compact glints. The waist shaft
+uses a cached 32³ value-noise lattice and hoists linear plane distances outside the march.
+Submission retirement uses value iterators and changes instance visibility only when needed.
+High uses the existing authored compact far mesh beyond 650 m (60 m for offscreen shadow-only
+casters); close, reflected, damaged, player, falling, open-bay and object-blurred film aircraft
+retain their articulated source. Compact variants are warmed before play. These changes preserve
+the simulation and cloud-resolution budget.
+
+Fixture v3 adds turret-glass, close-shadow and formation-glints, resets the simulation RNG after
+art construction, and records formation poses. Matched live-main provenance, crops, probe ablation,
+performance distributions and verification are in `docs/phase11/reports/02.md`.

@@ -5,10 +5,10 @@ import { CAMPAIGN, type Mission } from '../game/Missions';
 import { Atmos } from '../render/Atmosphere';
 import { applyWeather } from '../render/Weather';
 import { Searchlights } from '../render/Searchlights';
-import { RIG_DT, RIG_STEPS, RIG_WEATHER, type RigShot } from './VisualRigConfig';
+import { RIG_DT, RIG_STEPS, RIG_WEATHER, RIG_SEED, seededRandom, type RigShot } from './VisualRigConfig';
 
 /** Staged fixtures use the production world, controllers, assets and effects. */
-export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: () => void) {
+export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: () => void, seed = RIG_SEED) {
   const pilot = shot.id === 'p51-cockpit';
   const weather = { ...RIG_WEATHER[shot.weather] };
   const mission: Mission = { ...CAMPAIGN[0], id: 'visual-rig', number: 0, role: pilot ? 'pilot' : 'gunner',
@@ -35,6 +35,8 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     game.input.endFrame();
   };
   const damaged = shot.id === 'damaged-neighbour' ? w.bombers().find(b => b !== w.playerBomber)! : null;
+  // Added art objects must not perturb the simulation random stream.
+  Math.random = seededRandom(seed ^ 0x51a7);
   for (let i = 0; i < RIG_STEPS; i++) {
     if (damaged && i === 180) {
       for (const name of ['engine1', 'engine2']) {
@@ -62,7 +64,37 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     s.yaw = s.tYaw = -.3; s.pitch = s.tPitch = .12; s.vPitch = s.vYaw = 0;
     gun.update(0);
   }
-  if (shot.id === 'waist-fw190' || shot.id === 'tail-bf109') {
+  if (shot.id === 'turret-glass') {
+    const s = gun.state;
+    s.yaw = s.tYaw = -.65; s.pitch = s.tPitch = .12; s.vPitch = s.vYaw = 0;
+    gun.update(0);
+    const neighbour = w.bombers().find(ship => ship !== b)!;
+    // Place a real neighbour in the dome's reflected field, behind the gunner.
+    const pane = gun.glassFx.paneForDev('top')!.mesh;
+    pane.updateWorldMatrix(true, false);
+    const ray = new THREE.Raycaster(); ray.layers.enableAll(); ray.setFromCamera(new THREE.Vector2(.48, .28), cam);
+    const hit = ray.intersectObject(pane)[0];
+    const normal = pane.worldToLocal(hit.point.clone()).normalize().transformDirection(pane.matrixWorld);
+    neighbour.pos.copy(hit.point).addScaledVector(ray.ray.direction.clone().reflect(normal), 95);
+    facts.reflectionPoint = [.48, .28];
+    facts.neighbourPosition = neighbour.pos.toArray();
+    neighbour.root.updateMatrixWorld(true);
+    facts.neighbourRange = neighbour.pos.distanceTo(cam.position);
+  }
+  if (shot.id === 'close-shadow') {
+    const neighbour = w.bombers().find(ship => ship !== b)!;
+    look(neighbour.localToWorld(new THREE.Vector3(24, -3, 22)), neighbour.pos, 42);
+    facts.neighbourRange = neighbour.pos.distanceTo(cam.position);
+  }
+  if (shot.id === 'formation-glints') {
+    const neighbour = w.bombers().find(ship => ship !== b)!;
+    // Above the wing on the specular half-vector, looking toward the sun.
+    const from = neighbour.pos.clone().addScaledVector(Atmos.sunDir, -38);
+    from.y = neighbour.pos.y + 17;
+    look(from, neighbour.pos, 52);
+    facts.neighbourRange = neighbour.pos.distanceTo(cam.position);
+  }
+  if (shot.id === 'waist-fw190'  || shot.id === 'tail-bf109') {
     const tail = shot.id === 'tail-bf109';
     const direction = cam.getWorldDirection(new THREE.Vector3());
     // Exact eye-to-aircraft-origin distance, in world metres (no off-axis displacement).
@@ -132,6 +164,7 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
   // Precipitation is camera-relative, so update once after placing the final camera.
   engine.precipitation.update(0, engine.time, engine.quality);
   facts.formationCount = w.bombers().length;
+  facts.formationPose = w.bombers().map(ship => ({ position: ship.pos.toArray(), quaternion: ship.quat.toArray() }));
   facts.pilotView = pilot ? game.pilot.view : null;
   facts.aimDownSight = shot.station === 'waistL' ? gun.ads : null;
   let shafts = 0;

@@ -55,9 +55,9 @@ export function updateVisiblePose(root: T.Object3D, camera: T.Camera, visit?: (o
   }
 }
 
-interface Slot { id: number; previous: T.Matrix4; frame: number }
+interface Slot { id: number; previous: T.Matrix4; frame: number; source: T.Mesh; visible: boolean }
 interface Batch {
-  mesh: T.BatchedMesh; previous: T.DataTexture; geometries: Map<T.BufferGeometry, number>;
+  retired: boolean; mesh: T.BatchedMesh; previous: T.DataTexture; geometries: Map<T.BufferGeometry, number>;
   slots: Map<T.Mesh, Slot>; used: number; vertices: number; indices: number;
 }
 interface Cached { geometry: T.BufferGeometry; material: T.Material; flags: number; batch: Batch; slot: Slot }
@@ -86,8 +86,10 @@ export class AircraftSubmission {
   private frame = 0;
   low = false;
   medium = false;
+  high = false;
   allowCompact = true;
   warming = false;
+  reflectionRange = 0;
   private readonly cameraPosition = new T.Vector3();
   private aircraftDistanceSq = 0;
   private readonly cameraFrustum = new T.Frustum();
@@ -122,7 +124,7 @@ export class AircraftSubmission {
     const tint = shared ? binding.tint : m.userData.batchTint as T.Color | undefined;
     const flags = +m.castShadow + 2 * +m.receiveShadow + 4 * +m.frustumCulled + 8 * +(!!tint) + 16 * m.renderOrder;
     let c = this.cached.get(m);
-    if (!c || c.geometry !== m.geometry || c.material !== material || c.flags !== flags || this.batches.get(c.batch.mesh.name) !== c.batch) {
+    if (!c || c.geometry !== m.geometry || c.material !== material || c.flags !== flags || c.batch.retired) {
       if (c) { c.batch.mesh.deleteInstance(c.slot.id); c.batch.slots.delete(m); }
       let layout = this.layouts.get(m.geometry);
       if (!layout) {
@@ -148,7 +150,7 @@ export class AircraftSubmission {
         mesh.frustumCulled = false; mesh.perObjectFrustumCulled = m.frustumCulled; mesh.sortObjects = material.transparent;
         const previous = new T.DataTexture(new Float32Array(HISTORY_SIZE * HISTORY_SIZE * 4), HISTORY_SIZE, HISTORY_SIZE, T.RGBAFormat, T.FloatType);
         previous.needsUpdate = true; mesh.userData.previousBatchTexture = previous;
-        b = { mesh, previous, geometries: new Map(), slots: new Map(), used: -1, vertices: 4096, indices: 12288 };
+        b = { retired: false, mesh, previous, geometries: new Map(), slots: new Map(), used: -1, vertices: 4096, indices: 12288 };
         this.batches.set(key, b);
       }
       let geometry = b.geometries.get(m.geometry);
@@ -168,13 +170,13 @@ export class AircraftSubmission {
         (previous.image.data as Float32Array).set(b.previous.image.data as Float32Array);
         b.previous.dispose(); b.previous = previous; b.previous.needsUpdate = true; b.mesh.userData.previousBatchTexture = previous;
       }
-      const slot = { id: b.mesh.addInstance(geometry), previous: m.matrixWorld.clone(), frame: -1 };
+      const slot = { id: b.mesh.addInstance(geometry), previous: m.matrixWorld.clone(), frame: -1, source: m, visible: false };
       b.slots.set(m, slot);
       c = { geometry: m.geometry, material, flags, batch: b, slot }; this.cached.set(m, c);
     }
     const { batch: b, slot } = c;
     if (b.used !== this.frame) { this.scene.children.push(b.mesh); b.used = this.frame; }
-    b.mesh.setVisibleAt(slot.id, true);
+    if (!slot.visible) { b.mesh.setVisibleAt(slot.id, true); slot.visible = true; }
     if (tint) b.mesh.setColorAt(slot.id, tint);
     if (!slot.previous.equals(m.matrixWorld) || slot.frame < 0) b.mesh.setMatrixAt(slot.id, m.matrixWorld);
     const old = slot.frame === this.frame - 1 ? slot.previous : m.matrixWorld;
@@ -195,7 +197,7 @@ export class AircraftSubmission {
   constructor() { this.scene.matrixWorldAutoUpdate = false; }
 
   reset() {
-    for(const b of this.batches.values()) { b.mesh.dispose(); b.previous.dispose(); }
+    for(const b of this.batches.values()) { b.retired = true; b.mesh.dispose(); b.previous.dispose(); }
     this.batches.clear(); this.scene.children.length = 0;
   }
 
@@ -218,40 +220,56 @@ export class AircraftSubmission {
     out.environmentIntensity = source.environmentIntensity;
     out.environmentRotation.copy(source.environmentRotation);
     out.overrideMaterial = source.overrideMaterial;
-    for (const b of this.batches.values()) for (const slot of b.slots.values()) b.mesh.setVisibleAt(slot.id, false);
     for (const child of source.children) {
       if (!child.visible || emptyDraw(child)) continue;
       if (child.userData.formationBatch || this.warming) {
         this.aircraftDistanceSq = child.position.distanceToSquared(this.cameraPosition);
         const f = formationSources.get(child), state = f?.state;
         child.userData.submissionCulled = false;
+        let shadowOnly = false;
         if (!this.warming && state && !this.shadowOverflow) {
           child.updateMatrix(); child.matrixWorld.multiplyMatrices(source.matrixWorld, child.matrix);
           this.sphere.center.setFromMatrixPosition(child.matrixWorld);
           this.sphere.radius = ((state.radius ?? 30) * 1.25 + 8) * Math.max(child.scale.x, child.scale.y, child.scale.z);
-          let visible = this.cameraFrustum.intersectsSphere(this.sphere);
+          let visible = this.cameraFrustum.intersectsSphere(this.sphere) ||
+            this.reflectionRange > 0 && this.aircraftDistanceSq < this.reflectionRange * this.reflectionRange;
+          shadowOnly = !visible;
           for (let i=0; !visible && i<this.shadows; i++) visible = this.shadowFrusta[i].intersectsSphere(this.sphere);
           if (!visible) { child.userData.submissionCulled = true; continue; }
         }
-        if (!this.warming && (this.low || this.medium) && this.allowCompact && f?.compact && state && !state.isPlayer && state.alive && !state.falling && !state.bayOpen && this.aircraftDistanceSq > (this.low ? 120 * 120 : 350 * 350)) {
+        if (!this.warming && (this.low || this.medium || this.high) && this.allowCompact && f?.compact && state && !state.isPlayer && state.alive && !state.falling && !state.bayOpen && (!this.high || state.integrity > .999) && this.aircraftDistanceSq > (this.low ? 120 * 120 : this.medium ? 350 * 350 : shadowOnly ? 60 * 60 : 650 * 650)) {
           child.updateMatrix(); child.matrixWorld.multiplyMatrices(source.matrixWorld, child.matrix);
           for (const part of f.compact.children) {
             part.matrixWorld.copy(child.matrixWorld);
             (part.userData.batchTint as T.Color).setScalar(.65 + .35 * state.integrity);
             this.collect(part);
           }
-        } else { updateVisiblePose(child, camera, this.collect); }
+        } else {
+          updateVisiblePose(child, camera, this.collect);
+          // Warm merged far geometry's attribute/tint variants before flight on every tier.
+          if (this.warming && f?.compact) for (const part of f.compact.children) {
+            part.matrixWorld.copy(child.matrixWorld);
+            (part.userData.batchTint as T.Color).setScalar(1);
+            this.collect(part);
+          }
+        }
       }
       else { updateVisiblePose(child, camera); out.children.push(child); }
     }
-    for (const [key, b] of this.batches) {
+    for (const b of this.batches.values()) {
       if (b.used === this.frame && (this.warming || !this.low && !this.medium)) b.previous.needsUpdate = true;
       else if (this.frame - b.used > 120) {
-        b.mesh.dispose(); b.previous.dispose(); this.batches.delete(key);
+        b.retired = true; b.mesh.dispose(); b.previous.dispose(); this.batches.delete(b.mesh.name);
+        continue;
       }
       // Release dead aircraft identities without changing ids of surviving instances.
-      for (const [m, slot] of b.slots) if (this.frame - slot.frame > 120) {
-        b.mesh.deleteInstance(slot.id); b.slots.delete(m); this.cached.delete(m);
+      // One values iterator, no per-instance [mesh, slot] arrays and no hide/show
+      // churn for every live part. This is also the camera-independent probe list.
+      for (const slot of b.slots.values()) {
+        if (slot.frame !== this.frame && slot.visible) { b.mesh.setVisibleAt(slot.id, false); slot.visible = false; }
+        if (this.frame - slot.frame > 120) {
+          b.mesh.deleteInstance(slot.id); b.slots.delete(slot.source); this.cached.delete(slot.source);
+        }
       }
     }
     return out;
