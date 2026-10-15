@@ -3,10 +3,11 @@ import { bombingOvercast } from '../game/BombRunState';
 import { weatherNow } from '../render/WeatherState';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { syncGroundWar } from '../render/GroundWar';
 import { createTargetSmoke, syncTargetSmoke } from '../render/TargetSmoke';
 import { setFarTerrain, targetRiverAxis } from '../render/FarTerrain';
 import { Atmos } from '../render/Atmosphere';
-import { targetUniforms, TGT_IMPACTS, TGT_PLUMES } from '../render/TargetGround';
+import { targetUniforms, syncTargetPlumes, TGT_IMPACTS, TGT_PLUMES } from '../render/TargetGround';
 import { cloudTargetUniforms } from '../render/Clouds';
 import { sound } from '../audio/Sound';
 import type { Engine } from '../core/Engine';
@@ -167,6 +168,7 @@ export class TargetArea {
   }
 
   private disable() {
+    syncGroundWar(0, 0);
     targetUniforms.uTgt.value.w = 0;
     targetUniforms.uTgtLook.value = 0;
     targetUniforms.uTgtClock.value = -1000;
@@ -290,6 +292,7 @@ export class TargetArea {
 
   private sync(clock: number, dt: number, m: Mission) {
     syncTargetSmoke();
+    syncGroundWar(clock, m.targetLook ?? 0);
     const u = targetUniforms;
     u.uTgt.value.set(this.aim.x, this.aim.y, CITY_R, 1);
     u.uTgtClock.value = clock;
@@ -322,12 +325,16 @@ export class TargetArea {
       const imp = p ? this.impacts[p.slot] : null;
       if (!p || !imp) {
         // Earlier waves: two permanent columns in the existing warmed smoke batch.
-        if (k >= TGT_PLUMES - 2) v.set(k === TGT_PLUMES - 2 ? -600 : 500, -350, -180, 1.2);
-        else v.set(0, 0, 0, 0);
+        if (k >= TGT_PLUMES - 2) {
+          const along = k === TGT_PLUMES - 2 ? -600 : 500;
+          const axis = u.uTgtRot.value;
+          v.set(axis.x * along + axis.y * 350, axis.y * along - axis.x * 350, -180, 1.2);
+        } else v.set(0, 0, 0, 0);
         continue;
       }
       v.set(imp.x, imp.z, p.t, p.s);
     }
+    syncTargetPlumes();
     // the deck parts over the target; fires light it from below
     const lx = this.aim.x - Atmos.originOffset.x, lz = this.aim.y - Atmos.originOffset.z;
     cloudTargetUniforms.uGap.value.set(lx, lz, 4800, bombingOvercast(weatherNow.cloud, weatherNow.mood) ? 0.08 : this.playerControlled ? 0.5 + 0.35 * Math.sin(this.world.time * 0.3) : 0.85);

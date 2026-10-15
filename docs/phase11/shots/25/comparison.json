@@ -1,0 +1,1624 @@
+[
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "high",
+    "shot": "bomb-release",
+    "clock": 5.999999999999984,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9921379692431697,
+    "perf": {
+      "mean": 3.163333332538605,
+      "p95": 6.899999976158142,
+      "programsBefore": 252,
+      "programsAfter": 252,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 2.983333333333323,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "high",
+    "shot": "walking-strikes",
+    "clock": 28.999999999999634,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9999999999300259,
+    "perf": {
+      "mean": 3.2099999994039536,
+      "p95": 6,
+      "programsBefore": 252,
+      "programsAfter": 252,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 25.983333333332972,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "high",
+    "shot": "burning-city",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9999999999999959,
+    "perf": {
+      "mean": 3.1700000007947287,
+      "p95": 6.199999988079071,
+      "programsBefore": 252,
+      "programsAfter": 252,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 86.98333333332951,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "high",
+    "shot": "wind-columns",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -6500,
+        7620,
+        -6531.25
+      ],
+      "quaternion": [
+        0.0709602499477949,
+        0.9237111262007455,
+        0.20961076265675965,
+        -0.3127070936815288
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9999999999999959,
+    "perf": {
+      "mean": 8.256666667262714,
+      "p95": 8.800000011920929,
+      "programsBefore": 252,
+      "programsAfter": 252,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 86.98333333332951,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "high",
+    "shot": "airfield-rail",
+    "clock": 90,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -981.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 42
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 1,
+    "perf": {
+      "mean": 3.376666667064031,
+      "p95": 6.5,
+      "programsBefore": 252,
+      "programsAfter": 252,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 87,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "high",
+    "shot": "bombsight-takeoff",
+    "clock": 76.2,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -491.5971945248775,
+        7620,
+        3763.4924282498378
+      ],
+      "quaternion": [
+        -0.7102915430464021,
+        -0.012376455129503462,
+        0.012261461241208065,
+        0.703691980772425
+      ],
+      "fov": 28
+    },
+    "formation": 18,
+    "bombsight": true,
+    "flak": 1,
+    "perf": {
+      "mean": 3.533333333333333,
+      "p95": 6,
+      "programsBefore": 252,
+      "programsAfter": 252,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 73.2,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "high",
+    "shot": "bombsight-moving",
+    "clock": 78.2,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -491.5971945248775,
+        7620,
+        3763.4924282498378
+      ],
+      "quaternion": [
+        -0.7102915430464021,
+        -0.012376455129503462,
+        0.012261461241208065,
+        0.703691980772425
+      ],
+      "fov": 28
+    },
+    "formation": 18,
+    "bombsight": true,
+    "flak": 1,
+    "perf": {
+      "mean": 3.293333333730698,
+      "p95": 5.800000011920929,
+      "programsBefore": 252,
+      "programsAfter": 252,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 75.2,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live-low",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "low",
+    "shot": "bomb-release",
+    "clock": 5.999999999999984,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9921379692431697,
+    "perf": {
+      "mean": 1.4933333327372869,
+      "p95": 3.0999999940395355,
+      "programsBefore": 239,
+      "programsAfter": 239,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 2.983333333333323,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live-low",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "low",
+    "shot": "walking-strikes",
+    "clock": 28.999999999999634,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9999999999300259,
+    "perf": {
+      "mean": 1.2666666676600775,
+      "p95": 2.5,
+      "programsBefore": 239,
+      "programsAfter": 239,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 25.983333333332972,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live-low",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "low",
+    "shot": "burning-city",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9999999999999959,
+    "perf": {
+      "mean": 1.369999999801318,
+      "p95": 2.5,
+      "programsBefore": 239,
+      "programsAfter": 239,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 86.98333333332951,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live-low",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "low",
+    "shot": "wind-columns",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -6500,
+        7620,
+        -6531.25
+      ],
+      "quaternion": [
+        0.0709602499477949,
+        0.9237111262007455,
+        0.20961076265675965,
+        -0.3127070936815288
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9999999999999959,
+    "perf": {
+      "mean": 2.6199999998013177,
+      "p95": 5.300000011920929,
+      "programsBefore": 239,
+      "programsAfter": 239,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 86.98333333332951,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live-low",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "low",
+    "shot": "airfield-rail",
+    "clock": 90,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -981.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 42
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 1,
+    "perf": {
+      "mean": 0.85,
+      "p95": 1.5999999940395355,
+      "programsBefore": 239,
+      "programsAfter": 239,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 87,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live-low",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "low",
+    "shot": "bombsight-takeoff",
+    "clock": 76.2,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -491.5971945248775,
+        7620,
+        3763.4924282498378
+      ],
+      "quaternion": [
+        -0.7102915430464021,
+        -0.012376455129503462,
+        0.012261461241208065,
+        0.703691980772425
+      ],
+      "fov": 28
+    },
+    "formation": 18,
+    "bombsight": true,
+    "flak": 1,
+    "perf": {
+      "mean": 0.9166666666666666,
+      "p95": 2.0999999940395355,
+      "programsBefore": 239,
+      "programsAfter": 239,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 73.2,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "live-low",
+    "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+    "scripts": [
+      "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev/assets/index-BOGsoLtY.js"
+    ],
+    "quality": "low",
+    "shot": "bombsight-moving",
+    "clock": 78.2,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -491.5971945248775,
+        7620,
+        3763.4924282498378
+      ],
+      "quaternion": [
+        -0.7102915430464021,
+        -0.012376455129503462,
+        0.012261461241208065,
+        0.703691980772425
+      ],
+      "fov": 28
+    },
+    "formation": 18,
+    "bombsight": true,
+    "flak": 1,
+    "perf": {
+      "mean": 0.8733333339293797,
+      "p95": 1.9000000059604645,
+      "programsBefore": 239,
+      "programsAfter": 239,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 75.2,
+      "freight": null,
+      "sorties": null
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "high",
+    "shot": "bomb-release",
+    "clock": 5.999999999999984,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9921379692431697,
+    "perf": {
+      "mean": 4.750000000993411,
+      "p95": 8.300000011920929,
+      "programsBefore": 271,
+      "programsAfter": 271,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 2.983333333333323,
+      "freight": 238.78333333333285,
+      "sorties": [
+        [
+          2630.650000000002,
+          -1044.1039111111108,
+          670.616666666667,
+          0
+        ],
+        [
+          215.65000000000168,
+          -1185,
+          141.61666666666702,
+          0
+        ],
+        [
+          -1491.6410138888884,
+          -1185,
+          4,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "high",
+    "shot": "walking-strikes",
+    "clock": 28.999999999999634,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9999999999300259,
+    "perf": {
+      "mean": 4.593333331743876,
+      "p95": 7.4000000059604645,
+      "programsBefore": 271,
+      "programsAfter": 271,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 25.983333333332972,
+      "freight": 537.7833333333292,
+      "sorties": [
+        [
+          5045.649999999965,
+          -565.9492444444536,
+          1199.616666666659,
+          0
+        ],
+        [
+          2630.649999999966,
+          -1044.1039111111154,
+          670.6166666666592,
+          0
+        ],
+        [
+          215.64999999996587,
+          -1185,
+          141.61666666665917,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "high",
+    "shot": "burning-city",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9999999999999959,
+    "perf": {
+      "mean": 4.780000000198682,
+      "p95": 10.5,
+      "programsBefore": 271,
+      "programsAfter": 271,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 86.98333333332951,
+      "freight": 1330.7833333332837,
+      "sorties": [
+        [
+          1790.6499999995958,
+          -1131.0585777778097,
+          486.6166666665781,
+          0
+        ],
+        [
+          -611.5660138892505,
+          -1185,
+          4,
+          0
+        ],
+        [
+          6620.649999999596,
+          -71.70924444458979,
+          1544.616666666578,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "high",
+    "shot": "wind-columns",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -6500,
+        7620,
+        -6531.25
+      ],
+      "quaternion": [
+        0.0709602499477949,
+        0.9237111262007455,
+        0.20961076265675965,
+        -0.3127070936815288
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9999999999999959,
+    "perf": {
+      "mean": 10.12333333293597,
+      "p95": 13,
+      "programsBefore": 271,
+      "programsAfter": 271,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 86.98333333332951,
+      "freight": 1330.7833333332837,
+      "sorties": [
+        [
+          1790.6499999995958,
+          -1131.0585777778097,
+          486.6166666665781,
+          0
+        ],
+        [
+          -611.5660138892505,
+          -1185,
+          4,
+          0
+        ],
+        [
+          6620.649999999596,
+          -71.70924444458979,
+          1544.616666666578,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "high",
+    "shot": "airfield-rail",
+    "clock": 90,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -981.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 42
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 1,
+    "perf": {
+      "mean": 4.7,
+      "p95": 7.899999976158142,
+      "programsBefore": 271,
+      "programsAfter": 271,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 87,
+      "freight": 1331,
+      "sorties": [
+        [
+          1792.4,
+          -1130.92,
+          487,
+          1
+        ],
+        [
+          -610,
+          -1185,
+          4,
+          1
+        ],
+        [
+          6622.4,
+          -71.07999999999993,
+          1545,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "high",
+    "shot": "bombsight-takeoff",
+    "clock": 76.2,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -491.5971945248775,
+        7620,
+        3763.4924282498378
+      ],
+      "quaternion": [
+        -0.7102915430464021,
+        -0.012376455129503462,
+        0.012261461241208065,
+        0.703691980772425
+      ],
+      "fov": 28
+    },
+    "formation": 18,
+    "bombsight": true,
+    "flak": 1,
+    "perf": {
+      "mean": 5.160000000397364,
+      "p95": 8.200000017881393,
+      "programsBefore": 271,
+      "programsAfter": 271,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 73.2,
+      "freight": 1151.6000000000004,
+      "sorties": [
+        [
+          343.40000000000487,
+          -1185,
+          169.60000000000105,
+          1
+        ],
+        [
+          -1459.6659999999986,
+          -1185,
+          4,
+          1
+        ],
+        [
+          5173.400000000005,
+          -531.2271999999987,
+          1227.600000000001,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "after",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "high",
+    "shot": "bombsight-moving",
+    "clock": 78.2,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -491.5971945248775,
+        7620,
+        3763.4924282498378
+      ],
+      "quaternion": [
+        -0.7102915430464021,
+        -0.012376455129503462,
+        0.012261461241208065,
+        0.703691980772425
+      ],
+      "fov": 28
+    },
+    "formation": 18,
+    "bombsight": true,
+    "flak": 1,
+    "perf": {
+      "mean": 4.60000000099341,
+      "p95": 7.200000017881393,
+      "programsBefore": 271,
+      "programsAfter": 271,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "groundClock": 75.2,
+      "freight": 1177.6000000000004,
+      "sorties": [
+        [
+          553.4000000000049,
+          -1184.5392,
+          215.60000000000105,
+          1
+        ],
+        [
+          -1391.9859999999983,
+          -1185,
+          4,
+          1
+        ],
+        [
+          5383.400000000005,
+          -472.0911999999986,
+          1273.600000000001,
+          0
+        ]
+      ]
+    },
+    "errors": [],
+    "motion": {
+      "before": {
+        "train": 1177.6000000000004,
+        "altitude": 215.60000000000105,
+        "target": [
+          0,
+          2418.75
+        ]
+      },
+      "after": {
+        "train": 1203.6000000000004,
+        "altitude": 261.60000000000105,
+        "target": [
+          0,
+          2418.75
+        ]
+      },
+      "reset": {
+        "bombs": 0,
+        "target": 0,
+        "aircraft": [
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "low",
+    "shot": "bomb-release",
+    "clock": 5.999999999999984,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9921379692431697,
+    "perf": {
+      "mean": 1.3199999988079072,
+      "p95": 2.699999988079071,
+      "programsBefore": 254,
+      "programsAfter": 254,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 2.983333333333323,
+      "freight": 238.78333333333285,
+      "sorties": [
+        [
+          2630.650000000002,
+          -1044.1039111111108,
+          670.616666666667,
+          0
+        ],
+        [
+          215.65000000000168,
+          -1185,
+          141.61666666666702,
+          0
+        ],
+        [
+          -1491.6410138888884,
+          -1185,
+          4,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "low",
+    "shot": "walking-strikes",
+    "clock": 28.999999999999634,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9999999999300259,
+    "perf": {
+      "mean": 1.0399999996026357,
+      "p95": 2.0999999940395355,
+      "programsBefore": 254,
+      "programsAfter": 254,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 25.983333333332972,
+      "freight": 537.7833333333292,
+      "sorties": [
+        [
+          5045.649999999965,
+          -565.9492444444536,
+          1199.616666666659,
+          0
+        ],
+        [
+          2630.649999999966,
+          -1044.1039111111154,
+          670.6166666666592,
+          0
+        ],
+        [
+          215.64999999996587,
+          -1185,
+          141.61666666665917,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "low",
+    "shot": "burning-city",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -1431.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9999999999999959,
+    "perf": {
+      "mean": 1.1566666662693024,
+      "p95": 2.5,
+      "programsBefore": 254,
+      "programsAfter": 254,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 86.98333333332951,
+      "freight": 1330.7833333332837,
+      "sorties": [
+        [
+          1790.6499999995958,
+          -1131.0585777778097,
+          486.6166666665781,
+          0
+        ],
+        [
+          -611.5660138892505,
+          -1185,
+          4,
+          0
+        ],
+        [
+          6620.649999999596,
+          -71.70924444458979,
+          1544.616666666578,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "low",
+    "shot": "wind-columns",
+    "clock": 89.99999999999618,
+    "target": [
+      0,
+      1968.75
+    ],
+    "look": 0,
+    "camera": {
+      "position": [
+        -6500,
+        7620,
+        -6531.25
+      ],
+      "quaternion": [
+        0.0709602499477949,
+        0.9237111262007455,
+        0.20961076265675965,
+        -0.3127070936815288
+      ],
+      "fov": 58
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 0.9999999999999959,
+    "perf": {
+      "mean": 2.8466666668653486,
+      "p95": 3.600000023841858,
+      "programsBefore": 254,
+      "programsAfter": 254,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 86.98333333332951,
+      "freight": 1330.7833333332837,
+      "sorties": [
+        [
+          1790.6499999995958,
+          -1131.0585777778097,
+          486.6166666665781,
+          0
+        ],
+        [
+          -611.5660138892505,
+          -1185,
+          4,
+          0
+        ],
+        [
+          6620.649999999596,
+          -71.70924444458979,
+          1544.616666666578,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "low",
+    "shot": "airfield-rail",
+    "clock": 90,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -2400,
+        7620,
+        -981.25
+      ],
+      "quaternion": [
+        0.15435318849288837,
+        0.8197396300573897,
+        0.48632383300199744,
+        -0.2601752516472273
+      ],
+      "fov": 42
+    },
+    "formation": 18,
+    "bombsight": false,
+    "flak": 1,
+    "perf": {
+      "mean": 1.1533333331346511,
+      "p95": 2.5,
+      "programsBefore": 254,
+      "programsAfter": 254,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 87,
+      "freight": 1331,
+      "sorties": [
+        [
+          1792.4,
+          -1130.92,
+          487,
+          1
+        ],
+        [
+          -610,
+          -1185,
+          4,
+          1
+        ],
+        [
+          6622.4,
+          -71.07999999999993,
+          1545,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "low",
+    "shot": "bombsight-takeoff",
+    "clock": 76.2,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -491.5971945248775,
+        7620,
+        3763.4924282498378
+      ],
+      "quaternion": [
+        -0.7102915430464021,
+        -0.012376455129503462,
+        0.012261461241208065,
+        0.703691980772425
+      ],
+      "fov": 28
+    },
+    "formation": 18,
+    "bombsight": true,
+    "flak": 1,
+    "perf": {
+      "mean": 1.2333333333333334,
+      "p95": 2.4000000059604645,
+      "programsBefore": 254,
+      "programsAfter": 254,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 73.2,
+      "freight": 1151.6000000000004,
+      "sorties": [
+        [
+          343.40000000000487,
+          -1185,
+          169.60000000000105,
+          1
+        ],
+        [
+          -1459.6659999999986,
+          -1185,
+          4,
+          1
+        ],
+        [
+          5173.400000000005,
+          -531.2271999999987,
+          1227.600000000001,
+          0
+        ]
+      ]
+    },
+    "errors": []
+  },
+  {
+    "tag": "low",
+    "url": "http://127.0.0.1:5325",
+    "scripts": [
+      "http://127.0.0.1:5325/@vite/client",
+      "http://127.0.0.1:5325/src/main.ts?t=1792074561485"
+    ],
+    "quality": "low",
+    "shot": "bombsight-moving",
+    "clock": 78.2,
+    "target": [
+      0,
+      2418.75
+    ],
+    "look": 3,
+    "camera": {
+      "position": [
+        -491.5971945248775,
+        7620,
+        3763.4924282498378
+      ],
+      "quaternion": [
+        -0.7102915430464021,
+        -0.012376455129503462,
+        0.012261461241208065,
+        0.703691980772425
+      ],
+      "fov": 28
+    },
+    "formation": 18,
+    "bombsight": true,
+    "flak": 1,
+    "perf": {
+      "mean": 0.9933333327372869,
+      "p95": 1.699999988079071,
+      "programsBefore": 254,
+      "programsAfter": 254,
+      "renderSize": [
+        1074,
+        604
+      ],
+      "groundClock": 75.2,
+      "freight": 1177.6000000000004,
+      "sorties": [
+        [
+          553.4000000000049,
+          -1184.5392,
+          215.60000000000105,
+          1
+        ],
+        [
+          -1391.9859999999983,
+          -1185,
+          4,
+          1
+        ],
+        [
+          5383.400000000005,
+          -472.0911999999986,
+          1273.600000000001,
+          0
+        ]
+      ]
+    },
+    "errors": [],
+    "motion": {
+      "before": {
+        "train": 1177.6000000000004,
+        "altitude": 215.60000000000105,
+        "target": [
+          0,
+          2418.75
+        ]
+      },
+      "after": {
+        "train": 1203.6000000000004,
+        "altitude": 261.60000000000105,
+        "target": [
+          0,
+          2418.75
+        ]
+      },
+      "reset": {
+        "bombs": 0,
+        "target": 0,
+        "aircraft": [
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  }
+]

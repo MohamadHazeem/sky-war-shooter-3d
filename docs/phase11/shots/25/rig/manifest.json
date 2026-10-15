@@ -1,0 +1,201 @@
+{
+  "version": 1,
+  "complete": true,
+  "seed": 19431008,
+  "backend": "webgl2",
+  "quality": "high",
+  "cameraReference": null,
+  "browser": "153.0.8010.12",
+  "platform": "darwin/arm64",
+  "revision": "72831a4eae16bfe51340a47c3fc1088d76862c7a",
+  "dirty": true,
+  "shots": [
+    {
+      "version": 2,
+      "backend": "webgl2",
+      "quality": "high",
+      "seed": 19431008,
+      "shot": "bomb-run",
+      "label": "Bomb run over Emden",
+      "pillars": [
+        4,
+        5,
+        7,
+        8,
+        10
+      ],
+      "backendActual": "webgl2",
+      "deviceInfo": {
+        "vendor": "Google Inc. (Apple)",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+      },
+      "seedDefault": 19431008,
+      "dt": 0.016666666666666666,
+      "steps": 360,
+      "settleFrames": 24,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "stream": {
+        "tier": "high",
+        "shown": true,
+        "bombers": 678,
+        "groups": 26,
+        "escorts": 16,
+        "gaggleFighters": 26,
+        "baked": {
+          "bomber": true,
+          "escort": true,
+          "gaggle": true,
+          "near": true
+        },
+        "impostors": 678,
+        "nearInstances": 0,
+        "ribbons": 2754,
+        "fieldBands": 78,
+        "wrecks": 0,
+        "barrages": 2
+      },
+      "camera": {
+        "position": [
+          130.22872087396826,
+          7618.427121599732,
+          496.30771687151963
+        ],
+        "quaternion": [
+          -0.26060275356753726,
+          0.06306101777022058,
+          0.01706115696300753,
+          0.963233320537597
+        ],
+        "fov": 70
+      },
+      "weather": {
+        "sunEl": 48,
+        "sunAz": 205,
+        "low": 0.08,
+        "high": 0.08,
+        "contrails": true
+      },
+      "subject": "bomb-run",
+      "bombs": 107,
+      "target": [
+        0,
+        1968.75
+      ],
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "frameMs": {
+        "samples": 60,
+        "programsBefore": 245,
+        "programsAfter": 245,
+        "mean": 8.375,
+        "p50": 8,
+        "p95": 11.100000023841858,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "pixelHash": "a1b65cd1e5a3194b45b25ef83166925ac37601c2fc1e7a598f64958d590d93f2",
+      "errors": []
+    },
+    {
+      "version": 2,
+      "backend": "webgl2",
+      "quality": "high",
+      "seed": 19431008,
+      "shot": "ball-europe",
+      "label": "Ball turret / Europe below",
+      "pillars": [
+        2,
+        4,
+        6,
+        7,
+        10
+      ],
+      "backendActual": "webgl2",
+      "deviceInfo": {
+        "vendor": "Google Inc. (Apple)",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+      },
+      "seedDefault": 19431008,
+      "dt": 0.016666666666666666,
+      "steps": 360,
+      "settleFrames": 24,
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "viewport": [
+        1920,
+        1080
+      ],
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "stream": {
+        "tier": "high",
+        "shown": true,
+        "bombers": 678,
+        "groups": 26,
+        "escorts": 16,
+        "gaggleFighters": 26,
+        "baked": {
+          "bomber": true,
+          "escort": true,
+          "gaggle": true,
+          "near": true
+        },
+        "impostors": 678,
+        "nearInstances": 0,
+        "ribbons": 2754,
+        "fieldBands": 78,
+        "wrecks": 0,
+        "barrages": 2
+      },
+      "camera": {
+        "position": [
+          104.21074744700748,
+          7619.297061346843,
+          387.0475251143791
+        ],
+        "quaternion": [
+          0.4816095824347421,
+          0.01178316016854914,
+          -0.03910918714874327,
+          -0.8754335147365792
+        ],
+        "fov": 64.99999999999997
+      },
+      "weather": {
+        "sunEl": 48,
+        "sunAz": 205,
+        "low": 0.08,
+        "high": 0.08,
+        "contrails": true
+      },
+      "subject": "ball-europe",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 3,
+      "frameMs": {
+        "samples": 60,
+        "programsBefore": 248,
+        "programsAfter": 248,
+        "mean": 10.09000000009934,
+        "p50": 10.099999994039536,
+        "p95": 13,
+        "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
+      },
+      "pixelHash": "150cd3b98b30ce37b65c7f48f110805421a272b6f39a89a2dcbe9846591d30df",
+      "errors": []
+    }
+  ]
+}
