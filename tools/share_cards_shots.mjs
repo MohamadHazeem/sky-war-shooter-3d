@@ -55,8 +55,12 @@ async function page(lang, viewport) {
   await p.goto(URL);
   await p.waitForFunction(() => window.sws?.autoplay && window.sws?.tour && sws.assetsReady(), { timeout: 180000 });
   await p.evaluate(() => { sws.engine.loopOverride = () => {}; sws.game.input.lock = () => {}; });
+  await noToasts(p);
   return p;
 }
+
+// achievement toasts from the seeded career/sortie are not part of the screens under test
+const noToasts = (p) => p.addStyleTag({ content: '#hudToast, #achv-toasts { display: none !important; }' });
 
 async function saveCard(p, name) {
   await p.waitForSelector('.scard-modal img', { timeout: 30000 });

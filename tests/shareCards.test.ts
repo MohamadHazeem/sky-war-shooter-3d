@@ -106,13 +106,15 @@ describe('share card model', () => {
     expect(medalList({ 'Air Medal': 3, Junk: 0 }).list).toEqual([expect.objectContaining({ name: 'Air Medal', count: 3 })]);
   });
 
-  it('builds the tour card with the crew on the print', () => {
+  it('builds the tour card with the crew roster', () => {
     const c = tourCard({
       sorties: 28, kills: 31, ships: ['Sky Queen', 'Lady Luck'], patches: 40,
       home: Array.from({ length: 12 }, (_, i) => ({ name: `Sgt. Man${i}`, pos: 'Tail Gun' })), fallen: 2, wounded: 1, medals: { 'Air Medal': 25 }, nose: 'pinup',
     });
     expect(c.kind).toBe('tour');
     expect(c.crew).toHaveLength(10);
+    expect(c.crew[0]).toEqual({ name: 'Sgt. Man0', pos: 'Tail Gun' });
+    expect(c.marks).toBe(0);   // the roster replaces the marks
     expect(c.tiles.map((t) => t.value)).toEqual(['28', '31', '2', '12/15']);
     expect(c.nose).toEqual({ id: 'pinup', name: 'Lady Luck' });
     expect(cardFileName(c, new Date('2026-10-15T10:00:00Z'))).toBe('sky-war-shooter-3d-tour-going-home-2026-10-15.png');
@@ -134,5 +136,21 @@ describe('stats page', () => {
     expect(html).toContain('67%');                              // came home from two of three
     expect(chartWidths(390)).toEqual({ wide: 318, half: 318 });
     expect(chartWidths(1280).half).toBeLessThan(chartWidths(1280).wide);
+  });
+});
+
+describe('share card staged photo', () => {
+  it('turns the camera to the side where the formation is', async () => {
+    const THREE = await import('three');
+    const { bestSide, STAGE } = await import('../src/game/ShareStage');
+    const subject = { pos: new THREE.Vector3(0, 7600, 0), quat: new THREE.Quaternion() };
+    const sun = new THREE.Vector3(0, 1, 0);
+    // a camera on the +x front quarter looks back across the subject towards -x / -z
+    const left = [new THREE.Vector3(-120, 7600, -60), new THREE.Vector3(-200, 7590, -150), new THREE.Vector3(-90, 7610, -20)];
+    expect(bestSide(subject, left, STAGE.bomber, 1.6, sun)).toEqual({ sx: 1, sz: 1 });
+    const right = left.map((v) => v.clone().setX(-v.x));
+    expect(bestSide(subject, right, STAGE.bomber, 1.6, sun)).toEqual({ sx: -1, sz: 1 });
+    // nobody around: the front quarter on the sun's side
+    expect(bestSide(subject, [], STAGE.bomber, 1.6, new THREE.Vector3(-1, 0.5, 0).normalize())).toEqual({ sx: -1, sz: 1 });
   });
 });

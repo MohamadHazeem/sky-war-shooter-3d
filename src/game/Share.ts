@@ -234,9 +234,11 @@ export function shareStamp(game: Game, note?: string): ShareStamp {
 }
 
 export let shareEngine: Engine | null = null;
+export let shareWorld: Game['world'] | null = null;   // the share cards' staged photo (ShareStage.ts)
 
 /** Wires photo mode's share key/button (called once from main.ts). */
 export function installShare(game: Game, engine: Engine) {
-  shareEngine = engine;   // share cards (ui/ShareCard.ts) photograph the current frame
+  shareEngine = engine;   // share cards (ui/ShareCard.ts) photograph the player's aircraft
+  shareWorld = game.world;
   game.photo.onShare = () => { void shareScreenshot(engine, shareStamp(game, 'Photo mode')); };
 }

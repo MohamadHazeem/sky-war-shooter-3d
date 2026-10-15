@@ -27,6 +27,7 @@ const table: PhraseTable = {
     "Came home from '{title}' with {kills} kills — Sky War Shooter 3D": "عدت من «{title}» ومعي {kills} إسقاطات — Sky War Shooter 3D",
     "Went down over '{title}' with {kills} kills — Sky War Shooter 3D": "سقطت في «{title}» بعد {kills} إسقاطات — Sky War Shooter 3D",
     "VICTORY MARKS": "علامات الانتصار",
+    "THE CREW · HOME FROM THE WAR": "الطاقم · عادوا من الحرب",
     "No victories this time": "لا انتصارات هذه المرة",
     "DECORATIONS": "الأوسمة",
     "None awarded": "لم يُمنح أي وسام",

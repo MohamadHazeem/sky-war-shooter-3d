@@ -11,7 +11,7 @@ export interface CardModel {
   kicker: string;                  // small line above the title
   title: string;                   // mission title / "Going Home"
   caption: { key: string; vars: Record<string, string> };   // typed on the print: 'B-17G "{ship}" · {date}'
-  crew: string[];                  // tour card: names written on the print, like the back of a crew photo
+  crew: { name: string; pos: string }[];   // tour card: the men who came home, listed under the print
   stamp: { text: string; good: boolean };
   tiles: CardTile[];               // up to 4
   marks: number;                   // victory marks painted under the tiles (capped)
@@ -21,7 +21,7 @@ export interface CardModel {
   nose: { id: string; name: string } | null;   // the player's B-17 nose art (gunner sorties and the Tour)
 }
 
-export const MARKS_MAX = 38;   // two rows of 19 on the card
+export const MARKS_MAX = 24;   // two rows of 12 Fw 190 silhouettes on the mission card
 export const MEDALS_MAX = 5;
 
 const pct = (v: number) => `${Math.round(Math.max(0, Math.min(1, v)) * 100)}%`;
@@ -103,7 +103,7 @@ export function tourCard(i: TourCardInput): CardModel {
     kicker: 'THE TOUR · 25 MISSIONS · LUCKY BASTARD CLUB',
     title: 'Going Home',
     caption: { key: 'B-17G "{ship}" · 401st Bomb Squadron', vars: { ship } },
-    crew: i.home.slice(0, 10).map((m) => `${m.name} (${m.pos})`),
+    crew: i.home.slice(0, 10).map((m) => ({ name: m.name, pos: m.pos })),
     stamp: { text: 'TOUR COMPLETE', good: true },
     tiles: [
       { label: 'SORTIES', value: n0(i.sorties) },
@@ -111,7 +111,7 @@ export function tourCard(i: TourCardInput): CardModel {
       { label: 'FORTRESSES', value: n0(i.ships.length) },
       { label: 'CREW HOME', value: `${n0(i.home.length)}/${n0(i.home.length + i.fallen + i.wounded)}` },
     ],
-    marks: Math.min(MARKS_MAX, kills), extraMarks: Math.max(0, kills - MARKS_MAX),
+    marks: 0, extraMarks: 0,   // the crew roster takes the marks' room; kills are on the tile
     medals: list, moreMedals: more,
     nose: { id: i.nose, name: ship },
   };

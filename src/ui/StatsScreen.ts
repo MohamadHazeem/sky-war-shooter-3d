@@ -10,6 +10,8 @@ import './career.css';
 import './shareCard.css';
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
+// The charts are laid out in physical x (mirrored by hand for Arabic), so their SVGs keep
+// direction:ltr: an inherited rtl would flip text-anchor and push labels over the bars.
 const CH = 210, PADL = 40, PADR = 12, PADT = 12, PADB = 26;
 
 /** Line chart over sorties: y in 0..yMax, optional dots for each sortie. Mirrors in Arabic (newest on the left). */
@@ -19,7 +21,7 @@ export function lineChartSvg(lines: { pts: Point[]; cls: string; dots?: boolean;
   const px = (i: number) => { const t = n > 1 ? i / (n - 1) : 0; return PADL + (rtl ? 1 - t : t) * (CW - PADL - PADR); };
   const py = (v: number) => PADT + (1 - Math.min(1, v / yMax)) * (CH - PADT - PADB);
   const ticks = yMax === 1 ? [0, 0.25, 0.5, 0.75, 1] : percentTicks(yMax);
-  let s = `<svg viewBox="0 0 ${CW} ${CH}" role="img" aria-label="${esc(label)}">`;
+  let s = `<svg viewBox="0 0 ${CW} ${CH}" style="direction:ltr" role="img" aria-label="${esc(label)}">`;
   for (const t of ticks) s += `<line class="${t === 0 ? 'st-base' : 'st-grid'}" x1="${PADL}" x2="${CW - PADR}" y1="${py(t)}" y2="${py(t)}"/><text x="${PADL - 6}" y="${py(t) + 4}" text-anchor="end">${pct(t)}</text>`;
   s += `<text x="${rtl ? CW - PADR : PADL}" y="${CH - 6}" text-anchor="${rtl ? 'end' : 'start'}">${esc(tx('older'))}</text><text x="${rtl ? PADL : CW - PADR}" y="${CH - 6}" text-anchor="${rtl ? 'start' : 'end'}">${esc(tx('latest'))}</text>`;
   for (const l of lines) {
@@ -38,7 +40,7 @@ export function lineChartSvg(lines: { pts: Point[]; cls: string; dots?: boolean;
 export function barChartSvg(rows: { label: string; v: number }[], label: string, W = 420): string {
   const rh = 26, h = rows.length * rh + 6, max = Math.max(1, ...rows.map((r) => r.v)), lw = 90;
   const rtl = isAr();
-  let s = `<svg viewBox="0 0 ${W} ${h}" role="img" aria-label="${esc(label)}">`;
+  let s = `<svg viewBox="0 0 ${W} ${h}" style="direction:ltr" role="img" aria-label="${esc(label)}">`;
   rows.forEach((r, i) => {
     const y = 4 + i * rh, bw = Math.max(r.v ? 4 : 0, (r.v / max) * (W - lw - 50));
     const bx = rtl ? W - lw - bw : lw;
