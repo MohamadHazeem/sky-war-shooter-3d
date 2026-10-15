@@ -50,6 +50,9 @@ export class Ditching {
   eligible(ending: boolean): boolean {
     const g = this.g, m = g.mission, b = g.world.playerBomber;
     if (!m || !b || this.ditched || g.endResult) return false;
+    // limping home (LimpingHome.ts): the crew's decision owns the ending, whichever way it went
+    if (g.limping.ditch) return true;
+    if (g.limping.owns) return false;
     if (!ending && g.boss.active) return false;   // no ditching out of a battle-group fight
     const progress = missionProgress(m, g.world.time, g.roundIdx, g.roundT0);
     // A structurally destroyed ship or dead pilots must retain the bail-out ending.

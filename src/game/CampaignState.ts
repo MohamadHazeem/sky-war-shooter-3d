@@ -24,6 +24,9 @@
 // merit) and recordCampaignOutcome (debrief, via ui/CampaignMap.ts mountCampaignReport).
 import { isSecondTourId, secondTourMission, secondTourKind, SECOND_TOUR_LENGTH, SECOND_TOUR_MEDAL } from './SecondTour';
 import { CAMPAIGN, type Mission } from './Missions';
+import { LIMP_TEXT } from './LimpingHomeRules';
+
+const INTERN_NOTE = LIMP_TEXT.internNote, TOUR_ENDED = LIMP_TEXT.tourOver;
 import { isRaidId, sideRaidById, sideRaidsFor, templateFor, type RaidKind, type SideRaid } from './SideRaids';
 
 export const CAMPAIGN_KEY = 'sws3d.campaign.v2';
@@ -40,7 +43,7 @@ export const REPLACEMENTS_PER_SORTIE = 2;
 
 export type GaugeId = 'luftwaffe' | 'squadron' | 'morale' | 'escort';
 
-export interface HistoryEntry { id: string; kind: 'story' | 'raid' | 'generated'; title: string; success: boolean; kills: number; lost: number; ditched?: boolean }
+export interface HistoryEntry { id: string; kind: 'story' | 'raid' | 'generated'; title: string; success: boolean; kills: number; lost: number; ditched?: boolean; interned?: boolean }
 
 export interface ReportLine { gauge: GaugeId | 'merit' | 'note'; text: string; from?: number; to?: number }
 export interface IntelReport { title: string; success: boolean; lines: ReportLine[]; effect: boolean }
@@ -61,9 +64,10 @@ export interface CampaignData {
   history: HistoryEntry[];
   report: IntelReport | null;
   complete: boolean;
+  interned?: 'Sweden' | 'Switzerland';   // limping home ended in a neutral country: the tour is over (LimpingHome.ts)
 }
 
-export interface Outcome { success: boolean; kills: number; bombersLost: number; bombersTotal: number; score?: number; ditched?: boolean }
+export interface Outcome { success: boolean; kills: number; bombersLost: number; bombersTotal: number; score?: number; ditched?: boolean; interned?: 'Sweden' | 'Switzerland' }
 
 export interface Modifiers {
   enemy: number;         // fighters in the air x
@@ -91,7 +95,7 @@ export function defaultCampaign(seed = newSeed(), tour = 1): CampaignData {
 
 export const storyIndex = (id: string) => CAMPAIGN.findIndex((m) => m.id === id);
 export const currentIndex = (d: CampaignData) => (d.secondTour ? d.secondTour.completed : d.complete ? -1 : Math.min(d.storyDone.length, CAMPAIGN.length - 1));
-export const currentStory = (d: CampaignData): Mission | null => (d.secondTour ? secondTourMission(d.seed, d.secondTour.completed) : d.complete ? null : CAMPAIGN[currentIndex(d)] ?? null);
+export const currentStory = (d: CampaignData): Mission | null => (d.interned ? null : d.secondTour ? secondTourMission(d.seed, d.secondTour.completed) : d.complete ? null : CAMPAIGN[currentIndex(d)] ?? null);
 // side raids are offered in the gap before the current story mission (none before the first)
 export const currentGap = (d: CampaignData) => (d.secondTour || d.complete ? -1 : d.storyDone.length);
 export const raidInGap = (d: CampaignData, gap: number) => d.raids.find((r) => r.gap === gap) ?? null;
@@ -279,16 +283,19 @@ export function applyOutcome(d0: CampaignData, op: OpInfo, o: Outcome): { data: 
   }
 
   // Progress
-  d.history.push({ id: op.id, kind: op.kind, title: op.title, success: o.success, kills: Math.max(0, Math.round(o.kills || 0)), lost, ...(o.ditched ? { ditched: true } : {}) });
+  d.history.push({ id: op.id, kind: op.kind, title: op.title, success: o.success, kills: Math.max(0, Math.round(o.kills || 0)), lost, ...(o.ditched ? { ditched: true } : {}), ...(o.interned ? { interned: true } : {}) });
   if (d.history.length > 80) d.history.splice(0, d.history.length - 80);
   if (op.kind === 'raid') d.raids.push({ gap: op.gap!, id: op.id, success: o.success });
   if (op.kind === 'story' && o.success) {
     d.storyDone.push(op.id);
     if (d.storyDone.length >= CAMPAIGN.length) d.complete = true;
   }
+  // interned in Sweden or Switzerland: the crew sits out the war, so this tour ends here
+  if (o.interned) { d.interned = o.interned; d.complete = true; }
 
   // Report
   if (o.ditched) lines.push({ gauge: 'note', text: 'Ditched · bomber lost · crew rescued' });
+  if (o.interned) lines.push({ gauge: 'note', text: INTERN_NOTE });
   const after = { lw: d.luftwaffe, sq: d.squadron, mo: d.morale, esc: escortAvailability(d) };
   const dir = (a: number, b: number, up: string, down: string, same: string) => (b > a ? up : b < a ? down : same);
   lines.push({ gauge: 'luftwaffe', from: before.lw, to: after.lw, text: `Luftwaffe strength ${dir(before.lw, after.lw, 'up', 'down', 'holds')} ${before.lw === after.lw ? `at ${pct(after.lw)}` : `${pct(before.lw)} → ${pct(after.lw)}`}. ${lwReason || 'This target did not touch the fighter arm.'}` });
@@ -299,7 +306,8 @@ export function applyOutcome(d0: CampaignData, op: OpInfo, o: Outcome): { data: 
   if (before.esc < ESCORT_THRESHOLD && after.esc >= ESCORT_THRESHOLD) lines.push({ gauge: 'escort', from: before.esc, to: after.esc, text: `Escort availability ${pct(before.esc)} → ${pct(after.esc)}. Fighter Command confirms: P-51 Mustangs will now join the bombers on gunner missions.` });
   else if (after.esc !== before.esc) lines.push({ gauge: 'escort', from: before.esc, to: after.esc, text: `Escort availability ${pct(before.esc)} → ${pct(after.esc)}.${after.esc >= ESCORT_THRESHOLD ? ' The Mustangs will reach us sooner.' : ` Mustangs join the gunner missions at ${ESCORT_THRESHOLD}%.`}` });
   const next = currentStory(d);
-  if (d.complete) lines.push({ gauge: 'note', text: 'The tour is complete. The campaign summary is ready.' });
+  if (d.interned) lines.push({ gauge: 'note', text: TOUR_ENDED });
+  else if (d.complete) lines.push({ gauge: 'note', text: 'The tour is complete. The campaign summary is ready.' });
   else if (next) lines.push({ gauge: 'note', text: `Next operation: Mission ${next.number}, ${next.title} (${next.date}). Enemy fighters x${enemyMult(d.luftwaffe).toFixed(2)}.` });
   const report: IntelReport = { title, success: o.success, effect: true, lines };
   d.report = report;
@@ -374,7 +382,8 @@ export function sanitize(raw: unknown): CampaignData | null {
   d.raids = (Array.isArray(o.raids) ? o.raids : []).filter((r: any) => r && typeof r.id === 'string' && isRaidId(r.id) && Number.isFinite(r.gap))
     .map((r: any) => ({ gap: Math.floor(r.gap), id: r.id, success: !!r.success }));
   d.history = (Array.isArray(o.history) ? o.history : []).filter((h: any) => h && typeof h.id === 'string').slice(-80)
-    .map((h: any) => ({ id: h.id, kind: h.kind === 'generated' ? 'generated' : h.kind === 'raid' ? 'raid' : 'story', title: String(h.title ?? h.id), success: !!h.success, kills: Math.max(0, num(h.kills, 0)), lost: Math.max(0, num(h.lost, 0)), ...(h.ditched === true ? { ditched: true } : {}) }));
+    .map((h: any) => ({ id: h.id, kind: h.kind === 'generated' ? 'generated' : h.kind === 'raid' ? 'raid' : 'story', title: String(h.title ?? h.id), success: !!h.success, kills: Math.max(0, num(h.kills, 0)), lost: Math.max(0, num(h.lost, 0)), ...(h.ditched === true ? { ditched: true } : {}), ...(h.interned === true ? { interned: true } : {}) }));
+  if (o.interned === 'Sweden' || o.interned === 'Switzerland') { d.interned = o.interned; d.complete = true; }
   const r = o.report;
   d.report = r && typeof r === 'object' && Array.isArray(r.lines) ? { title: String(r.title ?? ''), success: !!r.success, effect: !!r.effect, lines: r.lines.filter((l: any) => l && typeof l.text === 'string').map((l: any) => ({ gauge: l.gauge, text: l.text, from: l.from, to: l.to })) } : null;
   return d;
@@ -408,7 +417,7 @@ export function startNewTour(prev: CampaignData): CampaignData {
 
 /** Carry the strategic situation forward; Experten live in their own save and are untouched. */
 export function startSecondTour(prev: CampaignData): CampaignData {
-  if (!prev.complete || prev.secondTour) return prev;
+  if (!prev.complete || prev.secondTour || prev.interned) return prev;
   const d: CampaignData = { ...prev, tour: prev.tour + 1, complete: false, history: [], raids: [], report: null,
     secondTour: { completed: 0, score: 0, medal: false } };
   saveCampaign(d);

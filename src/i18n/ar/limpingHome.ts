@@ -1,0 +1,48 @@
+import type { PhraseTable } from '../types';
+
+// Arabic for limping home (game/LimpingHome.ts, game/LimpingHomeRules.ts): the return-leg card, the
+// crew's vote, the outcomes (emergency field, ditching, internment) and the crew's radio lines.
+// Templates keep their {placeholders}; the recorded voices stay English.
+export default { phrases: {
+  'LIMPING HOME': 'العودة بطائرة جريحة',
+  'Badly damaged, and a long way from England': 'أضرار جسيمة، وإنجلترا ما زالت بعيدة',
+  'Fuel': 'الوقود',
+  'fuel leak': 'تسرّب وقود',
+  'Engines {n} of 4': 'المحركات {n} من 4',
+  'falling behind the formation': 'نتخلّف عن التشكيل',
+  'CREW DECISION · where do we take her?': 'قرار الطاقم · إلى أين نتجه بها؟',
+  'Your vote: {choice}': 'صوتك: {choice}',
+  'Crew decision: {choice}': 'قرار الطاقم: {choice}',
+  '{n} votes': '{n} أصوات',
+  '1 vote': 'صوت واحد',
+  'Press {keys} to vote · {s} s': 'اضغط {keys} للتصويت · {s} ث',
+  'Home with the formation': 'العودة إلى القاعدة مع التشكيل',
+  'Emergency field · RAF Woodbridge': 'مدرج الطوارئ · وودبريدج التابع لسلاح الجو الملكي',
+  'Ditch in the Channel · Air-Sea Rescue': 'الهبوط في القنال · الإنقاذ الجوي البحري',
+  'Neutral Sweden · interned': 'السويد المحايدة · احتجاز',
+  'Neutral Switzerland · interned': 'سويسرا المحايدة · احتجاز',
+  '{km} km to go': 'بقي {km} كم',
+  'Tanks dry': 'الخزانات فارغة',
+  'Objectives met. Diverted to the emergency field at RAF Woodbridge on failing engines.': 'أُنجزت الأهداف. تحوّلنا إلى مدرج الطوارئ في وودبريدج والمحركات تتعطل.',
+  'INTERNED': 'محتجزون',
+  'Landed in neutral Sweden. Bomber and crew interned; the tour is over.': 'هبطنا في السويد المحايدة. احتُجزت القاذفة وطاقمها؛ انتهت جولة الخدمة.',
+  'Landed in neutral Switzerland. Bomber and crew interned; the tour is over.': 'هبطنا في سويسرا المحايدة. احتُجزت القاذفة وطاقمها؛ انتهت جولة الخدمة.',
+  'Interned in a neutral country · the crew sits out the war · the tour ends here': 'احتجاز في بلد محايد · يقضي الطاقم بقية الحرب بعيدًا عن القتال · تنتهي الجولة هنا',
+  'Tour ended · interned': 'انتهت الجولة · احتجاز',
+  'The crew is interned. The tour is over; the campaign summary is ready.': 'الطاقم محتجز. انتهت جولة الخدمة؛ ملخص الحملة جاهز.',
+  'An interned crew cannot volunteer for a second tour. Begin a new tour.': 'لا يستطيع طاقم محتجز التطوع لجولة ثانية. ابدأ جولة جديدة.',
+  // radio
+  "Pilot to crew: she's hurt bad. Engineer, give me a fuel check.": 'الطيار إلى الطاقم: إصاباتها بالغة. أيها المهندس، افحص الوقود.',
+  "We're losing gas from a holed tank. I'm transferring what I can.": 'نفقد الوقود من خزان مثقوب. أنقل ما أستطيع منه.',
+  'Tanks are holding, but the dead engines are costing us.': 'الخزانات صامدة، لكن المحركات المعطلة تكلّفنا الكثير.',
+  "We can't hold formation. We're dropping behind the box.": 'لا نستطيع البقاء في التشكيل. نحن نتخلّف عن المجموعة.',
+  'Navigator, give me the options. Gunner, you get a vote too.': 'أيها الملاح، أعطني الخيارات. وأنت أيها الرامي، لك صوت أيضًا.',
+  'We stay with the box. Close up and keep those guns hot.': 'نبقى مع المجموعة. اقتربوا وأبقوا الرشاشات جاهزة.',
+  'New heading for Woodbridge. Their emergency strip is three miles long.': 'اتجاه جديد نحو وودبريدج. مدرج الطوارئ هناك طوله ثلاثة أميال.',
+  "We'll never make England. Heading for the neutral border. Burn the papers.": 'لن نصل إلى إنجلترا. نتجه إلى حدود البلد المحايد. أحرقوا الأوراق.',
+  'Mayday, Mayday. Position fixed and sent. Air-Sea Rescue is on the way.': 'نداء استغاثة، نداء استغاثة. حُدّد الموقع وأُرسل. الإنقاذ الجوي البحري في الطريق.',
+  'Fighters at six! They have spotted a straggler!': 'مقاتلات عند السادسة! لقد رصدوا طائرة متخلّفة!',
+  "Engines are starving, the tanks are dry! We're going in the water!": 'المحركات بلا وقود، الخزانات فارغة! سنهبط في الماء!',
+  "We're over neutral territory. Their fighters are rocking their wings: follow them down.": 'نحن فوق أرض محايدة. مقاتلاتهم تهز أجنحتها: اتبعوها للهبوط.',
+  'English coast dead ahead. Air-Sea Rescue has us on the plot.': 'الساحل الإنجليزي أمامنا مباشرة. الإنقاذ الجوي البحري يتابع موقعنا.',
+} } satisfies PhraseTable;

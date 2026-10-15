@@ -108,8 +108,24 @@ async function boot() {
       const b = game.world.playerBomber!;
       for (let i = 0; i < 3; i++) { b.engineDead[i] = true; b.zone(`engine${i + 1}`)!.hp = 0; }
       game.director.bombsDropped = bombsDropped;
+      game.limping.skip();   // straight to the sea, no return-leg vote
       game.finish(bombsDropped, '');
       return { active: game.ditching.active, result: game.endResult };
+    };
+    // Limping home now: sws.limp(enginesOut = 2, leaking = false, mission = 1) damages the ship and ends the
+    // mission in success, so the return leg starts (vote with 7/8/9/0); sws.limp().state shows the fuel.
+    (window as any).sws.limp = (enginesOut = 2, leaking = false, mission = 1) => {
+      if (!isMissionReady()) return 'Wait for sws.assetsReady()';
+      if (game.state !== 'playing' || game.mission?.role !== 'gunner' || !game.mission.number) {
+        const auto = game.bookends.auto; game.bookends.auto = true;
+        game.startMission(CAMPAIGN[mission]); game.bookends.auto = auto;
+      }
+      const b = game.world.playerBomber!;
+      for (let i = 0; i < enginesOut; i++) { b.engineDead[i] = true; b.zone(`engine${i + 1}`)!.hp = 0; }
+      if (leaking) game.limping.forceLeak = true;
+      game.director.bombsDropped = true;
+      game.finish(true, game.mission!.success ?? '');
+      return game.limping;
     };
     // Formation set piece now (gunner mission in progress): sws.drama('flakHit' | 'collision' | 'bombBay' | 'straggler' | 'littleFriends'); sws.drama() lists them
     (window as any).sws.drama = (n?: any) => (n ? game.midRound.devDrama(n) : 'flakHit, collision, bombBay, straggler, littleFriends');

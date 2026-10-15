@@ -56,6 +56,7 @@ import { syncSurfaceDetail } from '../render/SurfaceDetail';
 import { syncHeroLod } from '../world/HeroLook';
 import { Director } from './Director';
 import { MissionFlow } from './MissionFlow';
+import { LimpingHome } from './LimpingHome';
 import { GameHud } from './GameHud';
 import { MenuScene } from './MenuScene';
 import { WorldEvents } from './WorldEvents';
@@ -134,6 +135,7 @@ export class Game {
   readonly cine: Cinematics;       // kill cam, mission fly-by, best-moment replay (Cinematics.ts)
   readonly ditching: Ditching;
   readonly formationReturn = new FormationReturn(this);
+  readonly limping = new LimpingHome(this);   // damaged return leg: fuel, stragglers, the crew's vote (LimpingHome.ts)
   readonly b17Damage: B17DamageCrew;
   readonly bookends: Bookends;     // take-off / landing scenes at Deenethorpe (Bookends.ts)
   readonly distantBattle = new DistantBattle();
@@ -303,6 +305,7 @@ export class Game {
     this.aa.release();
     this.formationReturn.release();
     this.ditching.release();
+    this.limping.release();
     this.bookends.release();   // the parked field behind a debrief gives the world back first
     this.photo.exit();
     this.state = 'menu';
@@ -332,6 +335,7 @@ export class Game {
     this.aa.release();
     this.formationReturn.release();
     this.ditching.release();
+    this.limping.release();
     this.bookends.release();
     sound.init();
     this.state = 'briefing';
@@ -564,6 +568,7 @@ export class Game {
       this.specials.update(dt, this.roundIdx, this.roundT0);
     }
     this.b17Damage.update(dt);
+    this.limping.frame(dt);
     this.cracks.update(dt);
     this.ui.redVignette(Math.min(0.35, this.damageT * 0.45 + (this.mission?.role === 'gunner' && !this.menuMode ? w.crewWounded * 0.05 : 0)));
     if (this.mission?.role === 'pilot' && !this.menuMode) { /* pilot sets exposure/vignette */ }
