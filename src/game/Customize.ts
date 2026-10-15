@@ -3,6 +3,7 @@ import { Progression } from './Upgrades';
 import { Rarity, WEAPON_MODS } from './WeaponMods';
 import { applyNoseArt, NOSE_ARTS } from '../render/NoseArt';
 import { applyPaint, PAINTS } from '../render/Paint';
+import { isModKey, modPaint } from '../render/ModArt';
 
 // Bomber customisation: the player's B-17 gets a name, nose art and a paint scheme. The
 // choice lives in Progression.bomber; cosmetic unlocks are 'nose:<id>', 'paint:<id>' and
@@ -44,7 +45,8 @@ export const KIND_LABEL: Record<ItemKind, string> = { mod: 'Weapon mod', nose: '
 // Merit price of a cosmetic in the hangar (weapon mods only come from crates)
 export const COSMETIC_COST: Record<Rarity, number> = { common: 300, rare: 750, epic: 1500, legendary: 2800 };
 
-export const owns = (p: Progression, key: string) => key === 'nose:none' || !!COLLECTABLES.find((c) => c.key === key && c.free) || p.unlocked.has(key);
+// mod paint schemes and nose art (render/ModArt.ts) are free while their mod is enabled
+export const owns = (p: Progression, key: string) => key === 'nose:none' || !!COLLECTABLES.find((c) => c.key === key && c.free) || p.unlocked.has(key) || isModKey(key);
 
 export function cleanName(s: string) {
   return s.replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX);
@@ -68,7 +70,7 @@ export function dressPlayerBomber(b: Bomber) {
   const paint = p && owns(p, 'paint:' + p.bomber.paint) ? p.bomber.paint : 'olive';
   const nose = p && owns(p, 'nose:' + p.bomber.nose) ? p.bomber.nose : 'script';
   applyPaint(b.model, paint);
-  applyNoseArt(b.model, nose, b.name, paint === 'silver' ? 0.45 : 0.1);
+  applyNoseArt(b.model, nose, b.name, paint === 'silver' || modPaint(paint)?.metal ? 0.45 : 0.1);
 }
 
 // Re-dress the current player bomber after a change in the hangar / Armory

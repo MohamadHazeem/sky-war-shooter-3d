@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { markOwned } from './Dispose';
 import type { Rarity } from '../game/WeaponMods';
+import { modImage, modNose, type ModNose } from './ModArt';
 
 // Nose art for the player's B-17: procedurally drawn canvas designs (2:1, transparent
 // background) applied as a decal on the left side of the nose. The decal is a small plane
@@ -310,8 +311,28 @@ export function drawNoseArt(id: string, name: string, canvas = document.createEl
   const g = canvas.getContext('2d')!;
   g.scale(resolution, resolution);
   g.clearRect(0, 0, CW, CH);
-  (DRAW[id] ?? DRAW.script)(g, name || 'Sky Queen');
+  const mod = modNose(id);
+  if (mod) drawModNose(g, mod, name || 'Sky Queen');
+  else (DRAW[id] ?? DRAW.script)(g, name || 'Sky Queen');
   return canvas;
+}
+
+// Nose art from a mod (render/ModArt.ts): its image fitted into the decal, the ship's name under it
+function drawModNose(g: G, n: ModNose, name: string) {
+  const img = modImage(n.image);
+  const h = n.showName ? CH * 0.74 : CH;
+  if (img) {
+    const k = Math.min(CW / img.width, h / img.height);
+    const w = img.width * k, ih = img.height * k;
+    g.drawImage(img, (CW - w) / 2, (h - ih) / 2, w, ih);
+  }
+  if (n.showName || !img) nameScript(g, name, CW / 2, img ? CH * 0.86 : CH * 0.5, CW * 0.9, img ? 54 : 96);
+}
+
+// Mod images decode after the first draw, and mods can be switched off: drop cached mod designs
+export function forgetModNoseArt() {
+  for (const k of [...thumbs.keys()]) if (k.startsWith('mod.')) thumbs.delete(k);
+  for (const [k, t] of [...textures]) if (k.startsWith('mod.')) { textures.delete(k); t.dispose(); }
 }
 
 // Thumbnails for the hangar (data URLs, cached per design + name)

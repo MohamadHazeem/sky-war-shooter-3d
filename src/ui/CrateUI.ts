@@ -6,6 +6,7 @@ import {
 } from '../game/Customize';
 import { NOSE_ARTS, noseArtThumb } from '../render/NoseArt';
 import { PAINTS } from '../render/Paint';
+import { modNoses, modPaints, modSwatch } from '../render/ModArt';
 import { sound } from '../audio/Sound';
 import { crateBurst, crateReveal, crateShake } from '../audio/CrateSound';
 import { mountSkillSection } from './SkillTreeScreen';
@@ -62,9 +63,13 @@ function tile(c: Collectable, prog: Progression, selected: boolean, inner: strin
 
 function bomberSection(prog: Progression) {
   const name = bomberName(), b = prog.bomber;
-  const paint = PAINTS.find((p) => p.id === b.paint && owns(prog, 'paint:' + p.id)) ?? PAINTS[0];
+  // enabled mods add free paint schemes and nose art (render/ModArt.ts, the Mods screen)
+  const mods = modPaints().map((p) => ({ id: p.id, name: p.name, pack: p.pack, swatch: modSwatch(p) }));
+  const paint = [...PAINTS, ...mods].find((p) => p.id === b.paint && owns(prog, 'paint:' + p.id)) ?? PAINTS[0];
   const nose = owns(prog, 'nose:' + b.nose) ? b.nose : 'script';
   const col = (key: string) => COLLECTABLES.find((c) => c.key === key)!;
+  const modCol = (kind: 'nose' | 'paint', id: string, name: string): Collectable => ({ key: `${kind}:${id}`, kind, id, name, desc: '', rarity: 'common', free: true });
+  const modTag = (pack: string) => `<i class="cmod" title="${esc(pack)}">${tx('MOD')}</i>`;
   return `<div class="hsec">${tx('YOUR B-17')}</div>
     <div class="bcust">
       <div class="bc-prev" style="background:${paint.swatch}"><img alt="" src="${nose === 'none' ? '' : noseArtThumb(nose, name)}" ${nose === 'none' ? 'hidden' : ''}/></div>
@@ -79,9 +84,11 @@ function bomberSection(prog: Progression) {
     </div>
     <div class="hsub">${tx('NOSE ART')}</div>
     <div class="cgrid">${tile({ key: 'nose:none', kind: 'nose', id: 'none', name: 'Bare nose', desc: '', rarity: 'common', free: true }, prog, nose === 'none', '<div class="cimg bare"></div>')}
-      ${NOSE_ARTS.filter((n) => n.id !== 'none').map((n) => tile(col('nose:' + n.id), prog, nose === n.id, `<img class="cimg" alt="" src="${noseArtThumb(n.id, name)}"/>`)).join('')}</div>
+      ${NOSE_ARTS.filter((n) => n.id !== 'none').map((n) => tile(col('nose:' + n.id), prog, nose === n.id, `<img class="cimg" alt="" src="${noseArtThumb(n.id, name)}"/>`)).join('')}
+      ${modNoses().map((n) => tile(modCol('nose', n.id, n.name), prog, nose === n.id, `${modTag(n.pack)}<img class="cimg" alt="" src="${noseArtThumb(n.id, name)}"/>`)).join('')}</div>
     <div class="hsub">${tx('PAINT')}</div>
-    <div class="cgrid">${PAINTS.map((p) => tile(col('paint:' + p.id), prog, paint.id === p.id, `<div class="cimg" style="background:${p.swatch}"></div>`)).join('')}</div>`;
+    <div class="cgrid">${PAINTS.map((p) => tile(col('paint:' + p.id), prog, paint.id === p.id, `<div class="cimg" style="background:${p.swatch}"></div>`)).join('')}
+      ${mods.map((p) => tile(modCol('paint', p.id, p.name), prog, paint.id === p.id, `${modTag(p.pack)}<div class="cimg" style="background:${p.swatch}"></div>`)).join('')}</div>`;
 }
 
 function collectionSection(prog: Progression) {

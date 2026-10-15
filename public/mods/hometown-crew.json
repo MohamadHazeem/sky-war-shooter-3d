@@ -1,0 +1,60 @@
+{
+  "format": "sws3d-mod",
+  "version": 1,
+  "id": "hometown-crew",
+  "name": "Hometown Crew",
+  "author": "Sky War team",
+  "description": "An example mod: new names and nicknames for the whole crew.",
+  "crew": {
+    "brenner": {
+      "first": "Walt",
+      "last": "Hayes",
+      "nick": "Pappy"
+    },
+    "doyle": {
+      "first": "Gene",
+      "last": "Malone",
+      "nick": "Red"
+    },
+    "stern": {
+      "first": "Abe",
+      "last": "Lindqvist",
+      "nick": "Compass"
+    },
+    "kessler": {
+      "first": "Vic",
+      "last": "Russo",
+      "nick": "Bullseye"
+    },
+    "mendez": {
+      "first": "Rudy",
+      "last": "Ortiz",
+      "nick": "Sparkplug"
+    },
+    "gallo": {
+      "first": "Benny",
+      "last": "Katz",
+      "nick": "Static"
+    },
+    "reilly": {
+      "first": "Pete",
+      "last": "Dunn",
+      "nick": "Peanut"
+    },
+    "price": {
+      "first": "Clay",
+      "last": "Barlow",
+      "nick": "Dusty"
+    },
+    "walsh": {
+      "first": "Artie",
+      "last": "Kowal",
+      "nick": "Clover"
+    },
+    "dawson": {
+      "first": "Lyle",
+      "last": "Becker",
+      "nick": "Owl"
+    }
+  }
+}

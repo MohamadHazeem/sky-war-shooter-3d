@@ -1,7 +1,8 @@
-import { registerHeroMaterial } from '../world/HeroTextures';
+import { heroBootMap, registerHeroMaterial } from '../world/HeroTextures';
 import * as THREE from 'three';
 import { markOwned } from './Dispose';
 import type { Rarity } from '../game/WeaponMods';
+import { modImage, modPaint, type ModPaint } from './ModArt';
 
 // Paint schemes for the player's B-17. The model's skin ('GD-L' material) is an olive drab
 // texture with a grey underside; a scheme recolours that texture on a canvas (keeping the
@@ -32,8 +33,9 @@ const SUGAR = [270, 356, 186, 232];
 
 const cache = new Map<string, THREE.Texture>();
 
-function paintedMap(id: string, src: THREE.Texture): THREE.Texture | null {
-  const k = id + '|' + src.uuid;
+function paintedMap(id: string, src: THREE.Texture, heroAtlas = false): THREE.Texture | null {
+  const mod = modColours(id), pat = mod ? patternPixels(mod) : null;
+  const k = id + '|' + src.uuid + (pat ? '|p' : '');
   const hit = cache.get(k);
   if (hit) return hit;
   const img = src.image as CanvasImageSource & { width: number; height: number };
@@ -63,7 +65,7 @@ function paintedMap(id: string, src: THREE.Texture): THREE.Texture | null {
   const scale = W / 1024;
   // every scheme (olive included) paints out the factory "Sugar" script on the left nose,
   // where the player's own nose art and name go
-  if (oN) {
+  if (oN && !(heroAtlas && mod)) {
     const [x0, x1, y0, y1] = SUGAR.map((v) => Math.round(v * scale));
     for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
       const p = y * W + x;
@@ -77,7 +79,17 @@ function paintedMap(id: string, src: THREE.Texture): THREE.Texture | null {
     if (!k2) continue;
     const i = p * 4;
     const shade = THREE.MathUtils.clamp(lum[p] / (k2 === 1 ? oRef : gRef), 0.35, 1.5);
-    if (id === 'silver') {
+    if (mod) {
+      // a mod's scheme: its camouflage pattern (tiled across the skin) or top colour, and its underside
+      let [r, gg, b] = k2 === 1 ? mod.topRGB : mod.underRGB;
+      if (k2 === 1 && pat) {
+        const x = p % W, y = (p / W) | 0, n = 4 * mod.scale;
+        const q = ((Math.floor((y / H) * n * pat.h) % pat.h) * pat.w + (Math.floor((x / W) * n * pat.w) % pat.w)) * 4;
+        r = pat.d[q]; gg = pat.d[q + 1]; b = pat.d[q + 2];
+      }
+      const s2 = mod.metal ? shade * 1.08 : shade;
+      set(i, r * s2, gg * s2, b * s2);
+    } else if (id === 'silver') {
       // aluminium: the grey underside a touch darker than the polished top
       const v = (k2 === 1 ? 182 : 168) * shade;
       set(i, v * 0.97, v * 0.99, v * 1.02);
@@ -101,6 +113,50 @@ function paintedMap(id: string, src: THREE.Texture): THREE.Texture | null {
   t.needsUpdate = true;
   cache.set(k, t);
   return t;
+}
+
+// ---------- mod paint schemes (render/ModArt.ts) ----------
+type ModColours = ModPaint & { topRGB: [number, number, number]; underRGB: [number, number, number] };
+const hexRGB = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const pixels = new Map<string, { w: number; h: number; d: Uint8ClampedArray } | null>();
+
+function patternPixels(m: ModPaint) {
+  const img = modImage(m.pattern);
+  if (!img) return null;
+  let hit = pixels.get(m.pattern!);
+  if (hit === undefined) {
+    const w = Math.min(256, img.width), h = Math.min(256, img.height);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    hit = g ? (g.drawImage(img, 0, 0, w, h), { w, h, d: g.getImageData(0, 0, w, h).data }) : null;
+    pixels.set(m.pattern!, hit);
+  }
+  return hit;
+}
+
+function modColours(id: string): ModColours | null {
+  const m = modPaint(id);
+  return m ? { ...m, topRGB: hexRGB(m.top), underRGB: hexRGB(m.under) } : null;
+}
+
+// The hero B-17: its boot colour atlas (the streamed one is GPU-compressed) recoloured like the classic
+// skin, so markings and panel art stay; without a readable atlas, a colour multiplier on the olive drab /
+// neutral grey map (linear olive and grey of the maps, from the Desert Pink calibration)
+const OLIVE_LIN = new THREE.Color().setRGB(0.212, 0.169, 0.091), GREY_LIN = new THREE.Color().setRGB(0.4, 0.42, 0.45);
+function heroModColour(cs: THREE.MeshStandardMaterial, std: THREE.MeshStandardMaterial, m: ModPaint) {
+  const boot = heroBootMap(std) ?? std.map;
+  const img = boot?.image as { width?: number } | undefined;
+  const map = boot && img?.width && !(boot as THREE.CompressedTexture).isCompressedTexture ? paintedMap(m.id, boot, true) : null;
+  if (map) { cs.map = map; cs.color.setRGB(1, 1, 1); cs.userData.modMap = true; return; }
+  const grey = /neutral_grey/.test(std.name), ref = grey ? GREY_LIN : OLIVE_LIN;
+  cs.color.set(grey ? m.under : m.top);
+  if (std.map) cs.color.setRGB(cs.color.r / ref.r, cs.color.g / ref.g, cs.color.b / ref.b);
+}
+
+// Mods were switched or their images decoded: rebuild the painted maps on the next dress
+export function forgetModPaint() {
+  for (const [k, t] of [...cache]) if (k.startsWith('mod.')) { cache.delete(k); t.dispose(); }
+  pixels.clear();
 }
 
 // Recolour a B-17 model. Restores the original (shared) materials first, so schemes can be
@@ -138,15 +194,19 @@ export function applyPaint(model: THREE.Object3D, id: string) {
         const hero = std.name.startsWith('hero_');
         // Low retains an embedded diffuse atlas, so recolour it without streaming detail.
         const heroLow = hero && std.name.endsWith('_low');
-        const map = (!hero || (heroLow && (id === 'silver' || id === 'desert'))) && std.map ? paintedMap(id, std.map) : null;
+        const mod = modPaint(id);
+        const map = (!hero || (heroLow && (id === 'silver' || id === 'desert' || mod))) && std.map ? paintedMap(id, std.map, hero) : null;
         if (map) cs.map = map;
+        else if (!hero && cs.color && mod) cs.color.set(mod.top);
         else if (!hero && cs.color && id !== 'invasion') cs.color.multiply(id === 'silver' ? new THREE.Color(1.9, 1.9, 2.0) : new THREE.Color(1.6, 1.15, 1.1));
         if (hero) {
           if (heroLow && map) cs.color.setRGB(1, 1, 1);
+          else if (mod) heroModColour(cs, std, mod);
           else if (id === 'silver') cs.color.fromArray(std.map ? [1, 1, 1] : [.52, .55, .58]);
           else if (id === 'desert') cs.color.fromArray(std.map ? [2.6, 1.7, 2.3] : [.25, .17, .10]);
           registerHeroMaterial(cs);
         }
+        if (mod?.metal) { cs.metalness = Math.max(cs.metalness, hero ? .7 : .55); cs.roughness = Math.min(cs.roughness, .4); }
         if (id === 'silver') { cs.metalness = hero ? (std.map && !heroLow ? 1 : .82) : .62; cs.roughness = hero ? (std.map && !heroLow ? 1 : .36) : .32; }
         copies.set(mat, c = cs);
       }
