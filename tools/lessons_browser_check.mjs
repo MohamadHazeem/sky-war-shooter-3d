@@ -49,6 +49,11 @@ const toStep = (page, id) => page.evaluate((id) => {
   }
   return false;
 }, id);
+// skip the rest of the running lesson (completes it, so the next one unlocks)
+const finish = (page) => page.evaluate(() => {
+  const L = sws.game.onboarding.lessons;
+  for (let i = 0; i < 6000 && L.active; i++) { if (L.phase === 'step') L.skip = true; sws.engine.frame(1 / 60, false); }
+});
 const card = (page) => page.evaluate(() => {
   const c = document.getElementById('tutCard');
   const k = c?.querySelector('.k');
@@ -88,10 +93,7 @@ try {
   await shot(page, 'waist-withpip-en');
 
   // 3. Finish the waist lesson (remaining steps skipped) and come back to the Training screen
-  await page.evaluate(() => {
-    const L = sws.game.onboarding.lessons;
-    for (let i = 0; i < 6000 && L.active; i++) { if (L.phase === 'step') L.skip = true; sws.engine.frame(1 / 60, false); }
-  });
+  await finish(page);
   results.screenAfter = await rows(page);
   const after = Object.fromEntries(results.screenAfter.filter((r) => r.id).map((r) => [r.id, r]));
   assert.equal(after.waist.status, 'Done'); assert.equal(after.top.status, 'New'); assert.equal(after.top.next, true);
@@ -109,6 +111,7 @@ try {
   results.topCard = await card(page);
   assert.match(results.topCard.text, /Range \d+ m/); assert.ok(results.topWait.wasted > 0);
   await shot(page, 'top-convergence-en');
+  await finish(page);
 
   // 5. Ball: short bursts (one long one flagged), then the forced jam card
   await page.evaluate(() => { sws.game.ui.hideAll(); sws.game.onboarding.startLesson('ball'); });
@@ -128,6 +131,7 @@ try {
   results.ballJamCard = await card(page);
   assert.equal(results.ballJam.jam, true);
   await shot(page, 'ball-jam-en');
+  await finish(page);
 
   // 6. Tail: the mask hose comes loose, the picture greys, press O
   await page.evaluate(() => { sws.game.ui.hideAll(); sws.game.onboarding.startLesson('tail'); });
