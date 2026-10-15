@@ -47,6 +47,7 @@ export function wireReveal(root: ParentNode) {
 
 const CSS = `
 body.streamer #hud .hud-text, body.streamer #feed, body.streamer #subs, body.streamer #tip, body.streamer #specHud .bar, body.streamer #specHud .top { zoom: 1.3; }
+@media (max-width: 640px) { body.streamer #hud .hud-text, body.streamer #specHud .top { zoom: 1.15; } }
 body.streamer #hud .hud-label { letter-spacing: 1.5px; }
 body.streamer #feed > * { text-shadow: 0 1px 3px #000, 0 0 8px rgba(0,0,0,.7); }
 body.streamer .sws-fps { display: none !important; }

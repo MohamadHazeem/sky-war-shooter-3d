@@ -36,7 +36,7 @@ body.spectating #hBL, body.spectating #hBR, body.spectating #abilityBar, body.sp
 body.spec-cine #hudCanvas { visibility: hidden; }
 html[dir=rtl] #specHud .tag, html[dir=rtl] #specHud .views button b, html[dir=rtl] #specHud .hint, html[dir=rtl] #specHud .wait { letter-spacing: 0; }
 html[lang=ar] #specHud .views button b { font-size: 14px; }
-@media (max-width: 640px) { #specHud .views { width: 100%; } #specHud .views button { min-width: 0; flex: 1 1 30%; padding: 7px 4px; } #specHud .views button b { font-size: 11px; letter-spacing: .5px; white-space: normal; } #specHud .views button small { max-width: none; } #specHud .hint { display: none; } #specHud .top { margin-top: 30px; } }
+@media (max-width: 640px) { #specHud .views { width: 100%; } #specHud .views button { min-width: 0; flex: 1 1 30%; padding: 7px 4px; } #specHud .views button b { font-size: 11px; letter-spacing: .5px; white-space: normal; } #specHud .views button small { max-width: none; } #specHud .hint { display: none; } #specHud .top { margin-top: 30px; } body.spectating[data-hud-detail] #hud .hud-tl { width: max-content; max-width: 62vw; } }
 `;
 
 export class SpectatorHud {
@@ -88,10 +88,30 @@ export class SpectatorHud {
     if (!on) document.body.classList.remove('spec-cine');
   }
 
+  /** Keep the SPECTATING / delay tags clear of the HUD's top-corner text (score, round line), which
+   *  grows with streamer mode's 1.3x and with long Arabic lines: drop the tags below it when they meet. */
+  private clearCorners() {
+    const top = this.root!.querySelector<HTMLElement>('.top')!;
+    top.style.marginTop = '';
+    const a = top.getBoundingClientRect();
+    if (!a.width) return;
+    let low = 0;
+    for (const el of document.querySelectorAll<HTMLElement>('#hud .hud-tl, #hud .hud-tr')) {
+      const b = el.getBoundingClientRect();
+      if (b.width && b.height && b.left < a.right + 8 && b.right > a.left - 8 && b.top < a.bottom + 8 && b.bottom > a.top - 8) low = Math.max(low, b.bottom);
+    }
+    if (!low) return;
+    const cs = getComputedStyle(top);
+    const zoom = parseFloat(cs.zoom) || 1;   // streamer mode zooms the tags (margins scale with it)
+    const base = parseFloat(cs.marginTop) || 0;
+    top.style.marginTop = `${base + (low + 8 - a.top) / zoom}px`;
+  }
+
   /** Refresh (a few times a second): which view is on, who sits where, who is firing, the delay. */
   update(view: SpecView, crew: readonly CrewSeat[], myId: number, fire: number, delay: number, waiting: boolean) {
     const r = this.ensure();
     document.body.classList.toggle('spec-cine', view === 'cine');
+    this.clearCorners();
     const sig = `${view}|${crew.map(p => `${p.id}:${p.seat}:${p.name}`).join(',')}|${fire}|${delay}|${waiting}|${document.documentElement.lang}|${document.body.classList.contains('streamer')}`;
     if (sig === this.last) return;
     this.last = sig;

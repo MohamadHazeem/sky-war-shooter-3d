@@ -287,12 +287,14 @@ export class CoopScreen {
   private watchLobby(v: LobbyView) {
     const delay = this.h.delayNow();
     const behind = delay ? ' ' + tx('The broadcast runs {n} s behind.', { n: delay }) : '';
+    const watchers = v.watchers ? tx('Spectators watching: {n}', { n: v.watchers }) : '';
     this.root.innerHTML = `<div class="screen-center"><div class="box panel">
       <div class="kicker">${tx('CO-OP (BETA) · SURVIVAL · B-17 GUNNERS')}</div>
       <div class="hud-label" style="margin-top:12px">${tx('Watching game')}</div>
       <div class="code">${revealable(v.code, 'code-text')}</div>
       <div class="status ok" data-status>${esc(tx(v.status))}</div>
       ${v.crew ? this.crewRows(v.crew, -1) : ''}
+      ${watchers ? `<p class="note" style="margin:0 0 6px">${esc(watchers)}</p>` : ''}
       <p class="note watchnote" style="margin:0 0 12px">${tx('You are a spectator: watch any gun position or the cinematic camera. You cannot fire.')}${esc(behind)}</p>
       <div class="row"><button class="btn ghost" data-leave>${tx('Leave')}</button></div>
     </div></div>`;

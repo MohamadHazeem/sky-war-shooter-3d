@@ -39,11 +39,18 @@
       ]
     ]
   },
+  "lobbyAr": "\n      اللعب التعاوني (تجريبي) · البقاء · رماة B-17\n      لعبة تشاهدها\n      F3H9YK\n      تشاهد الآن — بانتظار أن يبدأ المضيف\n      Reed · الجانب الأيسر · جاهزWalsh · مدفع الذيل · جاهزمكان شاغر في الطاقم · يغطيه الرامي الآليمكان شاغر في الطاقم · يغطيه الرامي الآلي\n      المشاهدون الآن: 1\n      أنت مشاهد: تابع أي موقع رشاش أو الكاميرا السينمائية. لا يمكنك الإطلاق.\n      غادر\n    ",
   "rejoined": [
     [
       3,
       false,
       "waistR",
+      "connecting"
+    ],
+    [
+      5,
+      true,
+      "waistL",
       "connecting"
     ],
     [
@@ -63,12 +70,6 @@
       true,
       "waistL",
       "open"
-    ],
-    [
-      5,
-      true,
-      "waistL",
-      "connecting"
     ]
   ],
   "start": {
@@ -86,8 +87,8 @@
     "spectator": {
       "station": "tail",
       "aim": [
-        3.489797914702308,
-        0.11899718512380804
+        3.489745772209373,
+        0.11899718107375527
       ],
       "fire": 16,
       "inputs": 0
@@ -100,7 +101,7 @@
     ],
     "spectator": [
       "waistL",
-      1.2710003510322694,
+      1.2710003525029356,
       0.14999984227549212
     ]
   },
@@ -108,22 +109,22 @@
     {
       "shot": "chase",
       "view": "cine",
-      "cam": 57.59922277253397
+      "cam": 57.599222772534
     },
     {
       "shot": "wing",
       "view": "cine",
-      "cam": 34.27115202785216
+      "cam": 34.27115202785219
     },
     {
       "shot": "below",
       "view": "cine",
-      "cam": 19.865578672668963
+      "cam": 19.86557867266901
     },
     {
       "shot": "nose",
       "view": "cine",
-      "cam": 44.09636429457646
+      "cam": 44.09636429457651
     }
   ],
   "action": {
@@ -132,20 +133,47 @@
   },
   "streamer": {
     "bar": "Left WaistGunner 1Right WaistAI gunnerTop TurretAI gunnerBall TurretAI gunnerTail GunGunner 2CinematicAuto cameraStop watchingLeave the game",
-    "body": "spectating hud-mission streamer"
+    "body": "spectating hud-mission streamer",
+    "gunnerN": 2
+  },
+  "gap": {
+    "streamer1280": [
+      "apart"
+    ],
+    "ar1280": [
+      "apart"
+    ],
+    "arPhone": [
+      8
+    ],
+    "enPhone": [
+      8
+    ]
+  },
+  "ar": {
+    "tag": "مشاهدة",
+    "bar": "الجانب الأيسرالرامي 1الجانب الأيمنالرامي الآليالبرج العلويالرامي الآليالبرج الكرويالرامي الآليمدفع الذيلالرامي 2سينمائيةكاميرا تلقائيةأوقف المشاهدةغادر اللعبة",
+    "hint": "1–5 مواقع الرشاشات · C الكاميرا السينمائية · ← → تبديل",
+    "status": "النقاط 0",
+    "objective": "الجولة 1 — 1:53 · 4 مقاتلات",
+    "dir": "rtl"
+  },
+  "phone": {
+    "overflow": false,
+    "rows": 3
   },
   "delay": {
-    "hostT0": 12.70000000000021,
+    "hostT0": 13.70000000000026,
     "held": 6,
-    "host": 13.000000000000226,
-    "specLatest": 12.7,
-    "releasedAfterMs": 9911,
-    "releasedLatest": 13
+    "host": 14.000000000000275,
+    "specLatest": 13.6833,
+    "releasedAfterMs": 10847,
+    "releasedLatest": 13.9833
   },
   "debrief": {
     "state": "debrief",
     "active": false,
-    "merit": 110,
+    "merit": 50,
     "points": 0
   },
   "mask": {

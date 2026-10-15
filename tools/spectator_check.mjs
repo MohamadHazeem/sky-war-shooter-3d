@@ -47,6 +47,12 @@ try {
   await gunner.waitForFunction(() => game.coop.watchers === 1);
   await host.screenshot({ path: `${shots}/lobby-host.jpg`, type: 'jpeg', quality: 62 });
   await spec.screenshot({ path: `${shots}/lobby-spectator.jpg`, type: 'jpeg', quality: 62 });
+  // the same spectator lobby in Arabic (sws.setLang: the game's own i18n instance)
+  await spec.evaluate(() => { sws.setLang('ar'); game.coop.renderLobby(game.coop.lobbyStatus); });
+  report.lobbyAr = await spec.evaluate(() => document.querySelector('#coop .box')?.textContent);
+  assert(report.lobbyAr.includes('المشاهدون الآن: 1') && report.lobbyAr.includes('أنت مشاهد'), 'Arabic spectator lobby');
+  await spec.screenshot({ path: `${shots}/lobby-spectator-ar.jpg`, type: 'jpeg', quality: 62 });
+  await spec.evaluate(() => { sws.setLang('en'); game.coop.renderLobby(game.coop.lobbyStatus); });
   // --- the round ---
   const seats = async (tag) => console.log(tag, JSON.stringify({ host: await host.evaluate(() => game.coop.peers.map(p => [p.id, p.spec, p.seat])), gunner: await gunner.evaluate(() => [game.coop.guestSeat, game.gunner.station]) }));
   await seats('before start');
@@ -125,15 +131,42 @@ try {
   // streamer mode on the spectator: big HUD, crew names hidden
   await spec.evaluate(() => { game.settings.streamer = true; game.applySettings(); });
   await spec.keyboard.press('Digit5'); await step(20);
+  // the gunner's id can change when it rejoins after the start-time link drop: "Gunner <id + 1>"
+  const gunnerN = await gunner.evaluate(() => game.coop.myId + 1);
+  const tailLabel = () => spec.evaluate(() => document.querySelector('#specHud .views [data-v=tail] small')?.textContent);
+  for (let i = 0; i < 60 && (await tailLabel()) !== `Gunner ${gunnerN}`; i++) await step();
   report.streamer = await spec.evaluate(() => ({ bar: document.querySelector('#specHud .views')?.textContent, body: document.body.className }));
-  assert(!report.streamer.bar.includes('Walsh') && report.streamer.bar.includes('Gunner 2'));
+  report.streamer.gunnerN = gunnerN;
+  assert(!report.streamer.bar.includes('Walsh') && (await tailLabel()) === `Gunner ${gunnerN}`, 'streamer mode: the tail shows "Gunner n", never the callsign');
   await shot(spec, 'spec-streamer');
-  // Arabic overlay
-  await spec.evaluate(async () => { const { setLang } = await import('/src/i18n/index.ts'); setLang('ar'); });
-  await step(12); await shot(spec, 'spec-ar');
-  await spec.evaluate(async () => { const { setLang } = await import('/src/i18n/index.ts'); setLang('en'); game.settings.streamer = false; game.applySettings(); });
-  // phone width spectator bar
-  await spec.setViewportSize({ width: 390, height: 844 }); await step(6); await shot(spec, 'spec-phone');
+  // the SPECTATING tag stays clear of the top-corner HUD text (score, round line) at 1.3x
+  const gap = () => spec.evaluate(() => {
+    const t = document.querySelector('#specHud .top').getBoundingClientRect();
+    return [...document.querySelectorAll('#hud .hud-tl, #hud .hud-tr')].map(e => e.getBoundingClientRect()).filter(b => b.width && b.height)
+      .map(b => (b.right <= t.left || b.left >= t.right) ? 'apart' : Math.round(t.top - b.bottom));
+  });
+  const clear = (g) => g.every(x => x === 'apart' || x >= 4);
+  report.gap = { streamer1280: await gap() };
+  // Arabic overlay (still in streamer mode, the widest case), then at phone width
+  await spec.evaluate(() => sws.setLang('ar'));
+  await step(12);
+  report.ar = await spec.evaluate(() => ({ tag: document.querySelector('#specHud .tag').textContent, bar: document.querySelector('#specHud .views').textContent, hint: document.querySelector('#specHud .hint').textContent, status: document.querySelector('#hStatus')?.textContent, objective: document.querySelector('#hObjective')?.textContent, dir: document.documentElement.dir }));
+  console.log('ar', JSON.stringify(report.ar));
+  assert.equal(report.ar.tag, 'مشاهدة');
+  for (const w of ['الجانب الأيسر', 'الجانب الأيمن', 'البرج العلوي', 'البرج الكروي', 'مدفع الذيل', 'سينمائية', 'الرامي الآلي', 'أوقف المشاهدة', `الرامي ${gunnerN}`]) assert(report.ar.bar.includes(w), 'Arabic bar: ' + w);
+  assert(!/[A-Za-z]{3}/.test(report.ar.bar + report.ar.status + report.ar.objective), 'no English left on the bar or the score block');
+  report.gap.ar1280 = await gap();
+  await shot(spec, 'spec-ar');
+  await spec.setViewportSize({ width: 390, height: 844 }); await step(6);
+  report.gap.arPhone = await gap();
+  report.phone = await spec.evaluate(() => ({ overflow: document.documentElement.scrollWidth > innerWidth, rows: new Set([...document.querySelectorAll('#specHud .views button')].map(b => Math.round(b.getBoundingClientRect().top))).size }));
+  await shot(spec, 'spec-phone');
+  await spec.evaluate(() => { sws.setLang('en'); });
+  await step(6); report.gap.enPhone = await gap();
+  console.log('gap', JSON.stringify(report.gap), 'phone', JSON.stringify(report.phone));
+  for (const g of Object.values(report.gap)) assert(clear(g), 'SPECTATING tag clear of the score block');
+  assert(!report.phone.overflow);
+  await spec.evaluate(() => { game.settings.streamer = false; game.applySettings(); });
   await spec.setViewportSize({ width: 1280, height: 720 });
   // --- broadcast delay: the spectator's picture falls behind the host's battle ---
   // (frames are stepped slowly here, so compare against the host's clock when the delay went on)

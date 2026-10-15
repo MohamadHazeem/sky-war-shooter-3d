@@ -8,7 +8,7 @@ const table: PhraseTable = { phrases: {
   '1–5 gun positions · C cinematic · ← → switch': '1–5 مواقع الرشاشات · C الكاميرا السينمائية · ← → تبديل',
   'Cinematic': 'سينمائية',
   'Auto camera': 'كاميرا تلقائية',
-  'AI gunner': 'رامٍ آلي',
+  'AI gunner': 'الرامي الآلي',
   'Stop watching': 'أوقف المشاهدة',
   'Leave the game': 'غادر اللعبة',
   // streamer mode (ui/Streamer.ts, Settings)
