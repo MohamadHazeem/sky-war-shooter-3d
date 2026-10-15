@@ -1,11 +1,12 @@
 import {describe, it, expect} from 'vitest';
-import {MeshStandardMaterial} from 'three';
+import {Matrix4, MeshStandardMaterial, Ray, Vector3} from 'three';
 import {tuneAircraftMaterial} from '../src/render/AircraftLook';
 import {auditMaterial} from '../src/render/MaterialAudit';
 import {NodeIO, getBounds} from '@gltf-transform/core';
 import {ALL_EXTENSIONS} from '@gltf-transform/extensions';
 import {MeshoptDecoder} from 'meshoptimizer';
 import {readdirSync, readFileSync} from 'node:fs';
+import sharp from 'sharp';
 
 await MeshoptDecoder.ready;
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'meshopt.decoder': MeshoptDecoder});
@@ -51,6 +52,10 @@ describe('original seated aircrew', () => {
     expect(materials.map(m => m.getName())).toEqual(expect.arrayContaining([
       'crewLeather', 'crewCloth', 'crewSkin', 'crewWebbing', 'crewRubber', 'crewMetal', 'crewLens',
     ]));
+    // Exterior cockpit lighting must not turn flying leather into glossy plastic.
+    const leather = materials.find(m => m.getName() === 'crewLeather')!;
+    expect(leather.getRoughnessFactor()).toBeGreaterThanOrEqual(.75);
+    expect(leather.getMetallicFactor()).toBe(0);
     for (const m of materials) {
       expect(m.getExtension('KHR_materials_unlit')).toBeNull();
       expect(m.getBaseColorFactor().slice(0, 3).some(c => c < .8)).toBe(true);
@@ -73,7 +78,67 @@ describe('original seated aircrew', () => {
 
 
 describe('Sketchfab fighter structural contract', () => {
+  it('Fw 190 skin closes the reversed panel seen through in the banked waist pass', async () => {
+    const doc = await io.read('public/models/fw190.glb');
+    const wing = doc.getRoot().listNodes().find(n => n.getName() === 'part_wingR_lod0')!;
+    // Model-space ray through the hole in the rejected 65 m capture. Backface
+    // culling matters: the double-sided source hid this conversion defect.
+    const ray = new Ray(new Vector3(-8.4070862, -4.8329314, 4.8295742),
+      new Vector3(.71578345, .49519380, -.49237907).normalize());
+    const wellRay = new Ray(new Vector3(-1.4, -2, .6), new Vector3(0, 1, 0));
+    const a = new Vector3(), b = new Vector3(), c = new Vector3(), hit = new Vector3();
+    let closed = false, underside = Infinity;
+    wing.traverse(node => {
+      const matrix = new Matrix4().fromArray(node.getWorldMatrix());
+      for (const p of node.getMesh()?.listPrimitives() ?? []) {
+        const position = p.getAttribute('POSITION')!, indices = p.getIndices()!;
+        for (let i = 0; i < indices.getCount(); i += 3) {
+          a.fromArray(position.getElement(indices.getScalar(i), [])).applyMatrix4(matrix);
+          b.fromArray(position.getElement(indices.getScalar(i + 1), [])).applyMatrix4(matrix);
+          c.fromArray(position.getElement(indices.getScalar(i + 2), [])).applyMatrix4(matrix);
+          if (ray.intersectTriangle(a, b, c, true, hit)) closed = true;
+          if (wellRay.intersectTriangle(a, b, c, true, hit)) underside = Math.min(underside, hit.y);
+        }
+      }
+    });
+    expect(closed).toBe(true);
+    // The retracted door covers the well, rather than exposing the upper skin
+    // at y≈-.35 and the dark rear wall of the source's parked wheel cavity.
+    expect(underside).toBeGreaterThan(-.75);
+    expect(underside).toBeLessThan(-.5);
+  });
   for (const kind of ['bf109', 'fw190']) {
+    it(`${kind} retains dense grey mottle rather than pale whitewash`, async () => {
+      const doc = await io.read(`public/models/${kind}.glb`);
+      const skin = doc.getRoot().listMaterials().find(m => m.getName() === `hero_${kind}`)!;
+      const {data, info} = await sharp(skin.getBaseColorTexture()!.getImage()!)
+        .removeAlpha().raw().toBuffer({resolveWithObject: true});
+      // Unmarked upper fin: avoid white bands, crosses and yellow tactical paint.
+      // Measure shipped WebP texels through the mesh UVs, not painter constants.
+      let samples = 0, pale = 0;
+      for (const node of doc.getRoot().listNodes()) {
+        let far = false;
+        for (let n = node; n; n = n.getParentNode()!) if (/_lod[12]$/.test(n.getName())) far = true;
+        if (far) continue;
+        const matrix = new Matrix4().fromArray(node.getWorldMatrix());
+        for (const p of node.getMesh()?.listPrimitives() ?? []) {
+          const pos = p.getAttribute('POSITION')!, uv = p.getAttribute('TEXCOORD_0');
+          if (!uv || p.getMaterial() !== skin) continue;
+          for (let i = 0; i < pos.getCount(); i++) {
+            const v = new Vector3().fromArray(pos.getElement(i, [])).applyMatrix4(matrix);
+            if (Math.abs(v.x) > .14 || v.y < (kind === 'bf109' ? 1.2 : .65) || v.z > -4.8) continue;
+            const [u, w] = uv.getElement(i, [0, 0]);
+            const x = Math.max(0, Math.min(info.width - 1, Math.floor(u * info.width)));
+            const y = Math.max(0, Math.min(info.height - 1, Math.floor(w * info.height)));
+            const offset = (y * info.width + x) * info.channels;
+            samples++;
+            if ((data[offset] + data[offset + 1] + data[offset + 2]) / 765 > .65) pale++;
+          }
+        }
+      }
+      expect(samples).toBeGreaterThan(100);
+      expect(pale / samples).toBeLessThan(.15);
+    });
     it(`${kind} keeps the close mesh within the live fighter triangle budget`, async () => {
       const doc = await io.read(`public/models/${kind}.glb`);
       let tris = 0;

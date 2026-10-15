@@ -1,6 +1,6 @@
 """fw190: CC BY 4.0 Sketchfab airframe, original period paint/crew/controls.
 See ../sketchfab.py and assets-src/sketchfab/CREDITS.md. Frame: metres, +Z nose, +X left."""
-from geom import tube
+from geom import tube, revolve
 from model import (Model, Surf, SKIN, GRILLE, GUNMETAL, INTERIOR, PANEL, SEAT, EXHAUST, GEAR, LENS, FRAME)
 import parts as P
 import airframe as A
@@ -50,20 +50,20 @@ def build():
     A.add_simple(m, 'interior', fg.meshes['interior'], INTERIOR)
 
     # Original project fittings on the Sketchfab shape.
-    P.annular_fan(m, 'cooling_fan', (0, -0.086, 1.637), 0.4, 12)
+    # Recessed BMW 801 fan and annular opening, ahead of the removed source disc.
+    m.add('part_nose', revolve([(-.055,.495), (0,.505), (.025,.52)],
+          (0,-.086,2.01), (0,0,1), 48), GUNMETAL)
+    P.annular_fan(m, 'cooling_fan', (0, -0.086, 2.06), .485, 12)
     for nm, p in fg.markers.items():
         if nm.startswith('muzzle_') or nm.startswith('eye_'):
             m.marker(nm, p)
     for s in (1, -1):
-        sfx = 'left' if s > 0 else 'right'
-        # Source FrontGun islands are removed with the parked details: restore
-        # the two MG 131 barrels at the retained gameplay muzzle anchors.
-        cowl = fg.markers[f'muzzle_cowl_{sfx}']
-        P.gun_barrel(m, 'part_fuselage', (cowl[0], cowl[1], cowl[2] - .45), cowl, .025)
-        mz = fg.markers[f'muzzle_wingroot_{sfx}']
-        P.gun_barrel(m, 'part_wingL' if s > 0 else 'part_wingR', (mz[0], mz[1], mz[2] - 0.3), mz, 0.02)
-        mz = fg.markers[f'muzzle_wingouter_{sfx}']
-        P.gun_barrel(m, 'part_wingLtip' if s > 0 else 'part_wingRtip', (mz[0], mz[1], mz[2] - 0.18), mz, 0.02)
+        # Visual barrels belong to the imported skin; gameplay muzzle markers
+        # remain unchanged. Bases penetrate their fairings, with one set per gun.
+        cowl = (s*.14, .49, .72)
+        P.gun_barrel(m, 'part_fuselage', (s*.14, .49, .16), cowl, .018)
+        for x,y,z in fg.wing_gun_mounts:
+            P.gun_barrel(m, 'part_wing'+('L' if s>0 else 'R'), (s*x,y,z-.20), (s*x,y,z+.24), .018)
     m.info['exhausts'] = [(s * 0.6, y, 0.6) for s in (1, -1) for y in (-0.12, 0.0, 0.12, 0.24)]
     m.info['stain_len'] = 1.5
     m.info['stain_amt'] = 0.8

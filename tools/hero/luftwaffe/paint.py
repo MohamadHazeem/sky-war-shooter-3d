@@ -264,8 +264,8 @@ def paint(m, maps, size):
             '7071': ('70', '71', '65')}[scheme]
     c_a, c_b, c_lo = RLM[cols[0]], RLM[cols[1]], RLM[cols[2]]
     if info.get('mottle_soft'):
-        # Fresh pale 76 below satin slate 74/75: retain separation after mipmapping.
-        c_a, c_b, c_lo = _c('353d40'), _c('5c6265'), _c('b4c2c7')
+        # Weathered 74/75 over blue-grey 76, without the rejected whitewash lift.
+        c_a, c_b, c_lo = _c('3c4242'), _c('626267'), _c('8e9c9f')
     hard = sstep(0.35, 0.65, splinter)
     upper_wing = mix(c_a[None, None, :] * np.ones((H, W, 1), np.float32), c_b, hard if scheme in ('7475', '7071') else blot)
     upper_body = mix(c_a[None, None, :] * np.ones((H, W, 1), np.float32), c_b, blot if scheme != '7071' else hard)
@@ -276,11 +276,11 @@ def paint(m, maps, size):
     mot_b = sstep(-0.02, 0.05, nz(5.8, 7) - (0.61 - 0.12 * dens)) * 0.88
     mot_c = sstep(-0.02, 0.05, nz(5.0, 9) - 0.68) * 0.7 if scheme in ('7475',) else np.zeros((H, W), np.float32)
     if info.get('mottle_soft'):
-        # Irregular isolated spray patches with a narrow feather. A broad transition
-        # mixed several grey layers together and looked smeared at gunner distance.
-        mot_a = sstep(0, .04, nz(5.5, 5, 3) - (.67 - .06 * dens)) * .72
-        mot_b = sstep(0, .035, nz(7.0, 7, 3) - (.68 - .06 * dens)) * .60
-        mot_c *= .15
+        # Dense overlapping sprayed greys, with irregular feathered edges.
+        # The lower sides retain 76; density increases toward the spine.
+        mot_a = sstep(-.045, .055, nz(5.5, 5, 3) - (.56 - .09 * dens)) * .92
+        mot_b = sstep(-.04, .05, nz(7.0, 7, 3) - (.57 - .08 * dens)) * .84
+        mot_c *= .35
     if scheme == '8182':
         mot_a = sstep(0.0, 0.03, nz(4.5, 5) - (0.62 - 0.12 * dens))
         mot_b = sstep(0.0, 0.03, nz(4.0, 7) - (0.63 - 0.12 * dens))
@@ -582,7 +582,7 @@ def paint(m, maps, size):
         pc = pc + (lum * 1.08 - pc) * sun
         pc = pc + sun * 0.05
         col = np.where(skinm[..., None], pc, col)
-        rough = np.where(skinm, (0.48 if info.get('mottle_soft') else 0.6) + (lowf - 0.5) * 0.12 + (nz(9, 33, 3) - 0.5) * 0.08, rough)
+        rough = np.where(skinm, (0.63 if info.get('mottle_soft') else 0.6) + (lowf - 0.5) * 0.12 + (nz(9, 33, 3) - 0.5) * 0.08, rough)
         col = np.where(skinm[..., None], col * (1 - 0.32 * seam)[..., None], col)
         # streaks aft of the seams (dirt drawn back by the airflow): stretched noise
         streak = fbm(flatP, (22, 22, 0.45), 3, seed + 41).reshape(H, W)

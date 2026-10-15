@@ -188,6 +188,12 @@ def unwrap(objs, prioritize_fuselage=False):
             uv.foreach_get('uv', a)
             a *= 0.45
             uv.foreach_set('uv', a)
+        elif o.name.startswith('spinner_') and prioritize_fuselage:
+            # The head-on gun sight resolves the spiral; avoid a jagged white blob.
+            uv = o.data.uv_layers.active.data
+            a = np.empty(len(uv) * 2, np.float32)
+            uv.foreach_get('uv', a)
+            uv.foreach_set('uv', a * 3.0)
         elif o.name.startswith(('part_fuselage', 'part_nose')) and prioritize_fuselage:
             # Prioritize fuselage paint/decals at gunner and inspection distances.
             uv = o.data.uv_layers.active.data

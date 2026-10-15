@@ -44,21 +44,21 @@
   "hero": {
    "file": "public/models/fw190.glb",
    "top": {
-    "iou": 0.9392,
-    "tolerant": 0.9905,
-    "extra": 0.0344,
+    "iou": 0.9388,
+    "tolerant": 0.9902,
+    "extra": 0.0348,
     "missing": 0.0264
    },
    "side": {
-    "iou": 0.8291,
-    "tolerant": 0.9277,
-    "extra": 0.1044,
-    "missing": 0.0664
+    "iou": 0.83,
+    "tolerant": 0.9285,
+    "extra": 0.1037,
+    "missing": 0.0663
    },
    "front": {
-    "iou": 0.7097,
-    "tolerant": 0.9004,
-    "extra": 0.0946,
+    "iou": 0.709,
+    "tolerant": 0.9001,
+    "extra": 0.0952,
     "missing": 0.1958
    }
   }

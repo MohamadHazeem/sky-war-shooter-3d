@@ -1,7 +1,7 @@
 # Phase 10 visual scorecard
 
 Capture rig v1; seed 19431008; requested webgl2; preset high.
-Browser: 153.0.8010.12. Source revision: `e2b1c1e990f1a7c89b838571f51faa322ca10c9b` (dirty at capture: true).
+Browser: 153.0.8010.12. Source revision: `c783961c55df46ed1dba49c95fc3ef07e4757772` (dirty at capture: true).
 [Contact sheet](contact-sheet.jpg) · [Capture metadata](manifest.json) · [Metric data](metrics.json)
 
 Score relevant cells from 0–10 against [the reference board](../../../../phase10/reference.md). `__/10` is unscored; `—` is not a primary subject. Do not convert image metrics into artistic scores. Review each pillar across its relevant shots; the ten pillar judgments sum to /100.
@@ -25,22 +25,22 @@ Frame times are real wall-clock milliseconds for a frozen scene render plus a GP
 
 | Shot | Source / pixels | Luma | RMS contrast | Colourfulness | Sharpness | Aliasing estimate | Render ms mean / p50 / p95 |
 |---|---|---:|---:|---:|---:|---:|---|
-| [waist-fw190](waist-fw190.jpg) | PNG 1920×1080 | 0.644 | 0.240 | 32.39 | 0.009697 | 0.115 | 28.26 / 27.60 / 40.20 |
-| [tail-bf109](tail-bf109.jpg) | PNG 1920×1080 | 0.295 | 0.331 | 12.89 | 0.012369 | 0.139 | 15.35 / 15.20 / 19.30 |
-| [waist-fw190-close](waist-fw190-close.jpg) | PNG 1920×1080 | 0.598 | 0.262 | 28.47 | 0.010654 | 0.084 | 9.57 / 9.40 / 13.20 |
-| [tail-bf109-close](tail-bf109-close.jpg) | PNG 1920×1080 | 0.266 | 0.295 | 13.45 | 0.012673 | 0.135 | 13.73 / 13.60 / 16.70 |
-| [headon-fw190-wedge](headon-fw190-wedge.jpg) | PNG 1920×1080 | 0.603 | 0.178 | 39.24 | 0.009619 | 0.112 | 12.18 / 12.20 / 15.60 |
-| [headon-fw190-zoom](headon-fw190-zoom.jpg) | PNG 1920×1080 | 0.623 | 0.155 | 33.38 | 0.006011 | 0.100 | 10.70 / 10.40 / 14.60 |
-| [waist-fw190-broadside](waist-fw190-broadside.jpg) | PNG 1920×1080 | 0.643 | 0.243 | 31.79 | 0.009070 | 0.110 | 12.59 / 12.30 / 16.60 |
-| [waist-bf109-broadside](waist-bf109-broadside.jpg) | PNG 1920×1080 | 0.645 | 0.244 | 31.42 | 0.009351 | 0.106 | 12.07 / 11.90 / 15.90 |
+| [waist-fw190](waist-fw190.jpg) | PNG 1920×1080 | 0.645 | 0.239 | 32.49 | 0.009380 | 0.115 | 13.09 / 11.20 / 23.60 |
+| [tail-bf109](tail-bf109.jpg) | PNG 1920×1080 | 0.295 | 0.331 | 12.89 | 0.012109 | 0.136 | 14.21 / 14.00 / 18.80 |
+| [waist-fw190-close](waist-fw190-close.jpg) | PNG 1920×1080 | 0.600 | 0.261 | 28.90 | 0.010120 | 0.081 | 8.07 / 7.70 / 10.70 |
+| [tail-bf109-close](tail-bf109-close.jpg) | PNG 1920×1080 | 0.267 | 0.296 | 13.45 | 0.012261 | 0.133 | 15.57 / 15.50 / 23.50 |
+| [headon-fw190-wedge](headon-fw190-wedge.jpg) | PNG 1920×1080 | 0.606 | 0.175 | 39.36 | 0.008951 | 0.112 | 12.80 / 10.90 / 25.30 |
+| [headon-fw190-zoom](headon-fw190-zoom.jpg) | PNG 1920×1080 | 0.629 | 0.145 | 33.87 | 0.005267 | 0.102 | 9.92 / 8.70 / 18.00 |
+| [waist-fw190-broadside](waist-fw190-broadside.jpg) | PNG 1920×1080 | 0.643 | 0.243 | 31.79 | 0.008823 | 0.108 | 12.80 / 11.80 / 22.90 |
+| [waist-bf109-broadside](waist-bf109-broadside.jpg) | PNG 1920×1080 | 0.644 | 0.243 | 31.58 | 0.009143 | 0.104 | 10.84 / 10.50 / 13.40 |
 
 | Shot | Luminance histogram (%) | Black / white clipped (%) |
 |---|---|---|
-| [waist-fw190](waist-fw190.jpg) | 1.8, 6.2, 2.7, 3.2, 1.5, 1.3, 1.3, 0.5, 1.0, 5.4, 13.3, 22.3, 19.8, 11.6, 7.9, 0.1 | 0.00 / 0.00 |
-| [tail-bf109](tail-bf109.jpg) | 5.2, 51.6, 8.3, 4.7, 2.9, 3.7, 1.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.7, 5.5, 12.6, 3.4 | 0.00 / 0.00 |
-| [waist-fw190-close](waist-fw190-close.jpg) | 1.8, 10.2, 2.8, 2.0, 2.5, 3.4, 2.7, 4.4, 1.0, 3.5, 10.9, 20.0, 17.5, 10.7, 6.1, 0.5 | 0.00 / 0.00 |
-| [tail-bf109-close](tail-bf109-close.jpg) | 5.5, 55.7, 5.5, 4.0, 2.5, 2.6, 4.4, 0.3, 0.2, 0.1, 0.3, 1.2, 4.5, 6.9, 5.8, 0.5 | 0.00 / 0.00 |
-| [headon-fw190-wedge](headon-fw190-wedge.jpg) | 0.4, 2.3, 1.5, 1.4, 2.7, 0.7, 1.7, 11.4, 15.8, 13.4, 13.8, 12.1, 13.1, 7.6, 2.0, 0.0 | 0.00 / 0.00 |
-| [headon-fw190-zoom](headon-fw190-zoom.jpg) | 0.0, 1.7, 1.8, 1.2, 1.6, 0.6, 0.3, 5.3, 15.3, 18.3, 17.5, 15.8, 13.7, 6.7, 0.2, 0.0 | 0.00 / 0.00 |
-| [waist-fw190-broadside](waist-fw190-broadside.jpg) | 1.8, 6.1, 2.7, 3.5, 1.8, 2.0, 1.5, 0.5, 0.8, 4.2, 12.5, 21.0, 21.6, 11.6, 8.1, 0.3 | 0.00 / 0.00 |
-| [waist-bf109-broadside](waist-bf109-broadside.jpg) | 1.8, 6.1, 2.8, 3.5, 1.8, 1.9, 1.5, 0.5, 0.8, 3.8, 12.2, 20.5, 22.3, 11.9, 8.4, 0.3 | 0.00 / 0.00 |
+| [waist-fw190](waist-fw190.jpg) | 1.8, 6.2, 2.5, 3.2, 1.5, 1.3, 1.3, 0.5, 1.0, 5.5, 13.4, 22.3, 19.7, 11.6, 8.0, 0.1 | 0.00 / 0.00 |
+| [tail-bf109](tail-bf109.jpg) | 5.2, 51.6, 8.3, 4.7, 2.9, 3.7, 1.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.7, 5.5, 12.6, 3.5 | 0.00 / 0.00 |
+| [waist-fw190-close](waist-fw190-close.jpg) | 1.8, 10.1, 2.3, 2.0, 2.7, 3.4, 3.0, 4.0, 0.8, 3.9, 11.1, 19.0, 19.0, 10.4, 6.1, 0.5 | 0.00 / 0.00 |
+| [tail-bf109-close](tail-bf109-close.jpg) | 5.5, 55.7, 5.4, 3.9, 2.5, 2.6, 4.4, 0.3, 0.2, 0.1, 0.3, 1.2, 4.5, 6.9, 5.9, 0.5 | 0.00 / 0.00 |
+| [headon-fw190-wedge](headon-fw190-wedge.jpg) | 0.4, 2.2, 1.2, 1.4, 2.7, 0.7, 1.7, 11.5, 15.9, 13.4, 14.0, 12.1, 13.3, 7.6, 2.0, 0.0 | 0.00 / 0.00 |
+| [headon-fw190-zoom](headon-fw190-zoom.jpg) | 0.0, 1.0, 1.4, 1.1, 1.4, 0.6, 0.3, 5.7, 15.5, 19.2, 16.7, 16.3, 14.1, 6.5, 0.1, 0.0 | 0.00 / 0.00 |
+| [waist-fw190-broadside](waist-fw190-broadside.jpg) | 1.8, 6.1, 2.7, 3.5, 1.8, 2.0, 1.5, 0.5, 0.8, 4.2, 12.5, 21.0, 21.6, 11.7, 8.1, 0.3 | 0.00 / 0.00 |
+| [waist-bf109-broadside](waist-bf109-broadside.jpg) | 1.8, 6.1, 2.8, 3.5, 1.8, 1.9, 1.5, 0.5, 0.8, 3.9, 12.3, 20.7, 21.9, 11.8, 8.3, 0.3 | 0.00 / 0.00 |

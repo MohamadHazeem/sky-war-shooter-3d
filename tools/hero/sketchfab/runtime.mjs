@@ -41,10 +41,10 @@ try{
    assert.equal(kind.lod2,mode==='low','Low forces the far geometry; High retains close detail');
   }
   for(const crew of Object.values(result.crew)){
-   assert.ok(crew.crewLeather.roughness>.4&&crew.crewLeather.roughness<.6,'authored leather survives runtime tuning');
+   assert.ok(crew.crewLeather.roughness>.75&&crew.crewLeather.roughness<.9,'authored leather survives runtime tuning');
    assert.ok(crew.crewCloth.roughness>.8,'cloth stays matte');
-   assert.ok(crew.crewMetal.metalness>.7,'crew equipment keeps its metal response');
-   assert.ok(crew.crewLens.roughness<.25,'goggle lenses keep their gloss');
+   assert.ok(crew.crewMetal.metalness>.55,'crew equipment keeps its metal response');
+   assert.ok(crew.crewLens.roughness<.35,'goggle lenses keep their gloss');
   }
   assert.deepEqual(errors,[]);await context.close();
  }

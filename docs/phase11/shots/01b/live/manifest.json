@@ -8,7 +8,7 @@
   "fighterBaseline": "/tmp/01b-baseline",
   "browser": "153.0.8010.12",
   "platform": "darwin/arm64",
-  "revision": "e2b1c1e990f1a7c89b838571f51faa322ca10c9b",
+  "revision": "c783961c55df46ed1dba49c95fc3ef07e4757772",
   "dirty": true,
   "shots": [
     {
@@ -101,7 +101,11 @@
           -0.17974497351826693,
           0.7853399575284407
         ],
-        "diving": false
+        "diving": false,
+        "propellerPhases": [
+          0.7
+        ],
+        "propellersSpinning": true
       },
       "enemies": [
         {
@@ -118,7 +122,11 @@
             -0.17974497351826693,
             0.7853399575284407
           ],
-          "diving": false
+          "diving": false,
+          "propellerPhases": [
+            0.7
+          ],
+          "propellersSpinning": true
         }
       ],
       "effectsCleared": true,
@@ -130,12 +138,12 @@
         "samples": 60,
         "programsBefore": 250,
         "programsAfter": 250,
-        "mean": 28.25500000019868,
-        "p50": 27.599999994039536,
-        "p95": 40.19999998807907,
+        "mean": 13.085000000397365,
+        "p50": 11.200000017881393,
+        "p95": 23.599999994039536,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "dedeab38c24757853f8b2068ad9dc4b6121791a41115431ab0c7c6c8120d65be",
+      "pixelHash": "35124d5d1fc4ceba91b78bb787bc616d34fd2c54fb8c159c075b18f924eff080",
       "errors": []
     },
     {
@@ -227,7 +235,11 @@
           0.18976323081385288,
           0.9361314072964794
         ],
-        "diving": true
+        "diving": true,
+        "propellerPhases": [
+          0.7
+        ],
+        "propellersSpinning": true
       },
       "enemies": [
         {
@@ -244,7 +256,11 @@
             0.18976323081385288,
             0.9361314072964794
           ],
-          "diving": true
+          "diving": true,
+          "propellerPhases": [
+            0.7
+          ],
+          "propellersSpinning": true
         }
       ],
       "effectsCleared": true,
@@ -256,12 +272,12 @@
         "samples": 60,
         "programsBefore": 252,
         "programsAfter": 252,
-        "mean": 15.348333333432674,
-        "p50": 15.200000017881393,
-        "p95": 19.299999982118607,
+        "mean": 14.211666666467984,
+        "p50": 14,
+        "p95": 18.799999982118607,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "8c07101006e381cc3d339d8a8641276327dd09b7bb79025ff656fccb00d6cacf",
+      "pixelHash": "1ba712e3a7ab79af605b90e402beed071481164009db9383a0bf20f5038b25e5",
       "errors": []
     },
     {
@@ -351,7 +367,11 @@
           -0.21725673546527674,
           0.94923597619117
         ],
-        "diving": false
+        "diving": false,
+        "propellerPhases": [
+          0.7
+        ],
+        "propellersSpinning": true
       },
       "enemies": [
         {
@@ -368,7 +388,11 @@
             -0.21725673546527674,
             0.94923597619117
           ],
-          "diving": false
+          "diving": false,
+          "propellerPhases": [
+            0.7
+          ],
+          "propellersSpinning": true
         }
       ],
       "effectsCleared": true,
@@ -380,12 +404,12 @@
         "samples": 60,
         "programsBefore": 250,
         "programsAfter": 250,
-        "mean": 9.568333333233992,
-        "p50": 9.400000005960464,
-        "p95": 13.199999988079071,
+        "mean": 8.07166666686535,
+        "p50": 7.699999988079071,
+        "p95": 10.700000017881393,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "98196f99f4d7f672e46f94521b1b0349de23b309cb62a016b5c004c9773add3a",
+      "pixelHash": "5314dc8a8f1082b1e2c026969ab080a2a4761422cecdbfe06ff6493c3055960b",
       "errors": []
     },
     {
@@ -475,7 +499,11 @@
           0.18976323081385288,
           0.9361314072964794
         ],
-        "diving": true
+        "diving": true,
+        "propellerPhases": [
+          0.7
+        ],
+        "propellersSpinning": true
       },
       "enemies": [
         {
@@ -492,7 +520,11 @@
             0.18976323081385288,
             0.9361314072964794
           ],
-          "diving": true
+          "diving": true,
+          "propellerPhases": [
+            0.7
+          ],
+          "propellersSpinning": true
         }
       ],
       "effectsCleared": true,
@@ -504,12 +536,12 @@
         "samples": 60,
         "programsBefore": 252,
         "programsAfter": 252,
-        "mean": 13.730000000198682,
-        "p50": 13.599999994039536,
-        "p95": 16.69999998807907,
+        "mean": 15.575,
+        "p50": 15.5,
+        "p95": 23.5,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "db307c38f0df65c2cd56a3f098b23bb1a4c80b5478366304d15f1081bed8ee43",
+      "pixelHash": "b27d0bdc874bb71f4d79d90433c650018ee669d99fbbc7f78d27d3ae0a230cd6",
       "errors": []
     },
     {
@@ -599,7 +631,11 @@
           -0.0948344177163032,
           0.0018408651528940777
         ],
-        "diving": false
+        "diving": false,
+        "propellerPhases": [
+          0.7
+        ],
+        "propellersSpinning": true
       },
       "enemies": [
         {
@@ -616,7 +652,11 @@
             -0.0948344177163032,
             0.0018408651528940777
           ],
-          "diving": false
+          "diving": false,
+          "propellerPhases": [
+            0.7
+          ],
+          "propellersSpinning": true
         },
         {
           "type": "fw190",
@@ -632,7 +672,11 @@
             -0.09838839587157575,
             -0.32420409977130055
           ],
-          "diving": false
+          "diving": false,
+          "propellerPhases": [
+            0.7
+          ],
+          "propellersSpinning": true
         },
         {
           "type": "fw190",
@@ -648,7 +692,11 @@
             -0.04167447255897873,
             0.32421147435894265
           ],
-          "diving": false
+          "diving": false,
+          "propellerPhases": [
+            0.7
+          ],
+          "propellersSpinning": true
         }
       ],
       "effectsCleared": true,
@@ -660,12 +708,12 @@
         "samples": 60,
         "programsBefore": 252,
         "programsAfter": 252,
-        "mean": 12.176666667064032,
-        "p50": 12.199999988079071,
-        "p95": 15.599999994039536,
+        "mean": 12.804999999701977,
+        "p50": 10.900000005960464,
+        "p95": 25.299999982118607,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "eabcab0e9f01e0a41832998433c1113b933e13e0741f55e4ae3bb8679da1a95d",
+      "pixelHash": "f3ea3e7623383557fe51a6b227f63f107278aa965eb84d5825e86bcc45212f06",
       "errors": []
     },
     {
@@ -755,7 +803,11 @@
           -0.0948344177163032,
           0.0018408651528940777
         ],
-        "diving": false
+        "diving": false,
+        "propellerPhases": [
+          0.7
+        ],
+        "propellersSpinning": true
       },
       "enemies": [
         {
@@ -772,7 +824,11 @@
             -0.0948344177163032,
             0.0018408651528940777
           ],
-          "diving": false
+          "diving": false,
+          "propellerPhases": [
+            0.7
+          ],
+          "propellersSpinning": true
         }
       ],
       "effectsCleared": true,
@@ -784,12 +840,12 @@
         "samples": 60,
         "programsBefore": 252,
         "programsAfter": 252,
-        "mean": 10.703333333134651,
-        "p50": 10.400000005960464,
-        "p95": 14.599999994039536,
+        "mean": 9.915000000099342,
+        "p50": 8.699999988079071,
+        "p95": 18,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "d4e19fc8ce411cd53cfdba4c87df805bae9d471f4e33eb6ed0a67eebe469ccc6",
+      "pixelHash": "72dabc25446aca09312f105d31985890d8d90e6ac8f23e3fea312d9384b0e6c6",
       "errors": []
     },
     {
@@ -879,7 +935,11 @@
           -0.059961974513000386,
           0.9981667144768864
         ],
-        "diving": false
+        "diving": false,
+        "propellerPhases": [
+          0.7
+        ],
+        "propellersSpinning": true
       },
       "enemies": [
         {
@@ -896,7 +956,11 @@
             -0.059961974513000386,
             0.9981667144768864
           ],
-          "diving": false
+          "diving": false,
+          "propellerPhases": [
+            0.7
+          ],
+          "propellersSpinning": true
         }
       ],
       "effectsCleared": true,
@@ -908,12 +972,12 @@
         "samples": 60,
         "programsBefore": 250,
         "programsAfter": 250,
-        "mean": 12.588333333532015,
-        "p50": 12.299999982118607,
-        "p95": 16.599999994039536,
+        "mean": 12.80166666607062,
+        "p50": 11.800000011920929,
+        "p95": 22.900000005960464,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "eece5646a8d8ab2fa1daff0f0d6750d5f5b9fc63f3feca78e441c3cdfe0eaef1",
+      "pixelHash": "ab400e47738aa53526e2995d41792d9845dbc5d7d3128026a3c3678445b3aafe",
       "errors": []
     },
     {
@@ -1003,7 +1067,11 @@
           -0.059961974513000386,
           0.9981667144768864
         ],
-        "diving": false
+        "diving": false,
+        "propellerPhases": [
+          0.7
+        ],
+        "propellersSpinning": true
       },
       "enemies": [
         {
@@ -1020,7 +1088,11 @@
             -0.059961974513000386,
             0.9981667144768864
           ],
-          "diving": false
+          "diving": false,
+          "propellerPhases": [
+            0.7
+          ],
+          "propellersSpinning": true
         }
       ],
       "effectsCleared": true,
@@ -1032,12 +1104,12 @@
         "samples": 60,
         "programsBefore": 250,
         "programsAfter": 250,
-        "mean": 12.066666666666666,
-        "p50": 11.900000005960464,
-        "p95": 15.900000005960464,
+        "mean": 10.83666666696469,
+        "p50": 10.5,
+        "p95": 13.400000005960464,
         "method": "frozen render + GPU fence; excludes simulation, includes synchronization"
       },
-      "pixelHash": "e01a45d3a237f4e4200d76cf596b25a5e89a2944b0b06ec1f52fe21f1659be94",
+      "pixelHash": "96762bb42d8441d561d34c3de6b44243c893ef1b977ff9d6f0090a88c3453508",
       "errors": []
     }
   ]

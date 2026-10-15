@@ -93,8 +93,15 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
         f.root.lookAt(cam.position);
       }
       f.root.rotateZ(headon ? .08 : broadside ? -.12 : tail ? .4 : -.45);
+      // Initialize the production flying prop presentation without advancing the
+      // fixture. Otherwise newly spawned planes keep parked blades across the
+      // cowl/fan, despite the frozen scene depicting an airborne pass.
+      f.propSpin.fill(.7);
+      f.updateProps(0);
       f.root.updateMatrixWorld(true);
-      return { type: f.kind, range: f.pos.distanceTo(cam.position), position: f.pos.toArray(), quaternion: f.quat.toArray(), diving: tail };
+      return { type: f.kind, range: f.pos.distanceTo(cam.position), position: f.pos.toArray(), quaternion: f.quat.toArray(), diving: tail,
+        propellerPhases: [...f.propSpin],
+        propellersSpinning: f.props.every(p => p.disc.visible && p.blades.every(b => !b.visible)) };
     });
     facts.enemy = enemies[0]; facts.enemies = enemies;
     facts.effectsCleared = true;

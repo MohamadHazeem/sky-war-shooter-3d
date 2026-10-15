@@ -4,26 +4,26 @@
     "kinds": {
       "bf109": {
         "parts": [
-          11058,
-          16206,
-          6534,
-          1870,
-          1022,
-          1870,
-          1028
+          9425,
+          16420,
+          5928,
+          1661,
+          940,
+          1682,
+          946
         ],
         "compressed": true,
         "lod2": false
       },
       "fw190": {
         "parts": [
-          9112,
-          4223,
-          6402,
-          5379,
-          2619,
-          5345,
-          3039
+          8736,
+          3920,
+          5429,
+          4151,
+          2067,
+          4067,
+          2405
         ],
         "compressed": true,
         "lod2": false
@@ -33,12 +33,12 @@
       "wing": {
         "seq": "wing",
         "log": [
-          "after rounds: alive=false kind=89 bits=11000 pieces=2",
-          "t=0.05: alive=false remove=false pieces=2 hulks=1 stats={\"separations\":2,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":0}",
-          "t=0.6: alive=false remove=false pieces=2 hulks=1 stats={\"separations\":2,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":1}",
-          "t=1.4: alive=false remove=false pieces=2 hulks=1 stats={\"separations\":2,\"explosions\":0,\"shards\":0,\"bailouts\":1,\"debrisHits\":0,\"fires\":1}",
-          "t=2.6: alive=false remove=false pieces=2 hulks=1 stats={\"separations\":2,\"explosions\":0,\"shards\":0,\"bailouts\":1,\"debrisHits\":0,\"fires\":1}",
-          "t=4.2: alive=false remove=false pieces=2 hulks=1 stats={\"separations\":2,\"explosions\":0,\"shards\":0,\"bailouts\":1,\"debrisHits\":0,\"fires\":2}"
+          "after rounds: alive=false kind=25 bits=11000 pieces=1",
+          "t=0.05: alive=false remove=false pieces=1 hulks=1 stats={\"separations\":1,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":0}",
+          "t=0.6: alive=false remove=false pieces=1 hulks=1 stats={\"separations\":1,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":0}",
+          "t=1.4: alive=false remove=false pieces=1 hulks=1 stats={\"separations\":1,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":0}",
+          "t=2.6: alive=false remove=false pieces=1 hulks=1 stats={\"separations\":1,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":0}",
+          "t=4.2: alive=false remove=false pieces=1 hulks=1 stats={\"separations\":1,\"explosions\":0,\"shards\":0,\"bailouts\":0,\"debrisHits\":0,\"fires\":0}"
         ],
         "files": [],
         "programs": 266
@@ -60,7 +60,7 @@
     "crew": {
       "p51d": {
         "crewLeather": {
-          "roughness": 0.4699999988079071,
+          "roughness": 0.8199999928474426,
           "metalness": 0
         },
         "crewCloth": {
@@ -68,7 +68,7 @@
           "metalness": 0
         },
         "crewSkin": {
-          "roughness": 0.6299999952316284,
+          "roughness": 0.7799999713897705,
           "metalness": 0
         },
         "crewRubber": {
@@ -76,29 +76,29 @@
           "metalness": 0
         },
         "crewMetal": {
-          "roughness": 0.3100000023841858,
-          "metalness": 0.75
+          "roughness": 0.47999998927116394,
+          "metalness": 0.6000000238418579
         },
         "crewLens": {
-          "roughness": 0.1899999976158142,
-          "metalness": 0.3499999940395355
+          "roughness": 0.30000001192092896,
+          "metalness": 0.10000000149011612
         },
-        "crewStitch": {
-          "roughness": 0.800000011920929,
+        "crewWebbing": {
+          "roughness": 0.8299999833106995,
           "metalness": 0
         },
         "crewFleece": {
           "roughness": 0.9200000166893005,
           "metalness": 0
         },
-        "crewWebbing": {
-          "roughness": 0.8299999833106995,
+        "crewStitch": {
+          "roughness": 0.800000011920929,
           "metalness": 0
         }
       },
       "b17": {
         "crewLeather": {
-          "roughness": 0.4699999988079071,
+          "roughness": 0.8199999928474426,
           "metalness": 0
         },
         "crewCloth": {
@@ -106,7 +106,7 @@
           "metalness": 0
         },
         "crewSkin": {
-          "roughness": 0.6299999952316284,
+          "roughness": 0.7799999713897705,
           "metalness": 0
         },
         "crewRubber": {
@@ -114,23 +114,23 @@
           "metalness": 0
         },
         "crewMetal": {
-          "roughness": 0.3100000023841858,
-          "metalness": 0.75
+          "roughness": 0.47999998927116394,
+          "metalness": 0.6000000238418579
         },
         "crewLens": {
-          "roughness": 0.1899999976158142,
-          "metalness": 0.3499999940395355
+          "roughness": 0.30000001192092896,
+          "metalness": 0.10000000149011612
         },
-        "crewStitch": {
-          "roughness": 0.800000011920929,
+        "crewWebbing": {
+          "roughness": 0.8299999833106995,
           "metalness": 0
         },
         "crewFleece": {
           "roughness": 0.9200000166893005,
           "metalness": 0
         },
-        "crewWebbing": {
-          "roughness": 0.8299999833106995,
+        "crewStitch": {
+          "roughness": 0.800000011920929,
           "metalness": 0
         }
       }
@@ -142,26 +142,26 @@
     "kinds": {
       "bf109": {
         "parts": [
-          11058,
-          16206,
-          6534,
-          1870,
-          1022,
-          1870,
-          1028
+          9425,
+          16420,
+          5928,
+          1661,
+          940,
+          1682,
+          946
         ],
         "compressed": true,
         "lod2": true
       },
       "fw190": {
         "parts": [
-          9112,
-          4223,
-          6402,
-          5379,
-          2619,
-          5345,
-          3039
+          8736,
+          3920,
+          5429,
+          4151,
+          2067,
+          4067,
+          2405
         ],
         "compressed": true,
         "lod2": true
@@ -171,7 +171,7 @@
     "crew": {
       "p51d": {
         "crewLeather": {
-          "roughness": 0.4699999988079071,
+          "roughness": 0.8199999928474426,
           "metalness": 0
         },
         "crewCloth": {
@@ -179,7 +179,7 @@
           "metalness": 0
         },
         "crewSkin": {
-          "roughness": 0.6299999952316284,
+          "roughness": 0.7799999713897705,
           "metalness": 0
         },
         "crewRubber": {
@@ -187,29 +187,29 @@
           "metalness": 0
         },
         "crewMetal": {
-          "roughness": 0.3100000023841858,
-          "metalness": 0.75
+          "roughness": 0.47999998927116394,
+          "metalness": 0.6000000238418579
         },
         "crewLens": {
-          "roughness": 0.1899999976158142,
-          "metalness": 0.3499999940395355
+          "roughness": 0.30000001192092896,
+          "metalness": 0.10000000149011612
         },
-        "crewStitch": {
-          "roughness": 0.800000011920929,
+        "crewWebbing": {
+          "roughness": 0.8299999833106995,
           "metalness": 0
         },
         "crewFleece": {
           "roughness": 0.9200000166893005,
           "metalness": 0
         },
-        "crewWebbing": {
-          "roughness": 0.8299999833106995,
+        "crewStitch": {
+          "roughness": 0.800000011920929,
           "metalness": 0
         }
       },
       "b17": {
         "crewLeather": {
-          "roughness": 0.4699999988079071,
+          "roughness": 0.8199999928474426,
           "metalness": 0
         },
         "crewCloth": {
@@ -217,7 +217,7 @@
           "metalness": 0
         },
         "crewSkin": {
-          "roughness": 0.6299999952316284,
+          "roughness": 0.7799999713897705,
           "metalness": 0
         },
         "crewRubber": {
@@ -225,23 +225,23 @@
           "metalness": 0
         },
         "crewMetal": {
-          "roughness": 0.3100000023841858,
-          "metalness": 0.75
+          "roughness": 0.47999998927116394,
+          "metalness": 0.6000000238418579
         },
         "crewLens": {
-          "roughness": 0.1899999976158142,
-          "metalness": 0.3499999940395355
+          "roughness": 0.30000001192092896,
+          "metalness": 0.10000000149011612
         },
-        "crewStitch": {
-          "roughness": 0.800000011920929,
+        "crewWebbing": {
+          "roughness": 0.8299999833106995,
           "metalness": 0
         },
         "crewFleece": {
           "roughness": 0.9200000166893005,
           "metalness": 0
         },
-        "crewWebbing": {
-          "roughness": 0.8299999833106995,
+        "crewStitch": {
+          "roughness": 0.800000011920929,
           "metalness": 0
         }
       }
@@ -253,26 +253,26 @@
     "kinds": {
       "bf109": {
         "parts": [
-          11058,
-          16206,
-          6534,
-          1870,
-          1022,
-          1870,
-          1028
+          9425,
+          16420,
+          5928,
+          1661,
+          940,
+          1682,
+          946
         ],
         "compressed": false,
         "lod2": false
       },
       "fw190": {
         "parts": [
-          9112,
-          4223,
-          6402,
-          5379,
-          2619,
-          5345,
-          3039
+          8736,
+          3920,
+          5429,
+          4151,
+          2067,
+          4067,
+          2405
         ],
         "compressed": false,
         "lod2": false
@@ -282,7 +282,7 @@
     "crew": {
       "p51d": {
         "crewLeather": {
-          "roughness": 0.4699999988079071,
+          "roughness": 0.8199999928474426,
           "metalness": 0
         },
         "crewCloth": {
@@ -290,7 +290,7 @@
           "metalness": 0
         },
         "crewSkin": {
-          "roughness": 0.6299999952316284,
+          "roughness": 0.7799999713897705,
           "metalness": 0
         },
         "crewRubber": {
@@ -298,29 +298,29 @@
           "metalness": 0
         },
         "crewMetal": {
-          "roughness": 0.3100000023841858,
-          "metalness": 0.75
+          "roughness": 0.47999998927116394,
+          "metalness": 0.6000000238418579
         },
         "crewLens": {
-          "roughness": 0.1899999976158142,
-          "metalness": 0.3499999940395355
+          "roughness": 0.30000001192092896,
+          "metalness": 0.10000000149011612
         },
-        "crewStitch": {
-          "roughness": 0.800000011920929,
+        "crewWebbing": {
+          "roughness": 0.8299999833106995,
           "metalness": 0
         },
         "crewFleece": {
           "roughness": 0.9200000166893005,
           "metalness": 0
         },
-        "crewWebbing": {
-          "roughness": 0.8299999833106995,
+        "crewStitch": {
+          "roughness": 0.800000011920929,
           "metalness": 0
         }
       },
       "b17": {
         "crewLeather": {
-          "roughness": 0.4699999988079071,
+          "roughness": 0.8199999928474426,
           "metalness": 0
         },
         "crewCloth": {
@@ -328,7 +328,7 @@
           "metalness": 0
         },
         "crewSkin": {
-          "roughness": 0.6299999952316284,
+          "roughness": 0.7799999713897705,
           "metalness": 0
         },
         "crewRubber": {
@@ -336,23 +336,23 @@
           "metalness": 0
         },
         "crewMetal": {
-          "roughness": 0.3100000023841858,
-          "metalness": 0.75
+          "roughness": 0.47999998927116394,
+          "metalness": 0.6000000238418579
         },
         "crewLens": {
-          "roughness": 0.1899999976158142,
-          "metalness": 0.3499999940395355
+          "roughness": 0.30000001192092896,
+          "metalness": 0.10000000149011612
         },
-        "crewStitch": {
-          "roughness": 0.800000011920929,
+        "crewWebbing": {
+          "roughness": 0.8299999833106995,
           "metalness": 0
         },
         "crewFleece": {
           "roughness": 0.9200000166893005,
           "metalness": 0
         },
-        "crewWebbing": {
-          "roughness": 0.8299999833106995,
+        "crewStitch": {
+          "roughness": 0.800000011920929,
           "metalness": 0
         }
       }
