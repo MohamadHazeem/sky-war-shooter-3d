@@ -1,5 +1,6 @@
 import type { Input } from '../core/Input';
 import { dragToMouse, stickValue, STICK_RATE } from '../core/Touch';
+import { gyroSupported, gyroToMouse, screenAngle, type RotationRate } from '../core/Gyro';
 import { STATIONS, StationId } from '../world/B17Layout';
 import { tx } from '../i18n';
 
@@ -10,7 +11,8 @@ import { tx } from '../i18n';
 //   bottom right      FIRE (hold; sliding the thumb while holding also aims), ZOOM (toggle)
 //   right edge        P-51 throttle lever, VIEW button
 //   LOOK              free look toggle: left of ZOOM (gunner), above the throttle (P-51)
-//   top right         MAP, controls card (?), PAUSE, full screen
+//   top right         MAP, controls card (?), PAUSE, full screen, GYRO (gyro aim on/off)
+//   above FIRE        gunner: previous / next gun position; RELOAD (hold: also clears a jam)
 //   under it (P-51)   wingman orders (added by DeviceControls)
 //   seat bar          the HUD's gun-position bar becomes tappable
 //   event prompt      engine fire / jam / oxygen: touch (or hold) the prompt itself
@@ -19,6 +21,9 @@ import { tx } from '../i18n';
 // Abilities: other systems can add small buttons with addAbility(id, label, code).
 
 type Role = 'gunner' | 'pilot';
+export type TouchAction = 'pause' | 'map' | 'help' | 'view' | 'seatPrev' | 'seatNext';
+
+const GYRO_STALE_MS = 250;   // no motion event for this long: the sensor stopped, aim nothing
 
 const FIRE = 1, ZOOM = 4;
 
@@ -32,6 +37,17 @@ export class TouchHud {
   private firePtr: Track | null = null; // finger on FIRE (sliding it aims too)
   private thrPtr: number | null = null;
   private promptPtr: { id: number; code: string } | null = null;   // finger on an event prompt
+  private reloadPtr: number | null = null;  // finger holding RELOAD
+  private gyroOn = false;
+  private rate: RotationRate = { alpha: 0, beta: 0, gamma: 0 };
+  private rateAt = 0;
+  private gyroOut = { x: 0, y: 0 };
+  private readonly onMotion = (e: DeviceMotionEvent) => {
+    const r = e.rotationRate;
+    if (!r) return;
+    this.rate.alpha = r.alpha; this.rate.beta = r.beta; this.rate.gamma = r.gamma;
+    this.rateAt = performance.now();
+  };
   private zoomOn = false;
   private lookOn = false;
   private stickEl: HTMLElement;
@@ -41,7 +57,9 @@ export class TouchHud {
   private abil: HTMLElement;
   private shownThr = -1;
   sensitivity = 1;      // Settings: touch aim sensitivity
-  onAction?: (a: 'pause' | 'map' | 'help' | 'view') => void;
+  gyroSens = 1;         // Settings: gyro aim sensitivity
+  onAction?: (a: TouchAction) => void;
+  onGyro?: () => void;  // GYRO tapped (DeviceControls asks for sensor access and saves the choice)
 
   constructor(private input: Input) {
     const el = document.createElement('div');
@@ -53,7 +71,10 @@ export class TouchHud {
         <button data-t="help" aria-label="${tx('Controls')}">?</button>
         <button data-t="pause" aria-label="${tx('Pause')}"><span class="th-pause"></span></button>
         ${document.fullscreenEnabled ? `<button data-t="full" aria-label="${tx('Full screen')}">⛶</button>` : ''}
+        ${gyroSupported() ? `<button class="th-gyro" aria-label="${tx('Gyro aim')}" aria-pressed="false">${tx('GYRO')}</button>` : ''}
       </div>
+      <div class="th-seat"><button data-t="seatPrev" aria-label="${tx('Previous gun position')}">◀</button><button data-t="seatNext" aria-label="${tx('Next gun position')}">▶</button></div>
+      <button class="th-reload" aria-label="${tx('Reload')}">${tx('RELOAD')}</button>
       <div class="th-abil"></div>
       <div class="th-thr" aria-label="${tx('Throttle')}"><div class="th-track"><i></i></div><span>${tx('THR')}</span></div>
       <button class="th-view" data-t="view">${tx('VIEW')}</button>
@@ -73,6 +94,8 @@ export class TouchHud {
     el.addEventListener('pointerup', (e) => this.up(e));
     el.addEventListener('pointercancel', (e) => this.up(e));
     el.addEventListener('contextmenu', (e) => e.preventDefault());
+    // a click, not pointerdown: iOS only grants motion access from a click
+    el.querySelector('.th-gyro')?.addEventListener('click', () => this.onGyro?.());
     // the HUD's gun-position bar: tap a seat to move there (works with remapped keys too)
     document.addEventListener('pointerdown', (e) => {
       if (!this.role || !document.body.classList.contains('touch')) return;
@@ -96,6 +119,18 @@ export class TouchHud {
 
   get visible() { return !!this.role; }
 
+  /** Gyro aim on or off (the motion listener only runs while on). */
+  setGyro(on: boolean) {
+    on = on && gyroSupported();
+    if (on === this.gyroOn) return;
+    this.gyroOn = on;
+    if (on) window.addEventListener('devicemotion', this.onMotion);
+    else { window.removeEventListener('devicemotion', this.onMotion); this.rateAt = 0; }
+    const b = this.el.querySelector('.th-gyro');
+    b?.classList.toggle('on', on);
+    b?.setAttribute('aria-pressed', String(on));
+  }
+
   addAbility(id: string, label: string, code: string) {
     if (this.abil.querySelector(`[data-ab="${CSS.escape(id)}"]`)) return;
     const b = document.createElement('button');
@@ -109,6 +144,7 @@ export class TouchHud {
   private releaseAll() {
     this.aim = this.stick = this.firePtr = null;
     this.thrPtr = null;
+    this.setReload(null);
     if (this.promptPtr) { this.input.hold(this.promptPtr.code, false); this.promptPtr = null; }
     this.zoomOn = false;
     this.setLook(false);
@@ -128,6 +164,14 @@ export class TouchHud {
     b?.setAttribute('aria-pressed', String(on));
   }
 
+  // RELOAD is held (R): a tap reloads, holding it works a jammed gun clear
+  private setReload(id: number | null) {
+    if (id === this.reloadPtr) return;
+    this.reloadPtr = id;
+    this.input.hold('KeyR', id !== null);
+    this.el.querySelector('.th-reload')?.classList.toggle('on', id !== null);
+  }
+
   private bits() { return (this.firePtr ? FIRE : 0) | (this.zoomOn ? ZOOM : 0); }
 
   private down(e: PointerEvent) {
@@ -145,10 +189,16 @@ export class TouchHud {
       btn.classList.toggle('on', this.zoomOn);
     } else if (btn?.classList.contains('th-look')) {
       this.setLook(!this.lookOn);
+    } else if (btn?.classList.contains('th-reload')) {
+      capture();
+      this.setReload(e.pointerId);
+    } else if (btn?.classList.contains('th-gyro')) {
+      // handled on click (motion permission)
+
     } else if (btn?.dataset.t) {
       const a = btn.dataset.t;
       if (a === 'full') this.toggleFullscreen();
-      else this.onAction?.(a as 'pause' | 'map' | 'help' | 'view');
+      else this.onAction?.(a as TouchAction);
     } else if (btn?.dataset.code) {
       this.input.tap(btn.dataset.code);
     } else if (this.promptAt(e.clientX, e.clientY)) {
@@ -197,6 +247,7 @@ export class TouchHud {
     if (this.stick?.id === id) { this.stick = null; this.stickEl.classList.remove('on'); }
     if (this.firePtr?.id === id) { this.firePtr = null; this.el.querySelector('.th-fire')?.classList.remove('on'); }
     if (this.thrPtr === id) this.thrPtr = null;
+    if (this.reloadPtr === id) this.setReload(null);
     if (this.promptPtr?.id === id) { this.input.hold(this.promptPtr.code, false); this.promptPtr = null; }
     this.input.setVirtualButtons('touch', this.bits());
   }
@@ -229,6 +280,12 @@ export class TouchHud {
       this.input.mouseDY += v.y * STICK_RATE * this.sensitivity * dt;
     }
     if (this.role === 'pilot' && this.thrPtr === null) this.showThrottle(throttle);
+    // gyro aim (gunner): the latest rotation rate over this frame's real time
+    if (this.gyroOn && this.role === 'gunner' && this.rateAt && performance.now() - this.rateAt < GYRO_STALE_MS) {
+      const g = gyroToMouse(this.rate, screenAngle(), dt, this.gyroSens, this.gyroOut);
+      this.input.mouseDX += g.x;
+      this.input.mouseDY += g.y;
+    }
   }
 
   private showThrottle(t: number) {

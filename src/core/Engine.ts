@@ -25,6 +25,7 @@ import { freshEnv, installAircraftLook, retargetEnvMaps, retireEnv, syncAircraft
 import { LivingSky } from '../render/LivingSky';
 import { BomberStream } from '../render/BomberStream';
 import { FpsCounter } from '../render/FpsCounter';
+import { cappedPixels, type PhoneProfile } from '../render/PhonePerf';
 import { DRS_FAST, DRS_HARD, DRS_SLOW, drsFloor, drsTargetMs, fasterRefreshFrom, refreshFromTimestamps } from '../render/FrameTiming';
 
 export type Quality = 'low' | 'medium' | 'high' | 'ultra' | 'cinematic';
@@ -97,6 +98,8 @@ export class Engine {
   width = 1;
   height = 1;
   pixelRatio = 1;
+  // Phone performance mode (render/PhonePerf.ts, set by DeviceControls): fewer pixels and particles
+  phone: PhoneProfile | null = null;
   onFrame?: (dt: number, time: number) => void;
   // Runs just before onFrame, and keeps running when a screen takes over onFrame (the replay
   // theatre does): touch / gamepad input (DeviceControls)
@@ -272,10 +275,17 @@ export class Engine {
     atmosUniforms.uAtmosQuality.value = q === 'low' ? 0 : 1;
     this.post.bloomLevels = q === 'cinematic' ? 6 : q === 'ultra' ? 5 : 4;
     this.heatHaze.enabled = p.haze;
-    this.livingSky.setQuality(p.particles);
+    this.livingSky.setQuality(p.particles * (this.phone?.particles ?? 1));
     this.bomberStream.setQuality(q === 'cinematic' ? 'ultra' : q, this.sceneRT.samples);
     // a new tier gets a fresh chance at the display's full refresh rate
     this.hiGiveUp = false; this.hiMiss = 0;
+  }
+
+  /** Phone performance mode on (a profile) or off (null): re-applies the preset under it. */
+  setPhoneProfile(p: PhoneProfile | null) {
+    if (p?.label === this.phone?.label) return;
+    this.phone = p;
+    this.setQuality(this.quality);
   }
 
   // Settings hook: quality tier and the FPS counter overlay
@@ -292,7 +302,7 @@ export class Engine {
   resize() {
     const w = window.innerWidth, h = window.innerHeight;
     // pixel budget instead of the raw device ratio: a Retina screen would otherwise render 4K
-    const budget = QUALITY[this.quality].pixels;
+    const budget = cappedPixels(QUALITY[this.quality].pixels, this.phone);
     const base = Math.min(window.devicePixelRatio || 1, Math.sqrt(budget / Math.max(1, w * h)));
     this.pixelRatio = Math.max(0.4, base * this.renderScale);
     this.width = w; this.height = h;

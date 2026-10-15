@@ -1,6 +1,7 @@
 import { access, AccessPrefs } from '../core/Accessibility';
 import { ACTIONS, ActionId, keyMap, keyLabel } from '../core/KeyMap';
 import { tx } from '../i18n';
+import { requestGyro } from '../core/Gyro';
 
 // Settings screen sections: Accessibility, Touch & gamepad, Key bindings.
 // Hook: UI.settings() calls mountAccessibilityPanel(box) after building its form; the
@@ -24,6 +25,10 @@ export function mountAccessibilityPanel(box: HTMLElement) {
     <div class="a11y-h">${tx('Touch &amp; gamepad')}</div>
     <label class="setting">${tx('Touch controls')} <select data-a="touch">${opt('auto', 'Automatic', p.touch)}${opt('on', 'Always on', p.touch)}${opt('off', 'Off', p.touch)}</select></label>
     <label class="setting"><span>${tx('Touch aim sensitivity')} <b class="a11y-val" data-v="touchSens">${p.touchSens.toFixed(2)}×</b></span><input type="range" min="0.4" max="2.5" step="0.05" data-a="touchSens" value="${p.touchSens}"></label>
+    <label class="setting">${tx('Gyro aim (turn the phone to aim)')} <select data-a="gyro">${opt('false', 'Off', String(p.gyro))}${opt('true', 'On', String(p.gyro))}</select></label>
+    <label class="setting"><span>${tx('Gyro sensitivity')} <b class="a11y-val" data-v="gyroSens">${p.gyroSens.toFixed(2)}×</b></span><input type="range" min="0.3" max="3" step="0.05" data-a="gyroSens" value="${p.gyroSens}"></label>
+    <label class="setting">${tx('Phone performance mode')} <select data-a="phonePerf">${opt('auto', 'Automatic', p.phonePerf)}${opt('on', 'Always on', p.phonePerf)}${opt('off', 'Off', p.phonePerf)}</select></label>
+    <div class="a11y-note">${tx('Phone performance mode renders fewer pixels and effects so a phone stays smooth and cool.')}</div>
     <div class="a11y-note" data-pad></div>
     <div class="a11y-h">${tx('Key bindings')}</div>
     <div class="a11y-keys">${ACTIONS.map((a) => `<div class="a11y-row"><span>${esc(tx(a.label))}</span><button class="a11y-key" data-k="${a.id}">${esc(keyLabel(keyMap.bindings[a.id]))}</button></div>`).join('')}</div>
@@ -36,8 +41,10 @@ export function mountAccessibilityPanel(box: HTMLElement) {
   wrap.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-a]').forEach((i) => i.addEventListener('input', () => {
     const k = i.dataset.a as keyof AccessPrefs;
     let v: unknown = i.value;
-    if (k === 'colorBlind' || k === 'reduceMotion') v = v === 'true';
-    if (k === 'subBg' || k === 'touchSens') v = parseFloat(i.value);
+    if (k === 'colorBlind' || k === 'reduceMotion' || k === 'gyro') v = v === 'true';
+    if (k === 'subBg' || k === 'touchSens' || k === 'gyroSens') v = parseFloat(i.value);
+    // iOS asks for motion access: the select's change is the tap that may ask
+    if (k === 'gyro' && v) void requestGyro().then((r) => { if (r !== 'granted') { access.set('gyro', false); i.value = 'false'; } });
     access.set(k, v as never);
     const out = wrap.querySelector(`[data-v="${k}"]`);
     if (out) out.textContent = k === 'subBg' ? `${Math.round((v as number) * 100)}%` : `${(v as number).toFixed(2)}×`;
