@@ -183,8 +183,10 @@ function placeholder(k: ModelKind): THREE.Object3D {
 
 // Translucent spinning-propeller disc with faint blade streaks.
 let discTex: THREE.Texture | null = null;
-function propDiscTexture() {
-  if (discTex) return discTex;
+let escortDiscTex: THREE.Texture | null = null;
+function propDiscTexture(softSweep = false) {
+  const cached = softSweep ? escortDiscTex : discTex;
+  if (cached) return cached;
   const S = 256;
   const c = document.createElement('canvas');
   c.width = c.height = S;
@@ -205,7 +207,13 @@ function propDiscTexture() {
         alpha = (0.05 + 0.1 * Math.pow(streak, 6) + 0.035 * Math.pow(band, 3)) * (1 - Math.pow(r, 6)) * inner;
         // Fine radial striations that fade out toward hub and rim, like motion streaks.
         alpha += 0.02 * Math.pow(0.5 + 0.5 * Math.cos(a * 17 + r * 2), 4) * 4 * r * (1 - r) * inner;
-        if (r > 0.9) {
+        if (softSweep) {
+          // Four broad paddle-blade shadows, with a continuous fade to a transparent rim.
+          // A narrow yellow tip band reads as a wire hoop on the large P-47 prop.
+          const blade = Math.pow(0.5 + 0.5 * Math.cos(a * 4), 5);
+          const edge = THREE.MathUtils.smoothstep(r, 0.68, 1);
+          alpha = (0.07 + 0.34 * blade) * (1 - edge) * inner;
+        } else if (r > 0.9) {
           ring = Math.exp(-Math.pow((r - 0.955) / 0.014, 2)); // thin yellow tip ring
           alpha += 0.16 * ring;
         }
@@ -215,9 +223,11 @@ function propDiscTexture() {
       img.data[i + 3] = Math.min(255, alpha * 255 * 1.6);
     }
   g.putImageData(img, 0, 0);
-  discTex = new THREE.CanvasTexture(c);
-  discTex.colorSpace = THREE.SRGBColorSpace;
-  return discTex;
+  const texture = new THREE.CanvasTexture(c);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  if (softSweep) escortDiscTex = texture;
+  else discTex = texture;
+  return texture;
 }
 
 export interface PropInfo { node: THREE.Object3D; blades: THREE.Object3D[]; disc: THREE.Mesh; base: THREE.Quaternion; layered: boolean; }
@@ -225,7 +235,7 @@ export interface PropInfo { node: THREE.Object3D; blades: THREE.Object3D[]; disc
 let heroDiscMaterial: THREE.MeshBasicMaterial | null = null;
 const discGeos = new Map<number, THREE.CircleGeometry>(); // one disc geometry per size, shared
 
-export function setupProps(root: THREE.Object3D, radius: number): PropInfo[] {
+export function setupProps(root: THREE.Object3D, radius: number, softSweep = false): PropInfo[] {
   const props: PropInfo[] = [];
   const layered = !!root.getObjectByName('B17G_HERO');
   const nodes: THREE.Object3D[] = [];
@@ -237,7 +247,7 @@ export function setupProps(root: THREE.Object3D, radius: number): PropInfo[] {
     const disc = new THREE.Mesh(
       geo,
       layered ? (heroDiscMaterial ??= new THREE.MeshBasicMaterial({ map: propDiscTexture(), transparent: true, opacity: .55, depthWrite: false, side: THREE.DoubleSide }))
-        : markOwned(new THREE.MeshBasicMaterial({ map: propDiscTexture(), transparent: true, depthWrite: false, side: THREE.DoubleSide })),
+        : markOwned(new THREE.MeshBasicMaterial({ map: propDiscTexture(softSweep), transparent: true, depthWrite: false, side: THREE.DoubleSide })),
     );
     disc.userData.formationPropSweep = layered;
     disc.position.z = 0.05;

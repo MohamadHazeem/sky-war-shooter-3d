@@ -52,6 +52,9 @@ def build(kind):
         for i,x in enumerate(xs):
             m.marker(f"muzzle_{'left' if s>0 else 'right'}_{i+1}",(s*x,-0.3 if not jug and i==2 else -0.34,2.3-i*0.09 if jug else [1.65,0.4,0.2][i]))
     m.info['exhausts'] = [(s*.46,.26,1.75-i*.15) for s in (1,-1) for i in range(6)] if not jug else [(s*.57,-.85,2.5) for s in (1,-1)]
+    if not jug:
+        # Local soot at the Merlin stacks, not a brown wash over the cockpit/camouflage.
+        m.info.update(stain_amt=0.12, stain_len=0.32)
     m.info.update(scheme='usod' if jug else 'raf',allied='us' if jug else 'raf',seed=47 if jug else 9,
                   spinner=dict(style='plain',hubs=[hub],base='alu' if jug else 'sky'),
                   number=dict(text='47' if jug else 'JE',z=-1.65 if jug else -1.95,y=0.1,h=0.5,color='21' if jug else 'sky'),

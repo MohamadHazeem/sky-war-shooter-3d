@@ -263,8 +263,8 @@ def paint(m, maps, size):
     big = nz(0.9, 3, 3)
     blot = sstep(0.47, 0.53, big)          # soft-edged blotches (fuselage spine, Me 262 / Bf 110)
     if scheme == 'raf':
-        # RAF A-pattern: broad curved disruptive bands, not Luftwaffe mottling.
-        blot = sstep(-0.08, 0.08, np.sin(P[..., 2] * 1.5 + 0.8 * np.sin(P[..., 0] * 1.1)) + 0.25 * np.sin(P[..., 0] * 2.0))
+        from allied_paint import raf_camouflage
+        blot = raf_camouflage(P, lift)
     cols = {'7475': ('74', '75', '76'), '7475m': ('74', '75', '76'), '8182': ('81', '82', '76'),
             '7071': ('70', '71', '65'), 'usod': ('od','od','mediumgrey'), 'raf': ('rafgreen','rafgrey','mediumgrey')}[scheme]
     c_a, c_b, c_lo = RLM[cols[0]], RLM[cols[1]], RLM[cols[2]]

@@ -2,6 +2,19 @@
 import numpy as np
 
 
+def raf_camouflage(P, lift):
+    """Broad Dark Green/Ocean Grey bands shared by wings and fuselage, in metres.
+
+    Carry the wing pattern up the fuselage sides with a gentle curve; no stretched
+    texture noise or mottling in the nose/cockpit band.
+    """
+    x, y, z = P[..., 0], P[..., 1], P[..., 2]
+    across = x + np.where(lift, 0, y * 0.65)
+    band = np.sin(z * 1.5 + 0.8 * np.sin(across * 1.1)) + 0.25 * np.sin(across * 2.0)
+    t = np.clip((band + 0.08) / 0.16, 0, 1)
+    return t * t * (3 - 2 * t)
+
+
 def markings(col, P, N, skin, lift, nation, colors):
     x,y,z=P[...,0],P[...,1],P[...,2]
     side=(np.abs(N[...,0])>0.3)&skin&~lift

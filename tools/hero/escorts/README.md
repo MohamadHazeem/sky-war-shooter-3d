@@ -48,5 +48,9 @@ then run `tools/heavy.sh node tools/hero/escorts/capture.mjs`. Set `PLAYWRIGHT_M
 The script uses the actual live production game and local game, the same six-second formation,
 weather, aircraft positions, cameras and viewport, saving JPEGs, side-by-side sheets and metadata
 under `docs/phase11/shots/23/`. The baseline has P-51s because live does not have these aircraft.
+The viewport and High render are 1920×1080; individual JPEGs are downsampled to 1280×720.
+Low renders at its 1074×604 budget and is resized to 1280×720 for inspection.
+Standard comparison sheets are 1280×388; the additional `*-close` comparisons are
+1920×568. Both dimensions are recorded in `comparison.json`.
 
 Dimension references: [USAF P-47 data](https://www.aetc.af.mil/Portals/88/Documents/history/AFD-070130-081.pdf) (40 ft 9 in span, 36 ft 2 in length); [Italian Air Force Spitfire V/IX](https://www.aeronautica.difesa.it/en/2023/05/26/spitfire-v-ix/) (11.23 m span, 9.47 m IX length). Tests allow 5%; the source-shape overlay uses fixed metres and no shape fitting.
