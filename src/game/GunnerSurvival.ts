@@ -32,11 +32,14 @@ export class GunnerSurvival {
   wound = 0;
   jamCooldown = 0;
   damageCooldown = 0;
+  // Station lessons (LessonRunner): a hose cut with its own pace, the same on every difficulty
+  oxygenDrill: { oxygenGrace: number; oxygenRise: number; rescue: number } | null = null;
   get tuning() { return SURVIVAL[this.difficulty]; }
   reset(difficulty = this.difficulty) {
     this.difficulty = difficulty;
     this.oxygen = false;
     this.hypoxia = this.oxygenTime = this.circuit = this.chill = this.wound = this.damageCooldown = 0;
+    this.oxygenDrill = null;
     this.jamCooldown = this.tuning.jamGap;
   }
   // Heavy hits to the fuselage / turret can sever a hose or short a heated-suit lead.
@@ -58,8 +61,9 @@ export class GunnerSurvival {
     this.wound += (clamp(wounds / 3) * this.tuning.wounds - this.wound) * (1 - Math.exp(-dt / 2));
     if (this.oxygen) {
       this.oxygenTime += dt;
-      this.hypoxia = hypoxiaCurve(this.oxygenTime, this.tuning.oxygenGrace, this.tuning.oxygenRise);
-      if (this.oxygenTime >= this.tuning.rescue) this.reconnect();
+      const o = this.oxygenDrill ?? this.tuning;
+      this.hypoxia = hypoxiaCurve(this.oxygenTime, o.oxygenGrace, o.oxygenRise);
+      if (this.oxygenTime >= o.rescue) this.reconnect();
     } else this.hypoxia = Math.max(0, this.hypoxia - dt / SURVIVAL_RULES.recovery);
   }
   tickGun(s: SurvivalGun, dt: number, waist: boolean) {

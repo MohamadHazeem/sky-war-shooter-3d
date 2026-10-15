@@ -88,3 +88,23 @@
 #controlsCard .cc-manual { margin-inline-start: 12px; font: 600 12px/1 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; letter-spacing: 1px; color: var(--khaki);
   background: transparent; border: 1px solid var(--khaki); padding: 7px 10px; min-height: 32px; cursor: pointer; }
 #controlsCard .cc-manual:hover, #controlsCard .cc-manual:focus-visible { background: var(--khaki); color: #14160e; outline: none; }
+
+/* Station lessons (LessonRunner.ts): the Gunnery School card plus a skip button */
+#tutCard.lesson .skip { pointer-events: auto; display: block; margin-top: 10px; min-height: 32px; padding: 6px 10px; cursor: pointer;
+  font: 600 12px/1 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; letter-spacing: 1px; color: var(--ink-dim);
+  background: transparent; border: 1px solid rgba(185, 167, 111, 0.45); }
+#tutCard.lesson .skip:hover, #tutCard.lesson .skip:focus-visible { color: var(--khaki); border-color: var(--khaki); outline: none; }
+body.touch #tutCard.lesson .skip { min-height: 44px; font-size: 14px; }
+
+/* Hangar → Training (ui/TrainingScreen.ts) */
+.training-sheet .tr-meta { font: 13px/1.5 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; color: var(--ink-dim); margin: 0 0 16px; }
+.training-sheet .tr-list { display: grid; gap: 10px; }
+.training-sheet .tr-row { cursor: default; min-height: 0; }
+.training-sheet .tr-row.locked { opacity: 0.55; }
+.training-sheet .tr-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.training-sheet .tr-status { font: 600 12px/1 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; letter-spacing: 1.5px; font-style: normal; color: var(--ink-dim); text-transform: uppercase; }
+.training-sheet .tr-status.done { color: var(--good); }
+.training-sheet .tr-status.new { color: var(--khaki); }
+.training-sheet .tr-acc { color: var(--ink); }
+.training-sheet .tr-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
+.training-sheet .tr-actions .btn { min-height: 44px; }

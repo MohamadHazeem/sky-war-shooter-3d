@@ -8,12 +8,16 @@ import type { Mission } from './Missions';
 import { sound } from '../audio/Sound';
 import { Tutorial, TUTORIAL } from './Tutorial';
 import { Hints } from './Hints';
+import { LessonRunner, lessonMission } from './LessonRunner';
+import { lessonById, type LessonId } from './StationLessons';
+import { showTrainingScreen } from '../ui/TrainingScreen';
 import { ControlsCard, ControlsHint } from '../ui/ControlsCard';
 import '../ui/onboarding.css';
 
 // First-time player experience, kept out of Game.ts: the Gunnery School tutorial (offered
 // automatically for new profiles), the H/F1 controls card, the
-// "H — controls" reminder and the once-per-profile context hints.
+// "H — controls" reminder, the once-per-profile context hints and the station lessons
+// (Hangar → Training, LessonRunner.ts).
 //
 // Game.ts hooks (see each method): constructor, startMenu → onTitle(),
 // startMission → onMissionStart(m), direct → direct(dt, m), frame → update(dt).
@@ -30,6 +34,7 @@ export interface OnboardingHost {
 
 export class Onboarding {
   readonly tutorial: Tutorial;
+  readonly lessons: LessonRunner;
   readonly hints: Hints;
   readonly card = new ControlsCard();
   private hint = new ControlsHint();
@@ -46,6 +51,8 @@ export class Onboarding {
       onDone: () => { this.saved.tutorialDone = true; this.save(); },
       markHint: (id) => this.hints.markSeen(id),
     });
+    // a finished lesson returns to the Training screen, which points at the next one
+    this.lessons = new LessonRunner(game, engine, ui, { finished: () => { this.game.startMenu(); this.openTraining(() => this.game.startMenu()); } });
     this.card.onClose = () => this.closeCard();
     // registered after Game's own key handler, so Esc closing the card never also pauses
     window.addEventListener('keydown', (e) => {
@@ -78,10 +85,29 @@ export class Onboarding {
     this.game.startMission(TUTORIAL);
   }
 
+  // Hangar → Training: the Gunnery School and the station lessons
+  openTraining(back: () => void) {
+    this.game.ui.hideAll();
+    showTrainingScreen(this.saved.tutorialDone, {
+      school: () => { this.game.ui.hideAll(); this.startTutorial(); },
+      lesson: (id) => { this.game.ui.hideAll(); this.startLesson(id); },
+      back,
+    });
+  }
+
+  startLesson(id: LessonId) {
+    const def = lessonById(id);
+    if (!def) return;
+    this.saved.promptDismissed = true;   // the player chose their training: no automatic first flight afterwards
+    this.save();
+    this.game.startMission(lessonMission(def));
+  }
+
   // ---------------- hooks ----------------
   // Game.startMenu(): first flight starts once; no prompt overlays the title.
   onTitle() {
     this.tutorial.stop();
+    this.lessons.stop();
     if (this.card.open) { this.card.hide(); }
     this.hint.set(false);
     if (shouldStartFirstFlight(this.saved, this.game.progress, this.game.service.career.missions)) {
@@ -95,13 +121,14 @@ export class Onboarding {
     this.hints.onMissionStart();
     this.hintT = 0;
     if (!m.tutorial) { this.saved.missions = (this.saved.missions ?? 0) + 1; this.save(); }
-    if (m.tutorial) this.tutorial.start(); else this.tutorial.stop();
+    if (m.tutorial && !m.lesson) this.tutorial.start(); else this.tutorial.stop();
+    if (m.lesson) this.lessons.start(m.lesson as LessonId); else this.lessons.stop();
   }
 
   // Game.direct(): the tutorial replaces the director, waves and end conditions
   direct(dt: number, m: Mission): boolean {
     if (!m.tutorial) return false;
-    this.tutorial.update(dt);
+    if (m.lesson) this.lessons.update(dt); else this.tutorial.update(dt);
     return true;
   }
 
@@ -114,7 +141,9 @@ export class Onboarding {
     const playing = !!g.mission && g.state === 'playing' && !g.photo.active && g.input.enabled;
     if (playing) this.hintT += dt;
     this.hint.set(controlsHintShown({ missions: this.saved.missions ?? 0, detail: hudRuntime.detail, playing, t: this.hintT, cardOpen: this.card.open }));
-    if (this.tutorial.active && g.state !== 'playing' && g.state !== 'paused' && g.state !== 'ending') this.tutorial.stop();
+    const away = g.state !== 'playing' && g.state !== 'paused' && g.state !== 'ending';
+    if (this.tutorial.active && away) this.tutorial.stop();
+    if (this.lessons.active && away) this.lessons.stop();
     this.hints.update(dt);
   }
 

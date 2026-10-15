@@ -13,7 +13,7 @@ function fixture() {
     ui: { title: vi.fn(), hideAll: vi.fn(), hangar: vi.fn(), openSettings: vi.fn() },
     service: { career: { xp: 0 }, openCareer: vi.fn(), openDaily: vi.fn(), openTrophies: vi.fn() },
     skills: { open: vi.fn() }, coop: { openMenu: vi.fn() },
-    onboarding: { startTutorial: vi.fn() }, extras: { openGallery: vi.fn(), openWhatsNew: vi.fn(), manual: { open: vi.fn() } },
+    onboarding: { startTutorial: vi.fn(), openTraining: vi.fn() }, extras: { openGallery: vi.fn(), openWhatsNew: vi.fn(), manual: { open: vi.fn() } },
     cine: { theatre: { openLibrary: vi.fn() } }, showCampaign: vi.fn(), showBriefing: vi.fn(), startMenu: vi.fn(),
   };
   const menus = new SimpleMenu(g as unknown as Game);
@@ -54,6 +54,6 @@ describe('menu routing', () => {
     for (const section of ['armory', 'customize'] as const) {
       menus.open(section, back); expect(g.ui.hangar).toHaveBeenLastCalledWith(g.prog, 'gunner', expect.objectContaining({ section, next: 'Back' }), back);
     }
-    menus.open('training', back); expect(g.onboarding.startTutorial).toHaveBeenCalledOnce();
+    menus.open('training', back); expect(g.onboarding.openTraining).toHaveBeenCalledWith(back);
   });
 });

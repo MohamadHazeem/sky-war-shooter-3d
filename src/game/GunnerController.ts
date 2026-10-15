@@ -424,6 +424,7 @@ export class GunnerController {
   }
 
   get state() { return this.states.get(this.station)!; }
+  gunState(id: StationId) { return this.states.get(id)!; }
   get def() { return STATIONS[this.station]; }
 
   get jammed() { return this.legacyJammed || this.state.jam; }

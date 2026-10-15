@@ -64,7 +64,7 @@ export class SimpleMenu {
         open(); break;
       }
       case 'weekly': this.survival('weekly', back); break;
-      case 'training': g.ui.hideAll(); g.onboarding.startTutorial(); break;
+      case 'training': g.onboarding.openTraining(back); break;
       case 'crew': {
         const root = this.sheet('crewMenu', 'Crew', back);
         mountCrewRoster(root.querySelector('.box')!, g.prog); break;
