@@ -45,6 +45,11 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 try {
   const host = await make('Reed'), g1 = await make('Walsh'), g2 = await make('أحمد', 'ar', { width: 844, height: 390 });
   const step = async (n = 1) => { for (let i = 0; i < n; i++) for (const p of pages) await p.evaluate(() => sws.step(3, 1 / 60)); };
+  // wait for a talk state, stepping frames meanwhile (the intercom's once-a-second catch-up runs in the frame loop)
+  const until = async (p, fn, arg, ms = 60000) => {
+    for (const t0 = Date.now(); Date.now() - t0 < ms;) { if (await p.evaluate(fn, arg)) return; await step(4); await wait(100); }
+    throw new Error('timed out waiting for ' + fn.toString());
+  };
   await host.locator('[data-host]').click();
   await host.waitForFunction(() => sws.game.coop.code.length === 6, null, { timeout: 45000 });
   const code = await host.evaluate(() => sws.game.coop.code);
@@ -66,9 +71,9 @@ try {
   let W = await g1.evaluate(() => sws.game.coop.localId);
   const before = { host: await inbound(host), g2: await inbound(g2) };
   await g1.locator('#coop [data-ic-talk]').dispatchEvent('pointerdown', { pointerId: 1 });
-  await g1.waitForFunction(() => sws.game.coop.intercom.net.local, null, { timeout: 10000 });
-  await host.waitForFunction(id => sws.game.coop.intercom.net.isTalking(id), W);
-  await g2.waitForFunction(id => sws.game.coop.intercom.net.isTalking(id), W);
+  await until(g1, () => sws.game.coop.intercom.net.local);
+  await until(host, id => sws.game.coop.intercom.net.isTalking(id), W);
+  await until(g2, id => sws.game.coop.intercom.net.isTalking(id), W);
   await step(1);
   report.lobbyPeak = { host: await busPeak(host), g2: await busPeak(g2) };
   const during = { host: await inbound(host), g2: await inbound(g2) };
@@ -91,47 +96,51 @@ try {
   assert(report.mutedPeak < 0.002, 'mute silences that crewman');
   await g2.locator(`#coop [data-ic-mute="${W}"]`).click();
   await g1.locator('#coop [data-ic-talk]').dispatchEvent('pointerup', { pointerId: 1 });
-  await host.waitForFunction(id => !sws.game.coop.intercom.net.isTalking(id), W);
-  await g2.waitForFunction(id => !sws.game.coop.intercom.net.isTalking(id), W);
+  await until(host, id => !sws.game.coop.intercom.net.isTalking(id), W);
+  await until(g2, id => !sws.game.coop.intercom.net.isTalking(id), W);
 
-  // ---- mission: the host talks with the remappable key (Y) ----
-  for (const p of [host, g1, g2]) await p.locator('#coop [data-ready]').click();
+  // ---- leaving frees the microphone (and lightens the machine for the mission) ----
+  await g1.evaluate(() => sws.game.coop.leave());
+  report.micAfterLeave = await g1.evaluate(() => ({ mic: sws.game.coop.intercom.mic, stream: sws.game.coop.intercom.stream, phase: sws.game.coop.phase }));
+  assert.equal(report.micAfterLeave.mic, 'off'); assert.equal(report.micAfterLeave.stream, null);
+  pages.splice(pages.indexOf(g1), 1); await g1.close();
+  await host.waitForFunction(() => sws.game.coop.roster.length === 2, null, { timeout: 30000 });
+
+  // ---- mission: the host talks with the remappable key (Y), the Arabic phone guest with the touch button ----
+  for (const p of [host, g2]) await p.locator('#coop [data-ready]').click();
   await host.waitForFunction(() => sws.game.coop.partnerReady);
   await host.evaluate(() => setTimeout(() => document.querySelector('[data-start]').click(), 0));
-  for (const p of [host, g1, g2]) await p.waitForFunction(() => sws.game.state === 'playing', null, { timeout: 120000 });
+  for (const p of [host, g2]) await p.waitForFunction(() => sws.game.state === 'playing', null, { timeout: 120000 });
   await step(20);
-  const b2 = { g1: await inbound(g1), g2: await inbound(g2) };
+  const G = await g2.evaluate(() => sws.game.coop.localId);
+  const b2 = { host: await inbound(host), g2: await inbound(g2) };
   await host.keyboard.down('KeyY');
-  await g1.waitForFunction(() => sws.game.coop.intercom.net.isTalking(0), null, { timeout: 30000 });
-  await g2.waitForFunction(() => sws.game.coop.intercom.net.isTalking(0));
-  await g1.locator('#icTalk').dispatchEvent('pointerdown', { pointerId: 2 });   // Walsh answers at the same time
-  W = await g1.evaluate(() => sws.game.coop.localId);   // Walsh's crew id (a reconnect can move him to another slot)
-  await g2.waitForFunction(id => sws.game.coop.intercom.net.isTalking(id), W, { timeout: 30000 });
+  await until(g2, () => sws.game.coop.intercom.net.isTalking(0));
+  await g2.locator('#icTalk').dispatchEvent('pointerdown', { pointerId: 2, pointerType: 'touch' });   // both talking at once
+  await until(host, id => sws.game.coop.intercom.net.isTalking(id), G);
   await wait(1200); await step(2);
-  const d2 = { g1: await inbound(g1), g2: await inbound(g2) };
-  report.hostTalk = { walshId: W, g1Slot0: d2.g1[0][0] - b2.g1[0][0], g2Slot0: d2.g2[0][0] - b2.g2[0][0], g2SlotWalsh: d2.g2[0][W] - b2.g2[0][W] };
-  console.log('Host + Walsh talking', JSON.stringify(report.hostTalk));
-  assert(report.hostTalk.g1Slot0 > 2000 && report.hostTalk.g2Slot0 > 2000 && report.hostTalk.g2SlotWalsh > 2000);
-  report.who = await g2.evaluate(() => [...document.querySelectorAll('#icWho span')].map(s => s.textContent));
-  console.log('Indicator (Arabic guest)', report.who);
-  assert.deepEqual([...report.who].sort(), ['Reed', 'Walsh'].sort());
-  for (const p of [g1, g2, host]) await p.evaluate(() => { sws.game.hud.updateHud(); sws.step(1, 1 / 60, true); });
-  await g2.screenshot({ path: `${shots}/mission-guest-ar-phone-indicator.jpg`, type: 'jpeg', quality: 70 });
-  await g1.screenshot({ path: `${shots}/mission-guest-talking.jpg`, type: 'jpeg', quality: 70 });
+  const d2 = { host: await inbound(host), g2: await inbound(g2) };
+  report.missionTalk = { guestId: G, guestHearsHost: d2.g2[0][0] - b2.g2[0][0], hostHearsGuest: d2.host[G][0] - b2.host[G][0] };
+  report.missionPeak = { host: await busPeak(host), g2: await busPeak(g2) };
+  console.log('Mission, both talking', JSON.stringify(report.missionTalk), JSON.stringify(report.missionPeak));
+  assert(report.missionTalk.guestHearsHost > 2000 && report.missionTalk.hostHearsGuest > 2000);
+  assert(report.missionPeak.host > 0.01 && report.missionPeak.g2 > 0.01);
+  report.who = { g2: await g2.evaluate(() => [...document.querySelectorAll('#icWho span')].map(s => s.textContent)), host: await host.evaluate(() => [...document.querySelectorAll('#icWho span')].map(s => s.textContent)) };
+  console.log('Indicators', JSON.stringify(report.who));
+  assert.deepEqual(report.who.g2, ['أنت', 'Reed']); assert.deepEqual(report.who.host, ['You', 'أحمد']);
+  for (const p of [g2, host]) await p.evaluate(() => { sws.game.hud.updateHud(); sws.step(1, 1 / 60, true); });
+  await g2.screenshot({ path: `${shots}/mission-guest-ar-phone-talking.jpg`, type: 'jpeg', quality: 70 });
+  await host.screenshot({ path: `${shots}/mission-host-talking.jpg`, type: 'jpeg', quality: 70 });
   await host.keyboard.up('KeyY');
-  await g1.locator('#icTalk').dispatchEvent('pointerup', { pointerId: 2 });
-  await g2.waitForFunction(() => !sws.game.coop.intercom.net.talkers.size);
+  await g2.locator('#icTalk').dispatchEvent('pointerup', { pointerId: 2, pointerType: 'touch' });
+  await until(g2, () => !sws.game.coop.intercom.net.talkers.size);
+  await until(host, () => !sws.game.coop.intercom.net.talkers.size);
   await step(2);
   report.whoAfter = await g2.evaluate(() => document.querySelector('#icWho').classList.contains('show'));
   assert.equal(report.whoAfter, false);
-
-  // ---- leaving frees the microphone ----
-  await g1.evaluate(() => sws.game.coop.leave());
-  report.micAfterLeave = await g1.evaluate(() => ({ mic: sws.game.coop.intercom.mic, stream: sws.game.coop.intercom.stream }));
-  assert.equal(report.micAfterLeave.mic, 'off'); assert.equal(report.micAfterLeave.stream, null);
   assert.deepEqual(errors, []); report.errors = errors;
   fs.writeFileSync(`${shots}/verification.json`, JSON.stringify(report, null, 2));
-  console.log('PASS: crew intercom (relay, filter, indicator, mute, key + button, cleanup)');
+  console.log('PASS: crew intercom (3-way relay, filter, mute, key + touch button in mission, indicator, cleanup)');
 } catch (e) {
   report.errors = errors; report.failure = String(e); fs.writeFileSync(`${shots}/verification-failed.json`, JSON.stringify(report, null, 2));
   for (let i = 0; i < pages.length; i++) await pages[i].screenshot({ path: `${shots}/failed-${i}.jpg`, type: 'jpeg', quality: 60 }).catch(() => {});

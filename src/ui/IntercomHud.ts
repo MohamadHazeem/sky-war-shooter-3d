@@ -38,6 +38,8 @@ const CSS = `
 html[lang=ar] #icWho span, html[lang=ar] #coop .intercom [data-ic-talk] { font-size: 12px; padding: 8px 14px; letter-spacing: 1px; }
 #coop .intercom .icmic { font-size: 14px; line-height: 1.6; }
 @media (max-width: 520px) { #coop .intercom .icrow input[type=range] { width: 80px; } }
+/* short (phone landscape) screens: the right edge is full of touch controls; the left middle is free */
+@media (max-height: 520px) { #icTalk { top: auto; bottom: 36%; right: auto; left: 12px; padding: 10px 14px; } }
 `;
 
 // Hold handlers for a push-to-talk button (mouse, touch and pen; released if the pointer leaves)

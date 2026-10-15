@@ -68,6 +68,7 @@ export class Intercom {
   version = 0;                            // bumped on every talk change (cheap HUD dirty check)
   private sent = new WeakMap<RTCRtpSender, MediaStreamTrack | null>();
   private capped = new WeakSet<RTCRtpSender>();
+  private told = new WeakSet<object>();   // links already given the current talk state
   private acc = 0;
 
   constructor(private env: IntercomEnv) {}
@@ -79,7 +80,7 @@ export class Intercom {
     if (on === this.local) return;
     if (on && !this.env.mic()) return;
     this.local = on; this.version++;
-    for (const l of this.env.links()) l.send({ t: 'talk', on, from: 0 });
+    for (const l of this.env.links()) { l.send({ t: 'talk', on, from: 0 }); this.told.add(l.pc); }
     this.apply();
   }
 
@@ -91,7 +92,7 @@ export class Intercom {
     if (m.on === this.talkers.has(from)) return;
     if (m.on) this.talkers.add(from); else this.talkers.delete(from);
     this.version++;
-    if (role === 'host') for (const l of this.env.links()) if (l.id !== from) l.send({ t: 'talk', on: m.on, from });
+    if (role === 'host') for (const l of this.env.links()) if (l.id !== from) { l.send({ t: 'talk', on: m.on, from }); this.told.add(l.pc); }
     this.apply();
     this.env.onTalk?.(from, m.on);
   }
@@ -107,6 +108,13 @@ export class Intercom {
       if (gone) { this.talkers.delete(id); this.version++; this.env.onTalk?.(id, false); }
     }
     if (this.local && !this.env.mic()) { this.local = false; this.version++; for (const l of links) l.send({ t: 'talk', on: false, from: 0 }); }
+    // a link that opened (or reconnected) mid-call: tell it who is talking right now
+    for (const l of links) {
+      if (this.told.has(l.pc)) continue;
+      this.told.add(l.pc);
+      if (this.local) l.send({ t: 'talk', on: true, from: 0 });
+      if (this.env.role() === 'host') for (const j of this.talkers) if (j !== l.id) l.send({ t: 'talk', on: true, from: j });
+    }
     this.apply(links);
   }
 
@@ -139,7 +147,7 @@ export class Intercom {
   reset() {
     const was = this.talkers.size > 0 || this.local;
     this.talkers.clear(); this.local = false; this.acc = 0;
-    this.sent = new WeakMap(); this.capped = new WeakSet();
+    this.sent = new WeakMap(); this.capped = new WeakSet(); this.told = new WeakSet();
     if (was) this.version++;
   }
 }

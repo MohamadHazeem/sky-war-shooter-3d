@@ -1,0 +1,64 @@
+{
+  "sdp": [
+    {
+      "id": 1,
+      "audio": 4,
+      "opus": true,
+      "dirs": [
+        "sendrecv",
+        "sendonly",
+        "sendonly",
+        "sendonly"
+      ]
+    },
+    {
+      "id": 2,
+      "audio": 4,
+      "opus": true,
+      "dirs": [
+        "sendrecv",
+        "sendonly",
+        "sendonly",
+        "sendonly"
+      ]
+    }
+  ],
+  "idlePeak": 0,
+  "lobbyPeak": {
+    "host": 1.0099890232086182,
+    "g2": 0.9932824969291687
+  },
+  "walshTalk": {
+    "walshId": 1,
+    "hostFromWalsh": 9796,
+    "g2SlotWalsh": 10580,
+    "g2SilentSlot": 0
+  },
+  "mutedPeak": 0,
+  "micAfterLeave": {
+    "mic": "off",
+    "stream": null,
+    "phase": "idle"
+  },
+  "missionTalk": {
+    "guestId": 3,
+    "guestHearsHost": 6942,
+    "hostHearsGuest": 3630
+  },
+  "missionPeak": {
+    "host": 1.0255484580993652,
+    "g2": 1.017142653465271
+  },
+  "who": {
+    "g2": [
+      "أنت",
+      "Reed"
+    ],
+    "host": [
+      "You",
+      "أحمد"
+    ]
+  },
+  "whoAfter": false,
+  "errors": []
+}

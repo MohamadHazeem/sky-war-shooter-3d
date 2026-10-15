@@ -149,6 +149,24 @@ describe('intercom transport', () => {
     expect(senderTrack(links[0], 1)).toBeNull();
   });
 
+  it('a link that opens mid-call is told who is already talking', () => {
+    const { ic, links } = setup('host', [1]);
+    ic.key(true); ic.receive({ t: 'talk', on: true, from: 0 }, 1);
+    ic.tick(1);
+    expect(links[0].sent).toEqual([{ t: 'talk', on: true, from: 0 }]);   // already up to date
+    links.push(link(2));
+    ic.tick(1);
+    expect(links[1].sent).toEqual([{ t: 'talk', on: true, from: 0 }, { t: 'talk', on: true, from: 1 }]);
+    ic.tick(1);
+    expect(links[1].sent).toHaveLength(2);
+    const g = setup('guest', [0]);
+    g.links[0].pc = fakePc('reconnected');   // same crew id, new connection
+    g.ic.key(true); g.links[0].sent.length = 0;
+    g.links.push(link(0)); g.links.shift();
+    g.ic.tick(1);
+    expect(g.links[0].sent).toEqual([{ t: 'talk', on: true, from: 0 }]);
+  });
+
   it('reset forgets everything', () => {
     const { ic } = setup('host', [1]);
     ic.key(true); ic.receive({ t: 'talk', on: true, from: 1 }, 1);
