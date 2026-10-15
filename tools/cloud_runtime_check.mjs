@@ -4,14 +4,16 @@ import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs'));
-const browser = await chromium.launch({ headless: true });
-const dir = 'docs/phase10/shots/03';
+const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE, args: process.platform === 'darwin' ? ['--use-gl=angle', '--use-angle=metal', '--enable-gpu'] : [] });
+const dir = process.env.CLOUD_OUTPUT ?? 'docs/phase10/shots/03';
+const url = process.env.CLOUD_URL ?? 'http://127.0.0.1:5303';
+await fs.mkdir(dir, { recursive: true });
 const errors = [];
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error' && /THREE|shader|WebGL/i.test(m.text())) errors.push(m.text()); });
-  await page.goto('http://127.0.0.1:5303/tools/visual-rig.html?shot=top-formation&quality=high');
+  await page.goto(`${url}/tools/visual-rig.html?shot=top-formation&quality=high`);
   await page.waitForFunction(() => window.visualRig?.ready, null, { timeout: 180000 });
   const result = await page.evaluate(async () => {
     // Resolve the exact URL already loaded by the rig (including Vite's HMR stamp),
@@ -74,15 +76,16 @@ try {
   assert.equal(result.cutHistory, 0);
   assert.deepEqual(result.rebased, [-10000, 10000]);
   assert.equal(result.programs, result.programsAfter, 'Weather does not recompile shaders');
-  assert.deepEqual(result.low, { temporal: false, steps: 36, scale: .33, inside: 0, shadows: 0, veil: 0 });
+  assert.deepEqual(result.low, { temporal: false, steps: 20, scale: .18, inside: 0, shadows: 0, veil: 0 });
   assert.equal(result.nonfinite, 0, 'Cloud history has no NaN/Inf');
   assert.deepEqual(errors, []);
+  await page.screenshot({ path: `${dir}/low.jpg`, type: 'jpeg', quality: 65 });
   // Exercise the normal game entry too: its default High tier can bypass setQuality.
   await page.addInitScript(() => {
     localStorage.setItem('sws3d.settings.v2', JSON.stringify({ quality: 'high', bookends: false, autoQuality: false, analytics: false }));
     localStorage.setItem('sws3d.onboarding.v1', JSON.stringify({ promptDismissed: true }));
   });
-  await page.goto('http://127.0.0.1:5303/');
+  await page.goto(url);
   await page.waitForFunction(() => window.sws?.assetsReady() && sws.vqa, null, { timeout: 180000 });
   const main = await page.evaluate(async () => {
     sws.vqa.freeze(); sws.game.input.lock = () => {};

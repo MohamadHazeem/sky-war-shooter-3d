@@ -1,0 +1,467 @@
+[
+  {
+    "shot": "sunset",
+    "method": "GPU elapsed query",
+    "size": [
+      1920,
+      1080
+    ],
+    "quality": "high",
+    "samples": [
+      3.663638,
+      3.824010375,
+      3.894885375,
+      4.07353125,
+      4.2383463125,
+      4.254328125,
+      4.3386171875,
+      4.5480520625,
+      4.7359843125
+    ],
+    "median": 4.2383463125,
+    "p95": 4.7359843125,
+    "programsBefore": 244,
+    "programsAfter": 244,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0,
+    "sunShadow": 1,
+    "errors": []
+  },
+  {
+    "shot": "overcast-rain",
+    "method": "GPU elapsed query",
+    "size": [
+      1920,
+      1080
+    ],
+    "quality": "high",
+    "samples": [
+      2.0980806875,
+      2.1175051875,
+      2.2142551875,
+      2.5564374375,
+      2.7040963125,
+      2.79743225,
+      2.8096484375,
+      2.8930364375,
+      2.9175078125
+    ],
+    "median": 2.7040963125,
+    "p95": 2.9175078125,
+    "programsBefore": 245,
+    "programsAfter": 245,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0,
+    "sunShadow": 0.09930923151142393,
+    "errors": []
+  },
+  {
+    "shot": "cloud-flythrough",
+    "method": "GPU elapsed query",
+    "size": [
+      1920,
+      1080
+    ],
+    "quality": "high",
+    "samples": [
+      1.158296875,
+      1.18604425,
+      1.249559875,
+      1.27855725,
+      1.3184088125,
+      1.410138,
+      1.6156405625,
+      1.6673515,
+      1.7724140625
+    ],
+    "median": 1.3184088125,
+    "p95": 1.7724140625,
+    "programsBefore": 244,
+    "programsAfter": 244,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0.9882352941176471,
+    "sunShadow": 0.0053241078430507705,
+    "errors": []
+  },
+  {
+    "shot": "ball-europe",
+    "method": "GPU elapsed query",
+    "size": [
+      1920,
+      1080
+    ],
+    "quality": "high",
+    "samples": [
+      0.7047135,
+      0.7744400625,
+      0.87823175,
+      0.9882655625,
+      0.9887135,
+      1.0014739375,
+      1.1028619375,
+      1.1556561875,
+      1.4351900625
+    ],
+    "median": 0.9887135,
+    "p95": 1.4351900625,
+    "programsBefore": 247,
+    "programsAfter": 247,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0,
+    "sunShadow": 1,
+    "errors": []
+  },
+  {
+    "shot": "formation-chase",
+    "method": "GPU elapsed query",
+    "size": [
+      1920,
+      1080
+    ],
+    "quality": "high",
+    "samples": [
+      3.70624475,
+      3.847273375,
+      4.0057395625,
+      4.045901,
+      4.090804625,
+      4.2811431875,
+      4.6940338125,
+      4.8040494375,
+      4.8408255
+    ],
+    "median": 4.090804625,
+    "p95": 4.8408255,
+    "programsBefore": 244,
+    "programsAfter": 244,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0,
+    "sunShadow": 1,
+    "errors": []
+  },
+  {
+    "shot": "sunset",
+    "method": "GPU elapsed query",
+    "size": [
+      1920,
+      1080
+    ],
+    "quality": "ultra",
+    "samples": [
+      3.6526744375,
+      4.065085875,
+      4.7455780625,
+      4.890179625,
+      4.9616484375,
+      5.04100775,
+      5.626541625,
+      5.6957186875,
+      5.7725181875
+    ],
+    "median": 4.9616484375,
+    "p95": 5.7725181875,
+    "programsBefore": 244,
+    "programsAfter": 244,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0,
+    "sunShadow": 1,
+    "errors": []
+  },
+  {
+    "shot": "overcast-rain",
+    "method": "GPU elapsed query",
+    "size": [
+      1920,
+      1080
+    ],
+    "quality": "ultra",
+    "samples": [
+      3.2411458125,
+      3.3125755,
+      3.3235963125,
+      4.1843359375,
+      4.208684875,
+      4.2269114375,
+      4.2358280625,
+      4.4522811875,
+      4.4799895625
+    ],
+    "median": 4.208684875,
+    "p95": 4.4799895625,
+    "programsBefore": 245,
+    "programsAfter": 245,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0,
+    "sunShadow": 0.09930923151142393,
+    "errors": []
+  },
+  {
+    "shot": "cloud-flythrough",
+    "method": "GPU elapsed query",
+    "size": [
+      1920,
+      1080
+    ],
+    "quality": "ultra",
+    "samples": [
+      1.1085181875,
+      1.2368515,
+      1.286122375,
+      1.3489453125,
+      1.6062186875,
+      1.6157265,
+      1.631015625,
+      1.652242125,
+      1.6672864375
+    ],
+    "median": 1.6062186875,
+    "p95": 1.6672864375,
+    "programsBefore": 244,
+    "programsAfter": 244,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0.9882352941176471,
+    "sunShadow": 0.0053241078430507705,
+    "errors": []
+  },
+  {
+    "shot": "ball-europe",
+    "method": "GPU elapsed query",
+    "size": [
+      1920,
+      1080
+    ],
+    "quality": "ultra",
+    "samples": [
+      0.827421875,
+      0.9404400625,
+      0.9488150625,
+      0.962122375,
+      0.9702239375,
+      0.97634375,
+      1.114054625,
+      1.129166625,
+      1.132184875
+    ],
+    "median": 0.9702239375,
+    "p95": 1.132184875,
+    "programsBefore": 247,
+    "programsAfter": 247,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0,
+    "sunShadow": 1,
+    "errors": []
+  },
+  {
+    "shot": "formation-chase",
+    "method": "GPU elapsed query",
+    "size": [
+      1920,
+      1080
+    ],
+    "quality": "ultra",
+    "samples": [
+      4.252148375,
+      4.5400833125,
+      4.7487135,
+      4.784054625,
+      4.8044843125,
+      5.1863958125,
+      5.5460208125,
+      5.622747375,
+      5.71950775
+    ],
+    "median": 4.8044843125,
+    "p95": 5.71950775,
+    "programsBefore": 244,
+    "programsAfter": 244,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0,
+    "sunShadow": 1,
+    "errors": []
+  },
+  {
+    "shot": "sunset",
+    "method": "GPU elapsed query",
+    "size": [
+      1074,
+      604
+    ],
+    "quality": "low",
+    "samples": [
+      0.347859375,
+      0.354354125,
+      0.37936975,
+      0.380229125,
+      0.3809375,
+      0.38573175,
+      0.394278625,
+      0.3969635,
+      0.401666625
+    ],
+    "median": 0.3809375,
+    "p95": 0.401666625,
+    "programsBefore": 234,
+    "programsAfter": 234,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0,
+    "sunShadow": 1,
+    "errors": []
+  },
+  {
+    "shot": "overcast-rain",
+    "method": "GPU elapsed query",
+    "size": [
+      1074,
+      604
+    ],
+    "quality": "low",
+    "samples": [
+      0.3645546875,
+      0.3743671875,
+      0.3759453125,
+      0.3779556875,
+      0.3788306875,
+      0.3800155625,
+      0.38015625,
+      0.3812056875,
+      0.38486975
+    ],
+    "median": 0.3788306875,
+    "p95": 0.38486975,
+    "programsBefore": 237,
+    "programsAfter": 237,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0,
+    "sunShadow": 1,
+    "errors": []
+  },
+  {
+    "shot": "cloud-flythrough",
+    "method": "GPU elapsed query",
+    "size": [
+      1074,
+      604
+    ],
+    "quality": "low",
+    "samples": [
+      0.7509686875,
+      0.7866405625,
+      0.7878046875,
+      0.789765625,
+      0.7900624375,
+      0.7951119375,
+      0.815166625,
+      0.816773375,
+      0.8253775625
+    ],
+    "median": 0.7900624375,
+    "p95": 0.8253775625,
+    "programsBefore": 234,
+    "programsAfter": 234,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0,
+    "sunShadow": 1,
+    "errors": []
+  },
+  {
+    "shot": "ball-europe",
+    "method": "GPU elapsed query",
+    "size": [
+      1074,
+      604
+    ],
+    "quality": "low",
+    "samples": [
+      0.14155725,
+      0.1610051875,
+      0.1617681875,
+      0.1626171875,
+      0.1709765,
+      0.17104425,
+      0.175916625,
+      0.1871588125,
+      0.194653625
+    ],
+    "median": 0.1709765,
+    "p95": 0.194653625,
+    "programsBefore": 236,
+    "programsAfter": 236,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0,
+    "sunShadow": 1,
+    "errors": []
+  },
+  {
+    "shot": "formation-chase",
+    "method": "GPU elapsed query",
+    "size": [
+      1074,
+      604
+    ],
+    "quality": "low",
+    "samples": [
+      0.3029453125,
+      0.311742125,
+      0.381763,
+      0.3830520625,
+      0.3911015,
+      0.39684375,
+      0.4011328125,
+      0.4155780625,
+      0.457046875
+    ],
+    "median": 0.3911015,
+    "p95": 0.457046875,
+    "programsBefore": 234,
+    "programsAfter": 234,
+    "device": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)"
+    },
+    "inside": 0,
+    "sunShadow": 1,
+    "errors": []
+  }
+]

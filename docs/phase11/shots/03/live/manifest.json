@@ -1,0 +1,197 @@
+{
+  "capturedAt": "2026-10-15T09:49:42.666Z",
+  "note": "Production game replay of VisualRigScene; camera locked to before manifest. Production startup differs from isolated rig startup.",
+  "shots": [
+    {
+      "shot": "sunset",
+      "weather": {
+        "sunEl": 7,
+        "sunAz": 250,
+        "low": 0.55,
+        "high": 0.25,
+        "mood": "dusk",
+        "contrails": true
+      },
+      "subject": "sunset",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "camera": {
+        "position": [
+          -310.7222987617368,
+          7775.63149259094,
+          -300.19520563204526
+        ],
+        "quaternion": [
+          0.038218235603471984,
+          0.9435300044290845,
+          0.11728126811320087,
+          -0.3074664231410787
+        ],
+        "fov": 58
+      },
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
+    },
+    {
+      "shot": "overcast-rain",
+      "weather": {
+        "sunEl": 28,
+        "sunAz": 140,
+        "low": 0.9,
+        "high": 0.95,
+        "mood": "overcast",
+        "preset": "heavyRain"
+      },
+      "subject": "overcast-rain",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": 0.9999999999999997,
+      "visibleSunShafts": 1,
+      "camera": {
+        "position": [
+          103.58781864748683,
+          7621.697082232951,
+          379.70470789462536
+        ],
+        "quaternion": [
+          -0.028405423673956175,
+          0.7016453341187183,
+          -0.024469614471118183,
+          -0.7115393137297265
+        ],
+        "fov": 35.64516129032259
+      },
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
+    },
+    {
+      "shot": "cloud-flythrough",
+      "weather": {
+        "sunEl": 40,
+        "sunAz": 140,
+        "low": 0.86,
+        "high": 0.25
+      },
+      "subject": "cloud-flythrough",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "camera": {
+        "position": [
+          180,
+          4900,
+          400
+        ],
+        "quaternion": [
+          -0.007319939235671809,
+          0.9869210649692631,
+          -0.046892271427149274,
+          -0.15405954981734818
+        ],
+        "fov": 55
+      },
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
+    },
+    {
+      "shot": "ball-europe",
+      "weather": {
+        "sunEl": 48,
+        "sunAz": 205,
+        "low": 0.08,
+        "high": 0.08,
+        "contrails": true
+      },
+      "subject": "ball-europe",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 3,
+      "camera": {
+        "position": [
+          103.37083963196783,
+          7619.890367695124,
+          381.77395546210073
+        ],
+        "quaternion": [
+          0.47622411266029774,
+          0.011768356246979925,
+          -0.03617092806297936,
+          -0.8785008618522916
+        ],
+        "fov": 64.99999999999997
+      },
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
+    },
+    {
+      "shot": "formation-chase",
+      "weather": {
+        "sunEl": 40,
+        "sunAz": 140,
+        "low": 0.55,
+        "high": 0.2,
+        "contrails": true
+      },
+      "subject": "formation-chase",
+      "formationCount": 18,
+      "pilotView": null,
+      "aimDownSight": null,
+      "visibleSunShafts": 0,
+      "camera": {
+        "position": [
+          -310.7222987617368,
+          7775.63149259094,
+          -300.19520563204526
+        ],
+        "quaternion": [
+          0.038218235603471984,
+          0.9435300044290845,
+          0.11728126811320087,
+          -0.3074664231410787
+        ],
+        "fov": 58
+      },
+      "time": 5.999999999999984,
+      "worldTime": 5.999999999999984,
+      "renderSize": [
+        1920,
+        1080
+      ],
+      "url": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+      "cloudShaderHash": "98deaa4fa87281f05e497f864fab4d4349c5ad4e3f2e64b602668a06c2dbfc1f",
+      "errors": []
+    }
+  ]
+}

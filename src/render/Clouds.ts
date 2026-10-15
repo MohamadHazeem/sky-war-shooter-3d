@@ -84,6 +84,7 @@ uniform vec2 uCloudType; // stratus amount, convective tower amount
 #define Atmos_hazeDist 60000.0
 uniform float uWeatherScale;
 uniform vec2 uRes;
+uniform vec2 uFullTexel;
 uniform vec4 uGap;   // break in the low deck over the bombing target: x, z (local), radius, strength
 uniform vec4 uGlow;  // fire / flash light from the target on the deck: x, z (local), radius, intensity
 uniform float uWeatherFog;
@@ -128,8 +129,10 @@ float filteredDensity(vec3 p, vec4 L, float layerSel, bool cheap, vec2 noiseLod)
   // share the same density field used by lighting and shadows; fronts blend continuously.
   float mature = smoothstep(0.25, 0.72, wm.g);
   float tower = uCloudType.y * mature;
-  topH = mix(0.42 + 0.48 * mature, 1.0, tower);
-  float cumulus = smoothstep(0.0, 0.07, h) * (1.0 - smoothstep(topH * 0.62, topH, h));
+  topH = mix(0.30 + 0.68 * mature, 1.0, tower);
+  // Independent cell maturity leaves tall heads beside lower shelves, not one lid.
+  cov = clamp(cov + (mature - 0.4) * 0.14 * (1.0 - uCloudType.x), 0.0, 1.0);
+  float cumulus = smoothstep(0.0, 0.07, h) * (1.0 - smoothstep(topH * 0.58, topH, h));
   float stratus = smoothstep(0.0, 0.06, h) * (1.0 - smoothstep(0.22, 0.42, h));
   prof = mix(cumulus, stratus, uCloudType.x);
   // Wind shear with height, strongest in convective cells.
@@ -138,15 +141,32 @@ float filteredDensity(vec3 p, vec4 L, float layerSel, bool cheap, vec2 noiseLod)
   float scale = mix(5600.0, 3800.0, layerSel);
   // Shape drifts against the weather field, so cells deform and churn instead of only sliding with the wind
   // Explicit level zero keeps the original density for below/inside views and shadows.
+#ifdef CLOUD_TYPES
+  // Reuse the broad weather samples for asymmetric shoulders. Light/shadow
+  // marches see this same body without paying for a separate distortion lookup.
+  q.xz += (vec2(wm.g, wm2.g) - 0.5) * (700.0 * (1.0 - uCloudType.x * 0.65));
+#endif
   vec4 n = textureLod(tShape, q / scale + uShapeDrift, noiseLod.x);
   float fbm = n.g * 0.625 + n.b * 0.25 + n.a * 0.125;
   float base = remap(n.r, -(1.0 - fbm), 1.0, 0.0, 1.0);
+#ifdef CLOUD_TYPES
+  // Preserve the dense core while revealing the Worley lobes on its exposed surface.
+  base = mix(base, base + (n.g - 0.35) * 0.28, 1.0 - uCloudType.x);
+#endif
   base = remap(base * prof, 1.0 - cov * 0.85, 1.0, 0.0, 1.0);
   if (base <= 0.0) return 0.0;
   if (!cheap) {
-    float dn = textureLod(tDetail, q / (scale * 0.14) + vec3(0.0, uTime * 0.002, 0.0) + uDetailDrift, noiseLod.y).r;
+    vec4 detail = textureLod(tDetail, q / (scale * 0.14) + vec3(0.0, uTime * 0.002, 0.0) + uDetailDrift, noiseLod.y);
+    float dn = detail.r;
     float dmod = mix(dn, 1.0 - dn, clamp(h * 4.0, 0.0, 1.0));
+  #ifdef CLOUD_TYPES
+    float fine = textureLod(tDetail, q / (scale * 0.047) + uDetailDrift + (detail.gba * 2.0 - 1.0) * 0.18, noiseLod.y + 1.57).r;
+    // Two erosion scales: cauliflower shoulders and curling fine edge fragments.
+    dmod = mix(dmod, fine, 0.24);
+    base = remap(base, dmod * 0.34, 1.0, 0.0, 1.0);
+#else
     base = remap(base, dmod * 0.42, 1.0, 0.0, 1.0);
+#endif
   }
   return clamp(base, 0.0, 1.0) * L.w;
 }
@@ -158,18 +178,23 @@ float density(vec3 p, vec4 L, float layerSel, bool cheap) {
 float lightMarch(vec3 p, vec4 L, float sel, float jl, vec2 noiseLod) {
   float sum = 0.0;
 #ifdef CLOUD_TYPES
-  float st = 150.0 * jl;
+  float st = 140.0 * jl;
   for (int i = 0; i < 3; i++) {
 #else
   float st = 45.0 * jl;
   for (int i = 0; i < 6; i++) {
 #endif
+#ifdef CLOUD_TYPES
+    // Midpoint integration keeps the nearby dense body in the shadow estimate.
+    p += uSunDir * (st * 0.5);
+    if (p.y > L.y) break;
+    float lightLod = max(0.0, float(i) * 1.2 - 1.0);
+    sum += filteredDensity(p, L, sel, true, max(noiseLod, vec2(lightLod))) * st;
+    p += uSunDir * (st * 0.5);
+    st *= 3.2;
+#else
     p += uSunDir * st;
     if (p.y > L.y) break;
-#ifdef CLOUD_TYPES
-    sum += filteredDensity(p, L, sel, true, noiseLod) * st;
-    st *= 2.5;
-#else
     sum += filteredDensity(p, L, sel, i > 2, noiseLod) * st;
     st *= 1.7;
 #endif
@@ -219,16 +244,16 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
   float phase = mix(hg(mu, 0.62), hg(mu, -0.25), 0.35) * 4.0 * 3.14159;
   phase = max(phase, 0.55);
 #ifdef SILVER
-  // a sharp forward lobe (g 0.88) for the single-scattered sun: only within ~20 degrees of
+  // a sharp forward lobe (g 0.90) for the single-scattered sun: only within ~20 degrees of
   // the sun, where it makes thin cloud edges in front of it blaze (silver linings)
-  float sharp = hg(mu, 0.88) * 4.0 * 3.14159 * 0.12;
+  float sharp = hg(mu, 0.90) * 4.0 * 3.14159 * 0.14;
   // powder darkening (dark edges seen away from the sun) fades out toward the sun
   float fwd = smoothstep(0.55, 0.97, mu);
   // light scattered many times has forgotten the sun's direction: toward the sun the higher
   // octaves take a flatter phase, so a thick cloud in front of the sun goes grey and only
   // its thin rim blazes (elsewhere the tuned single phase is kept)
-  float phaseSoft = mix(phase, mix(hg(mu, 0.3), hg(mu, -0.2), 0.35) * 4.0 * 3.14159, fwd);
-  float phaseFlat = mix(phase, 0.9, fwd);
+  float phaseSoft = mix(hg(mu, 0.3), hg(mu, -0.2), 0.35) * 4.0 * 3.14159;
+  float phaseFlat = 0.9;
   // the broad forward lobe narrows its energy into the sharp one above: the bulk of a cloud
   // near the sun is no longer blown out, its edges are
   float phaseMain = mix(phase, mix(hg(mu, 0.4), hg(mu, -0.25), 0.35) * 4.0 * 3.14159, fwd);
@@ -239,16 +264,24 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
   float tt = t0 + dt * jitter;
   float sigma = 0.0042;
   for (int i = 0; i < 96; i++) {
-    if (i >= steps || tt > t1 || T < 0.02) break;
+    if (i >= steps || T < 0.02) break;
+#ifndef CLOUD_TYPES
+    if (tt > t1) break;
+#endif
 #ifdef CLOUD_TYPES
-    // Quadratic spacing resolves wisps within metres of the eye on entry, without
-    // increasing sample count. Integrate the actual interval (Beer is step invariant).
-    if (inK > 0.0) {
-      float a = float(i) / float(steps), b = float(i + 1) / float(steps);
-      float ta = mix(a, a * a, inK), tb = mix(b, b * b, inK);
-      dt = len * (tb - ta);
-      tt = t0 + len * ta + dt * jitter;
-    }
+    // Spend samples on the 5–30 km heads, not mostly distant haze. The same
+    // continuous spacing tightens to metres around the eye on entry.
+    float a = float(i) / float(steps), b = float(i + 1) / float(steps);
+    float nearWeight = mix(0.7, 1.0, inK);
+    float ta = mix(a, a * a, nearWeight), tb = mix(b, b * b, nearWeight);
+    dt = len * (tb - ta);
+    tt = t0 + len * ta + dt * jitter;
+    float pixelFootprint = tt * uFullTexel.y * 2.0;
+    float intervalFootprint = dt * 0.22 * smoothstep(0.0, 100.0, ro.y - L.y);
+    // Ray-interval filtering stabilizes the body; erosion uses the projected pixel
+    // footprint so fine wisps survive instead of becoming a uniform density bias.
+    noiseLod = log2(max(vec2(1.0), vec2(max(pixelFootprint, intervalFootprint), pixelFootprint)
+      * vec2(64.0, 32.0 / 0.14) / noiseScale));
 #endif
     vec3 p = ro + rd * tt;
     float dens = filteredDensity(p, L, sel, false, noiseLod);
@@ -278,6 +311,13 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
       if (sel < 0.5) sun *= cloudShadow(p);
 #endif
       vec3 amb = mix(uHorizon * 0.3 + vec3(0.02), uZenith * 0.7 + uHorizon * 0.45, h) * uAmb * mix(0.42, 1.0, h * h * (3.0 - 2.0 * h));
+#ifdef CLOUD_TYPES
+      // Sky fill is attenuated inside a thick body, with cool open-sky bounce on
+      // exposed heads. Low sun keeps its warm direct colour against blue shadows.
+      float skyAccess = exp(-dens * 1.8) * mix(0.38, 1.0, h);
+      amb *= mix(0.62, 1.08, skyAccess);
+      amb += uZenith * uAmb * skyAccess * 0.10;
+#endif
       if (sel < 0.5 && uGlow.w > 0.0) {
         vec2 gq = p.xz - uGlow.xy;
         amb += vec3(1.0, 0.45, 0.15) * uGlow.w * exp(-dot(gq, gq) / (uGlow.z * uGlow.z)) * (1.0 - h);
@@ -303,7 +343,6 @@ void marchLayer(vec3 ro, vec3 rd, vec2 t, float maxDist, vec4 L, float sel, int 
   }
 }
 
-uniform vec2 uFullTexel;
 #if defined(SHADOW_PASS)
 // Cloud shadow map: transmittance of the upper layer along the sun ray that crosses the
 // layer's base at this texel's (x, z). Cheap density (no detail erosion), 8 steps.

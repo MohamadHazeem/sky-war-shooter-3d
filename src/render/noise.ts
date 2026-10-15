@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 // Tileable 3D noise volumes for the volumetric clouds, generated once at startup.
 // Shape: R = Perlin-Worley (billowy base), G/B/A = Worley fbm at increasing frequencies.
-// Detail: R = high-frequency Worley fbm used to erode cloud edges.
+// Detail: R = Worley erosion; GBA = signed periodic curl for domain distortion.
 
 function hash3(x: number, y: number, z: number, seed: number): number {
   let h = (x * 374761393 + y * 668265263 + z * 2147483647 + seed * 144665) | 0;
@@ -104,8 +104,21 @@ export function createShapeNoise(size = 64): THREE.Data3DTexture {
   return tex;
 }
 
+// Curl of A = (sin(y+2z), sin(z+2x), sin(x+2y)). The extra eddies omit their own
+// coordinate; cross derivatives cancel in the main curl.
+// Integer frequencies make wrap seams continuous.
+// Analytic derivatives avoid a second startup volume and runtime finite differences.
+export function cloudCurl(u: number, v: number, w: number): [number, number, number] {
+  const x = u * Math.PI * 2, y = v * Math.PI * 2, z = w * Math.PI * 2;
+  return [
+    (2 * Math.cos(x + 2 * y) - Math.cos(z + 2 * x) + .5 * Math.cos(3 * y - z)) / 3.5,
+    (2 * Math.cos(y + 2 * z) - Math.cos(x + 2 * y) + .5 * Math.cos(3 * z - x)) / 3.5,
+    (2 * Math.cos(z + 2 * x) - Math.cos(y + 2 * z) + .5 * Math.cos(3 * x - y)) / 3.5,
+  ];
+}
+
 export function createDetailNoise(size = 32): THREE.Data3DTexture {
-  const data = new Uint8Array(size * size * size);
+  const data = new Uint8Array(size * size * size * 4);
   const w1 = makeWorley(4, 21), w2 = makeWorley(8, 22), w3 = makeWorley(16, 23);
   let i = 0;
   for (let z = 0; z < size; z++)
@@ -113,9 +126,11 @@ export function createDetailNoise(size = 32): THREE.Data3DTexture {
       for (let x = 0; x < size; x++) {
         const u = x / size, v = y / size, w = z / size;
         data[i++] = (w1(u, v, w) * 0.625 + w2(u, v, w) * 0.25 + w3(u, v, w) * 0.125) * 255;
+        const curl = cloudCurl(u, v, w);
+        for (const c of curl) data[i++] = Math.round((c * .5 + .5) * 255);
       }
   const tex = new THREE.Data3DTexture(data, size, size, size);
-  tex.format = THREE.RedFormat;
+  tex.format = THREE.RGBAFormat;
   tex.wrapS = tex.wrapT = tex.wrapR = THREE.RepeatWrapping;
   tex.minFilter = tex.magFilter = THREE.LinearFilter;
   tex.unpackAlignment = 1;
