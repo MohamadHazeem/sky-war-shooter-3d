@@ -125,6 +125,37 @@ service cloud.firestore {
       }
     }
 
+    // Public co-op lobbies, B-17 crew mode (src/net/Lobbies.ts). One listing per public game, keyed
+    // by its base room code; only the owner of that game's slot-0 signalling room may publish it.
+    // No personal data beyond the callsign the player already shows on leaderboards and a coarse
+    // region code. Listings are refreshed at most every 3 seconds, listed 20 at a time, and deleted
+    // by their host on leave (expiresAt is ready for a TTL policy; stale ones are filtered by time).
+    match /coop_lobbies/{code} {
+      function lobbyOk(d) {
+        return d.keys().hasOnly(['host', 'name', 'crew', 'open', 'phase', 'round', 'region', 'updatedAt', 'expiresAt', 'v'])
+          && d.keys().hasAll(['host', 'name', 'crew', 'open', 'phase', 'round', 'region', 'updatedAt', 'expiresAt', 'v'])
+          && d.host == request.auth.uid
+          && d.name is string && d.name.size() >= 1 && d.name.size() <= 20
+          && intIn(d.crew, 1, 4) && intIn(d.open, 0, 3) && d.crew + d.open == 4
+          && d.phase in ['lobby', 'mission'] && intIn(d.round, 0, 999)
+          && d.region in ['eu', 'na', 'sa', 'af', 'me', 'as', 'oc', 'xx']
+          && d.updatedAt == request.time
+          && d.expiresAt is timestamp && d.expiresAt > request.time + duration.value(90, 'm') && d.expiresAt < request.time + duration.value(150, 'm')
+          && d.v == 1;
+      }
+      function roomOwner() {
+        return exists(/databases/$(database)/documents/coop_rooms/$(code))
+          && get(/databases/$(database)/documents/coop_rooms/$(code)).data.host == request.auth.uid;
+      }
+      allow get: if request.auth != null;
+      allow list: if request.auth != null && request.query.limit <= 20;
+      allow create: if request.auth != null && code.matches('^[A-HJ-NP-Z2-9]{6}$') && lobbyOk(request.resource.data) && roomOwner();
+      allow update: if request.auth != null && resource.data.host == request.auth.uid
+        && lobbyOk(request.resource.data)
+        && resource.data.updatedAt < request.time - duration.value(3, 's');
+      allow delete: if request.auth != null && resource.data.host == request.auth.uid;
+    }
+
     // Public scores use an opaque boardId, never the six-character invitation code.
     // Phase 6: private squadrons. The profile is the authority; localStorage is only a mirror.
     function squadCode(code) { return code is string && code.matches('^[A-HJ-NP-Z2-9]{6}$'); }
