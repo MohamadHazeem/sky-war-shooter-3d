@@ -16,7 +16,7 @@ sc.render.engine = 'BLENDER_WORKBENCH'
 sc.display.shading.light = 'STUDIO'
 sc.display.shading.color_type = 'VERTEX' if '--mat' not in args else 'MATERIAL'
 sc.display.shading.show_cavity = True
-sc.render.resolution_x, sc.render.resolution_y = 900, 900
+sc.render.resolution_x, sc.render.resolution_y = 700, 700
 cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam'))
 sc.collection.objects.link(cam)
 sc.camera = cam
@@ -28,12 +28,19 @@ VIEWS = {
     'radio': ((-0.2, 4.0, 0.4), (0.4, 2.8, 0.1), 80),
     'bay': ((0.0, 2.6, 0.0), (0.0, 0.0, 0.1), 70),
     'top': ((0, 6, 9), (0, 6, 0), 50),
+    'face': ((0.22, -0.55, 1.7), (0, 0, 1.655), 22),
+    'face3': ((0.12, -0.6, 1.68), (0, 0, 1.655), 24),
+    'hand': ((0.9, -0.5, 1.1), (0.6, 0, 0.98), 25),
+    'fp': ((0.35, -0.35, 0.25), (0, 0, 0), 30),
 }
 p, t, lens_deg = VIEWS[view]
 cam.location = Vector(p)
 cam.data.angle = math.radians(lens_deg)
 d = Vector(t) - Vector(p)
 cam.rotation_euler = d.to_track_quat('-Z', 'Y').to_euler()
+for o in sc.objects:   # the LOD overlaps the body; the first-person arm sits at the origin
+    if 'Lod' in o.name or o.name.startswith('fpArm') or ('--novest' in args and ('Vest' in o.name or 'Steel' in o.name)):
+        o.hide_render = True
 arm = next((o for o in sc.objects if o.type == 'ARMATURE'), None)
 if arm and arm.animation_data and arm.animation_data.nla_tracks:
     want = [a for a in args[3:] if not a.startswith('--')]

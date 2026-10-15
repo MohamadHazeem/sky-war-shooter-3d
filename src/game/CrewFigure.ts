@@ -19,7 +19,7 @@ export interface FigureLook {
 
 const C = (r: number, g: number, b: number) => new THREE.Color(r, g, b);
 const JACKETS: Record<string, [THREE.Color, THREE.Color]> = {
-  b3: [C(0.2, 0.11, 0.055), C(0.62, 0.55, 0.42)],     // B-3 sheepskin: brown hide, cream fleece
+  b3: [C(0.14, 0.078, 0.042), C(0.6, 0.52, 0.38)],   // B-3 sheepskin: dark brown hide, cream fleece
   a2: [C(0.13, 0.075, 0.045), C(0.12, 0.08, 0.05)],   // A-2 horsehide, knit collar
   olive: [C(0.14, 0.14, 0.085), C(0.1, 0.1, 0.06)],   // rookie: olive drab
 };

@@ -294,6 +294,7 @@ export class GunnerController {
     const wi = this.waistInterior;
     if (!wi || !this.bomber) return;
     const heavy = this.world.bomberDamage.lastHeavy;
+    this.living.nearMiss(local, heavy);   // the crew in the waist flinch
     const a = 1.08, b = 1.12, yC = 0.15;
     const wl = STATIONS.waistL.pivot;
     const zc = (wl.z + STATIONS.waistR.pivot.z) / 2, z0 = zc - 3.1, z1 = zc + 3.1;

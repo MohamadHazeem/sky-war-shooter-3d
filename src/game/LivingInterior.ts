@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { CrewTask } from './B17DamageRules';
 import type { World } from '../world/World';
-import type { Bomber, Fighter } from '../world/Aircraft';
+import { Fighter, type Bomber } from '../world/Aircraft';
 import { STATIONS, StationId, wrapAngle } from '../world/B17Layout';
 import type { CrewId } from '../world/Crew';
 import { envRef } from '../render/EnvRef';
@@ -74,6 +74,8 @@ interface Station {
   woundT: number;                  // s since the man at the gun was hit (-1 = fine)
   aimYaw: number; aimPitch: number; vYaw: number; vPitch: number;
   cooldown: number; recoilT: number; shots: number; idle: number;
+  // Crew 2.0 behaviour: calling threats on the player's side, glancing at him, the wounded man's spasms
+  scanT: number; callT: number; callCool: number; threat: Fighter | null; glanceT: number; spasmT: number; passCool: number;
 }
 
 const _camW = new THREE.Vector3();
@@ -256,6 +258,7 @@ export class LivingInterior {
     this.st = {
       id: other, crew: other, yaw, pitch, gun, man: null, manLook: '', down: null, downT: 0, downFrom: new THREE.Vector3(), downYaw0: 0, helper: null,
       woundT: -1, aimYaw: 0, aimPitch: 0, vYaw: 0, vPitch: 0, cooldown: 0, recoilT: 0, shots: 0, idle: Math.random() * 10,
+      scanT: 0, callT: 0, callCool: 4, threat: null, glanceT: 6 + Math.random() * 6, spasmT: 3, passCool: 0,
     };
     // A wounded man stays beside his empty gun until a real replacement arrives.
     if (this.world.crew.wounded.has(other)) {
@@ -621,7 +624,7 @@ export class LivingInterior {
       for (const r of s.gun.recoil) r.position.z = -s.recoilT * 0.022;
       s.gun.belt?.tick(dt);
     }
-    if (s.man instanceof CrewActor) this.poseActor(s, firing, dt);
+    if (s.man instanceof CrewActor) this.poseActor(s, firing, dt, target, b);
     else if (s.man) this.poseGunner(s, firing);
   }
 
@@ -654,10 +657,11 @@ export class LivingInterior {
 
   // interior 2.0: the skinned man on the grips: his clip (fire / idle) under hands IK'd onto
   // the spade grips, a crouch and lean under a high target, the head down along the gun
-  private poseActor(s: Station, firing: boolean, dt: number) {
+  private poseActor(s: Station, firing: boolean, dt: number, target: Fighter | null, b: Bomber) {
     const a = s.man as CrewActor;
     a.play(firing ? 'fire' : 'idle', 0.25);
-    a.update(dt);
+    this.behave(s, a, dt, target, b);
+    a.update(dt, true);
     const p = s.aimPitch + STATIONS[s.id].rest.pitch;
     const cp = Math.cos(p), sp = Math.sin(p);
     const root = a.root.position;
@@ -667,6 +671,65 @@ export class LivingInterior {
       (side > 0 ? this.aimPose.handL : this.aimPose.handR).set(gx - root.x, gy * cp + gz * sp - root.y, -gy * sp + gz * cp - root.z);
     }
     a.gunPose(this.aimPose.handL, this.aimPose.handR, 0.06 + 0.3 * up, 0.12 + 0.35 * up - 0.1 * down, -0.15 - p * 0.6);
+  }
+
+  // Crew 2.0: where the man on the other gun looks and points. Eyes on his own target; with none,
+  // a fighter closing on the player's side gets called: he lets go of a grip and points at it
+  // (head round, index finger out) so the player can find it; otherwise the odd glance across at
+  // the player. A fighter flashing past close makes everyone duck.
+  private behave(s: Station, a: CrewActor, dt: number, target: Fighter | null, b: Bomber) {
+    s.callCool -= dt; s.passCool -= dt; s.glanceT -= dt;
+    s.scanT -= dt;
+    if (s.scanT <= 0) {
+      s.scanT = 0.3;
+      const side = STATIONS[s.id].pivot.x > 0 ? 1 : -1;
+      let best: Fighter | null = null, bestD = 1100;
+      for (const f of this.world.aircraft) {
+        if (!(f instanceof Fighter) || f.team !== 'axis' || !f.alive || f.remove) continue;
+        const d = f.pos.distanceTo(b.pos);
+        if (d < 75 && s.passCool <= 0) { s.passCool = 3; this.ducks(f.pos, 0.6); }
+        if (target || s.callCool > 0 || d > bestD) continue;
+        b.worldToLocal(_v.copy(f.pos));
+        if (_v.x * side > -8) continue;                         // on his own side: his to shoot
+        _w.subVectors(b.pos, f.pos);
+        _d.subVectors(f.vel, b.vel);
+        if (_d.dot(_w) <= 0) continue;                          // not closing
+        best = f; bestD = d;
+      }
+      if (best) { s.threat = best; s.callT = 2.4; s.callCool = 10; }
+    }
+    if (s.callT > 0 && !target && s.threat?.alive) {
+      s.callT -= dt;
+      a.point(s.threat.pos, 1);
+      a.look(s.threat.pos, 1);
+      return;
+    }
+    s.callT = 0; s.threat = null;
+    a.point(null);
+    if (target) { a.look(target.pos, 0.35); return; }
+    if (s.glanceT < 0 && this.cam) {
+      // a look across at the player (checking he's alright), 1.6 s every 10-18 s
+      a.look(this.cam.getWorldPosition(_w), 0.85);
+      if (s.glanceT < -1.6) s.glanceT = 10 + Math.random() * 8;
+      return;
+    }
+    a.look(null);
+  }
+
+  // every crewman near a blast or a passing fighter flinches, by distance (world point)
+  private ducks(at: THREE.Vector3, strength: number) {
+    for (const a of [this.st?.man, this.st?.down, this.st?.helper, this.radioActor, this.tailActor]) {
+      if (!(a instanceof CrewActor) || !a.root.visible) continue;
+      const d = a.root.getWorldPosition(_w).distanceTo(at);
+      const k = strength * THREE.MathUtils.clamp(1.6 - d / 2.2, 0, 1);
+      if (k > 0.12) a.flinch(at, k);
+    }
+  }
+
+  /** GunnerController.fuselageHit: a round or splinter through the waist (bomber-local point). */
+  nearMiss(local: THREE.Vector3, heavy: boolean) {
+    if (!this.bomber || !this.high) return;
+    this.ducks(this.bomber.root.localToWorld(_v.copy(local)), heavy ? 1 : 0.75);
   }
 
   private crewShot(s: Station, b: Bomber) {
@@ -681,6 +744,7 @@ export class LivingInterior {
     this.flash.position.copy(p).addScaledVector(dir, -0.85);
     this.flash.intensity = 2.5 + Math.random() * 2;
     s.recoilT = 1;
+    if (s.man instanceof CrewActor) s.man.kick(0.8 + Math.random() * 0.4);
     gun.belt?.advance(1);
     // brass out of the ejection port, onto the walkway
     if (this.brass) {
@@ -729,6 +793,11 @@ export class LivingInterior {
       f.root.position.set(THREE.MathUtils.lerp(s.downFrom.x, tx, k), FLOOR_TOP, THREE.MathUtils.lerp(s.downFrom.z, tz, k));
       f.root.rotation.set(0, s.downYaw0 + wrapAngle(tYaw - s.downYaw0) * k, 0);
       if (f.clip === 'hit' && f.clipDone) f.play('down', 0.5);
+      // the pain comes in waves: a spasm every few seconds, eyes screwed shut
+      s.spasmT -= dt;
+      if (f.clip === 'down' && s.spasmT < 0) { s.spasmT = 3 + Math.random() * 5; f.flinch(null, 0.35 + Math.random() * 0.3); }
+      // he turns his head to the man helping him
+      f.look(s.helper ? s.helper.root.getWorldPosition(_w).setY(_w.y + 0.9) : null, 0.6);
       f.update(dt);
       return;
     }
