@@ -1,29 +1,29 @@
 {
   "mission": {
-    "result": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 2 enemies 3 bombers 9 playing\n56s kills 8 enemies 5 bombers 9 playing\n86s kills 8 enemies 5 bombers 9 playing\n116s kills 8 enemies 5 bombers 9 playing\n",
+    "result": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 2 enemies 3 bombers 9 playing\n60s kills 5 enemies 4 bombers 9 playing\n90s kills 5 enemies 4 bombers 9 playing\n119s kills 5 enemies 7 bombers 9 playing\n",
     "state": "debrief",
     "worldStats": {
-      "kills": 25,
-      "shots": 1675,
-      "hits": 517,
-      "damage": 6223.7169629442415,
-      "bombersLost": 4,
-      "scriptedLost": 1,
+      "kills": 27,
+      "shots": 1689,
+      "hits": 594,
+      "damage": 7194.509887243137,
+      "bombersLost": 3,
+      "scriptedLost": 0,
       "assists": 0,
-      "enemiesSpawned": 64
+      "enemiesSpawned": 71
     },
-    "shots": 1675,
-    "hits": 517,
-    "kills": 25,
+    "shots": 1689,
+    "hits": 594,
+    "kills": 27,
     "stations": [
       {
         "id": "waistL",
         "gained": 10,
         "rank": 1,
         "kills": 1,
-        "shots": 31,
-        "hits": 9,
-        "time": 20.40250000000012,
+        "shots": 118,
+        "hits": 18,
+        "time": 24.402499999999893,
         "deflection": 0,
         "aces": 0,
         "long": 0,
@@ -33,53 +33,53 @@
       },
       {
         "id": "top",
-        "gained": 265,
-        "rank": 3,
-        "kills": 13,
-        "shots": 1092,
-        "hits": 356,
-        "time": 219.67226985373887,
-        "deflection": 5,
-        "aces": 0,
-        "long": 4,
-        "heavy": 2,
-        "clean": 0,
-        "xp": 230
-      },
-      {
-        "id": "ball",
-        "gained": 85,
-        "rank": 1,
-        "kills": 5,
-        "shots": 278,
-        "hits": 51,
-        "time": 82.01083333332983,
-        "deflection": 1,
-        "aces": 0,
-        "long": 2,
-        "heavy": 1,
-        "clean": 0,
-        "xp": 85
-      },
-      {
-        "id": "tail",
-        "gained": 140,
+        "gained": 225,
         "rank": 2,
-        "kills": 6,
-        "shots": 274,
-        "hits": 101,
-        "time": 54.55916666666505,
+        "kills": 14,
+        "shots": 830,
+        "hits": 316,
+        "time": 111.06966666666119,
         "deflection": 3,
         "aces": 0,
         "long": 3,
-        "heavy": 0,
+        "heavy": 1,
         "clean": 0,
-        "xp": 120
+        "xp": 205
+      },
+      {
+        "id": "ball",
+        "gained": 200,
+        "rank": 2,
+        "kills": 8,
+        "shots": 498,
+        "hits": 176,
+        "time": 113.1024999999944,
+        "deflection": 5,
+        "aces": 0,
+        "long": 3,
+        "heavy": 1,
+        "clean": 0,
+        "xp": 165
+      },
+      {
+        "id": "tail",
+        "gained": 95,
+        "rank": 1,
+        "kills": 4,
+        "shots": 243,
+        "hits": 84,
+        "time": 100.53999999999499,
+        "deflection": 2,
+        "aces": 0,
+        "long": 1,
+        "heavy": 1,
+        "clean": 0,
+        "xp": 75
       }
     ],
     "hunt": {
-      "gained": 490,
-      "points": 490,
+      "gained": 500,
+      "points": 500,
       "goal": 1500,
       "reached": false,
       "quarry": {
@@ -94,10 +94,10 @@
     },
     "rewards": [
       "+250 merit",
-      "Crew patch: Top Hat",
       "+250 merit"
     ]
   },
+  "header": "Best gun: Ball Turret, rank 7 · 19 of 50 ranks · Ace Hunt: Goal reached ✓ 4,763",
   "locker": {
     "sight": "chevron",
     "patch": "ballbearing"

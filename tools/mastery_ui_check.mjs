@@ -31,6 +31,21 @@ async function open(lang, viewport) {
   return page;
 }
 
+// Scrolled down, the sticky Back button must still be the topmost element under its own centre
+const backOnTop = (page) => page.evaluate(() => {
+  const sheet = document.querySelector('#mastery .menu-sheet'), back = sheet?.querySelector('.menu-back'), bar = sheet?.querySelector('.ms-topbar');
+  if (!sheet || !back) return false;
+  sheet.scrollTop = 160;
+  const r = back.getBoundingClientRect();
+  const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+  const bg = getComputedStyle(bar ?? back).backgroundColor, m = bg.match(/rgba?\(([^)]+)\)/), alpha = m ? (m[1].split(',')[3] === undefined ? 1 : +m[1].split(',')[3]) : 0;
+  return !!hit && (hit === back || back.contains(hit)) && alpha === 1;   // on top, and opaque so nothing shows through
+});
+// Every stats header sits over its own number column (centres within 2 px)
+const statsAligned = (page) => page.evaluate(() => [...document.querySelectorAll('#mastery table.ms-stats')].every((t) => {
+  const h = [...t.querySelectorAll('thead th')], c = [...t.querySelectorAll('tbody tr:first-child > *')];
+  return h.length === c.length && h.every((x, i) => { const a = x.getBoundingClientRect(), b = c[i].getBoundingClientRect(); return Math.abs((a.left + a.right) / 2 - (b.left + b.right) / 2) <= 2; });
+}));
 const noHScroll = (page) => page.evaluate(() => {
   const s = document.querySelector('#mastery .menu-sheet');
   return document.documentElement.scrollWidth <= innerWidth && (!s || s.scrollWidth <= s.clientWidth + 1);
@@ -101,7 +116,14 @@ try {
     await page.waitForTimeout(150);
     assert.ok(await noHScroll(page), `no horizontal scroll: ${tab}`);
     await shot(page, `en-${tab}`);
+    if (['stations', 'locker', 'stats'].includes(tab)) {
+      assert.ok(await backOnTop(page), `Back button above the header when scrolled: ${tab}`);
+      if (tab === 'locker') await shot(page, 'en-locker-scrolled');
+      await page.evaluate(() => { document.querySelector('#mastery .menu-sheet').scrollTop = 0; });
+    }
   }
+  report.header = await page.evaluate(() => document.querySelector('#mastery .ms-sub')?.textContent);
+  assert.ok(!/\d\/\d/.test(report.header) && /Goal reached ✓ [\d,]+|[\d,]+ \/ 1,500/.test(report.header), `formatted hunt score: ${report.header}`);
   // equip a sight and a patch from the Locker; the HUD and the ball turret pick it up
   await page.locator('#mastery [data-tab="locker"]').click();
   await page.locator('#mastery [data-equip="sight:chevron"]').click();
@@ -136,6 +158,14 @@ try {
   for (const tab of ['stations', 'stats', 'locker']) {
     await ar.locator(`#mastery [data-tab="${tab}"]`).click(); await ar.waitForTimeout(150);
     assert.ok(await noHScroll(ar), `phone, no horizontal scroll: ${tab}`);
+    assert.ok(await backOnTop(ar), `phone, Back above the header: ${tab}`);
+    await ar.evaluate(() => { document.querySelector('#mastery .menu-sheet').scrollTop = 0; });
+    if (tab === 'stats') {
+      assert.ok(await statsAligned(ar), 'Arabic phone: stats headers over their columns');
+      assert.ok(await ar.evaluate(() => [...document.querySelectorAll('#mastery table.ms-stats')].every((t) => t.getBoundingClientRect().width <= t.parentElement.clientWidth + 1)), 'Arabic phone: stats tables fit');
+      await ar.locator('#mastery table.ms-stats').nth(1).scrollIntoViewIfNeeded();
+      await shot(ar, 'ar-phone-stats-kinds');
+    }
     await shot(ar, `ar-phone-${tab}`);
   }
   await ar.close();

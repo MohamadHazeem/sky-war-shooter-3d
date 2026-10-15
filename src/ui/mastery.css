@@ -1,7 +1,13 @@
 /* Gunner Mastery (MasteryScreen.ts): the hangar sheet and the debrief report. Logical properties
    so the Arabic layout mirrors without extra rules. */
 .ms-sheet { width: min(860px, 100%); }
-.ms-head { display: flex; gap: 18px; align-items: center; margin-bottom: 18px; }
+.ms-head { display: flex; gap: 18px; align-items: center; margin-bottom: 18px; position: relative; z-index: 0; }
+/* the sticky Back button stays above the header medallion (its drop-shadow filter) and the cards while the sheet scrolls */
+/* The Back button rides an opaque full-width bar pinned to the top of the sheet, so the header
+   medallion, the title and the tabs scroll under it instead of showing through or around it. */
+.ms-sheet { --ms-pad: 28px; }
+.ms-topbar { position: sticky; top: calc(-1 * var(--ms-pad)); z-index: 10; margin: calc(-1 * var(--ms-pad)) calc(-1 * var(--ms-pad)) 18px; padding: var(--ms-pad) var(--ms-pad) 10px; background: var(--panel-solid); border-bottom: 1px solid var(--line); }
+.ms-topbar .btn.menu-back { position: static; margin: 0; background: var(--panel-solid); }
 .ms-head h2 { margin: 4px 0 6px; }
 .ms-head .patch { flex: none; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
 .ms-sub { color: var(--ink-dim); font: 13px/1.5 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; }
@@ -50,6 +56,12 @@ html[dir=rtl] .ms-bar i { background: linear-gradient(270deg, #8f7f4c, var(--kha
 .ms-points { max-width: 360px; margin-bottom: 14px; }
 .ms-points td:first-child { text-align: start; }
 .ms-scroll { overflow-x: auto; margin-bottom: 8px; }
+/* stats: fixed columns, centred numbers under wrapped headers, so header and column always line up (LTR and RTL) */
+.ms-stats { table-layout: fixed; }
+.ms-stats thead th:first-child { width: 24%; }
+.ms-stats th, .ms-stats td { text-align: center; white-space: normal; overflow-wrap: anywhere; }
+.ms-stats th[scope=row] { text-align: start; }
+.ms-stats thead th { vertical-align: bottom; line-height: 1.25; }
 .ms-lsec { margin-bottom: 22px; }
 .ms-lsec h3 { font: 18px Oswald, 'Noto Kufi Arabic', sans-serif; letter-spacing: 1px; color: var(--khaki); margin: 0 0 4px; display: flex; gap: 10px; align-items: baseline; font-weight: 500; }
 .ms-lsec .ms-note { margin: 0 0 10px; }
@@ -73,13 +85,13 @@ html[dir=rtl] .ms-bar i { background: linear-gradient(270deg, #8f7f4c, var(--kha
 .ms-chip.locked { opacity: .6; cursor: default; font-size: 12px; }
 .ms-sheet :is(.ms-tile, .ms-chip):focus-visible { outline: 2px solid #ead99e; outline-offset: 2px; }
 /* debrief */
-.ms-debrief { margin: 14px 0 6px; padding-top: 12px; border-top: 1px solid var(--line); text-align: start; }
+.ms-debrief { margin: 14px 0 6px; padding: 12px 16px 14px; border: 1px solid var(--line); background: rgba(0,0,0,.18); text-align: start; overflow-wrap: anywhere; }
 .ms-dhead { display: flex; gap: 10px; align-items: center; }
 .ms-dst { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 8px; }
 .ms-dst li { display: flex; gap: 10px; align-items: center; }
 .ms-dst .ms-ct b { font-size: 16px; }
 .ms-dst .ms-ct span { font-size: 13px; }
-.ms-xp { margin-inline-start: auto; color: var(--ink) !important; }
+.ms-xp { margin-inline-start: auto; padding-inline-end: 2px; color: var(--ink) !important; white-space: nowrap; }
 .ms-up { font-style: normal; font-size: 11px; letter-spacing: 1px; color: #17130c; background: #e2b33c; padding: 1px 6px; }
 .ms-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
 .ms-pill { font: 12px 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; color: var(--ink-dim); border: 1px solid var(--line); padding: 3px 8px; }
@@ -87,14 +99,18 @@ html[dir=rtl] .ms-bar i { background: linear-gradient(270deg, #8f7f4c, var(--kha
 .ms-drw { list-style: none; margin: 6px 0; padding: 0; display: grid; gap: 4px; }
 .ms-drw li { font: 13px 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; color: #e2b33c; display: flex; gap: 10px; flex-wrap: wrap; }
 .ms-drw small { color: var(--ink-dim); }
-.ms-dhunt { font: 13px/1.5 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; color: var(--ink-dim); }
+.ms-dhunt { font: 13px/1.5 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; color: var(--ink-dim); margin-top: 8px; overflow-wrap: normal; }
+.ms-dhunt > div + div { margin-top: 2px; }
 .ms-dhunt b { color: var(--ink); font-weight: 500; }
 @media (max-width: 600px) {
+  .ms-sheet { --ms-pad: 18px; }
   .ms-head { gap: 12px; }
   .ms-head .patch { width: 52px; height: 52px; }
   .ms-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ms-card { padding: 10px; gap: 10px; }
   .ms-ct b { font-size: 18px; }
   .ms-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
-  .ms-table th, .ms-table td { padding: 6px 5px; font-size: 12px; }
+  .ms-table th, .ms-table td { padding: 6px 3px; font-size: 11px; }
+  .ms-stats thead th { font-size: 10px; }
+  .ms-debrief { padding: 10px 12px 12px; }
 }

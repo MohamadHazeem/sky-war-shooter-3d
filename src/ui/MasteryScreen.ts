@@ -30,7 +30,7 @@ const bar = (x: number) => `<div class="ms-bar"><i style="width:${pct(x)}"></i><
 
 // "Gun sight: Gyro K-14", translated piecewise
 export function rewardText(r: Reward): string {
-  if (r.kind === 'merit') return tx('+{n} merit', { n: r.amount });
+  if (r.kind === 'merit') return tx('+{n} merit', { n: num(r.amount) });
   const p = rewardParts(r);
   return `${tx(p.kind)}: ${r.kind === 'name' ? p.name : tx(p.name)}`;
 }
@@ -44,6 +44,11 @@ export function sourceLabel(src: string): string {
   const c = CHALLENGES.find((x) => x.id === a);
   return c ? `${tx(c.name)} · ${tx('Tier {n}', { n: b })}` : '';
 }
+
+// Aircraft designations never break across lines ("Me 410", not "Me / 410")
+const keepTypes = (s: string) => s.replace(/\b(Bf|Ju|Me|Fw|He|Do) (\d)/g, '$1\u00a0$2');
+// "1,234 / 1,500" before the goal, "Goal reached ✓ 4,753" after it
+const huntScore = (points: number, done: boolean) => (done ? tx('Goal reached ✓ {p}', { p: num(points) }) : `${num(points)} / ${num(HUNT_GOAL)}`);
 
 const howTo = (r: Reward) => sourcesOf(r).slice(0, 2).map(sourceLabel).join(' / ');
 
@@ -67,7 +72,7 @@ function stationsTab(book: MasteryBook): string {
       <div class="ms-cmain">
         <div class="ms-ct"><b>${stName(s)}</b><span>${esc(tx(r.name))}</span></div>
         ${bar(r.progress)}
-        <div class="ms-cs">${r.next !== null ? tx('{xp} / {next} XP', { xp: num(Math.floor(r.xp)), next: num(r.next) }) : tx('Highest rank · {xp} XP', { xp: num(Math.floor(r.xp)) })} · ${tx('{n} kills', { n: rec.kills })} · ${tx('accuracy {p}', { p: acc })}</div>
+        <div class="ms-cs">${r.next !== null ? tx('{xp} / {next} XP', { xp: num(Math.floor(r.xp)), next: num(r.next) }) : tx('Highest rank · {xp} XP', { xp: num(Math.floor(r.xp)) })} · ${tx('{n} kills', { n: num(rec.kills) })} · ${tx('accuracy {p}', { p: acc })}</div>
         ${next ? `<div class="ms-next">${tx('Rank {n}', { n: r.rank + 1 })}: ${rewardLabel(next)}</div>` : ''}
       </div>
     </div>`;
@@ -92,14 +97,14 @@ function huntTab(book: MasteryBook): string {
   return `<div class="ms-hunt">
     <div class="ms-hhead">
       <div><div class="kicker">${tx('Week {n}', { n: +h.week.slice(4) })} · ${tx('B-17 gunners')}</div>
-        <div class="ms-quarry">${tx('Quarry')}: <b>${esc(tx(q.name))}</b></div>
+        <div class="ms-quarry">${tx('Quarry')}: <b>${esc(keepTypes(tx(q.name)))}</b></div>
         <div class="ms-cs">${tx('Every gunner sortie this week counts: campaign, Survival and the other modes.')}</div></div>
       <div class="ms-cd2">${tx('Resets in')}<b data-hunt-cd>${esc(tx(fmtWeekCountdown(msUntilNextWeek())))}</b></div>
     </div>
-    <div class="ms-hpts"><b>${num(h.points)}</b> / ${num(HUNT_GOAL)} ${tx('points')}${h.done ? ` · <span class="ms-ok">${tx('Goal reached')}</span>` : ''}</div>
+    <div class="ms-hpts">${h.done ? `<span class="ms-ok">${tx('Goal reached ✓ {p}', { p: `<b>${num(h.points)}</b>` })}</span> ${tx('points')}` : `<b>${num(h.points)}</b> / ${num(HUNT_GOAL)} ${tx('points')}`}</div>
     ${bar(h.points / HUNT_GOAL)}
-    <div class="ms-cs">${tx('{k} kills · {m} sorties this week', { k: h.kills, m: h.missions })} · ${tx('Weeks won: {n}', { n: book.d.huntWins })}</div>
-    <div class="ms-reward">${patchSvg(HUNT_PATCH, 40)}<span>${tx('Goal reward: +{m} merit every week, and the Hunt Master patch the first time.', { m: HUNT_MERIT })}</span></div>
+    <div class="ms-cs">${tx('{k} kills · {m} sorties this week', { k: num(h.kills), m: num(h.missions) })} · ${tx('Weeks won: {n}', { n: book.d.huntWins })}</div>
+    <div class="ms-reward">${patchSvg(HUNT_PATCH, 40)}<span>${tx('Goal reward: +{m} merit every week, and the Hunt Master patch the first time.', { m: num(HUNT_MERIT) })}</span></div>
     <table class="ms-table ms-points"><tbody>${rows.map(([k, v]) => `<tr><td>${esc(tx(k))}</td><td dir="ltr">+${v}</td></tr>`).join('')}</tbody></table>
     <div data-hunt-board></div>
   </div>`;
@@ -141,7 +146,7 @@ function lockerTab(book: MasteryBook, prog: Progression): string {
 
 function statsTab(book: MasteryBook): string {
   const row = (label: string, r: ReturnType<MasteryBook['totals']>, cls = '') => `<tr class="${cls}"><th scope="row">${esc(label)}</th><td>${num(r.kills)}</td><td>${num(r.shots)}</td><td>${num(r.hits)}</td><td>${r.shots > 0 ? `${((r.hits / r.shots) * 100).toFixed(1)}%` : '—'}</td><td>${fmtHours(r.time)}</td></tr>`;
-  const row2 = (label: string, r: ReturnType<MasteryBook['totals']>, cls = '') => `<tr class="${cls}"><th scope="row">${esc(label)}</th><td>${r.deflection}</td><td>${r.aces}</td><td>${r.long}</td><td>${r.heavy}</td><td>${r.clean}</td><td>${r.bestMission}</td></tr>`;
+  const row2 = (label: string, r: ReturnType<MasteryBook['totals']>, cls = '') => `<tr class="${cls}"><th scope="row">${esc(label)}</th><td>${num(r.deflection)}</td><td>${num(r.aces)}</td><td>${num(r.long)}</td><td>${num(r.heavy)}</td><td>${num(r.clean)}</td><td>${num(r.bestMission)}</td></tr>`;
   const t = book.totals();
   const accs = STATION_ORDER.map((s) => ({ s, a: book.accuracy(s), n: book.station(s).shots })).filter((x) => x.n >= 200).sort((a, b) => b.a - a.a);
   return `<div class="ms-scroll"><table class="ms-table ms-stats"><thead><tr><th></th><th>${tx('Kills')}</th><th>${tx('Rounds fired')}</th><th>${tx('Hits')}</th><th>${tx('Accuracy')}</th><th>${tx('Time at the gun')}</th></tr></thead>
@@ -161,10 +166,10 @@ export function showMasteryScreen(book: MasteryBook, prog: Progression, h: Maste
   const body = tab === 'stations' ? stationsTab(book) : tab === 'challenges' ? CHALLENGES.map((c) => challengeRow(book, c)).join('')
     : tab === 'hunt' ? huntTab(book) : tab === 'locker' ? lockerTab(book, prog) : statsTab(book);
   root.innerHTML = `<div class="screen-center"><div class="box panel menu-sheet ms-sheet">
-    <button class="btn ghost menu-back" data-back>${tx('Back')}</button>
+    <div class="ms-topbar"><button class="btn ghost menu-back" data-back>${tx('Back')}</button></div>
     <div class="ms-head">${patchSvg(book.activePatch(prog), 68)}
       <div><div class="kicker">${tx('Crew & Skills')}</div><h2>${tx('Gunner Mastery')}</h2>
-      <div class="ms-sub">${tx('Best gun: {s}, rank {n}', { s: stName(best.s), n: best.r.rank })} · ${tx('{n} of {of} ranks', { n: ranks, of: MAX_RANK * STATION_ORDER.length })} · ${tx('Ace Hunt {p}/{g}', { p: num(book.d.hunt.points), g: HUNT_GOAL })}</div></div></div>
+      <div class="ms-sub">${tx('Best gun: {s}, rank {n}', { s: stName(best.s), n: best.r.rank })} · ${tx('{n} of {of} ranks', { n: ranks, of: MAX_RANK * STATION_ORDER.length })} · ${tx('Ace Hunt')}: ${huntScore(book.d.hunt.points, book.d.hunt.done)}</div></div></div>
     <div class="hangar-tabs ms-tabs" role="tablist" aria-label="${tx('Gunner Mastery')}">${MASTERY_TABS.map(([id, label]) => `<button role="tab" id="ms-tab-${id}" aria-controls="ms-body" aria-selected="${id === tab}" tabindex="${id === tab ? 0 : -1}" data-tab="${id}">${tx(label)}</button>`).join('')}</div>
     <div id="ms-body" class="ms-body ms-${tab}" role="tabpanel" aria-labelledby="ms-tab-${tab}">${body}</div>
   </div></div>`;
@@ -216,8 +221,8 @@ export function renderMasteryDebrief(rep: MissionReport, book: MasteryBook, prog
   sec.className = 'ms-debrief';
   const st = rep.stations.map((g) => {
     const up = g.after.rank > g.before.rank;
-    return `<li>${rankBadge(g.after.rank, 34)}<div class="ms-cmain"><div class="ms-ct"><b>${stName(g.id)}</b><span>${esc(tx(g.after.name))}</span>${up ? `<em class="ms-up">${tx('RANK UP')}</em>` : ''}<span class="ms-xp">${tx('+{n} XP', { n: g.gained })}</span></div>
-      ${bar(g.after.progress)}<div class="ms-cs">${tx('{k} kills · {d} deflection · {a} aces', { k: g.tally.kills, d: g.tally.deflection, a: g.tally.aces })}${g.tally.shots > 0 ? ` · ${tx('accuracy {p}', { p: `${Math.round((g.tally.hits / g.tally.shots) * 100)}%` })}` : ''}</div></div></li>`;
+    return `<li>${rankBadge(g.after.rank, 34)}<div class="ms-cmain"><div class="ms-ct"><b>${stName(g.id)}</b><span>${esc(tx(g.after.name))}</span>${up ? `<em class="ms-up">${tx('RANK UP')}</em>` : ''}<span class="ms-xp">${tx('+{n} XP', { n: num(g.gained) })}</span></div>
+      ${bar(g.after.progress)}<div class="ms-cs">${tx('{k} kills · {d} deflection · {a} aces', { k: num(g.tally.kills), d: num(g.tally.deflection), a: num(g.tally.aces) })}${g.tally.shots > 0 ? ` · ${tx('accuracy {p}', { p: `${Math.round((g.tally.hits / g.tally.shots) * 100)}%` })}` : ''}</div></div></li>`;
   }).join('');
   const ch = rep.challenges.map((c) => {
     const def = CHALLENGES.find((x) => x.id === c.id)!;
@@ -229,7 +234,8 @@ export function renderMasteryDebrief(rep: MissionReport, book: MasteryBook, prog
     ${st ? `<ul class="ms-dst">${st}</ul>` : ''}
     ${ch ? `<div class="ms-pills">${ch}</div>` : ''}
     ${rw ? `<ul class="ms-drw">${rw}</ul>` : ''}
-    <div class="ms-dhunt">${tx('Weekly Ace Hunt')}: <b>${tx('+{n} points', { n: hunt.gained })}</b> · ${num(hunt.points)}/${num(hunt.goal)}${hunt.reached ? ` · <span class="ms-ok">${tx('Goal reached')}</span>` : ''} · ${tx('Quarry')}: ${esc(tx(hunt.quarry.name))}</div>`;
+    <div class="ms-dhunt"><div>${tx('Weekly Ace Hunt')}: <b>${tx('+{n} points', { n: num(hunt.gained) })}</b> · ${hunt.reached ? `<span class="ms-ok">${huntScore(hunt.points, true)}</span>` : huntScore(hunt.points, false)}</div>
+      <div>${tx('Quarry')}: ${esc(keepTypes(tx(hunt.quarry.name)))}</div></div>`;
   const row = Array.from(box.children).filter((x) => x.classList.contains('row')).pop();
   box.insertBefore(sec, row ?? null);
 }
