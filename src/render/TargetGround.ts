@@ -55,6 +55,7 @@ uniform vec3 uImpBound;   // circle holding every impact's marks and pall: x, z,
 // city's water as a signed side distance (m) with its half-width (0 = no mapped water: the
 // procedural river below)
 float tgtLand = 1.0, tgtRiverV = 0.0, tgtRiverW = 0.0;   // tgtRiverW < 0: a harbour shore (no river band)
+float tgtDry = 1.0;
 float tgtOwnTown = 0.0;   // 1: the map draws the city's streets itself (no block grid here)
 
 // 1 inside [a, b], antialiased over w metres
@@ -154,7 +155,7 @@ vec3 tCity(vec2 rel, vec3 base, float fw) {
     if (uTgtLook < 1.5 || (uTgtLook > 2.5 && uTgtLook < 3.5)) {
       float runway = tBand(v, -1250.0, -1120.0, fw) * tBand(u, -1800.0, 1800.0, fw);
       float cross = uTgtLook > 2.5 ? tBand(u + v * 0.6, -100.0, 30.0, fw) * tBand(v, -1400.0, -350.0, fw) : 0.0;
-      c = mix(c, vec3(0.32, 0.31, 0.27), max(runway, cross) * dry);
+      c = mix(c, vec3(0.075, 0.08, 0.065), max(runway, cross) * dry * tgtLand);
       float halls = tBand(v, -900.0, -300.0, fw) * tBand(u, -1300.0, 1300.0, fw);
       float rows = tBand(mod(u + 1400.0, 370.0), 30.0, 310.0, fw);
       c = mix(c, mix(vec3(0.09), vec3(0.3, 0.29, 0.25), rows), halls * dry);
@@ -172,18 +173,20 @@ vec3 tCity(vec2 rel, vec3 base, float fw) {
       c = mix(c, mix(vec3(0.065, 0.06, 0.05), vec3(0.4, 0.4, 0.36), tanks), zone * dry);
     }
   }
+  tgtDry = tgtLand * (1.0 - water * (1.0 - bridge));
   // Four-gun revetments identify the flashing batteries between salvos.
   float rr = length(rel);
   if (rr > R * 0.45 && rr < R * 2.1) {
     vec2 bc = floor(rel / 520.0);
-    if (h2(bc + 3.7) < 0.45) {
+    if (h2(bc + 3.7) < 0.16) {
       vec2 site = (bc + 0.3 + 0.4 * vec2(h2(bc + 1.3), h2(bc + 7.1))) * 520.0;
-      vec2 q = abs(rel - site) - 22.5;
+      vec2 q = abs(rel - site) - 50.0;
       float pit = length(q);
-      float earth = tBand(pit, 9.0, 19.0, fw);
-      float gun = 1.0 - smoothstep(5.0, 10.0 + fw, pit);
-      c = mix(c, vec3(0.25, 0.21, 0.15), earth * tgtLand * (1.0 - water) * 0.45);
-      c = mix(c, vec3(0.035), gun * tgtLand * (1.0 - water) * 0.35);
+      float siteDetail = 1.0 - smoothstep(16.0, 28.0, fw);
+      float earth = tBand(pit, 20.0, 37.0, fw * 0.65);
+      float gun = 1.0 - smoothstep(10.0, 18.0 + fw, pit);
+      c = mix(c, vec3(0.32, 0.23, 0.12), earth * tgtDry * siteDetail);
+      c = mix(c, vec3(0.035), gun * tgtDry * siteDetail * 0.9);
     }
   }
   return groundWarTraffic(uv, c, fw, tgtLand * (1.0 - water));
@@ -198,7 +201,7 @@ vec3 targetGround(vec2 rel, vec3 alb, float fw, vec3 light, vec2 camRel, vec3 d)
   if (r2 < R * R * 4.6) {
     alb = tCity(rel, alb / 1.35, fw) * 1.35;
     vec2 bq = rel - uImpBound.xy;
-    if (uTgtClock > 0.0 && dot(bq, bq) < uImpBound.z * uImpBound.z) {
+    if (uTgtClock > 0.0 && tgtDry > 0.5 && dot(bq, bq) < uImpBound.z * uImpBound.z) {
       float burn = 0.0, ring = 0.0, fireGlow = 0.0;
       for (int i = 0; i < TGT_IMPACTS; i++) {
         vec4 I = uImpacts[i];
@@ -255,30 +258,30 @@ vec3 targetGround(vec2 rel, vec3 alb, float fw, vec3 light, vec2 camRel, vec3 d)
       if (P.w <= 0.0 || P.z > -100.0 || uTgtClock < P.z) continue;
       vec2 q = rel - P.xy;
       float scar = exp(-dot(q, q) / 65000.0);
-      alb = mix(alb, vec3(0.027, 0.024, 0.02), scar * 0.9);
+      alb = mix(alb, vec3(0.027, 0.024, 0.02), scar * 0.9 * tgtDry);
       float fire = exp(-dot(q, q) / 13000.0) * (0.55 + 0.45 * vnoise(q / 35.0 + uTgtClock * 0.3));
-      emis += vec3(1.0, 0.30, 0.035) * fire * 2.8;
+      emis += vec3(1.0, 0.30, 0.035) * fire * 2.8 * tgtDry;
     }
     // Pathfinder target indicators, laid before our arrival; hidden by the real cloud deck.
     if (uTgtClock < 3.0 && uTgtClock > -40.0) {
       float marker = 1.0 - smoothstep(35.0, max(80.0, fw * 2.0), length(rel));
-      emis += vec3(1.0, 0.18, 0.035) * marker * 18.0;
+      emis += vec3(1.0, 0.18, 0.035) * marker * 18.0 * tgtDry;
     }
     // flak batteries: four-gun sites ringed around the city, muzzle flashes during the barrage
-    if (uFlakGround > 0.0 && tgtLand > 0.5) {
+    if (uFlakGround > 0.0 && tgtDry > 0.5) {
       float rr = sqrt(r2);
       if (rr > R * 0.45 && rr < R * 2.1) {
         vec2 cell = floor(rel / 520.0);
         float h = h2(cell + 3.7);
-        if (h < 0.45) {
+        if (h < 0.16) {
           vec2 gp = (cell + 0.3 + 0.4 * vec2(h2(cell + 1.3), h2(cell + 7.1))) * 520.0;
           for (int i = 0; i < 4; i++) {
-            vec2 o = gp + (vec2(mod(float(i), 2.0), floor(float(i) / 2.0)) - 0.5) * 45.0;
+            vec2 o = gp + (vec2(mod(float(i), 2.0), floor(float(i) / 2.0)) - 0.5) * 100.0;
             float rate = 0.24 + 0.12 * h2(cell + float(i));
             float since = fract(uTgtClock * rate + h2(cell + float(i) * 2.3)) / rate;
-            float rf = max(9.0, fw * 1.3);
-            float kf = clamp(81.0 / (rf * rf), 0.12, 1.0);
-            emis += vec3(1.0, 0.72, 0.38) * 70.0 * uFlakGround * exp(-since * 22.0) * kf * (1.0 - smoothstep(0.0, rf, length(rel - o)));
+            float rf = max(28.0, fw * 2.0);
+            float kf = clamp(784.0 / (rf * rf), 0.3, 1.0);
+            emis += vec3(1.0, 0.72, 0.38) * 70.0 * uFlakGround * exp(-since * 10.0) * kf * (1.0 - smoothstep(0.0, rf, length(rel - o)));
           }
         }
       }

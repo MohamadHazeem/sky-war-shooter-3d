@@ -25,37 +25,45 @@ float warBox(vec2 p, vec2 halfSize, float fw) {
   return 1.0 - smoothstep(-fw, fw, max(d.x, d.y));
 }
 vec3 groundWarTraffic(vec2 uv, vec3 c, float fw, float dry) {
-  // A continuous through line on the inland edge of the marshalling yard.
-  float rail = tBand(uv.y, -1048.0, -1020.0, fw) * tBand(uv.x, -3000.0, 2800.0, fw) * dry;
-  c = mix(c, vec3(0.24, 0.22, 0.18), rail);
-  float tracks = tBand(abs(uv.y + 1034.0), 3.0, 5.0, fw);
+  // Exaggerated ballast/car widths preserve distinct wagons at the Low sky resolution.
+  float rail = tBand(uv.y, -1070.0, -998.0, fw) * tBand(uv.x, -3000.0, 2800.0, fw) * dry;
+  c = mix(c, vec3(0.46, 0.40, 0.29), rail);
+  float tracks = tBand(abs(uv.y + 1034.0), 20.0, 25.0, fw);
   c = mix(c, vec3(0.055), rail * tracks);
   float tail = uFreight - uv.x;
-  float train = tBand(tail, 0.0, 290.0, fw) * tBand(uv.y, -1041.0, -1027.0, fw) * dry;
-  float wagons = tBand(mod(tail, 26.0), 2.0, 23.0, fw * 0.6);
-  c = mix(c, mix(vec3(0.035), vec3(0.12, 0.075, 0.045), wagons * step(29.0, tail)), train);
-  // Locomotive exhaust: a narrow plume trailing the moving engine, bent by the real wind.
+  float train = tBand(tail, 0.0, 460.0, fw) * tBand(uv.y, -1053.0, -1015.0, fw) * dry;
+  float wagons = tBand(mod(tail, 56.0), 5.0, 49.0, fw * 0.5);
+  vec3 car = mix(vec3(0.035, 0.028, 0.022), vec3(0.24, 0.085, 0.025), step(60.0, tail));
+  c = mix(c, car, train * wagons);
+  // Broad rolling soot trails the moving locomotive; keep the car gaps unobscured.
   vec2 wind = warUV(uTgtWind);
-  vec2 smoke = uv - vec2(uFreight - 22.0, -1034.0);
+  vec2 smoke = uv - vec2(uFreight - 18.0, -1034.0);
   float behind = -smoke.x;
-  float width = 12.0 + max(0.0, behind) * 0.18;
-  float steam = exp(-pow((smoke.y - wind.y * max(0.0, behind) / 15.0) / width, 2.0))
-    * tBand(behind, 0.0, 240.0, 35.0) * (1.0 - clamp(behind / 280.0, 0.0, 1.0));
-  c = mix(c, vec3(0.30, 0.29, 0.26), steam * 0.7 * dry);
+  float width = 18.0 + max(0.0, behind) * 0.20;
+  float drift = 40.0 + max(0.0, behind) * (0.36 + wind.y / 25.0);
+  float steam = exp(-pow((smoke.y - drift) / width, 2.0))
+    * tBand(behind, -20.0, 360.0, 30.0) * (1.0 - clamp(behind / 440.0, 0.0, 1.0));
+  steam *= 0.72 + 0.28 * sin(behind / 20.0 - uTgtClock * 2.0);
+  c = mix(c, vec3(0.045, 0.042, 0.037), steam * 0.9 * dry);
   if ((uTgtLook > 0.5 && uTgtLook < 1.5) || (uTgtLook > 2.5 && uTgtLook < 3.5)) {
     // Perimeter taxiway, dispersals and threshold bars remain readable through 7.6 km of air.
-    float taxi = tBand(uv.y, -1430.0, -1400.0, fw) * tBand(uv.x, -1700.0, 1700.0, fw);
-    float links = tBand(abs(uv.x), 1500.0, 1535.0, fw) * tBand(uv.y, -1430.0, -1185.0, fw);
-    c = mix(c, vec3(0.23, 0.22, 0.18), max(taxi, links) * dry);
-    float marking = tBand(uv.y, -1191.0, -1179.0, fw) * tBand(abs(uv.x), 80.0, 1600.0, fw)
+    float taxi = tBand(uv.y, -1465.0, -1395.0, fw) * tBand(uv.x, -1700.0, 1700.0, fw);
+    float links = tBand(abs(uv.x), 1490.0, 1560.0, fw) * tBand(uv.y, -1465.0, -1185.0, fw);
+    c = mix(c, vec3(0.10, 0.105, 0.09), max(taxi, links) * dry);
+    float marking = tBand(uv.y, -1199.0, -1171.0, fw) * tBand(abs(uv.x), 80.0, 1600.0, fw)
       * tBand(mod(uv.x + 1800.0, 180.0), 0.0, 90.0, fw);
-    float threshold = tBand(abs(uv.x), 1590.0, 1630.0, fw) * tBand(uv.y, -1235.0, -1135.0, fw);
-    c = mix(c, vec3(0.63, 0.59, 0.46), max(marking, threshold) * dry);
+    float threshold = tBand(abs(uv.x), 1550.0, 1660.0, fw) * tBand(uv.y, -1235.0, -1135.0, fw);
+    c = mix(c, vec3(0.9, 0.86, 0.66), max(marking, threshold * tBand(mod(uv.y + 1240.0, 35.0), 0.0, 20.0, fw * 0.5)) * dry);
     float bay = warBox(vec2(mod(uv.x + 1600.0, 400.0) - 200.0, uv.y + 1510.0), vec2(85.0, 60.0), fw)
       * tBand(uv.x, -1600.0, 1600.0, fw);
     c = mix(c, vec3(0.19, 0.18, 0.145), bay * dry);
   }
   return c;
+}
+float warFighter(vec2 q, float aa) {
+  float wing = warBox(q - vec2(0.8 - abs(q.y) * 0.17, 0.0), vec2(1.3 - abs(q.y) * 0.09, 5.255), aa);
+  return max(warBox(q, vec2(4.475, 0.7), aa),
+    max(wing, warBox(q + vec2(3.5, 0.0), vec2(0.7, 2.3), aa)));
 }
 vec3 groundWarAircraft(vec2 rel, vec2 camRel, vec3 g, float fw, vec3 light) {
   vec2 uv = warUV(rel), camera = warUV(camRel);
@@ -66,15 +74,18 @@ vec3 groundWarAircraft(vec2 rel, vec2 camRel, vec3 g, float fw, vec3 light) {
     float ratio = uCamAlt / max(100.0, uCamAlt - p.z);
     vec2 projected = camera + (p.xy - camera) * ratio;
     vec2 q = uv - projected;
-    float scale = max(1.0, fw * 2.0 / 5.255) * ratio;
+    // Seven-times recognition scale, with a nine-pixel minimum on the half-size Low sky.
+    float size = max(7.0, fw * 4.5 / 5.255);
+    float scale = size * ratio;
     q /= scale;
-    float aa = fw / scale * 0.65;
-    // Fw 190 planform: 8.95 m length / 10.51 m span, enlarged only below pixel resolution.
-    float silhouette = max(warBox(q, vec2(4.475, 0.8), aa),
-      max(warBox(q - vec2(0.8, 0.0), vec2(1.1, 5.255), aa), warBox(q + vec2(3.5, 0.0), vec2(0.7, 2.3), aa)));
-    float shadow = warBox(uv - p.xy - vec2(p.z * 0.4, p.z * 0.25), vec2(7.0, 6.0), fw + p.z * 0.025);
-    g *= 1.0 - shadow * p.w * 0.3;
-    g = mix(g, vec3(0.065, 0.075, 0.06) * light, silhouette * p.w);
+    float aa = fw / scale * 0.55;
+    float silhouette = warFighter(q, aa);
+    vec2 shadowUV = uv - p.xy + warUV(uSunDir.xz) * p.z / max(uSunDir.y, 0.15);
+    float shadow = warFighter(shadowUV / size, fw / size + p.z * 0.0008);
+    g *= 1.0 - shadow * p.w * 0.75;
+    vec3 paint = mix(vec3(0.035, 0.045, 0.028), vec3(0.42, 0.43, 0.33), step(2.5, abs(q.y)));
+    paint = mix(paint, vec3(0.75, 0.49, 0.045), step(2.8, q.x));
+    g = mix(g, paint * light, silhouette * p.w);
   }
   return g;
 }

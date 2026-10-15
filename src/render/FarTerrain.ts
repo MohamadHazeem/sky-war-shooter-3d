@@ -285,7 +285,22 @@ vec3 terrain(vec2 xz, float dist) {
     if (inR < 1.0) { Ln = vec4(O.r, 1.0, 0.0, 1.0); Cv = vec4(O.b, O.g, 0.25, 0.04); }
     if (inR > 0.0) {
       vec4 L2 = texture2D(tFarLines, uv);
-      if (uFarQuality < 0.5) return mix(water, grass, smoothstep(0.495, 0.505, mix(Ln.r, L2.r, inR)));
+      if (uFarQuality < 0.5) {
+        // The early Low return must still publish its coast/river mask to target effects.
+        // Reuse the one existing line sample; no cover/relief or extra texture reads.
+        vec4 lowLines = mix(Ln, L2, inR);
+        float lowLand = smoothstep(0.495, 0.505, lowLines.r);
+        float lowSide = (lowLines.g * 2.0 - 1.0) * ${GRID.SIDE_RANGE}.0;
+        float lowWidth = lowLines.b * 510.0;
+        float lowSpur = step(abs(dFdx(lowSide)) + abs(dFdy(lowSide)), fw * 3.0 + 4.0);
+        float lowRiver = lowWidth > 0.5 ? farLine(lowSide, lowWidth, fw) * lowSpur : 0.0;
+        tgtLand = lowLand * (1.0 - lowRiver);
+        if (uFarCityWater > 1.5) tgtRiverW = -1.0;
+        else if (uFarCityWater > 0.5 && lowWidth > 0.5 && abs(lowSide) < 1500.0) {
+          tgtRiverV = lowSide; tgtRiverW = max(lowWidth, 45.0);
+        }
+        return mix(water, grass, tgtLand);
+      }
       Ln = mix(Ln, L2, inR);
       Cv = mix(Cv, texture2D(tFarCover, uv), inR);
       Rf = mix(Rf, texture2D(tFarRelief, uv), inR);
