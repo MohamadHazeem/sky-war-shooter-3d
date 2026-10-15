@@ -8,6 +8,7 @@ import { TouchHud } from '../ui/TouchHud';
 import { STATION_ORDER } from '../world/B17Layout';
 import { tx } from '../i18n';
 import { keyMap } from '../core/KeyMap';
+import { OneHandedMouse } from '../core/OneHanded';
 import '../ui/devices.css';
 
 // Touch controls, gamepad and accessibility preferences, wired up from main.ts so Game.ts
@@ -21,6 +22,7 @@ export class DeviceControls {
   private abilityRole: string | null = null;
   readonly touch: TouchHud;
   readonly pad: GamepadInput;
+  readonly oneHand: OneHandedMouse;
   private toastEl: HTMLElement;
   private toastTimer = 0;
   private touchFirst = isTouchDevice();
@@ -40,12 +42,7 @@ export class DeviceControls {
     this.pad = new GamepadInput(input, {
       flying: () => this.flying(),
       role: () => (this.game.mission ? this.game.mission.role : null),
-      cycleSeat: (dir) => {
-        if (this.game.aa.active) { this.game.aa.switchPit((this.game.aa.selected + dir + this.game.aa.unlocked) % this.game.aa.unlocked); return; }
-        const g = this.game.gunner;
-        const i = STATION_ORDER.indexOf(g.station);
-        g.requestStation(STATION_ORDER[(i + dir + STATION_ORDER.length) % STATION_ORDER.length]);
-      },
+      cycleSeat: (dir) => this.cycleSeat(dir),
       togglePause: () => this.togglePause(),
       photo: () => this.game.state === 'playing' && !!this.game.mission && this.game.photo.active,
       theatre: () => {
@@ -58,6 +55,20 @@ export class DeviceControls {
       },
       onConnect: (name, on) => this.toast(on ? tx('Gamepad connected — {name}', { name: shortName(name) }) : tx('Gamepad disconnected')),
     });
+    // one-handed mouse mode (Settings > Accessibility): wheel / middle / side buttons
+    this.oneHand = new OneHandedMouse(input, {
+      enabled: () => access.prefs.oneHand,
+      flying: () => this.flying(),
+      role: () => (this.game.mission ? this.game.mission.role : null),
+      cycleSeat: (dir) => this.cycleSeat(dir),
+      promptKey: () => document.querySelector<HTMLElement>('#evPrompt.show')?.dataset.code || null,
+    });
+    this.oneHand.attach();
+    // the mouse or keyboard taking over again ends the gamepad's aim-assist step (AimAssist.ts)
+    const notPad = () => { this.pad.inUse = false; };
+    window.addEventListener('mousedown', notPad, true);
+    window.addEventListener('keydown', (e) => { if (e.isTrusted) notPad(); }, true);
+    window.addEventListener('mousemove', (e) => { if (Math.abs(e.movementX) + Math.abs(e.movementY) > 2) notPad(); }, true);
     // P-51 wingman orders (Wingman.ts listens for the number keys): a row of small buttons
     this.wingRow = document.createElement('div');
     this.wingRow.className = 'th-wing';
@@ -84,6 +95,13 @@ export class DeviceControls {
     // run before the game's frame (engine.beforeFrame, so the replay theatre taking over
     // engine.onFrame keeps the gamepad working)
     engine.beforeFrame = (dt) => this.update(dt);
+  }
+
+  private cycleSeat(dir: -1 | 1) {
+    if (this.game.aa.active) { this.game.aa.switchPit((this.game.aa.selected + dir + this.game.aa.unlocked) % this.game.aa.unlocked); return; }
+    const g = this.game.gunner;
+    const i = STATION_ORDER.indexOf(g.station);
+    g.requestStation(STATION_ORDER[(i + dir + STATION_ORDER.length) % STATION_ORDER.length]);
   }
 
   private flying() {
@@ -127,6 +145,9 @@ export class DeviceControls {
     // scoped key bindings: the number keys are gun positions in the B-17, wingman orders in the P-51
     keyMap.scope = g.mission && g.state !== 'menu' ? g.mission.role : null;
     this.pad.update(real);
+    // aim assist one preset stronger while the gamepad is the device in use (Settings)
+    const padAssist = this.pad.inUse && access.prefs.padAssist;
+    if (padAssist !== g.padAssist) { g.padAssist = padAssist; g.applyAssist(); }
     const role = this.touchMode && this.flying() ? g.mission!.role : null;
     // ability buttons follow the role's keys (gunner Q/E/G, pilot Z/X/G)
     if (role && role !== this.abilityRole) {

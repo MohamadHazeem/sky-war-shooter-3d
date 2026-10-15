@@ -1,3 +1,4 @@
+import type { AssistLevel } from '../core/AimAssist';
 import { presetFilmLook } from '../render/FilmParams';
 import { hudDetail, hudRuntime, statusRepeatsRound, type HudDetail } from './HudDetail';
 import { hudToast } from './HudToast';
@@ -47,7 +48,7 @@ export interface Settings {
   fpsCounter?: boolean;   // on-screen frame-rate readout (render/FpsCounter.ts); undefined = off
   markers: boolean;
   leadPip: 'off' | 'recruit' | 'always';
-  aimAssist: 'off' | 'low' | 'high';
+  aimAssist: AssistLevel;   // core/AimAssist.ts presets
   flightMode: 'mouseAim' | 'direct';
   difficulty: 'recruit' | 'veteran' | 'ace';
   fov: number;   // base field of view in degrees (gunner and P-51 views); zoom scales from it
@@ -465,7 +466,7 @@ export class UI {
       ${this.detectGraphics ? `<div class="setting"><span></span><button class="btn ghost" style="padding:6px 10px;font-size:12px;letter-spacing:1px" data-detect title="${t('settings.detectHint')}">${t('settings.detect')}</button></div>` : ''}
       <label class="setting">${t('settings.fpsCounter')} <select data-k="fpsCounter"><option value="false">${t('common.off')}</option><option value="true" ${s.fpsCounter ? 'selected' : ''}>${t('common.on')}</option></select></label>
       <label class="setting">${t('settings.markers')} <select data-k="markers"><option value="true">${t('common.on')}</option><option value="false" ${!s.markers ? 'selected' : ''}>${t('settings.markersOff')}</option></select></label>
-      <label class="setting">${t('settings.aimAssist')} <select data-k="aimAssist"><option value="off" ${s.aimAssist === 'off' ? 'selected' : ''}>${t('common.off')}</option><option value="low" ${s.aimAssist === 'low' ? 'selected' : ''}>${t('settings.low')}</option><option value="high" ${s.aimAssist === 'high' || !s.aimAssist ? 'selected' : ''}>${t('settings.high')}</option></select></label>
+      <label class="setting">${t('settings.aimAssist')} <select data-k="aimAssist"><option value="off" ${s.aimAssist === 'off' ? 'selected' : ''}>${t('common.off')}</option><option value="low" ${s.aimAssist === 'low' ? 'selected' : ''}>${t('settings.low')}</option><option value="high" ${s.aimAssist === 'high' || !s.aimAssist ? 'selected' : ''}>${t('settings.high')}</option><option value="strong" ${s.aimAssist === 'strong' ? 'selected' : ''}>${tx('Strong (accessibility)')}</option></select></label>
       <label class="setting">${t('settings.leadPip')} <select data-k="leadPip"><option value="off" ${s.leadPip === 'off' ? 'selected' : ''}>${t('common.off')}</option><option value="recruit" ${s.leadPip === 'recruit' || !s.leadPip ? 'selected' : ''}>${t('settings.recruitOnly')}</option><option value="always" ${s.leadPip === 'always' ? 'selected' : ''}>${t('settings.always')}</option></select></label>
       <label class="setting">${t('settings.killCam')} <select data-k="killCam"><option value="true">${t('common.on')}</option><option value="false" ${s.killCam === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
       <label class="setting">${tx('Combat director')} <select data-k="cineDirector">${(['off', 'rare', 'often'] as const).map((v) => `<option value="${v}" ${(s.cineDirector ?? 'rare') === v ? 'selected' : ''}>${v === 'off' ? t('common.off') : tx(v === 'rare' ? 'Rare' : 'Often')}</option>`).join('')}</select></label>
@@ -611,7 +612,7 @@ export class UI {
             <div class="pips">${Array.from({ length: MAX_LEVEL }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</div>
             <button class="btn ${maxed || prog.points < cost ? 'ghost' : ''}" data-u="${u.id}" ${maxed || prog.points < cost ? 'disabled' : ''}>${maxed ? t('common.maxed') : t('common.upgrade', { cost })}</button></div>`;
         }).join('')}</div>
-        <div class="row" style="margin-top:18px"><button class="btn" data-go>${info.next === 'Back' ? t('common.back') : t('hangar.launch', { next: esc(tx(info.next)) })}</button><button class="btn ghost" data-settings>${t('common.settings')}</button></div>
+        <div class="row" style="margin-top:18px"><button class="btn" data-go ${info.next === 'Back' ? 'data-back' : ''}>${info.next === 'Back' ? t('common.back') : t('hangar.launch', { next: esc(tx(info.next)) })}</button><button class="btn ghost" data-settings>${t('common.settings')}</button></div>
       </div>`;
       if (role === 'gunner' && !info.section) mountCrewRoster(el.querySelector('.hwrap')!, prog);
       el.querySelectorAll<HTMLButtonElement>('[data-a]').forEach((b) => b.addEventListener('click', () => {
