@@ -103,6 +103,7 @@ body.touch #tutCard.lesson .skip { min-height: 44px; font-size: 14px; }
    subtitles move to the free side so they never run under it */
 @media (max-height: 500px) {
   #tutCard.lesson { top: 44px; width: min(330px, 42vw); padding: 8px 12px; }
+  #tutCard.lesson .k .kl { display: none; }   /* the station and step count are enough here */
   #tutCard.lesson .t { font-size: 18px; margin: 2px 0 3px; }
   #tutCard.lesson .b { font-size: 13px; line-height: 1.35; }
   #tutCard.lesson .skip { margin-top: 6px; }

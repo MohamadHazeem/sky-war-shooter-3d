@@ -319,7 +319,7 @@ export class LessonRunner {
     if (!this.card || !this.def) return;
     const steps = this.def.steps;
     const dots = steps.map((_, i) => `<i class="${i < this.stepIdx || (done && i === this.stepIdx) ? 'on' : i === this.stepIdx ? 'cur' : ''}"></i>`).join('');
-    const head = `${tx('STATION LESSON')} · ${tx(STATIONS[this.def.station].label).toUpperCase()}`;
+    const head = `<span class="kl">${tx('STATION LESSON')} · </span>${tx(STATIONS[this.def.station].label).toUpperCase()}`;
     // one header line: the station on the start side (ellipsis if it must), the step count on the end side
     const html = `<div class="k"><span class="kh">${head}</span>${kicker ? `<span class="ks">${kicker}</span>` : ''}</div><div class="t">${title}</div><div class="b">${body}</div><div class="dots">${dots}</div>`;
     if (html === this.lastHtml) return;

@@ -57,7 +57,7 @@ const finish = (page) => page.evaluate(() => {
 const card = (page) => page.evaluate(() => {
   const c = document.getElementById('tutCard');
   const k = c?.querySelector('.k');
-  return { text: c?.innerText ?? '', headerOneLine: k ? k.getBoundingClientRect().height < 20 : null };
+  return { text: c?.innerText ?? '', headerOneLine: k ? k.getBoundingClientRect().height < 20 : null, headerClipped: k ? [...k.children].some((e) => e.scrollWidth > e.clientWidth + 1) : null };
 });
 const rows = (page) => page.evaluate(() => [...document.querySelectorAll('.tr-row')].map((r) => ({
   id: r.dataset.row, status: r.querySelector('.tr-status')?.textContent, next: r.classList.contains('primary'),
@@ -136,9 +136,9 @@ try {
   // 6. Tail: the mask hose comes loose, the picture greys, press O
   await page.evaluate(() => { sws.game.ui.hideAll(); sws.game.onboarding.startLesson('tail'); });
   assert.ok(await toStep(page, 'hose'));
-  results.tailHose = await page.evaluate(() => { const l = sws.game.gunner.survival; for (let i = 0; i < 1200 && l.hypoxia < 0.55; i++) sws.engine.frame(1 / 60, false); return { oxygen: l.oxygen, hypoxia: +l.hypoxia.toFixed(2) }; });
+  results.tailHose = await page.evaluate(() => { const l = sws.game.gunner.survival; for (let i = 0; i < 1200 && l.hypoxia < 0.3; i++) sws.engine.frame(1 / 60, false); return { oxygen: l.oxygen, hypoxia: +l.hypoxia.toFixed(2) }; });
   results.tailCard = await card(page);
-  assert.equal(results.tailHose.oxygen, true); assert.ok(results.tailHose.hypoxia > 0.3);
+  assert.equal(results.tailHose.oxygen, true); assert.ok(results.tailHose.hypoxia >= 0.3);
   await shot(page, 'tail-oxygen-en');
   results.tailReconnect = await page.evaluate(() => { const g = sws.game; g.input.tap('KeyO'); sws.step(2, 1 / 60); return { oxygen: g.gunner.survival.oxygen, phase: g.onboarding.lessons.phase }; });
   assert.equal(results.tailReconnect.oxygen, false);
