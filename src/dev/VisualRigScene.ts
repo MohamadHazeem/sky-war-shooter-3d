@@ -18,7 +18,7 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
   game.startMission(mission);
   const w = game.world, cam = engine.camera, gun = game.gunner;
   game.input.active = true;
-  if (shot.station === 'waistL') game.input.setVirtualButtons('visual-rig', 4);
+  if (shot.station === 'waistL' || shot.id === 'headon-fw190-zoom') game.input.setVirtualButtons('visual-rig', 4);
   if (pilot) {
     game.pilot.view = 'cockpit';
     (game.pilot as unknown as { applyViewVisibility(): void }).applyViewVisibility();
@@ -62,17 +62,49 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
     s.yaw = s.tYaw = -.3; s.pitch = s.tPitch = .12; s.vPitch = s.vYaw = 0;
     gun.update(0);
   }
-  if (shot.id === 'waist-fw190' || shot.id === 'tail-bf109') {
-    const tail = shot.id === 'tail-bf109';
+  if (/^(waist-(fw190|bf109)|tail-bf109|headon-fw190)/.test(shot.id)) {
+    const tail = shot.id.startsWith('tail');
+    const headon = shot.id.startsWith('headon');
+    const close = shot.id.endsWith('-close');
+    const broadside = shot.id.includes('broadside');
+    if (headon) {
+      const s = gun.state;
+      s.yaw = s.tYaw = 0; s.pitch = s.tPitch = .06; s.vPitch = s.vYaw = 0;
+      gun.update(0);
+    }
+    // Frozen inspection passes: no combat or post-spawn simulation can change effects/poses.
+    w.effects.clear(); w.ballistics.clear();
     const direction = cam.getWorldDirection(new THREE.Vector3());
-    // Exact eye-to-aircraft-origin distance, in world metres (no off-axis displacement).
-    const pos = cam.position.clone().addScaledVector(direction, tail ? 180 : 150);
-    const f = w.spawnEnemy(pos, 'beam', 1, false, false, tail ? 'bf109' : 'fw190');
-    const flight = tail ? new THREE.Vector3(.15, -.65, 1).applyQuaternion(b.quat).normalize()
-      : new THREE.Vector3(-1, -.08, .3).applyQuaternion(b.quat).normalize();
-    f.quat.setFromUnitVectors(new THREE.Vector3(0, 0, 1), flight);
-    f.root.rotateZ(tail ? .4 : -.45); f.root.updateMatrixWorld(true);
-    facts.enemy = { type: f.kind, range: f.pos.distanceTo(cam.position), position: f.pos.toArray(), quaternion: f.quat.toArray(), diving: tail };
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(cam.quaternion);
+    const planes = headon ? (shot.id.endsWith('-zoom') ? [[65, 0]] : [[65, 0], [130, -100], [130, 100]]) : [[close ? 65 : tail ? 180 : 150, 0]];
+    const enemies = planes.map(([range, offset]) => {
+      const pos = cam.position.clone().addScaledVector(direction, range).addScaledVector(right, offset);
+      const type = tail || shot.id.includes('bf109') ? 'bf109' : 'fw190';
+      const f = w.spawnEnemy(pos, 'beam', 1, false, false, type);
+      const flight = headon ? cam.position.clone().sub(pos).normalize()
+        : broadside ? new THREE.Vector3(0, 0, 1).applyQuaternion(b.quat)
+        : close && !tail ? new THREE.Vector3(-.45, -.08, .9).applyQuaternion(b.quat).normalize()
+        : tail ? new THREE.Vector3(.15, -.65, 1).applyQuaternion(b.quat).normalize()
+        : new THREE.Vector3(-1, -.08, .3).applyQuaternion(b.quat).normalize();
+      f.quat.setFromUnitVectors(new THREE.Vector3(0, 0, 1), flight);
+      if (headon) {
+        // A shortest-arc +Z rotation can turn an approaching fighter upside down.
+        f.root.up.set(0, 1, 0).applyQuaternion(b.quat);
+        f.root.lookAt(cam.position);
+      }
+      f.root.rotateZ(headon ? .08 : broadside ? -.12 : tail ? .4 : -.45);
+      // Initialize the production flying prop presentation without advancing the
+      // fixture. Otherwise newly spawned planes keep parked blades across the
+      // cowl/fan, despite the frozen scene depicting an airborne pass.
+      f.propSpin.fill(.7);
+      f.updateProps(0);
+      f.root.updateMatrixWorld(true);
+      return { type: f.kind, range: f.pos.distanceTo(cam.position), position: f.pos.toArray(), quaternion: f.quat.toArray(), diving: tail,
+        propellerPhases: [...f.propSpin],
+        propellersSpinning: f.props.every(p => p.disc.visible && p.blades.every(b => !b.visible)) };
+    });
+    facts.enemy = enemies[0]; facts.enemies = enemies;
+    facts.effectsCleared = true;
   }
   if (shot.id === 'b17-beauty') look(local([19, 8, 24]), local([0, 0, 0]), 45);
   if (['formation-chase', 'sunset', 'flak-barrage'].includes(shot.id)) {
@@ -133,7 +165,7 @@ export function setupRigShot(engine: Engine, game: Game, shot: RigShot, step: ()
   engine.precipitation.update(0, engine.time, engine.quality);
   facts.formationCount = w.bombers().length;
   facts.pilotView = pilot ? game.pilot.view : null;
-  facts.aimDownSight = shot.station === 'waistL' ? gun.ads : null;
+  facts.aimDownSight = shot.station === 'waistL' || shot.id === 'headon-fw190-zoom' ? gun.ads : null;
   let shafts = 0;
   engine.scene.traverse(o => { if (o.name === 'sunShaft' && o.visible) shafts++; });
   facts.visibleSunShafts = shafts;

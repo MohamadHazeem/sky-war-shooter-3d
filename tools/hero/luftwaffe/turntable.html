@@ -49,7 +49,7 @@ const gltf = await loader.loadAsync(`/models/${kind}.glb?v=${Date.now()}`);
 const root = gltf.scene;
 let tris = 0;
 root.traverse((o) => {
-  const m = /_lod(\d)$/.exec(o.name);
+  const m = /_lod(\d)$/i.exec(o.name);
   if (m) o.visible = Number(m[1]) === lod;
   if (/^gear_/.test(o.name)) o.visible = q.get('gear') === '1';
   if (o.isMesh) {
@@ -100,19 +100,17 @@ if (q.get('pilot') === '1') {
     renderer.render(scene, cam);
   });
   document.getElementById('l').textContent = `${kind} pilot`;
-  window.ready = { tris: 0, size: size.toArray(), ktx2: ktxInfo };
-  throw new Error('pilot view done');
-}
-if (q.get('cam')) {
+  window.ready = { tris: Math.round(tris), size: size.toArray(), ktx2: ktxInfo };
+
+} else if (q.get('cam')) {
   // one full-frame view: ?cam=x,y,z&at=x,y,z (model metres, +Z nose, +X left wing)
   const c = q.get('cam').split(',').map(Number), a = (q.get('at') ?? '0,0,0').split(',').map(Number);
   cam.aspect = W / H; cam.fov = Number(q.get('fov') ?? 30); cam.updateProjectionMatrix();
   cam.position.set(c[0], c[1], c[2]); cam.lookAt(a[0], a[1], a[2]);
   renderer.render(scene, cam);
   document.getElementById('l').textContent = `${kind} lod${lod}`;
-  window.ready = { tris: 0, size: size.toArray(), ktx2: ktxInfo };
-  throw new Error('single view done');
-}
+  window.ready = { tris: Math.round(tris), size: size.toArray(), ktx2: ktxInfo };
+} else {
 renderer.setScissorTest(true);
 const yaw0 = Number(q.get('yaw') ?? 0);
 views.forEach(([yaw, el, k, off], i) => {
@@ -127,6 +125,7 @@ views.forEach(([yaw, el, k, off], i) => {
 });
 document.getElementById('l').textContent = `${kind} lod${lod} ${Math.round(tris)} tris${q.get('ace') === '1' ? ' (ace)' : ''}${ktxInfo ? ' (KTX2)' : ''}`;
 window.ready = { tris: Math.round(tris), size: size.toArray(), ktx2: ktxInfo };
+}
 </script>
 </body>
 </html>

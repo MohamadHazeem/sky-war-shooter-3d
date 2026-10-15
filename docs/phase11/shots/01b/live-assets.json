@@ -1,0 +1,76 @@
+{
+  "origin": "https://sky-war-shooter-3d.mhamadhazeem2001.workers.dev",
+  "fetchedAt": "2026-10-15T12:04:06.908Z",
+  "records": [
+    {
+      "path": "models/bf109.glb",
+      "bytes": 1492916,
+      "sha256": "db3072b3641e0ef937533cfa222ebb8e39f891dccbe4f70cc0c51b4bc3ca4d30",
+      "baselineSha256": "db3072b3641e0ef937533cfa222ebb8e39f891dccbe4f70cc0c51b4bc3ca4d30",
+      "matches": true
+    },
+    {
+      "path": "models/bf109_base.ktx2",
+      "bytes": 2689276,
+      "sha256": "daffbc52c7094181ec6da3d00eb182857fe98c0202d20a3ca3a291950e613955",
+      "baselineSha256": "daffbc52c7094181ec6da3d00eb182857fe98c0202d20a3ca3a291950e613955",
+      "matches": true
+    },
+    {
+      "path": "models/bf109_normal.ktx2",
+      "bytes": 107569,
+      "sha256": "953b071253a95f1f3964484a737cee928c96b2707dd427120f64eefaa27b2a21",
+      "baselineSha256": "953b071253a95f1f3964484a737cee928c96b2707dd427120f64eefaa27b2a21",
+      "matches": true
+    },
+    {
+      "path": "models/bf109_orm.ktx2",
+      "bytes": 876081,
+      "sha256": "5d00dc42cc54ef9777c6a4376d54880224621d093aa12198942c7b1c5dd08511",
+      "baselineSha256": "5d00dc42cc54ef9777c6a4376d54880224621d093aa12198942c7b1c5dd08511",
+      "matches": true
+    },
+    {
+      "path": "models/bf109_ace.webp",
+      "bytes": 556110,
+      "sha256": "747cdc1400a3ac7f6b053b837344be342f6d937a1b5e783c7f5410c9598520a0",
+      "baselineSha256": "747cdc1400a3ac7f6b053b837344be342f6d937a1b5e783c7f5410c9598520a0",
+      "matches": true
+    },
+    {
+      "path": "models/fw190.glb",
+      "bytes": 1420872,
+      "sha256": "05727098b0d3c952a44582739c2083d3a3c3fc9470d420480c60e567f7f3e12a",
+      "baselineSha256": "05727098b0d3c952a44582739c2083d3a3c3fc9470d420480c60e567f7f3e12a",
+      "matches": true
+    },
+    {
+      "path": "models/fw190_base.ktx2",
+      "bytes": 2608417,
+      "sha256": "b9d6d5f10f75a3482b945814718ab774dc281249f41030ce260a97ca68f706f2",
+      "baselineSha256": "b9d6d5f10f75a3482b945814718ab774dc281249f41030ce260a97ca68f706f2",
+      "matches": true
+    },
+    {
+      "path": "models/fw190_normal.ktx2",
+      "bytes": 144545,
+      "sha256": "1f2900a03d611cea05eb3f1ccaa01e8d6feaaf51583fa494f31939dbc493e372",
+      "baselineSha256": "1f2900a03d611cea05eb3f1ccaa01e8d6feaaf51583fa494f31939dbc493e372",
+      "matches": true
+    },
+    {
+      "path": "models/fw190_orm.ktx2",
+      "bytes": 874600,
+      "sha256": "8ae6fce8e083de6c9c76a2dee313a21b4e9f6c0a1cfd85bc8885e36388ba11b5",
+      "baselineSha256": "8ae6fce8e083de6c9c76a2dee313a21b4e9f6c0a1cfd85bc8885e36388ba11b5",
+      "matches": true
+    },
+    {
+      "path": "models/fw190_ace.webp",
+      "bytes": 539242,
+      "sha256": "fd486105392f39bb18cb6cc85869c1bdef75494a6f9c6ab57328372e2d54746c",
+      "baselineSha256": "fd486105392f39bb18cb6cc85869c1bdef75494a6f9c6ab57328372e2d54746c",
+      "matches": true
+    }
+  ]
+}

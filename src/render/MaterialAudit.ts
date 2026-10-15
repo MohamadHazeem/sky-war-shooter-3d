@@ -10,7 +10,7 @@ export function auditMaterial(m:T.Material){
  const s=m as T.MeshStandardMaterial;
  if(s.isMeshStandardMaterial){
   s.roughness=Math.max(.04,Math.min(1,s.roughness));s.metalness=Math.max(0,Math.min(1,s.metalness));
-  if(/paint|fabric|rubber|tire|seat|wood|interior|crew/i.test(m.name))s.metalness=0;
+  if(/paint|fabric|rubber|tire|seat|wood|interior|crew/i.test(m.name)&&!/^crew(Metal|Lens)$/.test(m.name))s.metalness=0;
   materialAudit.pbr++;
  }else if((m as T.ShaderMaterial).isShaderMaterial){materialAudit.shader++;return;}else materialAudit.unlit++;
  const before=m.onBeforeCompile,cache=m.customProgramCacheKey.bind(m),hook=before.toString();

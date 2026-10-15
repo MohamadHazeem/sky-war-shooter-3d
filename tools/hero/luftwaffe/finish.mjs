@@ -83,6 +83,10 @@ if (!BASISU) console.log('no Basis encoder (BASISU): WebP only');
 for (const kind of kinds) {
   const doc = await io.read(join(SRC, `${kind}.glb`));
   const root = doc.getRoot();
+  if (kind === 'bf109' || kind === 'fw190') {
+    const credit = kind === 'bf109' ? { author: 'GRIP420', source: 'https://sketchfab.com/3d-models/bf-109-f-2-messerschmitt-e48914913f2140158bee87495916d64e' } : { author: 'Saman Salili', source: 'https://sketchfab.com/3d-models/fw-190-51fd2e42ae5445788c15f00fe34729d2' };
+    root.listScenes()[0].setExtras({ ...credit, license: 'CC-BY-4.0', modifications: 'Normalized, repainted, articulated, original crew, LODs and PBR textures' });
+  }
   const skin = root.listMaterials().find((m) => m.getName() === `hero_${kind}`);
   const glass = root.listMaterials().find((m) => m.getName() === `hero_${kind}_glass`);
   if (!skin) throw new Error(`${kind}: no hero_${kind} material`);
@@ -102,12 +106,12 @@ for (const kind of kinds) {
   isolateNamedMeshes(doc);
   await doc.transform(
     prune({ keepLeaves: true, keepAttributes: false, keepExtras: true }),
-    textureCompress({ encoder: sharp, targetFormat: 'webp', quality: Q, effort: 90 }),
+    textureCompress({ encoder: sharp, targetFormat: 'webp', quality: ['bf109', 'fw190'].includes(kind) ? 95 : Q, effort: 90 }),
     meshopt({ encoder: MeshoptEncoder, level: 'high', quantizeTexcoord: 14 }),
   );
   const dst = join(OUT, `${kind}.glb`);
   await io.write(dst, doc);
-  const ace = await sharp(await png(kind, 'ace')).webp({ quality: Q, effort: 6 }).toBuffer();
+  const ace = await sharp(await png(kind, 'ace')).webp({ quality: ['bf109', 'fw190'].includes(kind) ? 95 : Q, effort: 6 }).toBuffer();
   writeFileSync(join(OUT, `${kind}_ace.webp`), ace);
   let k = '';
   if (BASISU) {

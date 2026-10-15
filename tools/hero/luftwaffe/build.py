@@ -61,6 +61,8 @@ def reset():
     sc = bpy.context.scene
     sc.render.engine = 'CYCLES'
     try:
+        if os.environ.get('HERO_CPU') == '1':
+            raise RuntimeError('CPU bake requested')
         prefs = bpy.context.preferences.addons['cycles'].preferences
         prefs.compute_device_type = 'METAL'
         prefs.get_devices()
@@ -167,7 +169,7 @@ def build_objects(m):
 LOW_PRIORITY = ('interior', 'gear_', 'blades_')   # crew figures keep full density (faces, straps)
 
 
-def unwrap(objs):
+def unwrap(objs, prioritize_fuselage=False):
     bpy.ops.object.select_all(action='DESELECT')
     for o in objs:
         o.select_set(True)
@@ -186,6 +188,18 @@ def unwrap(objs):
             uv.foreach_get('uv', a)
             a *= 0.45
             uv.foreach_set('uv', a)
+        elif o.name.startswith('spinner_') and prioritize_fuselage:
+            # The head-on gun sight resolves the spiral; avoid a jagged white blob.
+            uv = o.data.uv_layers.active.data
+            a = np.empty(len(uv) * 2, np.float32)
+            uv.foreach_get('uv', a)
+            uv.foreach_set('uv', a * 3.0)
+        elif o.name.startswith(('part_fuselage', 'part_nose')) and prioritize_fuselage:
+            # Prioritize fuselage paint/decals at gunner and inspection distances.
+            uv = o.data.uv_layers.active.data
+            a = np.empty(len(uv) * 2, np.float32)
+            uv.foreach_get('uv', a)
+            uv.foreach_set('uv', a * 2.0)
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.uv.select_all(action='SELECT')
@@ -415,7 +429,7 @@ for kind in KINDS:
     mod = importlib.import_module(kind)
     m = mod.build()
     objs, lod0, opaque, glass = build_objects(m)
-    unwrap(opaque)
+    unwrap(opaque, kind in ('bf109', 'fw190'))
     if os.environ.get('HERO_UVCHECK'):
         frac, worst = uv_overlap(opaque)
         print(f'  UV overlap {frac * 100:.2f}% of the atlas; worst {worst}')

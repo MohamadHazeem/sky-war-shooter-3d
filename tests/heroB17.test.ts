@@ -49,7 +49,7 @@ describe('shipped B-17 asset contract', () => {
     expect(totals[2]).toBeLessThan(totals[1]*.75);expect(totals[2]).toBeLessThan(26000);
   });
   it('matches the artifact verified against the USAAF three-view and section widths',()=>{
-    const qa=JSON.parse(readFileSync('docs/phase10/shots/02c/silhouette.json','utf8'));
+    const qa=JSON.parse(readFileSync('docs/phase11/shots/01b/b17-silhouette/silhouette.json','utf8'));
     expect(qa.artifactSha256).toBe(createHash('sha256').update(readFileSync('public/models/hero/b17.glb')).digest('hex'));
     expect(qa.pass).toBe(true);
     for(const section of Object.values(qa.sections) as {relativeError:number;tolerance:number}[])expect(section.relativeError).toBeLessThanOrEqual(section.tolerance);
@@ -66,7 +66,10 @@ describe('shipped B-17 asset contract', () => {
     const skin=r.listMaterials().find(m=>m.getName()==='hero_skin')!;
     expect(skin.getBaseColorTexture()).toBeTruthy();expect(skin.getNormalTexture()).toBeTruthy();expect(skin.getOcclusionTexture()).toBeTruthy();
     expect(r.listMaterials().some(m=>!!m.getExtension('KHR_materials_transmission'))).toBe(true);
-    for(const m of r.listMeshes())for(const p of m.listPrimitives())expect(p.getAttribute('TEXCOORD_0')).toBeTruthy();
+    for(const m of r.listMeshes())for(const p of m.listPrimitives()) {
+      if(p.getMaterial()?.getBaseColorTexture())expect(p.getAttribute('TEXCOORD_0')).toBeTruthy();
+      else expect(p.getAttribute('TEXCOORD_0') ?? p.getAttribute('COLOR_0')).toBeTruthy(); // Original seated crew uses vertex colours.
+    }
     const manifest=JSON.parse(readFileSync('public/models/hero/manifest.json','utf8'));
     expect(manifest.format).toBe('ktx2');expect(manifest.fallback).toBe('webp');
     for(const name of ['base','normal','orm','silver','silver-orm']) {

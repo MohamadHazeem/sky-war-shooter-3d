@@ -48,7 +48,7 @@ export async function captureRig(argv) {
   }
   if (!chromium) throw new Error('Use an existing Playwright installation: set PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs. No packages were installed.');
   const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE, args: ['--autoplay-policy=no-user-gesture-required', ...(process.platform === 'darwin' ? ['--use-gl=angle', '--use-angle=metal'] : []), '--enable-gpu', '--disable-frame-rate-limit', '--disable-gpu-vsync'] });
-  const manifest = { version: 1, complete: false, seed: Number(args.seed), backend: args.backend, quality: args.quality, cameraReference: args['camera-from'] || null,
+  const manifest = { version: 1, complete: false, seed: Number(args.seed), backend: args.backend, quality: args.quality, cameraReference: args['camera-from'] || null, fighterBaseline: process.env.VISUAL_FIGHTER_BASELINE || null,
     browser: browser.version(), platform: `${process.platform}/${process.arch}`,
     revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
     dirty: !!execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], { cwd: root, encoding: 'utf8' }).trim(), shots: [] };
@@ -57,6 +57,11 @@ export async function captureRig(argv) {
     const errors = [];
     // Offline fixtures: asset requests stay on the selected local server.
     await context.route('**/*', route => new URL(route.request().url()).origin === url.origin ? route.continue() : route.abort());
+    // Optional artifact comparison: hold the fixture/runtime constant and swap only the two fighters.
+    if (process.env.VISUAL_FIGHTER_BASELINE) await context.route(/\/models\/(bf109|fw190)(\.glb|_(base|normal|orm)\.ktx2|_ace\.webp)(\?.*)?$/, async route => {
+      const file = path.basename(new URL(route.request().url()).pathname);
+      await route.fulfill({ status: 200, body: await fs.readFile(path.join(process.env.VISUAL_FIGHTER_BASELINE, file)) });
+    });
     const page = await context.newPage();
     page.on('response', r => { if (new URL(r.url()).origin === url.origin && r.status() >= 400) errors.push(`HTTP ${r.status()}: ${r.url()}`); });
     page.on('requestfailed', r => { if (new URL(r.url()).origin === url.origin) errors.push(`Request failed: ${r.url()}`); });
@@ -79,6 +84,9 @@ export async function captureRig(argv) {
       assert.equal(metadata.formationCount, 18);
       if (id === 'waist-fw190') assert.ok(Math.abs(metadata.enemy.range - 150) < 1e-6 && metadata.aimDownSight > .99);
       if (id === 'tail-bf109') assert.equal(metadata.enemy.diving, true);
+      if (id === 'headon-fw190-zoom') assert.ok(Math.abs(metadata.enemy.range - 65) < 1e-6 && metadata.aimDownSight > .99);
+      if (/^(waist-(fw190|bf109)|tail-bf109|headon-fw190)/.test(id))
+        assert.ok(metadata.enemies.every(e => e.propellersSpinning), 'Airborne fighter props initialized without stepping');
       if (id === 'p51-cockpit') assert.equal(metadata.pilotView, 'cockpit');
       if (id === 'bomb-run') assert.ok(metadata.bombs > 0);
       if (id === 'damaged-neighbour') assert.equal(metadata.burningEngines.length, 2);

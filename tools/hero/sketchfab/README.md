@@ -1,0 +1,48 @@
+# Phase 11 fighters and original exterior crew
+
+The Bf 109 and Fw 190 use the supplied CC BY 4.0 Sketchfab shapes. Attribution and source links are in `assets-src/sketchfab/CREDITS.md` and `public/models/CREDITS.md`.
+
+`../luftwaffe/sketchfab.py` imports those GLBs, converts to metres (+Z nose, +X left, +Y up), removes parked gear and costly bolt/spring islands, replaces the source propellers, and normalizes the Fw 190's parked pitch. Span is 9.924 / 10.5 m. The Bf 109's prop axis is already level; it needs an axis rotation, not a pitch correction. `anchors.json` retains the gameplay prop/muzzle anchors independently of the archived FlightGear files.
+
+The two type specifications supply the actual hinge locations, seven structural owners, joint/fuel markers, original cockpit/pilot/props, G-6 cowl blisters, and representative 74/75/76 Defence-of-the-Reich paint. The Bf 109 retains the F-2 source's canopy and small airframe details; this is a G-6 adaptation, not a certified G-6 reconstruction. The shared pipeline cuts controls, unwraps, bakes AO and position maps, paints, makes LOD0/1/2, and emits meshopt GLB/WebP and UASTC KTX2. The Fw 190's hood edge seals follow its source glazing boundaries. Dense feathered 74/75 spray over blue-grey 76, doubled fuselage atlas scale, quality-95 WebP decals and reduced chips apply only to these two types. The Fw 190 uses a 0.60 m refinement threshold to keep its close mesh near the live budget, and replaces the source guns with one skin-fitted set. Gameplay muzzle anchors stay independent. Retracted wheel-well covers are fitted from the convex lower wing sections, and gun bases are fitted to the source leading edge. The double-sided source skin passes exterior-visibility orientation before the single-sided PBR export; the Fw 190 nose has a recessed twelve-blade cooling fan. Thin source antenna cables are omitted from every LOD to prevent dotted aliasing; solid masts remain. The Bf 109 aft band is selected in world coordinates around the entire skin circumference.
+
+Run from the repository root using installed tools (no dependency downloads):
+
+```sh
+HERO_CPU=1 tools/heavy.sh /Applications/Blender.app/Contents/MacOS/Blender -b -t 6 --python-exit-code 1 -P tools/hero/luftwaffe/build.py -- bf109 fw190 --size 2048 --ao-samples 48
+BASISU=/path/to/basisu tools/heavy.sh node tools/hero/luftwaffe/finish.mjs bf109 fw190
+```
+
+`HERO_CPU=1` avoids a Blender 5.2 Metal compiler crash seen on this shared Mac. Both render paths produce the same atlas dimensions. `BASISU` must identify an existing encoder; the shipped texture tests require KTX2.
+
+## Original crew
+
+`seated.py` authors a smooth seated figure directly in metres, with continuous bent sleeves/trousers, a flying helmet, goggles, oxygen equipment, shearling collar, gloves, boots and harness. Leather, fabric, skin, rubber, canvas and metal use separate lit PBR materials. The 16,274-triangle figure has nine PBR materials, a continuous tapered face, fitted oxygen-mask shell and matte leather; its origin is at the eyes. `replace-crew.mjs` dequantizes the copied attributes before applying source and destination transforms, places it at the eye markers, and prunes inherited figures/materials/textures. It is repeatable and upgrades existing replacements. Archived conversion outputs stay unquantized so mechanical pivots remain usable.
+
+```sh
+tools/heavy.sh node tools/hero/sketchfab/build-seated.mjs
+node tools/hero/sketchfab/replace-crew.mjs public/models/b17.glb public/models/hero/b17.glb public/models/p51d.glb public/models/do335.glb public/models/he111.glb tools/convert_models/output/*.glb
+```
+
+Both `tools/compress_models.mjs` and `tools/hero/compress.mjs` apply the replacement when rebuilding from upstream. The Luftwaffe hero figures were already original project geometry. The B-17 cockpit crew visibility hook uses the renamed original-crew LOD group.
+
+## Verification
+
+Use port **5330**, an existing Playwright install, and its bundled **headless shell**. `PLAYWRIGHT_EXECUTABLE` can identify the installed shell when its revision differs from Playwright's default; never select desktop Chrome.
+
+```sh
+npx vite --port 5330 --strictPort
+tools/heavy.sh node tools/hero/sketchfab/shots.mjs after
+tools/heavy.sh node tools/visual_rig.mjs --url http://127.0.0.1:5330 --out docs/phase11/shots/01b/after --shots waist-fw190,tail-bf109 --camera-from docs/phase11/shots/01b/live/manifest.json
+tools/heavy.sh node tools/hero/sketchfab/runtime.mjs
+tools/heavy.sh node tools/hero/sketchfab/crew-shots.mjs
+node tools/hero/luftwaffe/silhouette/check.mjs bf109 fw190 --set hero=public/models --out docs/phase11/shots/01b/silhouette --gate
+node tools/hero/sketchfab/b17-project.mjs
+HERO_SILHOUETTE_OUT=docs/phase11/shots/01b/b17-silhouette /path/to/existing/python-with-numpy-pillow tools/hero/silhouette.py
+npx tsc --noEmit
+npx vitest run tests/heroModels.test.ts tests/heroB17.test.ts tests/sketchfabFighters.test.ts tests/destruction.test.ts tests/i18n.test.ts
+```
+
+`live-baseline.mjs` compares the deployed fighter GLBs and all four texture files against `BASELINE_DIR` (default `/tmp/01b-baseline`, populated from the starting commit). The committed receipt proves those assets matched before replacement. Use matching `before`/`after` captures and `compare.mjs` for review. The fixed visual rig covers waist/tail; `shots.mjs` adds turntables and now delegates every gun scene to the isolated Phase 10 rig. Close passes use the existing beauty daylight on both sides and are explicitly labelled 65 m; the head-on wedge is 65–164 m. The head-on lead also has a production aim-down-sight zoom fixture at 65 m. The original 150/180 m fixtures remain. No simulation runs after fighter placement, and ballistic/effect pools are cleared. Production prop presentation is initialized at zero delta with a fixed .7-radian phase on both sides, so parked blades do not obscure the airborne cowl inspection. `compare.mjs` asserts equal cameras, fighter poses, weather and simulation clocks before writing sheets. Turntables select both lowercase fighter and uppercase B-17 LOD suffixes so opaque far windows cannot cover the close crew. All evidence is in `docs/phase11/shots/01b/`.
+
+Run runtime validation against a freshly started Vite server after source edits: hot-reload timestamped imports can otherwise give standalone dynamic imports a separate model cache.

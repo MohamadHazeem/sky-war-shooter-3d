@@ -146,6 +146,8 @@ export function tuneAircraftMaterial(mat: THREE.Material, kind: string): boolean
   if (!m.isMeshStandardMaterial) return false;
   // the P-51 cockpit sits around the camera: keep its authored surfaces, just tame reflections
   if (kind === 'p51d_cockpit') { useSkyEnv(m, /glass/i.test(m.name) ? 1.3 : 0.55); return false; }
+  // Original seated aircrew carries authored leather, cloth and equipment PBR.
+  if (/^crew(Cloth|Leather|Fleece|Skin|Rubber|Webbing|Metal|Lens|Stitch)$/.test(m.name)) { useSkyEnv(m, .55); return false; }
   const part = LOOKS.find((l) => l.test.test(m.name));
   const look = part?.look ?? (kind === 'p51d' ? BARE : SKIN);
   m.roughness = look.rough;

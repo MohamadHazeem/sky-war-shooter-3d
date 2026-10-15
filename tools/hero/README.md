@@ -1,6 +1,6 @@
 # FlightGear-based B-17G hero pipeline
 
-Goals 02b/02c replace the rejected procedural exterior with the retained FlightGear B-17G surfaces. The source silhouette, canopy, nose, nacelles, turrets, radial engines, crew, propellers and livery UVs are retained. A small dimensional normalization sets span to **31.62 m** and overall length (including tail guns) to **22.66 m**. The source is GPL, explicitly authorized by the 02b task.
+Goals 02b/02c replace the rejected procedural exterior with the retained FlightGear B-17G surfaces. The source silhouette, canopy, nose, nacelles, turrets, radial engines, propellers and livery UVs are retained. A small dimensional normalization sets span to **31.62 m** and overall length (including tail guns) to **22.66 m**. The source is GPL, explicitly authorized by the 02b task.
 
 ## Rebuild
 
@@ -17,7 +17,7 @@ FG_SRC=/tmp/hero-fg BASISU=/path/to/basisu HERO_PYTHON=/path/to/python tools/her
 
 ## Source and licence
 
-- Geometry/UVs: [FGMEMBERS/B-17](https://github.com/FGMEMBERS/B-17/tree/949abb7615da96104a72c2b1a351a05d60a0bf3c), Emmanuel Baranger, Detlef Faber, Fabien Barbier; GPL v2. Crew: Bertrand Augras, through that source.
+- Geometry/UVs: [FGMEMBERS/B-17](https://github.com/FGMEMBERS/B-17/tree/949abb7615da96104a72c2b1a351a05d60a0bf3c), Emmanuel Baranger, Detlef Faber, Fabien Barbier; GPL v2. Crew: original project seated figures, replaced by `sketchfab/replace-crew.mjs` before compression.
 - Livery: GD-L, Brett Harrison (2009/2011), from the same GPL package. Existing markings, localized exhaust staining and service-panel artwork are retained and reprocessed. This is a **derivative**, not original-only geometry or texture artwork.
 - New relief, weathering, fittings, material variants, build/validation code: project work, GPL-2.0-or-later.
 - Dimensional reference: USAAF **AN 01-20EG-2, 15 February 1945, Figure 1, printed page 2**, [public sample scan](https://app.aircorpslibrary.com/document/getsamplepage/tsteven3/6), [catalogue](https://app.aircorpslibrary.com/document/viewer/tsteven3). The underlying US military drawing is public-domain US government work. The scan remains at its source: only manually digitized outline coordinates and computed overlay images are committed; no scan pixels or archive watermark are redistributed.

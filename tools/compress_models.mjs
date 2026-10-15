@@ -25,6 +25,7 @@ import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { meshopt, textureCompress } from '@gltf-transform/functions';
 import { MeshoptEncoder, MeshoptDecoder } from 'meshoptimizer';
 import sharp from 'sharp';
+import { replaceCrew } from './hero/sketchfab/replace-crew.mjs';
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = process.env.MODELS_SRC ?? join(REPO, 'tools/convert_models/output');
@@ -59,6 +60,7 @@ let inTotal = 0, outTotal = 0;
 for (const f of files) {
   const src = join(SRC, f), dst = join(OUT, f);
   const doc = await io.read(src);
+  await replaceCrew(doc, await io.read(join(REPO, 'public/models/seated-crew.glb')));
   const nodesBefore = doc.getRoot().listNodes().map((x) => x.getName()).filter(Boolean).sort().join(',');
   const moved = isolateNamedMeshes(doc);
   await doc.transform(

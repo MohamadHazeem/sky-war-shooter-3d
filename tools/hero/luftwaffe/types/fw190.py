@@ -1,12 +1,11 @@
-"""Focke-Wulf Fw 190 A-8. Shape: the FlightGear fw190 model (GPL, tools/convert_models/output/fw190.glb),
-whose proportions match the FM 30-30 three-view (goal 05b silhouette gate); parts, controls, paint and
-detail are ours. Frame as the game expects: prop hub (0, -0.086, 1.979), cooling fan (0, -0.086, 1.637),
-pilot eye (0, 0.714, -1.588)."""
-from geom import tube
-from model import (Model, Surf, SKIN, GRILLE, GUNMETAL, INTERIOR, PANEL, SEAT, EXHAUST, GEAR, LENS)
+"""fw190: CC BY 4.0 Sketchfab airframe, original period paint/crew/controls.
+See ../sketchfab.py and assets-src/sketchfab/CREDITS.md. Frame: metres, +Z nose, +X left."""
+from geom import tube, revolve
+from model import (Model, Surf, SKIN, GRILLE, GUNMETAL, INTERIOR, PANEL, SEAT, EXHAUST, GEAR, LENS, FRAME)
 import parts as P
 import airframe as A
-from fg import FG, Hinge
+from fg import Hinge
+from sketchfab import Sketchfab as FG
 
 
 def build():
@@ -30,35 +29,45 @@ def build():
             hinges.append(Hinge(f'{name}_{sfx}', parent.replace('L', sfx, 1) if parent.startswith('part_wing') else parent, a2, b2, **k))
         hg('ctl_aileron', 'part_wingLtip', (2.72, -0.30, -0.98), (4.78, -0.07, -0.86), depth=0.55)
         hg('ctl_flap', 'part_wingL', (0.95, -0.47, -1.15), (2.62, -0.35, -1.03), depth=0.6)
-        hg('ctl_elevator', 'part_tail', (0.2, 0.19, -5.47), (1.82, 0.19, -5.5), depth=0.5, off=0.15)
-    hinges.append(Hinge('ctl_rudder', 'part_tail', (0, -0.12, -6.02), (0, 1.58, -5.83), depth=0.6, rudder=True, off=0.12))
+        hg('ctl_elevator', 'part_tail', (0.2, -.13, -5.10), (1.80, -.13, -5.12), depth=0.5, off=0.15)
+    hinges.append(Hinge('ctl_rudder', 'part_tail', (0, -.4, -5.90), (0, 1.1, -5.45), depth=0.6, rudder=True, off=0.12))
 
     A.assemble(m, fg.meshes['airframe'], dict(
-        fus_split=-2.4, tail_z=-4.85, tail_half=0.18, fin=(0.15, 0.45),
-        wing=dict(root=0.6, joint=2.68, y=(-0.75, 0.1), z=(-1.75, 0.75), le=(0.9, 0.6, 4.8, 0.08), te=(0.9, -1.61, 4.8, -1.17)),
+        nose_z=0.7, fus_split=-2.4, tail_z=-4.85, tail_half=0.18, fin=(0.15, 0.45),
+        wing=dict(root=0.6, joint=2.68, y=(-.85, .20), z=(-1.75, 1.8)),
         hinges=hinges,
-        cls_mats={'interiour': INTERIOR, 'metal': INTERIOR, 'misc': PANEL, 'panels': PANEL, 'misc.002': PANEL,
+        cls_mats={'GunMat': GUNMETAL, 'lambert1': GUNMETAL, 'interiour': INTERIOR, 'metal': INTERIOR, 'misc': PANEL, 'panels': PANEL, 'misc.002': PANEL,
                   'misc.003': GRILLE, 'exhaust': EXHAUST, 'gear': GEAR, 'misc.004': SEAT},
         interior=((-0.5, -0.7, -3.2), (0.5, 0.95, -0.35), (INTERIOR, PANEL, SEAT)),
         surfs=dict(fus=fs, wing_in=ws_in, wing_out=ws_out, tail=ts, fin=ts, rudder=rs),
     ))
     A.add_simple(m, 'glass', fg.meshes['glass'], LENS)
+    # The source hood has glass but no visible edge seals. Retain its shape and add slim frames.
+    for edge in fg.meshes['glass'].bm.edges:
+        if len(edge.link_faces) == 1 and max(v.co.z for v in edge.verts) < -.8:
+            m.add('part_fuselage', tube([tuple(v.co) for v in edge.verts], .013, 6), FRAME)
+    m.node('interior')
+    A.add_simple(m, 'interior', fg.meshes['interior'], INTERIOR)
 
-    # our details on the FlightGear shape
-    P.annular_fan(m, 'cooling_fan', (0, -0.086, 1.637), 0.4, 12)
+    # Original project fittings on the Sketchfab shape.
+    # Recessed BMW 801 fan and annular opening, ahead of the removed source disc.
+    m.add('part_nose', revolve([(-.055,.495), (0,.505), (.025,.52)],
+          (0,-.086,2.01), (0,0,1), 48), GUNMETAL)
+    P.annular_fan(m, 'cooling_fan', (0, -0.086, 2.06), .485, 12)
     for nm, p in fg.markers.items():
         if nm.startswith('muzzle_') or nm.startswith('eye_'):
             m.marker(nm, p)
     for s in (1, -1):
-        sfx = 'left' if s > 0 else 'right'
-        mz = fg.markers[f'muzzle_wingroot_{sfx}']
-        P.gun_barrel(m, 'part_wingL' if s > 0 else 'part_wingR', (mz[0], mz[1], mz[2] - 0.3), mz, 0.02)
-        mz = fg.markers[f'muzzle_wingouter_{sfx}']
-        P.gun_barrel(m, 'part_wingLtip' if s > 0 else 'part_wingRtip', (mz[0], mz[1], mz[2] - 0.18), mz, 0.02)
+        # Visual barrels belong to the imported skin; gameplay muzzle markers
+        # remain unchanged. Bases penetrate their fairings, with one set per gun.
+        cowl = (s*.14, .49, .72)
+        P.gun_barrel(m, 'part_fuselage', (s*.14, .49, .16), cowl, .018)
+        for x,y,z in fg.wing_gun_mounts:
+            P.gun_barrel(m, 'part_wing'+('L' if s>0 else 'R'), (s*x,y,z-.20), (s*x,y,z+.24), .018)
     m.info['exhausts'] = [(s * 0.6, y, 0.6) for s in (1, -1) for y in (-0.12, 0.0, 0.12, 0.24)]
     m.info['stain_len'] = 1.5
     m.info['stain_amt'] = 0.8
-    P.pilot(m, (0, 0.70, -1.62))
+    P.pilot(m, (0, .46, -1.50))
     P.propeller(m, 1, fg.origins['prop_1'], 0.62, 0.36, 1.65, 3, chord=0.31, back=0.16, root_r=0.2, paddle=True)
     for side in (1, -1):
         P.main_gear(m, side, (side * 1.75, -0.55, 0.35), (side * 1.72, -2.0, 0.55), 0.35, 0.17)
@@ -71,9 +80,9 @@ def build():
         spinner=dict(style='spiral', hubs=[fg.origins['prop_1']], base='70'),
         crosses_fus=[(-3.05, 0.0, 0.8)],
         crosses_wing=[(3.35, -0.45, 1.0)],
-        number=dict(text='8', z=-2.2, y=0.0, h=0.48, color='22', outline='21'),
+        number=dict(text='8', z=-2.2, y=0.0, h=0.56, color='22', outline='21'),
         fuel_triangle=(-2.75, -0.38), walkway=[(0.6, 1.1, -1.2, 0.5)],
-        oil=[(0.0, -0.65, 0.6, 0.7), (0.4, -0.55, 0.6, 0.5), (-0.4, -0.55, 0.6, 0.5)], wear=1.1, seed=190,
+        oil=[(0.0, -0.65, 0.6, 0.7), (0.4, -0.55, 0.6, 0.5), (-0.4, -0.55, 0.6, 0.5)], wear=.65, mottle_soft=True, seed=190,
         emblem_at=(0.95, 0.1, 0.32),
         ace=dict(kills=62, emblem='spade', chevrons=True, spinner='white', band=(-4.0, -3.62, ['22', '21', '22'])),
         label='Fw 190 A-8',

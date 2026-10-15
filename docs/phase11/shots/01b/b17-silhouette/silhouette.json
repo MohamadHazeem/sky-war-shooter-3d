@@ -1,0 +1,106 @@
+{
+  "artifactSha256": "5a353b04e2a244d4951b6b2015fc9c0983d992582b4cf7fcc0afc69167754593",
+  "source": "https://app.aircorpslibrary.com/document/getsamplepage/tsteven3/6",
+  "manual": "USAAF AN 01-20EG-2, 15 February 1945, Figure 1, printed page 2",
+  "method": "Manually digitized outer contours from the public 1240x1607 scan. Gear, gun barrels, propeller blades, wires and scan annotations excluded. Points stay in scan pixels. No source image pixels redistributed.",
+  "uncertaintyPixels": 4,
+  "registration": {
+    "topOrigin": [
+      592,
+      672
+    ],
+    "frontOrigin": [
+      594,
+      1032
+    ],
+    "frontPitchSlope": 0.05,
+    "frontScanRollSlope": -0.024,
+    "sideOrigin": [
+      443,
+      1308
+    ],
+    "sidePitchSlope": 0.035
+  },
+  "toleranceMetric": "boundary-tolerant IoU: mismatch within 4 scan pixels is ignored; raw IoU also reported",
+  "pixelsPerMetre": 31.752055660974065,
+  "tolerance": {
+    "top": 0.82,
+    "front": 0.7,
+    "side": 0.75
+  },
+  "views": {
+    "top": {
+      "legacy": {
+        "iou": 0.88,
+        "boundaryTolerantIoU": 0.9447
+      },
+      "hero": {
+        "iou": 0.9022,
+        "boundaryTolerantIoU": 0.9574
+      }
+    },
+    "front": {
+      "legacy": {
+        "iou": 0.608,
+        "boundaryTolerantIoU": 0.8459
+      },
+      "hero": {
+        "iou": 0.6197,
+        "boundaryTolerantIoU": 0.8564
+      }
+    },
+    "side": {
+      "legacy": {
+        "iou": 0.8406,
+        "boundaryTolerantIoU": 0.9344
+      },
+      "hero": {
+        "iou": 0.8416,
+        "boundaryTolerantIoU": 0.9352
+      }
+    }
+  },
+  "bounds": {
+    "hero": [
+      [
+        -15.81002426147461,
+        -1.9992112630418402,
+        -16.25660079717636
+      ],
+      [
+        15.81002426147461,
+        4.92357344070407,
+        6.407391548156738
+      ]
+    ],
+    "legacy": [
+      [
+        -15.760223388671875,
+        -1.9952445077016427,
+        -16.576065063476562
+      ],
+      [
+        15.760223388671875,
+        4.9239652174038,
+        6.529226779937744
+      ]
+    ]
+  },
+  "sections": {
+    "forwardFuselage": {
+      "stationZMetres": 3.5,
+      "referenceWidthMetres": 2.289,
+      "heroWidthMetres": 2.369,
+      "relativeError": 0.0349,
+      "tolerance": 0.1
+    },
+    "outboardNacelle": {
+      "stationZMetres": 2.2,
+      "referenceWidthMetres": 1.481,
+      "heroWidthMetres": 1.403,
+      "relativeError": 0.0531,
+      "tolerance": 0.1
+    }
+  },
+  "pass": true
+}
