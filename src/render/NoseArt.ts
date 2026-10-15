@@ -22,6 +22,8 @@ export const NOSE_ARTS: NoseArtDef[] = [
   { id: 'ace', name: 'Ace of Spades', rarity: 'epic' },
   { id: 'wings', name: 'Gilded Wings', rarity: 'legendary' },
   { id: 'weeklyace', name: 'Lightning Shield', rarity: 'legendary', exclusive: 'Weekly Challenge reward' },   // Weekly.ts
+  { id: 'acehunter', name: 'Ace Hunter', rarity: 'legendary', exclusive: 'Gunner Mastery reward' },   // Mastery.ts: Ace Hunter challenge
+  { id: 'mastergunner', name: 'Master Gunner', rarity: 'legendary', exclusive: 'Gunner Mastery reward' },   // Mastery.ts: station rank 9
   // monthly season tiers (Seasons.ts TIERS)
   { id: 'seasonbronze', name: 'Bronze Season Wings', rarity: 'rare', exclusive: 'Season reward' },
   { id: 'seasonsilver', name: 'Silver Season Wings', rarity: 'epic', exclusive: 'Season reward' },
@@ -248,7 +250,46 @@ const DRAW: Record<string, (g: G, name: string) => void> = {
   seasonbronze: (g, name) => seasonWings(g, name, '#b07a3c', 1),
   seasonsilver: (g, name) => seasonWings(g, name, '#c9ced6', 2),
   seasongold: (g, name) => seasonWings(g, name, GOLD, 3),
+  // Gunner Mastery, Ace Hunter challenge: the ace of spades in a gun-sight ring
+  acehunter: (g, name) => {
+    g.save(); g.translate(124, 112); g.rotate(-0.12);
+    rrect(g, -56, -84, 112, 168, 12); g.fillStyle = CREAM; g.fill(); g.lineWidth = 6; g.strokeStyle = INK; g.stroke();
+    spade(g, 0, 2, 84);
+    g.restore();
+    g.save(); g.strokeStyle = RED; g.lineWidth = 7; g.lineCap = 'round';
+    g.beginPath(); g.arc(124, 114, 92, 0, Math.PI * 2); g.stroke();
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { g.beginPath(); g.moveTo(124 + dx * 70, 114 + dy * 70); g.lineTo(124 + dx * 112, 114 + dy * 112); g.stroke(); }
+    g.restore();
+    nameScript(g, name, 372, 90, 260, 64);
+    for (let i = 0; i < 5; i++) star(g, 290 + i * 40, 150, 14, i % 2 ? CREAM : GOLD);
+    g.font = "bold 22px 'IBM Plex Mono', monospace"; g.textAlign = 'center'; g.fillStyle = CREAM;
+    g.strokeStyle = INK; g.lineWidth = 5; g.strokeText('ACE HUNTER', 372, 204); g.fillText('ACE HUNTER', 372, 204);
+  },
+  // Gunner Mastery, station rank 9: crossed fifties over gilded wings
+  mastergunner: (g, name) => {
+    wing(g, 256, 70, 1, 200, GOLD);
+    wing(g, 256, 70, -1, 200, GOLD);
+    fifty(g, 256, 84, 230, 0.42);
+    fifty(g, 256, 84, 230, Math.PI - 0.42);
+    g.beginPath(); g.arc(256, 84, 26, 0, Math.PI * 2); g.fillStyle = RED; g.fill(); g.lineWidth = 5; g.strokeStyle = INK; g.stroke();
+    star(g, 256, 85, 18, CREAM);
+    nameScript(g, name, CW / 2, CH * 0.8, CW * 0.86, 56, GOLD);
+    g.font = "bold 20px 'IBM Plex Mono', monospace"; g.textAlign = 'center'; g.fillStyle = CREAM;
+    g.strokeStyle = INK; g.lineWidth = 5; g.strokeText('MASTER GUNNER', CW / 2, CH * 0.97); g.fillText('MASTER GUNNER', CW / 2, CH * 0.97);
+  },
 };
+
+// Gunner Mastery (Mastery.ts): a twin .50 crossed over gold wings with a row of kill stars
+function fifty(g: G, x: number, y: number, len: number, ang: number) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  g.lineWidth = 4; g.strokeStyle = INK;
+  g.fillStyle = '#3a3a36'; rrect(g, -len * 0.5, -9, len * 0.42, 18, 4); g.fill(); g.stroke();        // receiver
+  g.fillStyle = '#55554e'; rrect(g, -len * 0.1, -6, len * 0.42, 12, 3); g.fill(); g.stroke();        // perforated jacket
+  g.fillStyle = INK; for (let i = 0; i < 5; i++) { g.beginPath(); g.arc(-len * 0.05 + i * len * 0.075, 0, 2.6, 0, Math.PI * 2); g.fill(); }
+  g.fillStyle = '#2a2a26'; g.fillRect(len * 0.32, -3.5, len * 0.18, 7); g.strokeRect(len * 0.32, -3.5, len * 0.18, 7);   // barrel
+  g.fillStyle = '#6b4220'; rrect(g, -len * 0.62, -7, len * 0.14, 14, 4); g.fill(); g.stroke();      // spade grips
+  g.restore();
+}
 
 // Season tier reward: a medal on spread wings in the tier's metal, one to three stars on its ribbon
 function seasonWings(g: G, name: string, metal: string, stars: number) {

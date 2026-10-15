@@ -70,7 +70,7 @@ function bomberSection(prog: Progression) {
       <div class="bc-prev" style="background:${paint.swatch}"><img alt="" src="${nose === 'none' ? '' : noseArtThumb(nose, name)}" ${nose === 'none' ? 'hidden' : ''}/></div>
       <div class="bc-ctl">
         <label class="bc-lab">${tx('NAME')}<input id="bcName" type="text" maxlength="${NAME_MAX}" spellcheck="false" autocomplete="off" value="${esc(name)}"/></label>
-        <div class="chips">${NAME_PRESETS.map((n) => {
+        <div class="chips">${NAME_PRESETS.filter((n) => !n.exclusive || owns(prog, 'name:' + n.name)).map((n) => {
           const c = col('name:' + n.name), own = owns(prog, c.key), cost = COSMETIC_COST[n.rarity];
           return `<button class="chip r-${n.rarity} ${name === n.name ? 'sel' : ''} ${own ? '' : 'locked'}" data-cos="${esc(c.key)}" ${!own && prog.points < cost ? 'disabled' : ''}>${esc(n.name)}${own ? '' : ` · ${cost}`}</button>`;
         }).join('')}</div>

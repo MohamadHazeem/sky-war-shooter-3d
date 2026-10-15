@@ -1,0 +1,115 @@
+{
+  "mission": {
+    "result": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 2 enemies 3 bombers 9 playing\n60s kills 5 enemies 4 bombers 9 playing\n90s kills 5 enemies 4 bombers 9 playing\n119s kills 5 enemies 7 bombers 9 playing\n",
+    "state": "debrief",
+    "worldStats": {
+      "kills": 27,
+      "shots": 1689,
+      "hits": 594,
+      "damage": 7194.509887243137,
+      "bombersLost": 3,
+      "scriptedLost": 0,
+      "assists": 0,
+      "enemiesSpawned": 71
+    },
+    "shots": 1689,
+    "hits": 594,
+    "kills": 27,
+    "stations": [
+      {
+        "id": "waistL",
+        "gained": 10,
+        "rank": 1,
+        "kills": 1,
+        "shots": 118,
+        "hits": 18,
+        "time": 24.402499999999893,
+        "deflection": 0,
+        "aces": 0,
+        "long": 0,
+        "heavy": 0,
+        "clean": 0,
+        "xp": 10
+      },
+      {
+        "id": "top",
+        "gained": 225,
+        "rank": 2,
+        "kills": 14,
+        "shots": 830,
+        "hits": 316,
+        "time": 111.06966666666119,
+        "deflection": 3,
+        "aces": 0,
+        "long": 3,
+        "heavy": 1,
+        "clean": 0,
+        "xp": 205
+      },
+      {
+        "id": "ball",
+        "gained": 200,
+        "rank": 2,
+        "kills": 8,
+        "shots": 498,
+        "hits": 176,
+        "time": 113.1024999999944,
+        "deflection": 5,
+        "aces": 0,
+        "long": 3,
+        "heavy": 1,
+        "clean": 0,
+        "xp": 165
+      },
+      {
+        "id": "tail",
+        "gained": 95,
+        "rank": 1,
+        "kills": 4,
+        "shots": 243,
+        "hits": 84,
+        "time": 100.53999999999499,
+        "deflection": 2,
+        "aces": 0,
+        "long": 1,
+        "heavy": 1,
+        "clean": 0,
+        "xp": 75
+      }
+    ],
+    "hunt": {
+      "gained": 500,
+      "points": 500,
+      "goal": 1500,
+      "reached": false,
+      "quarry": {
+        "id": "heavies",
+        "name": "Heavy fighters (Bf 110 / Ju 88 / Me 410)",
+        "types": [
+          "bf110",
+          "ju88",
+          "me410"
+        ]
+      }
+    },
+    "rewards": [
+      "+250 merit",
+      "+250 merit"
+    ]
+  },
+  "header": "Best gun: Ball Turret, rank 7 · 19 of 50 ranks · Ace Hunt: Goal reached ✓ 4,763",
+  "locker": {
+    "sight": "chevron",
+    "patch": "ballbearing"
+  },
+  "flight-waistL": {
+    "state": "playing",
+    "station": "waistL"
+  },
+  "flight-ball": {
+    "state": "playing",
+    "station": "ball"
+  },
+  "arabicDir": "rtl",
+  "errors": []
+}

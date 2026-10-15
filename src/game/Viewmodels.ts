@@ -1,4 +1,5 @@
 import { RecoilSpring } from './GunRecoil';
+import { activeSight, drawReflectorSight } from './GunSights';
 import { frostMaterial } from './InteriorFx';
 import * as THREE from 'three';
 import { envRef } from '../render/EnvRef';
@@ -519,14 +520,11 @@ export function buildTurret(kind: 'top' | 'ball'): { group: THREE.Group; guns: G
   const c = document.createElement('canvas');
   c.width = c.height = 256;
   const x = c.getContext('2d')!;
-  x.strokeStyle = 'rgba(255,140,40,1)'; x.lineWidth = 3;
-  x.beginPath(); x.arc(128, 128, 90, 0, Math.PI * 2); x.stroke();
-  x.fillStyle = 'rgba(255,140,40,1)';
-  x.beginPath(); x.arc(128, 128, 5, 0, Math.PI * 2); x.fill();
-  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { x.fillRect(128 + dx * 100 - 2 + (dx ? 0 : 0), 128 + dy * 100 - 2, dx ? 20 * dx : 4, dy ? 20 * dy : 4); }
+  const style = activeSight();   // the Locker's gun sight style (GunSights.ts)
+  drawReflectorSight(x, 256, style);
   const tex = new THREE.CanvasTexture(c);
   const sight = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.12), new THREE.MeshBasicMaterial({
-    map: tex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, color: new THREE.Color(3, 1.6, 0.6),
+    map: tex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, color: new THREE.Color(...style.glass),
   }));
   sight.position.set(0, 0.03, 0.32);
   sight.rotation.y = Math.PI;

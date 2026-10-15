@@ -11,7 +11,7 @@ import { applyPaint, PAINTS } from '../render/Paint';
 export const DEFAULT_NAME = 'Sky Queen';
 export const NAME_MAX = 22;
 
-export interface NamePreset { name: string; rarity: Rarity; free?: boolean }
+export interface NamePreset { name: string; rarity: Rarity; free?: boolean; exclusive?: string }   // exclusive: how it is earned (never in crates or for merit)
 export const NAME_PRESETS: NamePreset[] = [
   { name: 'Sky Queen', rarity: 'common', free: true },
   { name: 'Lucky Lady', rarity: 'common', free: true },
@@ -23,6 +23,9 @@ export const NAME_PRESETS: NamePreset[] = [
   { name: 'Wing an\' a Prayer', rarity: 'epic' },
   { name: 'Ol\' Rattletrap', rarity: 'epic' },
   { name: 'Queen of Spades', rarity: 'legendary' },
+  // Gunner Mastery (Mastery.ts): station rank 7 and the challenge sets
+  ...['Left Hook', 'Right Cross', 'High Noon', 'Belly Gunner', 'Tail-End Charlie'].map((name): NamePreset => ({ name, rarity: 'epic', exclusive: 'Gunner Mastery reward' })),
+  ...['Deflection Queen', 'Ace Hunter', 'Untouchable', 'Long Reach'].map((name): NamePreset => ({ name, rarity: 'legendary', exclusive: 'Gunner Mastery reward' })),
 ];
 
 // Every collectable in one list (the hangar's collection view and the crate pool)
@@ -33,7 +36,7 @@ export const COLLECTABLES: Collectable[] = [
   ...WEAPON_MODS.map((m): Collectable => ({ key: 'mod:' + m.id, kind: 'mod', id: m.id, name: m.name, desc: m.desc, rarity: m.rarity, free: false })),
   ...NOSE_ARTS.filter((n) => n.id !== 'none').map((n): Collectable => ({ key: 'nose:' + n.id, kind: 'nose', id: n.id, name: n.name, desc: 'Painted on the nose of your B-17 · pick it in the hangar', rarity: n.rarity, free: !!n.free, exclusive: n.exclusive })),
   ...PAINTS.map((p): Collectable => ({ key: 'paint:' + p.id, kind: 'paint', id: p.id, name: p.name, desc: p.desc, rarity: p.rarity, free: !!p.free })),
-  ...NAME_PRESETS.map((n): Collectable => ({ key: 'name:' + n.name, kind: 'name', id: n.name, name: `"${n.name}"`, desc: 'A name for your B-17 · pick it in the hangar', rarity: n.rarity, free: !!n.free })),
+  ...NAME_PRESETS.map((n): Collectable => ({ key: 'name:' + n.name, kind: 'name', id: n.name, name: `"${n.name}"`, desc: 'A name for your B-17 · pick it in the hangar', rarity: n.rarity, free: !!n.free, exclusive: n.exclusive })),
 ];
 
 export const KIND_LABEL: Record<ItemKind, string> = { mod: 'Weapon mod', nose: 'Nose art', paint: 'Paint scheme', name: 'Bomber name' };
