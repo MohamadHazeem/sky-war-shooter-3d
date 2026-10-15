@@ -50,8 +50,8 @@ const table: PhraseTable = {
     'Director': 'المخرج',
     'Aircraft': 'الطائرات',
     '· Tab cycles': '· Tab للتنقّل',
-    'Space play/pause · ←/→ frame · Shift+←/→ 5 s · ,/. moments · 1–4 camera · Free: WASD Q/E, drag to look, Shift fast · Orbit: drag, wheel · H hide UI · Esc exit':
-      'المسافة تشغيل/إيقاف · ←/→ إطار · Shift+←/→ ‏5 ث · ,/. اللقطات · 1–4 الكاميرا · الحرّة: WASD وQ/E، اسحب للنظر، Shift للإسراع · المدار: اسحب، العجلة · H إخفاء الواجهة · Esc خروج',
+    'Space play/pause · ←/→ frame · Shift+←/→ 5 s · ,/. moments · 1–5 camera · Free: WASD Q/E, drag to look, Shift fast · Orbit: drag, wheel · H hide UI · Esc exit':
+      'المسافة تشغيل/إيقاف · ←/→ إطار · Shift+←/→ ‏5 ث · ,/. اللقطات · 1–5 الكاميرا · الحرّة: WASD وQ/E، اسحب للنظر، Shift للإسراع · المدار: اسحب، العجلة · H إخفاء الواجهة · Esc خروج',
     'Photo': 'التصوير',
     'Field of view': 'مجال الرؤية',
     'Auto FOV': 'مجال رؤية تلقائي',

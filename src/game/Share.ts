@@ -58,7 +58,7 @@ export function captureFrame(engine: Engine): HTMLCanvasElement {
 }
 
 let fontsReady: Promise<unknown> | null = null;
-function loadFonts() {
+export function loadFonts() {
   if (!fontsReady) {
     fontsReady = Promise.race([
       Promise.all([document.fonts?.load('700 48px Oswald'), document.fonts?.load('400 24px "IBM Plex Mono"')]).catch(() => null),
@@ -149,8 +149,14 @@ export async function shareScreenshot(engine: Engine, stamp: ShareStamp): Promis
   drawStamp(c, stamp);
   const blob = await toBlob(c);
   const name = `${slug(GAME_NAME)}-${slug(stamp.mission)}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '')}.png`;
-  const text = shareTextFor(stamp);
-  const file = new File([blob], name, { type: 'image/png' });
+  return shareFile(blob, name, shareTextFor(stamp), 'Screenshot saved');
+}
+
+/** Shares an image file (Web Share with files) or downloads it and copies the text + link,
+ *  then toasts `saved` (+ "· share text and link copied"). Used by the screenshot above and
+ *  the replay theatre's share card (Theatre.ts). */
+export async function shareFile(blob: Blob, name: string, text: string, saved: string): Promise<ShareOutcome> {
+  const file = new File([blob], name, { type: blob.type || 'image/png' });
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
   if (nav.share && nav.canShare?.({ files: [file] })) {
     try {
@@ -163,7 +169,7 @@ export async function shareScreenshot(engine: Engine, stamp: ShareStamp): Promis
   }
   download(blob, name);
   const copied = await copyText(`${text} ${SHARE_URL}`);
-  toast(copied ? 'Screenshot saved · share text and link copied' : 'Screenshot saved');
+  toast(copied ? `${saved} · share text and link copied` : saved);
   return 'downloaded';
 }
 

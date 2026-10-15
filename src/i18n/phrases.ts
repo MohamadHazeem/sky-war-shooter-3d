@@ -23,6 +23,7 @@ import crewRoles from './ar/crewRoles';
 import squadron from './ar/squadron';
 import secondTour from './ar/secondTour';
 import cinema from './ar/cinema';
+import replayStudio from './ar/replayStudio';
 // Arabic phrase tables, keyed by the exact English text shown by the game.
 // One file per area under ./ar/ so they can be maintained independently.
 import type { PhraseTable, Pattern } from './types';
@@ -55,7 +56,7 @@ import ditching from './ar/ditching';
 import sea from './ar/sea';
 
 // manual first: its generic words (Low, Close, Zoom...) never override another screen's wording
-const TABLES: PhraseTable[] = [mastery, touchGunner, crewDecisions, coopLobbies, spatialAudio, score, crewStories, seasons, renderer, cinema, b17Damage, deepPenetration, bombRun, formation, soundscape, luftwaffe, enemyAi, gunnerSurvival, cleanHud, menu, weather, aa, sea, ditching, squadron, secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles, bombardier];
+const TABLES: PhraseTable[] = [replayStudio, mastery, touchGunner, crewDecisions, coopLobbies, spatialAudio, score, crewStories, seasons, renderer, cinema, b17Damage, deepPenetration, bombRun, formation, soundscape, luftwaffe, enemyAi, gunnerSurvival, cleanHud, menu, weather, aa, sea, ditching, squadron, secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles, bombardier];
 
 // Any ./ar/*.ts table not listed above is picked up automatically and goes FIRST (lowest
 // precedence), like a newly prepended table: a new goal only adds its file, no edit here.
