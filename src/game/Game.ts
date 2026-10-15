@@ -53,6 +53,7 @@ import { showCampaignMap, prepareCampaignMission, isSideRaid } from '../ui/Campa
 import { TourRuntime } from './TourRuntime';
 import { showTour as showTourScreen, registerTourOpener } from '../ui/TourScreen';
 import '../ui/CustomBattleScreen'; // registers the Custom Battle and Weekly Challenge modes + their Survival-screen tabs
+import { openMissionLink } from '../ui/MissionEditorScreen'; // registers the Mission Editor mode (Survival screen tab)
 import { CoopSession } from './CoopSession';
 import { qualityFallbackReady } from '../render/FrameTiming';
 import { syncSurfaceDetail } from '../render/SurfaceDetail';
@@ -329,7 +330,7 @@ export class Game {
     this.coop.onTitle();
     this.service.onTitle();
     this.menus.title();
-    this.onboarding.onTitle();
+    if (!openMissionLink(this)) this.onboarding.onTitle(); // a shared player mission link (?mission=CODE) goes before the first flight, once per page load
     this.ui.fade(false);
   }
 

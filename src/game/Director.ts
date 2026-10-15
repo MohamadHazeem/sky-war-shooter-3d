@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import type { Game } from './Game';
 import { Mission, Round, roundDef, SpawnFrom, Wave } from './Missions';
 import { STATIONS, STATION_ORDER, StationId } from '../world/B17Layout';
-import { randomEnemyType, ENEMY_VARIANTS } from '../world/EnemyTypes';
+import { pickEnemyType, randomEnemyType, ENEMY_VARIANTS } from '../world/EnemyTypes';
 import type { AttackType } from '../world/AI';
 import type { Incoming } from '../ui/Radar';
 import * as Chatter from './RadioChatter';
@@ -171,7 +171,7 @@ export class Director {
       let attack: AttackType | undefined = w.attack;
       if (!attack) attack = (['headon', 'stern', 'beam', 'high'] as AttackType[])[Math.floor(Math.random() * 4)];
       const tier = g.roundIdx + (g.mission && g.mission.number > 0 ? Math.floor((g.mission.number - 1) / 2) : 0);
-      const selected = g.modes.enemyType(g.mission, tier);
+      const selected = w.types?.length ? pickEnemyType(w.types, tier) : g.modes.enemyType(g.mission, tier);   // player missions: per-group types
       const regular = selected ?? randomEnemyType(tier);
       const type = selected ? selected : regular === 'ju88' && weatherNow.night > .5 ? 'ju88g' : regular === 'bf110' && tier >= 3 && Math.random() < .35 ? 'me410' : regular;
       if (g.mission && isSecondTourId(g.mission.id) && g.mission.number >= 7 && type === 'fw190') attack = 'stern';

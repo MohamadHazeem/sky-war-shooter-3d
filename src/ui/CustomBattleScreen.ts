@@ -22,7 +22,7 @@ import { tx } from '../i18n';
 // the set-up summary, each piece translated
 const describe = (c: CustomConfig) => configParts(c).map((p) => tx(p)).join(' · ');
 
-function injectCss() {
+export function injectCss() {
   if (document.getElementById('cb-css')) return;
   const st = document.createElement('style');
   st.id = 'cb-css';

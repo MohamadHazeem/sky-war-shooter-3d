@@ -15,6 +15,7 @@ export interface Wave {
   rockets?: number;           // fraction of the wave carrying Wgr. 21 rockets
   radio?: [string, string];
   station?: string;           // gunner missions: the gun position this group goes for (unset = the player's)
+  types?: EnemyType[];        // only these enemy types in this group (player missions, MissionEditor.ts)
 }
 
 export interface Mission {

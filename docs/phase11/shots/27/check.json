@@ -1,0 +1,39 @@
+{
+  "code": "Fgw0JSCQQMEQKkMBAEpldCBIdW50RqU",
+  "flight": {
+    "res": "0s kills 0 enemies 0 bombers 9 playing\n30s kills 2 enemies 1 bombers 9 playing\n60s kills 2 enemies 2 bombers 9 playing\n89s kills 3 enemies 0 bombers 9 playing\n119s kills 3 enemies 0 bombers 9 playing\nenemy AI: {\"extend\":0,\"zoom\":0,\"dive\":0,\"reattack\":0,\"jink\":0,\"break\":0,\"splitS\":0,\"weakGun\":0,\"straggler\":0,\"engine\":0,\"schwarm\":0,\"signature\":0,\"limp\":6,\"press\":0}\nRESULT: Mission complete — perks 0, kills 3, accuracy 24%, bombers lost 0, t=148s",
+    "types": {
+      "me262": 4,
+      "me163": 4
+    },
+    "state": "debrief",
+    "flakMax": 1.3,
+    "bombsAway": 99,
+    "waves": 3
+  },
+  "library": [
+    {
+      "code": "Fgw0JSCQQMEQKkMBAEpldCBIdW50RqU",
+      "mine": false,
+      "plays": 1,
+      "wins": 1,
+      "best": 2029,
+      "rating": 4,
+      "at": 1792071727033
+    }
+  ],
+  "libraryNoHScroll-en": true,
+  "editorNoHScroll-en": true,
+  "editorWaves-en": 5,
+  "libraryNoHScroll-ar": true,
+  "editorNoHScroll-ar": true,
+  "editorWaves-ar": 5,
+  "libraryNoHScroll-phone-en": true,
+  "editorNoHScroll-phone-en": true,
+  "editorWaves-phone-en": 5,
+  "libraryNoHScroll-phone-ar": true,
+  "editorNoHScroll-phone-ar": true,
+  "editorWaves-phone-ar": 5,
+  "damaged": "This mission code is damaged — a character is missing or wrong.",
+  "errors": []
+}
