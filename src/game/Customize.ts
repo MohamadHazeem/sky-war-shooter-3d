@@ -60,13 +60,19 @@ export const withName = (s: string) => s.replace(/Sky Queen/g, bomberName());
 // ---------- the 3D aircraft ----------
 let dressed: Bomber | null = null;
 
+/** The nose art painted on the player's B-17 (an owned design, else the default script). */
+export function noseArtId(): string {
+  const p = Progression.current;
+  return p && owns(p, 'nose:' + p.bomber.nose) ? p.bomber.nose : 'script';
+}
+
 // Called when the player's B-17 is spawned (World.spawnFormation): name, paint, nose art
 export function dressPlayerBomber(b: Bomber) {
   dressed = b;
   const p = Progression.current;
   b.name = bomberName();
   const paint = p && owns(p, 'paint:' + p.bomber.paint) ? p.bomber.paint : 'olive';
-  const nose = p && owns(p, 'nose:' + p.bomber.nose) ? p.bomber.nose : 'script';
+  const nose = noseArtId();
   applyPaint(b.model, paint);
   applyNoseArt(b.model, nose, b.name, paint === 'silver' ? 0.45 : 0.1);
 }

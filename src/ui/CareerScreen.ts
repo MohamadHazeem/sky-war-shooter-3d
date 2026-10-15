@@ -8,6 +8,7 @@ import { savedName } from '../net/Leaderboard';
 import { esc, fmtDate, fmtHours, insigniaSvg, onBackKey, showLayer } from './serviceCommon';
 import { num, tx } from '../i18n';
 import { showNemesisScreen } from './NemesisScreen';
+import { showStatsScreen } from './StatsScreen';
 
 export function showCareerScreen(c: CareerData, h: { back(): void; trophies(): void }) {
   const el = showLayer('svc-career');
@@ -98,10 +99,11 @@ export function showCareerScreen(c: CareerData, h: { back(): void; trophies(): v
       <span>${tx('Achievements: {n}/{m}', { n: achievements.count(), m: ACHIEVEMENTS.length })}</span>
       <div class="svc-stamp svc-stamp-foot">${tx('CERTIFIED CORRECT')}</div>
     </div>
-    <div class="row svc-actions"><button class="btn ghost" data-back>${tx('Back')}</button><button class="btn" data-tro>${tx('Trophies')}</button><button class="btn" data-nem>${tx('Luftwaffe Experten')}</button></div>
+    <div class="row svc-actions"><button class="btn ghost" data-back>${tx('Back')}</button><button class="btn" data-tro>${tx('Trophies')}</button><button class="btn" data-nem>${tx('Luftwaffe Experten')}</button><button class="btn" data-stats>${tx('Personal stats')}</button></div>
   </div></div>`;
   el.querySelector('[data-back]')!.addEventListener('click', h.back);
   el.querySelector('[data-tro]')!.addEventListener('click', h.trophies);
   el.querySelector('[data-nem]')!.addEventListener('click', () => showNemesisScreen({ back: () => showCareerScreen(c, h) }));
+  el.querySelector('[data-stats]')!.addEventListener('click', () => showStatsScreen(c, { back: () => showCareerScreen(c, h) }));
   onBackKey(el, h.back);
 }
