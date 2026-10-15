@@ -32,6 +32,7 @@ export interface LessonStep {
   timeout: number;               // s: the step moves on anyway (a lesson can never get stuck)
   drone?: DroneSpec;
   leadPip?: boolean;             // force the lead indicator on, whatever the difficulty
+  noAssist?: boolean;            // aim assist off for the step: the player has to find the lead point
   need?: number;                 // bursts: how many short bursts
 }
 
@@ -67,7 +68,7 @@ export const LESSONS: readonly LessonDef[] = [
     steps: [
       drill('left waist', WAIST_DRILL, true),
       {
-        id: 'hold', kind: 'leadHold', title: 'Aim ahead', timeout: 40, leadPip: true,
+        id: 'hold', kind: 'leadHold', title: 'Aim ahead', timeout: 40, leadPip: true, noAssist: true,
         text: 'Your rounds need time to get there, so aim ahead of a crossing plane. Hold the sight on the yellow <b class="gold">◇ lead indicator</b> for a second.',
         radio: ['Navigator', 'Don\'t chase his tail — get ahead of him.'],
         drone: { dist: 520, y0: 0, p0: 0.06, ay: 0.45, ap: 0.02, w: 0.18 },

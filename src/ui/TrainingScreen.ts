@@ -7,7 +7,7 @@ import {
 import { tx } from '../i18n';
 
 // Hangar → Training: the Gunnery School and the four station lessons, one row each, in the
-// order they unlock. A row shows its state, the accuracy before → after of the last finished
+// order they unlock (a lesson's summary already names its gun position). A row shows its state, the accuracy before → after of the last finished
 // flight, and Start / Skip. Simple Phase 8 sheet (menu-sheet + menu-choice styles).
 
 export interface TrainingRow {
@@ -61,15 +61,16 @@ export function showTrainingScreen(schoolDone: boolean, a: TrainingActions) {
       <p class="tr-meta">${tx('Lessons complete: {n} / {m}', { n: m.completed, m: m.total })}${gain}</p>
       <div class="tr-list">${rows.map((r) => `
         <div class="menu-choice tr-row${r.next ? ' primary' : ''}${r.status === 'locked' ? ' locked' : ''}" data-row="${r.id}">
-          <div class="tr-head"><span>${esc(tx(r.title))}</span><em class="tr-status ${r.status}">${tx(STATUS[r.status])}</em></div>
-          <small>${esc(tx(r.station))} · ${esc(tx(r.summary))}</small>
-          ${r.result ? `<small class="tr-acc">${tx('Accuracy {a} → {b}', { a: r.result[0], b: r.result[1] })}</small>` : ''}
+          <div class="tr-text">
+            <div class="tr-head"><span>${esc(tx(r.title))}</span>${r.result ? `<small class="tr-acc">${tx('Accuracy {a} → {b}', { a: r.result[0], b: r.result[1] })}</small>` : ''}<em class="tr-status ${r.status}">${tx(STATUS[r.status])}</em></div>
+            <small>${r.id === 'school' ? esc(tx(r.station)) + ' · ' : ''}${esc(tx(r.summary))}</small>
+          </div>
           <div class="tr-actions">
             ${r.status === 'locked' ? `<small>${tx('Finish or skip the lesson above to unlock')}</small>` : `<button class="btn${r.next ? '' : ' ghost'}" data-start="${r.id}">${tx(r.status === 'done' ? 'Fly again' : 'Start')}</button>`}
             ${r.canSkip ? `<button class="btn ghost" data-skip="${r.id}">${tx('Skip')}</button>` : ''}
           </div>
         </div>`).join('')}
-      </div></div></div>`;
+      </div><div class="tr-more" aria-hidden="true">▼</div></div></div>`;
     root.querySelector<HTMLElement>('[data-back]')!.onclick = a.back;
     root.querySelectorAll<HTMLElement>('[data-start]').forEach((b) => {
       b.onclick = () => { const id = b.dataset.start!; if (id === 'school') a.school(); else a.lesson(id as LessonId); };
@@ -77,7 +78,15 @@ export function showTrainingScreen(schoolDone: boolean, a: TrainingActions) {
     root.querySelectorAll<HTMLElement>('[data-skip]').forEach((b) => {
       b.onclick = () => { const p2 = loadLessonProgress(); if (skipLesson(p2, b.dataset.skip as LessonId)) saveLessonProgress(p2); draw(); };
     });
-    root.querySelector<HTMLElement>('.tr-row.primary [data-start]')?.focus();
+    const primary = root.querySelector<HTMLElement>('.tr-row.primary');
+    primary?.querySelector<HTMLElement>('[data-start]')?.focus({ preventScroll: true });
+    // short screens scroll the sheet: bring the next lesson up only when it starts below the fold
+    const sheet = root.querySelector<HTMLElement>('.training-sheet')!;
+    if (primary && primary.getBoundingClientRect().top > sheet.getBoundingClientRect().bottom - 40) primary.scrollIntoView({ block: 'nearest' });
+    // phones hide overlay scrollbars: a fading ▼ at the bottom edge while more rows lie below
+    const more = () => sheet.classList.toggle('more', sheet.scrollTop + sheet.clientHeight < sheet.scrollHeight - 4);
+    sheet.onscroll = more;
+    more();
   };
   draw();
   onBackKey(root, a.back);

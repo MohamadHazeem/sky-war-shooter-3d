@@ -9,7 +9,7 @@ import { sound } from '../audio/Sound';
 import { Tutorial, TUTORIAL } from './Tutorial';
 import { Hints } from './Hints';
 import { LessonRunner, lessonMission } from './LessonRunner';
-import { lessonById, type LessonId } from './StationLessons';
+import { isUnlocked, lessonById, loadLessonProgress, type LessonId } from './StationLessons';
 import { showTrainingScreen } from '../ui/TrainingScreen';
 import { ControlsCard, ControlsHint } from '../ui/ControlsCard';
 import '../ui/onboarding.css';
@@ -95,12 +95,14 @@ export class Onboarding {
     });
   }
 
-  startLesson(id: LessonId) {
+  // follows the unlock order like the Training screen does: a locked lesson never starts
+  startLesson(id: LessonId): boolean {
     const def = lessonById(id);
-    if (!def) return;
+    if (!def || !isUnlocked(loadLessonProgress(), id)) return false;
     this.saved.promptDismissed = true;   // the player chose their training: no automatic first flight afterwards
     this.save();
     this.game.startMission(lessonMission(def));
+    return true;
   }
 
   // ---------------- hooks ----------------

@@ -1,10 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
+import * as THREE from 'three';
 import { stubStorage } from './helpers';
 import {
   LESSONS, LESSON_KEY, emptyProgress, loadLessonProgress, saveLessonProgress, isUnlocked, lessonStatus, nextLesson,
   recordAttempt, recordResult, skipLesson, accuracy, accuracyGain, lessonMetrics, lessonById,
 } from '../src/game/StationLessons';
 import { LessonRunner, lessonMission } from '../src/game/LessonRunner';
+import { Onboarding } from '../src/game/Onboarding';
+import type { LessonId } from '../src/game/StationLessons';
 import { trainingRows } from '../src/ui/TrainingScreen';
 import { GunnerSurvival } from '../src/game/GunnerSurvival';
 import { STATIONS } from '../src/world/B17Layout';
@@ -140,15 +143,15 @@ describe('station lessons: mission and oxygen pace', () => {
 
 // A lesson driven frame by frame against a stand-in game: the runner's checks read the
 // same fields the real gunner and world expose.
-function fakeRunner(id: 'ball' | 'tail') {
+function fakeRunner(id: LessonId) {
   stubStorage();
   const guns = new Map(Object.keys(STATIONS).map((k) => [k, { jam: false, clear: 0, tapAge: Infinity }]));
-  let drones: { f: { alive: boolean }; dist: number }[] = [];
+  let drones: { f: { alive: boolean; pos: THREE.Vector3; vel: THREE.Vector3 }; dist: number }[] = [];
   const keys = new Set<string>();
   const game = {
     state: 'playing',
-    world: { stats: { shots: 0, hits: 0 }, playerDamageScale: 1, aiGunnerFactor: 1, flakIntensity: 1, playerFocus: 0, callout: vi.fn(), playerBomber: {} },
-    gunner: { station: lessonById(id)!.station, firing: false, survival: new GunnerSurvival(), gunState: (k: string) => guns.get(k)!, loadout: { weapon: { velocity: 870 }, velocity: 1 } },
+    world: { stats: { shots: 0, hits: 0 }, playerDamageScale: 1, aiGunnerFactor: 1, flakIntensity: 1, playerFocus: 0, callout: vi.fn(), playerBomber: { vel: new THREE.Vector3() } },
+    gunner: { station: lessonById(id)!.station, firing: false, survival: new GunnerSurvival(), gunState: (k: string) => guns.get(k)!, assist: 1, aimDirection: (v: THREE.Vector3) => v.set(-1, 0, 0), loadout: { weapon: { velocity: 870 }, velocity: 1 } },
     hud: { forceLeadPip: false },
     input: { hit: (k: string) => keys.has(k) },
   };
@@ -156,14 +159,14 @@ function fakeRunner(id: 'ball' | 'tail') {
     get drones() { return drones; },
     anyAlive: () => drones.some((d) => d.f.alive),
     clear: () => { drones = []; },
-    spawn: (_s: string, spec: { dist: number }) => { const d = { f: { alive: true }, dist: spec.dist }; drones.push(d); return d; },
+    spawn: (_s: string, spec: { dist: number }) => { const d = { f: { alive: true, pos: new THREE.Vector3(spec.dist, 0, 0), vel: new THREE.Vector3(0, 0, 100) }, dist: spec.dist }; drones.push(d); return d; },
   };
   const ui = { banner: vi.fn() };
   const r = Object.assign(Object.create(LessonRunner.prototype), {
-    game, ui, range, engine: { camera: { position: {} } }, host: { finished: vi.fn() }, log: [], card: null, lastHtml: '',
+    game, ui, range, engine: { camera: { position: new THREE.Vector3() } }, host: { finished: vi.fn() }, log: [], card: null, lastHtml: '',
     active: true, def: lessonById(id), stepIdx: -1, phase: 'intro', t: 0, total: 0, acc: 0, shots0: 0, hits0: 0, prevShots: 0,
     bursts: 0, longBursts: 0, burstT: -1, wasted: 0, triggered: false, byPlayer: false, skip: false, stepsSkipped: 0, timeouts: 0,
-    before: null, after: null,
+    before: null, after: null, assist: null,
   }) as LessonRunner;
   const run = (s: number, each?: () => void) => { for (let t = 0; t < s; t += 0.05) { each?.(); r.update(0.05); } };
   const shoot = (shots: number, hits: number) => { game.world.stats.shots += shots; game.world.stats.hits += hits; };
@@ -234,5 +237,40 @@ describe('station lessons: the runner', () => {
     const e = loadLessonProgress().lessons.tail!;
     expect(e).toMatchObject({ completed: 1, after: 0.25, stepsSkipped: 1, timeouts: 1 });
     expect(e.before).toBeUndefined();
+  });
+
+  it('turns aim assist off while the player has to find the lead point, and gives it back after', () => {
+    const f = fakeRunner('waist');
+    const { r, game } = f;
+    game.gunner.assist = 0.5;
+    f.run(3.6);
+    (r as any).skip = true; f.run(0.1); f.run(1.4);       // past the warm-up drill
+    expect(r.step?.kind).toBe('leadHold');
+    expect(game.hud.forceLeadPip).toBe(true);
+    expect(game.gunner.assist).toBe(0);
+    game.gunner.assist = 1; f.run(0.1);                   // Settings re-applied mid-step
+    expect(game.gunner.assist).toBe(0);
+    (r as any).skip = true; f.run(0.1);
+    expect(game.gunner.assist).toBe(1);
+    f.run(1.4);
+    expect(r.step?.id).toBe('withPip');
+    expect(game.gunner.assist).toBe(1);                   // the next step keeps the player's setting
+  });
+});
+
+describe('station lessons: unlock order', () => {
+  it('a locked lesson never starts, even when asked for directly', () => {
+    stubStorage();
+    const startMission = vi.fn();
+    const ob = Object.assign(Object.create(Onboarding.prototype), { saved: { tutorialDone: true, promptDismissed: false }, game: { startMission } }) as Onboarding;
+    expect(ob.startLesson('top')).toBe(false);
+    expect(startMission).not.toHaveBeenCalled();
+    expect(ob.startLesson('waist')).toBe(true);
+    expect(startMission).toHaveBeenCalledOnce();
+    const p = loadLessonProgress();
+    recordResult(p, 'waist', { time: 60, before: null, after: null, stepsSkipped: 0, timeouts: 0 });
+    saveLessonProgress(p);
+    expect(ob.startLesson('top')).toBe(true);
+    expect(ob.startLesson('tail')).toBe(false);
   });
 });

@@ -96,15 +96,31 @@
 #tutCard.lesson .skip:hover, #tutCard.lesson .skip:focus-visible { color: var(--khaki); border-color: var(--khaki); outline: none; }
 body.touch #tutCard.lesson .skip { min-height: 44px; font-size: 14px; }
 
-/* Hangar → Training (ui/TrainingScreen.ts) */
-.training-sheet .tr-meta { font: 13px/1.5 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; color: var(--ink-dim); margin: 0 0 16px; }
-.training-sheet .tr-list { display: grid; gap: 10px; }
-.training-sheet .tr-row { cursor: default; min-height: 0; }
+/* Hangar → Training (ui/TrainingScreen.ts): compact so the five rows and the totals fit a
+   720p screen; shorter screens and phones scroll the sheet (visible khaki scrollbar) */
+.training-sheet { padding-block: 20px; scrollbar-color: var(--khaki) rgba(0, 0, 0, 0.25); scrollbar-gutter: stable; }
+.training-sheet .menu-back.btn { margin-bottom: 6px; background: #202720; }   /* sticky: solid, rows scroll under it */
+.training-sheet .tr-more { position: sticky; bottom: -20px; height: 0; overflow: visible; pointer-events: none; opacity: 0; transition: opacity 0.2s; text-align: center; color: var(--khaki); font-size: 14px; }
+.training-sheet .tr-more::before { content: ''; position: absolute; inset: -46px -28px 0; background: linear-gradient(transparent, rgba(20, 26, 22, 0.95)); z-index: -1; }
+.training-sheet.more .tr-more { opacity: 1; height: 26px; margin-top: -26px; }
+.training-sheet h2 { font-size: 30px; margin: 4px 0 8px; }
+.training-sheet > p { margin: 0 0 6px; font-size: 14px; line-height: 1.5; }
+.training-sheet .tr-meta { font: 13px/1.5 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; color: var(--ink); margin: 0 0 12px; }
+.training-sheet .tr-list { display: grid; gap: 8px; }
+.training-sheet .tr-row { cursor: default; min-height: 0; padding: 10px 14px; font-size: 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 16px; }
 .training-sheet .tr-row.locked { opacity: 0.55; }
-.training-sheet .tr-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.training-sheet .tr-row small { margin-top: 3px; }
+.training-sheet .tr-head { display: flex; align-items: baseline; gap: 12px; }
+.training-sheet .tr-head > span { flex: 1; }
 .training-sheet .tr-status { font: 600 12px/1 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; letter-spacing: 1.5px; font-style: normal; color: var(--ink-dim); text-transform: uppercase; }
 .training-sheet .tr-status.done { color: var(--good); }
 .training-sheet .tr-status.new { color: var(--khaki); }
-.training-sheet .tr-acc { color: var(--ink); }
-.training-sheet .tr-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
-.training-sheet .tr-actions .btn { min-height: 44px; }
+.training-sheet .tr-row small.tr-acc { margin: 0; color: var(--ink); white-space: nowrap; }
+.training-sheet .tr-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
+.training-sheet .tr-actions small { max-width: 220px; margin: 0; text-align: end; font-size: 12px; }
+.training-sheet .tr-actions .btn { min-height: 44px; padding-block: 8px; }
+@media (max-width: 600px) {
+  .training-sheet .tr-row { grid-template-columns: 1fr; }
+  .training-sheet .tr-actions { justify-content: flex-start; margin-top: 8px; }
+  .training-sheet .tr-actions small { max-width: none; text-align: start; }
+}

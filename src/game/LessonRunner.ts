@@ -66,6 +66,7 @@ export class LessonRunner {
   private card: HTMLElement | null = null;
   private range: TrainingDrones;
   private lastHtml = '';
+  private assist: number | null = null; // the gunner's aim assist, saved while a noAssist step holds it at 0
 
   constructor(private game: Game, private engine: Engine, private ui: UI, private host: LessonHost) {
     this.range = new TrainingDrones(game);
@@ -132,6 +133,7 @@ export class LessonRunner {
       case 'step': {
         const s = this.step!;
         g.hud.forceLeadPip = !!s.leadPip;
+        if (s.noAssist) this.holdAssist();
         this.track(s, dt);
         const skipped = this.skip, timedOut = this.t > s.timeout;
         if (skipped || timedOut || this.check(s, dt)) this.endStep(s, skipped, !skipped && timedOut);
@@ -191,6 +193,7 @@ export class LessonRunner {
   private cleanupStep() {
     const g = this.game;
     g.hud.forceLeadPip = false;
+    if (this.assist !== null) { g.gunner.assist = this.assist; this.assist = null; }
     const life = g.gunner.survival;
     if (life.oxygenDrill) { life.oxygenDrill = null; if (life.oxygen) life.reconnect(); }
     for (const id of Object.keys(STATIONS) as StationId[]) {
@@ -227,6 +230,14 @@ export class LessonRunner {
     life.oxygenDrill = DRILL_OXYGEN;
     life.oxygen = true;
     life.oxygenTime = 0;
+  }
+
+  // aim assist would pull the sight onto the lead point by itself and pass the step for the
+  // player; Settings re-applied mid-step (pause menu) update the value to restore
+  private holdAssist() {
+    const g = this.game.gunner;
+    if (this.assist === null || g.assist !== 0) this.assist = g.assist;
+    g.assist = 0;
   }
 
   // per-frame bookkeeping the checks read
