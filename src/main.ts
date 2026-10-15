@@ -10,7 +10,7 @@ import { DeviceControls } from './game/DeviceControls';
 import { installShare } from './game/Share';
 import { AutoGraphics } from './game/AutoGraphics';
 import { analytics } from './net/Analytics';
-import { langReady } from './i18n';
+import { langReady, setLang } from './i18n';
 import { checkSavesAtBoot, openSaveRecovery } from './ui/SaveRecoveryScreen';
 import './style.css';
 import './ui/cleanHud.css';
@@ -80,6 +80,8 @@ async function boot() {
   };
   (window as any).sws.assetsReady = () => isMissionReady();
   if (import.meta.env.DEV) {
+    // the game's own i18n instance (a dynamic import from a test page can load a second copy)
+    (window as any).sws.setLang = setLang;
     const { markerCapture, captureMarkerAudit } = await import('./ui/MarkerAudit');
     markerCapture.enabled = true;
     (window as any).sws.markerAuditRun = async (progress?: (s: string) => void) => {

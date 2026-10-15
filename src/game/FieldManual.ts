@@ -286,6 +286,7 @@ export const CHAPTERS: Chapter[] = [
         items: [
           'Two players crew one B-17 in Survival, each on a different gun. The host shares a 6-character room code; rooms expire after 2 hours.',
           'Title menu → Co-op (beta).',
+          'Watch: enter a crew\'s code and press Watch to follow the battle without a gun, from any gun position (1–5) or the cinematic camera (C). Settings → Spectator delay holds the picture back; Streamer mode hides codes and callsigns and makes the HUD bigger.',
         ],
       },
     ],

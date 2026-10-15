@@ -30,6 +30,7 @@ import { mountCloudSave } from './CloudSavePanel';
 import { mountStatsToggle } from '../net/Analytics';
 import { t, tx, getLang, setLang, applyDocumentLang, LANGS, type Lang } from '../i18n';
 import '../i18n/rtl.css';
+import { SPECTATOR_DELAYS, delaySeconds } from '../game/SpectatorRules';
 
 export interface Settings {
   hudDetail?: HudDetail;
@@ -62,6 +63,8 @@ export interface Settings {
   breathing?: boolean;  // oxygen-mask breathing (Sound.setBreathing); undefined = on
   bookends?: boolean;  // take-off and landing scenes around B-17 and P-51 campaign missions (Bookends.ts, FighterBookends.ts); undefined = on
   crewRoom?: boolean;  // crew-room scenes between story missions (CrewRoomScene.ts); undefined = on
+  streamer?: boolean;   // streamer mode: no personal info on screen, a bigger HUD (ui/Streamer.ts); undefined = off
+  spectatorDelay?: number;   // co-op spectators: the broadcast is held back this many seconds (game/SpectatorRules.ts); undefined = off
   gfxAuto?: 'pending'; // first-launch graphics benchmark still to run (game/AutoGraphics.ts); a preset picked here clears it
 }
 
@@ -487,14 +490,17 @@ export class UI {
       <label class="setting">${tx('Film look')} <select data-k="filmLook">${(['off', 'film', 'kodachrome', 'newsreel'] as const).map((v) => `<option value="${v}" ${presetFilmLook(s.quality, s.filmLook) === v ? 'selected' : ''}>${v === 'off' ? t('common.off') : tx(v === 'film' ? 'Film' : v === 'kodachrome' ? 'Kodachrome' : 'Newsreel B&W')}</option>`).join('')}</select></label>
       <label class="setting">${t('settings.bookends')} <select data-k="bookends"><option value="true">${t('common.on')}</option><option value="false" ${s.bookends === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
       <label class="setting">${t('settings.crewRoom')} <select data-k="crewRoom"><option value="true">${t('common.on')}</option><option value="false" ${s.crewRoom === false ? 'selected' : ''}>${t('common.off')}</option></select></label>
+      <label class="setting" title="${tx('Hides join codes, callsigns and the cloud-save code, and makes the HUD bigger.')}">${tx('Streamer mode')} <select data-k="streamer"><option value="false">${t('common.off')}</option><option value="true" ${s.streamer ? 'selected' : ''}>${t('common.on')}</option></select></label>
+      <label class="setting" title="${tx('Co-op spectators see the battle this much later.')}">${tx('Spectator delay')} <select data-k="spectatorDelay">${SPECTATOR_DELAYS.map((n) => `<option value="${n}" ${delaySeconds(s.spectatorDelay) === n ? 'selected' : ''}>${n ? tx('{n} s', { n }) : t('common.off')}</option>`).join('')}</select></label>
       <label class="setting">${t('settings.flightMode')} <select data-k="flightMode"><option value="mouseAim">${t('settings.mouseAim')}</option><option value="direct" ${s.flightMode === 'direct' ? 'selected' : ''}>${t('settings.direct')}</option></select></label>
       <div class="row" style="margin-top:22px"><button class="btn" data-back>${t('settings.done')}</button></div>
     </div></div>`;
     st.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-k]').forEach((i) => i.addEventListener('input', () => {
       const k = i.dataset.k as keyof Settings;
       let v: any = i.value;
+      if (k === 'spectatorDelay') v = delaySeconds(v);
       if (k === 'voiceVolume' || k === 'sensitivity' || k === 'volume' || k === 'musicVolume' || k === 'sfxVolume' || k === 'ambVolume' || k === 'fov') v = parseFloat(v);
-      if (k === 'lensDirt' || k === 'weatherEffects' || k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'musicCues' || k === 'adaptive' || k === 'killCam' || k === 'fpsCounter' || k === 'breathing' || k === 'bookends' || k === 'crewRoom') v = v === 'true';
+      if (k === 'lensDirt' || k === 'weatherEffects' || k === 'invertY' || k === 'radio' || k === 'markers' || k === 'music' || k === 'musicCues' || k === 'adaptive' || k === 'killCam' || k === 'fpsCounter' || k === 'breathing' || k === 'bookends' || k === 'crewRoom' || k === 'streamer') v = v === 'true';
       (s as any)[k] = v;
       if (k === 'quality') { delete s.gfxAuto; s.graphicsMode = 'manual'; st.querySelector<HTMLSelectElement>('[data-graphics]')!.value = graphicsChoice(s); }   // the player's choice wins over the first-launch pick
       if (k === 'fov') { const b = i.closest('label')?.querySelector('.fov-val'); if (b) b.textContent = `${v}°`; }
