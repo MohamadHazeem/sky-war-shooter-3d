@@ -11,7 +11,7 @@ export function aircraftFinish(m: T.Material): number {
 }
 /** Clear perspex retains dielectric Fresnel rather than a tinted opaque bubble. */
 export function tuneAircraftGlass(m: T.MeshStandardMaterial) {
-  if (!glassName.test(m.name)) return;
+  if (!glassName.test(m.name) || !m.transparent) return;
   m.color.setRGB(.82, .91, .96);
   m.roughness = .065; m.metalness = 0;
   m.opacity = .24; m.transparent = true; m.depthWrite = false;
@@ -27,7 +27,7 @@ export function installAircraftFinish() {
   // ORM remains authoritative: satin paint, slightly broader brushed aluminium lobes.
   T.ShaderChunk.metalnessmap_fragment += `
 #ifdef STANDARD
-  if(swsFinish>.5 && swsFinish<1.5) roughnessFactor=clamp(roughnessFactor*mix(.48,.78,metalnessFactor),.13,.9);
+  if(swsFinish>.5 && swsFinish<1.5) roughnessFactor=clamp(roughnessFactor*mix(.86,.9,metalnessFactor),.28,.9);
 #endif
 `;
   T.ShaderChunk.normal_fragment_maps += `

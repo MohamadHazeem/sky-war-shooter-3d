@@ -135,7 +135,7 @@ export class SkyDome {
 
 // Retain PMREM shaders and the capture scene across weather updates. The old implementation
 // disposed/recompiled these during fronts, causing multi-hundred-ms stalls in flight.
-interface EnvironmentCapture { material: THREE.ShaderMaterial; scene: THREE.Scene; pmrem: THREE.PMREMGenerator }
+interface EnvironmentCapture { floor: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>; material: THREE.ShaderMaterial; scene: THREE.Scene; pmrem: THREE.PMREMGenerator }
 const captures = new WeakMap<THREE.WebGLRenderer, EnvironmentCapture>();
 const targets = new WeakMap<THREE.Texture, THREE.WebGLRenderTarget>();
 export function disposeEnvironment(texture: THREE.Texture) {
@@ -149,9 +149,13 @@ export function buildEnvironment(renderer: THREE.WebGLRenderer, sky: SkyDome): T
       side:source.side,depthWrite:false,depthTest:false,
       uniforms:{...source.uniforms,...atmosUniforms,uEnvCapture:{value:1},uEnvCoverage:{value:Atmos.lowCoverage},uSunDisk:{value:0},uFarMapped:{value:0},uFarQuality:{value:0},uTgt:{value:new THREE.Vector4()},uGroundHaze:{value:24000}}});
     scene.add(dome);
-    capture={scene,material:dome.material as THREE.ShaderMaterial,pmrem:new THREE.PMREMGenerator(renderer)};captures.set(renderer,capture);
+    const floor=new THREE.Mesh(new THREE.CircleGeometry(5000,32),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));
+    floor.rotation.x=-Math.PI/2;floor.position.y=-60;scene.add(floor);
+    capture={scene,floor,material:dome.material as THREE.ShaderMaterial,pmrem:new THREE.PMREMGenerator(renderer)};captures.set(renderer,capture);
   }
   capture.material.uniforms.uEnvCoverage.value = Atmos.lowCoverage;
+  // Retain the calibrated lower-hemisphere fill on guns and cockpit frames.
+  capture.floor.material.color.setRGB(.95,.96,1).multiplyScalar(.55*Atmos.envFloor);
   // Direct solar disk belongs to the sun light; including it in IBL double-counts energy.
   const rt=capture.pmrem.fromScene(capture.scene,0,.1,20000,{size:128});
   targets.set(rt.texture,rt);return rt.texture;

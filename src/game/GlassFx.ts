@@ -369,7 +369,9 @@ const FRAG = /* glsl */ `
       vec3 vp=(viewMatrix*vec4(vW,1.)).xyz;
       float f=.14+.86*pow(1.-abs(dot(wn,normalize(cameraPosition-vW))),5.);
       vec4 reflected=swsGlassReflection(vp,vn);
-      float weight=min(.42,f);
+      // Exterior gun barrels cross the dome: do not wash their silhouette with IBL.
+      float receiverDepth=texture2D(swsReflectionDepth,ndc*.5+.5).r;
+      float weight=min(.42,f)*smoothstep(3.,12.,receiverDepth);
       vec3 rd=reflect(vd,wn);
       // Reflection behind the eye uses the same cloud/sky IBL as the outer glass.
       vec3 sky=textureCubeUV(swsReflectionEnvironment,rd,.035).rgb;

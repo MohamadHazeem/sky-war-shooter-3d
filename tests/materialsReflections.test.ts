@@ -3,11 +3,9 @@ import * as T from 'three';
 import { aircraftFinish, tuneAircraftGlass } from '../src/render/AircraftFinish';
 import { auditMaterial } from '../src/render/MaterialAudit';
 import { bindGlassReflection, reflectionUniforms } from '../src/render/GlassReflection';
-import { SunCascades } from '../src/render/SunCascades';
 import { FormationReflection, formationReflectionUniforms } from '../src/render/FormationReflection';
 import { InteriorLight } from '../src/render/InteriorLight';
 import { warmBatchedShadow } from '../src/render/ShadowWarmup';
-import { Atmos } from '../src/render/Atmosphere';
 
 describe('aircraft finishes and safe glass reflections', () => {
   it('warms untextured batched debris depth without leaking shadow or clipping state', () => {
@@ -44,10 +42,13 @@ describe('aircraft finishes and safe glass reflections', () => {
     }
   });
   it('uses a thin dielectric without a costly transmission pass and leaves paint alone', () => {
-    const glass = new T.MeshPhysicalMaterial({ transmission: .55 }); glass.name = 'hero_glass';
+    const glass = new T.MeshPhysicalMaterial({ transmission: .55, transparent: true }); glass.name = 'hero_glass';
     tuneAircraftGlass(glass);
     expect(glass.transmission).toBe(0); expect(glass.metalness).toBe(0);
     expect(glass.ior).toBe(1.46); expect(glass.depthWrite).toBe(false);
+    const farGlass = new T.MeshStandardMaterial({ roughness: .75 }); farGlass.name = 'hero_glass_low';
+    tuneAircraftGlass(farGlass);
+    expect(farGlass.transparent).toBe(false); expect(farGlass.roughness).toBe(.75);
     const paint = new T.MeshStandardMaterial({ roughness: .72 }); paint.name = 'hero_skin';
     tuneAircraftGlass(paint); expect(paint.roughness).toBe(.72);
   });
@@ -61,28 +62,6 @@ describe('aircraft finishes and safe glass reflections', () => {
     bindGlassReflection(color, linearDepth, camera, false);
     expect(reflectionUniforms.swsReflectionOn.value).toBe(0);
     expect(reflectionUniforms.swsReflectionProjection.value).toBe(matrix);
-  });
-  it('fits visible aircraft at 10–200 m with finer formation texels at the same map size', () => {
-    const scene = new T.Scene(), sun = new T.DirectionalLight(); scene.add(sun, sun.target);
-    const cascade = new SunCascades(scene, sun), camera = new T.PerspectiveCamera(62, 16 / 9, .03, 3000);
-    camera.position.set(0, 7600, 0); camera.updateMatrixWorld();
-    cascade.quality(2048, 40, true); cascade.update(camera, 4);
-    // Nearby wing/fuselage intersections remain in the fine map through 38 m.
-    const close = cascade.lights[0]; close.updateMatrixWorld(); close.shadow.updateMatrices(close);
-    expect((close.shadow.camera.right - close.shadow.camera.left) / 2048).toBeLessThan(.07);
-    for (const d of [10, 35, 50]) {
-      const p = new T.Vector3(0, 7600, -d).applyMatrix4(close.shadow.matrix);
-      expect(p.x).toBeGreaterThan(0); expect(p.x).toBeLessThan(1);
-      expect(p.y).toBeGreaterThan(0); expect(p.y).toBeLessThan(1);
-    }
-    const light = cascade.lights[1]; light.updateMatrixWorld(); light.shadow.updateMatrices(light);
-    expect((light.shadow.camera.right - light.shadow.camera.left) / 2048).toBeLessThan(520 / 2048 * .7);
-    for (const d of [10, 50, 100, 150, 200]) {
-      const p = new T.Vector3(0, 7600, -d).applyMatrix4(light.shadow.matrix);
-      expect(p.x).toBeGreaterThan(0); expect(p.x).toBeLessThan(1);
-      expect(p.y).toBeGreaterThan(0); expect(p.y).toBeLessThan(1);
-    }
-    expect(Atmos.sunDir.length()).toBeCloseTo(1);
   });
   it('stages six probe faces, skips unoccupied views and preserves borrowed aircraft parents', () => {
     const probe = new FormationReflection(), scene = new T.Scene(), eye = new T.PerspectiveCamera();

@@ -273,12 +273,13 @@ already-installed **headless shell**, never the desktop Chrome application.
 ### Phase 11 material reflections
 
 `AircraftFinish` retains baked ORM, satin paint, UV-oriented brushed-metal response and specular
-occlusion. Thin glass skips physical transmission and uses a single double-sided draw, including occupied pane overlays.
+occlusion. Paint roughness stays close to its authored value to avoid silver-white wings. Thin glass skips physical transmission and uses a single double-sided draw, including occupied pane overlays. Opaque distant glass stays opaque.
 `GlassReflection` reads the safe HDR composite and SoftDepth copy, with eight bounded trace steps,
 refined depth hits, depth-edge rejection, grazing fades and a small clamped spatial filter.
 `Engine.sortLayers` gates the copy/trace to nearby visible glass; Low and Medium retain IBL.
 
-`GlassFx` uses smooth pane normals and the weather-refreshed sky/cloud PMREM. Occupied High+ panes
+`GlassFx` uses smooth pane normals and the weather-refreshed sky/cloud PMREM. The original
+lower-hemisphere fill preserves cockpit-frame contrast; depth masking keeps nearby guns clear of reflection wash. Occupied High+ panes
 also use `FormationReflection`: a 256px aircraft-silhouette cubemap, one face every other frame,
 22–180 m, with no clouds, shadows, interior or effects passes. All six faces must be populated
 before sampling, and camera cuts invalidate them. The ordinary aircraft submission retains nearby
@@ -286,16 +287,14 @@ ships behind the eye; probe render lists borrow their existing matrices without 
 `Engine.warmRenderer` warms batched/non-batched probe variants. The probe is an approximation:
 it supplies actual offscreen aircraft silhouettes, not full material/damage-shader shading.
 
-The near sun cascade keeps its 80 m map width/3.9 cm High texels, shifts 20 m toward the view and
-covers receivers through 38 m before blending. Near/mid caster depth is fitted to 160/520 m;
-map-edge fades retain fallback coverage. The formation map retains its 345.6 m width.
+The final review retains the original sun-cascade fit and GTAO settings; the proposed
+contact-shadow expansion did not demonstrate a clear enough visual gain.
 Low-sun cloud illumination separates cool ambient fill from warm direct edges, alongside the
 mood LUT. High uses three radiance-normalized bloom levels for compact glints. The waist shaft
 uses a cached 32³ value-noise lattice and hoists linear plane distances outside a six-step march.
 `InteriorLight` draws these volumes at half resolution on layer 2, clips the integration against
 SoftDepth, then upsamples with depth weights. Other transparencies retain native resolution;
-World prewarm also warms the shaft composite. Formation GTAO extends through 220 m with a
-3.2 m contact radius and stronger cavity weight beyond the cockpit.
+World prewarm also warms the shaft composite.
 Submission retirement uses value iterators and changes instance visibility only when needed.
 High merges the existing authored LOD1 by material at 240–650 m, then uses compact LOD2 beyond
 650 m (60 m for offscreen shadow-only casters); close, reflected, damaged, player, falling, open-bay and object-blurred film aircraft

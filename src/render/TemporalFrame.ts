@@ -98,13 +98,13 @@ export class TemporalFrame {
         // sides of the projected normal's hemisphere, then normalize by the open arc.
         float arc(float h,float n){return .25*(cos(n)+2.*h*sin(n)-cos(2.*h-n));}
         void main(){vec3 p=viewAt(vUv);float d=-p.z*.001;
-          if(skyAt(vUv)||-p.z>220.){gl_FragColor=vec4(1.,d,0.,1.);return;}
+          if(skyAt(vUv)||-p.z>180.){gl_FragColor=vec4(1.,d,0.,1.);return;}
           // Derivative normal from the nearer depth neighbour avoids silhouette normals.
           vec3 l=viewAt(vUv-vec2(texel.x,0.))-p,r=viewAt(vUv+vec2(texel.x,0.))-p;
           vec3 b=viewAt(vUv-vec2(0.,texel.y))-p,t=viewAt(vUv+vec2(0.,texel.y))-p;
           vec3 n=normalize(cross(abs(l.z)<abs(r.z)?-l:r,abs(b.z)<abs(t.z)?-b:t));
           if(dot(n,-p)<0.)n=-n;
-          float radius=mix(.45,3.2,smoothstep(2.,35.,-p.z));
+          float radius=mix(.45,1.4,smoothstep(2.,35.,-p.z));
           float screenRadius=clamp(.5*radius/max(.001,-p.z*invProj[1][1]),texel.y*2.,.12);
           float visibility=0.;vec3 v=normalize(-p);
           float angle=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)+frame*.125;
@@ -132,9 +132,7 @@ export class TemporalFrame {
             float h0=clamp(-acos(clamp(horizon.x,-1.,1.)),lo,hi),h1=clamp(acos(clamp(horizon.y,-1.,1.)),lo,hi);
             visibility+=clamp((arc(h0,normalAngle)+arc(h1,normalAngle))/max(.001,arc(lo,normalAngle)+arc(hi,normalAngle)),0.,1.);
           }
-          float ao=clamp(visibility/slices,.15,1.);
-          // Broader aircraft crevices need contact weight at formation distances.
-          ao=pow(ao,mix(1.,2.,smoothstep(5.,20.,-p.z)));vec4 motion=texture2D(tMotion,vUv);vec2 prev=vUv+motion.xy;vec2 history=texture2D(tHistory,prev).rg;
+          float ao=clamp(visibility/slices,.15,1.);vec4 motion=texture2D(tMotion,vUv);vec2 prev=vUv+motion.xy;vec2 history=texture2D(tHistory,prev).rg;
           bool accept=valid>.5&&motion.a>.5&&all(greaterThan(prev,vec2(0.)))&&all(lessThan(prev,vec2(1.)))&&abs(history.g-motion.z)<max(${HISTORY_DEPTH_ABS},motion.z*${HISTORY_DEPTH_REL});
           if(accept)ao=mix(ao,clamp(history.r,ao-.15,ao+.15),.85);
           gl_FragColor=vec4(ao,d,0.,1.);}`,
