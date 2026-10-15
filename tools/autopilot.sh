@@ -6,7 +6,7 @@
 #      REJECT  -> Codex branches are sent back automatically with the reasons (max 2 rounds); others are flagged.
 # State: /tmp/sws-autopilot/<branch>.{approved,rejected,shipped,round}. Log: /tmp/sws-autopilot/log.
 set -uo pipefail
-cd "$(dirname "$0")/.."; ROOT="$(pwd)"; GH=~/.local/bin/gh; S=/tmp/sws-autopilot; mkdir -p "$S"
+cd "$(dirname "$0")/.."; ROOT="$(pwd)"; GH="$HOME/.local/bin/gh"; S=/tmp/sws-autopilot; mkdir -p "$S"
 export PATH="$HOME/.local/node/bin:$PATH"
 log(){ echo "$(date +%H:%M:%S) $*" | tee -a "$S/log"; }
 key(){ echo "$1" | tr '/' '_'; }
@@ -17,7 +17,7 @@ while :; do
     [ -f "$S/$k.shipped" ] && continue; pending=1
     head=$(git rev-parse -q --verify "refs/remotes/origin/$branch" 2>/dev/null); git fetch -q origin "$branch" 2>/dev/null; head=$(git rev-parse -q --verify "refs/remotes/origin/$branch" 2>/dev/null) || continue
     git cat-file -e "$head:$report" 2>/dev/null || continue
-    ci=$($GH run list --branch "$branch" --limit 5 --json headSha,conclusion --jq ".[] | select(.headSha==\"$head\") | .conclusion" | head -1)
+    ci=$("$GH" run list --branch "$branch" --limit 5 --json headSha,conclusion --jq ".[] | select(.headSha==\"$head\") | .conclusion" | head -1)
     [ "$ci" = "success" ] || continue
     [ -f "$S/$k.reviewed-$head" ] && continue
     # cloud-lane branches have no local worktree yet: check the branch out for review/preview
