@@ -8,7 +8,7 @@ import { Atmos } from '../render/Atmosphere';
 import type { Quality } from '../core/Engine';
 import { skinMaterial } from './InteriorKit';
 import { interiorSkinTextures } from '../render/InteriorSkin';
-import { crewFabric } from '../render/CrewFabric';
+import { crewFabric, type FabricKind } from '../render/CrewFabric';
 import { yokeMaterial } from './PlayerHands';
 
 // B-17 interior 2.0 (Phase 10 goal 07): the Blender-made assets of the gunner's world, loaded
@@ -106,6 +106,33 @@ function tuneKit(root: THREE.Object3D) {
   root.traverse((o) => { const mesh = o as THREE.Mesh; if (mesh.isMesh && (mesh.material as THREE.Material).name === 'kitSky') mesh.castShadow = false; });
 }
 
+// Crew 2.0 surfaces (tools/interior/build_crew.py): microstructure, response and fill per material
+const CREW_SURFACE: Record<string, { kind: FabricKind | null; rough: number; metal: number; env: number; normal: number; bounce: number }> = {
+  crewLeather: { kind: 'leather', rough: 1, metal: 0, env: 0.3, normal: 0.7, bounce: 1.35 },
+  crewFleece: { kind: 'fleece', rough: 1, metal: 0, env: 0.04, normal: 1.0, bounce: 1.5 },
+  crewCanvas: { kind: 'canvas', rough: 1, metal: 0, env: 0.06, normal: 0.6, bounce: 1.4 },
+  crewSkin: { kind: 'skin', rough: 1, metal: 0, env: 0.18, normal: 0.3, bounce: 1.35 },
+  crewHard: { kind: null, rough: 0.38, metal: 0.18, env: 0.35, normal: 0, bounce: 1.2 },
+  crewEye: { kind: null, rough: 0.07, metal: 0, env: 1.2, normal: 0, bounce: 1.4 },
+  crewCloth: { kind: 'cloth', rough: 0.95, metal: 0, env: 0.08, normal: 0.4, bounce: 1.35 },
+};
+
+// The generator paints a key colour in RGB and a shade (baked occlusion x wear) in alpha: keep both
+// for the per-look recolour (CrewActor.recolour) and show key x shade until then.
+export function splitCrewShade(geo: THREE.BufferGeometry) {
+  if (geo.userData.crewKeys) return;
+  const c = geo.getAttribute('color') as THREE.BufferAttribute | undefined;
+  if (!c) return;
+  const n = c.count, keys = new Float32Array(n * 3), shade = new Float32Array(n), rgb = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    keys[i * 3] = c.getX(i); keys[i * 3 + 1] = c.getY(i); keys[i * 3 + 2] = c.getZ(i);
+    shade[i] = c.itemSize === 4 ? c.getW(i) : 1;
+    for (let k = 0; k < 3; k++) rgb[i * 3 + k] = keys[i * 3 + k] * shade[i];
+  }
+  geo.userData.crewKeys = keys; geo.userData.crewShade = shade;
+  geo.setAttribute('color', new THREE.BufferAttribute(rgb, 3));
+}
+
 function tuneCrew(root: THREE.Object3D) {
   const seen = new Set<THREE.Material>();
   root.traverse((o) => {
@@ -113,21 +140,19 @@ function tuneCrew(root: THREE.Object3D) {
     if (!mesh.isMesh) return;
     mesh.castShadow = mesh.receiveShadow = true;
     mesh.frustumCulled = false;   // skinned: the bind-pose bounds don't follow the clips
+    splitCrewShade(mesh.geometry);
     const m = mesh.material as THREE.MeshStandardMaterial;
     if (seen.has(m)) return;
     seen.add(m);
     m.side = THREE.FrontSide;
     m.envMap = envRef.tex;
-    if (m.name === 'crewHard') { m.roughness = 0.45; m.metalness = 0.15; m.envMapIntensity = 0.25; }
-    else {
-      const leather = m.name === 'crewLeather';
-      m.roughness = leather ? 0.72 : 0.95; m.metalness = 0; m.envMapIntensity = leather ? 0.16 : 0.08;
-      if (mesh.geometry.getAttribute('uv')) {
-        const maps = crewFabric(leather);
-        m.normalMap = maps.normal; m.roughnessMap = maps.rough; m.normalScale.setScalar(leather ? 0.55 : 0.4);
-      }
+    const s = CREW_SURFACE[m.name] ?? CREW_SURFACE.crewCloth;
+    m.roughness = s.rough; m.metalness = s.metal; m.envMapIntensity = s.env;
+    if (s.kind && mesh.geometry.getAttribute('uv')) {
+      const maps = crewFabric(s.kind);
+      m.normalMap = maps.normal; m.roughnessMap = maps.rough; m.normalScale.setScalar(s.normal);
     }
-    addBounce(m, 1.35);
+    addBounce(m, s.bounce);
   });
 }
 

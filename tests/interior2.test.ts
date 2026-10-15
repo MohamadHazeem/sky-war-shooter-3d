@@ -22,21 +22,22 @@ describe('interior 2.0 assets', () => {
   it('ships the crewman with his rig, LOD, vest, first-person arm and every clip', () => {
     const j = gltfJson('public/models/crew.glb');
     const nodes = j.nodes.map((n: { name?: string }) => n.name);
-    for (const n of ['crewBody', 'crewBodyLod', 'crewFlakVest', 'fpArm', 'hips', 'upperarm.L', 'hand.R', 'foot.L']) expect(nodes).toContain(n);
+    for (const n of ['crewBody', 'crewBodyLod', 'crewFlakVest', 'crewSteelHelmet', 'fpArm', 'hips', 'upperarm.L', 'hand.R', 'foot.L', 'lids', 'index.L', 'index.R']) expect(nodes).toContain(n);
     expect(j.animations.map((a: { name: string }) => a.name).sort()).toEqual(['down', 'fire', 'help', 'hit', 'idle', 'kneel', 'sit']);
     expect(j.skins.length).toBeGreaterThan(0);
     expect(j.extensionsUsed).toContain('EXT_meshopt_compression');
   });
   it('retains sculpted clothing and a cheaper skinned LOD after compression', () => {
     const j = gltfJson('public/models/crew.glb');
-    expect(j.materials.map((m: {name: string}) => m.name)).toContain('crewLeather');
+    const mats = j.materials.map((m: {name: string}) => m.name);
+    for (const m of ['crewLeather', 'crewFleece', 'crewCanvas', 'crewSkin', 'crewHard', 'crewEye']) expect(mats).toContain(m);
     const triangles = (name: string) => {
       const node = j.nodes.find((n: {name: string}) => n.name === name);
       return j.meshes[node.mesh].primitives.reduce((n: number, p: {indices: number}) => n + j.accessors[p.indices].count / 3, 0);
     };
-    expect(triangles('crewBody')).toBeGreaterThan(9000);
-    expect(triangles('crewBodyLod')).toBeLessThan(triangles('crewBody') * 0.35);
-    expect(triangles('crewBody')).toBeLessThan(24000);
+    expect(triangles('crewBody')).toBeGreaterThan(30000);   // Crew 2.0: built for 0.5-3 m close-ups
+    expect(triangles('crewBodyLod')).toBeLessThan(triangles('crewBody') * 0.2);
+    expect(triangles('crewBody')).toBeLessThan(64000);
   });
   it('ships the kit with its four parts and materials', () => {
     const j = gltfJson('public/models/b17_interior.glb');
@@ -78,6 +79,20 @@ describe('crew rig helpers', () => {
     expect(out.getY(1)).toBeCloseTo(look.collar.g, 4);
     expect(out.getX(2)).toBeCloseTo(0.55, 4);      // the Mae West stays yellow
     expect(g.getAttribute('color').getX(0)).toBeCloseTo(0.2, 4);   // the source is untouched
+  });
+  it('keeps the baked shade and tints the whole skin surface for a look', () => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+    g.setAttribute('color', new THREE.BufferAttribute(new Float32Array([0.2, 0.11, 0.055, 0.6, 0.3, 0.24]), 3));
+    g.userData.crewKeys = new Float32Array([0.2, 0.11, 0.055, 0.6, 0.3, 0.24]);
+    g.userData.crewShade = new Float32Array([0.5, 0.8]);
+    const look = lookOf(null);
+    const cloth = recolour(g, look).getAttribute('color');
+    expect(cloth.getX(0)).toBeCloseTo(look.jacket.r * 0.5, 4);        // jacket key swapped, then shaded
+    const skin = recolour(g, look, 'crewSkin').getAttribute('color');
+    // a reddened cheek keeps its own variation: tinted by the look's skin, not replaced by it
+    expect(skin.getX(1) / skin.getY(1)).toBeGreaterThan(1.5);
+    expect(skin.getX(1)).toBeLessThan(0.6 * 0.8 + 1e-6);
   });
   it('solves two-bone IK onto a reachable target and bends toward the pole', () => {
     const a = new THREE.Vector3(0, 1.4, 0), t = new THREE.Vector3(0.1, 1.0, 0.35), mid = new THREE.Vector3(), end = new THREE.Vector3();

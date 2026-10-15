@@ -145,6 +145,9 @@ barrel and two FDL 131 barbette blisters (`src/world/EnemyDress.ts`). No He 219 
 * `crew.glb`: skinned B-17 crewman (sheepskin B-3 jacket, flak helmet, A-14 mask, Mae West, flak vest), rig and clips.
   Goal 13 adds original sculpted garment folds, stitched seams and pockets in `build_crew.py`;
   cloth/leather normal and roughness maps are original procedural work in `src/render/CrewFabric.ts`.
+  Phase 11 goal 05 (Crew 2.0) rebuilds the man in the same script, still entirely original: lofted body,
+  sculpted face with eyes and blinking lids, A-11 helmet, B-8 goggles, A-14 mask, gloves with fingers,
+  M4 steel helmet, AO baked in Cycles, and leather / sheepskin / canvas / skin microstructure maps.
 * `b17_interior.glb`: waist, radio room and bomb bay structure and equipment, ambient occlusion baked in Cycles.
 
 ## Phase 11 escort fighters
