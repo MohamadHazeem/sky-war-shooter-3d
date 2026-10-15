@@ -342,7 +342,7 @@ export class ServiceRecord {
     box.querySelectorAll('.lb-panel').forEach((p) => p.remove());
     const mode = dailyMode(m.role, keyDate(key));
     mountLeaderboard(box, mode, `DAILY RUN · ${m.role === 'gunner' ? 'B-17 GUNNER' : 'P-51 ESCORT'} · TOP 10`,
-      { name: '', mode, score: d.score, kills: d.kills, rounds: d.waves ?? 0 });
+      { name: '', mode, score: d.score, kills: d.kills, rounds: d.waves ?? 0, duration: d.time });
   }
 
   // ---------------- toast ----------------

@@ -1,5 +1,6 @@
 import { fbConnect, type BoardRow } from './Leaderboard';
 import { cacheSquadron, cachedSquadron, normalizeSquadronCode, safeSquadronName, squadronCode, validCallsign, type SquadronProfile } from './SquadronProfile';
+import { visibleRows } from '../game/Seasons';
 
 export interface Squadron { name: string; memberCount: number; boardId: string }
 export interface SquadronMember { uid: string; callsign: string }
@@ -94,7 +95,7 @@ export async function squadronScores(code: string, mode: string): Promise<BoardR
   // Read exactly the active members' bests: former members cannot crowd out the top 64.
   const members = await fs.getDocs(fs.query(fs.collection(db, 'squadrons', code, 'members'), fs.limit(64)));
   const bests = await Promise.all(members.docs.map(m => fs.getDoc(fs.doc(db, 'squadrons', code, 'bests', `${m.id}_${mode}`))));
-  return bests.filter(d => d.exists()).map(d => ({ ...d.data(), mine: d.data()!.uid === uid }) as BoardRow)
+  return visibleRows(bests.filter(d => d.exists()).map(d => ({ ...d.data(), mine: d.data()!.uid === uid }) as BoardRow))
     .sort((a, b) => b.score - a.score || a.uid.localeCompare(b.uid));
 }
 export async function recordSquadronExperte(): Promise<void> {

@@ -22,6 +22,10 @@ export const NOSE_ARTS: NoseArtDef[] = [
   { id: 'ace', name: 'Ace of Spades', rarity: 'epic' },
   { id: 'wings', name: 'Gilded Wings', rarity: 'legendary' },
   { id: 'weeklyace', name: 'Lightning Shield', rarity: 'legendary', exclusive: 'Weekly Challenge reward' },   // Weekly.ts
+  // monthly season tiers (Seasons.ts TIERS)
+  { id: 'seasonbronze', name: 'Bronze Season Wings', rarity: 'rare', exclusive: 'Season reward' },
+  { id: 'seasonsilver', name: 'Silver Season Wings', rarity: 'epic', exclusive: 'Season reward' },
+  { id: 'seasongold', name: 'Gold Season Wings', rarity: 'legendary', exclusive: 'Season reward' },
 ];
 
 const CW = 512, CH = 256;
@@ -241,7 +245,24 @@ const DRAW: Record<string, (g: G, name: string) => void> = {
     g.font = "bold 22px 'IBM Plex Mono', monospace"; g.textAlign = 'center'; g.fillStyle = CREAM;
     g.strokeStyle = INK; g.lineWidth = 5; g.strokeText('WEEKLY ACE', 372, 196); g.fillText('WEEKLY ACE', 372, 196);
   },
+  seasonbronze: (g, name) => seasonWings(g, name, '#b07a3c', 1),
+  seasonsilver: (g, name) => seasonWings(g, name, '#c9ced6', 2),
+  seasongold: (g, name) => seasonWings(g, name, GOLD, 3),
 };
+
+// Season tier reward: a medal on spread wings in the tier's metal, one to three stars on its ribbon
+function seasonWings(g: G, name: string, metal: string, stars: number) {
+  wing(g, 128, 92, 1, 116, metal);
+  wing(g, 128, 92, -1, 116, metal);
+  g.fillStyle = RED; g.fillRect(104, 20, 48, 34); g.fillStyle = CREAM; g.fillRect(120, 20, 16, 34);
+  g.lineWidth = 3; g.strokeStyle = INK; g.strokeRect(104, 20, 48, 34);
+  g.beginPath(); g.arc(128, 96, 40, 0, Math.PI * 2); g.fillStyle = metal; g.fill(); g.lineWidth = 6; g.strokeStyle = INK; g.stroke();
+  g.beginPath(); g.arc(128, 96, 30, 0, Math.PI * 2); g.lineWidth = 3; g.strokeStyle = NAVY; g.stroke();
+  for (let i = 0; i < stars; i++) star(g, 128 + (i - (stars - 1) / 2) * 22, stars > 1 ? 96 : 98, stars > 1 ? 11 : 20, CREAM);
+  nameScript(g, name, 372, 100, 260, 64);
+  g.font = "bold 22px 'IBM Plex Mono', monospace"; g.textAlign = 'center'; g.fillStyle = CREAM;
+  g.strokeStyle = INK; g.lineWidth = 5; g.strokeText('SEASON ACE', 372, 176); g.fillText('SEASON ACE', 372, 176);
+}
 
 export function drawNoseArt(id: string, name: string, canvas = document.createElement('canvas'), resolution = 1): HTMLCanvasElement {
   canvas.width = CW * resolution; canvas.height = CH * resolution;
