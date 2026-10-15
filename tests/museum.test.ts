@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { stubStorage } from './helpers';
 import { setLang, tx } from '../src/i18n';
-import { AIRCRAFT_SPECS, specTexts, type AircraftId } from '../src/game/AircraftData';
+import { AIRCRAFT_SPECS, serviceLabel, specTexts, type AircraftId } from '../src/game/AircraftData';
 import {
   MUSEUM, EncounterLog, encounters, factOpen, freshFacts, loadMuseum, markKnown, museumDebrief, museumTexts, museumTotals,
   openFacts, openSnapshot, ruleText, type MuseumStats,
@@ -44,7 +44,11 @@ describe('museum data', () => {
     expect(by('spitfire9').model).toBe('spitfire9');
     expect(by('p47d').side).toBe('allied');
     expect(by('p47d').first).toBe('6 May 1941');
-    expect(by('spitfire9').first).toBe('5 March 1936');
+    expect(by('spitfire9').first).toBe('5 March 1936 (Mk IX: 1942)');
+    expect(serviceLabel(by('spitfire9'))).toBe('Allied · RAF');
+    expect(serviceLabel(by('p47d'))).toBe('Allied · USAAF');
+    expect(serviceLabel(by('fw190'))).toBe('Luftwaffe');
+    expect(serviceLabel(by('boss'))).toBe('Fictional · boss');
     for (const id of ['p47d', 'spitfire9']) for (const t of specTexts(by(id))) expect(t.length).toBeLessThan(120);
   });
 

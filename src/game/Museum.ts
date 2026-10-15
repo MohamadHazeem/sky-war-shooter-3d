@@ -48,7 +48,7 @@ export const MUSEUM: Record<AircraftId, MuseumEntry> = {
     history: 'Designed for the British in 1940 and transformed by the Rolls-Royce Merlin engine, the Mustang had the range to fly to Berlin and back. From early 1944 it escorted the bombers all the way, and the Luftwaffe\'s day fighters never recovered.',
     crew: ['Pilot'],
     facts: facts(friend, [
-      'The prototype, the NA-73X, was designed and built in just over a hundred days.',
+      'The prototype, the NA-73X, was rolled out 102 days after the contract was signed.',
       'The bubble canopy of the D model gave its pilot a clear view all round, above all to the rear.',
       'With two drop tanks it could escort the bombers to Berlin and back, more than 1,800 km.',
       'More than 15,000 Mustangs were built; the D model was the most numerous, with about 8,000.',
@@ -99,7 +99,7 @@ export const MUSEUM: Record<AircraftId, MuseumEntry> = {
     crew: ['Pilot', 'Radio operator · rear gunner', 'Radar operator (night fighters)'],
     facts: facts(foe, [
       'Zerstörer means "destroyer": the heavy fighter was meant to escort bombers deep into enemy land.',
-      'Its 21 cm rockets were adapted army mortar rounds, fired into the bomber boxes to break them up.',
+      'Its 21 cm rockets were adapted from the army\'s Nebelwerfer barrage rockets, fired into the bomber boxes to break them up.',
       'Once American escorts could reach Germany, the slow Bf 110 day units suffered terrible losses.',
       'As a night fighter it served the most successful night aces, such as Heinz-Wolfgang Schnaufer.',
     ]),

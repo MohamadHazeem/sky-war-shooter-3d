@@ -10,7 +10,7 @@
 // unlock as you meet each type, game/Museum.ts), the list marks aircraft with facts not yet read,
 // and the Codex tab shows crew roles, medals and operations (ui/CodexPanel.ts).
 import { tx, num } from '../i18n';
-import type { AircraftId, AircraftSpec } from '../game/AircraftData';
+import { serviceLabel, type AircraftId, type AircraftSpec } from '../game/AircraftData';
 import { ruleText, type MuseumEntry } from '../game/Museum';
 import type { CodexCtx, CodexEntry } from '../game/Codex';
 import { CodexPanel, CODEX_CSS } from './CodexPanel';
@@ -140,14 +140,19 @@ const CSS = `
 #acGallery .ag-facts li.locked { background: none; border: 1px dashed rgba(43,37,24,.35); color: #6b5a3a; font: 11.5px/1.4 "IBM Plex Mono", monospace; }
 #acGallery .ag-facts li.locked b { display: block; letter-spacing: 2px; text-transform: uppercase; font-size: 10px; }
 #acGallery .ag-fcount { font: 11px/1.4 "IBM Plex Mono", monospace; color: #6b5a3a; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+#acGallery .ag-card.more::after { content: '▾ ' attr(data-more); position: sticky; bottom: -14px; display: block; box-sizing: border-box; height: 32px; margin: -32px -16px 0; padding: 19px 0 0;
+  text-align: center; pointer-events: none; font: 600 9.5px/1 "IBM Plex Mono", monospace; letter-spacing: 1px; text-transform: uppercase; color: #6b5a3a;
+  background: linear-gradient(rgba(222,211,180,0), rgba(222,211,180,.97) 55%); }
 @media (max-height: 520px), (max-width: 760px) {
+  #acGallery .ag-card.more::after { bottom: -10px; margin: -32px -11px 0; }
   #acGallery .ag-sec { margin-bottom: 6px; }
   #acGallery .ag-sec button { font-size: 10.5px; letter-spacing: 0; min-height: 30px; padding: 3px 1px; }
   #acGallery .ag-hist, #acGallery .ag-facts li { font-size: 11.5px; line-height: 1.4; }
   #acGallery .ag-crew { font-size: 12px; line-height: 1.4; }
   #acGallery .ag-facts li { padding: 5px 7px; }
 }
-html[lang=ar] #acGallery .ag-sec button { letter-spacing: 0; }
+html[lang=ar] #acGallery .ag-sec button, html[lang=ar] #acGallery .ag-card.more::after { letter-spacing: 0; }
+html[lang=ar] #acGallery .ag-card.more::after { font-family: "IBM Plex Mono", "IBM Plex Sans Arabic", monospace; }
 html[lang=ar] #acGallery .ag-hist, html[lang=ar] #acGallery .ag-facts li { font-family: "Special Elite", "Noto Naskh Arabic", serif; line-height: 1.7; }
 html[lang=ar] #acGallery .ag-crewn, html[lang=ar] #acGallery .ag-fcount, html[lang=ar] #acGallery .ag-facts li.locked { font-family: "IBM Plex Mono", "IBM Plex Sans Arabic", monospace; letter-spacing: 0; }
 html[lang=ar] #acGallery { font-family: Oswald, "Noto Kufi Arabic", "Arial Narrow", sans-serif; }
@@ -176,7 +181,6 @@ function injectCss() {
 }
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
-const sideLabel = (s: AircraftSpec) => (s.fictional ? 'Fictional · boss' : s.side === 'allied' ? 'Allied · USAAF' : 'Luftwaffe');
 
 export class GalleryScreen {
   root: HTMLElement | null = null;
@@ -223,11 +227,16 @@ export class GalleryScreen {
     r.querySelectorAll<HTMLButtonElement>('[data-step]').forEach((b) => b.addEventListener('click', () => c.step(+b.dataset.step!)));
     r.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => b.addEventListener('click', () => (b.dataset.tab === 'quiz' ? c.startQuiz() : b.dataset.tab === 'codex' ? c.openCodex() : c.stopQuiz())));
     r.querySelector('[data-back]')!.addEventListener('click', () => c.back());
+    const card = r.querySelector<HTMLElement>('.ag-card')!;
+    card.addEventListener('scroll', this.updateMore, { passive: true });
+    card.dataset.more = tx('Scroll for more');
+    addEventListener('resize', this.updateMore);
     document.querySelectorAll('.layer').forEach((l) => l.classList.toggle('show', l === r));
     onBackKey(r, () => c.back());
   }
 
   close() {
+    removeEventListener('resize', this.updateMore);
     this.root?.classList.remove('show');
     if (this.root) this.root.innerHTML = '';
     this.root = null;
@@ -253,17 +262,25 @@ export class GalleryScreen {
     });
     r.querySelector('.ag-name')!.textContent = tx(s.nick);
     const sec = m ? this.section : 'specs';
+    if (m && sec === 'facts') this.c?.factsSeen(s.id);   // read now: clears the marks before they are drawn
     const fresh = r.querySelector(`.ag-list [data-id="${s.id}"]`)?.classList.contains('fresh');
     const tabs = m ? `<div class="ag-sec" role="tablist">${SECTIONS.map(([id, label]) => `<button role="tab" data-sec="${id}" class="${id === sec ? 'on' : ''}${id === 'facts' && fresh ? ' fresh' : ''}" aria-selected="${id === sec}">${tx(label)}</button>`).join('')}</div>` : '';
     const card = r.querySelector('.ag-card')!;
     card.innerHTML = `
-      <div class="ag-k${s.side === 'allied' ? ' allied' : ''}">${tx(sideLabel(s))}</div>
+      <div class="ag-k${s.side === 'allied' ? ' allied' : ''}">${tx(serviceLabel(s))}</div>
       <h3>${esc(tx(s.name))}</h3>
       <div class="ag-role">${esc(tx(s.role))}</div>
       ${tabs}
       <div class="ag-body">${m && sec !== 'specs' ? this.museumBody(sec, m) : this.specsBody(s, kills)}</div>`;
     card.querySelectorAll<HTMLButtonElement>('[data-sec]').forEach((b) => b.addEventListener('click', () => this.setSection(b.dataset.sec as CardSection, true)));
-    if (m && sec === 'facts') this.c?.factsSeen(s.id);
+    card.scrollTop = 0;
+    this.updateMore();
+  }
+
+  /** Card taller than the screen (phones): fade the bottom edge and show "more" until scrolled down. */
+  private updateMore = () => {
+    const card = this.root?.querySelector<HTMLElement>('.ag-card');
+    if (card) card.classList.toggle('more', card.scrollHeight - card.scrollTop - card.clientHeight > 4);
   }
 
   /** Switch the card section (kept while the aircraft changes). */
@@ -287,7 +304,7 @@ export class GalleryScreen {
     const killLine = kills === null ? `<div class="ag-kills">${tx('On our side: hold your fire')}</div>`
       : `<div class="ag-kills">${tx(s.fictional ? 'Warships downed by you:' : 'Shot down by you:')}<b>${num(kills)}</b></div>`;
     return `
-      <dl>${row('Crew', s.crew)}${row('Armament', s.armament)}${row('Top speed', s.speed)}${row('First flight', s.first)}${row('Span × length', s.size)}</dl>
+      <dl>${row('Crew', s.crew)}${row('Armament', s.armament)}${row('Top speed', s.speed)}${row('Type first flight', s.first)}${row('Span × length', s.size)}</dl>
       <div class="ag-tip"><b>${tx('Gunner\'s note')}</b>${esc(tx(s.tip))}</div>
       ${killLine}
       ${s.note ? `<div class="ag-note${s.fictional ? ' fict' : ''}">${esc(tx(s.note))}</div>` : ''}`;

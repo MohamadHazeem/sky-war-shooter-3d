@@ -41,6 +41,8 @@ try {
     await page.waitForTimeout(500);
     await shot(page, `specs-fw190-${tag}`);
     for (const sec of ['history', 'facts']) { await page.evaluate((s) => sws.game.extras.gallery.section(s), sec); await page.waitForTimeout(250); await shot(page, `${sec}-fw190-${tag}`); }
+    // the facts were read: no "new" mark on the Facts tab or on the list entry while they are shown
+    const factsFresh = await page.evaluate(() => !!document.querySelector('#acGallery .ag-sec .fresh, #acGallery .ag-list [data-id="fw190"].fresh'));
     await page.evaluate(() => { const g = sws.game.extras.gallery; g.select('p47d'); g.section('crew'); });
     await ready('p47d');
     await page.waitForTimeout(500);
@@ -53,6 +55,13 @@ try {
     await ready('spitfire9');
     await page.waitForTimeout(500);
     await shot(page, `specs-spitfire-${tag}`);
+    const spitfire = await page.evaluate(() => { const c = document.querySelector('#acGallery .ag-card'); return { header: c.querySelector('.ag-k').textContent, more: c.classList.contains('more') }; });
+    if (spitfire.more) {   // the scroll hint goes away at the bottom of the card
+      await page.evaluate(() => { const c = document.querySelector('#acGallery .ag-card'); c.scrollTop = c.scrollHeight; });
+      await page.waitForTimeout(150);
+      spitfire.moreAtEnd = await page.evaluate(() => document.querySelector('#acGallery .ag-card').classList.contains('more'));
+      await shot(page, `specs-spitfire-scrolled-${tag}`);
+    }
     await page.evaluate(() => document.querySelector('#acGallery [data-tab="codex"]').click());
     await page.waitForTimeout(250);
     await shot(page, `codex-crew-${tag}`);
@@ -66,7 +75,7 @@ try {
     await page.evaluate(() => document.querySelectorAll('#acGallery [data-entry]')[4].click());
     await page.waitForTimeout(150);
     await shot(page, `codex-ops-locked-${tag}`);
-    log.push({ tag, state: await page.evaluate(() => sws.game.extras.gallery.state), overflowX: await page.evaluate(() => document.documentElement.scrollWidth > innerWidth) });
+    log.push({ tag, factsFresh, spitfire, state: await page.evaluate(() => sws.game.extras.gallery.state), overflowX: await page.evaluate(() => document.documentElement.scrollWidth > innerWidth) });
     await context.close();
   }
 } finally {

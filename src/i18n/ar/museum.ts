@@ -18,6 +18,10 @@ const table: PhraseTable = {
     'Facts found: {n} / {total}': 'الحقائق المكتشفة: {n} / {total}',
     'New facts: {list}': 'حقائق جديدة: {list}',
     ', ': '، ',
+    'Allied · RAF': 'الحلفاء · سلاح الجو الملكي البريطاني',
+    'Type first flight': 'أول طيران للطراز',
+    'Scroll for more': 'مرّر للمزيد',
+    '5 March 1936 (Mk IX: 1942)': '5 مارس 1936 (مارك 9: 1942)',
     'Hangar → Aircraft & Armory → Museum': 'الحظيرة ← الطائرات والتسليح ← المتحف',
     'Fly it to open the file': 'نفّذها لفتح الملف',
     'Classified. Fly this operation to open its file.': 'سرّي. نفّذ هذه العملية لفتح ملفها.',
@@ -80,7 +84,7 @@ const table: PhraseTable = {
     // ---------- P-51 ----------
     'Designed for the British in 1940 and transformed by the Rolls-Royce Merlin engine, the Mustang had the range to fly to Berlin and back. From early 1944 it escorted the bombers all the way, and the Luftwaffe\'s day fighters never recovered.':
       'صُمّمت للبريطانيين عام 1940 وغيّرها محرك رولز-رويس ميرلين تمامًا، فصار للموستانغ مدى يكفي للطيران إلى برلين والعودة. ومنذ مطلع 1944 رافقت القاذفات طوال الطريق، ولم تتعافَ مقاتلات اللوفتفافه النهارية بعدها قط.',
-    'The prototype, the NA-73X, was designed and built in just over a hundred days.': 'صُمّم النموذج الأولي وبُني في ما يزيد قليلًا على مئة يوم.',
+    'The prototype, the NA-73X, was rolled out 102 days after the contract was signed.': 'خرج النموذج الأولي من المصنع بعد 102 يوم من توقيع العقد.',
     'The bubble canopy of the D model gave its pilot a clear view all round, above all to the rear.': 'منحت القمرة الفقاعية في الطراز D طيّارها رؤية واضحة في كل الاتجاهات، ولا سيما إلى الخلف.',
     'With two drop tanks it could escort the bombers to Berlin and back, more than 1,800 km.': 'بخزانين إضافيين قابلين للإسقاط كانت تستطيع مرافقة القاذفات إلى برلين والعودة، أي أكثر من 1,800 كم.',
     'More than 15,000 Mustangs were built; the D model was the most numerous, with about 8,000.': 'بُنيت أكثر من 15,000 موستانغ؛ وكان الطراز D الأكثر عددًا بنحو 8,000 طائرة.',
@@ -121,7 +125,7 @@ const table: PhraseTable = {
     'Designed as a long-range Zerstörer to clear the way for the bombers, it was mauled by single-seat fighters over Britain. It found a new life as a night fighter and, by day, as a rocket-armed destroyer of unescorted bombers.':
       'صُمّمت «مدمّرةً» بعيدة المدى تمهّد الطريق للقاذفات، فمزّقتها المقاتلات أحادية المقعد فوق بريطانيا. ثم وجدت حياة جديدة مقاتلةً ليلية، وفي النهار مدمّرةً مسلّحة بالصواريخ للقاذفات غير المرافَقة.',
     'Zerstörer means "destroyer": the heavy fighter was meant to escort bombers deep into enemy land.': 'تسيرشتورر تعني «المدمّرة»: أُريد للمقاتلة الثقيلة أن ترافق القاذفات إلى عمق أرض العدو.',
-    'Its 21 cm rockets were adapted army mortar rounds, fired into the bomber boxes to break them up.': 'كانت صواريخها عيار 21 سم قذائف هاون معدّلة من الجيش، تُطلق على تشكيلات القاذفات لتفريقها.',
+    'Its 21 cm rockets were adapted from the army\'s Nebelwerfer barrage rockets, fired into the bomber boxes to break them up.': 'كانت صواريخها عيار 21 سم معدّلة من صواريخ «نيبلفيرفر» التي استخدمها الجيش للقصف المكثّف، تُطلق على تشكيلات القاذفات لتفريقها.',
     'Once American escorts could reach Germany, the slow Bf 110 day units suffered terrible losses.': 'حين صارت المرافقة الأمريكية قادرة على بلوغ ألمانيا، تكبّدت وحدات Bf 110 النهارية البطيئة خسائر فادحة.',
     'As a night fighter it served the most successful night aces, such as Heinz-Wolfgang Schnaufer.': 'وبوصفها مقاتلة ليلية خدمت أنجح آسات الليل، مثل هاينتس-فولفغانغ شناوفر.',
 
