@@ -26,6 +26,8 @@ import { analytics } from '../net/Analytics';
 import { mountCampaignReport, prepareCampaignMission, campaignMeritMult } from '../ui/CampaignMap';
 import { crewRoomScene } from '../ui/CrewRoomScene';
 import { endBriefing } from '../ui/BriefingExtras';
+import { isTourId } from './Tour';
+import { mountTourReport } from '../ui/TourScreen';
 
 // Bail-out sequence when a gunner's B-17 is shot down (before the debrief): BailOutCinematic.ts
 const BAIL_SEQ_TIME = BAIL_TOTAL;
@@ -149,7 +151,9 @@ export class MissionFlow {
     g.distantBattle.reset();
     g.ui.hud(m.role, g.coop.phase === 'mission');
     if (aa) g.aa.mountHud();
+    g.tour.beforeCrew(m);   // the Tour's crew and ship (TourRuntime.ts)
     crewRoster.beginMission(g.world, g.ui, m.role);
+    g.tour.start();
     g.b17Damage.reset();
     g.ui.fadeTo(1);
     setTimeout(() => g.ui.fade(false), 50);
@@ -277,6 +281,7 @@ export class MissionFlow {
     sound.setMode('menu');
     const acc = w.stats.shots > 0 ? w.stats.hits / w.stats.shots : 0;
     achievements.endMission(r.success, w.stats.shots, w.stats.hits);
+    g.tour.capture();
     crewRoster.endMission(r.success);
     const survivors = w.bombers().filter((b) => b.alive).length;
     const survival = m.duration === Infinity;
@@ -293,7 +298,7 @@ export class MissionFlow {
       g.progress.survival.push({ name: 'You', score: g.score, waves: m.round ? g.roundIdx + (r.success ? 1 : 0) : Math.max(0, survivalWave - (r.success ? 0 : 1)), role: m.role, date: new Date().toLocaleDateString() });
       g.progress.survival.sort((a, b) => b.score - a.score);
       g.progress.survival = g.progress.survival.slice(0, 20);
-    } else {
+    } else if (!isTourId(m.id)) {   // the Tour keeps its own record (Tour.ts)
       const idx = CAMPAIGN.findIndex((c) => c.id === m.id);
       if (r.success && idx >= 0) g.progress.unlocked = Math.max(g.progress.unlocked, Math.min(CAMPAIGN.length - 1, idx + 1));
       const prev = new Set(g.progress.medals[m.id] ?? []);
@@ -330,12 +335,14 @@ export class MissionFlow {
     // online leaderboard: survival per role, campaign per mission
     const host = document.querySelector<HTMLElement>('#debrief .box');
     const board = leaderboardMode(m) ?? (survival ? `survival-${m.role}` : `campaign-${m.id}`);
-    if (host && !isSecondTourId(m.id) && !isChapterMission(m.id)) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: g.score, kills: w.stats.kills, rounds: g.roundIdx + 1, duration: d.time });
+    if (host && !isSecondTourId(m.id) && !isChapterMission(m.id) && !isTourId(m.id)) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: g.score, kills: w.stats.kills, rounds: g.roundIdx + 1, duration: d.time });
     mountShare(host, g.engine, () => shareStamp(g), () => ({ title: m.title, kills: d.kills, score: d.score, success: d.success, survival, waves: d.waves, role: m.role }));
     analytics.missionEnd(m, d);
     g.service.onDebrief(m, d, medals);
     mountCampaignReport(m, { success: r.success, kills: w.stats.kills, bombersLost: w.stats.bombersLost, bombersTotal: m.bombers, score: g.score, ditched: g.ditching.ditched }, g.prog, g.progress, toMap);
     g.specials.nemesis.onDebrief(m); // named Experten: this mission's ace outcomes (NemesisRuntime.ts)
     crewRoomScene.capture(g, m, d); // the outcome the crew-room scene talks about
+    const tour = g.tour.debrief(m, r.success, w.stats.kills, merit);
+    if (tour) mountTourReport(tour, () => g.showTour());
   }
 }

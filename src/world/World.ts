@@ -36,6 +36,7 @@ import { Crew, STATION_CREW } from './Crew';
 import { prewarmBoss } from './BossShip';
 import { prewarmSea } from './SeaWorld';
 import { warmInteriorDamage } from '../game/InteriorDamage';
+import { warmRepairPatches } from '../game/RepairPatches';
 import { warmGlassFx } from '../game/GlassFx';
 import { bomberName, dressPlayerBomber } from '../game/Customize';
 import { aiGunnerSkill, crewRoster } from '../game/CrewRoster';
@@ -358,6 +359,7 @@ export class World implements WorldView {
     const unwarmTurrets = warmTurretViewmodels(this.scene, at);
     const unwarmAA = warmAAGuns(this.scene, at);
     const unwarmInteriorDamage = warmInteriorDamage(this.scene, at);
+    const unwarmPatches = warmRepairPatches(this.scene, at, b17.root);   // the Tour's repair patches (RepairPatches.ts)
     const unwarmDamage = warmDamageStages(this.scene, at);
     const unwarmDestruction = this.destruction.warm(this.scene, at, [...dummies, b17].map((f) => ({ kind: f.kind, model: f.model })));
     const unwarmGlass = warmGlassFx(this.scene, at);       // canopy / turret glass overlay
@@ -386,7 +388,7 @@ export class World implements WorldView {
     unwarmGlass();
     unwarmDamage();
     unwarmDestruction();
-    unwarmInteriorDamage();
+    unwarmInteriorDamage(); unwarmPatches();
     unwarmAA();
     unwarmBoss();
     unwarmSea();

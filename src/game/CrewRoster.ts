@@ -171,6 +171,8 @@ export class CrewRoster {
   private effectCache: CrewEffects | null = null;
   readonly serious = new Set<ManId>();
   escapeRecorded = false;
+  /** Set by TourRuntime for a tour mission (null otherwise): 'rest' / 'gone' keeps a man out of it. */
+  tourOut: ((id: ManId) => false | 'rest' | 'gone') | null = null;
   private skillCache: Partial<Record<StationId, AISkill>> = {};
   private listeners: ((e: RosterEvent, who?: ManId) => void)[] = [];
   private aiHits = new WeakMap<object, number>();   // fighter -> world time our AI gunners last hit it
@@ -351,13 +353,15 @@ export class CrewRoster {
       };
     }
     if (!this.live) { this.placeAll(); this.emit('mission'); return; }
-    for (const m of MEN) if (this.men[m.id].rest > 0 || this.men[m.id].dead) this.resting.add(m.id);
+    // The Tour (TourRuntime.ts) decides who of its own crew flies: wounded / lost men sit out
+    const tour = this.tourOut;
+    for (const m of MEN) if (this.men[m.id].dead || (tour ? tour(m.id) : this.men[m.id].rest > 0)) this.resting.add(m.id);
     this.place();
     for (const m of MEN) this.killsAt[m.id] = this.men[m.id].kills;
     crewStories.beginSortie([...this.flew]);   // rituals at take-off
     for (const m of MEN) if (this.resting.has(m.id)) {
-      const pos = m.gunner ? POST_CREW[this.postOf(m.id)!] : m.home;
-      ui.feed(tx(this.men[m.id].dead ? '{who} is remembered — {rookie} (rookie) takes his place' : '{who} is resting — {rookie} (rookie) takes his place', { who: tx(m.call), rookie: tx(ROOKIES[pos].call) }), 'loss');
+      const pos = m.gunner && !this.tourOut ? POST_CREW[this.postOf(m.id)!] : m.home;
+      ui.feed(tx(this.men[m.id].dead || tour?.(m.id) === 'gone' ? '{who} is remembered — {rookie} (rookie) takes his place' : '{who} is resting — {rookie} (rookie) takes his place', { who: tx(m.call), rookie: tx(ROOKIES[pos].call) }), 'loss');
     }
     this.emit('mission');
   }
@@ -414,7 +418,7 @@ export class CrewRoster {
     for (const c of CREW) this.world?.crew.heal(c.id);
     for (const id of this.benched) {
       const m = manDef(id);
-      const pos = m.gunner ? POST_CREW[this.postOf(id)!] : m.home;
+      const pos = m.gunner && !this.tourOut ? POST_CREW[this.postOf(id)!] : m.home;
       ui?.feed(tx('{rookie} (rookie) takes over from {who}', { rookie: tx(ROOKIES[pos].call), who: tx(m.call) }), 'loss');
     }
     this.emit('change');
@@ -442,6 +446,7 @@ export class CrewRoster {
       wounded: MEN.filter((m) => this.wounded.has(m.id) || this.benched.has(m.id) || this.serious.has(m.id)).map((m) => m.id),
       kills: Object.fromEntries(MEN.map((m) => [m.id, this.men[m.id].kills - (this.killsAt[m.id] ?? this.men[m.id].kills)])),
     });
+    this.tourOut = null;
     for (const m of MEN) {
       const st = this.men[m.id];
       if (st.dead) continue;
@@ -492,8 +497,9 @@ export class CrewRoster {
 
   // Positions this mission: resting/benched men are replaced by the position's rookie
   private place() {
+    const seats = this.tourOut ? DEFAULT_SEATS : this.seats;   // the Tour flies its men at their own trade
     for (const p of POSTS) {
-      const id = this.seats[p];
+      const id = seats[p];
       this.occ[POST_CREW[p]] = this.men[id].dead || this.resting.has(id) || this.benched.has(id) ? null : id;
     }
     for (const m of MEN) if (!m.gunner) this.occ[m.home] = this.men[m.id].dead || this.resting.has(m.id) || this.benched.has(m.id) ? null : m.id;

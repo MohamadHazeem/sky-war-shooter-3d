@@ -12,7 +12,7 @@ export { CHART, type ChartPlace } from '../world/EuropeChart';
 type Geo = { lat: number; lon: number };
 type Pt = [lon: number, lat: number];
 type Place = ChartPlace;
-const { BASE, NORFOLK, BERLIN, PLACES, ENGLAND, MAINLAND, ISLANDS, COUNTRIES, KX } = CHART;
+const { BASE, NORFOLK, BERLIN, PLACES, EXTRA, ENGLAND, MAINLAND, ISLANDS, COUNTRIES, KX } = CHART;
 
 const W = 400, H = 260;                      // viewBox, scales to the sheet width
 const ASPECT = W / H;
@@ -36,7 +36,7 @@ function legsFor(p: Place): Leg[] {
 
 /** Inline SVG route chart for the briefing, or '' when the mission has no destination (survival). */
 export function briefingMapSvg(m: Mission): string {
-  const place = PLACES.find((p) => m.target.includes(p.key));
+  const place = PLACES.find((p) => m.target.includes(p.key)) ?? EXTRA.find((p) => m.target.includes(p.key));   // EXTRA: the Tour's chart-only targets
   if (!place) return '';
   const legs = legsFor(place);
   if (m.shuttle) legs[1] = { pts: [place, { lat: 45.5, lon: 10.5 }], dashed: true };
