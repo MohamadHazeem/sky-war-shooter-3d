@@ -360,12 +360,12 @@ const FRAG = /* glsl */ `
       vec3 vn=normalize(vNormal);
       vec3 wn=normalize(vec3(vec4(vn,0.)*viewMatrix));
       vec3 vp=(viewMatrix*vec4(vW,1.)).xyz;
-      float f=.075+.925*pow(1.-abs(dot(wn,normalize(cameraPosition-vW))),5.);
+      float f=.14+.86*pow(1.-abs(dot(wn,normalize(cameraPosition-vW))),5.);
       vec4 reflected=swsGlassReflection(vp,vn);
-      float weight=min(.30,f);
+      float weight=min(.42,f);
       vec3 rd=reflect(vd,wn);
       // Reflection behind the eye uses the same cloud/sky IBL as the outer glass.
-      vec3 sky=textureCubeUV(swsReflectionEnvironment,rd,.12).rgb;
+      vec3 sky=textureCubeUV(swsReflectionEnvironment,rd,.035).rgb;
       if(swsFormationOn>.5) {
         vec4 aircraft=textureCube(swsFormationMap,rd);
         sky=mix(sky,aircraft.rgb,aircraft.a);
@@ -419,6 +419,7 @@ function glassMaterial(): THREE.ShaderMaterial {
       transparent: true,
       premultipliedAlpha: true,
       depthWrite: false,
+      forceSinglePass: true,
       side: THREE.DoubleSide,   // one program for every pane (side is part of the program key)
     });
     env.uFrostTex.value = frostTexture();
@@ -432,7 +433,7 @@ function paneMaterial(): THREE.ShaderMaterial {
   const owned = Object.fromEntries(Object.entries(source.uniforms).filter(([k]) => !(k in env)));
   const m = new THREE.ShaderMaterial({
     name: source.name, vertexShader: source.vertexShader, fragmentShader: source.fragmentShader,
-    transparent: true, premultipliedAlpha: true, depthWrite: false, side: THREE.DoubleSide,
+    transparent: true, premultipliedAlpha: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true,
     uniforms: { ...THREE.UniformsUtils.clone(owned), ...env },
   });
   return m;

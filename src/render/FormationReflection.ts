@@ -40,7 +40,7 @@ export class FormationReflection {
     this.scene.children.length = 0;
     for (const o of source.children) {
       const m = (o as T.Mesh).material;
-      if (m && !Array.isArray(m) && aircraftFinish(m) === 1) this.scene.children.push(o);
+      if (!o.userData.reflectionExcluded && m && !Array.isArray(m) && aircraftFinish(m) === 1) this.scene.children.push(o);
     }
     this.camera.position.copy(eye.position); this.camera.updateMatrixWorld(true);
     const target = renderer.getRenderTarget(), face = renderer.getActiveCubeFace(), mip = renderer.getActiveMipmapLevel();

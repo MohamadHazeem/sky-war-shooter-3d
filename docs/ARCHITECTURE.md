@@ -273,7 +273,7 @@ already-installed **headless shell**, never the desktop Chrome application.
 ### Phase 11 material reflections
 
 `AircraftFinish` retains baked ORM, satin paint, UV-oriented brushed-metal response and specular
-occlusion. Thin glass skips physical transmission and uses a single double-sided draw.
+occlusion. Thin glass skips physical transmission and uses a single double-sided draw, including occupied pane overlays.
 `GlassReflection` reads the safe HDR composite and SoftDepth copy, with eight bounded trace steps,
 refined depth hits, depth-edge rejection, grazing fades and a small clamped spatial filter.
 `Engine.sortLayers` gates the copy/trace to nearby visible glass; Low and Medium retain IBL.
@@ -282,7 +282,7 @@ refined depth hits, depth-edge rejection, grazing fades and a small clamped spat
 also use `FormationReflection`: a 256px aircraft-silhouette cubemap, one face every other frame,
 22–180 m, with no clouds, shadows, interior or effects passes. All six faces must be populated
 before sampling, and camera cuts invalidate them. The ordinary aircraft submission retains nearby
-ships behind the eye; probe render lists borrow their existing matrices without reparenting.
+ships behind the eye; probe render lists borrow their existing matrices without reparenting. Player-aircraft batches are separated and excluded from the probe so its own wings cannot become broad bands across the dome. The narrow dome rails sit at the view corners.
 `Engine.warmRenderer` warms batched/non-batched probe variants. The probe is an approximation:
 it supplies actual offscreen aircraft silhouettes, not full material/damage-shader shading.
 
@@ -291,13 +291,19 @@ covers receivers through 38 m before blending. Near/mid caster depth is fitted t
 map-edge fades retain fallback coverage. The formation map retains its 345.6 m width.
 Low-sun cloud illumination separates cool ambient fill from warm direct edges, alongside the
 mood LUT. High uses three radiance-normalized bloom levels for compact glints. The waist shaft
-uses a cached 32³ value-noise lattice and hoists linear plane distances outside the march.
+uses a cached 32³ value-noise lattice and hoists linear plane distances outside a six-step march.
+`InteriorLight` draws these volumes at half resolution on layer 2, clips the integration against
+SoftDepth, then upsamples with depth weights. Other transparencies retain native resolution;
+World prewarm also warms the shaft composite. Formation GTAO extends through 220 m with a
+3.2 m contact radius and stronger cavity weight beyond the cockpit.
 Submission retirement uses value iterators and changes instance visibility only when needed.
 High uses the existing authored compact far mesh beyond 650 m (60 m for offscreen shadow-only
 casters); close, reflected, damaged, player, falling, open-bay and object-blurred film aircraft
 retain their articulated source. Compact variants are warmed before play. These changes preserve
 the simulation and cloud-resolution budget.
 
-Fixture v3 adds turret-glass, close-shadow and formation-glints, resets the simulation RNG after
-art construction, and records formation poses. Matched live-main provenance, crops, probe ablation,
+Fixture v4 retains turret-glass, close-shadow and formation-glints, resets the simulation RNG after
+art construction, and records formation poses. It waits for streamed mission terrain before
+settling temporal history, and records SHA-256 hashes of all three region textures. Comparisons
+assert these hashes as well as the camera, weather and formation poses. Matched live-main provenance, crops, probe ablation,
 performance distributions and verification are in `docs/phase11/reports/02.md`.

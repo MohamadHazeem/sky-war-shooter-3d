@@ -23,7 +23,7 @@ for(const shot of reference.shots.filter(s=>!selected||selected.includes(s.shot)
   const batches=[await page.evaluate(()=>window.visualRig.benchmark(180))];
   const mean=batches.reduce((s,b)=>s+b.mean,0)/batches.length;
   const p95=Math.max(...batches.map(b=>b.p95));
-  const critical=['sunset','waist-interior'].includes(shot.shot) && quality==='high';
+  const critical=quality==='high';
   const reflectionVisible=await page.evaluate(()=>window.visualRig.engine.reflectionVisible);
   results.push({shot:shot.shot,mean,p95,budget,reflectionVisible,warmup,passes:mean<=budget && (!critical || p95<budget),batches,errors});
   await fs.writeFile(process.env.MATERIALS_PERF_OUTPUT??`${root}/performance${quality==='low'?'-low':''}.json`,JSON.stringify({method:'180 warm-up frames followed by one continuous 180-frame rig benchmark per shot; a fresh browser process per fixture releases all prior scene/GPU resources. Frozen simulation, GPU fenced; p95 of all 180 frames. No other task-owned capture concurrent.',results},null,2)+'\n');

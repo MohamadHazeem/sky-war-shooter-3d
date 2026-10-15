@@ -27,7 +27,7 @@ export function installAircraftFinish() {
   // ORM remains authoritative: satin paint, slightly broader brushed aluminium lobes.
   T.ShaderChunk.metalnessmap_fragment += `
 #ifdef STANDARD
-  if(swsFinish>.5 && swsFinish<1.5) roughnessFactor=clamp(roughnessFactor*mix(.72,.88,metalnessFactor),.19,.9);
+  if(swsFinish>.5 && swsFinish<1.5) roughnessFactor=clamp(roughnessFactor*mix(.48,.78,metalnessFactor),.13,.9);
 #endif
 `;
   T.ShaderChunk.normal_fragment_maps += `

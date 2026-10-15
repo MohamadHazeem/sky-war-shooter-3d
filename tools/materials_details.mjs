@@ -3,6 +3,9 @@ import sharp from 'sharp';
 import {smallJpeg} from './visual_rig.mjs';
 const root='docs/phase11/shots/02';
 for(const [name,shot,rect] of [
+ ['terrain-detail','b17-beauty',{left:20,top:650,width:640,height:360}],
+ ['glass-detail','turret-glass',{left:1020,top:160,width:640,height:360}],
+ ['glint-detail','formation-glints',{left:800,top:500,width:640,height:360}],
  ['shadow-detail','close-shadow',{left:880,top:435,width:640,height:240}],
  ['canopy-detail','p51-cockpit',{left:200,top:80,width:650,height:800}],
 ]){
@@ -16,4 +19,9 @@ for(const [name,shot,rect] of [
  const height=Math.round(rect.height*640/rect.width)+28;
  const img=await sharp({create:{width:1280,height,channels:3,background:'#151a22'}}).composite(tiles).png().toBuffer();
  await fs.writeFile(`${root}/${name}.jpg`,await smallJpeg(img,1280));
+}
+
+// Full-resolution review copies of the affected fixtures (bounded JPEG size).
+for (const phase of ['before','after']) for (const shot of ['b17-beauty','turret-glass','top-formation','close-shadow','formation-glints']) {
+  await fs.writeFile(`${root}/${phase}/${shot}-native.jpg`,await smallJpeg(await fs.readFile(`${root}/${phase}/${shot}.png`),1920));
 }

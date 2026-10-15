@@ -2,7 +2,7 @@ import type { StationId } from '../world/B17Layout';
 import type { Weather } from '../render/Weather';
 
 export interface RigShot { id: string; label: string; pillars: number[]; station?: StationId; weather: keyof typeof RIG_WEATHER }
-export const RIG_VERSION = 3;
+export const RIG_VERSION = 4;
 export const RIG_SEED = 19431008;
 export const RIG_DT = 1 / 60;
 export const RIG_STEPS = 360;

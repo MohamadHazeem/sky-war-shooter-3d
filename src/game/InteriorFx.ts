@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { softDepth } from '../render/SoftDepth';
+import { shaftResolution } from '../render/InteriorLight';
 import { Atmos } from '../render/Atmosphere';
 
 // Light and air in the waist compartment:
@@ -74,17 +76,20 @@ function shaftNoiseTexture() {
 let shaftVolMat: THREE.ShaderMaterial | null = null;
 export function shaftVolumeMaterial(): THREE.ShaderMaterial {
   shaftVolMat ??= new THREE.ShaderMaterial({
+    name: 'interior_sun_volume',
     uniforms: {
+      tShaftDepth: softDepth.uniforms.tSoftDepth, uShaftInvRes: shaftResolution,
       uDustNoise: { value: shaftNoiseTexture() },
       uCol: { value: new THREE.Color() }, uCam: { value: new THREE.Vector3() }, uTime: { value: 0 },
       uPlanes: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) }, uLen: { value: SHAFT_LEN },
     },
     vertexShader: /* glsl */ `
-      varying vec3 vP;
-      void main() { vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      varying vec3 vP; varying float vDepth;
+      void main() { vP = position; vec4 p=modelViewMatrix*vec4(position,1.);vDepth=-p.z;gl_Position=projectionMatrix*p; }`,
     fragmentShader: /* glsl */ `
       uniform vec3 uCol; uniform vec3 uCam; uniform float uTime; uniform vec4 uPlanes[6]; uniform float uLen;
-      varying vec3 vP;
+      varying vec3 vP; varying float vDepth;
+      uniform sampler2D tShaftDepth; uniform vec2 uShaftInvRes;
       float h31(vec3 p) { p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
       uniform highp sampler3D uDustNoise;
       float vnoise(vec3 p) {
@@ -106,8 +111,12 @@ export function shaftVolumeMaterial(): THREE.ShaderMaterial {
         bool entry = abs(dist - t0) < abs(dist - t1);
         if (entry) { if (t0 <= 0.0) discard; t0 = dist; }            // eye outside: from here to the exit
         else { if (t0 > 0.0) discard; t0 = 0.0; t1 = dist; }         // eye inside: from the eye to here
+        // Clip the volume itself against opaque crew/panels, not just its entry face.
+        float sceneDepth=texture2D(tShaftDepth,gl_FragCoord.xy*uShaftInvRes).r;
+        t1=min(t1,sceneDepth*dist/max(vDepth,.0001));
         if (t1 <= t0) discard;
-        const int N = 10;
+        // Six stratified samples; TAA integrates the drifting dust between frames.
+        const int N = 6;
         float dt = (t1 - t0) / float(N), acc = 0.0;
         float j = h31(vec3(gl_FragCoord.xy, uTime * 60.0));
         // Plane distances vary linearly along the ray. Hoist their dot products
@@ -173,8 +182,15 @@ export class SunShafts {
       geo.setIndex(idx);
       geo.boundingSphere = new THREE.Sphere(corners[0].clone(), 4);
       const mat = shaftMaterial().clone();
-      const vol = shaftVolumeMaterial().clone();
-      vol.uniforms.uDustNoise.value = shaftNoiseTexture();
+      const source = shaftVolumeMaterial();
+      const { tShaftDepth, uShaftInvRes, uDustNoise, ...owned } = source.uniforms;
+      // Share render-target samplers; UniformsUtils cannot clone their textures.
+      const vol = new THREE.ShaderMaterial({
+        name: source.name, vertexShader: source.vertexShader, fragmentShader: source.fragmentShader,
+        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide, forceSinglePass: true,
+        uniforms: { ...THREE.UniformsUtils.clone(owned), tShaftDepth, uShaftInvRes, uDustNoise },
+      });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.renderOrder = 2;
       mesh.name = 'sunShaft';

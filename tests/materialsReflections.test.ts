@@ -5,6 +5,7 @@ import { auditMaterial } from '../src/render/MaterialAudit';
 import { bindGlassReflection, reflectionUniforms } from '../src/render/GlassReflection';
 import { SunCascades } from '../src/render/SunCascades';
 import { FormationReflection, formationReflectionUniforms } from '../src/render/FormationReflection';
+import { InteriorLight } from '../src/render/InteriorLight';
 import { Atmos } from '../src/render/Atmosphere';
 
 describe('aircraft finishes and safe glass reflections', () => {
@@ -70,12 +71,13 @@ describe('aircraft finishes and safe glass reflections', () => {
     const probe = new FormationReflection(), scene = new T.Scene(), eye = new T.PerspectiveCamera();
     const skin = new T.MeshStandardMaterial(); skin.name = 'hero_skin';
     const aircraft = new T.Mesh(new T.BoxGeometry(), skin); scene.add(aircraft);
+    const ownAircraft = aircraft.clone(); ownAircraft.userData.reflectionExcluded = true; scene.add(ownAircraft);
     let draws = 0;
     const renderer = {
       autoClear: true, shadowMap: { autoUpdate: true },
       getRenderTarget: () => null, getActiveCubeFace: () => 0, getActiveMipmapLevel: () => 0,
       getClearAlpha: () => 1, getClearColor: (c: T.Color) => c.set(0), setClearColor() {}, setRenderTarget() {},
-      render: (borrowed: T.Scene) => { draws++; expect(borrowed.children).toContain(aircraft); expect(aircraft.parent).toBe(scene); },
+      render: (borrowed: T.Scene) => { draws++; expect(borrowed.children).toContain(aircraft); expect(borrowed.children).not.toContain(ownAircraft); expect(aircraft.parent).toBe(scene); },
     } as unknown as T.WebGLRenderer;
     probe.update(renderer, scene, eye, false); expect(draws).toBe(0);
     for (let i = 0; i < 10; i++) probe.update(renderer, scene, eye, true);
@@ -86,6 +88,23 @@ describe('aircraft finishes and safe glass reflections', () => {
     eye.position.x = 100; probe.update(renderer, scene, eye, true);
     expect(formationReflectionUniforms.swsFormationOn.value).toBe(0);
     probe.update(renderer, scene, eye, false); expect(formationReflectionUniforms.swsFormationOn.value).toBe(0);
+  });
+
+  it('restores render state when the cabin-volume pass fails', () => {
+    const light = new InteriorLight(), scene = new T.Scene(), camera = new T.PerspectiveCamera();
+    camera.layers.set(1);
+    const target = new T.WebGLRenderTarget(16, 16);
+    let current: T.WebGLRenderTarget | null = target;
+    const renderer = {
+      autoClear: false, shadowMap: { autoUpdate: true },
+      getRenderTarget: () => current, setRenderTarget: (t: T.WebGLRenderTarget | null) => { current = t; },
+      getClearAlpha: () => 1, getClearColor: (c: T.Color) => c.set(0), setClearColor() {},
+      render: () => { expect(camera.layers.mask).toBe(4); throw new Error('draw failed'); },
+    } as unknown as T.WebGLRenderer;
+    light.setSize(1920, 1080);
+    expect(() => light.render(renderer, scene, camera)).toThrow('draw failed');
+    expect(current).toBe(target); expect(camera.layers.mask).toBe(2);
+    expect(renderer.autoClear).toBe(false); expect(renderer.shadowMap.autoUpdate).toBe(true);
   });
 
 });

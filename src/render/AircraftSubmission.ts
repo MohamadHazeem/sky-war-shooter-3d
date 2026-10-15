@@ -92,6 +92,7 @@ export class AircraftSubmission {
   reflectionRange = 0;
   private readonly cameraPosition = new T.Vector3();
   private aircraftDistanceSq = 0;
+  private reflectionExcluded = false;
   private readonly cameraFrustum = new T.Frustum();
   private readonly shadowFrusta = [new T.Frustum(), new T.Frustum(), new T.Frustum()];
   private readonly projection = new T.Matrix4();
@@ -131,7 +132,7 @@ export class AircraftSubmission {
         layout = Object.entries(m.geometry.attributes).map(([n,a]) => `${n}:${a.itemSize}:${a.normalized}:${a.array.constructor.name}`).sort().join('|') + !!m.geometry.index;
         this.layouts.set(m.geometry, layout);
       }
-      const key = `${material.uuid}/${flags}/${layout}`;
+      const key = `${material.uuid}/${flags}/${layout}/${this.reflectionExcluded}`;
       let b = this.batches.get(key);
       if (!b) {
         const mesh = new T.BatchedMesh(CAPACITY, 4096, 12288, material);
@@ -144,6 +145,7 @@ export class AircraftSubmission {
           T.BatchedMesh.prototype.onBeforeRender.call(mesh, renderer, scene, camera, geometry, material, group);
           preparedFrame = this.frame; preparedCamera = camera; wireframe = wire;
         };
+        mesh.userData.reflectionExcluded = this.reflectionExcluded;
         mesh.name = key; mesh.matrixAutoUpdate = mesh.matrixWorldAutoUpdate = false;
         mesh.castShadow = m.castShadow; mesh.receiveShadow = m.receiveShadow;
         mesh.layers.set(0); mesh.renderOrder = m.renderOrder;
@@ -185,9 +187,11 @@ export class AircraftSubmission {
   };
 
   private passthrough(m: T.Mesh) {
+    m.userData.reflectionExcluded = this.reflectionExcluded;
     if (!m.children.length) { this.scene.children.push(m); return; }
     let proxy = this.proxies.get(m);
     if (!proxy) { proxy = m.clone(false); proxy.matrixAutoUpdate = proxy.matrixWorldAutoUpdate = false; this.proxies.set(m, proxy); }
+    proxy.userData.reflectionExcluded = this.reflectionExcluded;
     proxy.matrixWorld.copy(m.matrixWorld); proxy.material = m.material; proxy.geometry = m.geometry;
     proxy.layers.mask = m.layers.mask; proxy.castShadow = m.castShadow; proxy.receiveShadow = m.receiveShadow;
     proxy.onBeforeRender = m.onBeforeRender; proxy.onAfterRender = m.onAfterRender;
@@ -225,6 +229,7 @@ export class AircraftSubmission {
       if (child.userData.formationBatch || this.warming) {
         this.aircraftDistanceSq = child.position.distanceToSquared(this.cameraPosition);
         const f = formationSources.get(child), state = f?.state;
+        this.reflectionExcluded = !state || state.isPlayer;
         child.userData.submissionCulled = false;
         let shadowOnly = false;
         if (!this.warming && state && !this.shadowOverflow) {

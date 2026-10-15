@@ -1,3 +1,4 @@
+import { InteriorLight } from '../render/InteriorLight';
 import { FormationReflection } from '../render/FormationReflection';
 import { bindGlassReflection, reflectionUniforms } from '../render/GlassReflection';
 import { AircraftSubmission } from '../render/AircraftSubmission';
@@ -307,6 +308,7 @@ export class Engine {
     this.renderer.setSize(w, h);
     const pw = Math.floor(w * this.pixelRatio), ph = Math.floor(h * this.pixelRatio);
     this.skyCache.setSize(pw, ph);
+    this.interiorLight.setSize(pw, ph);
     this.sceneRT.setSize(pw, ph);
     this.hdrRT.setSize(pw, ph);
     this.clouds.setQuality(QUALITY[this.quality], pw, ph);
@@ -494,7 +496,7 @@ export class Engine {
       this.post.hazeTex = this.heatHaze.render(r, cam, this.sceneRT.depthTexture!);
       // linear depth copy for the soft effects (render/SoftDepth.ts), only when something wants it
       const traceGlass = this.reflectionVisible && this.quality !== 'low' && this.quality !== 'medium';
-      if (traceGlass) softDepth.want();
+      if (traceGlass || this.interiorShafts) softDepth.want();
       softDepth.capture(r, cam, this.sceneRT.depthTexture!, this.clouds.sunShadow);
       // Copy the composite back over the scene colour (keeping its depth buffer), then
       // pass 2: transparent effects (layer 1) on top of the clouds, depth-tested.
@@ -506,6 +508,7 @@ export class Engine {
       cam.layers.set(1);
       r.shadowMap.autoUpdate = false;
       r.render(drawScene, cam);
+      if (this.interiorShafts) this.interiorLight.render(r, drawScene, cam);
       r.shadowMap.autoUpdate = true;
       r.autoClear = true;
       cam.layers.set(0);
@@ -529,6 +532,7 @@ export class Engine {
       softDepth.want(); // compile the depth-copy pass before the first damage trail
       this.render(1/60);
       this.glassProbe.update(this.renderer, this.submission.scene, this.camera, false, true);
+      this.interiorLight.render(this.renderer, this.submission.scene, this.camera);
       // Mission-owned interior/damage meshes also need their batched variants before a hit or station switch.
       this.submission.warming = true;
       this.renderer.shadowMap.needsUpdate = true;
@@ -575,6 +579,8 @@ export class Engine {
   }
 
   private glassProbe = new FormationReflection();
+  private interiorLight = new InteriorLight();
+  private interiorShafts = false;
   private reflectionInterior = false;
   private reflectionVisible = false;
   private reflectionSphere = new THREE.Sphere();
@@ -585,6 +591,7 @@ export class Engine {
   private sortLayers(scene = this.scene) {
     this.reflectionVisible = false;
     this.reflectionInterior = false;
+    this.interiorShafts = false;
     this.reflectionFrustum.setFromProjectionMatrix(this.reflectionMatrix.multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse), this.camera.coordinateSystem, this.camera.reversedDepth);
     scene.traverseVisible((o) => {
       if ((o as THREE.Light).isLight) { o.layers.enableAll(); return; }
@@ -593,6 +600,7 @@ export class Engine {
       if (Array.isArray(m)) { for (const material of m) { auditMaterial(material); freshEnv(material); } } else { auditMaterial(m); freshEnv(m); }   // back from outside the scene: the current sky
       const transparent = Array.isArray(m) ? m.some((x) => x.transparent) : m.transparent;
       o.layers.set(transparent && o !== this.sky.mesh ? 1 : 0);
+      if (!Array.isArray(m) && m.name === 'interior_sun_volume') { o.layers.set(2); this.interiorShafts = true; }
       if (!Array.isArray(m) && m.name === 'gunner_glass_overlay') this.reflectionInterior = true;
       if (!this.reflectionVisible && transparent && !Array.isArray(m) && glassMaterialName.test(m.name)) {
         const mesh = o as THREE.Mesh, geometry = mesh.geometry;

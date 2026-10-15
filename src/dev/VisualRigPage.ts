@@ -54,6 +54,21 @@ async function boot() {
   // No Engine.start(), auto graphics, live input, director, or wall-clock animation loop.
   Math.random = seededRandom(options.seed);
   const facts = setupRigShot(engine, game, shot, () => { tick++; engine.frame(RIG_DT, false); }, options.seed);
+  // Mission terrain streams asynchronously. Do not compare placeholder fields on
+  // one side with loaded geography on the other, or retain it in TAA history.
+  const { farTerrainUniforms } = await import('../render/FarTerrain');
+  const terrainStart = realNow();
+  while (!farTerrainUniforms.uFarMapped.value) {
+    if (realNow() - terrainStart > 30000) throw new Error('Fixture terrain did not load');
+    await new Promise(r => setTimeout(r, 20));
+  }
+  const terrainTextures = await Promise.all([
+    farTerrainUniforms.tFarLines, farTerrainUniforms.tFarCover, farTerrainUniforms.tFarRelief,
+  ].map(async ({ value: texture }) => {
+    const { data, width, height } = texture.image;
+    const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(data as Uint8Array));
+    return { width, height, sha256: Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2, '0')).join('') };
+  }));
   engine.onFrame = undefined;
   engine.beforeFrame = undefined;
   // Hide all game chrome; the standalone development page has no player-facing controls.
@@ -68,6 +83,7 @@ async function boot() {
   const metadata = {
     version: RIG_VERSION, ...options, label: shot.label, pillars: shot.pillars,
     backendActual: adapter.backend, deviceInfo: adapter.deviceInfo, seedDefault: RIG_SEED, dt: RIG_DT, steps: RIG_STEPS,
+    terrainMapped: farTerrainUniforms.uFarMapped.value, terrainTextures,
     settleFrames: RIG_SETTLE, time: engine.time, worldTime: game.world.time,
     viewport: [innerWidth, innerHeight], renderSize: [canvas.width, canvas.height],
     stream: engine.bomberStream.stats(),
