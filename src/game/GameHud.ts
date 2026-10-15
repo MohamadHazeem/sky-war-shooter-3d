@@ -173,8 +173,11 @@ export class GameHud {
     ctx.setLineDash([3, 4]);
     ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(x, y); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.strokeStyle = 'rgba(255,200,90,0.95)'; ctx.lineWidth = 1.8;
-    ctx.beginPath(); ctx.moveTo(x, y - 7); ctx.lineTo(x + 7, y); ctx.lineTo(x, y + 7); ctx.lineTo(x - 7, y); ctx.closePath(); ctx.stroke();
+    // a lesson teaching the pip (forceLeadPip) draws it larger, with a glow, so it reads at a glance
+    const r = this.forceLeadPip ? 11 : 7;
+    ctx.strokeStyle = 'rgba(255,200,90,0.95)'; ctx.lineWidth = this.forceLeadPip ? 2.4 : 1.8;
+    if (this.forceLeadPip) { ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 4; }
+    ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath(); ctx.stroke();
     ctx.restore();
   }
 
