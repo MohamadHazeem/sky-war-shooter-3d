@@ -26,7 +26,7 @@ interface Debris {
   mesh: THREE.Object3D; vel: THREE.Vector3; spin: THREE.Vector3; life: number; max: number;
   smoke: boolean; fire: boolean; acc: number; fAcc: number; active: boolean; pooled: boolean;
 }
-interface Chute { obj: THREE.Group; vel: THREE.Vector3; life: number; open: number; phase: number }
+interface Chute { obj: THREE.Group; vel: THREE.Vector3; life: number; open: number; phase: number; drag: number }
 interface LightSlot { light: THREE.PointLight; life: number; max: number; intensity: number }
 interface Pending { t: number; pos: THREE.Vector3; vel: THREE.Vector3; k: number; kind: 0 | 1 | 2; active: boolean }
 
@@ -779,15 +779,17 @@ export class Effects {
     obj.add(canopy, body, lines);
     obj.visible = false;
     this.scene.add(obj);
-    return { obj, vel: new THREE.Vector3(), life: 0, open: 0, phase: 0 };
+    return { obj, vel: new THREE.Vector3(), life: 0, open: 0, phase: 0, drag: 2.2 };
   }
 
-  parachute(pos: THREE.Vector3, vel: THREE.Vector3, scale = 1): boolean {
+  // drag: how fast an open canopy sheds its forward speed (MissionEvents' bail-out keeps the chutes
+  // drifting near the falling ship a while, so the crew can count them)
+  parachute(pos: THREE.Vector3, vel: THREE.Vector3, scale = 1, drag = 2.2): boolean {
     for (const c of this.chutes) {
       if (c.life > 0) continue;
       c.obj.visible = true; c.obj.position.copy(pos); c.obj.rotation.set(0, 0, 0); c.obj.scale.setScalar(scale);
       c.obj.children[0].scale.setScalar(0.01); c.obj.children[2].visible = false;
-      c.vel.copy(vel); c.life = 60; c.open = -1.5 - Math.random() * 1.5; c.phase = Math.random() * Math.PI * 2;
+      c.vel.copy(vel); c.life = 60; c.open = -1.5 - Math.random() * 1.5; c.phase = Math.random() * Math.PI * 2; c.drag = drag;
       return true;
     }
     return false; // never steal a visible chute: crew counts reflect successful spawns
@@ -911,12 +913,12 @@ export class Effects {
         canopy.scale.set(s * breath, s * breath * (0.8 + 0.2 * Math.sin(c.open * 2)), s * breath);
         c.obj.children[2].visible = s > 0.5;
         // decelerate to ~6 m/s descent, drift with the wind
-        c.vel.multiplyScalar(Math.exp(-2.2 * dt));
+        c.vel.multiplyScalar(Math.exp(-c.drag * dt));
         c.vel.y += (-6 - c.vel.y) * Math.min(1, dt * 2);
         c.obj.rotation.z = Math.sin(c.open * 0.9) * 0.08;
       } else {
         c.vel.y -= 9.81 * dt;
-        c.vel.multiplyScalar(Math.exp(-0.4 * dt));
+        c.vel.multiplyScalar(Math.exp(-Math.min(0.4, c.drag) * dt));
       }
       c.obj.position.addScaledVector(c.vel, dt);
       if (c.life <= 0) c.obj.visible = false;

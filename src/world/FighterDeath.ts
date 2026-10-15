@@ -287,27 +287,29 @@ function fly(f: Fighter, dt: number, follow: number, cruise: number) {
 }
 
 // The pilot leaves: up and out of the cockpit, his chute opens below (scaled like the fighters)
-function jump(f: Fighter, w: World) {
+function jump(f: Fighter, w: World, drag?: number, carry?: THREE.Vector3) {
   const pilot = f.model.getObjectByName('pilot');
   if (pilot) pilot.visible = false;
   f.bailedOut = true;
   const sc = f.model.scale.x;
   f.localToWorld(_l.copy(COCKPIT).multiplyScalar(sc), _p);
   _p.addScaledVector(f.up(_v), 1.2 * sc);
-  _v.multiplyScalar(7).addScaledVector(f.vel, 0.35);
+  _v.multiplyScalar(7).addScaledVector(carry ?? f.vel, carry ? 1 : 0.35);
   _v.y += 4;
-  w.effects.parachute(_p, _v, CHUTE_SCALE);
+  w.effects.parachute(_p, _v, CHUTE_SCALE, drag);
 }
 
-// Canopy off and out: a pilot leaving a falling aircraft (the engine-fire ending, a hulk that lost a wing or its tail)
-export function ejectPilot(f: Fighter, w: World) {
+// Canopy off and out: a pilot leaving a falling aircraft (the engine-fire ending, a hulk that lost a wing or its tail).
+// drag / carry: how fast his canopy sheds speed (Effects.parachute) and the speed he leaves with
+// (default: a third of the aircraft's); MissionEvents keeps one in the gun's view with them
+export function ejectPilot(f: Fighter, w: World, drag?: number, carry?: THREE.Vector3) {
   if (f.bailedOut) return;
   bailing.add(f);
   f.localToWorld(_l.copy(COCKPIT).multiplyScalar(f.model.scale.x), _p);
   glassBurst(f, w.effects, _p, 6);
   w.effects.spawnDebris(_p, f.vel, 2, false);
   sound.play('glass', _p, { gain: 0.7, ref: 60 });
-  jump(f, w);
+  jump(f, w, drag, carry);
 }
 
 function boom(s: Seq) {

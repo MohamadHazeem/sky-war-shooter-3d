@@ -8,10 +8,14 @@ import { atmosUniforms, skyGLSL } from './Atmosphere';
 //
 // One curved strip of 97 x 2 vertices, built in the vertex shader around the camera: it sits
 // at most GEOM_MAX away (inside the far plane and the clouds' march range) but is scaled in
-// height to subtend the angle it would at its true distance. It is drawn in the opaque pass
-// right after the sky dome (renderOrder) with alpha blending and no depth write, so to the
-// cloud pass it is sky: the volumetric clouds in front draw over it, and aircraft always do.
-// Always in the scene (compiled with the first frame); with uFade = 0 every vertex is clipped.
+// height to subtend the angle it would at its true distance. It is drawn in the transparent pass,
+// after the cloud composite (Engine: layer 1), first of the transparents, with no depth write:
+// aircraft and terrain in front still hide it, and the clouds behind it no longer paint over it
+// (as "sky" to the cloud march it was covered by the high layer and the far cloud sea, which
+// smeared into streaks and a hard grey band at the horizon). Only the part above the cloud deck
+// is drawn, so the near deck in front of its foot still covers it; with the camera in or under
+// the deck the wall is hidden. Always in the scene (compiled with the first frame); with
+// uFade = 0 every vertex is clipped.
 
 const GEOM_MAX = 14000;   // m
 
@@ -26,6 +30,7 @@ export class StormWall {
     uSpan: { value: 1.25 },                     // half-width of the arc (rad)
     uBase: { value: 4600 },                     // cloud base / top (m)
     uTop: { value: 13000 },
+    uDeck: { value: 5500 },                     // top of the low cloud deck (m): the wall rises out of it
     uFade: { value: 0 },
     uFlash: { value: 0 },                       // lightning inside the wall (0..1)
     uFlashAt: { value: 0 },                     // where along the wall it flickers (-1..1)
@@ -61,7 +66,8 @@ export class StormWall {
         }`,
       fragmentShader: /* glsl */ `
         ${skyGLSL}
-        uniform float uD, uBase, uTop, uFade, uFlash, uFlashAt, uTime, uHaze, uSpan;
+        uniform float uD, uBase, uTop, uDeck, uFade, uFlash, uFlashAt, uTime, uHaze, uSpan;
+        uniform vec3 uCam;
         varying vec2 vWall;
         varying float vU;
         varying vec3 vWorld;
@@ -100,7 +106,8 @@ export class StormWall {
           float facing = 0.3 + 0.7 * max(dot(normalize(-V0.xz + 1e-5), normalize(uSunDir.xz + 1e-5)), 0.0);
           vec3 sunC = uSunColor * (0.02 + 0.2 * h * h + 0.1 * anvil * h) * (0.3 + 1.1 * relief) * sunUp * facing;
           vec3 amb = mix(uHorizon * 0.09 + uGround * 0.15, uZenith * 0.35 + uHorizon * 0.18, h) * (0.5 + 0.6 * n);
-          vec3 col = sunC + amb;
+          // sunlit turrets over a darker, rain-heavy body
+          vec3 col = (sunC + amb) * vec3(0.92, 0.96, 1.0) * (0.36 + 0.64 * smoothstep(top - 4200.0, top - 300.0, alt));
           // rain shafts under the base: grey streaks hanging down to the cloud sea
           float below = smoothstep(uBase + 300.0, uBase - 2000.0, alt);
           float shafts = smoothstep(0.42, 0.7, fbm3(vec2(x / 900.0 + alt / 9000.0, 0.5 + uTime * 0.01)));
@@ -117,12 +124,18 @@ export class StormWall {
           col = mix(col, skyRadiance(V), hz * 0.85);
           // ends of the arc fade out
           a *= uFade * (1.0 - smoothstep(0.7, 1.0, abs(vU)));
+          // its foot sinks into the deck in billows and haze, no straight edge (the deck in front
+          // covers it); with the camera in or under the deck, none of it
+          float foot = fbm3(vec2(x / 1700.0, 2.9));
+          float rise = smoothstep(uDeck - 100.0 + 900.0 * foot, uDeck + 1400.0 + 1800.0 * foot, alt);
+          col = mix(skyRadiance(V), col, 0.3 + 0.7 * rise);
+          a *= rise * smoothstep(uDeck - 100.0, uDeck + 250.0, uCam.y);
           if (a < 0.003) discard;
           gl_FragColor = vec4(col, a);
         }`,
       depthWrite: false,
       depthTest: true,
-      transparent: false,   // stays in the opaque pass (Engine.sortLayers), so it is drawn before the clouds
+      transparent: true,    // the transparent pass (Engine.sortLayers: layer 1), after the clouds
       blending: THREE.CustomBlending,
       blendSrc: THREE.SrcAlphaFactor,
       blendDst: THREE.OneMinusSrcAlphaFactor,
@@ -130,7 +143,7 @@ export class StormWall {
     });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.frustumCulled = false;
-    this.mesh.renderOrder = -999;   // right after the sky dome
+    this.mesh.renderOrder = -1000;   // first of the transparents: smoke, contrails and tracers draw over it
     this.mesh.userData.noRebase = true;
     this.mesh.name = 'storm-wall';
   }

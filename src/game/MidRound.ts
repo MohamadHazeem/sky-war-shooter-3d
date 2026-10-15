@@ -15,6 +15,8 @@ import { RandomEvent, EVENTS, EventId } from './RandomEvents';
 import { tx } from '../i18n';
 import { SetPieces, SetPieceId } from './SetPieces';
 import { projectMarker } from '../ui/MarkerProjection';
+import { MissionEvents } from './MissionEvents';
+import { EventBanner } from '../ui/EventBanner';
 
 // Mid-round extras: pop-up bonus objectives (1–2 per round) and random in-flight events
 // (every 60–120 s). This file is the scheduler and the shared toolbox; the objectives live in
@@ -53,9 +55,11 @@ export class MidRound {
   roundT = 0;
   roundLeft = 0;
   readonly setPieces: SetPieces;      // formation drama set pieces (SetPieces.ts)
+  readonly events: MissionEvents;     // dynamic in-mission events (MissionEvents.ts, Phase 11 goal 28)
 
   constructor(readonly game: Game, readonly engine: Engine, readonly input: Input, readonly ui: UI) {
     this.setPieces = new SetPieces(this);
+    this.events = new MissionEvents(this, new EventBanner());
     this.hookKills();
   }
 
@@ -95,7 +99,7 @@ export class MidRound {
     } else if (!m.signature && this.objSlots.length && this.roundT >= this.objSlots[0]) {
       // a slot comes due: needs 25 s of the round left, no boss and a gap after an event
       if (this.roundLeft < 25) this.objSlots.length = 0;
-      else if (!boss && !this.setPieces.busy && w.time - this.eventStartedAt > 6 && w.time - this.objEndedAt > 8) { this.objSlots.shift(); this.startObjective(); }
+      else if (!boss && !this.setPieces.busy && !this.events.busy && w.time - this.eventStartedAt > 6 && w.time - this.objEndedAt > 8) { this.objSlots.shift(); this.startObjective(); }
     }
 
     // ---- random events ----
@@ -109,13 +113,16 @@ export class MidRound {
       if (e.state !== 'active') this.finishEvent(e);
     } else {
       this.eventCd -= dt;
-      if (!m.signature && this.eventCd <= 0 && this.roundT >= EVENT_QUIET_START && this.roundLeft > 15 && !boss && !this.setPieces.busy && w.time - this.objStartedAt > 6) {
+      if (!m.signature && this.eventCd <= 0 && this.roundT >= EVENT_QUIET_START && this.roundLeft > 15 && !boss && !this.setPieces.busy && !this.events.busy && w.time - this.objStartedAt > 6) {
         if (this.startEvent()) this.eventCd = EVENT_GAP[0] + Math.random() * (EVENT_GAP[1] - EVENT_GAP[0]);
         else this.eventCd = 5;
       }
     }
     // ---- formation set pieces (lulls only; never on top of an objective or event) ----
-    this.setPieces.update(dt, boss, !!this.event);
+    this.setPieces.update(dt, boss, !!this.event || this.events.busy);
+    // ---- dynamic events (one at a time; never on top of a random event, a set piece or a bonus objective's
+    // first or last moments; a running objective may carry on: events never pick the ships it marks) ----
+    this.events.update(dt, boss, !!this.event || this.setPieces.busy || w.time - this.objStartedAt < 8 || w.time - this.objEndedAt < 8 || w.time - this.eventStartedAt < 20);
     if (!this.event) this.hud.hidePrompt();
     this.drawTags();
   }
@@ -132,6 +139,7 @@ export class MidRound {
     // the first event comes a little sooner than the 60-120 s gap, so round 1 gets one
     this.eventCd = 40 + Math.random() * 35;
     this.setPieces.reset();
+    this.events.reset();
     this.hookKills();
   }
 
@@ -214,7 +222,7 @@ export class MidRound {
     if (this.objective) { this.objective.cancel(this); this.objective.end(this); this.objective = null; }
     if (this.event) { this.event.cancel(this); this.event.end(this); this.event = null; }
     this.pins.clear();
-    if (!keepSetPiece) this.setPieces.stop();
+    if (!keepSetPiece) { this.setPieces.stop(); this.events.stop(); }
     this.hud.hideAll();
   }
 

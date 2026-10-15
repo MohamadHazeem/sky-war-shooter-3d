@@ -302,6 +302,7 @@ export function updateWeather(engine: Engine, dt: number, forward: THREE.Vector3
     u.uDir.value.copy(front.wallDir);
     u.uD.value = D;
     u.uBase.value = Atmos.lowTop - 900;
+    u.uDeck.value = Atmos.lowTop;
     u.uTop.value = 13200;
     u.uTime.value += dt;
     const fadeIn = THREE.MathUtils.smoothstep(lead, 0, 12);

@@ -146,6 +146,8 @@ async function boot() {
       return game.limping;
     };
     // Formation set piece now (gunner mission in progress): sws.drama('flakHit' | 'collision' | 'bombBay' | 'straggler' | 'littleFriends'); sws.drama() lists them
+    // Dynamic in-mission event now (Phase 11 goal 28): sws.missionEvent('salute'); no id lists them, '?' shows state
+    (window as any).sws.missionEvent = (n?: string) => game.midRound.events.dev(n);
     (window as any).sws.drama = (n?: any) => (n ? game.midRound.devDrama(n) : 'flakHit, collision, bombBay, straggler, littleFriends');
     // Sharing / trailer / social card tools (docs/TRAILER.md): sws.trailer(), sws.ogCard(), sws.analytics.last
     const { trailer } = await import('./dev/Trailer');
