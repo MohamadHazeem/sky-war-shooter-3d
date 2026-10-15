@@ -15,16 +15,16 @@ await fs.mkdir(OUT, { recursive: true });
 // event id -> [seconds into the event for the shot, station]
 const SHOTS = {
   nearMiss: [2.0, 'waistL'], friendlyExplodes: [3.1, 'waistL'], bailout: [8.5, 'waistL', -0.08], jamming: [3, 'waistL'],
-  oxygenFire: [1.6, 'waistL'], gunnerFreezes: [2, 'waistL'], salute: [9.6, 'waistL'], lostMustang: [8.5, 'waistL'],
+  oxygenFire: [1.0, 'waistL'], gunnerFreezes: [2, 'waistL'], salute: [9.6, 'waistL'], lostMustang: [8.5, 'waistL'],
   cookOff: [2.2, 'waistL'], weatherWall: [9, 'top', 0.05], flakWalk: [3.95, 'waistL'], runawayProp: [3, 'waistL'],
-  redFlares: [1.9, 'waistL'], enemyBailout: [4.6, 'waistL'], yellowNoses: [6, 'top'], sunBandits: [5, 'top'],
+  redFlares: [1.9, 'waistL'], enemyBailout: [6.6, 'waistL'], yellowNoses: [6, 'top'], sunBandits: [5, 'top'],
   chaff: [3, 'waistL'], oxygenCheck: [5, 'waistL'], tightenUp: [7, 'waistL'], strayTracers: [0.7, 'waistL'],
   escortHome: [3.5, 'waistL'], brassRain: [2, 'waistL'],
 };
 const args = process.argv.slice(2);
 const pick = args.filter((a) => SHOTS[a]);
 const only = pick.length || args.length ? pick : Object.keys(SHOTS);
-const extras = args.length ? args.filter((a) => !SHOTS[a]) : ['full', 'ar', 'phone', 'pacing'];
+const extras = args.length ? args.filter((a) => !SHOTS[a]) : ['full', 'ar', 'phone', 'front', 'pacing'];
 
 function quiet() {
   // the shots stage events one by one: the director's waves, set pieces, objectives and random events wait
@@ -67,6 +67,7 @@ async function startMission(page) {
     g.ui.fade(false);
     g.midRound.events.reset();
     window.__quiet();
+    sws.step(120, 1 / 60, false);   // rounds the removed fighters had already fired land first (their "we're hit" calls too)
   });
   // MissionFlow's start-of-mission pilot line runs on a 2.5 s real-time timer: let it play out
   // before the event, so the subtitle in the shot is the event's own
@@ -114,6 +115,7 @@ async function play(page, id, at, station, name = id, pitch = null) {
       time: +g.world.time.toFixed(1), bombsAway: g.mission?.bombsAway ?? null,
     };
   }));
+  r.shot = name;
   await page.screenshot({ path: `${OUT}/${name}.jpg`, type: 'jpeg', quality: 70 });
   // run it out: it must clean up after itself
   r.after = await page.evaluate(({ id }) => {
@@ -154,6 +156,42 @@ try {
     }
     await context.close();
   }
+  if (extras.includes('front')) {
+    // the storm wall of a mission with its own front (Into the Front, m9: the front arrives at 110 s),
+    // far off (~18 km) and close (~6 km, just before it arrives): the wall the weatherWall event shows
+    const { context, page } = await open('en', { width: 1280, height: 720 });
+    await page.evaluate(() => {
+      const g = sws.game;
+      g.startMission(sws.CAMPAIGN.find((c) => c.id === 'm9'));
+      sws.step(60 * 12, 1 / 60);
+      g.ui.fade(false);
+    });
+    for (const [T, name] of [[79, 'stormFront-far'], [104, 'stormFront-near']]) {
+      const r = await page.evaluate((T) => {
+        const g = sws.game;
+        window.__programs = g.engine.renderer.info.programs.length;
+        // the waves fly as usual (clearing them would end the round); nobody flies the player's
+        // Mustang, so it is held straight and level at its cruise height, facing the front
+        const pl = g.world.player, y0 = window.__y0 ??= pl.root.position.y;
+        while (g.state === 'playing' && g.world.time < T) {
+          for (const z of pl.zones) z.hp = z.maxHp;
+          const fw = g.world.formationForward, sp = Math.max(120, pl.vel.length());
+          pl.root.position.y = y0;
+          pl.root.quaternion.setFromUnitVectors(fw.clone().set(0, 0, 1), fw.clone().setY(0).normalize());
+          pl.vel.copy(fw).setY(0).normalize().multiplyScalar(sp); pl.fm.vel.copy(pl.vel);
+          sws.step(30, 1 / 60, false);
+        }
+        sws.step(1, 1 / 60, true);
+        const u = g.engine.scene.getObjectByName('storm-wall').material.uniforms;
+        return { state: g.state, time: +g.world.time.toFixed(1), wallKm: +(u.uD.value / 1000).toFixed(1), wallFade: +u.uFade.value.toFixed(2), programs: g.engine.renderer.info.programs.length - window.__programs };
+      }, T);
+      if (r.state !== 'playing') r.error = `state ${r.state}`;
+      await page.screenshot({ path: `${OUT}/${name}.jpg`, type: 'jpeg', quality: 70 });
+      results.push({ id: name, shot: name, ...r });
+      console.log(JSON.stringify({ id: name, ...r }));
+    }
+    await context.close();
+  }
   if (extras.includes('pacing')) {
     // the director on its own: full gunner campaign missions under the autoplay bot (sws.autoplay)
     const { context, page } = await open('en', { width: 960, height: 540 });
@@ -182,7 +220,17 @@ try {
   }
 } finally {
   await browser.close();
-  await fs.writeFile(`${OUT}/results.json`, JSON.stringify({ results, errors }, null, 1));
+  // a run of only some shots replaces those in results.json and keeps the rest
+  let all = results;
+  if (args.length) {
+    try {
+      const prev = JSON.parse(await fs.readFile(`${OUT}/results.json`, 'utf8')).results;
+      const fresh = new Map(results.map((r) => [r.shot ?? r.id, r]));
+      all = prev.map((r) => { const k = r.shot ?? r.id, n = fresh.get(k); if (!n) return r; fresh.delete(k); return n; });
+      all.push(...fresh.values());
+    } catch { /* no earlier results */ }
+  }
+  await fs.writeFile(`${OUT}/results.json`, JSON.stringify({ results: all, errors }, null, 1));
 }
 const bad = results.filter((r) => r.error || r.bombRun || (r.programs ?? 0) > 0 || r.after?.active || r.after?.jammed || r.after?.frozen?.length || (r.overlaps?.length ?? 0) > 0);
 console.log(`errors: ${errors.length}, problems: ${bad.length}`);

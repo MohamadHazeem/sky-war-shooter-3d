@@ -212,9 +212,9 @@ export const MISSION_EVENTS: MissionEventDef[] = [
     beats: [
       { at: 0, act: 'crosser' },
       { at: 0.3, say: ['Ball Turret', 'Burning Fw 190 coming across — he\'s in trouble!'] },
-      { at: 3.6, act: 'bail' },
-      { at: 4, say: ['Ball Turret', 'He\'s out! There\'s his chute!'] },
-      { at: 8, say: ['Pilot', 'Let him go. His war\'s over.'] },
+      { at: 2.6, act: 'bail' },
+      { at: 5.4, say: ['Ball Turret', 'He\'s out! There\'s his chute!'] },
+      { at: 8.4, say: ['Pilot', 'Let him go. His war\'s over.'] },
     ],
   },
   {

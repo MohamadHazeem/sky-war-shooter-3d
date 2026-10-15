@@ -125,28 +125,29 @@
    "started": "event oxygenFire started",
    "state": {
     "active": "oxygenFire",
-    "t": 1.6,
+    "t": 1,
     "count": 1,
     "played": [
      "oxygenFire"
     ],
     "log": [
-     "13s event oxygenFire (dev) start"
+     "15s event oxygenFire (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTOxygen fireFire in the radio room",
    "subtitle": "RADIOFire! The oxygen line's burning in the radio room!",
    "bombRun": false,
-   "time": 14.2,
+   "time": 15.5,
    "bombsAway": 85,
+   "shot": "oxygenFire",
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "13s event oxygenFire (dev) start",
-     "24s event oxygenFire end"
+     "15s event oxygenFire (dev) start",
+     "26s event oxygenFire end"
     ]
    }
   },
@@ -281,22 +282,23 @@
      "weatherWall"
     ],
     "log": [
-     "14s event weatherWall (dev) start"
+     "16s event weatherWall (dev) start"
     ]
    },
    "programs": 0,
    "banner": null,
    "subtitle": "PILOTThen we go through. Close it up and watch your spacing.",
    "bombRun": false,
-   "time": 22.7,
+   "time": 24.7,
    "bombsAway": 85,
+   "shot": "weatherWall",
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "14s event weatherWall (dev) start",
-     "25s event weatherWall end"
+     "16s event weatherWall (dev) start",
+     "27s event weatherWall end"
     ]
    }
   },
@@ -395,28 +397,29 @@
    "started": "event enemyBailout started",
    "state": {
     "active": "enemyBailout",
-    "t": 4.6,
+    "t": 6.6,
     "count": 1,
     "played": [
      "enemyBailout"
     ],
     "log": [
-     "13s event enemyBailout (dev) start"
+     "15s event enemyBailout (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTHe's outA burning Fw 190 pilot bails out",
    "subtitle": "BALL TURRETHe's out! There's his chute!",
    "bombRun": false,
-   "time": 17.2,
+   "time": 21.2,
    "bombsAway": 85,
+   "shot": "enemyBailout",
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "13s event enemyBailout (dev) start",
-     "23s event enemyBailout end"
+     "15s event enemyBailout (dev) start",
+     "25s event enemyBailout end"
     ]
    }
   },
@@ -491,22 +494,23 @@
      "chaff"
     ],
     "log": [
-     "13s event chaff (dev) start"
+     "15s event chaff (dev) start"
     ]
    },
    "programs": 0,
    "banner": "IN FLIGHTWindowThe lead ship scatters radar foil",
    "subtitle": "NAVIGATORLead's dropping chaff — foil strips to blind their radar.",
    "bombRun": false,
-   "time": 15.6,
+   "time": 17.6,
    "bombsAway": 85,
+   "shot": "chaff",
    "after": {
     "active": null,
     "jammed": false,
     "frozen": [],
     "log": [
-     "13s event chaff (dev) start",
-     "23s event chaff end"
+     "15s event chaff (dev) start",
+     "24s event chaff end"
     ]
    }
   },
@@ -943,6 +947,24 @@
     "354s set piece littleFriends done"
    ],
    "overlaps": []
+  },
+  {
+   "id": "stormFront-far",
+   "shot": "stormFront-far",
+   "state": "playing",
+   "time": 79.5,
+   "wallKm": 17.8,
+   "wallFade": 1,
+   "programs": 0
+  },
+  {
+   "id": "stormFront-near",
+   "shot": "stormFront-near",
+   "state": "playing",
+   "time": 104,
+   "wallKm": 7.1,
+   "wallFade": 1,
+   "programs": 0
   }
  ],
  "errors": []

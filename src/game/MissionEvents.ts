@@ -7,6 +7,7 @@ import { tx } from '../i18n';
 import { DEFAULT_WEATHER, Weather } from '../render/Weather';
 import { SP_MAX_LOSSES } from './SetPieces';
 import { brassGeometry, brassMaterial } from './Brass';
+import { ejectPilot } from '../world/FighterDeath';
 import {
   CHUTE_LINES, CHUTE_SPEAKER, EV_AFTER, EV_GAP, EvAction, EvContext, EvNeed, EvTone, MissionEventDef,
   EVENT_IDS, bombLeadIn, eventDef, eventDue, pickEvent,
@@ -39,9 +40,12 @@ const NEAR_SCALE = 2.2;        // scripted enemy fighters close by: near true si
 const NEIGHBOUR = 480;         // m: a B-17 this close to the player's ship reads clearly
 const TRACER: [number, number, number] = [10, 7, 3];
 const STAGE_T = 4;             // s a staged B-17 takes to slide into the gun's view before the event proper
-const BAILOUT_DEATH = 4;      // FighterDeath KINDS index of 'bailout'
+const ENGINE_FIRE_DEATH = 3;   // FighterDeath KINDS index of 'engineFire' (no bail-out roll: the pilot is already out)
+const CROSS_FROM = 250, CROSS_SPEED = 46;   // m, m/s: the burning Fw 190 crossing the gun's view
+const CROSS_FALL = 4.8;        // s after the pilot jumps that the empty fighter rolls over and goes down
 const SINK_T = 9.5;            // s a bailing B-17 sinks out of the box on her own (chutes in view) before she spins in
 const CHUTE_DRAG = 0.12;       // the bail-out's canopies shed forward speed slowly: they drift near her, countable
+const CHAFF_GLINT = [22, 22, 24], CHAFF_DIM = [7, 7, 7.8], CHAFF_END = [0.6, 0.6, 0.7];   // foil flashing in the sun (HDR)
 const BRASS_N = 72;            // falling casings (instanced, the waist pile's own geometry and material)
 const BRASS_SIZE = 2.4;        // drawn larger than a real .50 case so the glint reads at a few metres
 
@@ -73,6 +77,7 @@ export class MissionEvents {
   private salute: Fighter | null = null;
   private joiner: Fighter | null = null;
   private crosser: Fighter | null = null;
+  private bailT = -1;            // event time the crossing Fw 190's pilot jumped (-1: not yet)
   private peelAt = -1;
   private announced = false;
   private jamAcc = 0;
@@ -550,20 +555,43 @@ export class MissionEvents {
     w.effects.flashLight(p, 260, 0.6, 0xff8a3a, 14);
     w.effects.sparks(p, pb.vel, true);
     sound.play('crack', p, { gain: 0.7, ref: 8 });
-    this.c.game.feel.blastFlash(0.18);
-    // smoke from the radio room pours out of the waist windows, streaming past the gun
-    // (puffs fly with the ship, drifting out of the window and slowly aft: no drag, or they'd be left behind)
-    let acc = 0;
+    this.c.game.feel.blastFlash(0.3);
+    // what the gunner sees of it: the fire flashing out of the window beside his gun, sparks
+    // spraying past it and thick smoke pouring out and streaming aft. Everything flies with the
+    // ship (no drag) and is spawned relative to the gun window, so it stays in the gun's view.
+    const arc0 = w.playerArc(), gun0 = w.playerGunPos();
+    if (arc0 && gun0) {
+      const q = _b.copy(gun0).addScaledVector(arc0, 1.1).addScaledVector(w.formationForward, 0.9);
+      w.effects.flashLight(q, 240, 0.5, 0xff7a2a, 8);
+      for (let i = 0; i < 3; i++) w.effects.sparks(q, _c.copy(pb.vel).addScaledVector(arc0, 6), true);
+    }
+    let acc = 0, age = 0;
     const v = new THREE.Vector3();
     this.actors.push({ left: 3, tick: (dt) => {
-      acc += dt;
-      if (acc < 0.05) return;
+      acc += dt; age += dt;
+      if (acc < 0.03) return;
       acc = 0;
       const arc = w.playerArc(), gun = w.playerGunPos();
       if (!arc || !gun) return;
-      const q = _a.copy(gun).addScaledVector(arc, 1.2 + Math.random() * 0.8).addScaledVector(w.formationForward, 0.6 + Math.random()).addScaledVector(UP, R() * 0.4);
-      v.copy(pb.vel).addScaledVector(arc, 2.5 + Math.random() * 2).addScaledVector(w.formationForward, -3 - Math.random() * 3).addScaledVector(UP, 0.6);
-      w.effects.smoke.spawn({ pos: q, vel: v, life: 1.4 + Math.random() * 0.8, size0: 0.35, size1: 2.6, color0: [0.2, 0.19, 0.18], alpha0: 0.75, alpha1: 0, lit: true });
+      const fwd = w.formationForward;
+      const q = _a.copy(gun).addScaledVector(arc, 1.0 + Math.random() * 0.6).addScaledVector(fwd, 0.7 + Math.random() * 0.8).addScaledVector(UP, R() * 0.3);
+      v.copy(pb.vel).addScaledVector(arc, 2 + Math.random() * 2).addScaledVector(fwd, -4 - Math.random() * 4).addScaledVector(UP, 0.5);
+      // flame licks out of the window for the first second and a half
+      if (age < 1.5) {
+        for (let i = 0; i < 3; i++) {
+          _c.set(R(), R(), R()).multiplyScalar(0.15).add(q);
+          w.effects.glow.spawn({ pos: _c, vel: v, life: 0.18 + Math.random() * 0.2, size0: 0.14 + Math.random() * 0.14, size1: 0.05, color0: [16, 7, 1.6], color1: [4, 0.9, 0.12], alpha0: 1, alpha1: 0, frame: 1 });
+        }
+        if (Math.random() < 0.5) w.effects.sparks(q, v);
+      }
+      // its light flickering on the gun and the wing
+      if (age < 2.2) w.effects.flashLight(q, 60 + Math.random() * 90, 0.06, 0xff7a2a, 7);
+      // dense, dark smoke rolling out past the gun
+      for (let i = 0; i < 2; i++) {
+        const dark = Math.random() * 0.05;
+        _c.set(R(), R(), R()).multiplyScalar(0.25).add(q);
+        w.effects.smoke.spawn({ pos: _c, vel: v, life: 0.8 + Math.random() * 0.6, size0: 0.3, size1: 1.0 + Math.random() * 0.5, color0: [0.04 + dark, 0.037 + dark, 0.034 + dark], alpha0: 1, alpha1: 0, lit: true });
+      }
     } });
   }
 
@@ -590,11 +618,11 @@ export class MissionEvents {
     return f;
   }
 
-  private smokeFrom(f: Fighter, level: number, fire: boolean, acc: { t: number; last: THREE.Vector3 }, dt: number) {
+  private smokeFrom(f: Fighter, level: number, fire: boolean, acc: { t: number; last: THREE.Vector3 }, dt: number, scale = 0.8) {
     acc.t += dt;
     if (acc.t < 0.05) return;
     const p = f.localToWorld(_a.set(0, 0, 1.2));
-    this.world.effects.trail(p, f.vel, level, fire, 0.8, acc.t, acc.last.lengthSq() ? acc.last : undefined);
+    this.world.effects.trail(p, f.vel, level, fire, scale, acc.t, acc.last.lengthSq() ? acc.last : undefined);
     acc.last.copy(p); acc.t = 0;
   }
 
@@ -675,39 +703,65 @@ export class MissionEvents {
     if (!arc || !gun) return;
     const dir = new THREE.Vector3().copy(arc).setY(THREE.MathUtils.clamp(arc.y, -0.25, 0.2)).normalize();
     const across = new THREE.Vector3().copy(UP).cross(dir).normalize();
-    const start = _a.copy(gun).addScaledVector(dir, 240).addScaledVector(across, -280);
+    const start = _a.copy(gun).addScaledVector(dir, 230).addScaledVector(across, -CROSS_FROM);
     const f = this.scripted(w.spawnEnemy(start.clone(), 'beam', 1, false, false, 'fw190'), 3.2);
     f.guns.length = 0;
     (f as { team: string }).team = 'allied';   // no threat any more: the crew's guns leave him be (axis again for his fall)
     f.noMarker = true;
     this.crosser = f;
+    this.bailT = -1;
     const last = new THREE.Vector3(), sm = { t: 0, last: new THREE.Vector3() };
     let t = 0;
     this.actors.push({ left: 30, tick: (dt) => {
       if (!f.alive || f.remove || this.crosser !== f) return;
       t += dt;
+      // slow across the gun's view, sinking, the engine on fire; the empty fighter carries on a
+      // while after the pilot is out (his chute opens beside it), then rolls over and goes down
+      if (this.bailT >= 0 && this.t - this.bailT > CROSS_FALL) { this.crosserDown(f); return; }
       const g = w.playerGunPos() ?? w.formationCenter;
-      f.root.position.copy(g).addScaledVector(dir, 240 - 6 * t).addScaledVector(across, -280 + 82 * t).addScaledVector(UP, 25 - 5 * t);
+      f.root.position.copy(g).addScaledVector(dir, 230 - 5 * t).addScaledVector(across, -CROSS_FROM + CROSS_SPEED * t).addScaledVector(UP, 22 - 3.5 * t);
       if (dt > 0 && last.lengthSq() > 0) {
         f.vel.copy(f.root.position).sub(last).divideScalar(dt);
         f.fm.vel.copy(f.vel);
         _q.setFromUnitVectors(Z, _c.copy(f.vel).normalize());
-        f.root.quaternion.copy(_q).multiply(_q2.setFromAxisAngle(Z, 0.5 * Math.sin(t * 2.2)));
+        f.root.quaternion.copy(_q).multiply(_q2.setFromAxisAngle(Z, 0.35 * Math.sin(t * 1.8)));
       }
       last.copy(f.root.position);
-      this.smokeFrom(f, 1, true, sm, dt);
+      this.smokeFrom(f, 0.75, true, sm, dt, 2.2);
+      // and the fire itself: a tongue of flame streaming back off the cowling (FighterDeath's engine fire)
+      if (sm.t === 0) {
+        const sc = f.model.scale.x, k = sc / 2.4;
+        const p = f.localToWorld(_a.set(0, 0.3 * sc, 0.75 * sc));
+        _b.copy(f.vel).multiplyScalar(0.25);
+        for (let i = 0; i < 4; i++) {
+          _c.copy(p).addScaledVector(f.vel, -Math.random() * 0.04);
+          _c.x += R() * 0.5 * k; _c.y += R() * 0.4 * k; _c.z += R() * 0.5 * k;
+          w.effects.glow.spawn({ pos: _c, vel: _b, life: 0.55 + Math.random() * 0.4, size0: 4.6 * k, size1: 1.4 * k, color0: i ? [12, 4.6, 1] : [18, 8, 1.8], color1: [2.4, 0.5, 0.06], alpha0: 1, alpha1: 0, frame: 2, rotVel: 3 });
+        }
+      }
     } });
   }
 
+  // the pilot is out: canopy off, he jumps and his chute opens beside the burning fighter
   private bail() {
     const w = this.world, f = this.crosser;
-    if (!f) return;
+    if (!f || !f.alive) return;
+    this.bailT = this.t;
+    ejectPilot(f, w, 0.05, _c.copy(w.player?.vel ?? f.vel).multiplyScalar(0.98));
+  }
+
+  // FighterDeath's engine-fire ending: flames and a black column as the empty fighter rolls over and
+  // dives away. Nobody shot him (the crew held fire): no kill in the feed, no credit
+  private crosserDown(f: Fighter) {
+    const w = this.world;
     this.crosser = null;
     const i = this.fighters.indexOf(f);
     if (i >= 0) this.fighters.splice(i, 1);   // the world owns the falling wreck from here
-    // FighterDeath's bail-out ending: the canopy flies off, the pilot jumps, the empty fighter spirals away
     (f as { team: string }).team = 'axis';
-    if (f.alive) { w.destruction.forceDeath(f, BAILOUT_DEATH); w.killAircraft(f, false, 'engine'); }
+    w.destruction.forceDeath(f, ENGINE_FIRE_DEATH);
+    const kill = w.events.kill;
+    w.events.kill = undefined;
+    try { w.killAircraft(f, false, 'engine'); } finally { w.events.kill = kill; }
   }
 
   private flak(step: number) {
@@ -733,12 +787,19 @@ export class MissionEvents {
       acc = 0;
       const arc = w.playerArc(), gun = w.playerGunPos();
       if (!arc || !gun) return;
-      // foil strips fluttering down: they fall behind the formation and catch the sun as they turn
+      // foil strips fluttering down: they fall behind the formation and flash as they turn to the sun.
+      // Each glint is a short stretched streak (Sparks: tumbling strips, all at odd angles); a few
+      // faint specks are the strips edge-on between flashes
       drift.copy(w.player?.vel ?? w.formationForward).multiplyScalar(0.82).addScaledVector(UP, -6);
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 9; i++) {
         const p = _a.copy(gun).addScaledVector(arc, 70 + Math.random() * 170).add(_b.set(R() * 60, R() * 30 + 22, R() * 60));
-        const bright = Math.random() < 0.35;
-        w.effects.glow.spawn({ pos: p, vel: drift, life: 1.6 + Math.random() * 1.6, size0: bright ? 1.3 : 0.7, size1: 0.4, color0: bright ? [16, 16, 18] : [5, 5, 5.6], color1: [2, 2, 2.2], alpha0: 1, alpha1: 0, frame: 1, drag: 0.3, rise: -2 });
+        const bright = Math.random() < 0.4;
+        _c.set(R(), R(), R()).normalize().multiplyScalar(18 + Math.random() * 22).add(drift);
+        w.effects.sparkFx.spawn(p, _c, 0.12 + Math.random() * 0.22, bright ? 0.16 : 0.1, bright ? CHAFF_GLINT : CHAFF_DIM, CHAFF_END, 0.4, 2);
+      }
+      for (let i = 0; i < 3; i++) {
+        const p = _a.copy(gun).addScaledVector(arc, 70 + Math.random() * 170).add(_b.set(R() * 60, R() * 30 + 22, R() * 60));
+        w.effects.glow.spawn({ pos: p, vel: drift, life: 1.2 + Math.random() * 1.2, size0: 0.35, size1: 0.2, color0: [2.6, 2.6, 2.9], color1: [1, 1, 1.1], alpha0: 1, alpha1: 0, frame: 1, drag: 0.3, rise: -2 });
       }
     } });
   }
@@ -746,8 +807,9 @@ export class MissionEvents {
   private weather() {
     const g = this.c.game, w = this.world;
     const now = this.currentWeather();
-    // the wall shows on the horizon at once (Weather.ts: in sight from 95 s before the front)
-    const next: Weather = { ...now, front: { at: 14, to: 'storm', preset: 'thunderstorm', duration: 45 } };
+    // the wall shows on the horizon at once (Weather.ts: in sight from 95 s before the front), about
+    // 20 km out and closing; the front itself arrives 40 s later
+    const next: Weather = { ...now, front: { at: 40, to: 'storm', preset: 'thunderstorm', duration: 45 } };
     // this event calls the wall itself: skip World's own "storm front" line for a while
     (w as unknown as { lastCallout: Map<string, number> }).lastCallout.set('wx_front', w.time);
     g.setWeather(next);
