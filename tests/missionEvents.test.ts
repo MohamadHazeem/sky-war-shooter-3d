@@ -164,7 +164,7 @@ function rig() {
   const v = () => new THREE.Vector3();
   const player = { pos: v(), vel: new THREE.Vector3(0, 0, 75), alive: true };
   const world: any = {
-    time: 0, player, playerBomber: { slot: v() }, playerStation: { id: 'tail' }, remoteStations: new Set(), crew: { wounded: new Set() },
+    time: 0, player, playerBomber: { slot: v(), vel: new THREE.Vector3(0, 0, 75), localToWorld: (p: THREE.Vector3) => p }, playerStation: { id: 'tail' }, remoteStations: new Set(), crew: { wounded: new Set() },
     frozenStations: frozen, formationForward: new THREE.Vector3(0, 0, 1), formationCenter: v(), stats: { scriptedLost: 0 },
     callout: (_k: string, sp: string, text: string) => said.push(`${sp}: ${text}`),
     playerArc: () => null, playerGunPos: () => null, activeEnemies: () => [], evade() {}, buffet() {},
@@ -213,16 +213,26 @@ describe('MissionEvents runtime', () => {
   });
 
   it('starts on its own when due, one at a time and never while another system is busy', () => {
-    const r = rig();
-    r.world.time = 100;
-    r.run(5, true);
-    expect(r.ev.active).toBeNull();
-    r.run(2);
-    expect(r.ev.active).not.toBeNull();
-    const first = r.ev.active!.id;
-    r.run(r.ev.active!.dur + 1);
-    expect(r.ev.log.filter((l) => l.includes('start')).length).toBe(1);
-    expect(r.ev.log[0]).toContain(first);
+    const random = Math.random;
+    try {
+      for (let s = 1; s <= 40; s++) {   // seeded picks: every event that fits a quiet sky gets played
+        let seed = s * 7919;
+        Math.random = () => { seed = (1664525 * seed + 1013904223) >>> 0; return seed / 4294967296; };
+        const r = rig();
+        r.world.time = 100;
+        r.run(5, true);
+        expect(r.ev.active).toBeNull();
+        r.run(2);
+        expect(r.ev.active).not.toBeNull();
+        const first = r.ev.active!.id;
+        r.run(r.ev.active!.dur + 1);
+        expect(r.ev.active).toBeNull();
+        expect(r.ev.log.filter((l) => l.includes('start')).length, first).toBe(1);
+        expect(r.ev.log[0]).toContain(first);
+        expect(r.ev.jammed).toBe(false);
+        expect(r.frozen.size).toBe(0);
+      }
+    } finally { Math.random = random; }
   });
 
   it('a neighbour event is not available without a B-17 in view', () => {
