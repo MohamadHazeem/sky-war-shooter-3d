@@ -1,7 +1,8 @@
 // Crew close-ups (Phase 11 goal 05): fixed 0.5-3 m views of the B-17 crewmen, built on the visual
 // rig's frozen `waist-interior` fixture (same seed, weather and steps), so before / after are
 // comparable. Start Vite first, then:
-//   node tools/crew_closeups.mjs --out docs/phase11/shots/05/after [--url http://127.0.0.1:5325] [--quality high]
+//   node tools/crew_closeups.mjs --out docs/phase11/shots/05/after [--url http://127.0.0.1:5325] [--quality high] [--shots a,b]
+//   node tools/crew_closeups.mjs --board <before-dir> <after-dir> --out board.jpg     (before | after sheet)
 // Views (cameras placed relative to the man's bones in the bomber frame):
 //   crew-face      0.6 m, head and shoulders, from the player's side (he glances across, Crew 2.0)
 //   crew-body      1.7 m, the man at the right waist gun from the player's side
@@ -24,6 +25,23 @@ const base = arg('url', 'http://127.0.0.1:5325');
 const quality = arg('quality', 'high');
 const only = arg('shots', '');
 const VIEWS = ['crew-face', 'crew-body', 'crew-fire', 'crew-point', 'crew-flinch', 'crew-down', 'crew-radio'].filter(v => !only || only.split(',').includes(v));
+
+// --board <before-dir> <after-dir>: a before | after comparison sheet of every view (written to --out)
+if (process.argv.includes('--board')) {
+  const i = process.argv.indexOf('--board'), [bd, ad] = [process.argv[i + 1], process.argv[i + 2]];
+  const tw = 800, th = 450, lab = 28;
+  const tiles = [];
+  for (const [r, v] of VIEWS.entries()) for (const [c, dir] of [bd, ad].entries()) {
+    const img = await sharp(path.join(dir, `${v}.jpg`)).resize(tw, th).png().toBuffer();
+    const label = Buffer.from(`<svg width="${tw}" height="${lab}"><rect width="100%" height="100%" fill="#171b20"/><text x="10" y="20" fill="white" font-size="17" font-family="sans-serif">${v} - ${c ? 'after (Crew 2.0)' : 'before (live main)'}</text></svg>`);
+    tiles.push({ input: label, left: c * tw, top: r * (th + lab) }, { input: img, left: c * tw, top: r * (th + lab) + lab });
+  }
+  const sheet = await sharp({ create: { width: 2 * tw, height: VIEWS.length * (th + lab), channels: 3, background: '#171b20' } }).composite(tiles).png().toBuffer();
+  const buf = await sharp(sheet).resize({ width: 1600 }).jpeg({ quality: 72, mozjpeg: true }).toBuffer();
+  await fs.writeFile(out, buf);
+  console.log('board', out, (buf.length / 1024).toFixed(0), 'KB');
+  process.exit(0);
+}
 
 let chromium;
 for (const c of [process.env.PLAYWRIGHT_MODULE, 'playwright', path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs')].filter(Boolean)) {

@@ -296,6 +296,14 @@ def tube_sections(points, prof, hint, step=0.012, p=2.0, disp=None, s0=0.0):
     return out
 
 
+def orient_out(bm, centre):
+    """Turn every face of a shell to face away from centre (the game culls back faces)."""
+    for fc in bm.faces:
+        if fc.normal.dot(fc.calc_center_median() - centre) < 0:
+            fc.normal_flip()
+    bm.normal_update()
+
+
 def smoothstep(a, b, x):
     t = max(0.0, min(1.0, (x - a) / (b - a)))
     return t * t * (3 - 2 * t)
@@ -661,7 +669,7 @@ for sx in (-1, 1):
         row = []
         for i in range(15):
             az = math.radians(-75 + 150 * i / 14)
-            r = 0.0131 + 0.0009 * (j == 6)
+            r = 0.0143 + 0.0009 * (j == 6)
             v = Vector((math.sin(az) * math.cos(el), -math.cos(az) * math.cos(el), math.sin(el))) * r
             row.append(lb.verts.new(c + v))
         rows.append(row)
@@ -669,6 +677,7 @@ for sx in (-1, 1):
         for i in range(14):
             lb.faces.new([r0[i], r0[i + 1], r1[i + 1], r1[i]])
     lb.normal_update()
+    orient_out(lb, c)
     B.add_bm(lb, SKI, lambda p: (0.48, 0.29, 0.22), ['lids'])
     lb.free()
     # lower lid: a skin shell from below the eye up to its margin (static, on the head)
@@ -679,7 +688,7 @@ for sx in (-1, 1):
         row = []
         for i in range(13):
             az = math.radians(-70 + 140 * i / 12)
-            r = 0.0131 + 0.0008 * (j == 4)
+            r = 0.0141 + 0.0008 * (j == 4)
             v = Vector((math.sin(az) * math.cos(el), -math.cos(az) * math.cos(el), math.sin(el))) * r
             row.append(lb.verts.new(c + v))
         rows.append(row)
@@ -687,6 +696,7 @@ for sx in (-1, 1):
         for i in range(12):
             lb.faces.new([r0[i], r1[i], r1[i + 1], r0[i + 1]])
     lb.normal_update()
+    orient_out(lb, c)
     B.add_bm(lb, SKI, lambda p: (0.5, 0.3, 0.24), HEAD)
     lb.free()
     # eyebrow: a dark ridge of hair
