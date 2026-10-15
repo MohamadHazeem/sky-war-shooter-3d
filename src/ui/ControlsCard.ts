@@ -2,6 +2,7 @@ import { STATION_ORDER, STATIONS } from '../world/B17Layout';
 import { keyMap, ActionId } from '../core/KeyMap';
 import { tx } from '../i18n';
 import { padConnected } from '../core/Gamepad';
+import { padMap, type PadActionId } from '../core/PadMap';
 import { openFieldManual } from './FieldManualScreen';
 
 // key bound to an action (Settings > Key bindings)
@@ -57,15 +58,18 @@ const TOUCH_PILOT = (): [string, string][] => [
   [k('?'), tx('This card')],
 ];
 // The same cards with a gamepad connected (core/Gamepad.ts; Xbox names, ✚ = the D-pad)
+// buttons follow the player's gamepad remapping (core/PadMap.ts)
+const pb = (id: PadActionId) => padMap.label(id);
 const PAD_GUNNER = (): [string, string][] => [
   [k(tx('Right stick')) + ' / ' + k(tx('Left stick')), tx('Swing the gun')],
-  [k('RT'), tx('Fire — short bursts keep the barrel cool')],
-  [k('LT'), tx('Look down the ring sight (zoom)')],
-  [k('R3'), tx('Free look (hold): look around the fuselage')],
-  [k('LB', 'RB'), tx('Previous / next gun position')],
-  [k('X'), tx('Reload, or answer an emergency prompt')],
-  [k('A', 'B', 'L3'), abilities('A', 'B', 'L3')],
-  [k('✚↑'), tx('Big radar map')],
+  [k(pb('fire')), tx('Fire — short bursts keep the barrel cool')],
+  [k(pb('zoom')), tx('Look down the ring sight (zoom)')],
+  [k(pb('look')), tx('Free look (hold): look around the fuselage')],
+  [k(pb('prevGun'), pb('nextGun')), tx('Previous / next gun position')],
+  [k(pb('reload')), tx('Reload, or answer an emergency prompt')],
+  [k(pb('mustangs'), pb('overdrive'), pb('focus')), abilities(pb('mustangs'), pb('overdrive'), pb('focus'))],
+  [k(pb('ping')), tx('Ping target')],
+  [k(pb('map')), tx('Big radar map')],
   [k('View') + ' + ' + k('Y'), tx('Photo mode')],
   [k('Start'), tx('Pause')],
   [k('View'), tx('This card')],
@@ -73,14 +77,14 @@ const PAD_GUNNER = (): [string, string][] => [
 const PAD_PILOT = (): [string, string][] => [
   [k(tx('Right stick')), tx('Fly where you look (mouse aim)')],
   [k(tx('Left stick')), tx('Roll (left / right) and throttle (up / down)')],
-  [k('RT'), tx('Fire')],
-  [k('LT'), tx('Zoom')],
-  [k('Y'), tx('Cockpit / chase view')],
-  [k('R3'), tx('Tap: padlock the nearest bandit · hold: free look')],
+  [k(pb('fire')), tx('Fire')],
+  [k(pb('zoom')), tx('Zoom')],
+  [k(pb('bombsight')), tx('Cockpit / chase view')],
+  [k(pb('look')), tx('Tap: padlock the nearest bandit · hold: free look')],
   [k('View') + ' + ' + k('X'), tx('Mouse aim / direct flight controls')],
-  [k('✚←', '✚→', '✚↓', 'LB + ✚↑'), tx('Wingman Blue Two: {a} attack my target · {b} cover me · {c} protect the bombers · {d} form up', { a: '✚←', b: '✚→', c: '✚↓', d: 'LB + ✚↑' })],
-  [k('A', 'B', 'L3'), abilities('A', 'B', 'L3')],
-  [k('✚↑'), tx('Big radar map')],
+  [k(pb('wingAttack'), pb('ping'), pb('wingProtect'), `${pb('prevGun')} + ${pb('map')}`), tx('Wingman Blue Two: {a} attack my target · {b} cover me · {c} protect the bombers · {d} form up', { a: pb('wingAttack'), b: pb('ping'), c: pb('wingProtect'), d: `${pb('prevGun')} + ${pb('map')}` })],
+  [k(pb('mustangs'), pb('overdrive'), pb('focus')), abilities(pb('mustangs'), pb('overdrive'), pb('focus'))],
+  [k(pb('map')), tx('Big radar map')],
   [k('View') + ' + ' + k('Y'), tx('Photo mode')],
   [k('Start'), tx('Pause')],
   [k('View'), tx('This card')],

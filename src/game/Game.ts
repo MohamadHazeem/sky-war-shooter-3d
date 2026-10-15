@@ -68,6 +68,7 @@ import { TitleExtras } from './TitleExtras';
 import { FeatWatch } from './FeatWatch';
 import { MasteryWatch } from './MasteryWatch';
 import { firstRunGraphics } from './AutoGraphics';
+import { assistStrength } from '../core/AimAssist';
 
 type State = 'menu' | 'briefing' | 'playing' | 'paused' | 'ending' | 'debrief';
 
@@ -397,9 +398,12 @@ export class Game {
     this.applyAssist();
   }
 
-  // aim assist: Settings level x Hawkeye perk; bullet magnetism x Gyro Gunsight / Gyro Lock
-  private applyAssist() {
-    const a = this.settings.aimAssist === 'off' ? 0 : this.settings.aimAssist === 'low' ? 0.5 : 1;
+  /** playing on a gamepad with "stronger on a gamepad" on (DeviceControls sets it, then re-applies) */
+  padAssist = false;
+
+  // aim assist: Settings preset (core/AimAssist.ts) x Hawkeye perk; bullet magnetism x Gyro Gunsight / Gyro Lock
+  applyAssist() {
+    const a = assistStrength(this.settings.aimAssist, this.padAssist);
     this.gunner.assist = this.settings.difficulty === 'ace' ? 0 : Math.min(1.6, a * this.loadout.assist);
     this.pilot.assist = Math.min(1.6, a * this.loadout.assist);
     this.world.ballistics.playerHitScale = this.settings.difficulty === 'ace' && this.mission?.role === 'gunner' ? 1 : (1 + 0.4 * a) * this.loadout.hitScale;

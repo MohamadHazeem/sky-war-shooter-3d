@@ -6,6 +6,7 @@ import { impactPattern, bombingScore, strikePhotoAltitude, releaseDue, BOMB_FALL
 import { achievements } from './Achievements';
 import { saveCareer } from './Career';
 import { tx } from '../i18n';
+import { padMap } from '../core/PadMap';
 import { keyMap } from '../core/KeyMap';
 import '../ui/bombardier.css';
 
@@ -111,7 +112,7 @@ export class Bombardier {
     if (g.state !== 'playing' || !w.player?.alive) { this.leave(); return; }
     if (this.available && !this.offered) {
       this.offered = true;
-      this.offer.textContent = `${tx(BOMBARDIER_TEXT.offer)} · ${keyMap.label('bombsight')} / Y`;
+      this.offer.textContent = `${tx(BOMBARDIER_TEXT.offer)} · ${keyMap.label('bombsight')} / ${padMap.label('bombsight')}`;
       w.callout('bombardier_offer', 'Pilot', BOMBARDIER_TEXT.pilot, 0, 3);
     }
     this.offer.hidden = !this.available || this.active;

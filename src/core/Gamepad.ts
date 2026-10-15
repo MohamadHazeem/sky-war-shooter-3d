@@ -1,4 +1,6 @@
 import type { Input } from './Input';
+import { padMap, PAD_RESERVED } from './PadMap';
+import { access } from './Accessibility';
 
 // Standard-mapping gamepad (Xbox / PlayStation layout), polled once per frame. It speaks
 // the mouse's language so the controllers need no gamepad code: the aim stick adds to
@@ -23,6 +25,11 @@ import type { Input } from './Input';
 //   theatre       LT / RT scrub, A play / pause, Y camera mode, LB / RB previous / next moment,
 //                 D-pad left / right frame step, up / down speed (free camera: rise / sink),
 //                 X next aircraft, L3 fast, View hide / show the interface, B exit
+//   gunner extras D-pad right = ping the target (U)
+//
+// Accessibility (Settings): every in-flight button can be remapped (PadMap: the physical
+// buttons are translated to these logical ones while flying; Start and View are fixed),
+// the aim speed scales with access.padSens and access.padSwap moves aiming to the left stick.
 
 export interface GamepadHost {
   /** a mission is in play and the player has control */
@@ -87,7 +94,6 @@ export function padConnected(): boolean {
 }
 
 export class GamepadInput {
-  private prev = new Set<number>();
   private usingRoll = false;
   private looking = false;   // free look held (KeyC)
   private rsT = -1;          // P-51: seconds the right stick has been held in (-1 = not held)
@@ -97,7 +103,11 @@ export class GamepadInput {
   private menuHT = 0;
   private promptHeld: string | null = null;   // event-prompt key held with X
   private photoHeld = new Set<string>();      // photo mode: movement keys held from the sticks
+  private phys = new Set<number>();           // physical buttons held last frame
+  private ax = [0, 0, 0, 0];                  // sticks after the left-handed swap (no per-frame allocation)
   connected = false;
+  /** the gamepad was the last device used (aim assist preset follows it, see AimAssist.ts) */
+  inUse = false;
 
   constructor(private input: Input, private host: GamepadHost) {
     if (typeof window === 'undefined') return;
@@ -108,17 +118,37 @@ export class GamepadInput {
   /** dt in real seconds (not slowed by hit-stop or slow motion) */
   update(dt: number) {
     const pad = this.findPad();
-    if (!pad) { this.release(); this.prev.clear(); return; }
+    if (!pad) { this.release(); this.phys.clear(); return; }
     const b = pad.buttons;
     const held = (i: number, thr = 0.5) => !!b[i]?.pressed || (b[i]?.value ?? 0) > thr;
-    const now = new Set<number>();
-    for (let i = 0; i < b.length; i++) if (held(i, i === B.LT || i === B.RT ? 0.35 : 0.5)) now.add(i);
-    const prev = this.prev;
+    const phys = new Set<number>();
+    for (let i = 0; i < b.length; i++) if (held(i, i === B.LT || i === B.RT ? 0.35 : 0.5)) phys.add(i);
+    const physPrev = this.phys;
+    this.phys = phys;
+    const inp = this.input;
+    if (phys.size || pad.axes.some((v) => Math.abs(v) > 0.3)) this.inUse = true;
+
+    // Settings is waiting for a button to bind (Start / View cancel): nothing else this frame
+    if (padMap.capturing) {
+      this.release();
+      for (const i of phys) {
+        if (physPrev.has(i)) continue;
+        padMap.finishCapture(PAD_RESERVED.includes(i) ? -1 : i);
+        break;
+      }
+      return;
+    }
+
+    // remapped buttons: physical -> logical while a mission is flown (menus keep the standard layout)
+    const fly = this.host.flying();
+    const now = fly ? mapped(phys) : phys;
+    const prev = fly ? mapped(physPrev) : physPrev;
     const edge = (i: number) => now.has(i) && !prev.has(i);
     const released = (i: number) => !now.has(i) && prev.has(i);
-    this.prev = now;
-    const ax = pad.axes;
-    const inp = this.input;
+    // left-handed: the sticks trade places in flight
+    const raw = pad.axes, ax = this.ax, swap = fly && access.prefs.padSwap;
+    for (let i = 0; i < 4; i++) ax[i] = raw[swap ? (i + 2) % 4 : i] ?? 0;
+    const aimSpeed = PAD_AIM_SPEED * (fly ? access.prefs.padSens || 1 : 1);
 
     // replay theatre: the pad drives the playback and the cameras (not the menu focus)
     const th = this.host.theatre?.() ?? null;
@@ -170,7 +200,7 @@ export class GamepadInput {
     }
     if (this.photoHeld.size) this.photoKeys({});
 
-    if (!this.host.flying()) {
+    if (!fly) {
       this.release();
       // menus: D-pad / left stick move between buttons, A presses, B goes back;
       // left / right adjust a focused slider (held: repeats)
@@ -229,6 +259,7 @@ export class GamepadInput {
       if (edge(B.LB)) this.host.cycleSeat(-1);
       if (edge(B.RB)) this.host.cycleSeat(1);
       if (edge(B.X) && !prompt && !back) inp.tap('KeyR');
+      if (edge(B.RIGHT)) inp.tap('KeyU');   // ping the target for the crew (CrewPings.ts)
     } else if (role === 'pilot') {
       if (edge(B.Y) && !back) inp.tap('KeyV');
       // wingman commands (Wingman.ts listens for the number keys in the P-51)
@@ -240,8 +271,8 @@ export class GamepadInput {
     // Aim: right stick; the gunner can also use the left one when the right is at rest
     let sx = padCurve(ax[2] ?? 0), sy = padCurve(ax[3] ?? 0);
     if (role === 'gunner' && sx === 0 && sy === 0) { sx = padCurve(ax[0] ?? 0); sy = padCurve(ax[1] ?? 0); }
-    inp.mouseDX += sx * PAD_AIM_SPEED * dt;
-    inp.mouseDY += sy * PAD_AIM_SPEED * dt;
+    inp.mouseDX += sx * aimSpeed * dt;
+    inp.mouseDY += sy * aimSpeed * dt;
 
     // P-51: left stick X rolls, Y is the throttle lever (push up = more power)
     if (role === 'pilot') {
@@ -288,6 +319,13 @@ export class GamepadInput {
     for (const p of pads) if (p && p.connected) return p;
     return null;
   }
+}
+
+function mapped(phys: Set<number>): Set<number> {
+  if (padMap.isDefault()) return phys;
+  const out = new Set<number>();
+  for (const i of phys) out.add(padMap.logical(i));
+  return out;
 }
 
 // ---------------- menus ----------------
@@ -369,11 +407,33 @@ export function menuNav(dir: number, a: boolean, b: boolean, input: Input, h = 0
   if (!items.length) return;
   const cur = items.indexOf(document.activeElement as HTMLElement);
   if (a) {
-    if (cur >= 0) press(items[cur]);
-    else items[0].focus();
+    if (cur >= 0) {
+      const sig = signature(items[cur]);
+      press(items[cur]);
+      refocus(sig);
+    } else items[0].focus();
     return;
   }
   const next = items[cur < 0 ? (dir > 0 ? 0 : items.length - 1) : (cur + dir + items.length) % items.length];
   next.focus({ preventScroll: true });
   next.scrollIntoView?.({ block: 'nearest' });
+}
+
+// A screen that redraws itself on a click (the Hangar after a purchase) drops the focus:
+// put it back on the same control (same tag, data attributes and label) so the D-pad
+// does not jump to the top of the screen.
+function signature(e: Element): string {
+  let s = e.tagName;
+  for (const at of Array.from(e.attributes)) if (at.name.startsWith('data-') || at.name === 'aria-label') s += `|${at.name}=${at.value}`;
+  return s.includes('|') ? s : s + '|' + (e.textContent ?? '').trim().slice(0, 40);
+}
+
+export function refocus(sig: string) {
+  const act = document.activeElement;
+  if (act && act !== document.body && act.isConnected) return;
+  const root = menuRoot();
+  if (!root) return;
+  for (const e of Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE))) {
+    if (shown(e) && signature(e) === sig) { e.focus({ preventScroll: true }); return; }
+  }
 }

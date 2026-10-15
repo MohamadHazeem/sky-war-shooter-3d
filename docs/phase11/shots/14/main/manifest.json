@@ -1,0 +1,70 @@
+{
+  "url": "http://127.0.0.1:5302",
+  "seed": 19431008,
+  "shots": {
+    "off": {
+      "state": "playing",
+      "threats": [
+        "top",
+        "ball",
+        "tail"
+      ],
+      "wounded": [
+        "ball",
+        "tail"
+      ],
+      "enemies": 7,
+      "body": "hud-mission",
+      "flash": 0,
+      "muzzle": 0
+    },
+    "redGreen": {
+      "state": "playing",
+      "threats": [
+        "top",
+        "ball",
+        "tail"
+      ],
+      "wounded": [
+        "ball",
+        "tail"
+      ],
+      "enemies": 7,
+      "body": "cb hud-mission",
+      "flash": 0,
+      "muzzle": 0
+    },
+    "flashOff": {
+      "state": "playing",
+      "threats": [
+        "top",
+        "ball",
+        "tail"
+      ],
+      "wounded": [
+        "ball",
+        "tail"
+      ],
+      "enemies": 7,
+      "body": "hud-mission",
+      "flash": 0.1692,
+      "muzzle": 1.0854870495386422
+    },
+    "flashOn": {
+      "state": "playing",
+      "threats": [
+        "top",
+        "ball",
+        "tail"
+      ],
+      "wounded": [
+        "ball",
+        "tail"
+      ],
+      "enemies": 7,
+      "body": "calm hud-mission",
+      "flash": 0.11519999999999994,
+      "muzzle": 0
+    }
+  }
+}
