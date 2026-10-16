@@ -30,9 +30,10 @@ import { buildScene, spokenText, vignetteFor, VOICE_ROLE, type CrewRoomCtx, type
 import { loadCampaign, totals } from '../game/CampaignState';
 import { portraitUrl } from '../render/Portraits';
 import { sound } from '../audio/Sound';
-import { tx, isTranslated } from '../i18n';
+import { tx, isTranslated, isAr } from '../i18n';
 import { crewStories } from '../game/CrewStories';
 import { say as storySay } from './CrewStoriesPanel';
+import { voiceUrlReady } from '../audio/VoiceLang';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 const norm = (s: string) => s.replace(/[‘’]/g, "'").replace(/\s+/g, ' ').trim().toLowerCase();
@@ -553,13 +554,14 @@ class RoomSound {
   }
 
   private buf(ctx: BaseAudioContext, id: string): Promise<AudioBuffer | null> {
-    let p = this.bufs.get(id);
+    const key = (isAr() ? 'ar:' : '') + id;   // Arabic game: the Arabic take (VoiceLang.ts)
+    let p = this.bufs.get(key);
     if (!p) {
       const c = this.clips?.[id];
-      p = !c ? Promise.resolve(null) : fetch(BASE + c.file).then((r) => (r.ok && !(r.headers.get('content-type') ?? '').includes('text/html') ? r.arrayBuffer() : null))
+      p = !c ? Promise.resolve(null) : voiceUrlReady(id, c.file).then((url) => fetch(url)).then((r) => (r.ok && !(r.headers.get('content-type') ?? '').includes('text/html') ? r.arrayBuffer() : null))
         .then((data) => (data ? new Promise<AudioBuffer | null>((res) => { const pr = ctx.decodeAudioData(data, res, () => res(null)) as Promise<AudioBuffer> | undefined; pr?.catch(() => res(null)); }) : null))
         .catch(() => null);
-      this.bufs.set(id, p);
+      this.bufs.set(key, p);
     }
     return p;
   }
@@ -681,25 +683,27 @@ class RoomSound {
     }
     onStart();
     const text = spokenText(l);
+    const shown = isTranslated() ? tx(l.text, l.show ?? l.vars) : text;
     if (this.voices && typeof speechSynthesis !== 'undefined') {
-      const ok = await this.tts(l.who, text);
+      // Arabic game: an Arabic system voice reads the Arabic line when the device has one
+      const ar = isAr() && speechSynthesis.getVoices().some((v) => v.lang.toLowerCase().startsWith('ar'));
+      const ok = await this.tts(l.who, ar ? shown : text, ar ? 'ar' : 'en');
       if (ok) return;
     }
     // subtitles only: reading time
-    const shown = isTranslated() ? tx(l.text, l.show ?? l.vars) : text;
     await new Promise((r) => setTimeout(r, Math.min(9000, 1400 + shown.length * 55)));
   }
 
-  private tts(who: Speaker, text: string): Promise<boolean> {
+  private tts(who: Speaker, text: string, lang: 'en' | 'ar' = 'en'): Promise<boolean> {
     return new Promise((resolve) => {
       try {
-        const u = new SpeechSynthesisUtterance(text.replace(/[—–]/g, ', '));
-        const en = speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith('en'));
+        const u = new SpeechSynthesisUtterance(text.replace(/[—–]/g, lang === 'ar' ? '، ' : ', ').replace(/[⁦-⁩]/g, ''));
+        const en = speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith(lang));
         const idx = ['brenner', 'doyle', 'stern', 'kessler', 'mendez', 'gallo', 'reilly', 'price', 'walsh', 'dawson'].indexOf(who);
-        const male = en.filter((v) => /Daniel|Fred|Alex|Ralph|Reed|Eddy|Rocko|Grandpa|Male|Guy|David|Mark|George|James/i.test(v.name));
+        const male = en.filter((v) => /Daniel|Fred|Alex|Ralph|Reed|Eddy|Rocko|Grandpa|Male|Guy|David|Mark|George|James|Majed|Maged|Tarik|Naayf|Hamed|Shakir/i.test(v.name));
         const pool = male.length ? male : en;
         if (pool.length) u.voice = pool[idx % pool.length];
-        u.lang = 'en-US'; u.rate = 0.98; u.pitch = TTS_PITCH[who] ?? 1; u.volume = Math.min(1, 0.95 * sound.volume + 0.1);
+        u.lang = lang === 'ar' ? 'ar-SA' : 'en-US'; u.rate = 0.98; u.pitch = TTS_PITCH[who] ?? 1; u.volume = Math.min(1, 0.95 * sound.volume + 0.1);
         let settled = false;
         const fin = (ok: boolean) => { if (settled) return; settled = true; if (this.speaking === u) this.speaking = null; resolve(ok); };
         u.onend = () => fin(true);

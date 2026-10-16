@@ -8,7 +8,7 @@
 //                    ./fr/, ./de/ and ./es/. Strings built at runtime are matched by the tables'
 //                    patterns.
 // Both return the English when English is active, so wrapping a string never changes the
-// English game. Radio voices stay English: only the displayed subtitle is translated.
+// English game. Recorded voices play their Arabic takes in Arabic (src/audio/VoiceLang.ts).
 // Arabic ships in the main bundle; French, German and Spanish are one lazy chunk each
 // (./packs/*.ts), loaded before the menu when chosen (langReady) or on a switch (setLang).
 import { en, type UiKey } from './en';

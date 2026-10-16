@@ -9,11 +9,15 @@
 // - One line at a time: a small priority queue, stale lines expire, low-priority chatter is
 //   rate-limited, a critical line cuts off chatter.
 // - Missing clip: nothing plays (the subtitle still shows).
+// - Arabic game language: the same lines play their Arabic takes (VoiceLang.ts, public/audio/voice/ar/);
+//   lookup stays on the English text/ids, only the recording differs.
 // API: voice.say(id, opts), voice.sayClock(prefixId, "nine o'clock low"), voice.sayLine(speaker,
 // text, priority) for subtitle lines (World.callout), voice.enabled.
 import { sound } from './Sound';
 import { Interphone } from './Interphone';
 import { FREQ, GAIN, fin, ok, setP } from './Safe';
+import { isAr } from '../i18n';
+import { loadArabicVoice, onVoiceLangChange, voiceUrl } from './VoiceLang';
 
 interface Clip { file: string; role: string; text: string; dur: number }
 interface Manifest {
@@ -87,6 +91,7 @@ export class Voice {
   private queue: Item[] = [];
   private playing: Playing | null = null;
   private seq = 0;
+  private gen = 0;                                  // bumps on a language switch: stale decodes are dropped
   private recent: number[] = [];
   private nextAt = 0;
   private timer = 0;
@@ -103,6 +108,18 @@ export class Voice {
     window.addEventListener('pointerdown', go);
     window.addEventListener('keydown', go);
     sound.onStopSpeech = () => this.stop();
+    // Arabic voice-over: same ids, other recordings. Drop what was decoded in the old language.
+    onVoiceLangChange(() => this.relang());
+  }
+
+  private relang() {
+    this.stop();
+    this.gen++;
+    this.bufs.clear();
+    this.cachedS = 0;
+    this.pending.clear();
+    this.missing.clear();
+    if (this.man) this.warm();
   }
 
   // Heard only when this is on and the Settings "Radio voices" toggle (sound.radioEnabled) is on
@@ -216,13 +233,18 @@ export class Voice {
         if (cut > 0) { const base = id.slice(0, cut); (this.variants.get(base) ?? this.variants.set(base, []).get(base)!).push(id); }
       }
       this.dynamic = (m.dynamic ?? []).filter((r) => !!m.clips[r.clip]).map((r) => ({ pattern: new RegExp(r.pattern), clip: r.clip }));
+      if (isAr()) await loadArabicVoice();   // Arabic voice-over (falls back to English per clip)
       this.man = m;
       this.state = 'ready';
-      for (const id of WARM) { const v = this.man.clips[id] ? [id] : this.variants.get(id) ?? []; for (const x of v) void this.fetchBuf(x); }
+      this.warm();
     } catch (e) {
       this.state = 'failed';
       console.info('Voice: no recorded crew voices', e);
     }
+  }
+
+  private warm() {
+    for (const id of WARM) { const v = this.man!.clips[id] ? [id] : this.variants.get(id) ?? []; for (const x of v) void this.fetchBuf(x); }
   }
 
   private decodeCtx(): BaseAudioContext | null {
@@ -243,9 +265,10 @@ export class Voice {
     if (p0) return p0;
     const clip = this.man?.clips[id];
     if (!clip) return Promise.resolve(null);
+    const gen = this.gen;
     const p = (async () => {
       try {
-        const r = await fetch(BASE + clip.file);
+        const r = await fetch(voiceUrl(id, clip.file));
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const data = await r.arrayBuffer();
         const dc = this.decodeCtx();
@@ -255,15 +278,16 @@ export class Voice {
           pr?.then(res, rej);
         });
         if (!ok(buf.duration) || buf.duration <= 0) throw new Error('empty clip');
+        if (gen !== this.gen) return null;   // the language changed while this decoded
         this.bufs.set(id, buf);
         this.cachedS += buf.duration;
         this.evict();
         return buf;
       } catch {
-        this.missing.add(id);
+        if (gen === this.gen) this.missing.add(id);
         return null;
       } finally {
-        this.pending.delete(id);
+        if (gen === this.gen) this.pending.delete(id);
       }
     })();
     this.pending.set(id, p);

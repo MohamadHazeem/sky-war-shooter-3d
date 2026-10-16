@@ -37,6 +37,31 @@ python3 tools/voice/generate.py --check   # verify callout coverage; report know
   Models load from the local Hugging Face cache (`HF_HUB_OFFLINE=1`); no installation is performed.
   `--check`, unit tests and the `say` fallback need only Python's standard library.
 
+## Arabic voice-over
+
+Every clip also has an Arabic take in `public/audio/voice/ar/` (same ids, same per-role reference voice,
+own `manifest.json`), played instead of the English one when the game language is Arabic
+(`src/audio/VoiceLang.ts`; used by `Voice.ts`, `BriefingVoice.ts` and the crew room). English players
+never fetch it; a clip without an Arabic take falls back to English.
+
+```sh
+node --experimental-strip-types tools/voice/arabic.mjs        # Arabic text for every clip -> lines_ar.json
+tools/heavy.sh python3 tools/voice/generate.py --lang ar --only pilot   # render in batches (role / id prefix)
+tools/heavy.sh python3 tools/voice/generate.py --lang ar --shard 0/2    # or two workers: 0/2 and 1/2
+tools/heavy.sh python3 tools/voice/asr_check.py --lang ar     # Whisper transcript vs text (CER), worst clips
+```
+
+- `arabic.mjs` translates each clip's English text with the game's own phrase tables (`tx()`), so the voice says
+  what the Arabic subtitle shows; runtime-filled crew-room templates are filled with translated values.
+  `src/audio/arabicSpoken.ts` makes it speakable: digits → Arabic words, `Fw 190`/`P-51D`/bomber names
+  transliterated, dashes/ellipses → pauses. Re-run it after changing a translation or adding lines, then `--lang ar`.
+- `generate.py --lang ar` uses `ChatterboxMultilingualTTS` (`language_id='ar'`) with the English casting refs
+  (cross-lingual cloning); `audio.ar.cfgScale` in `lines.json` scales each clip's guidance (lower = less English
+  accent carried over from the reference). Hash, retries, trimming, AAC encoding and the duration check
+  (Arabic: 2.4 words/s expected) are shared with English; metrics go to `.cache/quality_ar.json`.
+- `asr_check.py` transcribes with Whisper large-v3-turbo from the local HF cache (no install/download) and
+  writes `.cache/asr_ar.json`. Re-render a bad clip with `--lang ar --only <id> --force --reseed <n>` (other random takes; `n` ≥ 1).
+
 ## Chatterbox generation
 
 ```sh

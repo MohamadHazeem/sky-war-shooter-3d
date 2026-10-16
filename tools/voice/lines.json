@@ -4,7 +4,11 @@
     "sampleRate": 16000,
     "bitrate": 24000,
     "urgentBoost": 22,
-    "engine": "chatterbox"
+    "engine": "chatterbox",
+    "ar": {
+      "_doc": "Arabic voice-over (generate.py --lang ar): cfgScale multiplies each clip's guidance; 0 = no classifier-free guidance, which carries the least English accent over from the English reference voices.",
+      "cfgScale": 0
+    }
   },
   "roles": {
     "pilot": {
