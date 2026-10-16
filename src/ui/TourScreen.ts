@@ -18,6 +18,7 @@ import { voice } from '../audio/Voice';
 import { VOICE_LINES } from '../audio/voiceLines';
 import { tx, isAr } from '../i18n';
 import { esc, onBackKey, showLayer } from './serviceCommon';
+import { mountTourShareCard } from './ShareCard';
 
 export interface TourHost {
   briefing(m: Mission, back: () => void): void;
@@ -347,6 +348,7 @@ function finaleView(root: HTMLElement, s: TourState, host: TourHost) {
   root.querySelector<HTMLElement>('[data-back]')!.onclick = () => host.menu();
   root.querySelector<HTMLElement>('[data-menu]')!.onclick = () => host.menu();
   root.querySelector<HTMLElement>('[data-new]')!.onclick = () => { selected = 0; saveTour(newTour()); showTour(host); };
+  mountTourShareCard(root.querySelector('.tour-actions'), s); // the tour's share card (ShareCard.ts)
   if (root.dataset.voiced !== 'finale') { root.dataset.voiced = 'finale'; say('tour_home'); }
 }
 

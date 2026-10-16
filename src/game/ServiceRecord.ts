@@ -23,6 +23,7 @@ import type { UI, DebriefData } from '../ui/UI';
 import type { Aircraft } from '../world/Aircraft';
 import { CAMPAIGN, survivalMission, type Mission } from './Missions';
 import { achievements } from './Achievements';
+import { recordSortie } from './StatsLog';
 import { nemesisMissionKills } from './NemesisRuntime';
 import {
   type CareerData, type Reward, RANKS, PROMOTION_REWARDS, grantReward, loadCareer, medalDef, rankFor, saveCareer, xpForMission,
@@ -191,6 +192,7 @@ export class ServiceRecord {
     c.bombersLost += d.bombersLost;
     if (d.success) c.bombersSaved += Math.max(0, d.bombersTotal - d.bombersLost);
     c.overdrives += b.overdrives;
+    recordSortie({ id: m.id, title: m.title, role: m.role, success: d.success, survived: d.success || !(!w.player?.alive || w.crewWounded >= 4), kills: d.kills, shots: d.rounds ?? w.stats.shots, hits: d.hits ?? w.stats.hits, score: d.personalScore ?? d.score, medals, types: b.kills });   // stats page logbook (StatsLog.ts)
     // ---- daily orders that are judged at the end ----
     if (d.success && !survival && m.number > 0) {
       if (!c.campaignWins.includes(m.id)) c.campaignWins.push(m.id);

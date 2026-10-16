@@ -38,6 +38,8 @@ body[data-hud-detail] #banner .b1 { font-size: 22px; }
 body[data-hud-detail] #banner .b2 { font-size: 12px; }
 #hudToast { position: fixed; top: 16px; right: 16px; width: min(28vw, 300px); box-sizing: border-box; padding: 8px 12px; background: rgba(10,14,10,.88); border-inline-start: 2px solid var(--khaki); z-index: 45; pointer-events: none; display: none; text-align: start; }
 #hudToast.show { display: block; }
+/* Arabic menus put Back on the leading (right) edge: toasts go to the left there so they never cover it */
+html[dir='rtl'] body:not(.hud-mission) #hudToast { right: auto; left: 16px; }
 #hudToast .k { font-size: 10px; color: var(--khaki); }
 #hudToast .t { font-size: 15px; }
 #hudToast .d { font-size: 11px; }

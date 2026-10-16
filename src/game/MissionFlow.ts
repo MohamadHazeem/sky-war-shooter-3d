@@ -23,6 +23,7 @@ import { BailOutCinematic, BAIL_TOTAL } from './BailOutCinematic';
 import { leaderboardMode } from './Modes';
 import { mountMissionRating } from '../ui/MissionEditorScreen';
 import { mountShare, shareStamp } from './Share';
+import { mountMissionShareCard } from '../ui/ShareCard';
 import { analytics } from '../net/Analytics';
 import { mountCampaignReport, prepareCampaignMission, campaignMeritMult } from '../ui/CampaignMap';
 import { crewRoomScene } from '../ui/CrewRoomScene';
@@ -348,6 +349,7 @@ export class MissionFlow {
     const board = leaderboardMode(m) ?? (survival ? `survival-${m.role}` : `campaign-${m.id}`);
     if (host && !isSecondTourId(m.id) && !isChapterMission(m.id) && !isTourId(m.id) && !isHistoricalId(m.id)) mountLeaderboard(host, board, 'ONLINE LEADERBOARD', { name: '', mode: board, score: g.score, kills: w.stats.kills, rounds: g.roundIdx + 1, duration: d.time });
     mountShare(host, g.engine, () => shareStamp(g), () => ({ title: m.title, kills: d.kills, score: d.score, success: d.success, survival, waves: d.waves, role: m.role }));
+    mountMissionShareCard(host, g.engine, m, d); // the share card: a crew-photo image of this mission (ui/ShareCard.ts)
     analytics.missionEnd(m, d);
     g.service.onDebrief(m, d, medals);
     mountMuseumNote(host, museumDebrief(this.museumBefore, () => g.extras.museumStats()), nickOf); // museum facts opened by this mission
