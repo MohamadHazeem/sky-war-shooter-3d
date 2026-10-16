@@ -4068,6 +4068,105 @@
       "text": "Fog on the field. Nobody's flying today."
     },
     {
+      "group": "Phase 11 station lessons (src/game/StationLessons.ts / LessonRunner.ts)"
+    },
+    {
+      "id": "lessonwaistbefore",
+      "role": "pilot",
+      "text": "Training drone on the left waist. Show me what you've got before we start.",
+      "urgent": false
+    },
+    {
+      "id": "lessonwaisthold",
+      "role": "nav",
+      "text": "Don't chase his tail — get ahead of him.",
+      "urgent": false
+    },
+    {
+      "id": "lessonwaistwithPip",
+      "role": "waist",
+      "text": "Lead him and let him fly into it!",
+      "urgent": false
+    },
+    {
+      "id": "lessonwaistbyEye",
+      "role": "pilot",
+      "text": "No crutches this time, gunner. Lead him by eye.",
+      "urgent": false
+    },
+    {
+      "id": "lessonwaistafter",
+      "role": "pilot",
+      "text": "Same drone as before. Let's see the difference.",
+      "urgent": false
+    },
+    {
+      "id": "lessontopbefore",
+      "role": "pilot",
+      "text": "Training drone on the top turret. Show me what you've got before we start.",
+      "urgent": false
+    },
+    {
+      "id": "lessontopsweet",
+      "role": "top",
+      "text": "Both guns meet at three hundred metres. That's where you hurt them.",
+      "urgent": false
+    },
+    {
+      "id": "lessontopwait",
+      "role": "pilot",
+      "text": "He's way out. Don't waste it — wait till he's close.",
+      "urgent": false
+    },
+    {
+      "id": "lessonballbefore",
+      "role": "pilot",
+      "text": "Training drone on the ball turret. Show me what you've got before we start.",
+      "urgent": false
+    },
+    {
+      "id": "lessonballbursts",
+      "role": "pilot",
+      "text": "Short bursts, gunner. That belt has to last all the way to the target and back.",
+      "urgent": false
+    },
+    {
+      "id": "lessonballjam",
+      "role": "ball",
+      "text": "Gun's jammed! Working the charging handle!",
+      "urgent": true
+    },
+    {
+      "id": "lessonballjamFight",
+      "role": "nav",
+      "text": "Fighter low! Get him, and keep that gun running.",
+      "urgent": true
+    },
+    {
+      "id": "lessontailbefore",
+      "role": "pilot",
+      "text": "Training drone on the tail gun. Show me what you've got before we start.",
+      "urgent": false
+    },
+    {
+      "id": "lessontailhose",
+      "role": "pilot",
+      "text": "Oxygen check! Tail, you're not answering — check your mask hose!",
+      "urgent": true
+    },
+    {
+      "id": "lessontailhoseFight",
+      "role": "tail",
+      "text": "Bandit at six! I'm on him.",
+      "urgent": true
+    },
+    {
+      "id": "lessondone",
+      "role": "pilot",
+      "text": "Good work, gunner. That one's in the log book.",
+      "urgent": false
+    },
+    {
       "group": "briefings (tools/voice/briefings.mjs)"
     },
     {
