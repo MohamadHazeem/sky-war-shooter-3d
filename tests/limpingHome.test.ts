@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  ASK_AT, CREW_SEATS, DECIDE_TIME, FUEL, LIMP_RADIO, LIMP_TEXT, PLAYER_WEIGHT, ROUTE, burnRate, crewVote, decide, distanceLeft, fuelMargin,
-  limpingDue, majorityNeeded, neutralFor, options, startFuel, tally, type LimpChoice, type LimpState, type LimpTrigger,
+  ALL_HANDS, ASK_AT, CREW_BIAS, CREW_SEATS, DECIDE_TIME, FUEL, LIMP_RADIO, LIMP_TEXT, PLAYER_WEIGHT, ROUTE, burnRate, crewVote, decide, distanceLeft, fuelMargin,
+  limpingDue, neutralFor, options, shortLabel, startFuel, tally, utility, type LimpChoice, type LimpState, type LimpTrigger,
 } from '../src/game/LimpingHomeRules';
 import { applyOutcome, currentStory, defaultCampaign, opInfo, sanitize, startSecondTour } from '../src/game/CampaignState';
 import { CAMPAIGN } from '../src/game/Missions';
@@ -95,56 +95,66 @@ describe('the crew vote', () => {
     expect(options(leg({ enginesOut: 1, leaking: true }))).toEqual(['home', 'divert', 'ditch']);
     expect(options(leg({ enginesOut: 2, leaking: false, neutral: 'Sweden' }))).toEqual(['divert', 'neutral', 'ditch']);
   });
-  it('with fuel for Woodbridge the crew takes her there; the gunner cannot talk them into Sweden', () => {
+  it('with fuel for Woodbridge most of the crew takes her there, but not as one man', () => {
     const s = leg({ enginesOut: 2, leaking: false, neutral: 'Sweden' });
     const t = tally(s);
-    expect(t.votes.divert).toBeGreaterThanOrEqual(majorityNeeded(true));
+    expect(t.votes.divert).toBeGreaterThanOrEqual(7);
+    expect(t.seat.Engineer).not.toBe('divert');   // he reads the gauges and wants more fuel to spare
     expect(decide(s, null)).toBe('divert');
+    // one gunner cannot drag a crew that can make England into internment
     expect(decide(s, 'neutral')).toBe('divert');
   });
-  it('two engines out from Bremen never gets a 9–0 crew; with a holed tank the gunner decides', () => {
+  it('two engines out from Bremen splits the crew: never 9–0, and the gunner decides', () => {
     for (const leaking of [false, true]) {
-      const s = atAsk({ enginesOut: 2, leaking, neutral: neutralFor(CAMPAIGN[1].target) });
-      const t = tally(s), counts = Object.values(t.votes);
-      expect(Math.max(...counts), `leaking ${leaking}`).toBeLessThan(CREW_SEATS.length);
-      expect(counts.filter((n) => n > 0).length).toBeGreaterThanOrEqual(2);
+      const s = leg({ enginesOut: 2, leaking, neutral: 'Sweden' });
+      const v = Object.values(tally(s).votes);
+      expect(Math.max(...v), `leaking ${leaking}`).toBeLessThan(CREW_SEATS.length);
     }
-    const s = atAsk({ enginesOut: 2, leaking: true, neutral: 'Sweden' }), t = tally(s);
-    expect(t.votes.neutral).toBeGreaterThan(0);
-    expect(t.votes.ditch).toBeGreaterThan(0);
-    expect(decide(s, null)).toBe('ditch');        // silence keeps the tour going
-    expect(decide(s, 'neutral')).toBe('neutral'); // the gunner's three hands make the majority
+    // the holed-tank case: England is out of reach, the crew is torn between Sweden and the sea
+    const s = leg({ enginesOut: 2, leaking: true, neutral: 'Sweden' });
+    const t = tally(s);
+    expect(t.votes.neutral).toBeGreaterThanOrEqual(3);
+    expect(t.votes.ditch).toBeGreaterThanOrEqual(3);
+    expect(decide(s, 'neutral')).toBe('neutral');
     expect(decide(s, 'ditch')).toBe('ditch');
+    // silence never ends the tour
+    expect(decide(s, null)).not.toBe('neutral');
   });
-  it('internment is never the silent default and always needs a clear majority', () => {
-    let interned = 0;
-    for (const s of sweep()) {
-      const opts = options(s);
-      expect(decide(s, null, opts), JSON.stringify(s)).not.toBe('neutral');
-      for (const c of opts) {
-        if (decide(s, c, opts) !== 'neutral') continue;
-        interned++;
-        expect(tally(s, opts).votes.neutral + (c === 'neutral' ? PLAYER_WEIGHT : 0)).toBeGreaterThanOrEqual(majorityNeeded(true));
-      }
+  it('every man shows his personality somewhere', () => {
+    const seen = new Map<string, Set<string>>();
+    for (const neutral of ['Sweden', null] as const) for (const eo of [1, 2, 3]) for (const leaking of [false, true]) for (const wounded of [0, 2]) {
+      const s = leg({ enginesOut: eo, leaking, neutral, wounded, straggling: true });
+      const t = tally(s);
+      for (const seat of CREW_SEATS) { if (!seen.has(seat)) seen.set(seat, new Set()); seen.get(seat)!.add(t.seat[seat]); }
     }
-    expect(interned).toBeGreaterThan(0);
+    for (const seat of CREW_SEATS) expect(seen.get(seat)!.size, seat).toBeGreaterThanOrEqual(2);
+    // the leans are the size of the fuel terms, not a rounding error
+    for (const seat of CREW_SEATS) if (seat !== 'Navigator') expect(Math.max(...Object.values(CREW_BIAS[seat].lean).map(Math.abs)), seat).toBeGreaterThanOrEqual(0.08);
+    const s = leg({ enginesOut: 2, leaking: true, neutral: 'Sweden' });
+    expect(utility('neutral', s, 'Tail')).toBeGreaterThan(utility('neutral', s, 'Pilot') + 0.2);
   });
-  it("every man's personality shows: each one votes against the rest of the crew somewhere", () => {
-    const dissent = new Set<string>();
-    for (const s of sweep()) {
-      const t = tally(s), top = Math.max(...Object.values(t.votes));
-      for (const c of Object.keys(t.voters) as LimpChoice[]) if (t.votes[c] > 0 && t.votes[c] < top) for (const seat of t.voters[c]) dissent.add(seat);
+  it('internment needs the gunner and a clear majority; it is never the silent default', () => {
+    for (let f = 0.05; f < 0.4; f += 0.01) for (const eo of [1, 2, 3]) {
+      const s = leg({ enginesOut: eo, leaking: true, neutral: 'Switzerland', fuel: f });
+      expect(decide(s, null), `fuel ${f} engines ${eo}`).not.toBe('neutral');
+      const t = tally(s);
+      if (decide(s, 'neutral') === 'neutral') expect((t.votes.neutral + PLAYER_WEIGHT) * 2).toBeGreaterThan(ALL_HANDS);
+      for (const c of ['divert', 'ditch'] as const) expect(decide(s, c)).not.toBe('neutral');
     }
-    expect([...dissent].sort()).toEqual([...CREW_SEATS].sort());
   });
-  it('short of England the crew ditches unless the gunner makes a majority for the neutral field', () => {
-    const deep = atAsk({ enginesOut: 1, leaking: true, neutral: 'Switzerland' });
+  it('short of England the crew ditches unless the gunner votes for the neutral field', () => {
+    const deep = leg({ enginesOut: 1, leaking: true, neutral: 'Switzerland' });
     expect(decide(deep, null)).toBe('ditch');
     expect(decide(deep, 'neutral')).toBe('neutral');
-    const coastal = atAsk({ enginesOut: 1, leaking: true });
+    const coastal = leg({ enginesOut: 1, leaking: true });
     expect(decide(coastal, null)).toBe('ditch');
   });
-  it('a split crew follows the gunner', () => {
+  it('the card names short choices', () => {
+    expect(shortLabel('divert', null)).toBe(LIMP_TEXT.shortDivert);
+    expect(shortLabel('neutral', 'Sweden')).toBe(LIMP_TEXT.shortSweden);
+    expect(shortLabel('neutral', 'Switzerland')).toBe(LIMP_TEXT.shortSwitzerland);
+  });
+  it('a split crew follows the gunner; the pilot breaks a tie', () => {
     let split: LimpState | null = null;
     for (let f = 0.1; f < 0.4 && !split; f += 0.002) {
       const s = leg({ enginesOut: 1, leaking: true, fuel: f });
@@ -238,23 +248,14 @@ describe('the leg in the game (LimpingHome)', () => {
     expect(g.midRound.spawnAttackers).toHaveBeenCalled();   // fighters hunt the straggler
     expect(lh.active).toBe(false);
   });
-  const key = (opts: LimpChoice[], c: LimpChoice) => ['Digit7', 'Digit8', 'Digit9', 'Digit0'][opts.indexOf(c)];
-  it('two engines and a holed tank over Bremen: a silent gunner leaves it to the crew, who ditch (the tour goes on)', async () => {
-    const { lh, g, run } = await rig({ enginesOut: 2, leaking: true });
-    g.flow.finish(true, 'Bombs on target.');
-    run(ASK_AT + DECIDE_TIME + 0.5);
-    expect(lh.choice).toBe('ditch');
-    run(ROUTE.ditch.time + 1);
-    expect(lh.interned).toBe(null);
-    expect(lh.ditch).toBe(true);
-  });
-  it("the gunner's vote swings a split crew", async () => {
+  it("the gunner's vote swings a split crew (Bremen, two engines out, a holed tank)", async () => {
     const { lh, g, pressed, run } = await rig({ enginesOut: 2, leaking: true });
     g.flow.finish(true, 'Bombs on target.');
     run(ASK_AT + 0.2);
     const opts = options(lh.state);
-    expect(decide(lh.state, null, opts)).toBe('ditch');
-    pressed.add(key(opts, 'neutral'));
+    expect(opts).toEqual(['divert', 'neutral', 'ditch']);
+    expect(decide(lh.state, null, opts)).toBe('ditch');   // silent: the crew's best non-tour-ending choice
+    pressed.add(['Digit7', 'Digit8', 'Digit9', 'Digit0'][opts.indexOf('neutral')]);
     run(0.1); pressed.clear();
     expect(lh.vote).toBe('neutral');
     run(2);
@@ -264,14 +265,20 @@ describe('the leg in the game (LimpingHome)', () => {
     const { lh, g, pressed, run } = await rig({ enginesOut: 2, leaking: true });
     g.flow.finish(true, 'Bombs on target.');
     run(ASK_AT + 0.2);
-    pressed.add(key(options(lh.state), 'neutral'));
-    run(0.1); pressed.clear();
+    pressed.add('Digit8'); run(0.1); pressed.clear();
     run(2);
     expect(lh.choice).toBe('neutral');
     run(ROUTE.neutral.time + 1);
     expect(lh.interned).toBe('Sweden');
     expect(g.world.stats.bombersLost).toBe(1);
     expect(g.endResult).toEqual({ success: true, reason: LIMP_TEXT.internSweden });
+  });
+  it('left to themselves, the same crew ditches and the tour goes on', async () => {
+    const { lh, g, run } = await rig({ enginesOut: 2, leaking: true });
+    g.flow.finish(true, 'Bombs on target.');
+    run(ASK_AT + DECIDE_TIME + 0.5);
+    expect(lh.choice).toBe('ditch');
+    expect(lh.interned).toBe(null);
   });
   it('running the tanks dry on the way to Woodbridge forces a ditching', async () => {
     const { lh, g, run } = await rig();
