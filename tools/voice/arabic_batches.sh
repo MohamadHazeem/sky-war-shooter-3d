@@ -3,6 +3,7 @@
 # slot limit), so other heavy jobs get their turn between batches. Resumable: finished clips are skipped.
 #   tools/voice/arabic_batches.sh            one worker
 #   tools/voice/arabic_batches.sh 0/2 &      two workers sharing the run (and 1/2)
+#   TTS_DEVICE=cpu tools/voice/arabic_batches.sh 2/3 &   a worker on the CPU (6 threads) next to two GPU ones
 # BATCH clips per heavy slot (default 30). Pass 1 retries the clips pass 0 rejected, with other seeds.
 set -u
 cd "$(dirname "$0")/../.."

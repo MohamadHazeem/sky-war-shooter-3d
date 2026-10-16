@@ -150,6 +150,8 @@ def trim_normalise(src, dst, sr, peak_db=None):
     if peak == 0:
         raise RuntimeError(f'silent render: {src}')
     thr = max(250, peak * 0.03)
+    if peak <= thr:  # nothing above the gate: a near-silent take (a StopIteration here would end the render loop silently)
+        raise RuntimeError(f'near-silent render: {src}')
     first = next(i for i, x in enumerate(a) if abs(x) > thr)
     last = len(a) - 1 - next(i for i, x in enumerate(reversed(a)) if abs(x) > thr)
     s = max(0, first - int(0.025 * sr))
@@ -251,7 +253,8 @@ def audio_metrics(path, text, lang='en'):
                 peakDb=round(20 * math.log10(max(peak, 1e-9)), 2),
                 rmsDb=round(20 * math.log10(max(rms, 1e-9)), 2),
                 silenceFraction=round(silent / max(1, n), 3),
-                durationOK=0.35 * expected <= dur <= 2.2 * expected)
+                # Arabic: a one-word call ("Fighters!") easily takes a second, so short lines get a 2 s ceiling
+                durationOK=0.35 * expected <= dur <= max(2.2 * expected, 2.0 if lang != 'en' else 0))
 
 
 def render(c, cfg, tmp, model=None, out_dir=None):
@@ -333,8 +336,15 @@ def split_chunks(text, max_words=CHUNK_WORDS):
                 out[-1] += ' ' + cur
             else:
                 out.append(cur)
+    # a one- or two-word sentence ("Landed!") rides with the next one: alone it comes out stretched
+    merged = []
+    for ch in out:
+        if merged and len(merged[-1].split()) < 3 and len((merged[-1] + ' ' + ch).split()) <= max_words:
+            merged[-1] += ' ' + ch
+        else:
+            merged.append(ch)
     # a trailing Arabic comma would make the model add a full stop: give it the Latin comma
-    return [re.sub('،$', ',', ch) for ch in out] or [text]
+    return [re.sub('،$', ',', ch) for ch in merged] or [text]
 
 
 def _pcm(path):
@@ -365,8 +375,14 @@ def render_chunked(c, cfg, tmp, model, cut):
             torch.manual_seed(seed)
             # the reference is re-embedded only when the role changes
             prompt = None if getattr(model, '_sws_ref', None) == ref else ref
-            wav = model.generate(ch, language_id=c['lang'], audio_prompt_path=prompt,
-                                 exaggeration=c['exa'], cfg_weight=c['cfg']).detach().cpu()
+            try:
+                wav = model.generate(ch, language_id=c['lang'], audio_prompt_path=prompt,
+                                     exaggeration=c['exa'], cfg_weight=c['cfg']).detach().cpu()
+            except (IndexError, RuntimeError) as e:   # an out-of-vocabulary speech token now and then: a failed take
+                print(f"  take failed {c['id']} chunk {k}: {e}", flush=True)
+                model._sws_ref = None
+                takes += 1
+                continue
             model._sws_ref = ref
             takes += 1
             wav = ta.functional.resample(wav, model.sr, sr).mean(dim=0)
@@ -385,7 +401,7 @@ def render_chunked(c, cfg, tmp, model, cut):
             if m['durationOK'] and score <= ACCEPT_CER:
                 break
         if best is None or best[0] >= 1:
-            raise RenderRejected(c['id'], dict(durationOK=False, duration=0, chunk=k, text=ch))
+            raise RenderRejected(c['id'], dict(durationOK=False, duration=0, chunk=k, chunkText=ch))
         pcm = _pcm(best[3])
         if joined:
             gap = 0.28 if re.search(r'[.!?؟]$', chunks[k - 1]) else 0.12
@@ -612,6 +628,9 @@ def main():
         ensure_tts_python()
         import torch
         device = 'mps' if torch.backends.mps.is_available() else 'cpu'
+        if os.environ.get('TTS_DEVICE') == 'cpu':   # an extra worker on the CPU while the GPU is busy
+            device = 'cpu'
+            torch.set_num_threads(int(os.environ.get('TTS_THREADS', '6')))
         if lang == 'en':
             from chatterbox.tts import ChatterboxTTS
             model = ChatterboxTTS.from_pretrained(device=device)
