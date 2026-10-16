@@ -12,7 +12,7 @@ import {
   CABLE, COACH_TEXT, GhostRecorder, SCORE, SLEEVE_HP, TAIL, accuracyBonus, coachLead, downPoints, ghostAt, leadDegrees,
   passPoint, passVelocity, timeline, type Drill, type Ghost, type GhostSample, type Window,
 } from './GunneryRangeRules';
-import { harmless } from './Tutorial';
+import { harmless } from './TrainingDrones';
 
 // Gunnery Range 2.0 (Phase 11 goal 35): a free practice flight. The drill's targets — gunless
 // target drones and cloth sleeves towed on a cable behind a tow ship — fly straight passes on

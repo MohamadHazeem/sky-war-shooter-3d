@@ -10,6 +10,7 @@ import crewStories from './ar/crewStories';
 import seasons from './ar/seasons';
 import limpingHome from './ar/limpingHome';
 import accessibility from './ar/accessibility';
+import lessons from './ar/lessons';
 import renderer from './ar/renderer';
 import formation from './ar/formation';
 import bombRun from './ar/bombRun';
@@ -60,7 +61,7 @@ import ditching from './ar/ditching';
 import sea from './ar/sea';
 
 // manual first: its generic words (Low, Close, Zoom...) never override another screen's wording
-const TABLES: PhraseTable[] = [accessibility, limpingHome, strategic, escorts, replayStudio, mastery, touchGunner, crewDecisions, coopLobbies, spatialAudio, score, crewStories, seasons, renderer, cinema, b17Damage, deepPenetration, bombRun, formation, soundscape, luftwaffe, enemyAi, gunnerSurvival, cleanHud, menu, weather, aa, sea, ditching, squadron, secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles, bombardier];
+const TABLES: PhraseTable[] = [lessons, accessibility, limpingHome, strategic, escorts, replayStudio, mastery, touchGunner, crewDecisions, coopLobbies, spatialAudio, score, crewStories, seasons, renderer, cinema, b17Damage, deepPenetration, bombRun, formation, soundscape, luftwaffe, enemyAi, gunnerSurvival, cleanHud, menu, weather, aa, sea, ditching, squadron, secondTour, manual, missions, radio, game, loadout, career, combat, misc, pilot, raid, campaign, skills, battle, theatre, aircraft, coop, hud, specials, nemesis, strafe, bookends, extras, setpieces, crewroom, crewRoles, bombardier];
 
 // Any ./ar/*.ts table not listed above is picked up automatically and goes FIRST (lowest
 // precedence), like a newly prepended table: a new goal only adds its file, no edit here.

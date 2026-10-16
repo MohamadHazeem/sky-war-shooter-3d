@@ -16,7 +16,7 @@ export const HANGAR_TABS = [
   ] },
   { id: 'more', label: 'More', entries: [
     ['manual', 'Field Manual', 'Learn the controls and tactics'], ['whatsnew', "What's new", 'Read the latest bulletin'], ['theatre', 'Theatre', 'Watch your saved moments'],
-    ['campaign', 'Campaign Map', 'Story missions and side raids'], ['custom', 'Custom Battle', 'Build your own battle'], ['training', 'Training', 'A guided gunner flight'],
+    ['campaign', 'Campaign Map', 'Story missions and side raids'], ['custom', 'Custom Battle', 'Build your own battle'], ['training', 'Training', 'Gunnery School and station lessons'],
   ] },
 ] as const;
 export type HangarTab = typeof HANGAR_TABS[number]['id'];

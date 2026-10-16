@@ -1,0 +1,148 @@
+{
+  "screenFirst": [
+    {
+      "id": "school",
+      "status": "Done",
+      "next": false
+    },
+    {
+      "id": "waist",
+      "status": "New",
+      "next": true
+    },
+    {
+      "id": "top",
+      "status": "Locked",
+      "next": false
+    },
+    {
+      "id": "ball",
+      "status": "Locked",
+      "next": false
+    },
+    {
+      "id": "tail",
+      "status": "Locked",
+      "next": false
+    },
+    {
+      "meta": "Lessons complete: 0 / 4"
+    }
+  ],
+  "sheetFit": {
+    "scrollH": 577,
+    "clientH": 577,
+    "lastRowBottom": 629,
+    "innerH": 720
+  },
+  "waistHold": {
+    "pip": true,
+    "assist": 0,
+    "acc": 0.08333333333333333,
+    "step": "hold"
+  },
+  "waistCard": {
+    "text": "STATION LESSON · LEFT WAIST\nSTEP 2 / 5\nAIM AHEAD\nYour rounds need time to get there, so aim ahead of a crossing plane. Hold the sight on the yellow ◇ lead indicator for a second.\nBackspace skip step",
+    "headerOneLine": true,
+    "headerClipped": false
+  },
+  "screenAfter": [
+    {
+      "id": "school",
+      "status": "Done",
+      "next": false
+    },
+    {
+      "id": "waist",
+      "status": "Done",
+      "next": false
+    },
+    {
+      "id": "top",
+      "status": "New",
+      "next": true
+    },
+    {
+      "id": "ball",
+      "status": "Locked",
+      "next": false
+    },
+    {
+      "id": "tail",
+      "status": "Locked",
+      "next": false
+    },
+    {
+      "meta": "Lessons complete: 1 / 4"
+    }
+  ],
+  "topWait": {
+    "wasted": 11,
+    "dist": 996
+  },
+  "topCard": {
+    "text": "STATION LESSON · TOP TURRET\nSTEP 3 / 4\nWAIT FOR IT\nThis one starts far out, where your streams spread apart and the rounds lose their punch. Hold your fire and open up once it is inside 400 m.\nRange 1000 m · Rounds wasted out of range: 11\nBackspace skip step",
+    "headerOneLine": true,
+    "headerClipped": false
+  },
+  "ballBursts": {
+    "bursts": 1,
+    "long": 1
+  },
+  "ballCard": {
+    "text": "STATION LESSON · BALL TURRET\nSTEP 2 / 5\nSHORT BURSTS\nEvery gun has a limited belt and a barrel that overheats. Fire 3 short bursts — under a second each. A turret can't be reloaded by hand: when its box runs low, the crew passes up more.\nShort bursts: 1 / 3\nToo long! Let go sooner.\nBackspace skip step",
+    "headerOneLine": true,
+    "headerClipped": false
+  },
+  "ballJam": {
+    "jam": true
+  },
+  "ballJamCard": {
+    "text": "STATION LESSON · BALL TURRET\nSTEP 3 / 5\nCLEAR THE JAM\nYour gun has jammed — the trigger just clicks. Hold R or tap it twice to work the charging handle.\nBackspace skip step",
+    "headerOneLine": true,
+    "headerClipped": false
+  },
+  "tailHose": {
+    "oxygen": true,
+    "hypoxia": 0.3
+  },
+  "tailCard": {
+    "text": "STATION LESSON · TAIL GUN\nSTEP 2 / 4\nCHECK YOUR MASK\nUp here the air is too thin to breathe. Your mask hose just came loose: the picture greys out and your aim drifts. Press O to reconnect it.\nBackspace skip step",
+    "headerOneLine": true,
+    "headerClipped": false
+  },
+  "tailReconnect": {
+    "oxygen": false,
+    "phase": "done"
+  },
+  "arabic": {
+    "dir": "rtl",
+    "title": "التدريب",
+    "meta": "الدروس المكتملة: 3 / 4"
+  },
+  "arCard": {
+    "text": "درس موقع الرماية · البرج العلوي\nالخطوة 3 / 4\nانتظره\nهذه تبدأ بعيدة، حيث يتباعد تيارا نيرانك وتفقد الطلقات قوتها. أمسك نيرانك وابدأ الإطلاق حين تصبح أقرب من 400 م.\nالمسافة 1090 م\nBackspace تخطَّ الخطوة",
+    "headerOneLine": true,
+    "headerClipped": false
+  },
+  "phoneCard": {
+    "text": "LEFT WAIST\nSTEP 2 / 5\nAIM AHEAD\nYour rounds need time to get there, so aim ahead of a crossing plane. Hold the sight on the yellow ◇ lead indicator for a second.\nSkip step",
+    "headerOneLine": true,
+    "headerClipped": false
+  },
+  "phoneSkip": {
+    "text": "Skip step",
+    "h": 44,
+    "right": 145.625,
+    "innerW": 844
+  },
+  "phoneSubs": {
+    "overlap": false,
+    "cardBottom": 225
+  },
+  "phoneSkipWorks": "done",
+  "phoneSheet": {
+    "scrolls": true,
+    "more": true
+  }
+}

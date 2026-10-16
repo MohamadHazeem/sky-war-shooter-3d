@@ -12,6 +12,10 @@ const table: PhraseTable = { phrases: {
   'One-handed mouse': 'الفأرة بيد واحدة',
   'Gunner on a mouse alone: wheel = gun position · middle click = reload (hold = bombsight) · side buttons = abilities.': 'الرامي بالفأرة وحدها: العجلة = موقع الرماية · النقر الأوسط = إعادة التلقيم (الضغط المطوّل = منظار القصف) · الأزرار الجانبية = القدرات.',
   // gamepad section
+  'Right stick': 'العصا اليمنى',
+  'Left stick': 'العصا اليسرى',
+  'Gamepad ready: {stick} aims · {fire} fire · {zoom} zoom · {prev}/{next} gun position · {reload} reload · {map} map · Start pause': 'يد التحكم جاهزة: {stick} للتصويب · {fire} للإطلاق · {zoom} للتقريب · {prev}/{next} لموقع الرماية · {reload} لإعادة التلقيم · {map} للخريطة · Start للإيقاف المؤقت',
+  'Gamepad: plug one in and press any button. {stick} aims, {fire} fires, {zoom} zooms, {prev}/{next} change gun position, Start pauses.': 'يد التحكم: وصّل واحدة واضغط أي زر. {stick} للتصويب، و{fire} للإطلاق، و{zoom} للتقريب، و{prev}/{next} لتغيير موقع الرماية، وStart للإيقاف المؤقت.',
   'Gamepad aim speed': 'سرعة التصويب بيد التحكم',
   'Left-handed sticks': 'العصوان لليد اليسرى',
   'On (aim with the left stick)': 'تشغيل (التصويب بالعصا اليسرى)',

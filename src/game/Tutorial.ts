@@ -4,7 +4,8 @@ import type { UI } from '../ui/UI';
 import type { Game } from './Game';
 import type { Mission } from './Missions';
 import type { Fighter } from '../world/Aircraft';
-import { dirFromYawPitch, inArc, STATIONS, StationId } from '../world/B17Layout';
+import { dirFromYawPitch, STATIONS, StationId } from '../world/B17Layout';
+import { TrainingDrones, harmless, type DroneSpec } from './TrainingDrones';
 import { tx } from '../i18n';
 
 // "Gunnery School": a calm, scripted first flight that teaches the gunner's controls one
@@ -41,27 +42,8 @@ interface Step {
   timeout: number;                // s: the step moves on anyway (it can never get stuck)
 }
 
-// A training target flown on rails in the bomber's frame: a slow weave inside one gun
-// position's field of fire, so it never leaves the window it was put in.
-interface Drone {
-  f: Fighter;
-  station: StationId;
-  dist: number;
-  y0: number; p0: number;         // centre of the weave, relative to the station's rest direction (rad)
-  ay: number; ap: number;         // weave amplitudes (rad)
-  w: number;                      // weave rate (rad/s)
-  t: number;
-  bank: number;
-  head: number;
-}
-
 const _v = new THREE.Vector3();
 const _v2 = new THREE.Vector3();
-const _m = new THREE.Matrix4();
-const _q = new THREE.Quaternion();
-const _z = new THREE.Vector3(0, 0, 1);
-const _up = new THREE.Vector3(0, 1, 0);
-const ZERO = new THREE.Vector3();
 
 const kbd = (k: string) => `<kbd>${k}</kbd>`;
 // touch controls (DeviceControls): the instructions name the on-screen buttons instead of the mouse and keys
@@ -73,7 +55,7 @@ export class Tutorial {
   phase: 'intro' | 'step' | 'done' | 'finale' | 'over' = 'over';
   private t = 0;                  // time in the current phase
   private acc = 0;                // per-step accumulator (aim hold, zoom hold, ...)
-  private drones: Drone[] = [];
+  private range: TrainingDrones;
   private fighters: Fighter[] = [];
   private tabs = 0;
   private seatTarget: StationId = 'waistR';
@@ -86,6 +68,7 @@ export class Tutorial {
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Tab' && !e.repeat && this.active && this.game.state === 'playing') this.tabs++;
     });
+    this.range = new TrainingDrones(game);
     this.steps = this.buildSteps();
   }
 
@@ -111,7 +94,7 @@ export class Tutorial {
     this.phase = 'over';
     this.card?.remove();
     this.card = null;
-    this.drones = [];
+    this.range?.clear();
     this.fighters = [];
   }
 
@@ -156,8 +139,7 @@ export class Tutorial {
 
   private next() {
     // leftovers from the last step leave quietly
-    for (const d of this.drones) if (d.f.alive) d.f.remove = true;
-    this.drones = [];
+    this.range.clear();
     this.stepIdx++;
     if (this.stepIdx >= this.steps.length) { this.finish(); return; }
     const s = this.steps[this.stepIdx];
@@ -195,7 +177,7 @@ export class Tutorial {
   // ---------------- steps ----------------
   private buildSteps(): Step[] {
     const g = this.game;
-    const alive = () => this.drones.some((d) => d.f.alive);
+    const alive = () => this.range.drones.some((d) => d.f.alive);
     return [
       {
         id: 'aim', title: 'Aim', timeout: 45,
@@ -203,7 +185,7 @@ export class Tutorial {
         radio: ['Pilot', 'This is a training flight, gunner. Nobody shoots back today. See that target drone? Put your sight on it.'],
         enter: () => this.spawnDrone(g.gunner.station, { dist: 620, y0: 0.42, p0: 0.12, ay: 0.05, ap: 0.03, w: 0.25 }),
         check: (dt) => {
-          const d = this.drones[0];
+          const d = this.range.drones[0];
           if (!d || !d.f.alive) return true;
           const cam = this.engine.camera.position;
           const ang = g.gunner.aimDirection(_v).angleTo(_v2.copy(d.f.pos).sub(cam));
@@ -245,7 +227,7 @@ export class Tutorial {
         id: 'seat', title: 'Change gun position', timeout: 75,
         text: () => {
           const st = STATIONS[this.seatTarget];
-          const there = this.drones[0] && this.inStationArc(g.gunner.station, this.drones[0].f.pos);
+          const there = this.range.drones[0] && this.inStationArc(g.gunner.station, this.range.drones[0].f.pos);
           return there
             ? tx('You\'re on the {st}. Now shoot it down!', { st: tx(st.label).toUpperCase() })
             : tx('A fighter is in the <b>{st}</b> arc — its seat badge lit up bottom-left. Press {key} to move there.', { st: tx(st.label).toUpperCase(), key: kbd(st.key) });
@@ -288,12 +270,7 @@ export class Tutorial {
   }
 
   // ---------------- training targets ----------------
-  private inStationArc(id: StationId, pos: THREE.Vector3) {
-    const b = this.game.world.playerBomber;
-    if (!b) return false;
-    const st = STATIONS[id];
-    return inArc(st, b.worldToLocal(pos, _v).sub(st.pivot));
-  }
+  private inStationArc(id: StationId, pos: THREE.Vector3) { return this.range.inStationArc(id, pos); }
 
   // A gun position other than the current one whose drone the current gun can't reach
   private pickSeatTarget(): StationId {
@@ -308,65 +285,7 @@ export class Tutorial {
     return cur === 'waistR' ? 'waistL' : 'waistR';
   }
 
-  private spawnDrone(station: StationId, o: { dist: number; y0: number; p0: number; ay: number; ap: number; w: number }) {
-    const w = this.game.world;
-    const st = STATIONS[station];
-    // keep the whole weave inside the station's limits
-    const ylim = (st.yaw[1] - st.yaw[0]) >= Math.PI * 1.99 ? Infinity : Math.min(-st.yaw[0], st.yaw[1]) - 0.08;
-    const y0 = THREE.MathUtils.clamp(o.y0, -ylim + o.ay, ylim - o.ay);
-    const d: Drone = { f: null as unknown as Fighter, station, dist: o.dist, y0, p0: o.p0, ay: o.ay, ap: o.ap, w: o.w, t: 0, bank: 0, head: NaN };
-    const pos = this.dronePos(d, new THREE.Vector3());
-    const f = w.spawnEnemy(pos, 'beam', 0.5, false, false, 'fw190');
-    harmless(f, 0.35);
-    (w as any).pilots?.delete?.(f);   // flown on rails below, not by the AI
-    d.f = f;
-    const orig = f.update.bind(f);
-    (f as any).update = (dt: number, time: number) => {
-      if (!f.alive) { orig(dt); return; }
-      this.flyDrone(d, dt);
-      f.updateProps(dt, 0.9);
-      void time;
-    };
-    this.flyDrone(d, 0);
-    this.drones.push(d);
-    return d;
-  }
-
-  private dronePos(d: Drone, out: THREE.Vector3) {
-    const b = this.game.world.playerBomber!;
-    const st = STATIONS[d.station];
-    const yaw = st.rest.yaw + d.y0 + d.ay * Math.sin(d.w * d.t);
-    const pitch = st.rest.pitch + d.p0 + d.ap * Math.sin(2 * d.w * d.t + 1);
-    const local = dirFromYawPitch(yaw, pitch, out).multiplyScalar(d.dist).add(st.pivot);
-    return b.localToWorld(local, out);
-  }
-
-  private flyDrone(d: Drone, dt: number) {
-    const f = d.f;
-    const b = this.game.world.playerBomber;
-    if (!b) return;
-    d.t += dt;
-    const p = this.dronePos(d, _v);
-    if (dt > 0) {
-      const vel = _v2.copy(p).sub(f.pos).divideScalar(dt);
-      f.vel.lerp(vel, Math.min(1, dt * 8));
-    } else f.vel.copy(b.vel);
-    f.fm.vel.copy(f.vel);
-    f.root.position.copy(p);
-    // nose along the flight path, banking into the weave
-    const head = Math.atan2(f.vel.x, f.vel.z);
-    if (dt > 0 && Number.isFinite(d.head)) {
-      let dh = head - d.head;
-      while (dh > Math.PI) dh -= Math.PI * 2;
-      while (dh < -Math.PI) dh += Math.PI * 2;
-      d.bank += (THREE.MathUtils.clamp(-dh / dt * 2.5, -0.9, 0.9) - d.bank) * Math.min(1, dt * 3);
-    }
-    d.head = head;
-    if (f.vel.lengthSq() > 1) {
-      _m.lookAt(f.vel, ZERO, _up);
-      f.root.quaternion.setFromRotationMatrix(_m).multiply(_q.setFromAxisAngle(_z, d.bank));
-    }
-  }
+  private spawnDrone(station: StationId, o: DroneSpec) { return this.range.spawn(station, o); }
 
   // The final exercise: real AI fighters, but slow, gunless and fragile, sent in through
   // the player's current field of fire.
@@ -384,13 +303,4 @@ export class Tutorial {
       this.fighters.push(f);
     }
   }
-}
-
-// No guns, no rockets, a thinner skin: a training target (also the gunnery range's drones)
-export function harmless(f: Fighter, toughness: number) {
-  f.guns = [];
-  f.rockets = 0;
-  f.fireRockets = false;
-  f.structure = f.maxStructure = f.maxStructure * toughness;
-  for (const z of f.zones) { z.maxHp *= toughness; z.hp = z.maxHp; }
 }
