@@ -33,7 +33,7 @@ body.cb-contrast .stations span { background: rgba(0, 0, 0, 0.8); border-width: 
 .a11y-panel { margin-top: 8px; }
 .a11y-h { font-family: 'Special Elite', monospace; color: var(--khaki); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin: 22px 0 4px; padding-top: 14px; border-top: 1px solid var(--line); }
 .a11y-h2 { font-size: 11px; margin-top: 14px; padding-top: 10px; }
-.a11y-val { font-weight: 400; color: var(--ink-dim); margin-left: 6px; }
+.a11y-val { font-weight: 400; color: var(--ink-dim); margin-inline-start: 6px; }
 .a11y-note { color: var(--ink-dim); font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; margin: 8px 0; }
 .a11y-sub { text-align: center; margin: 6px 0 2px; }
 .a11y-sample { display: inline-block; background: rgba(0, 0, 0, var(--subs-bg, 0.55)); color: #fff; font-size: calc(16px * var(--subs-scale, 1)); padding: 3px 12px; letter-spacing: 0.3px; }
@@ -49,6 +49,11 @@ html[dir=rtl] .a11y-note { font-family: 'IBM Plex Mono', 'IBM Plex Sans Arabic',
 .a11y-key { background: #222; color: var(--ink); border: 1px solid var(--line); padding: 6px 8px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; cursor: pointer; text-align: center; }
 .a11y-key:hover, .a11y-key:focus-visible { border-color: var(--khaki); color: var(--khaki); outline: none; }
 .a11y-key.wait { border-color: var(--khaki); color: #1b1a12; background: var(--khaki); }
+/* Arabic: spaced small-caps break the joined letters and Special Elite has no Arabic glyphs */
+html[dir=rtl] .a11y-h { letter-spacing: 0; text-transform: none; font-family: 'Oswald', 'Noto Kufi Arabic', sans-serif; font-size: 14px; }
+html[dir=rtl] .a11y-h2 { font-size: 13px; }
+html[dir=rtl] .a11y-sample .who { letter-spacing: 0; text-transform: none; margin-inline-end: 0.7em; }
+html[dir=rtl] .a11y-note { font-family: 'IBM Plex Mono', 'IBM Plex Sans Arabic', monospace; }
 @media (max-width: 560px) { .setting, .a11y-row { grid-template-columns: 1fr 150px; } }
 
 /* ---------- Gamepad toast ---------- */
